@@ -5,7 +5,7 @@
 # any change of this settings.yml file is detected by the GitHub App and
 # the settings of this repository are updated immediately.
 #
-_extends: repo-settings:.github/common-settings-v2.yml
+_extends: repo-settings:.github/hpc-settings.yml
 
 # repo-specific settings
 #
@@ -15,15 +15,15 @@ repository:
   # By changing this field, you rename the repository.
 
   # Uncomment this name property and set the name to the current repo name.
-  # name: ""
+  name: "terraform-ibm-hpc"
 
   # The description is displayed under the repository name on the
   # organization page and in the 'About' section of the repository.
 
   # Uncomment this description property
   # and update the description to the current repo description.
-  # description: ""
+  description: "IBM Cloud HPC is a deployable architecture where you can deploy both cloud compute resources (vCPU resources) and HPC scheduling software for your compute-intensive HPC workloads. You can reserve capacity on a recurring hourly basis from a dedicated IBM Cloud HPC resource pool."
 
   # Uncomment this topics property
   # and add a comma-separated list of topics to set on the repo.
-  # topics: terraform, ibm-cloud, terraform-module
+  topics: terraform, ibm-cloud, terraform-module, hpc, high-performance-computing
