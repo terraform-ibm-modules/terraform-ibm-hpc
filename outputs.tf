@@ -1,8 +1,4 @@
-########################################################################################################################
-# Outputs
-########################################################################################################################
-
-#output "myoutput" {
-#  description = "Description of my output"
-#  value       = "value"
-#}
+output "ssh_command" {
+  description = "SSH command to connect to HPC cluster"
+  value       = module.hpc.ssh_command
+}

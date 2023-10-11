@@ -1,31 +1,4 @@
 ##############################################################################
-# Offering Variations
-##############################################################################
-variable "scheduler" {
-  type        = string
-  default     = "LSF"
-  description = "Select one of the scheduler (LSF/Symphony/Slurm/None)"
-}
-
-variable "storage_type" {
-  type        = string
-  default     = "scratch"
-  description = "Select the required storage type(scratch/persistent/eval)."
-}
-
-variable "ibm_customer_number" {
-  type        = string
-  sensitive   = true
-  default     = ""
-  description = "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
-  validation {
-    # regex(...) fails if the IBM customer number has special characters.
-    condition     = can(regex("^[0-9A-Za-z]*([0-9A-Za-z]+,[0-9A-Za-z]+)*$", var.ibm_customer_number))
-    error_message = "The IBM customer number input value cannot have special characters."
-  }
-}
-
-##############################################################################
 # Account Variables
 ##############################################################################
 
@@ -34,6 +7,12 @@ variable "ibmcloud_api_key" {
   type        = string
   sensitive   = true
   default     = null
+}
+
+variable "enable_landing_zone" {
+  type        = bool
+  default     = true
+  description = "Run landing zone module."
 }
 
 ##############################################################################
@@ -87,31 +66,15 @@ variable "placement_strategy" {
   description = "VPC placement groups to create (null / host_spread / power_spread)"
 }
 
+variable "ssh_keys" {
+  type        = list(string)
+  description = "The key pair to use to access the servers."
+}
+
 ##############################################################################
 # Access Variables
 ##############################################################################
-variable "enable_bastion" {
-  type        = bool
-  default     = true
-  description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
-}
 
-variable "enable_bootstrap" {
-  type        = bool
-  default     = false
-  description = "Bootstrap should be only used for better deployment performance"
-}
-
-variable "bootstrap_instance_profile" {
-  type        = string
-  default     = "mx2-4x32"
-  description = "Bootstrap should be only used for better deployment performance"
-}
-
-variable "bastion_ssh_keys" {
-  type        = list(string)
-  description = "The key pair to use to access the bastion host."
-}
 
 variable "bastion_subnets_cidr" {
   type        = list(string)
@@ -152,22 +115,10 @@ variable "allowed_cidr" {
 ##############################################################################
 # Compute Variables
 ##############################################################################
-
 variable "login_subnets_cidr" {
   type        = list(string)
   default     = ["10.10.10.0/24", "10.20.10.0/24", "10.30.10.0/24"]
   description = "Subnet CIDR block to launch the login host."
-}
-
-variable "login_ssh_keys" {
-  type        = list(string)
-  description = "The key pair to use to launch the login host."
-}
-
-variable "login_image_name" {
-  type        = string
-  default     = "ibm-redhat-8-6-minimal-amd64-5"
-  description = "Image name to use for provisioning the login instances."
 }
 
 variable "login_instances" {
@@ -190,17 +141,6 @@ variable "compute_subnets_cidr" {
   description = "Subnet CIDR block to launch the compute cluster host."
 }
 
-variable "compute_ssh_keys" {
-  type        = list(string)
-  description = "The key pair to use to launch the compute host."
-}
-
-variable "management_image_name" {
-  type        = string
-  default     = "ibm-redhat-8-6-minimal-amd64-5"
-  description = "Image name to use for provisioning the management cluster instances."
-}
-
 variable "management_instances" {
   type = list(
     object({
@@ -215,7 +155,7 @@ variable "management_instances" {
   description = "Number of instances to be launched for management."
 }
 
-variable "static_compute_instances" {
+variable "compute_instances" {
   type = list(
     object({
       profile = string
@@ -229,39 +169,6 @@ variable "static_compute_instances" {
   description = "Min Number of instances to be launched for compute cluster."
 }
 
-variable "dynamic_compute_instances" {
-  type = list(
-    object({
-      profile = string
-      count   = number
-    })
-  )
-  default = [{
-    profile = "cx2-2x4"
-    count   = 250
-  }]
-  description = "MaxNumber of instances to be launched for compute cluster."
-}
-
-variable "compute_image_name" {
-  type        = string
-  default     = "ibm-redhat-8-6-minimal-amd64-5"
-  description = "Image name to use for provisioning the compute cluster instances."
-}
-
-variable "compute_gui_username" {
-  type        = string
-  default     = "admin"
-  sensitive   = true
-  description = "GUI user to perform system management and monitoring tasks on compute cluster."
-}
-
-variable "compute_gui_password" {
-  type        = string
-  sensitive   = true
-  description = "Password for compute cluster GUI"
-}
-
 ##############################################################################
 # Scale Storage Variables
 ##############################################################################
@@ -270,11 +177,6 @@ variable "storage_subnets_cidr" {
   type        = list(string)
   default     = ["10.10.30.0/24", "10.20.30.0/24", "10.30.30.0/24"]
   description = "Subnet CIDR block to launch the storage cluster host."
-}
-
-variable "storage_ssh_keys" {
-  type        = list(string)
-  description = "The key pair to use to launch the storage cluster host."
 }
 
 variable "storage_instances" {
@@ -289,12 +191,6 @@ variable "storage_instances" {
     count   = 3
   }]
   description = "Number of instances to be launched for storage cluster."
-}
-
-variable "storage_image_name" {
-  type        = string
-  default     = "ibm-redhat-8-6-minimal-amd64-5"
-  description = "Image name to use for provisioning the storage cluster instances."
 }
 
 variable "protocol_subnets_cidr" {
@@ -315,82 +211,6 @@ variable "protocol_instances" {
     count   = 2
   }]
   description = "Number of instances to be launched for protocol hosts."
-}
-
-variable "storage_gui_username" {
-  type        = string
-  default     = "admin"
-  sensitive   = true
-  description = "GUI user to perform system management and monitoring tasks on storage cluster."
-}
-
-variable "storage_gui_password" {
-  type        = string
-  sensitive   = true
-  description = "Password for storage cluster GUI"
-}
-
-variable "file_shares" {
-  type = list(
-    object({
-      mount_path = string,
-      size       = number
-    })
-  )
-  default = [{
-    mount_path = "/mnt/binaries"
-    size       = 100
-    }, {
-    mount_path = "/mnt/data"
-    size       = 100
-  }]
-  description = "Custom file shares to access shared storage"
-}
-
-variable "nsd_details" {
-  type = list(
-    object({
-      profile  = string
-      capacity = optional(number)
-      iops     = optional(number)
-    })
-  )
-  default = [{
-    profile = "custom"
-    size    = 100
-    iops    = 100
-  }]
-  description = "Storage scale NSD details"
-}
-
-##############################################################################
-# DNS Template Variables
-##############################################################################
-
-variable "dns_instance_id" {
-  type        = string
-  default     = null
-  description = "IBM Cloud HPC DNS service instance id."
-}
-
-variable "dns_custom_resolver_id" {
-  type        = string
-  default     = null
-  description = "IBM Cloud DNS custom resolver id."
-}
-
-variable "dns_domain_names" {
-  type = object({
-    compute  = string
-    storage  = string
-    protocol = string
-  })
-  default = {
-    compute  = "comp.com"
-    storage  = "strg.com"
-    protocol = "ces.com"
-  }
-  description = "IBM Cloud HPC DNS domain names."
 }
 
 ##############################################################################
@@ -427,14 +247,8 @@ variable "enable_vpc_flow_logs" {
 
 variable "key_management" {
   type        = string
-  default     = "key_protect"
+  default     = null
   description = "null/key_protect/hs_crypto"
-}
-
-variable "boot_volume_encryption_enabled" {
-  type        = bool
-  default     = true
-  description = "Set to true when key management is set"
 }
 
 variable "hpcs_instance_name" {
@@ -442,7 +256,3 @@ variable "hpcs_instance_name" {
   default     = null
   description = "Hyper Protect Crypto Service instance"
 }
-
-##############################################################################
-# TODO: Auth Server (LDAP/AD) Variables
-##############################################################################
