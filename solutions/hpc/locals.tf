@@ -45,14 +45,16 @@ locals {
     {
       mount_path = "/mnt/lsf"
       size       = 100
+      iops       = 1000
     }
   ] : []
-  total_shares = length(var.management_instances) > 0 ? [] : concat(local.default_share, var.file_shares)
+  total_shares = concat(local.default_share, var.file_shares)
   file_shares = [
     for count in range(length(local.total_shares)) :
     {
-      name = element(split("/", local.total_shares[count]["mount_path"]), length(split("/", local.total_shares[count]["mount_path"])) - 1)
+      name = format("%s-%s", var.prefix, element(split("/", local.total_shares[count]["mount_path"]), length(split("/", local.total_shares[count]["mount_path"])) - 1))
       size = local.total_shares[count]["size"]
+      iops = local.total_shares[count]["iops"]
     }
   ]
 }

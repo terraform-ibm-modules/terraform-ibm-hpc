@@ -14,7 +14,8 @@ variable "file_shares" {
   type = list(
     object({
       name = string,
-      size = number
+      size = number,
+      iops = number
     })
   )
   default     = null

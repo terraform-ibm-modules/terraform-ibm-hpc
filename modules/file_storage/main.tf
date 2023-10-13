@@ -4,6 +4,7 @@ resource "ibm_is_share" "share" {
   access_control_mode = var.security_group_ids != null ? "security_group" : "vpc"
   size                = var.file_shares[count.index]["size"]
   profile             = "dp2"
+  iops                = var.file_shares[count.index]["iops"]
   zone                = var.zone
   encryption_key      = var.encryption_key_crn
 }

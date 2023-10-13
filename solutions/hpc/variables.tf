@@ -333,15 +333,18 @@ variable "file_shares" {
   type = list(
     object({
       mount_path = string,
-      size       = number
+      size       = number,
+      iops       = number
     })
   )
   default = [{
     mount_path = "/mnt/binaries"
     size       = 100
+    iops       = 1000
     }, {
     mount_path = "/mnt/data"
     size       = 100
+    iops       = 1000
   }]
   description = "Custom file shares to access shared storage"
 }
