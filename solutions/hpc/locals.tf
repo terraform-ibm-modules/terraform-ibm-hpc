@@ -48,7 +48,7 @@ locals {
       iops       = 1000
     }
   ] : []
-  total_shares = concat(local.default_share, var.file_shares)
+  total_shares = length(var.storage_instances) > 0 ? [] : concat(local.default_share, var.file_shares)
   file_shares = [
     for count in range(length(local.total_shares)) :
     {
