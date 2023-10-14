@@ -1,10 +1,10 @@
-module github.com/terraform-ibm-modules/terraform-ibm-hpc
+module ibm-hpc
 
-go 1.20
+go 1.21.0
 
 require (
 	github.com/stretchr/testify v1.8.4
-	github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper v1.23.0
+	github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper v1.21.10
 )
 
 require (
@@ -18,7 +18,7 @@ require (
 	github.com/IBM-Cloud/power-go-client v1.3.1 // indirect
 	github.com/IBM/go-sdk-core/v5 v5.14.1 // indirect
 	github.com/IBM/platform-services-go-sdk v0.50.1 // indirect
-	github.com/IBM/vpc-go-sdk v1.0.2 // indirect
+	github.com/IBM/vpc-go-sdk v0.41.0 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230828082145-3c4c8a2d2371 // indirect
 	github.com/acomagu/bufpipe v1.0.4 // indirect
