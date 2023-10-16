@@ -37,13 +37,18 @@ locals {
   }]
   */
 
-  enable_login      = length(var.management_instances) > 0
-  enable_management = length(var.management_instances) > 0
-  enable_compute    = length(var.management_instances) > 0 || length(var.static_compute_instances) > 0 || length(var.protocol_instances) > 0
-  enable_storage    = length(var.storage_instances) > 0
+  management_instance_count      = sum(var.management_instances[*]["count"])
+  storage_instance_count         = sum(var.storage_instances[*]["count"])
+  protocol_instance_count        = sum(var.protocol_instances[*]["count"])
+  static_compute_instance_count  = sum(var.static_compute_instances[*]["count"])
+
+  enable_login      = local.management_instance_count > 0
+  enable_management = local.management_instance_count > 0
+  enable_compute    = local.management_instance_count > 0 || local.static_compute_instance_count > 0 || local.protocol_instance_count > 0
+  enable_storage    = local.storage_instance_count > 0
   # TODO: Fix the logic
   enable_block_storage = var.storage_type == "scratch" ? true : false
-  enable_protocol      = length(var.storage_instances) > 0 && length(var.protocol_instances) > 0
+  enable_protocol      = local.storage_instance_count > 0 && local.protocol_instance_count > 0
   #TODO: Fix the logic
   enable_load_balancer = false
 

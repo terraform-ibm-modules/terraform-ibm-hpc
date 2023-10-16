@@ -274,62 +274,66 @@ locals {
   transit_gateway_connections    = [var.vpc]
 
   active_cos = [
-    var.enable_cos_integration ? {
+  (
+    var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker
+  ) ? {
       name           = var.cos_instance_name == null ? "hpc-cos" : var.cos_instance_name
       resource_group = local.resource_group
       plan           = "standard"
       random_suffix  = false
       use_data       = var.cos_instance_name == null ? false : true
       keys           = []
+
       # Extra bucket for solution specific object storage
       buckets = [
-        {
+        var.enable_cos_integration ? {
           name          = "hpc-bucket"
           storage_class = "standard"
           endpoint_type = "public"
           force_delete  = true
           kms_key       = var.key_management == "key_protect" ? format("%s-key", var.prefix) : null
-        }
-      ]
-    } : null,
-    var.enable_vpc_flow_logs ? {
-      name           = var.cos_instance_name == null ? "vpc-flow-logs-cos" : var.cos_instance_name
-      resource_group = local.resource_group
-      plan           = "standard"
-      random_suffix  = false
-      use_data       = var.cos_instance_name == null ? false : true
-      keys           = []
-      # Extra bucket for solution specific object storage
-      buckets = [
-        {
+        } : null,
+        var.enable_vpc_flow_logs ? {
           name          = "vpc-flow-logs-bucket"
           storage_class = "standard"
           endpoint_type = "public"
           force_delete  = true
           kms_key       = var.key_management == "key_protect" ? format("%s-slz-key", var.prefix) : null
-        }
-      ]
-    } : null,
-    var.enable_atracker ? {
-      name           = var.cos_instance_name == null ? "atracker-cos" : var.cos_instance_name
-      resource_group = local.resource_group
-      plan           = "standard"
-      random_suffix  = false
-      use_data       = var.cos_instance_name == null ? false : true
-      keys           = []
-      # Extra bucket for solution specific object storage
-      buckets = [
-        {
+        } : null,
+        var.enable_atracker ? {
           name          = "atracker-bucket"
           storage_class = "standard"
           endpoint_type = "public"
           force_delete  = true
           kms_key       = var.key_management == "key_protect" ? format("%s-atracker-key", var.prefix) : null
-        }
+        } : null
       ]
     } : null
   ]
-  cos = [for each in local.active_cos : each if each != null]
+
+  cos = [
+    for instance in local.active_cos :
+    {
+      name           = instance.name
+      resource_group = instance.resource_group
+      plan           = instance.plan
+      random_suffix  = instance.random_suffix
+      use_data       = instance.use_data
+      keys           = instance.keys
+      buckets = [
+        for bucket in instance.buckets :
+        {
+          name          = bucket.name
+          storage_class = bucket.storage_class
+          endpoint_type = bucket.endpoint_type
+          force_delete  = bucket.force_delete
+          kms_key       = bucket.kms_key
+        }
+        if bucket != null
+      ]
+    }
+    if instance != null
+  ]
 
   # Prerequisite: Existing key protect instance is not supported, always create a key management instance
   active_keys = [

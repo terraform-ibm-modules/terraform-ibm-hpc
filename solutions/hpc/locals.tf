@@ -41,14 +41,16 @@ locals {
   # dependency: landing_zone_vsi -> file-share
   compute_subnet_id         = local.compute_subnets[0].id
   compute_security_group_id = module.landing_zone_vsi.compute_sg_id
-  default_share = length(var.management_instances) > 0 ? [
+  management_instance_count = sum(var.management_instances[*]["count"])
+  default_share = local.management_instance_count > 0 ? [
     {
       mount_path = "/mnt/lsf"
       size       = 100
       iops       = 1000
     }
   ] : []
-  total_shares = length(var.storage_instances) > 0 ? [] : concat(local.default_share, var.file_shares)
+  storage_instance_count = sum(var.storage_instances[*]["count"])
+  total_shares = local.storage_instance_count > 0 ? [] : concat(local.default_share, var.file_shares)
   file_shares = [
     for count in range(length(local.total_shares)) :
     {
