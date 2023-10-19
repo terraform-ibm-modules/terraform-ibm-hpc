@@ -37,10 +37,10 @@ locals {
   }]
   */
 
-  management_instance_count      = sum(var.management_instances[*]["count"])
-  storage_instance_count         = sum(var.storage_instances[*]["count"])
-  protocol_instance_count        = sum(var.protocol_instances[*]["count"])
-  static_compute_instance_count  = sum(var.static_compute_instances[*]["count"])
+  management_instance_count     = sum(var.management_instances[*]["count"])
+  storage_instance_count        = sum(var.storage_instances[*]["count"])
+  protocol_instance_count       = sum(var.protocol_instances[*]["count"])
+  static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
 
   enable_login      = local.management_instance_count > 0
   enable_management = local.management_instance_count > 0

@@ -50,7 +50,7 @@ locals {
     }
   ] : []
   storage_instance_count = sum(var.storage_instances[*]["count"])
-  total_shares = local.storage_instance_count > 0 ? [] : concat(local.default_share, var.file_shares)
+  total_shares           = local.storage_instance_count > 0 ? [] : concat(local.default_share, var.file_shares)
   file_shares = [
     for count in range(length(local.total_shares)) :
     {

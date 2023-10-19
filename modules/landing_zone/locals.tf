@@ -274,9 +274,9 @@ locals {
   transit_gateway_connections    = [var.vpc]
 
   active_cos = [
-  (
-    var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker
-  ) ? {
+    (
+      var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker
+      ) ? {
       name           = var.cos_instance_name == null ? "hpc-cos" : var.cos_instance_name
       resource_group = local.resource_group
       plan           = "standard"
