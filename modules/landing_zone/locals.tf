@@ -59,7 +59,8 @@ locals {
     for zone in var.zones :
     format("zone-%d", substr(zone, -1, -2))
   ]
-  zone_count = length(local.active_zones)
+  # Future use
+  #zone_count = length(local.active_zones)
 
   # Address Prefixes calculation
   address_prefixes = {

@@ -10,7 +10,8 @@ locals {
   vpc_id                        = var.vpc == null ? one(module.landing_zone.vpc_id) : var.vpc
   bastion_subnets               = module.landing_zone.bastion_subnets
   boot_volume_encryption_key    = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
-  skip_iam_authorization_policy = true
+  # Future use
+  # skip_iam_authorization_policy = true
 }
 
 # locals needed for landing_zone_vsi

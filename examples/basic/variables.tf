@@ -56,12 +56,6 @@ variable "allowed_cidr" {
 # Compute Variables
 ##############################################################################
 
-variable "login_subnets_cidr" {
-  type        = list(string)
-  default     = ["10.10.10.0/24", "10.20.10.0/24", "10.30.10.0/24"]
-  description = "Subnet CIDR block to launch the login host."
-}
-
 variable "login_ssh_keys" {
   type        = list(string)
   description = "The key pair to use to launch the login host."
@@ -71,7 +65,6 @@ variable "compute_ssh_keys" {
   type        = list(string)
   description = "The key pair to use to launch the compute host."
 }
-
 
 variable "compute_gui_password" {
   type        = string

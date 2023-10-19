@@ -1,6 +1,7 @@
 # define variables
 locals {
-  products       = "scale"
+  # Future use
+  # products       = "scale"
   name           = "hpc"
   prefix         = var.prefix
   tags           = [local.prefix, local.name]
@@ -49,7 +50,8 @@ locals {
   # TODO: Fix the logic
   enable_block_storage = var.storage_type == "scratch" ? true : false
   enable_protocol      = local.storage_instance_count > 0 && local.protocol_instance_count > 0
-  #TODO: Fix the logic
+  # Future use
+  # TODO: Fix the logic
   enable_load_balancer = false
 
   login_node_name      = format("%s-%s", local.prefix, "login")
@@ -58,6 +60,7 @@ locals {
   storage_node_name    = format("%s-%s", local.prefix, "strg")
   protocol_node_name   = format("%s-%s", local.prefix, "proto")
 
+  # Future use
   /*
   management_instance_count     = sum(var.management_instances[*]["count"])
   management_instance_profile   = flatten([for item in var.management_instances: [
@@ -68,11 +71,14 @@ locals {
   protocol_instance_count       = sum(var.protocol_instances[*]["count"])
   */
 
+  # Future use
+  /*
   login_image_name      = var.login_image_name
   management_image_name = var.management_image_name
   compute_image_name    = var.compute_image_name
   storage_image_name    = var.storage_image_name
   protocol_image_name   = var.storage_image_name
+  */
 
   management_image_id = data.ibm_is_image.management.id
   login_image_id      = data.ibm_is_image.login.id
@@ -86,6 +92,7 @@ locals {
   management_ssh_keys = local.compute_ssh_keys
   protocol_ssh_keys   = local.storage_ssh_keys
 
+  # Future use
   /*
   # Scale static configs
   scale_cloud_deployer_path     = "/opt/IBM/ibm-spectrumscale-cloud-deploy"

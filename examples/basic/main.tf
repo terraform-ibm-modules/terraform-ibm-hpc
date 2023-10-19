@@ -1,4 +1,4 @@
-module "hpc-basic-example" {
+module "hpc_basic_example" {
   source               = "../.."
   ibmcloud_api_key     = var.ibmcloud_api_key
   resource_group       = var.resource_group
