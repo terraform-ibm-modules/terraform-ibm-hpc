@@ -1,9 +1,9 @@
+# Future use
+/*
 data "ibm_is_region" "itself" {
   name = local.region
 }
 
-# Future use
-/*
 data "ibm_is_zone" "itself" {
   name   = var.zones[0]
   region = data.ibm_is_region.itself.name

@@ -1,6 +1,8 @@
 ##############################################################################
 # Offering Variations
 ##############################################################################
+# Future use
+/*
 variable "scheduler" {
   type        = string
   default     = "LSF"
@@ -12,6 +14,7 @@ variable "storage_type" {
   default     = "scratch"
   description = "Select the required storage type(scratch/persistent/eval)."
 }
+*/
 
 variable "ibm_customer_number" {
   type        = string
@@ -151,12 +154,14 @@ variable "allowed_cidr" {
 ##############################################################################
 # Compute Variables
 ##############################################################################
-
+# Future use
+/*
 variable "login_subnets_cidr" {
   type        = list(string)
   default     = ["10.10.10.0/24", "10.20.10.0/24", "10.30.10.0/24"]
   description = "Subnet CIDR block to launch the login host."
 }
+*/
 
 variable "login_ssh_keys" {
   type        = list(string)
@@ -247,7 +252,8 @@ variable "compute_image_name" {
   default     = "ibm-redhat-8-6-minimal-amd64-5"
   description = "Image name to use for provisioning the compute cluster instances."
 }
-
+# Future use
+/*
 variable "compute_gui_username" {
   type        = string
   default     = "admin"
@@ -260,7 +266,7 @@ variable "compute_gui_password" {
   sensitive   = true
   description = "Password for compute cluster GUI"
 }
-
+*/
 ##############################################################################
 # Scale Storage Variables
 ##############################################################################
@@ -315,7 +321,8 @@ variable "protocol_instances" {
   }]
   description = "Number of instances to be launched for protocol hosts."
 }
-
+# Future use
+/*
 variable "storage_gui_username" {
   type        = string
   default     = "admin"
@@ -328,6 +335,7 @@ variable "storage_gui_password" {
   sensitive   = true
   description = "Password for storage cluster GUI"
 }
+*/
 
 variable "file_shares" {
   type = list(

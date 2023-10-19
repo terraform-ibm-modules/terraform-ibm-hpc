@@ -52,7 +52,7 @@ locals {
   enable_protocol      = local.storage_instance_count > 0 && local.protocol_instance_count > 0
   # Future use
   # TODO: Fix the logic
-  enable_load_balancer = false
+  # enable_load_balancer = false
 
   login_node_name      = format("%s-%s", local.prefix, "login")
   management_node_name = format("%s-%s", local.prefix, "mgmt")

@@ -1,3 +1,5 @@
+# Future use
+/*
 module "hpc_basic_example" {
   source               = "../.."
   ibmcloud_api_key     = var.ibmcloud_api_key
@@ -12,3 +14,4 @@ module "hpc_basic_example" {
   compute_gui_password = var.compute_gui_password
   storage_gui_password = var.storage_gui_password
 }
+*/
