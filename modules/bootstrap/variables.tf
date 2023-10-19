@@ -1,5 +1,3 @@
-# Future use
-/*
 ##############################################################################
 # Account Variables
 ##############################################################################
@@ -41,11 +39,54 @@ variable "zones" {
 }
 
 ##############################################################################
+# VPC Variables
+##############################################################################
+
+variable "vpc_id" {
+  type        = string
+  description = "ID of an existing VPC in which the cluster resources will be deployed."
+}
+
+variable "network_cidr" {
+  description = "Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning."
+  type        = string
+  default     = "10.0.0.0/8"
+}
+##############################################################################
 # Access Variables
 ##############################################################################
-variable "bastion_ssh_keys" {
+variable "enable_bastion" {
+  type        = bool
+  default     = true
+  description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
+}
+
+variable "bastion_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the bastion host."
+}
+
+variable "enable_bootstrap" {
+  type        = bool
+  default     = false
+  description = "Bootstrap should be only used for better deployment performance"
+}
+
+variable "bootstrap_instance_profile" {
+  type        = string
+  default     = "mx2-4x32"
+  description = "Bootstrap should be only used for better deployment performance"
+}
+
+variable "ssh_keys" {
   type        = list(string)
-  description = "The key pair to use to access the bastion host."
+  description = "The key pair to use to access the host."
 }
 
 variable "allowed_cidr" {
@@ -54,54 +95,15 @@ variable "allowed_cidr" {
   default     = ["10.0.0.0/8"]
 }
 
-##############################################################################
-# Compute Variables
-##############################################################################
-
-variable "login_ssh_keys" {
-  type        = list(string)
-  description = "The key pair to use to launch the login host."
+# TODO: landing-zone-vsi limitation to opt out encryption
+variable "kms_encryption_enabled" {
+  description = "Enable Key management"
+  type        = bool
+  default     = true
 }
 
-variable "compute_ssh_keys" {
-  type        = list(string)
-  description = "The key pair to use to launch the compute host."
-}
-
-variable "compute_gui_password" {
+variable "boot_volume_encryption_key" {
   type        = string
-  sensitive   = true
-  description = "Password for compute cluster GUI"
+  default     = null
+  description = "CRN of boot volume encryption key"
 }
-
-##############################################################################
-# Scale Storage Variables
-##############################################################################
-
-variable "storage_ssh_keys" {
-  type        = list(string)
-  description = "The key pair to use to launch the storage cluster host."
-}
-
-variable "storage_gui_password" {
-  type        = string
-  sensitive   = true
-  description = "Password for storage cluster GUI"
-}
-
-##############################################################################
-# DNS Template Variables
-##############################################################################
-
-##############################################################################
-# Observability Variables
-##############################################################################
-
-##############################################################################
-# Encryption Variables
-##############################################################################
-
-##############################################################################
-# TODO: Auth Server (LDAP/AD) Variables
-##############################################################################
-*/

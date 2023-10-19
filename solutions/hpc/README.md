@@ -2,21 +2,39 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.3.0, <1.6.0 |
+| <a name="requirement_ibm"></a> [ibm](#requirement\_ibm) | >= 1.56.2 |
 
 ## Providers
 
-No providers.
+| Name | Version |
+|------|---------|
+| <a name="provider_ibm"></a> [ibm](#provider\_ibm) | >= 1.56.2 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_hpc"></a> [hpc](#module\_hpc) | ./solutions/hpc | n/a |
+| <a name="module_bootstrap"></a> [bootstrap](#module\_bootstrap) | ./../../modules/bootstrap | n/a |
+| <a name="module_compute_dns_records"></a> [compute\_dns\_records](#module\_compute\_dns\_records) | ./../../modules/dns_record | n/a |
+| <a name="module_compute_inventory"></a> [compute\_inventory](#module\_compute\_inventory) | ./../../modules/inventory | n/a |
+| <a name="module_compute_playbook"></a> [compute\_playbook](#module\_compute\_playbook) | ./../../modules/playbook | n/a |
+| <a name="module_dns"></a> [dns](#module\_dns) | ./../../modules/dns | n/a |
+| <a name="module_file_storage"></a> [file\_storage](#module\_file\_storage) | ../../modules/file_storage | n/a |
+| <a name="module_landing_zone"></a> [landing\_zone](#module\_landing\_zone) | ../../modules/landing_zone | n/a |
+| <a name="module_landing_zone_vsi"></a> [landing\_zone\_vsi](#module\_landing\_zone\_vsi) | ../../modules/landing_zone_vsi | n/a |
+| <a name="module_protocol_dns_records"></a> [protocol\_dns\_records](#module\_protocol\_dns\_records) | ./../../modules/dns_record | n/a |
+| <a name="module_storage_dns_records"></a> [storage\_dns\_records](#module\_storage\_dns\_records) | ./../../modules/dns_record | n/a |
+| <a name="module_storage_inventory"></a> [storage\_inventory](#module\_storage\_inventory) | ./../../modules/inventory | n/a |
+| <a name="module_storage_playbook"></a> [storage\_playbook](#module\_storage\_playbook) | ./../../modules/playbook | n/a |
 
 ## Resources
 
-No resources.
+| Name | Type |
+|------|------|
+| [ibm_is_region.itself](https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/data-sources/is_region) | data source |
+| [ibm_is_subnet.itself](https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/data-sources/is_subnet) | data source |
+| [ibm_is_vpc.itself](https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/data-sources/is_vpc) | data source |
+| [ibm_is_zone.itself](https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/data-sources/is_zone) | data source |
 
 ## Inputs
 
