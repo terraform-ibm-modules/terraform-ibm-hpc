@@ -64,7 +64,10 @@ locals {
 # locals needed for file-storage
 locals {
   # dependency: landing_zone -> file-storage
-  resource_group_id = one(values(one(module.landing_zone.resource_group_id)))
+  # resource_group_id = one(values(one(module.landing_zone.resource_group_id)))
+  mgmt_resource_group_id = module.landing_zone.resource_group_id[0]["management-rg"]
+  service_resource_group_id = module.landing_zone.resource_group_id[0]["service-rg"]
+  workload_resource_group_id = module.landing_zone.resource_group_id[0]["workload-rg"]
   vpc_crn           = var.vpc == null ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
   subnets           = flatten([local.compute_subnets, local.storage_subnets, local.protocol_subnets])
   subnets_crns      = data.ibm_is_subnet.itself[*].crn

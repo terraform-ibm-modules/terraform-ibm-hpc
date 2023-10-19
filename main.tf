@@ -5,8 +5,9 @@ module "hpc" {
   bastion_ssh_keys               = var.bastion_ssh_keys
   bastion_subnets_cidr           = var.bastion_subnets_cidr
   boot_volume_encryption_enabled = var.boot_volume_encryption_enabled
-  compute_gui_password           = var.compute_gui_password
-  compute_gui_username           = var.compute_gui_username
+  # compute_gui_password           = var.compute_gui_password
+  # compute_gui_username           = var.compute_gui_username
+  compute_gui_credentials        = var.compute_gui_credentials
   compute_image_name             = var.compute_image_name
   compute_ssh_keys               = var.compute_ssh_keys
   compute_subnets_cidr           = var.compute_subnets_cidr
@@ -41,8 +42,9 @@ module "hpc" {
   resource_group                 = var.resource_group
   scheduler                      = var.scheduler
   static_compute_instances       = var.static_compute_instances
-  storage_gui_password           = var.storage_gui_password
-  storage_gui_username           = var.storage_gui_username
+  # storage_gui_password           = var.storage_gui_password
+  # storage_gui_username           = var.storage_gui_username
+  storage_gui_credentials        = var.storage_gui_credentials
   storage_image_name             = var.storage_image_name
   storage_instances              = var.storage_instances
   storage_ssh_keys               = var.storage_ssh_keys

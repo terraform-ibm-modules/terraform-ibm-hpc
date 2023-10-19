@@ -176,7 +176,7 @@ locals {
 
   # Derived configs
   # VPC
-  resource_group_id = data.ibm_resource_group.itself.id
+  resource_group_id = var.resource_group
 
   # Subnets
   # TODO: Multi-zone multi-vNIC VSIs deployment support (bug #https://github.ibm.com/GoldenEye/issues/issues/5830)

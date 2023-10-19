@@ -33,7 +33,7 @@ module "landing_zone" {
 module "bootstrap" {
   source                     = "./../../modules/bootstrap"
   ibmcloud_api_key           = var.ibmcloud_api_key
-  resource_group             = var.resource_group
+  resource_group             = local.mgmt_resource_group_id
   prefix                     = var.prefix
   zones                      = var.zones
   vpc_id                     = local.vpc_id
@@ -51,7 +51,7 @@ module "bootstrap" {
 module "landing_zone_vsi" {
   source                     = "../../modules/landing_zone_vsi"
   ibmcloud_api_key           = var.ibmcloud_api_key
-  resource_group             = var.resource_group
+  resource_group             = local.mgmt_resource_group_id
   prefix                     = var.prefix
   zones                      = var.zones
   vpc_id                     = local.vpc_id
@@ -94,7 +94,7 @@ module "dns" {
   source                 = "./../../modules/dns"
   ibmcloud_api_key       = var.ibmcloud_api_key
   prefix                 = var.prefix
-  resource_group_id      = local.resource_group_id
+  resource_group_id      = local.mgmt_resource_group_id
   vpc_crn                = local.vpc_crn
   subnet_crns            = local.subnets_crns
   dns_instance_id        = var.dns_instance_id

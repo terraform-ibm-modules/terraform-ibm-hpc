@@ -248,17 +248,30 @@ variable "compute_image_name" {
   description = "Image name to use for provisioning the compute cluster instances."
 }
 
-variable "compute_gui_username" {
-  type        = string
-  default     = "admin"
-  sensitive   = true
-  description = "GUI user to perform system management and monitoring tasks on compute cluster."
-}
+# variable "compute_gui_username" {
+#   type        = string
+#   default     = "admin"
+#   sensitive   = true
+#   description = "GUI user to perform system management and monitoring tasks on compute cluster."
+# }
 
-variable "compute_gui_password" {
-  type        = string
+# variable "compute_gui_password" {
+#   type        = string
+#   sensitive   = true
+#   description = "Password for compute cluster GUI"
+# }
+
+variable "compute_gui_credentials" {
+  type = object({
+    username  = string
+    password  = string
+  })
+  default = {
+    username  = "admin"
+    password  = "Password"
+  }
   sensitive   = true
-  description = "Password for compute cluster GUI"
+  description = "GUI user credentials to perform system management and monitoring tasks on compute cluster."
 }
 
 ##############################################################################
@@ -316,17 +329,30 @@ variable "protocol_instances" {
   description = "Number of instances to be launched for protocol hosts."
 }
 
-variable "storage_gui_username" {
-  type        = string
-  default     = "admin"
-  sensitive   = true
-  description = "GUI user to perform system management and monitoring tasks on storage cluster."
-}
+# variable "storage_gui_username" {
+#   type        = string
+#   default     = "admin"
+#   sensitive   = true
+#   description = "GUI user to perform system management and monitoring tasks on storage cluster."
+# }
 
-variable "storage_gui_password" {
-  type        = string
+# variable "storage_gui_password" {
+#   type        = string
+#   sensitive   = true
+#   description = "Password for storage cluster GUI"
+# }
+
+variable "storage_gui_credentials" {
+  type = object({
+    username  = string
+    password  = string
+  })
+  default = {
+    username  = "admin"
+    password  = "Password"
+  }
   sensitive   = true
-  description = "Password for storage cluster GUI"
+  description = "GUI user credentials to perform system management and monitoring tasks on storage cluster."
 }
 
 variable "file_shares" {
