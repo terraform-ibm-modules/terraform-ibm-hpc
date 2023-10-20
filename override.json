@@ -1,0 +1,94 @@
+{
+    "scheduler": "LSF",
+    "storage_type": "scratch",
+    "ibm_customer_number": "",
+    "ibmcloud_api_key": null,
+    "resource_group": null,
+    "prefix": "example-prefix",
+    "zones": ["zone1", "zone2"],
+    "vpc": null,
+    "network_cidr": "10.0.0.0/8",
+    "placement_strategy": null,
+    "enable_bastion": true,
+    "enable_bootstrap": false,
+    "bootstrap_instance_profile": "mx2-4x32",
+    "bastion_ssh_keys": [],
+    "bastion_subnets_cidr": ["10.0.0.0/24"],
+    "enable_vpn": false,
+    "vpn_peer_cidr": null,
+    "vpn_peer_address": null,
+    "vpn_preshared_key": null,
+    "allowed_cidr": ["10.0.0.0/8"],
+    "login_subnets_cidr": ["10.10.10.0/24", "10.20.10.0/24", "10.30.10.0/24"],
+    "login_ssh_keys": [],
+    "login_image_name": "ibm-redhat-8-6-minimal-amd64-5",
+    "login_instances": [{
+      "profile": "cx2-2x4",
+      "count": 1
+    }],
+    "compute_subnets_cidr": ["10.10.20.0/24", "10.20.20.0/24", "10.30.20.0/24"],
+    "compute_ssh_keys": [],
+    "management_image_name": "ibm-redhat-8-6-minimal-amd64-5",
+    "management_instances": [{
+      "profile": "cx2-2x4",
+      "count": 3
+    }],
+    "static_compute_instances": [{
+      "profile": "cx2-2x4",
+      "count": 0
+    }],
+    "dynamic_compute_instances": [{
+      "profile": "cx2-2x4",
+      "count": 250
+    }],
+    "compute_image_name": "ibm-redhat-8-6-minimal-amd64-5",
+    "compute_gui_credentials": {
+      "username": "admin",
+      "password": "Password"
+    },
+    "storage_subnets_cidr": ["10.10.30.0/24", "10.20.30.0/24", "10.30.30.0/24"],
+    "storage_ssh_keys": [],
+    "storage_instances": [{
+      "profile": "bx2-2x8",
+      "count": 3
+    }],
+    "storage_image_name": "ibm-redhat-8-6-minimal-amd64-5",
+    "protocol_subnets_cidr": ["10.10.40.0/24", "10.20.40.0/24", "10.30.40.0/24"],
+    "protocol_instances": [{
+      "profile": "bx2-2x8",
+      "count": 2
+    }],
+    "storage_gui_credentials": {
+      "username": "admin",
+      "password": "Password"
+    },
+    "file_shares": [{
+      "mount_path": "/mnt/binaries",
+      "size": 100,
+      "iops": 1000
+    }, {
+      "mount_path": "/mnt/data",
+      "size": 100,
+      "iops": 1000
+    }],
+    "nsd_details": [{
+      "profile": "custom",
+      "size": 100,
+      "iops": 100
+    }],
+    "dns_instance_id": null,
+    "dns_custom_resolver_id": null,
+    "dns_domain_names": {
+      "compute": "comp.com",
+      "storage": "strg.com",
+      "protocol": "ces.com"
+    },
+    "enable_cos_integration": true,
+    "cos_instance_name": null,
+    "enable_atracker": true,
+    "enable_vpc_flow_logs": true,
+    "key_management": "key_protect",
+    "boot_volume_encryption_enabled": true,
+    "hpcs_instance_name": null
+}
+  
