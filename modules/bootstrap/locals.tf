@@ -76,7 +76,7 @@ locals {
 
   # Derived configs
   # VPC
-  resource_group_id = data.ibm_resource_group.itself.id
+  # resource_group_id = data.ibm_resource_group.itself.id
 
   # Subnets
   bastion_subnets = var.bastion_subnets
