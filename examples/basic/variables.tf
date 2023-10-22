@@ -1,5 +1,3 @@
-# Future use
-/*
 ##############################################################################
 # Account Variables
 ##############################################################################
@@ -18,7 +16,7 @@ variable "ibmcloud_api_key" {
 variable "resource_group" {
   description = "String describing resource groups to create or reference"
   type        = string
-  default     = null
+  default     = "Default"
 }
 
 ##############################################################################
@@ -28,7 +26,7 @@ variable "resource_group" {
 variable "prefix" {
   description = "A unique identifier for resources. Must begin with a letter and end with a letter or number. This prefix will be prepended to any resources provisioned by this template. Prefixes must be 16 or fewer characters."
   type        = string
-
+  default     = "tim-hpc"
   validation {
     error_message = "Prefix must begin and end with a letter and contain only letters, numbers, and - characters."
     condition     = can(regex("^([A-z]|[a-z][-a-z0-9]*[a-z0-9])$", var.prefix))
@@ -38,70 +36,14 @@ variable "prefix" {
 variable "zones" {
   description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
   type        = list(string)
+  default     = ["ca-tor-1"]
 }
 
 ##############################################################################
 # Access Variables
 ##############################################################################
-variable "bastion_ssh_keys" {
+variable "ssh_keys" {
   type        = list(string)
   description = "The key pair to use to access the bastion host."
+  default     = ["tim-hpc-ssh-key"]
 }
-
-variable "allowed_cidr" {
-  description = "Network CIDR to access the VPC. This is used to manage network ACL rules for accessing the cluster."
-  type        = list(string)
-  default     = ["10.0.0.0/8"]
-}
-
-##############################################################################
-# Compute Variables
-##############################################################################
-
-variable "login_ssh_keys" {
-  type        = list(string)
-  description = "The key pair to use to launch the login host."
-}
-
-variable "compute_ssh_keys" {
-  type        = list(string)
-  description = "The key pair to use to launch the compute host."
-}
-
-variable "compute_gui_password" {
-  type        = string
-  sensitive   = true
-  description = "Password for compute cluster GUI"
-}
-
-##############################################################################
-# Scale Storage Variables
-##############################################################################
-
-variable "storage_ssh_keys" {
-  type        = list(string)
-  description = "The key pair to use to launch the storage cluster host."
-}
-
-variable "storage_gui_password" {
-  type        = string
-  sensitive   = true
-  description = "Password for storage cluster GUI"
-}
-
-##############################################################################
-# DNS Template Variables
-##############################################################################
-
-##############################################################################
-# Observability Variables
-##############################################################################
-
-##############################################################################
-# Encryption Variables
-##############################################################################
-
-##############################################################################
-# TODO: Auth Server (LDAP/AD) Variables
-##############################################################################
-*/
