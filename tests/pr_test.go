@@ -19,7 +19,7 @@ func TestRunHpcBasicExample(t *testing.T) {
 		Testing:      t,
 		TerraformDir: exampleBasicTerraformDir,
 		TerraformVars: map[string]interface{}{
-			"ibmcloud_api_key": os.Getenv("envIBMCloudAPIKey"),
+			"ibmcloud_api_key": os.Getenv("TF_VAR_ibmcloud_api_key"),
 		},
 	}
 	// Run the test
