@@ -14,4 +14,3 @@ module "hpc_basic_example" {
   compute_ssh_keys = var.ssh_keys
   storage_ssh_keys = var.ssh_keys
 }
-
