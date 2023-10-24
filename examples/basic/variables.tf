@@ -6,7 +6,8 @@ variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
   type        = string
   sensitive   = true
-  default     = null
+  # TODO: Temp fix
+  default = "geretain-hpc-rg"
 }
 
 ##############################################################################
@@ -36,7 +37,8 @@ variable "prefix" {
 variable "zones" {
   description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
   type        = list(string)
-  default     = ["ca-tor-1"]
+  # TODO: Temp fix
+  default = ["ca-tor-1"]
 }
 
 ##############################################################################
@@ -45,5 +47,6 @@ variable "zones" {
 variable "ssh_keys" {
   type        = list(string)
   description = "The key pair to use to access the bastion host."
-  default     = ["tim-hpc-ssh-key"]
+  # TODO: Temp fix
+  default = ["geretain-hpc-ssh-key"]
 }
