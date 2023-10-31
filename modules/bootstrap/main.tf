@@ -36,6 +36,7 @@ module "bastion_vsi" {
   vpc_id                        = var.vpc_id
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = false
+  existing_kms_instance_guid    = var.existing_kms_instance_guid
   boot_volume_encryption_key    = var.boot_volume_encryption_key
 }
 
@@ -59,5 +60,6 @@ module "bootstrap_vsi" {
   vpc_id                        = var.vpc_id
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = var.enable_bastion ? true : false
+  existing_kms_instance_guid    = var.existing_kms_instance_guid
   boot_volume_encryption_key    = var.boot_volume_encryption_key
 }

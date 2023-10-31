@@ -107,3 +107,9 @@ variable "boot_volume_encryption_key" {
   default     = null
   description = "CRN of boot volume encryption key"
 }
+
+variable "existing_kms_instance_guid" {
+  type        = string
+  default     = null
+  description = "GUID of boot volume encryption key"
+}
