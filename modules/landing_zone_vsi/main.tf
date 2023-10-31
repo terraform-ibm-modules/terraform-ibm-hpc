@@ -62,7 +62,7 @@ module "login_vsi" {
   user_data                     = data.template_file.login_user_data.rendered
   vpc_id                        = var.vpc_id
   kms_encryption_enabled        = var.kms_encryption_enabled
-  skip_iam_authorization_policy = true
+  skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
 }
 
@@ -85,7 +85,7 @@ module "management_vsi" {
   user_data                     = data.template_file.management_user_data.rendered
   vpc_id                        = var.vpc_id
   kms_encryption_enabled        = var.kms_encryption_enabled
-  skip_iam_authorization_policy = true
+  skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
   #placement_group_id = var.placement_group_ids[(var.management_instances[count.index]["count"])%(length(var.placement_group_ids))]
@@ -110,7 +110,7 @@ module "compute_vsi" {
   user_data                     = data.template_file.compute_user_data.rendered
   vpc_id                        = var.vpc_id
   kms_encryption_enabled        = var.kms_encryption_enabled
-  skip_iam_authorization_policy = true
+  skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
   #placement_group_id = var.placement_group_ids[(var.static_compute_instances[count.index]["count"])%(length(var.placement_group_ids))]
@@ -136,7 +136,7 @@ module "storage_vsi" {
   vpc_id                        = var.vpc_id
   block_storage_volumes         = local.enable_block_storage ? local.block_storage_volumes : []
   kms_encryption_enabled        = var.kms_encryption_enabled
-  skip_iam_authorization_policy = true
+  skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
   #placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
@@ -161,7 +161,7 @@ module "protocol_vsi" {
   user_data                     = data.template_file.protocol_user_data.rendered
   vpc_id                        = var.vpc_id
   kms_encryption_enabled        = var.kms_encryption_enabled
-  skip_iam_authorization_policy = true
+  skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   # Bug: 5847 - LB profile & subnets are not configurable
   # load_balancers        = local.enable_load_balancer ? local.load_balancers : []
