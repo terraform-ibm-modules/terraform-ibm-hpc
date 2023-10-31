@@ -251,6 +251,12 @@ variable "key_management" {
   description = "null/key_protect/hs_crypto"
 }
 
+variable "kms_encryption_enabled" {
+  description = "Set to true when key management is set"
+  type        = bool
+  default     = true
+}
+
 variable "hpcs_instance_name" {
   type        = string
   default     = null

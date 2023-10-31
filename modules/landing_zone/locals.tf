@@ -338,7 +338,7 @@ locals {
 
   # Prerequisite: Existing key protect instance is not supported, always create a key management instance
   active_keys = [
-    var.key_management != null ? {
+    var.key_management != null && var.kms_encryption_enabled == true ? {
       name = format("%s-vsi-key", var.prefix)
     } : null,
     var.enable_cos_integration ? {

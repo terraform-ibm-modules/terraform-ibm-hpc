@@ -93,10 +93,15 @@ output "protocol_subnets" {
   ]
 }
 
+output "key_management_guid" {
+  description = "GUID for KMS instance"
+  value       = module.landing_zone[0].key_management_guid
+}
+
 # TODO: Find a way to get CRN needed for VSI boot drive encryption
 output "boot_volume_encryption_key" {
   description = "Boot volume encryption key"
-  value       = var.key_management != null ? module.landing_zone[*].key_map[format("%s-vsi-key", var.prefix)] : null
+  value       = var.key_management != null && var.kms_encryption_enabled == true ? module.landing_zone[*].key_map[format("%s-vsi-key", var.prefix)] : null
 }
 
 # TODO: Observability data

@@ -11,6 +11,7 @@ module "landing_zone" {
   hpcs_instance_name     = var.hpcs_instance_name
   ibmcloud_api_key       = var.ibmcloud_api_key
   key_management         = var.key_management
+  kms_encryption_enabled = var.boot_volume_encryption_enabled
   ssh_keys               = var.bastion_ssh_keys
   bastion_subnets_cidr   = var.bastion_subnets_cidr
   management_instances   = var.management_instances
@@ -77,6 +78,7 @@ module "landing_zone_vsi" {
   nsd_details                = var.nsd_details
   dns_domain_names           = var.dns_domain_names
   boot_volume_encryption_key = local.boot_volume_encryption_key
+  existing_kms_instance_guid = local.existing_kms_instance_guid
   kms_encryption_enabled     = var.boot_volume_encryption_enabled
 }
 
