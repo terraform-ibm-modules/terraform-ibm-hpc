@@ -95,7 +95,7 @@ output "protocol_subnets" {
 
 output "key_management_guid" {
   description = "GUID for KMS instance"
-  value       = module.landing_zone[0].key_management_guid
+  value       = var.key_management != null && var.kms_encryption_enabled == true ? module.landing_zone[0].key_management_guid : null
 }
 
 # TODO: Find a way to get CRN needed for VSI boot drive encryption

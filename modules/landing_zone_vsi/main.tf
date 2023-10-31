@@ -62,7 +62,7 @@ module "login_vsi" {
   user_data                     = data.template_file.login_user_data.rendered
   vpc_id                        = var.vpc_id
   kms_encryption_enabled        = var.kms_encryption_enabled
-  skip_iam_authorization_policy = false
+  skip_iam_authorization_policy = true
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   existing_kms_instance_guid    = var.existing_kms_instance_guid
 }

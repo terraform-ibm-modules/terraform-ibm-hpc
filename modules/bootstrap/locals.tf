@@ -5,7 +5,6 @@ locals {
   prefix = var.prefix
   tags   = [local.prefix, local.name]
   # TODO: explore (DA always keep it true)
-  skip_iam_authorization_policy = true
 
   schematics_reserved_cidrs = [
     "169.44.0.0/14",

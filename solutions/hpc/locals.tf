@@ -10,7 +10,7 @@ locals {
   vpc_id                     = var.vpc == null ? one(module.landing_zone.vpc_id) : var.vpc
   bastion_subnets            = module.landing_zone.bastion_subnets
   boot_volume_encryption_key = (var.key_management != null && var.boot_volume_encryption_enabled == true) ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
-  existing_kms_instance_guid = module.landing_zone.key_management_guid
+  existing_kms_instance_guid = (var.key_management != null && var.boot_volume_encryption_enabled == true) ? module.landing_zone.key_management_guid : null
   # Future use
   # skip_iam_authorization_policy = true
 }
