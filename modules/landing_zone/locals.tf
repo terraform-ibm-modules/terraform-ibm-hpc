@@ -281,7 +281,7 @@ locals {
       name           = var.cos_instance_name == null ? "hpc-cos" : var.cos_instance_name
       resource_group = local.resource_group
       plan           = "standard"
-      random_suffix  = false
+      random_suffix  = true
       use_data       = var.cos_instance_name == null ? false : true
       keys           = []
 
