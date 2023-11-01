@@ -1,7 +1,8 @@
 # locals needed for landing_zone
 locals {
   # Region and Zone calculations
-  region = join("-", slice(split("-", var.zones[0]), 0, 2))
+  region                         = join("-", slice(split("-", var.zones[0]), 0, 2))
+  boot_volume_encryption_enabled = var.key_management != null ? true : false
 }
 
 # locals needed for bootstrap
