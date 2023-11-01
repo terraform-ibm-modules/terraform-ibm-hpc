@@ -441,12 +441,6 @@ variable "key_management" {
   description = "null/key_protect/hs_crypto"
 }
 
-variable "boot_volume_encryption_enabled" {
-  type        = bool
-  default     = true
-  description = "Set to true when key management is set"
-}
-
 variable "hpcs_instance_name" {
   type        = string
   default     = null

@@ -8,7 +8,7 @@ locals {
   vsi_interfaces = ["eth0", "eth1"]
   bms_interfaces = ["ens1", "ens2"]
   # TODO: explore (DA always keep it true)
-  skip_iam_authorization_policy = false
+  skip_iam_authorization_policy = true
 
   block_storage_volumes = [for volume in var.nsd_details : {
     name           = format("nsd-%s", index(var.nsd_details, volume) + 1)

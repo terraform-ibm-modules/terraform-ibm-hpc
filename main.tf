@@ -1,10 +1,9 @@
 module "hpc" {
-  source                         = "./solutions/hpc"
-  allowed_cidr                   = var.allowed_cidr
-  bootstrap_instance_profile     = var.bootstrap_instance_profile
-  bastion_ssh_keys               = var.bastion_ssh_keys
-  bastion_subnets_cidr           = var.bastion_subnets_cidr
-  boot_volume_encryption_enabled = var.boot_volume_encryption_enabled
+  source                     = "./solutions/hpc"
+  allowed_cidr               = var.allowed_cidr
+  bootstrap_instance_profile = var.bootstrap_instance_profile
+  bastion_ssh_keys           = var.bastion_ssh_keys
+  bastion_subnets_cidr       = var.bastion_subnets_cidr
   #compute_gui_password          = var.compute_gui_password
   #compute_gui_username          = var.compute_gui_username
   compute_image_name        = var.compute_image_name

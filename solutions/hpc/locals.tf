@@ -1,7 +1,8 @@
 # locals needed for landing_zone
 locals {
   # Region and Zone calculations
-  region = join("-", slice(split("-", var.zones[0]), 0, 2))
+  region                         = join("-", slice(split("-", var.zones[0]), 0, 2))
+  boot_volume_encryption_enabled = var.key_management != null ? true : false
 }
 
 # locals needed for bootstrap
@@ -10,6 +11,7 @@ locals {
   vpc_id                     = var.vpc == null ? one(module.landing_zone.vpc_id) : var.vpc
   bastion_subnets            = module.landing_zone.bastion_subnets
   boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
+  existing_kms_instance_guid = var.key_management != null ? module.landing_zone.key_management_guid : null
   # Future use
   # skip_iam_authorization_policy = true
 }

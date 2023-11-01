@@ -45,7 +45,8 @@ module "bootstrap" {
   ssh_keys                   = var.bastion_ssh_keys
   allowed_cidr               = var.allowed_cidr
   boot_volume_encryption_key = local.boot_volume_encryption_key
-  kms_encryption_enabled     = var.boot_volume_encryption_enabled
+  kms_encryption_enabled     = local.boot_volume_encryption_enabled
+  existing_kms_instance_guid = local.existing_kms_instance_guid
 }
 
 module "landing_zone_vsi" {
@@ -77,7 +78,7 @@ module "landing_zone_vsi" {
   nsd_details                = var.nsd_details
   dns_domain_names           = var.dns_domain_names
   boot_volume_encryption_key = local.boot_volume_encryption_key
-  kms_encryption_enabled     = var.boot_volume_encryption_enabled
+  kms_encryption_enabled     = local.boot_volume_encryption_enabled
 }
 
 module "file_storage" {

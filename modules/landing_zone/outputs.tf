@@ -99,4 +99,9 @@ output "boot_volume_encryption_key" {
   value       = var.key_management != null ? module.landing_zone[*].key_map[format("%s-vsi-key", var.prefix)] : null
 }
 
+output "key_management_guid" {
+  description = "GUID for KMS instance"
+  value       = var.key_management != null ? module.landing_zone[0].key_management_guid : null
+}
+
 # TODO: Observability data
