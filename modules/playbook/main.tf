@@ -26,6 +26,7 @@ EOT
   filename = var.playbook_path
 }
 
+/*
 resource "null_resource" "run_playbook" {
   count = var.inventory_path != null ? 1 : 0
   provisioner "local-exec" {
@@ -34,6 +35,18 @@ resource "null_resource" "run_playbook" {
   }
   triggers = {
     build = timestamp()
+  }
+  depends_on = [local_file.create_playbook]
+}
+*/
+
+resource "ansible_playbook" "playbook" {
+  playbook   = var.playbook_path
+  name       = "localhost"
+  replayable = true
+  verbosity  = 6
+  extra_vars = {
+    ansible_python_interpreter = "auto"
   }
   depends_on = [local_file.create_playbook]
 }

@@ -1,8 +1,7 @@
 # locals needed for landing_zone
 locals {
   # Region and Zone calculations
-  region                         = join("-", slice(split("-", var.zones[0]), 0, 2))
-  boot_volume_encryption_enabled = var.key_management != null ? true : false
+  region = join("-", slice(split("-", var.zones[0]), 0, 2))
 }
 
 # locals needed for bootstrap
@@ -10,6 +9,7 @@ locals {
   # dependency: landing_zone -> bootstrap
   vpc_id                     = var.vpc == null ? one(module.landing_zone.vpc_id) : var.vpc
   bastion_subnets            = module.landing_zone.bastion_subnets
+  kms_encryption_enabled     = var.key_management != null ? true : false
   boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   existing_kms_instance_guid = var.key_management != null ? module.landing_zone.key_management_guid : null
   # Future use
@@ -64,13 +64,16 @@ locals {
   ]
 }
 
-# locals needed for file-storage
+# locals needed for DNS
 locals {
-  # dependency: landing_zone -> file-storage
+  # dependency: landing_zone -> DNS
   resource_group_id = one(values(one(module.landing_zone.resource_group_id)))
   vpc_crn           = var.vpc == null ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
-  subnets           = flatten([local.compute_subnets, local.storage_subnets, local.protocol_subnets])
-  subnets_crns      = data.ibm_is_subnet.itself[*].crn
+  # TODO: Fix existing subnet logic
+  #subnets_crn       = var.vpc == null ? module.landing_zone.subnets_crn : ###
+  #subnets           = flatten([local.compute_subnets, local.storage_subnets, local.protocol_subnets])
+  #subnets_crns      = data.ibm_is_subnet.itself[*].crn
+  subnets_crn = module.landing_zone.subnets_crn
   #boot_volume_encryption_key    = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
 
   # dependency: landing_zone_vsi -> file-share

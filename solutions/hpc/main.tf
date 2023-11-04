@@ -44,8 +44,8 @@ module "bootstrap" {
   bootstrap_instance_profile = var.bootstrap_instance_profile
   ssh_keys                   = var.bastion_ssh_keys
   allowed_cidr               = var.allowed_cidr
+  kms_encryption_enabled     = local.kms_encryption_enabled
   boot_volume_encryption_key = local.boot_volume_encryption_key
-  kms_encryption_enabled     = local.boot_volume_encryption_enabled
   existing_kms_instance_guid = local.existing_kms_instance_guid
 }
 
@@ -77,8 +77,8 @@ module "landing_zone_vsi" {
   protocol_instances         = var.protocol_instances
   nsd_details                = var.nsd_details
   dns_domain_names           = var.dns_domain_names
+  kms_encryption_enabled     = local.kms_encryption_enabled
   boot_volume_encryption_key = local.boot_volume_encryption_key
-  kms_encryption_enabled     = local.boot_volume_encryption_enabled
 }
 
 module "file_storage" {
@@ -97,7 +97,7 @@ module "dns" {
   prefix                 = var.prefix
   resource_group_id      = local.resource_group_id
   vpc_crn                = local.vpc_crn
-  subnet_crns            = local.subnets_crns
+  subnets_crn            = local.subnets_crn
   dns_instance_id        = var.dns_instance_id
   dns_custom_resolver_id = var.dns_custom_resolver_id
   dns_domain_names       = values(var.dns_domain_names)

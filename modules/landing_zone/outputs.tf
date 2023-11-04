@@ -93,6 +93,11 @@ output "protocol_subnets" {
   ]
 }
 
+output "subnets_crn" {
+  description = "Subnets crn"
+  value       = flatten(module.landing_zone[*].subnet_data[*]["crn"])
+}
+
 # TODO: Find a way to get CRN needed for VSI boot drive encryption
 output "boot_volume_encryption_key" {
   description = "Boot volume encryption key"

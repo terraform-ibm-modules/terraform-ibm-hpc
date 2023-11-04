@@ -42,7 +42,7 @@ variable "vpc_crn" {
   description = "VPC CRN"
 }
 
-variable "subnet_crns" {
+variable "subnets_crn" {
   type        = list(string)
   description = "Subnet CRN"
 }

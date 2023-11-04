@@ -16,9 +16,9 @@ resource "ibm_dns_custom_resolver" "itself" {
   name              = format("%s-custom-resolver", var.prefix)
   instance_id       = local.dns_instance_id
   enabled           = true
-  high_availability = length(var.subnet_crns) > 1 ? true : false
+  high_availability = length(var.subnets_crn) > 1 ? true : false
   dynamic "locations" {
-    for_each = length(var.subnet_crns) > 3 ? slice(var.subnet_crns, 0, 3) : var.subnet_crns
+    for_each = length(var.subnets_crn) > 3 ? slice(var.subnets_crn, 0, 3) : var.subnets_crn
     content {
       subnet_crn = locations.value
       enabled    = true
