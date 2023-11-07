@@ -215,7 +215,7 @@ variable "management_instances" {
   )
   default = [{
     profile = "cx2-2x4"
-    count   = 3
+    count   = 1
   }]
   description = "Number of instances to be launched for management."
 }
@@ -292,7 +292,7 @@ variable "storage_instances" {
   )
   default = [{
     profile = "bx2-2x8"
-    count   = 3
+    count   = 1
   }]
   description = "Number of instances to be launched for storage cluster."
 }
@@ -318,7 +318,7 @@ variable "protocol_instances" {
   )
   default = [{
     profile = "bx2-2x8"
-    count   = 2
+    count   = 1
   }]
   description = "Number of instances to be launched for protocol hosts."
 }

@@ -1,6 +1,7 @@
 module "landing_zone" {
   source = "../../modules/landing_zone"
   # TODO: Add logic
+  enable_landing_zone    = var.enable_bootstrap ? true : false
   allowed_cidr           = var.allowed_cidr
   compute_subnets_cidr   = var.compute_subnets_cidr
   cos_instance_name      = var.cos_instance_name
@@ -47,6 +48,9 @@ module "bootstrap" {
   boot_volume_encryption_key = local.boot_volume_encryption_key
   kms_encryption_enabled     = local.boot_volume_encryption_enabled
   existing_kms_instance_guid = local.existing_kms_instance_guid
+  compute_ssh_keys           = var.compute_ssh_keys
+  storage_ssh_keys           = var.storage_ssh_keys
+  login_ssh_keys             = var.login_ssh_keys      
 }
 
 module "landing_zone_vsi" {
@@ -79,6 +83,7 @@ module "landing_zone_vsi" {
   dns_domain_names           = var.dns_domain_names
   boot_volume_encryption_key = local.boot_volume_encryption_key
   kms_encryption_enabled     = local.boot_volume_encryption_enabled
+  enable_bootstrap           = var.enable_bootstrap
 }
 
 module "file_storage" {
@@ -105,6 +110,7 @@ module "dns" {
 
 module "compute_dns_records" {
   source           = "./../../modules/dns_record"
+  # count            = enable_bootstrap ? 0 : 1
   ibmcloud_api_key = var.ibmcloud_api_key
   dns_instance_id  = local.dns_instance_id
   dns_zone_id      = local.compute_dns_zone_id
@@ -113,6 +119,7 @@ module "compute_dns_records" {
 
 module "storage_dns_records" {
   source           = "./../../modules/dns_record"
+  # count            = enable_bootstrap ? 0 : 1
   ibmcloud_api_key = var.ibmcloud_api_key
   dns_instance_id  = local.dns_instance_id
   dns_zone_id      = local.storage_dns_zone_id
@@ -121,6 +128,7 @@ module "storage_dns_records" {
 
 module "protocol_dns_records" {
   source           = "./../../modules/dns_record"
+  # count            = enable_bootstrap ? 0 : 1
   ibmcloud_api_key = var.ibmcloud_api_key
   dns_instance_id  = local.dns_instance_id
   dns_zone_id      = local.protocol_dns_zone_id
@@ -129,18 +137,21 @@ module "protocol_dns_records" {
 
 module "compute_inventory" {
   source         = "./../../modules/inventory"
+  # count          = enable_bootstrap ? 0 : 1
   hosts          = local.compute_hosts
   inventory_path = local.compute_inventory_path
 }
 
 module "storage_inventory" {
   source         = "./../../modules/inventory"
+  # count          = enable_bootstrap ? 0 : 1
   hosts          = local.storage_hosts
   inventory_path = local.storage_inventory_path
 }
 
 module "compute_playbook" {
   source           = "./../../modules/playbook"
+  # count            = enable_bootstrap ? 0 : 1
   bastion_fip      = local.bastion_fip
   private_key_path = local.compute_private_key_path
   inventory_path   = local.compute_inventory_path
@@ -150,6 +161,7 @@ module "compute_playbook" {
 
 module "storage_playbook" {
   source           = "./../../modules/playbook"
+  # count            = enable_bootstrap ? 0 : 1
   bastion_fip      = local.bastion_fip
   private_key_path = local.storage_private_key_path
   inventory_path   = local.storage_inventory_path

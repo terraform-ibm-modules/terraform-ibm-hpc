@@ -31,7 +31,7 @@ resource "null_resource" "run_playbook" {
   count = var.inventory_path != null ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "which ansible; /usr/bin/ansible-playbook -i ${var.inventory_path} ${var.playbook_path}"
+    command     = "ansible-playbook -i ${var.inventory_path} ${var.playbook_path}"
   }
   triggers = {
     build = timestamp()

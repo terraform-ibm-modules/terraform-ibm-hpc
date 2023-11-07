@@ -113,3 +113,18 @@ variable "existing_kms_instance_guid" {
   default     = null
   description = "GUID of boot volume encryption key"
 }
+
+variable "compute_ssh_keys" {
+  type        = list(string)
+  description = "The key pair to use to launch the compute host."
+}
+
+variable "login_ssh_keys" {
+  type        = list(string)
+  description = "The key pair to use to launch the login host."
+}
+
+variable "storage_ssh_keys" {
+  type        = list(string)
+  description = "The key pair to use to launch the storage cluster host."
+}

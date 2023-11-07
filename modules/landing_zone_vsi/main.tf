@@ -1,17 +1,17 @@
 module "compute_key" {
-  count            = local.enable_compute ? 1 : 0
+  count            = var.enable_bootstrap ? 0 : (local.enable_compute ? 1 : 0)
   source           = "./../key"
   private_key_path = "compute_id_rsa" #checkov:skip=CKV_SECRET_6
 }
 
 module "storage_key" {
-  count            = local.enable_storage ? 1 : 0
+  count            = var.enable_bootstrap ? 0 : (local.enable_storage ? 1 : 0)
   source           = "./../key"
   private_key_path = "storage_id_rsa" #checkov:skip=CKV_SECRET_6
 }
 
 module "login_sg" {
-  count                        = local.enable_login ? 1 : 0
+  count                        = var.enable_bootstrap ? 0 : (local.enable_login ? 1 : 0)
   source                       = "terraform-ibm-modules/security-group/ibm"
   version                      = "1.0.1"
   add_ibm_cloud_internal_rules = true
@@ -22,7 +22,7 @@ module "login_sg" {
 }
 
 module "compute_sg" {
-  count                        = local.enable_compute ? 1 : 0
+  count                        = var.enable_bootstrap ? 0 : (local.enable_compute ? 1 : 0)
   source                       = "terraform-ibm-modules/security-group/ibm"
   version                      = "1.0.1"
   add_ibm_cloud_internal_rules = true

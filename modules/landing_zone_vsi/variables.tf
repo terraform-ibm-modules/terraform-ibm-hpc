@@ -304,6 +304,11 @@ variable "boot_volume_encryption_key" {
   description = "CRN of boot volume encryption key"
 }
 
+variable "enable_bootstrap" {
+  description = "enable_bootstrap"
+  type        = bool
+}
+
 ##############################################################################
 # TODO: Auth Server (LDAP/AD) Variables
 ##############################################################################
