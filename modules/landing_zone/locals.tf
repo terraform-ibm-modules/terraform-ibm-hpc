@@ -393,7 +393,7 @@ locals {
   wait_till                 = "IngressReady"
   teleport_vsi              = []
   iam_account_settings = {
-    enable = true
+    enable = false
   }
   teleport_config_data = {
     domain = var.prefix
