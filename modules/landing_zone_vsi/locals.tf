@@ -38,15 +38,22 @@ locals {
   }]
   */
 
-  management_instance_count     = sum(var.management_instances[*]["count"])
-  storage_instance_count        = sum(var.storage_instances[*]["count"])
-  protocol_instance_count       = sum(var.protocol_instances[*]["count"])
-  static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
+  management_instance_count     = var.enable_bootstrap ? 0 : sum(var.management_instances[*]["count"])
+  storage_instance_count        = var.enable_bootstrap ? 0 : sum(var.storage_instances[*]["count"])
+  protocol_instance_count       = var.enable_bootstrap ? 0 : sum(var.protocol_instances[*]["count"])
+  static_compute_instance_count = var.enable_bootstrap ? 0 : sum(var.static_compute_instances[*]["count"])
 
   enable_login      = local.management_instance_count > 0
   enable_management = local.management_instance_count > 0
   enable_compute    = local.management_instance_count > 0 || local.static_compute_instance_count > 0 || local.protocol_instance_count > 0
   enable_storage    = local.storage_instance_count > 0
+
+  static_compute_instances = var.enable_bootstrap ? [] : var.static_compute_instances
+  login_instances = var.enable_bootstrap ? [] : var.login_instances
+  management_instances = var.enable_bootstrap ? [] : var.management_instances
+  storage_instances = var.enable_bootstrap ? [] : var.storage_instances
+  protocol_instances = var.enable_bootstrap ? [] : var.protocol_instances
+
   # TODO: Fix the logic
   enable_block_storage = var.storage_type == "scratch" ? true : false
   enable_protocol      = local.storage_instance_count > 0 && local.protocol_instance_count > 0

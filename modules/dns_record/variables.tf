@@ -9,6 +9,12 @@ variable "ibmcloud_api_key" {
   default     = null
 }
 
+variable "enable_bootstrap" {
+  type        = bool
+  default     = false
+  description = "Bootstrap should be only used for better deployment performance"
+}
+
 ##############################################################################
 # DNS Variables
 ##############################################################################
