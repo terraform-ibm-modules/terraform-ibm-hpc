@@ -55,7 +55,6 @@ module "landing_zone_vsi" {
   ibmcloud_api_key           = var.ibmcloud_api_key
   resource_group             = var.resource_group
   prefix                     = var.prefix
-  enable_bootstrap           = var.enable_bootstrap
   zones                      = var.zones
   vpc_id                     = local.vpc_id
   bastion_security_group_id  = local.bastion_security_group_id
@@ -63,20 +62,20 @@ module "landing_zone_vsi" {
   login_subnets              = local.login_subnets
   login_ssh_keys             = var.login_ssh_keys
   login_image_name           = var.login_image_name
-  login_instances            = var.login_instances
+  login_instances            = local.login_instances
   compute_subnets            = local.compute_subnets
   compute_ssh_keys           = var.compute_ssh_keys
   management_image_name      = var.management_image_name
-  management_instances       = var.management_instances
-  static_compute_instances   = var.static_compute_instances
+  management_instances       = local.management_instances
+  static_compute_instances   = local.static_compute_instances
   dynamic_compute_instances  = var.dynamic_compute_instances
   compute_image_name         = var.compute_image_name
   storage_subnets            = local.storage_subnets
   storage_ssh_keys           = var.storage_ssh_keys
-  storage_instances          = var.storage_instances
+  storage_instances          = local.storage_instances
   storage_image_name         = var.storage_image_name
   protocol_subnets           = local.protocol_subnets
-  protocol_instances         = var.protocol_instances
+  protocol_instances         = local.protocol_instances
   nsd_details                = var.nsd_details
   dns_domain_names           = var.dns_domain_names
   kms_encryption_enabled     = local.kms_encryption_enabled
@@ -108,7 +107,6 @@ module "dns" {
 module "compute_dns_records" {
   source           = "./../../modules/dns_record"
   ibmcloud_api_key = var.ibmcloud_api_key
-  enable_bootstrap = var.enable_bootstrap
   dns_instance_id  = local.dns_instance_id
   dns_zone_id      = local.compute_dns_zone_id
   dns_records      = local.compute_dns_records
@@ -117,7 +115,6 @@ module "compute_dns_records" {
 module "storage_dns_records" {
   source           = "./../../modules/dns_record"
   ibmcloud_api_key = var.ibmcloud_api_key
-  enable_bootstrap = var.enable_bootstrap
   dns_instance_id  = local.dns_instance_id
   dns_zone_id      = local.storage_dns_zone_id
   dns_records      = local.storage_dns_records
@@ -126,7 +123,6 @@ module "storage_dns_records" {
 module "protocol_dns_records" {
   source           = "./../../modules/dns_record"
   ibmcloud_api_key = var.ibmcloud_api_key
-  enable_bootstrap = var.enable_bootstrap
   dns_instance_id  = local.dns_instance_id
   dns_zone_id      = local.protocol_dns_zone_id
   dns_records      = local.protocol_dns_records
@@ -134,21 +130,18 @@ module "protocol_dns_records" {
 
 module "compute_inventory" {
   source         = "./../../modules/inventory"
-  enable_bootstrap = var.enable_bootstrap
   hosts          = local.compute_hosts
   inventory_path = local.compute_inventory_path
 }
 
 module "storage_inventory" {
   source         = "./../../modules/inventory"
-  enable_bootstrap = var.enable_bootstrap
   hosts          = local.storage_hosts
   inventory_path = local.storage_inventory_path
 }
 
 module "compute_playbook" {
   source           = "./../../modules/playbook"
-  enable_bootstrap = var.enable_bootstrap
   bastion_fip      = local.bastion_fip
   private_key_path = local.compute_private_key_path
   inventory_path   = local.compute_inventory_path
@@ -158,10 +151,18 @@ module "compute_playbook" {
 
 module "storage_playbook" {
   source           = "./../../modules/playbook"
-  enable_bootstrap = var.enable_bootstrap
   bastion_fip      = local.bastion_fip
   private_key_path = local.storage_private_key_path
   inventory_path   = local.storage_inventory_path
   playbook_path    = local.storage_playbook_path
   depends_on       = [module.storage_inventory]
+}
+
+module "bootstrap_playbook" {
+  source           = "./../../modules/bootstrap_module"
+  # bastion_fip      = local.bastion_fip
+  # private_key_path = local.storage_private_key_path
+  # inventory_path   = local.storage_inventory_path
+  # playbook_path    = local.storage_playbook_path
+  # depends_on       = [module.storage_inventory]
 }

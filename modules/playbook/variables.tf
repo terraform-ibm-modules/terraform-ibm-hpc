@@ -21,9 +21,3 @@ variable "playbook_path" {
   type        = string
   default     = "ssh.yaml"
 }
-
-variable "enable_bootstrap" {
-  type        = bool
-  default     = false
-  description = "Bootstrap should be only used for better deployment performance"
-}
