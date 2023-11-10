@@ -1,0 +1,476 @@
+{
+    "products": [
+        {
+            "name": "IBM Cloud HPC (DA)",
+            "version": "1.0.0",
+            "label": "HPC Deployable Architecture",
+            "product_kind": "solution",
+            "tags": [
+                "Deployable Architecture",
+                "DA",
+                "HPC",
+                "IBM Cloud HPC",
+                "ibm_created",
+                "target_terraform",
+                "terraform",
+                "reference_architecture",
+                "solution"
+            ],
+            "keywords": [
+                "HPC",
+                "vpc",
+                "DA",
+                "Deployable Architecture",
+                "terraform",
+                "solution"
+            ],
+            "short_description": "Deploy your high performance computing (HPC) cluster with IBM scheduling software for compute intensive workloads.",
+            "long_description": "**Before you begin deploying IBM Cloud HPC, make sure that you meet the prerequisites listed in [the step-by-step guide](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-before-you-begin-deploying).**\n\nIBM Cloud HPC is a deployable architecture where you can deploy both cloud compute resources (vCPU resources) and HPC scheduling software for your compute-intensive HPC workloads. You can reserve capacity on a recurring hourly basis from a dedicated IBM Cloud HPC resource pool.",
+            "provider_name": "IBM",
+            "offering_docs_url": "https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-overview",
+            "features": [
+                {
+                    "title": "Reserve HPC compute on an hourly basis",
+                    "description": "Reserve HPC compute capacity on a recurring hourly basis. This reserved time slot and capacity cannot be preempted by IBM."
+                },
+                {
+                    "title": "HPC infrastructure bundled with LSF scheduling software",
+                    "description": "Create a cluster with IBM Spectrum LSF in its own subnet and security group for HPC administrators to log in, submit, and manage HPC jobs."
+                },
+                {
+                    "title": "Automatic compute scaling with LSF resource connector",
+                    "description": "Automatically scale up compute resources based on workload demand. Compute resources are automatically scaled down when no longer required."
+                }
+            ],
+            "flavors": [
+                {
+                    "label": "Standard",
+                    "name": "standard",
+                    "install_type": "fullstack",
+                    "working_directory": "solution/hpc",
+                    "compliance": {
+                        "authority": "scc-v3",
+                        "profiles": [
+                            {
+                                "profile_name": "IBM Cloud Framework for Financial Services",
+                                "profile_version": "1.5.0"
+                            }
+                        ]
+                    },
+                    "release_notes_url": "https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-release-notes",
+                    "configuration": [
+                        {
+                            "key": "ibmcloud_api_key",
+                            "type": "password",
+                            "description": "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required.",
+                            "required": true
+                        },
+                        {
+                            "key": "resource_group",
+                            "type": "string",
+                            "default_value": "",
+                            "description": "String describing resource groups to create or reference",
+                            "display_name": "Resource group",
+                            "required": true,
+                            "custom_config": {
+                                "type": "resource_group",
+                                "grouping": "deployment",
+                                "original_grouping": "deployment",
+                                "config_constraints": {
+                                    "identifier": "rg_name"
+                                }
+                            }
+                        },
+                        {
+                            "key": "prefix",
+                            "type": "string",
+                            "default_value": "hpcaas",
+                            "description": "A unique identifier for resources. Must begin with a letter and end with a letter or number. This prefix will be prepended to any resources provisioned by this template. Prefixes must be 16 or fewer characters.",
+                            "required": true
+                        },
+                        {
+                            "key": "zones",
+                            "type": "array",
+                            "default_value": "",
+                            "description": "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions.",
+                            "required": true
+                        },
+                        {
+                            "key": "vpc",
+                            "type": "string",
+                            "default_value": "",
+                            "description": "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)",
+                            "required": false
+                        },
+                        {
+                            "key": "network_cidr",
+                            "type": "string",
+                            "default_value": "10.0.0.0/8",
+                            "description": "Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning.",
+                            "required": false
+                        },
+                        {
+                            "key": "placement_strategy",
+                            "type": "string",
+                            "default_value": null,
+                            "description": "VPC placement groups to create (null / host_spread / power_spread)",
+                            "required": false
+                        },
+                        {
+                            "key": "enable_bastion",
+                            "type": "boolean",
+                            "default_value": true,
+                            "description": "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false.",
+                            "required": false
+                        },
+                        {
+                            "key": "enable_bootstrap",
+                            "type": "boolean",
+                            "default_value": false,
+                            "description": "Bootstrap should be only used for better deployment performance",
+                            "required": false
+                        },
+                        {
+                            "key": "bootstrap_instance_profile",
+                            "type": "string",
+                            "default_value": "mx2-4x32",
+                            "description": "Bootstrap should be only used for better deployment performance",
+                            "required": false
+                        },
+                        {
+                            "key": "bastion_ssh_keys",
+                            "type": "array",
+                            "default_value": "",
+                            "description": "The key pair to use to access the bastion host.",
+                            "required": true
+                        },
+                        {
+                            "key": "bastion_subnets_cidr",
+                            "type": "array",
+                            "default_value": "[\"10.0.0.0/24\"]",
+                            "description": "Subnet CIDR block to launch the bastion host.",
+                            "required": true
+                        },
+                        {
+                            "key": "enable_vpn",
+                            "type": "boolean",
+                            "default_value": false,
+                            "description": "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN, set this value to true.",
+                            "required": false
+                        },
+                        {
+                            "key": "vpn_peer_cidr",
+                            "type": "array",
+                            "default_value": null,
+                            "description": "The peer CIDRs (e.g., 192.168.0.0/24) to which the VPN will be connected.",
+                            "required": true
+                        },
+                        {
+                            "key": "vpn_peer_address",
+                            "type": "string",
+                            "default_value": null,
+                            "description": "The peer public IP address to which the VPN will be connected.",
+                            "required": false
+                        },
+                        {
+                            "key": "vpn_preshared_key",
+                            "type": "string",
+                            "default_value": null,
+                            "description": "The pre-shared key for the VPN.",
+                            "required": false
+                        },
+                        {
+                            "key": "allowed_cidr",
+                            "type": "array",
+                            "default_value": "[\"10.0.0.0/8\"]",
+                            "description": "Network CIDR to access the VPC. This is used to manage network ACL rules for accessing the cluster.",
+                            "required": false
+                        },
+                        {
+                            "key": "login_ssh_keys",
+                            "type": "array",
+                            "default_value": "",
+                            "description": "The key pair to use to launch the login host.",
+                            "required": true
+                        },
+                        {
+                            "key": "login_image_name",
+                            "type": "string",
+                            "default_value": "ibm-redhat-8-6-minimal-amd64-5",
+                            "description": "Image name to use for provisioning the login instances.",
+                            "required": false
+                        },
+                        {
+                            "key": "login_instances",
+                            "type": "array",
+                            "default_value": "[{ profile = \"cx2-2x4\", count = 1 }]",
+                            "description": "Number of instances to be launched for login.",
+                            "required": false
+                        },
+                        {
+                            "key": "compute_subnets_cidr",
+                            "type": "array",
+                            "default_value": "[\"10.10.20.0/24\", \"10.20.20.0/24\", \"10.30.20.0/24\"]",
+                            "description": "Subnet CIDR block to launch the compute cluster host.",
+                            "required": false
+                        },
+                        {
+                            "key": "compute_ssh_keys",
+                            "type": "array",
+                            "default_value": "[\"10.10.20.0/24\", \"10.20.20.0/24\", \"10.30.20.0/24\"]",
+                            "description": "The key pair to use to launch the compute host.",
+                            "required": false
+                        },
+                        {
+                            "key": "management_image_name",
+                            "type": "string",
+                            "default_value": "ibm-redhat-8-6-minimal-amd64-5",
+                            "description": "Image name to use for provisioning the management cluster instances.",
+                            "required": false
+                        },
+                        {
+                            "key": "static_compute_instances",
+                            "type": "array",
+                            "default_value": "[{ profile = \"cx2-2x4\", count = 3 }]",
+                            "description": "Number of instances to be launched for management.",
+                            "required": false
+                        },
+                        {
+                            "key": "management_instances",
+                            "type": "array",
+                            "default_value": "[{ profile = \"cx2-2x4\", count = 0 }]",
+                            "description": "Min Number of instances to be launched for compute cluster.",
+                            "required": false
+                        },
+                        {
+                            "key": "dynamic_compute_instances",
+                            "type": "array",
+                            "default_value": "[{ profile = \"cx2-2x4\", count = 250 }]",
+                            "description": "MaxNumber of instances to be launched for compute cluster.",
+                            "required": false
+                        },
+                        {
+                            "key": "compute_image_name",
+                            "type": "string",
+                            "default_value": "ibm-redhat-8-6-minimal-amd64-5",
+                            "description": "Image name to use for provisioning the compute cluster instances.",
+                            "required": false
+                        },
+                        {
+                            "key": "storage_subnets_cidr",
+                            "type": "array",
+                            "default_value": "[\"10.10.30.0/24\", \"10.20.30.0/24\", \"10.30.30.0/24\"]",
+                            "description": "Subnet CIDR block to launch the storage cluster host.",
+                            "required": false
+                        },
+                        {
+                            "key": "storage_ssh_keys",
+                            "type": "array",
+                            "default_value": "",
+                            "description": "The key pair to use to launch the storage cluster host.",
+                            "required": true
+                        },
+                        {
+                            "key": "storage_instances",
+                            "type": "array",
+                            "default_value": "[{ profile = \"bx2-2x8\", count = 3 }]",
+                            "description": "MaxNumber of instances to be launched for compute cluster.",
+                            "required": false
+                        },
+                        {
+                            "key": "storage_image_name",
+                            "type": "string",
+                            "default_value": "ibm-redhat-8-6-minimal-amd64-5",
+                            "description": "Image name to use for provisioning the storage cluster instances.",
+                            "required": false
+                        },
+                        {
+                            "key": "protocol_subnets_cidr",
+                            "type": "array",
+                            "default_value": "[\"10.10.40.0/24\", \"10.20.40.0/24\", \"10.30.40.0/24\"]",
+                            "description": "Subnet CIDR block to launch the storage cluster host.",
+                            "required": false
+                        },
+                        {
+                            "key": "protocol_instances",
+                            "type": "array",
+                            "default_value": "[{ profile = \"bx2-2x8\", count = 2 }]",
+                            "description": "Number of instances to be launched for protocol hosts.",
+                            "required": false
+                        },
+                        {
+                            "key": "file_shares",
+                            "type": "array",
+                            "default_value": "[{ mount_path = \"/mnt/binaries\", size = 100, iops = 1000 }, { mount_path = \"/mnt/data\", size = 100, iops = 1000 }]",
+                            "description": "Custom file shares to access shared storage",
+                            "required": false
+                        },
+                        {
+                            "key": "nsd_details",
+                            "type": "array",
+                            "default_value": "[{ profile = \"custom\", size = 100, iops = 100 }]",
+                            "description": "Storage scale NSD details",
+                            "required": false
+                        },
+                        {
+                            "key": "dns_instance_id",
+                            "type": "string",
+                            "default_value": null,
+                            "description": "IBM Cloud HPC DNS service instance id.",
+                            "required": false
+                        },
+                        {
+                            "key": "dns_custom_resolver_id",
+                            "type": "string",
+                            "default_value": null,
+                            "description": "IBM Cloud DNS custom resolver id.",
+                            "required": false
+                        },
+                        {
+                            "key": "dns_domain_names",
+                            "type": "object",
+                            "default_value": "{ compute = \"comp.com\", storage = \"strg.com\", protocol = \"ces.com\" }",
+                            "description": "IBM Cloud HPC DNS domain names.",
+                            "required": false
+                        },
+                        {
+                            "key": "enable_cos_integration",
+                            "type": "boolean",
+                            "default_value": true,
+                            "description": "Integrate COS with HPC solution",
+                            "required": false
+                        },
+                        {
+                            "key": "cos_instance_name",
+                            "type": "string",
+                            "default_value": null,
+                            "description": "Exiting COS instance name",
+                            "required": false
+                        },
+                        {
+                            "key": "enable_atracker",
+                            "type": "boolean",
+                            "default_value": true,
+                            "description": "Enable Activity tracker",
+                            "required": false
+                        },
+                        {
+                            "key": "enable_vpc_flow_logs",
+                            "type": "boolean",
+                            "default_value": true,
+                            "description": "Enable Activity tracker",
+                            "required": false
+                        },
+                        {
+                            "key": "key_management",
+                            "type": "string",
+                            "default_value": "key_protect",
+                            "description": "null/key_protect/hs_crypto",
+                            "required": false
+                        },
+                        {
+                            "key": "hpcs_instance_name",
+                            "type": "string",
+                            "default_value": null,
+                            "description": "Hyper Protect Crypto Service instance",
+                            "required": false
+                        }
+                    ],
+                    "iam_permissions": [
+                        {
+                            "role_crns": [
+                                "crn:v1:bluemix:public:iam::::serviceRole:Manager"
+                            ],
+                            "service_name": "appid"
+                        },
+                        {
+                            "role_crns": [
+                                "crn:v1:bluemix:public:iam::::serviceRole:Manager"
+                            ],
+                            "service_name": "cloud-object-storage"
+                        },
+                        {
+                            "role_crns": [
+                                "crn:v1:bluemix:public:iam::::serviceRole:Manager"
+                            ],
+                            "service_name": "hs-crypto"
+                        },
+                        {
+                            "role_crns": [
+                                "crn:v1:bluemix:public:iam::::role:Administrator"
+                            ],
+                            "service_name": "iam-identity"
+                        },
+                        {
+                            "role_crns": [
+                                "crn:v1:bluemix:public:iam::::serviceRole:Manager"
+                            ],
+                            "service_name": "kms"
+                        },
+                        {
+                            "role_crns": [
+                                "crn:v1:bluemix:public:iam::::role:Administrator"
+                            ],
+                            "service_name": "is.vpc"
+                        }
+                    ],
+                    "architecture": {
+                        "descriptions": "",
+                        "features": [
+                            {
+                                "title": "Separate VPC for management",
+                                "description": "Yes"
+                            },
+                            {
+                                "title": "Separate VPC for workloads",
+                                "description": "Yes"
+                            },
+                            {
+                                "title": "Virtual Server Instances for every subnet",
+                                "description": "Yes"
+                            },
+                            {
+                                "title": "Increases security with Key Management",
+                                "description": "Yes"
+                            },
+                            {
+                                "title": "Reduces failure events by using multizone regions",
+                                "description": "Yes"
+                            },
+                            {
+                                "title": "Collects and stores Internet Protocol (IP) traffic information with Activity Tracker and Flow Logs",
+                                "description": "Yes"
+                            },
+                            {
+                                "title": "Securely connects to multiple networks with a site-to-site virtual private network",
+                                "description": "Yes"
+                            },
+                            {
+                                "title": "Simplifies risk management and demonstrates regulatory compliance with Financial Services",
+                                "description": "Yes"
+                            },
+                            {
+                                "title": "Uses an edge VPC for secure access through the public internet",
+                                "description": "Yes, if enabled"
+                            },
+                            {
+                                "title": "Uses Floating IP address for access through the public internet",
+                                "description": "No"
+                            }
+                        ],
+                        "diagrams": [
+                            {
+                                "diagram": {
+                                    "caption": "VSI on VPC landing zone - Standard variation",
+                                    "url": "https://raw.githubusercontent.com/terraform-ibm-modules/terraform-ibm-landing-zone/main/reference-architectures/vsi-vsi.drawio.svg",
+                                    "type": "image/svg+xml"
+                                },
+                                "description": "The Standard variation of the VSI on VPC landing zone deployable architecture is based on the IBM Cloud for Financial Services reference architecture. The architecture creates a customizable and secure infrastructure, with virtual servers, to run your workloads with a Virtual Private Cloud (VPC) in multizone regions."
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

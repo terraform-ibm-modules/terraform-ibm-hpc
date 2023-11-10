@@ -1,0 +1,14 @@
+{
+  "ibmcloud_api_key": $VALIDATION_APIKEY,
+  "prefix": $PREFIX,
+  "resource_group": "Default,
+  "zones": $ZONES
+  "bastion_ssh_keys": $BASTION_SSH_KEYS
+  "compute_ssh_keys": $COMPUTE_SSH_KEYS
+  "login_ssh_keys": $LOGIN_SSH_KEYS
+  "storage_ssh_keys": $STORAGE_SSH_KEYS
+  "allowed_cidr": $ALLOWED_CIDR
+  "enable_cos_integration": false
+  "enable_atracker": false
+  "enable_vpc_flow_logs": false
+}
