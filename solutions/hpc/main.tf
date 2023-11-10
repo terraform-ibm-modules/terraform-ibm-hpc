@@ -30,6 +30,24 @@ module "landing_zone" {
   zones                  = var.zones
 }
 
+module "bastion" {
+  source                     = "./../../modules/bastion"
+  ibmcloud_api_key           = var.ibmcloud_api_key
+  resource_group             = var.resource_group
+  prefix                     = var.prefix
+  zones                      = var.zones
+  vpc_id                     = local.vpc_id
+  network_cidr               = var.network_cidr
+  enable_bastion             = var.enable_bastion
+  bastion_subnets            = local.bastion_subnets
+  enable_bootstrap           = var.enable_bootstrap
+  ssh_keys                   = var.bastion_ssh_keys
+  allowed_cidr               = var.allowed_cidr
+  kms_encryption_enabled     = local.kms_encryption_enabled
+  boot_volume_encryption_key = local.boot_volume_encryption_key
+  existing_kms_instance_guid = local.existing_kms_instance_guid
+}
+
 module "bootstrap" {
   source                     = "./../../modules/bootstrap"
   ibmcloud_api_key           = var.ibmcloud_api_key
@@ -42,8 +60,9 @@ module "bootstrap" {
   bastion_subnets            = local.bastion_subnets
   enable_bootstrap           = var.enable_bootstrap
   bootstrap_instance_profile = var.bootstrap_instance_profile
-  ssh_keys                   = var.bastion_ssh_keys
-  allowed_cidr               = var.allowed_cidr
+  ssh_keys                   = local.bastion_ssh_keys
+  security_group_ids         = [local.bastion_security_group_id]
+  bastion_public_key_content = local.bastion_public_key_content
   kms_encryption_enabled     = local.kms_encryption_enabled
   boot_volume_encryption_key = local.boot_volume_encryption_key
   existing_kms_instance_guid = local.existing_kms_instance_guid

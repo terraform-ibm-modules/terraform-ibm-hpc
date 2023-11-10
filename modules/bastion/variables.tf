@@ -78,27 +78,15 @@ variable "enable_bootstrap" {
   description = "Bootstrap should be only used for better deployment performance"
 }
 
-variable "bootstrap_instance_profile" {
-  type        = string
-  default     = "mx2-4x32"
-  description = "Bootstrap should be only used for better deployment performance"
-}
-
 variable "ssh_keys" {
   type        = list(string)
   description = "The key pair to use to access the host."
 }
 
-variable "security_group_ids" {
+variable "allowed_cidr" {
+  description = "Network CIDR to access the VPC. This is used to manage network ACL rules for accessing the cluster."
   type        = list(string)
-  description = "Security group IDs for bootstrap server."
-}
-
-variable "bastion_public_key_content" {
-  type        = string
-  sensitive   = true
-  default     = null
-  description = "Bastion public key content."
+  default     = ["10.0.0.0/8"]
 }
 
 # TODO: landing-zone-vsi limitation to opt out encryption

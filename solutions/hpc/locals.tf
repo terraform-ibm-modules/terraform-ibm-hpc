@@ -19,8 +19,9 @@ locals {
 # locals needed for landing_zone_vsi
 locals {
   # dependency: landing_zone -> bootstrap -> landing_zone_vsi
-  bastion_security_group_id  = module.bootstrap.bastion_security_group_id
-  bastion_public_key_content = module.bootstrap.bastion_public_key_content
+  bastion_security_group_id  = module.bastion.bastion_security_group_id
+  bastion_public_key_content = module.bastion.bastion_public_key_content
+  bastion_ssh_keys = module.bastion.bastion_ssh_keys
 
   # dependency: landing_zone -> landing_zone_vsi
   login_subnets    = module.landing_zone.login_subnets
@@ -131,7 +132,7 @@ locals {
 
 # locals needed for playbook
 locals {
-  bastion_fip              = module.bootstrap.bastion_fip
+  bastion_fip              = module.bastion.bastion_fip
   compute_private_key_path = "compute_id_rsa" #checkov:skip=CKV_SECRET_6
   storage_private_key_path = "storage_id_rsa" #checkov:skip=CKV_SECRET_6
   compute_playbook_path    = "compute_ssh.yaml"
