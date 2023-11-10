@@ -104,6 +104,7 @@ locals {
   compute_instances_data  = var.enable_bootstrap ? [] : flatten([module.landing_zone_vsi.management_vsi_data, module.landing_zone_vsi.compute_vsi_data])
   storage_instances_data  = var.enable_bootstrap ? [] : flatten([module.landing_zone_vsi.storage_vsi_data, module.landing_zone_vsi.protocol_vsi_data])
   protocol_instances_data = var.enable_bootstrap ? [] : flatten([module.landing_zone_vsi.protocol_vsi_data])
+  bootstrap_instances_data  = var.enable_bootstrap ? flatten([module.bootstrap.bootstrap_vsi_data]) : []
 
   compute_dns_records = var.enable_bootstrap ? [] : [
     for instance in local.compute_instances_data :
@@ -132,8 +133,10 @@ locals {
 locals {
   compute_hosts          = var.enable_bootstrap ? [] : local.compute_instances_data[*]["ipv4_address"]
   storage_hosts          = var.enable_bootstrap ? [] : local.storage_instances_data[*]["ipv4_address"]
+  bootstrap_hosts        = var.enable_bootstrap ? local.bootstrap_instances_data[*]["ipv4_address"] : []
   compute_inventory_path = "compute.ini"
   storage_inventory_path = "storage.ini"
+  bootstrap_inventory_path = "bootstrap.ini"
 }
 
 # locals needed for playbook
@@ -141,6 +144,9 @@ locals {
   bastion_fip              = module.bootstrap.bastion_fip
   compute_private_key_path = "compute_id_rsa" #checkov:skip=CKV_SECRET_6
   storage_private_key_path = "storage_id_rsa" #checkov:skip=CKV_SECRET_6
+  bastion_private_key_path = "bastion_id_rsa"
+  
+  bootstrap_playbook_path  = "bootstrap_playbook.yaml"
   compute_playbook_path    = "compute_ssh.yaml"
   storage_playbook_path    = "storage_ssh.yaml"
 }

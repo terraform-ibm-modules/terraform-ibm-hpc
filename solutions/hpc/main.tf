@@ -140,6 +140,12 @@ module "storage_inventory" {
   inventory_path = local.storage_inventory_path
 }
 
+module "bootstrap_inventory" {
+  source         = "./../../modules/inventory"
+  hosts          = local.bootstrap_hosts
+  inventory_path = local.bootstrap_inventory_path
+}
+
 module "compute_playbook" {
   source           = "./../../modules/playbook"
   bastion_fip      = local.bastion_fip
@@ -159,10 +165,16 @@ module "storage_playbook" {
 }
 
 module "bootstrap_playbook" {
-  source           = "./../../modules/bootstrap_module"
-  # bastion_fip      = local.bastion_fip
-  # private_key_path = local.storage_private_key_path
-  # inventory_path   = local.storage_inventory_path
-  # playbook_path    = local.storage_playbook_path
-  # depends_on       = [module.storage_inventory]
+  source           = "./../../modules/bootstrap_playbook"
+  playbook_path    = local.bootstrap_playbook_path
+  bastion_fip      = local.bastion_fip
+  private_key_path = local.bastion_private_key_path
+  inventory_path   = local.bootstrap_inventory_path
+  depends_on       = [module.bootstrap_inventory]
+
+  enable_bootstrap = var.enable_bootstrap
+  ibmcloud_api_key           = var.ibmcloud_api_key
+  resource_group             = var.resource_group
+  prefix                     = var.prefix
+  zones                      = var.zones  
 }
