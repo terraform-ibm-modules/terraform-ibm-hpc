@@ -64,7 +64,16 @@ locals {
       name      = format("allow-variable-outbound-%s", index(local.bastion_sg_variable_cidr, cidr) + 1)
       direction = "outbound"
       remote    = cidr
-    }]
+    }],
+    {
+        name      = "allow-outbound-port-443"
+        direction = "outbound"
+        remote    = "0.0.0.0/0"
+        tcp = {
+            port_min = 443
+            port_max = 443
+        }
+    }    
   ])
 
   # Derived configs

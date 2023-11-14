@@ -38,10 +38,10 @@ locals {
   }]
   */
 
-  management_instance_count     = sum(var.management_instances[*]["count"])
-  storage_instance_count        = sum(var.storage_instances[*]["count"])
-  protocol_instance_count       = sum(var.protocol_instances[*]["count"])
-  static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
+  management_instance_count     = length(var.management_instances) > 0 ? sum(var.management_instances[*]["count"]) : 0
+  storage_instance_count        = length(var.storage_instances) > 0 ? sum(var.storage_instances[*]["count"]) : 0
+  protocol_instance_count       = length(var.protocol_instances) > 0 ? sum(var.protocol_instances[*]["count"]) : 0
+  static_compute_instance_count = length(var.static_compute_instances) > 0 ? sum(var.static_compute_instances[*]["count"]) : 0
 
   enable_login      = local.management_instance_count > 0
   enable_management = local.management_instance_count > 0
@@ -110,7 +110,7 @@ locals {
   # TODO: DNS configs
 
   # Security group rules
-  login_security_group_rules = [
+  login_security_group_rules = local.enable_login ? [
     {
       name      = "allow-all-bastion"
       direction = "inbound"
@@ -131,12 +131,12 @@ locals {
       direction = "outbound"
       remote    = module.compute_sg[0].security_group_id
     }
-  ]
+  ] : []
   # TODO: Compute & storage can't be added due to SG rule limitation
   /* [ERROR] Error while creating Security Group Rule Exceeded limit of remote rules per security group
   (the limit is 5 remote rules per security group)*/
 
-  compute_security_group_rules = [
+  compute_security_group_rules = local.enable_compute ? [
     {
       name      = "allow-all-bastion"
       direction = "inbound"
@@ -157,8 +157,8 @@ locals {
       direction = "outbound"
       remote    = module.login_sg[0].security_group_id
     }
-  ]
-  storage_security_group_rules = [
+  ] : []
+  storage_security_group_rules = local.enable_storage ? [
     {
       name      = "allow-all-bastion"
       direction = "inbound"
@@ -178,7 +178,7 @@ locals {
       name      = "allow-all-compute"
       direction = "outbound"
       remote    = module.compute_sg[0].security_group_id
-  }]
+  }] : []
 
 
   # Derived configs

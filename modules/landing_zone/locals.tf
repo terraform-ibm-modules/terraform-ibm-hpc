@@ -105,7 +105,7 @@ locals {
         name           = "bastion-subnet"
         acl_name       = "hpc-acl"
         cidr           = var.bastion_subnets_cidr[0]
-        public_gateway = false
+        public_gateway = true
       } : null
     ] : []
   }
@@ -139,8 +139,24 @@ locals {
       source      = var.network_cidr
     }
   ]
-  network_acl_rules = flatten([local.network_acl_inbound_rules, local.network_acl_outbound_rules])
-
+  network_acl_all_rules = [
+    {
+      name        = "allow-inbound-all"
+      action      = "allow"
+      destination = var.network_cidr
+      direction   = "inbound"
+      source      = "0.0.0.0/0"      
+    },
+    {
+      name        = "allow-outbound-all"
+      action      = "allow"
+      destination = "0.0.0.0/0"
+      direction   = "outbound"
+      source      = var.network_cidr      
+    }
+  ]
+  network_acl_rules = flatten([local.network_acl_all_rules, local.network_acl_inbound_rules, local.network_acl_outbound_rules])
+  
   vpcs = var.vpc == null ? [
     {
       prefix                       = local.name

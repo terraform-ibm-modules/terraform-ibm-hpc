@@ -1,6 +1,7 @@
 module "landing_zone" {
   source = "../../modules/landing_zone"
   # TODO: Add logic
+  enable_landing_zone    = var.enable_bootstrap ? true : false
   allowed_cidr           = var.allowed_cidr
   compute_subnets_cidr   = var.compute_subnets_cidr
   cos_instance_name      = var.cos_instance_name
@@ -66,6 +67,9 @@ module "bootstrap" {
   kms_encryption_enabled     = local.kms_encryption_enabled
   boot_volume_encryption_key = local.boot_volume_encryption_key
   existing_kms_instance_guid = local.existing_kms_instance_guid
+  compute_ssh_keys           = var.compute_ssh_keys
+  storage_ssh_keys           = var.storage_ssh_keys
+  login_ssh_keys             = var.login_ssh_keys  
 }
 
 module "landing_zone_vsi" {
@@ -80,20 +84,20 @@ module "landing_zone_vsi" {
   login_subnets              = local.login_subnets
   login_ssh_keys             = var.login_ssh_keys
   login_image_name           = var.login_image_name
-  login_instances            = var.login_instances
+  login_instances            = local.login_instances
   compute_subnets            = local.compute_subnets
   compute_ssh_keys           = var.compute_ssh_keys
   management_image_name      = var.management_image_name
-  management_instances       = var.management_instances
-  static_compute_instances   = var.static_compute_instances
+  management_instances       = local.management_instances
+  static_compute_instances   = local.static_compute_instances
   dynamic_compute_instances  = var.dynamic_compute_instances
   compute_image_name         = var.compute_image_name
   storage_subnets            = local.storage_subnets
   storage_ssh_keys           = var.storage_ssh_keys
-  storage_instances          = var.storage_instances
+  storage_instances          = local.storage_instances
   storage_image_name         = var.storage_image_name
   protocol_subnets           = local.protocol_subnets
-  protocol_instances         = var.protocol_instances
+  protocol_instances         = local.protocol_instances
   nsd_details                = var.nsd_details
   dns_domain_names           = var.dns_domain_names
   kms_encryption_enabled     = local.kms_encryption_enabled

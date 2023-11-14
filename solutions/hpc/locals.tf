@@ -95,26 +95,33 @@ locals {
   ]))
 
   # dependency: landing_zone_vsi -> dns-records
-  compute_instances  = flatten([module.landing_zone_vsi.management_vsi_data, module.landing_zone_vsi.compute_vsi_data])
-  storage_instances  = flatten([module.landing_zone_vsi.storage_vsi_data, module.landing_zone_vsi.protocol_vsi_data])
-  protocol_instances = flatten([module.landing_zone_vsi.protocol_vsi_data])
+  static_compute_instances = var.enable_bootstrap ? [] : var.static_compute_instances
+  login_instances = var.enable_bootstrap ? [] : var.login_instances
+  management_instances = var.enable_bootstrap ? [] : var.management_instances
+  storage_instances = var.enable_bootstrap ? [] : var.storage_instances
+  protocol_instances = var.enable_bootstrap ? [] : var.protocol_instances
 
-  compute_dns_records = [
-    for instance in local.compute_instances :
+  compute_instances_data  = var.enable_bootstrap ? [] : flatten([module.landing_zone_vsi.management_vsi_data, module.landing_zone_vsi.compute_vsi_data])
+  storage_instances_data  = var.enable_bootstrap ? [] : flatten([module.landing_zone_vsi.storage_vsi_data, module.landing_zone_vsi.protocol_vsi_data])
+  protocol_instances_data = var.enable_bootstrap ? [] : flatten([module.landing_zone_vsi.protocol_vsi_data])
+  bootstrap_instances_data  = var.enable_bootstrap ? flatten([module.bootstrap.bootstrap_vsi_data]) : []
+
+  compute_dns_records = var.enable_bootstrap ? [] : [
+    for instance in local.compute_instances_data :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
     }
   ]
-  storage_dns_records = [
-    for instance in local.storage_instances :
+  storage_dns_records = var.enable_bootstrap ? [] : [
+    for instance in local.storage_instances_data :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
     }
   ]
-  protocol_dns_records = [
-    for instance in local.protocol_instances :
+  protocol_dns_records = var.enable_bootstrap ? [] : [
+    for instance in local.protocol_instances_data :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
@@ -124,8 +131,9 @@ locals {
 
 # locals needed for inventory
 locals {
-  compute_hosts          = local.compute_instances[*]["ipv4_address"]
-  storage_hosts          = local.storage_instances[*]["ipv4_address"]
+  compute_hosts          = var.enable_bootstrap ? [] : local.compute_instances_data[*]["ipv4_address"]
+  storage_hosts          = var.enable_bootstrap ? [] : local.storage_instances_data[*]["ipv4_address"]
+  bootstrap_hosts        = var.enable_bootstrap ? local.bootstrap_instances_data[*]["ipv4_address"] : []
   compute_inventory_path = "compute.ini"
   storage_inventory_path = "storage.ini"
 }

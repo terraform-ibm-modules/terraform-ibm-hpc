@@ -18,4 +18,9 @@ locals {
 
   # Subnets
   bastion_subnets = var.bastion_subnets
+
+  bootstrap_path                = "/opt/IBM"
+  remote_ansible_path           = format("%s/terraform-ibm-hpc", local.bootstrap_path)
+  da_hpc_repo_url               = "https://github.com/terraform-ibm-modules/terraform-ibm-hpc"
+  da_hpc_repo_tag               = "develop"
 }
