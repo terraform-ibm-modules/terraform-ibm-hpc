@@ -63,9 +63,5 @@ export IC_API_KEY=${ibmcloud_api_key} && sudo -E terraform -chdir=${remote_ansib
    -var 'storage_subnets=${storage_subnets}' \
    -var 'protocol_subnets=${protocol_subnets}' \
    -var 'bastion_security_group_id=${bastion_security_group_id}' \
-   -var 'bastion_public_key_content=${bastion_public_key_content}'
-
-# To add if needed:
-#    -var 'bastion_ssh_keys=[]' \
-#    -var 'enable_bootstrap=false' \
-#    -var 'enable_bastion=false' \   
+   -var 'bastion_public_key_content=${bastion_public_key_content}' \
+   -var 'boot_volume_encryption_key=false'
