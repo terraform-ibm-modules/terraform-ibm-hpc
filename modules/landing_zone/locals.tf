@@ -139,24 +139,37 @@ locals {
       source      = var.network_cidr
     }
   ]
-  network_acl_all_rules = [
+   network_acl_443_rules = [
     {
-      name        = "allow-inbound-all"
+      name        = "allow-inbound-443"
       action      = "allow"
       destination = var.network_cidr
       direction   = "inbound"
-      source      = "0.0.0.0/0"      
+      source      = "0.0.0.0/0"
+      # tcp = {
+      #   port_max        = 443
+      #   port_min        = 443
+      #   source_port_max = 443
+      #   source_port_min = 443
+      # }
     },
     {
-      name        = "allow-outbound-all"
+      name        = "allow-outbound-443"
       action      = "allow"
       destination = "0.0.0.0/0"
       direction   = "outbound"
-      source      = var.network_cidr      
+      source      = var.network_cidr
+      # tcp = {
+      #   port_max        = 443
+      #   port_min        = 443
+      #   source_port_max = 443
+      #   source_port_min = 443
+      # }
     }
   ]
-  network_acl_rules = flatten([local.network_acl_all_rules, local.network_acl_inbound_rules, local.network_acl_outbound_rules])
-  
+
+  network_acl_rules = flatten([local.network_acl_443_rules, local.network_acl_inbound_rules, local.network_acl_outbound_rules])
+
   vpcs = var.vpc == null ? [
     {
       prefix                       = local.name

@@ -135,3 +135,47 @@ variable "storage_ssh_keys" {
   type        = list(string)
   description = "The key pair to use to launch the storage cluster host."
 }
+
+variable "login_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the login hosts."
+}
+
+variable "compute_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the compute host."
+}
+
+variable "storage_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the storage host."
+}
+
+variable "protocol_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the bastion host."
+}

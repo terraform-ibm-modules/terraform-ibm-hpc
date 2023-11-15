@@ -50,14 +50,22 @@ sudo wget https://releases.hashicorp.com/terraform/1.5.4/terraform_1.5.4_linux_a
 sudo yum install -y unzip
 sudo unzip terraform_1.5.4_linux_amd64.zip -d /usr/bin
 if [ ! -d ${remote_ansible_path} ]; then sudo git clone -b ${da_hpc_repo_tag} ${da_hpc_repo_url} ${remote_ansible_path}; fi
-export IC_API_KEY=${ibmcloud_api_key} && sudo -E terraform -chdir=${remote_ansible_path} init && sudo -E terraform -chdir=${remote_ansible_path} apply -auto-approve \
+export IC_API_KEY=${ibmcloud_api_key} && sudo -E terraform -chdir=${remote_ansible_path}/modules/landing_zone_vsi init && sudo -E terraform -chdir=${remote_ansible_path}/modules/landing_zone_vsi apply -auto-approve \
    -var 'resource_group=${resource_group}' \
    -var 'prefix=${prefix}' \
    -var 'zones=${zones}' \
-   -var 'enable_bastion=false' \
    -var 'compute_ssh_keys=${compute_ssh_keys}' \
-   -var 'enable_bootstrap=false' \
-   -var 'enable_bastion=false' \
    -var 'login_ssh_keys=${login_ssh_keys}' \
    -var 'storage_ssh_keys=${storage_ssh_keys}' \
-   -var 'bastion_ssh_keys=[]'
+   -var 'vpc_id=${vpc_id}' \
+   -var 'compute_subnets=${compute_subnets}' \
+   -var 'login_subnets=${login_subnets}' \
+   -var 'storage_subnets=${storage_subnets}' \
+   -var 'protocol_subnets=${protocol_subnets}' \
+   -var 'bastion_security_group_id=${bastion_security_group_id}' \
+   -var 'bastion_public_key_content=${bastion_public_key_content}'
+
+# To add if needed:
+#    -var 'bastion_ssh_keys=[]' \
+#    -var 'enable_bootstrap=false' \
+#    -var 'enable_bastion=false' \   

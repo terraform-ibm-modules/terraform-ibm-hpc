@@ -69,7 +69,11 @@ module "bootstrap" {
   existing_kms_instance_guid = local.existing_kms_instance_guid
   compute_ssh_keys           = var.compute_ssh_keys
   storage_ssh_keys           = var.storage_ssh_keys
-  login_ssh_keys             = var.login_ssh_keys  
+  login_ssh_keys             = var.login_ssh_keys
+  login_subnets              = local.login_subnets
+  compute_subnets            = local.compute_subnets
+  protocol_subnets           = local.protocol_subnets
+  storage_subnets            = local.storage_subnets   
 }
 
 module "landing_zone_vsi" {
