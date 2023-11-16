@@ -418,11 +418,7 @@
                         "descriptions": "",
                         "features": [
                             {
-                                "title": "Separate VPC for management",
-                                "description": "Yes"
-                            },
-                            {
-                                "title": "Separate VPC for workloads",
+                                "title": "Separate VPC for HPC workloads",
                                 "description": "Yes"
                             },
                             {
@@ -450,10 +446,6 @@
                                 "description": "Yes"
                             },
                             {
-                                "title": "Uses an edge VPC for secure access through the public internet",
-                                "description": "Yes, if enabled"
-                            },
-                            {
                                 "title": "Uses Floating IP address for access through the public internet",
                                 "description": "No"
                             }
@@ -461,11 +453,11 @@
                         "diagrams": [
                             {
                                 "diagram": {
-                                    "caption": "VSI on VPC landing zone - Standard variation",
+                                    "caption": "HPC variation",
                                     "url": "https://raw.githubusercontent.com/terraform-ibm-modules/terraform-ibm-landing-zone/main/reference-architectures/vsi-vsi.drawio.svg",
                                     "type": "image/svg+xml"
                                 },
-                                "description": "The Standard variation of the VSI on VPC landing zone deployable architecture is based on the IBM Cloud for Financial Services reference architecture. The architecture creates a customizable and secure infrastructure, with virtual servers, to run your workloads with a Virtual Private Cloud (VPC) in multizone regions."
+                                "description": "The HPC variation of the deployable architecture is based on the IBM Cloud for Financial Services reference architecture. The architecture creates a customizable and secure infrastructure, with virtual servers, to run your workloads with a Virtual Private Cloud (VPC) in multizone regions."
                             }
                         ]
                     }
