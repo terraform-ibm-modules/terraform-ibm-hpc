@@ -89,7 +89,6 @@ variable "placement_strategy" {
   default     = null
   description = "VPC placement groups to create (null / host_spread / power_spread)"
 }
-
 ##############################################################################
 # Access Variables
 ##############################################################################

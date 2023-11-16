@@ -6,17 +6,17 @@ variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
   type        = string
   sensitive   = true
+  default     = null
 }
 
 ##############################################################################
 # Resource Groups Variables
 ##############################################################################
 
-variable "resource_group" {
+variable "resource_group_id" {
   description = "String describing resource groups to create or reference"
   type        = string
-  # TODO: Temp fix
-  default = "geretain-hpc-rg"
+  default     = null
 }
 
 ##############################################################################
@@ -26,26 +26,45 @@ variable "resource_group" {
 variable "prefix" {
   description = "A unique identifier for resources. Must begin with a letter and end with a letter or number. This prefix will be prepended to any resources provisioned by this template. Prefixes must be 16 or fewer characters."
   type        = string
-  default     = "tim-hpc"
+
   validation {
     error_message = "Prefix must begin and end with a letter and contain only letters, numbers, and - characters."
     condition     = can(regex("^([A-z]|[a-z][-a-z0-9]*[a-z0-9])$", var.prefix))
   }
 }
 
-variable "zones" {
-  description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
+##############################################################################
+# VPC Variables
+##############################################################################
+
+variable "vpc_crn" {
+  type        = string
+  description = "VPC CRN"
+}
+
+variable "subnets_crn" {
   type        = list(string)
-  # TODO: Temp fix
-  default = ["ca-tor-1"]
+  description = "Subnet CRN"
 }
 
 ##############################################################################
-# Access Variables
+# DNS Template Variables
 ##############################################################################
-variable "ssh_keys" {
+
+variable "dns_instance_id" {
+  type        = string
+  default     = null
+  description = "IBM Cloud HPC DNS service resource id."
+}
+
+variable "dns_custom_resolver_id" {
+  type        = string
+  default     = null
+  description = "IBM Cloud DNS custom resolver id."
+}
+
+variable "dns_domain_names" {
   type        = list(string)
-  description = "The key pair to use to access the bastion host."
-  # TODO: Temp fix
-  default = ["geretain-hpc-ssh-key"]
+  default     = null
+  description = "IBM Cloud HPC DNS domain names."
 }

@@ -2,21 +2,39 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.3.0, <1.6.0 |
+| <a name="requirement_ibm"></a> [ibm](#requirement\_ibm) | >= 1.56.2 |
 
 ## Providers
 
-No providers.
+| Name | Version |
+|------|---------|
+| <a name="provider_ibm"></a> [ibm](#provider\_ibm) | >= 1.56.2 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_hpc"></a> [hpc](#module\_hpc) | ./solutions/hpc | n/a |
+| <a name="module_bootstrap"></a> [bootstrap](#module\_bootstrap) | ./../../modules/bootstrap | n/a |
+| <a name="module_compute_dns_records"></a> [compute\_dns\_records](#module\_compute\_dns\_records) | ./../../modules/dns_record | n/a |
+| <a name="module_compute_inventory"></a> [compute\_inventory](#module\_compute\_inventory) | ./../../modules/inventory | n/a |
+| <a name="module_compute_playbook"></a> [compute\_playbook](#module\_compute\_playbook) | ./../../modules/playbook | n/a |
+| <a name="module_dns"></a> [dns](#module\_dns) | ./../../modules/dns | n/a |
+| <a name="module_file_storage"></a> [file\_storage](#module\_file\_storage) | ../../modules/file_storage | n/a |
+| <a name="module_landing_zone"></a> [landing\_zone](#module\_landing\_zone) | ../../modules/landing_zone | n/a |
+| <a name="module_landing_zone_vsi"></a> [landing\_zone\_vsi](#module\_landing\_zone\_vsi) | ../../modules/landing_zone_vsi | n/a |
+| <a name="module_protocol_dns_records"></a> [protocol\_dns\_records](#module\_protocol\_dns\_records) | ./../../modules/dns_record | n/a |
+| <a name="module_storage_dns_records"></a> [storage\_dns\_records](#module\_storage\_dns\_records) | ./../../modules/dns_record | n/a |
+| <a name="module_storage_inventory"></a> [storage\_inventory](#module\_storage\_inventory) | ./../../modules/inventory | n/a |
+| <a name="module_storage_playbook"></a> [storage\_playbook](#module\_storage\_playbook) | ./../../modules/playbook | n/a |
 
 ## Resources
 
-No resources.
+| Name | Type |
+|------|------|
+| [ibm_is_region.itself](https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/data-sources/is_region) | data source |
+| [ibm_is_subnet.itself](https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/data-sources/is_subnet) | data source |
+| [ibm_is_vpc.itself](https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/data-sources/is_vpc) | data source |
+| [ibm_is_zone.itself](https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/data-sources/is_zone) | data source |
 
 ## Inputs
 
@@ -27,6 +45,8 @@ No resources.
 | <a name="input_bastion_subnets_cidr"></a> [bastion\_subnets\_cidr](#input\_bastion\_subnets\_cidr) | Subnet CIDR block to launch the bastion host. | `list(string)` | <pre>[<br>  "10.0.0.0/24"<br>]</pre> | no |
 | <a name="input_boot_volume_encryption_enabled"></a> [boot\_volume\_encryption\_enabled](#input\_boot\_volume\_encryption\_enabled) | Set to true when key management is set | `bool` | `true` | no |
 | <a name="input_bootstrap_instance_profile"></a> [bootstrap\_instance\_profile](#input\_bootstrap\_instance\_profile) | Bootstrap should be only used for better deployment performance | `string` | `"mx2-4x32"` | no |
+| <a name="input_compute_gui_password"></a> [compute\_gui\_password](#input\_compute\_gui\_password) | Password for compute cluster GUI | `string` | n/a | yes |
+| <a name="input_compute_gui_username"></a> [compute\_gui\_username](#input\_compute\_gui\_username) | GUI user to perform system management and monitoring tasks on compute cluster. | `string` | `"admin"` | no |
 | <a name="input_compute_image_name"></a> [compute\_image\_name](#input\_compute\_image\_name) | Image name to use for provisioning the compute cluster instances. | `string` | `"ibm-redhat-8-6-minimal-amd64-5"` | no |
 | <a name="input_compute_ssh_keys"></a> [compute\_ssh\_keys](#input\_compute\_ssh\_keys) | The key pair to use to launch the compute host. | `list(string)` | n/a | yes |
 | <a name="input_compute_subnets_cidr"></a> [compute\_subnets\_cidr](#input\_compute\_subnets\_cidr) | Subnet CIDR block to launch the compute cluster host. | `list(string)` | <pre>[<br>  "10.10.20.0/24",<br>  "10.20.20.0/24",<br>  "10.30.20.0/24"<br>]</pre> | no |
@@ -49,6 +69,7 @@ No resources.
 | <a name="input_login_image_name"></a> [login\_image\_name](#input\_login\_image\_name) | Image name to use for provisioning the login instances. | `string` | `"ibm-redhat-8-6-minimal-amd64-5"` | no |
 | <a name="input_login_instances"></a> [login\_instances](#input\_login\_instances) | Number of instances to be launched for login. | <pre>list(<br>    object({<br>      profile = string<br>      count   = number<br>    })<br>  )</pre> | <pre>[<br>  {<br>    "count": 1,<br>    "profile": "cx2-2x4"<br>  }<br>]</pre> | no |
 | <a name="input_login_ssh_keys"></a> [login\_ssh\_keys](#input\_login\_ssh\_keys) | The key pair to use to launch the login host. | `list(string)` | n/a | yes |
+| <a name="input_login_subnets_cidr"></a> [login\_subnets\_cidr](#input\_login\_subnets\_cidr) | Subnet CIDR block to launch the login host. | `list(string)` | <pre>[<br>  "10.10.10.0/24",<br>  "10.20.10.0/24",<br>  "10.30.10.0/24"<br>]</pre> | no |
 | <a name="input_management_image_name"></a> [management\_image\_name](#input\_management\_image\_name) | Image name to use for provisioning the management cluster instances. | `string` | `"ibm-redhat-8-6-minimal-amd64-5"` | no |
 | <a name="input_management_instances"></a> [management\_instances](#input\_management\_instances) | Number of instances to be launched for management. | <pre>list(<br>    object({<br>      profile = string<br>      count   = number<br>    })<br>  )</pre> | <pre>[<br>  {<br>    "count": 3,<br>    "profile": "cx2-2x4"<br>  }<br>]</pre> | no |
 | <a name="input_network_cidr"></a> [network\_cidr](#input\_network\_cidr) | Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning. | `string` | `"10.0.0.0/8"` | no |
@@ -58,11 +79,15 @@ No resources.
 | <a name="input_protocol_instances"></a> [protocol\_instances](#input\_protocol\_instances) | Number of instances to be launched for protocol hosts. | <pre>list(<br>    object({<br>      profile = string<br>      count   = number<br>    })<br>  )</pre> | <pre>[<br>  {<br>    "count": 2,<br>    "profile": "bx2-2x8"<br>  }<br>]</pre> | no |
 | <a name="input_protocol_subnets_cidr"></a> [protocol\_subnets\_cidr](#input\_protocol\_subnets\_cidr) | Subnet CIDR block to launch the storage cluster host. | `list(string)` | <pre>[<br>  "10.10.40.0/24",<br>  "10.20.40.0/24",<br>  "10.30.40.0/24"<br>]</pre> | no |
 | <a name="input_resource_group"></a> [resource\_group](#input\_resource\_group) | String describing resource groups to create or reference | `string` | `null` | no |
+| <a name="input_scheduler"></a> [scheduler](#input\_scheduler) | Select one of the scheduler (LSF/Symphony/Slurm/None) | `string` | `"LSF"` | no |
 | <a name="input_static_compute_instances"></a> [static\_compute\_instances](#input\_static\_compute\_instances) | Min Number of instances to be launched for compute cluster. | <pre>list(<br>    object({<br>      profile = string<br>      count   = number<br>    })<br>  )</pre> | <pre>[<br>  {<br>    "count": 0,<br>    "profile": "cx2-2x4"<br>  }<br>]</pre> | no |
+| <a name="input_storage_gui_password"></a> [storage\_gui\_password](#input\_storage\_gui\_password) | Password for storage cluster GUI | `string` | n/a | yes |
+| <a name="input_storage_gui_username"></a> [storage\_gui\_username](#input\_storage\_gui\_username) | GUI user to perform system management and monitoring tasks on storage cluster. | `string` | `"admin"` | no |
 | <a name="input_storage_image_name"></a> [storage\_image\_name](#input\_storage\_image\_name) | Image name to use for provisioning the storage cluster instances. | `string` | `"ibm-redhat-8-6-minimal-amd64-5"` | no |
 | <a name="input_storage_instances"></a> [storage\_instances](#input\_storage\_instances) | Number of instances to be launched for storage cluster. | <pre>list(<br>    object({<br>      profile = string<br>      count   = number<br>    })<br>  )</pre> | <pre>[<br>  {<br>    "count": 3,<br>    "profile": "bx2-2x8"<br>  }<br>]</pre> | no |
 | <a name="input_storage_ssh_keys"></a> [storage\_ssh\_keys](#input\_storage\_ssh\_keys) | The key pair to use to launch the storage cluster host. | `list(string)` | n/a | yes |
 | <a name="input_storage_subnets_cidr"></a> [storage\_subnets\_cidr](#input\_storage\_subnets\_cidr) | Subnet CIDR block to launch the storage cluster host. | `list(string)` | <pre>[<br>  "10.10.30.0/24",<br>  "10.20.30.0/24",<br>  "10.30.30.0/24"<br>]</pre> | no |
+| <a name="input_storage_type"></a> [storage\_type](#input\_storage\_type) | Select the required storage type(scratch/persistent/eval). | `string` | `"scratch"` | no |
 | <a name="input_vpc"></a> [vpc](#input\_vpc) | Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc) | `string` | `null` | no |
 | <a name="input_vpn_peer_address"></a> [vpn\_peer\_address](#input\_vpn\_peer\_address) | The peer public IP address to which the VPN will be connected. | `string` | `null` | no |
 | <a name="input_vpn_peer_cidr"></a> [vpn\_peer\_cidr](#input\_vpn\_peer\_cidr) | The peer CIDRs (e.g., 192.168.0.0/24) to which the VPN will be connected. | `list(string)` | `null` | no |

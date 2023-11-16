@@ -1,45 +1,33 @@
-// Tests in this file are run in the PR pipeline and the continuous testing pipeline
-package test
+package tests
 
 import (
-	"testing"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
+	"os"
+	"testing"
 )
 
-// Use existing resource group
-const resourceGroup = "geretain-test-resources"
-const completeExampleDir = "examples/complete"
+const (
+	exampleBasicTerraformDir = "examples/basic" // Path of the Terraform directory
+)
 
-func setupOptions(t *testing.T, prefix string, dir string) *testhelper.TestOptions {
-	options := testhelper.TestOptionsDefaultWithVars(&testhelper.TestOptions{
-		Testing:       t,
-		TerraformDir:  dir,
-		Prefix:        prefix,
-		ResourceGroup: resourceGroup,
-	})
-	return options
-}
-
-func TestRunCompleteExample(t *testing.T) {
+// TestRunHpcBasicExample
+func TestRunHpcBasicExample(t *testing.T) {
 	t.Parallel()
 
-	options := setupOptions(t, "mod-template", completeExampleDir)
-
-	output, err := options.RunTestConsistency()
-	assert.Nil(t, err, "This should not have errored")
-	assert.NotNil(t, output, "Expected some output")
-}
-
-func TestRunUpgradeExample(t *testing.T) {
-	t.Parallel()
-
-	options := setupOptions(t, "mod-template-upg", completeExampleDir)
-
-	output, err := options.RunTestUpgrade()
-	if !options.UpgradeTestSkipped {
-		assert.Nil(t, err, "This should not have errored")
-		assert.NotNil(t, output, "Expected some output")
+	options := &testhelper.TestOptions{
+		Testing:      t,
+		TerraformDir: exampleBasicTerraformDir,
+		TerraformVars: map[string]interface{}{
+			"ibmcloud_api_key": os.Getenv("TF_VAR_ibmcloud_api_key"),
+		},
 	}
+	// Run the test
+	output, err := options.RunTestConsistency()
+
+	// Check for errors
+	assert.Nil(t, err, "Expected no errors, but got: %v", err)
+
+	// Check the output for specific strings
+	assert.NotNil(t, output, "Expected non-nil output, but got nil")
 }

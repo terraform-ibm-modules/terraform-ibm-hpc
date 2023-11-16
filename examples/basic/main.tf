@@ -1,24 +1,16 @@
-########################################################################################################################
-# Resource group
-########################################################################################################################
-
-module "resource_group" {
-  source  = "terraform-ibm-modules/resource-group/ibm"
-  version = "1.1.0"
-  # if an existing resource group is not set (null) create a new one using prefix
-  resource_group_name          = var.resource_group == null ? "${var.prefix}-resource-group" : null
-  existing_resource_group_name = var.resource_group
+locals {
+  # Region and Zone calculations
+  region = join("-", slice(split("-", var.zones[0]), 0, 2))
 }
 
-########################################################################################################################
-# COS instance
-########################################################################################################################
-
-resource "ibm_resource_instance" "cos_instance" {
-  name              = "${var.prefix}-cos"
-  resource_group_id = module.resource_group.resource_group_id
-  service           = "cloud-object-storage"
-  plan              = "standard"
-  location          = "global"
-  tags              = var.resource_tags
+module "hpc_basic_example" {
+  source           = "../.."
+  ibmcloud_api_key = var.ibmcloud_api_key
+  prefix           = var.prefix
+  zones            = var.zones
+  resource_group   = var.resource_group
+  bastion_ssh_keys = var.ssh_keys
+  login_ssh_keys   = var.ssh_keys
+  compute_ssh_keys = var.ssh_keys
+  storage_ssh_keys = var.ssh_keys
 }
