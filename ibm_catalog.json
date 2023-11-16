@@ -44,8 +44,8 @@
             ],
             "flavors": [
                 {
-                    "label": "Standard",
-                    "name": "standard",
+                    "label": "HPC",
+                    "name": "hpc",
                     "install_type": "fullstack",
                     "working_directory": "solution/hpc",
                     "compliance": {
