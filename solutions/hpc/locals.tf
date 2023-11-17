@@ -12,7 +12,7 @@ locals {
   bastion_subnets            = module.landing_zone.bastion_subnets
   kms_encryption_enabled     = var.key_management != null ? true : false
   boot_volume_encryption_key = var.key_management != null ? (var.boot_volume_encryption_key != null ? var.boot_volume_encryption_key : one(module.landing_zone.boot_volume_encryption_key)["crn"]) : null
-  existing_kms_instance_guid = var.key_management != null ? module.landing_zone.key_management_guid : null
+  existing_kms_instance_guid = var.key_management != null ? one(module.landing_zone.key_management_guid) : null
   # Future use
   # skip_iam_authorization_policy = true
 }
@@ -69,7 +69,7 @@ locals {
 # locals needed for DNS
 locals {
   # dependency: landing_zone -> DNS
-  resource_group_id = one(values(one(module.landing_zone.resource_group_id)))
+  resource_group_id = one(values(one(module.landing_zone.resource_group_id))) == null ? data.ibm_resource_group.resource_group[0].id : one(values(one(module.landing_zone.resource_group_id)))
   vpc_crn           = var.vpc == null ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
   # TODO: Fix existing subnet logic
   #subnets_crn       = var.vpc == null ? module.landing_zone.subnets_crn : ###
