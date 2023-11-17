@@ -1,9 +1,9 @@
 resource "local_file" "create_playbook" {
-  count    = var.inventory_path != null ? 1 : 0
-  content  = <<EOT
+  count   = var.inventory_path != null ? 1 : 0
+  content = <<EOT
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
-- name: Check passwordless SSH connection is setup
+- name: Check passwordless SSH connection is set up
   hosts: all
   any_errors_fatal: true
   gather_facts: false
@@ -15,6 +15,8 @@ resource "local_file" "create_playbook" {
       until: result.stdout.find("PASSWDLESS_SSH_ENABLED") != -1
       retries: 60
       delay: 10
+
+${var.bastion_fip != null ? <<-EOT
   vars:
     ansible_ssh_common_args: >-
       -o ControlMaster=auto
@@ -22,6 +24,9 @@ resource "local_file" "create_playbook" {
       -o UserKnownHostsFile=/dev/null
       -o StrictHostKeyChecking=no
       -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${var.private_key_path} -J ubuntu@${var.bastion_fip} -W %h:%p root@{{ inventory_hostname }}"
+EOT
+: ""}
+
 EOT
   filename = var.playbook_path
 }

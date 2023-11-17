@@ -69,7 +69,7 @@ locals {
 # locals needed for DNS
 locals {
   # dependency: landing_zone -> DNS
-  resource_group_id = one(values(one(module.landing_zone.resource_group_id))) == null ? data.ibm_resource_group.resource_group[0].id : one(values(one(module.landing_zone.resource_group_id)))
+  resource_group_id = module.landing_zone.resource_group_id == [] ? data.ibm_resource_group.resource_group[0].id : one(values(one(module.landing_zone.resource_group_id)))
   vpc_crn           = var.vpc == null ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
   # TODO: Fix existing subnet logic
   #subnets_crn       = var.vpc == null ? module.landing_zone.subnets_crn : ###
