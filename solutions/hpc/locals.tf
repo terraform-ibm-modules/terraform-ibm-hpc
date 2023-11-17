@@ -7,10 +7,11 @@ locals {
 # locals needed for bootstrap
 locals {
   # dependency: landing_zone -> bootstrap
-  vpc_id                     = var.vpc == null ? one(module.landing_zone.vpc_id) : var.vpc
+  vpc_id                     = var.vpc == null ? one(module.landing_zone.vpc_id) : data.ibm_is_vpc.itself[0].id
+  vpc                        = var.vpc == null ? one(module.landing_zone.vpc_name) : var.vpc
   bastion_subnets            = module.landing_zone.bastion_subnets
   kms_encryption_enabled     = var.key_management != null ? true : false
-  boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
+  boot_volume_encryption_key = var.key_management != null ? (var.boot_volume_encryption_key != null ? var.boot_volume_encryption_key : one(module.landing_zone.boot_volume_encryption_key)["crn"]) : null
   existing_kms_instance_guid = var.key_management != null ? module.landing_zone.key_management_guid : null
   # Future use
   # skip_iam_authorization_policy = true
@@ -19,20 +20,20 @@ locals {
 # locals needed for landing_zone_vsi
 locals {
   # dependency: landing_zone -> bootstrap -> landing_zone_vsi
-  bastion_security_group_id  = module.bastion.bastion_security_group_id
-  bastion_public_key_content = module.bastion.bastion_public_key_content
+  bastion_security_group_id  = var.bastion_security_group_id != null ? var.bastion_security_group_id : module.bastion.bastion_security_group_id
+  bastion_public_key_content = var.bastion_public_key_content != null ? var.bastion_public_key_content : module.bastion.bastion_public_key_content
   bastion_ssh_keys = module.bastion.bastion_ssh_keys
 
   # dependency: landing_zone -> landing_zone_vsi
-  login_subnets    = module.landing_zone.login_subnets
-  compute_subnets  = module.landing_zone.compute_subnets
-  storage_subnets  = module.landing_zone.storage_subnets
-  protocol_subnets = module.landing_zone.protocol_subnets
+  login_subnets    = length(var.login_subnets) > 0 ? var.login_subnets : module.landing_zone.login_subnets
+  compute_subnets  = length(var.compute_subnets) > 0 ? var.compute_subnets : module.landing_zone.compute_subnets
+  storage_subnets  = length(var.storage_subnets) > 0 ? var.storage_subnets : module.landing_zone.storage_subnets
+  protocol_subnets = length(var.protocol_subnets) > 0 ? var.protocol_subnets : module.landing_zone.protocol_subnets
 
   #boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   #skip_iam_authorization_policy = true
   #resource_group_id = data.ibm_resource_group.itself.id
-  #vpc_id            = var.vpc == null ? module.landing_zone.vpc_id[0] : data.ibm_is_vpc.itself[0].id
+  # vpc_id            = var.vpc == null ? module.landing_zone.vpc_id[0] : data.ibm_is_vpc.itself[0].id
   #vpc_crn           = var.vpc == null ? module.landing_zone.vpc_crn[0] : data.ibm_is_vpc.itself[0].crn
 }
 
@@ -84,6 +85,7 @@ locals {
 locals {
   # dependency: dns -> dns-records
   dns_instance_id = module.dns.dns_instance_id
+  dns_custom_resolver_id = module.dns.dns_custom_resolver_id
   compute_dns_zone_id = one(flatten([
     for dns_zone in module.dns.dns_zone_maps : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["compute"]
   ]))

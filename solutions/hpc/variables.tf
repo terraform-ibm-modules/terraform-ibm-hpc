@@ -450,3 +450,78 @@ variable "hpcs_instance_name" {
 ##############################################################################
 # TODO: Auth Server (LDAP/AD) Variables
 ##############################################################################
+
+variable "bastion_security_group_id" {
+  type        = string
+  default     = null
+  description = "Bastion security group id."
+}
+
+variable "bastion_public_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Bastion public key content."
+}
+
+variable "login_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the login hosts."
+}
+
+variable "compute_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the compute host."
+}
+
+variable "storage_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the storage host."
+}
+
+variable "protocol_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the bastion host."
+}
+
+variable "kms_encryption_enabled" {
+  description = "Enable Key management"
+  type        = bool
+  default     = true
+}
+
+variable "boot_volume_encryption_key" {
+  type        = string
+  default     = null
+  description = "CRN of boot volume encryption key"
+}
+
+variable "enable_landing_zone" {
+  type        = bool
+  default     = true
+  description = "Run landing zone module."
+}

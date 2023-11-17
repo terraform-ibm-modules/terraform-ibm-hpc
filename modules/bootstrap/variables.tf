@@ -42,6 +42,11 @@ variable "zones" {
 # VPC Variables
 ##############################################################################
 
+variable "vpc" {
+  type        = string
+  description = "Name of an existing VPC in which the cluster resources will be deployed."
+}
+
 variable "vpc_id" {
   type        = string
   description = "ID of an existing VPC in which the cluster resources will be deployed."
@@ -178,4 +183,16 @@ variable "protocol_subnets" {
   }))
   default     = []
   description = "Subnets to launch the bastion host."
+}
+
+variable "dns_instance_id" {
+  type        = string
+  default     = null
+  description = "IBM Cloud HPC DNS service resource id."
+}
+
+variable "dns_custom_resolver_id" {
+  type        = string
+  default     = null
+  description = "IBM Cloud DNS custom resolver id."
 }

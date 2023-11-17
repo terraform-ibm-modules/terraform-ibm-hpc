@@ -47,9 +47,17 @@ module "hpc" {
   storage_ssh_keys     = var.storage_ssh_keys
   storage_subnets_cidr = var.storage_subnets_cidr
   #storage_type        = var.storage_type
-  vpc               = var.vpc
+  vpc                  = var.vpc
   vpn_peer_address  = var.vpn_peer_address
   vpn_peer_cidr     = var.vpn_peer_cidr
   vpn_preshared_key = var.vpn_preshared_key
   zones             = var.zones
+  bastion_security_group_id = var.bastion_security_group_id
+  bastion_public_key_content = var.bastion_public_key_content
+  login_subnets = var.login_subnets
+  compute_subnets = var.compute_subnets
+  storage_subnets = var.storage_subnets
+  protocol_subnets = var.protocol_subnets
+  boot_volume_encryption_key = var.boot_volume_encryption_key
+  enable_landing_zone = var.enable_landing_zone
 }

@@ -1,7 +1,7 @@
 module "landing_zone" {
   source = "../../modules/landing_zone"
   # TODO: Add logic
-  enable_landing_zone    = var.enable_bootstrap ? true : false
+  enable_landing_zone    = var.enable_landing_zone
   allowed_cidr           = var.allowed_cidr
   compute_subnets_cidr   = var.compute_subnets_cidr
   cos_instance_name      = var.cos_instance_name
@@ -55,6 +55,7 @@ module "bootstrap" {
   resource_group             = var.resource_group
   prefix                     = var.prefix
   zones                      = var.zones
+  vpc                        = local.vpc
   vpc_id                     = local.vpc_id
   network_cidr               = var.network_cidr
   enable_bastion             = var.enable_bastion
@@ -73,7 +74,9 @@ module "bootstrap" {
   login_subnets              = local.login_subnets
   compute_subnets            = local.compute_subnets
   protocol_subnets           = local.protocol_subnets
-  storage_subnets            = local.storage_subnets   
+  storage_subnets            = local.storage_subnets
+  dns_instance_id            = local.dns_instance_id
+  dns_custom_resolver_id     = local.dns_custom_resolver_id
 }
 
 module "landing_zone_vsi" {
