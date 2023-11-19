@@ -44,8 +44,8 @@
             ],
             "flavors": [
                 {
-                    "label": "HPC",
-                    "name": "hpc",
+                    "label": "Advanced",
+                    "name": "advanced",
                     "install_type": "fullstack",
                     "working_directory": "solution/hpc",
                     "compliance": {
@@ -68,10 +68,9 @@
                         {
                             "key": "resource_group",
                             "type": "string",
-                            "default_value": "",
+                            "default_value": null,
                             "description": "String describing resource groups to create or reference",
                             "display_name": "Resource group",
-                            "required": true,
                             "custom_config": {
                                 "type": "resource_group",
                                 "grouping": "deployment",
@@ -84,21 +83,20 @@
                         {
                             "key": "prefix",
                             "type": "string",
-                            "default_value": "hpcaas",
+                            "default_value": "hpc",
                             "description": "A unique identifier for resources. Must begin with a letter and end with a letter or number. This prefix will be prepended to any resources provisioned by this template. Prefixes must be 16 or fewer characters.",
-                            "required": true
+                            "required": false
                         },
                         {
                             "key": "zones",
                             "type": "array",
-                            "default_value": "",
                             "description": "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions.",
                             "required": true
                         },
                         {
                             "key": "vpc",
                             "type": "string",
-                            "default_value": "",
+                            "default_value": null,
                             "description": "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)",
                             "required": false
                         },
@@ -140,7 +138,6 @@
                         {
                             "key": "bastion_ssh_keys",
                             "type": "array",
-                            "default_value": "",
                             "description": "The key pair to use to access the bastion host.",
                             "required": true
                         },
@@ -149,7 +146,7 @@
                             "type": "array",
                             "default_value": "[\"10.0.0.0/24\"]",
                             "description": "Subnet CIDR block to launch the bastion host.",
-                            "required": true
+                            "required": false
                         },
                         {
                             "key": "enable_vpn",
@@ -163,7 +160,7 @@
                             "type": "array",
                             "default_value": null,
                             "description": "The peer CIDRs (e.g., 192.168.0.0/24) to which the VPN will be connected.",
-                            "required": true
+                            "required": false
                         },
                         {
                             "key": "vpn_peer_address",
@@ -189,7 +186,6 @@
                         {
                             "key": "login_ssh_keys",
                             "type": "array",
-                            "default_value": "",
                             "description": "The key pair to use to launch the login host.",
                             "required": true
                         },
@@ -217,9 +213,8 @@
                         {
                             "key": "compute_ssh_keys",
                             "type": "array",
-                            "default_value": "[\"10.10.20.0/24\", \"10.20.20.0/24\", \"10.30.20.0/24\"]",
                             "description": "The key pair to use to launch the compute host.",
-                            "required": false
+                            "required": true
                         },
                         {
                             "key": "management_image_name",
@@ -266,7 +261,6 @@
                         {
                             "key": "storage_ssh_keys",
                             "type": "array",
-                            "default_value": "",
                             "description": "The key pair to use to launch the storage cluster host.",
                             "required": true
                         },
