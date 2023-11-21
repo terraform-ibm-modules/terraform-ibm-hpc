@@ -17,7 +17,7 @@ data "template_file" "bootstrap_user_data" {
     login_subnets = jsonencode(var.login_subnets)
     storage_subnets = jsonencode(var.storage_subnets)
     protocol_subnets = jsonencode(var.protocol_subnets)
-    boot_volume_encryption_key = jsonencode(var.boot_volume_encryption_key)
+    boot_volume_encryption_key = var.boot_volume_encryption_key
     bastion_security_group_id = one(var.security_group_ids)
     dns_instance_id = var.dns_instance_id
     dns_custom_resolver_id = var.dns_custom_resolver_id
