@@ -86,7 +86,7 @@ locals {
   # dependency: dns -> dns-records
   dns_instance_id = module.dns.dns_instance_id
   dns_custom_resolver_id = module.dns.dns_custom_resolver_id
-  dns_domain_names = var.enable_bootstrap ? [] : values(var.dns_domain_names)
+  # dns_domain_names = var.enable_bootstrap ? [] : values(var.dns_domain_names)
   compute_dns_zone_id = one(flatten([
     for dns_zone in module.dns.dns_zone_maps : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["compute"]
   ]))

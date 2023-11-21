@@ -130,7 +130,7 @@ module "dns" {
   subnets_crn            = local.subnets_crn
   dns_instance_id        = var.dns_instance_id
   dns_custom_resolver_id = var.dns_custom_resolver_id
-  dns_domain_names       = local.dns_domain_names
+  dns_domain_names       = values(var.dns_domain_names)
 }
 
 module "compute_dns_records" {
