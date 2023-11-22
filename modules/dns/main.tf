@@ -53,7 +53,7 @@ locals {
 }
 
 resource "ibm_dns_permitted_network" "itself" {
-  count       = length(var.dns_domain_names)
+  count       = length(local.dns_domain_names)
   instance_id = local.dns_instance_id
   vpc_crn     = var.vpc_crn
   zone_id     = one(values(local.dns_zone_maps[count.index]))
