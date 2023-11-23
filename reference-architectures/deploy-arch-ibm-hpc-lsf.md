@@ -1,0 +1,3 @@
+# IBM Cloud HPC (Spectrum LSF)
+
+IBM Spectrum LSF allows you to deploy high-performance computing (HPC) clusters by using IBM Spectrum LSF as HPC scheduling software. This offering uses open source Terraform-based automation to provision and configure IBM Cloud resources. With simple steps to define configuration properties and use automated deployment, you can build your own HPC clusters in minutes. IBM Spectrum LSF also enables configuration for auto-scaling, so IBM Spectrum LSF clusters can automatically add and remove worker nodes based on workload specifications. This allows you to take full advantage of consumption-based pricing and pay for cloud resources only when they are needed.
