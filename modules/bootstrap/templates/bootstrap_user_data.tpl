@@ -51,7 +51,7 @@ sudo yum install -y unzip
 sudo unzip terraform_1.5.4_linux_amd64.zip -d /usr/bin
 if [ ! -d ${remote_ansible_path} ]; then sudo git clone -b ${da_hpc_repo_tag} ${da_hpc_repo_url} ${remote_ansible_path}; fi
 
-export IC_API_KEY=${ibmcloud_api_key} && sudo -E terraform -chdir=${remote_ansible_path} init && sudo -E terraform -chdir=${remote_ansible_path} apply -auto-approve \
+sudo -E terraform -chdir=${remote_ansible_path} init && sudo -E terraform -chdir=${remote_ansible_path} apply -auto-approve \
     -var 'resource_group=${resource_group}' \
     -var 'prefix=${prefix}' \
     -var 'zones=${zones}' \
