@@ -1,10 +1,10 @@
 {
   "ibmcloud_api_key": $VALIDATION_APIKEY,
   "prefix": $PREFIX,
-  "zones": $ZONES,
-  "resource_group": $RG_NAME,
-  "bastion_ssh_keys": $SSH_KEYS,
-  "login_ssh_keys": $SSH_KEYS,
-  "compute_ssh_keys": $SSH_KEYS,
-  "storage_ssh_keys": $SSH_KEYS
+  "zones": ["ca-tor-1"],
+  "resource_group": "geretain-hpc-rg",
+  "bastion_ssh_keys": ["geretain-hpc-ssh-key"],
+  "login_ssh_keys": ["geretain-hpc-ssh-key"],
+  "compute_ssh_keys": ["geretain-hpc-ssh-key"],
+  "storage_ssh_keys": ["geretain-hpc-ssh-key"]
 }
