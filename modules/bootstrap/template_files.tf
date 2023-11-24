@@ -21,5 +21,6 @@ data "template_file" "bootstrap_user_data" {
     bastion_security_group_id = one(var.security_group_ids)
     dns_instance_id = var.dns_instance_id
     dns_custom_resolver_id = var.dns_custom_resolver_id
+    enable_bastion = var.enable_bastion
   }
 }

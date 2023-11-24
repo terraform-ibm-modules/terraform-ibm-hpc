@@ -130,6 +130,11 @@ locals {
       name      = "allow-all-compute"
       direction = "outbound"
       remote    = module.compute_sg[0].security_group_id
+    },
+    {
+      name      = "allow-outbound-temp" ##TODO: Remove this and add specific CIDRs needed
+      direction = "outbound"
+      remote    = "0.0.0.0/0"
     }
   ] : []
   # TODO: Compute & storage can't be added due to SG rule limitation
@@ -156,6 +161,11 @@ locals {
       name      = "allow-all-login"
       direction = "outbound"
       remote    = module.login_sg[0].security_group_id
+    },
+    {
+      name      = "allow-outbound-temp" ##TODO: Remove this and add specific CIDRs needed
+      direction = "outbound"
+      remote    = "0.0.0.0/0"
     }
   ] : []
   storage_security_group_rules = local.enable_storage ? [
@@ -178,7 +188,13 @@ locals {
       name      = "allow-all-compute"
       direction = "outbound"
       remote    = module.compute_sg[0].security_group_id
-  }] : []
+    },
+    {
+      name      = "allow-outbound-temp" ##TODO: Remove this and add specific CIDRs needed
+      direction = "outbound"
+      remote    = "0.0.0.0/0"
+    }
+  ] : []
 
 
   # Derived configs

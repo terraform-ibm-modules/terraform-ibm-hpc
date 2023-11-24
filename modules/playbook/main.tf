@@ -45,13 +45,13 @@ resource "null_resource" "run_playbook" {
 }
 */
 
-resource "ansible_playbook" "playbook" {
-  playbook   = var.playbook_path
-  name       = "localhost"
-  replayable = false
-  verbosity  = 6
-  extra_vars = {
-    ansible_python_interpreter = "auto"
-  }
-  depends_on = [local_file.create_playbook]
-}
+# resource "ansible_playbook" "playbook" {
+#   playbook   = var.playbook_path
+#   name       = "localhost"
+#   replayable = false
+#   verbosity  = 6
+#   extra_vars = {
+#     ansible_python_interpreter = "auto"
+#   }
+#   depends_on = [local_file.create_playbook]
+# }
