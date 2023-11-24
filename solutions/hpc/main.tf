@@ -79,6 +79,139 @@ module "bootstrap" {
   dns_custom_resolver_id     = local.dns_custom_resolver_id
 }
 
+resource "time_sleep" "wait_150_seconds" {
+  create_duration = "150s"
+  depends_on      = [module.bootstrap]
+}
+
+resource "null_resource" "bootstrap_resources_provisioner" {
+  connection {
+    type                = "ssh"
+    host                = local.bootstrap_private_ip
+    user                = "vpcuser"
+    private_key         = local.bastion_private_key_content
+    bastion_host        = local.bastion_fip
+    bastion_user        = "ubuntu"
+    bastion_private_key = local.bastion_private_key_content
+    timeout             = "60m"
+  }
+
+  provisioner "remote-exec" {
+    inline = [<<EOF
+      if [ ! -d ${local.remote_ansible_path} ]; then sudo git clone -b ${local.da_hpc_repo_tag} ${local.da_hpc_repo_url} ${local.remote_ansible_path}; fi
+      sudo -E terraform -chdir=${local.remote_ansible_path} init && sudo -E terraform -chdir=${local.remote_ansible_path} apply -auto-approve \
+          -var 'resource_group=${var.resource_group}' \
+          -var 'prefix=${var.prefix}' \
+          -var 'zones=${jsonencode(var.zones)}' \
+          -var 'compute_ssh_keys=${jsonencode(var.compute_ssh_keys)}' \
+          -var 'login_ssh_keys=${jsonencode(var.login_ssh_keys)}' \
+          -var 'storage_ssh_keys=${jsonencode(var.storage_ssh_keys)}' \
+          -var 'vpc=${local.vpc}' \
+          -var 'compute_subnets=${jsonencode(local.compute_subnets)}' \
+          -var 'login_subnets=${jsonencode(local.login_subnets)}' \
+          -var 'storage_subnets=${jsonencode(local.storage_subnets)}' \
+          -var 'protocol_subnets=${jsonencode(local.protocol_subnets)}' \
+          -var 'bastion_security_group_id=${local.bastion_security_group_id}' \
+          -var 'bastion_public_key_content=${local.bastion_public_key_content}' \
+          -var 'bastion_ssh_keys=[]' \
+          -var 'enable_bootstrap=false' \
+          -var 'enable_bastion=false' \
+          -var 'boot_volume_encryption_key=${local.boot_volume_encryption_key}' \
+          -var 'dns_instance_id=${local.dns_instance_id}' \
+          -var 'dns_custom_resolver_id=${local.dns_custom_resolver_id}' \
+          -var 'enable_landing_zone=false' \
+          -var 'ibmcloud_api_key=${var.ibmcloud_api_key}'          
+    EOF
+    ]
+  }
+  
+  # triggers = {
+  #   always_run = "${timestamp()}"
+  # }
+
+  depends_on = [
+    module.bootstrap,
+    module.bastion,
+    time_sleep.wait_150_seconds
+  ]
+}
+
+resource "null_resource" "bootstrap_resources_destroyer" {
+  triggers = {
+    bootstrap_private_ip = local.bootstrap_private_ip
+    bastion_private_key_content = local.bastion_private_key_content
+    bastion_fip = local.bastion_fip
+    remote_ansible_path = local.remote_ansible_path
+    resource_group = var.resource_group
+    prefix = var.prefix
+    zones = jsonencode(var.zones)
+    compute_ssh_keys = jsonencode(var.compute_ssh_keys)
+    login_ssh_keys = jsonencode(var.login_ssh_keys)
+    storage_ssh_keys = jsonencode(var.storage_ssh_keys)
+    vpc = local.vpc
+    compute_subnets = jsonencode(local.compute_subnets)
+    login_subnets = jsonencode(local.login_subnets)
+    storage_subnets = jsonencode(local.storage_subnets)
+    protocol_subnets = jsonencode(local.protocol_subnets)
+    bastion_security_group_id = local.bastion_security_group_id
+    bastion_public_key_content = local.bastion_public_key_content
+    boot_volume_encryption_key = local.boot_volume_encryption_key
+    dns_instance_id = local.dns_instance_id
+    dns_custom_resolver_id = local.dns_custom_resolver_id
+    ibmcloud_api_key = var.ibmcloud_api_key
+  }
+
+  connection {
+    type                = "ssh"
+    host                = self.triggers.bootstrap_private_ip
+    user                = "vpcuser"
+    private_key         = self.triggers.bastion_private_key_content
+    bastion_host        = self.triggers.bastion_fip
+    bastion_user        = "ubuntu"
+    bastion_private_key = self.triggers.bastion_private_key_content
+    timeout             = "60m"
+  }
+
+  provisioner "remote-exec" {
+    when       = destroy
+    on_failure = fail    
+    inline = [<<EOF
+      sudo -E terraform -chdir=${self.triggers.remote_ansible_path} init && sudo -E terraform -chdir=${self.triggers.remote_ansible_path} destroy -auto-approve \
+          -var 'resource_group=${self.triggers.resource_group}' \
+          -var 'prefix=${self.triggers.prefix}' \
+          -var 'zones=${self.triggers.zones}' \
+          -var 'compute_ssh_keys=${self.triggers.compute_ssh_keys}' \
+          -var 'login_ssh_keys=${self.triggers.login_ssh_keys}' \
+          -var 'storage_ssh_keys=${self.triggers.storage_ssh_keys}' \
+          -var 'vpc=${self.triggers.vpc}' \
+          -var 'compute_subnets=${self.triggers.compute_subnets}' \
+          -var 'login_subnets=${self.triggers.login_subnets}' \
+          -var 'storage_subnets=${self.triggers.storage_subnets}' \
+          -var 'protocol_subnets=${self.triggers.protocol_subnets}' \
+          -var 'bastion_security_group_id=${self.triggers.bastion_security_group_id}' \
+          -var 'bastion_public_key_content=${self.triggers.bastion_public_key_content}' \
+          -var 'bastion_ssh_keys=[]' \
+          -var 'enable_bootstrap=false' \
+          -var 'enable_bastion=false' \
+          -var 'boot_volume_encryption_key=${self.triggers.boot_volume_encryption_key}' \
+          -var 'dns_instance_id=${self.triggers.dns_instance_id}' \
+          -var 'dns_custom_resolver_id=${self.triggers.dns_custom_resolver_id}' \
+          -var 'enable_landing_zone=false' \
+          -var 'ibmcloud_api_key=${self.triggers.ibmcloud_api_key}'          
+    EOF
+    ]
+  }
+
+  depends_on = [
+    module.landing_zone,
+    module.bootstrap,
+    module.bastion,
+    module.dns,
+    time_sleep.wait_150_seconds,
+    null_resource.bootstrap_resources_provisioner
+  ]
+}
+
 module "landing_zone_vsi" {
   source                     = "../../modules/landing_zone_vsi"
   ibmcloud_api_key           = var.ibmcloud_api_key

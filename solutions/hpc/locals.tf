@@ -22,6 +22,7 @@ locals {
   # dependency: landing_zone -> bootstrap -> landing_zone_vsi
   bastion_security_group_id  = var.bastion_security_group_id != null ? var.bastion_security_group_id : module.bastion.bastion_security_group_id
   bastion_public_key_content = var.bastion_public_key_content != null ? var.bastion_public_key_content : module.bastion.bastion_public_key_content
+  bastion_private_key_content = var.enable_bastion ? module.bastion.bastion_private_key_content : null
   bastion_ssh_keys = module.bastion.bastion_ssh_keys
 
   # dependency: landing_zone -> landing_zone_vsi
@@ -108,6 +109,7 @@ locals {
   storage_instances_data  = var.enable_bootstrap ? [] : flatten([module.landing_zone_vsi.storage_vsi_data, module.landing_zone_vsi.protocol_vsi_data])
   protocol_instances_data = var.enable_bootstrap ? [] : flatten([module.landing_zone_vsi.protocol_vsi_data])
   bootstrap_instances_data  = var.enable_bootstrap ? flatten([module.bootstrap.bootstrap_vsi_data]) : []
+  bootstrap_private_ip = var.enable_bootstrap ? local.bootstrap_instances_data[0]["ipv4_address"] : null
 
   compute_dns_records = var.enable_bootstrap ? [] : [
     for instance in local.compute_instances_data :
@@ -148,4 +150,12 @@ locals {
   storage_private_key_path = "storage_id_rsa" #checkov:skip=CKV_SECRET_6
   compute_playbook_path    = "compute_ssh.yaml"
   storage_playbook_path    = "storage_ssh.yaml"
+}
+
+# locals needed for Bootstrap null resource
+locals {
+  bootstrap_path                = "/opt/IBM"
+  remote_ansible_path           = format("%s/terraform-ibm-hpc", local.bootstrap_path)
+  da_hpc_repo_url               = "https://github.com/terraform-ibm-modules/terraform-ibm-hpc"
+  da_hpc_repo_tag               = "bootstrap_userdata" ###### change it to main in future
 }
