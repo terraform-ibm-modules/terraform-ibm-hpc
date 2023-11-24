@@ -85,6 +85,7 @@ resource "time_sleep" "wait_150_seconds" {
 }
 
 resource "null_resource" "bootstrap_resources_provisioner" {
+  count = (var.enable_bastion && var.enable_bootstrap) ? 1 : 0
   connection {
     type                = "ssh"
     host                = local.bootstrap_private_ip
@@ -137,6 +138,7 @@ resource "null_resource" "bootstrap_resources_provisioner" {
 }
 
 resource "null_resource" "bootstrap_resources_destroyer" {
+  count = (var.enable_bastion && var.enable_bootstrap) ? 1 : 0
   triggers = {
     bootstrap_private_ip = local.bootstrap_private_ip
     bastion_private_key_content = local.bastion_private_key_content
