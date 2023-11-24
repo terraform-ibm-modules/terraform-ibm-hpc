@@ -46,7 +46,7 @@
                     "label": "Advanced",
                     "name": "advanced",
                     "install_type": "fullstack",
-                    "working_directory": "solution/hpc",
+                    "working_directory": "solutions/hpc",
                     "compliance": {
                         "authority": "scc-v3",
                         "profiles": [
