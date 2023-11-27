@@ -1,0 +1,164 @@
+{
+    "products": [
+        {
+            "name": "terraform-ibm-modules-terraform-ibm-hpc-ad6e71e",
+            "label": "HPC Deployable Architecture",
+            "product_kind": "solution",
+            "tags": [
+                "Deployable Architecture",
+                "DA",
+                "HPC",
+                "IBM Cloud HPC",
+                "ibm_created",
+                "target_terraform",
+                "terraform",
+                "reference_architecture",
+                "solution"
+            ],
+            "keywords": [
+                "HPC",
+                "vpc",
+                "DA",
+                "Deployable Architecture",
+                "terraform",
+                "solution"
+            ],
+            "short_description": "Deploy your high performance computing (HPC) cluster with IBM scheduling software for compute intensive workloads.",
+            "long_description": "**Before you begin deploying IBM Cloud HPC, make sure that you meet the prerequisites listed in [the step-by-step guide](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-before-you-begin-deploying).**\n\nIBM Cloud HPC is a deployable architecture where you can deploy both cloud compute resources (vCPU resources) and HPC scheduling software for your compute-intensive HPC workloads. You can reserve capacity on a recurring hourly basis from a dedicated IBM Cloud HPC resource pool.",
+            "provider_name": "IBM",
+            "offering_docs_url": "https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-overview",
+            "features": [
+                {
+                    "title": "Reserve HPC compute on an hourly basis",
+                    "description": "Reserve HPC compute capacity on a recurring hourly basis. This reserved time slot and capacity cannot be preempted by IBM."
+                },
+                {
+                    "title": "HPC infrastructure bundled with LSF scheduling software",
+                    "description": "Create a cluster with IBM Spectrum LSF in its own subnet and security group for HPC administrators to log in, submit, and manage HPC jobs."
+                },
+                {
+                    "title": "Automatic compute scaling with LSF resource connector",
+                    "description": "Automatically scale up compute resources based on workload demand. Compute resources are automatically scaled down when no longer required."
+                }
+            ],
+            "flavors": [
+                {
+                    "label": "Advanced",
+                    "name": "advanced",
+                    "install_type": "fullstack",
+                    "working_directory": "solutions/hpc",
+                    "compliance": {
+                        "authority": "scc-v3",
+                        "profiles": [
+                            {
+                                "profile_name": "IBM Cloud Framework for Financial Services",
+                                "profile_version": "1.5.0"
+                            }
+                        ]
+                    },
+                    "release_notes_url": "https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-release-notes",
+                    "configuration": [
+                        {
+                            "key": "ibmcloud_api_key",
+                            "type": "password",
+                            "description": "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required.",
+                            "required": true
+                        },
+                        {
+                            "key": "nsd_details",
+                            "type": "array",
+                            "default_value": null,
+                            "description": "Storage scale NSD details",
+                            "hidden": true
+                        }
+                    ],
+                    "iam_permissions": [
+                        {
+                            "role_crns": [
+                                "crn:v1:bluemix:public:iam::::serviceRole:Manager"
+                            ],
+                            "service_name": "appid"
+                        },
+                        {
+                            "role_crns": [
+                                "crn:v1:bluemix:public:iam::::serviceRole:Manager"
+                            ],
+                            "service_name": "cloud-object-storage"
+                        },
+                        {
+                            "role_crns": [
+                                "crn:v1:bluemix:public:iam::::serviceRole:Manager"
+                            ],
+                            "service_name": "hs-crypto"
+                        },
+                        {
+                            "role_crns": [
+                                "crn:v1:bluemix:public:iam::::role:Administrator"
+                            ],
+                            "service_name": "iam-identity"
+                        },
+                        {
+                            "role_crns": [
+                                "crn:v1:bluemix:public:iam::::serviceRole:Manager"
+                            ],
+                            "service_name": "kms"
+                        },
+                        {
+                            "role_crns": [
+                                "crn:v1:bluemix:public:iam::::role:Administrator"
+                            ],
+                            "service_name": "is.vpc"
+                        }
+                    ],
+                    "architecture": {
+                        "descriptions": "",
+                        "features": [
+                            {
+                                "title": "Separate VPC for HPC workloads",
+                                "description": "Yes"
+                            },
+                            {
+                                "title": "Virtual Server Instances for every subnet",
+                                "description": "Yes"
+                            },
+                            {
+                                "title": "Increases security with Key Management",
+                                "description": "Yes"
+                            },
+                            {
+                                "title": "Reduces failure events by using multizone regions",
+                                "description": "Yes"
+                            },
+                            {
+                                "title": "Collects and stores Internet Protocol (IP) traffic information with Activity Tracker and Flow Logs",
+                                "description": "Yes"
+                            },
+                            {
+                                "title": "Securely connects to multiple networks with a site-to-site virtual private network",
+                                "description": "Yes"
+                            },
+                            {
+                                "title": "Simplifies risk management and demonstrates regulatory compliance with Financial Services",
+                                "description": "Yes"
+                            },
+                            {
+                                "title": "Uses Floating IP address for access through the public internet",
+                                "description": "No"
+                            }
+                        ],
+                        "diagrams": [
+                            {
+                                "diagram": {
+                                    "caption": "HPC variation",
+                                    "url": "https://raw.githubusercontent.com/terraform-ibm-modules/terraform-ibm-landing-zone/main/reference-architectures/vsi-vsi.drawio.svg",
+                                    "type": "image/svg+xml"
+                                },
+                                "description": "The HPC variation of the deployable architecture is based on the IBM Cloud for Financial Services reference architecture. The architecture creates a customizable and secure infrastructure, with virtual servers, to run your workloads with a Virtual Private Cloud (VPC) in multizone regions."
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

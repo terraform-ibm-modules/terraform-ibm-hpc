@@ -14,7 +14,6 @@ variable "storage_type" {
   default     = "scratch"
   description = "Select the required storage type(scratch/persistent/eval)."
 }
-*/
 
 variable "ibm_customer_number" {
   type        = string
@@ -27,7 +26,7 @@ variable "ibm_customer_number" {
     error_message = "The IBM customer number input value cannot have special characters."
   }
 }
-
+*/
 ##############################################################################
 # Account Variables
 ##############################################################################
