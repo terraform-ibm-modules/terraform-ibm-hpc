@@ -65,7 +65,7 @@ locals {
       direction = "outbound"
       remote    = cidr
     }],
-    {
+    var.enable_bootstrap ? [{
         name      = "allow-outbound-port-443"
         direction = "outbound"
         remote    = "0.0.0.0/0"
@@ -73,7 +73,7 @@ locals {
             port_min = 443
             port_max = 443
         }
-    }    
+    }] : []
   ])
 
   # Derived configs
