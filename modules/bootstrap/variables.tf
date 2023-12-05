@@ -19,6 +19,12 @@ variable "resource_group" {
   default     = null
 }
 
+variable "resource_group_id" {
+  description = "String describing resource groups to create or reference"
+  type        = string
+  default     = null
+}
+
 ##############################################################################
 # Module Level Variables
 ##############################################################################

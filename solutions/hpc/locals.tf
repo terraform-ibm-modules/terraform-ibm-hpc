@@ -72,7 +72,9 @@ locals {
   # dependency: landing_zone -> DNS
   # resource_group_id = module.landing_zone.resource_group_id == [] ? data.ibm_resource_group.resource_group[0].id : one(values(one(module.landing_zone.resource_group_id)))
 
-  resource_groups = {
+  resource_group = var.resource_group == null ? "workload-rg" : var.resource_group
+
+  resource_group_ids = {
     # management_rg = var.resource_group == null ? module.landing_zone.resource_group_id[0]["management-rg"] : one(values(one(module.landing_zone.resource_group_id)))
     service_rg = var.resource_group == null ? module.landing_zone.resource_group_id[0]["service-rg"] : one(values(one(module.landing_zone.resource_group_id)))
     workload_rg = var.resource_group == null ? module.landing_zone.resource_group_id[0]["workload-rg"] : one(values(one(module.landing_zone.resource_group_id)))

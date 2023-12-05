@@ -15,10 +15,10 @@ data "ibm_is_vpc" "itself" {
   name  = var.vpc
 }
 
-data "ibm_resource_group" "resource_group" {
-  count = var.resource_group == null ? 0 : 1
-  name = var.resource_group
-}
+# data "ibm_resource_group" "resource_group" {
+#   count = var.resource_group == null ? 0 : 1
+#   name = var.resource_group
+# }
 
 /*
 data "ibm_is_subnet" "itself" {
