@@ -15,7 +15,7 @@ module "login_sg" {
   source                       = "terraform-ibm-modules/security-group/ibm"
   version                      = "1.0.1"
   add_ibm_cloud_internal_rules = true
-  resource_group               = local.resource_group_id
+  resource_group               = var.resource_group
   security_group_name          = format("%s-login-sg", local.prefix)
   security_group_rules         = local.login_security_group_rules
   vpc_id                       = var.vpc_id
@@ -26,7 +26,7 @@ module "compute_sg" {
   source                       = "terraform-ibm-modules/security-group/ibm"
   version                      = "1.0.1"
   add_ibm_cloud_internal_rules = true
-  resource_group               = local.resource_group_id
+  resource_group               = var.resource_group
   security_group_name          = format("%s-comp-sg", local.prefix)
   security_group_rules         = local.compute_security_group_rules
   vpc_id                       = var.vpc_id
@@ -37,7 +37,7 @@ module "storage_sg" {
   source                       = "terraform-ibm-modules/security-group/ibm"
   version                      = "1.0.1"
   add_ibm_cloud_internal_rules = true
-  resource_group               = local.resource_group_id
+  resource_group               = var.resource_group
   security_group_name          = format("%s-strg-sg", local.prefix)
   security_group_rules         = local.storage_security_group_rules
   vpc_id                       = var.vpc_id
@@ -54,7 +54,7 @@ module "login_vsi" {
   image_id                      = local.login_image_id
   machine_type                  = var.login_instances[count.index]["profile"]
   prefix                        = count.index == 0 ? local.login_node_name : format("%s-%s", local.login_node_name, count.index)
-  resource_group_id             = local.resource_group_id
+  resource_group_id             = var.resource_group
   enable_floating_ip            = false
   security_group_ids            = module.login_sg[*].security_group_id
   ssh_key_ids                   = local.login_ssh_keys
@@ -77,7 +77,7 @@ module "management_vsi" {
   image_id                      = local.management_image_id
   machine_type                  = var.management_instances[count.index]["profile"]
   prefix                        = count.index == 0 ? local.management_node_name : format("%s-%s", local.management_node_name, count.index)
-  resource_group_id             = local.resource_group_id
+  resource_group_id             = var.resource_group
   enable_floating_ip            = false
   security_group_ids            = module.compute_sg[*].security_group_id
   ssh_key_ids                   = local.management_ssh_keys
@@ -102,7 +102,7 @@ module "compute_vsi" {
   image_id                      = local.compute_image_id
   machine_type                  = var.static_compute_instances[count.index]["profile"]
   prefix                        = count.index == 0 ? local.compute_node_name : format("%s-%s", local.compute_node_name, count.index)
-  resource_group_id             = local.resource_group_id
+  resource_group_id             = var.resource_group
   enable_floating_ip            = false
   security_group_ids            = module.compute_sg[*].security_group_id
   ssh_key_ids                   = local.compute_ssh_keys
@@ -127,7 +127,7 @@ module "storage_vsi" {
   image_id                      = local.storage_image_id
   machine_type                  = var.storage_instances[count.index]["profile"]
   prefix                        = count.index == 0 ? local.storage_node_name : format("%s-%s", local.storage_node_name, count.index)
-  resource_group_id             = local.resource_group_id
+  resource_group_id             = var.resource_group
   enable_floating_ip            = false
   security_group_ids            = module.storage_sg[*].security_group_id
   ssh_key_ids                   = local.storage_ssh_keys
@@ -153,7 +153,7 @@ module "protocol_vsi" {
   image_id                      = local.protocol_image_id
   machine_type                  = var.protocol_instances[count.index]["profile"]
   prefix                        = count.index == 0 ? local.protocol_node_name : format("%s-%s", local.protocol_node_name, count.index)
-  resource_group_id             = local.resource_group_id
+  resource_group_id             = var.resource_group
   enable_floating_ip            = false
   security_group_ids            = module.storage_sg[*].security_group_id
   ssh_key_ids                   = local.protocol_ssh_keys

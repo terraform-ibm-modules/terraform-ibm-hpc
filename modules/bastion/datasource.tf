@@ -1,6 +1,6 @@
-data "ibm_resource_group" "itself" {
-  name = var.resource_group
-}
+# data "ibm_resource_group" "itself" {
+#   name = var.resource_group
+# }
 
 data "ibm_is_image" "bastion" {
   name = local.bastion_image_name

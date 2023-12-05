@@ -8,7 +8,7 @@ module "bootstrap_vsi" {
   image_id                      = local.bootstrap_image_id
   machine_type                  = var.bootstrap_instance_profile
   prefix                        = local.bootstrap_node_name
-  resource_group_id             = local.resource_group_id
+  resource_group_id             = var.resource_group
   enable_floating_ip            = false
   security_group_ids            = var.security_group_ids
   ssh_key_ids                   = var.ssh_keys

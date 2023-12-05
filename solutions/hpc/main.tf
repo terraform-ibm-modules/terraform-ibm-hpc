@@ -34,7 +34,7 @@ module "landing_zone" {
 module "bastion" {
   source                     = "./../../modules/bastion"
   ibmcloud_api_key           = var.ibmcloud_api_key
-  resource_group             = var.resource_group
+  resource_group             = local.resource_groups["workload_rg"]
   prefix                     = var.prefix
   zones                      = var.zones
   vpc_id                     = local.vpc_id
@@ -52,7 +52,7 @@ module "bastion" {
 module "bootstrap" {
   source                     = "./../../modules/bootstrap"
   ibmcloud_api_key           = var.ibmcloud_api_key
-  resource_group             = var.resource_group
+  resource_group             = local.resource_groups["workload_rg"]
   prefix                     = var.prefix
   zones                      = var.zones
   vpc                        = local.vpc
@@ -217,7 +217,7 @@ resource "null_resource" "bootstrap_resources_destroyer" {
 module "landing_zone_vsi" {
   source                     = "../../modules/landing_zone_vsi"
   ibmcloud_api_key           = var.ibmcloud_api_key
-  resource_group             = var.resource_group
+  resource_group             = local.resource_groups["workload_rg"]
   prefix                     = var.prefix
   zones                      = var.zones
   vpc_id                     = local.vpc_id
@@ -260,7 +260,7 @@ module "dns" {
   source                 = "./../../modules/dns"
   ibmcloud_api_key       = var.ibmcloud_api_key
   prefix                 = var.prefix
-  resource_group_id      = local.resource_group_id
+  resource_group_id      = local.resource_groups["service_rg"]
   vpc_crn                = local.vpc_crn
   subnets_crn            = local.subnets_crn
   dns_instance_id        = var.dns_instance_id

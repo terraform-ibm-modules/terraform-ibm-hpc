@@ -27,11 +27,11 @@ locals {
       create = local.create_resource_group,
       use_prefix : false
     },
-    {
-      name   = "management-rg",
-      create = local.create_resource_group,
-      use_prefix : false
-    },
+    # {
+    #   name   = "management-rg",
+    #   create = local.create_resource_group,
+    #   use_prefix : false
+    # },
     {
       name   = "workload-rg",
       create = local.create_resource_group,
