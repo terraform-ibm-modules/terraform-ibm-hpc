@@ -508,11 +508,11 @@ variable "protocol_subnets" {
   description = "Subnets to launch the bastion host."
 }
 
-variable "kms_encryption_enabled" {
-  description = "Enable Key management"
-  type        = bool
-  default     = true
-}
+# variable "kms_encryption_enabled" {
+#   description = "Enable Key management"
+#   type        = bool
+#   default     = true
+# }
 
 variable "boot_volume_encryption_key" {
   type        = string

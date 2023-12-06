@@ -145,8 +145,8 @@ locals {
 
 # locals needed for inventory
 locals {
-  compute_hosts          = var.enable_bootstrap ? [] : local.compute_instances_data[*]["ipv4_address"]
-  storage_hosts          = var.enable_bootstrap ? [] : local.storage_instances_data[*]["ipv4_address"]
+  compute_hosts = var.enable_bootstrap ? [] : local.compute_instances_data[*]["ipv4_address"]
+  storage_hosts = var.enable_bootstrap ? [] : local.storage_instances_data[*]["ipv4_address"]
   # bootstrap_hosts        = var.enable_bootstrap ? local.bootstrap_instances_data[*]["ipv4_address"] : []
   compute_inventory_path = "compute.ini"
   storage_inventory_path = "storage.ini"

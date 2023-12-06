@@ -58,7 +58,6 @@ module "bootstrap" {
   zones                      = var.zones
   vpc                        = local.vpc
   vpc_id                     = local.vpc_id
-  network_cidr               = var.network_cidr
   enable_bastion             = var.enable_bastion
   bastion_subnets            = local.bastion_subnets
   enable_bootstrap           = var.enable_bootstrap
