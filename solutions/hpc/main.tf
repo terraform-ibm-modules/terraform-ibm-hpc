@@ -123,7 +123,7 @@ resource "null_resource" "bootstrap_resources_provisioner" {
           -var 'dns_instance_id=${local.dns_instance_id}' \
           -var 'dns_custom_resolver_id=${local.dns_custom_resolver_id}' \
           -var 'enable_landing_zone=false' \
-          -var 'ibmcloud_api_key=${var.ibmcloud_api_key}'          
+          -var 'ibmcloud_api_key=${var.ibmcloud_api_key}'
     EOF
     ]
   }
@@ -201,7 +201,7 @@ resource "null_resource" "bootstrap_resources_destroyer" {
           -var 'dns_instance_id=${self.triggers.dns_instance_id}' \
           -var 'dns_custom_resolver_id=${self.triggers.dns_custom_resolver_id}' \
           -var 'enable_landing_zone=false' \
-          -var 'ibmcloud_api_key=${self.triggers.ibmcloud_api_key}'          
+          -var 'ibmcloud_api_key=${self.triggers.ibmcloud_api_key}'
     EOF
     ]
   }
