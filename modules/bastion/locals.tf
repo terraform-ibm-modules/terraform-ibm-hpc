@@ -23,13 +23,13 @@ locals {
     var.network_cidr
   ]) : flatten([var.allowed_cidr, var.network_cidr])
 
-  enable_bastion   = var.enable_bastion || var.enable_bootstrap
-  bastion_node_name   = format("%s-%s", local.prefix, "bastion")
+  enable_bastion    = var.enable_bastion || var.enable_bootstrap
+  bastion_node_name = format("%s-%s", local.prefix, "bastion")
 
   bastion_machine_type = "cx2-4x8"
   bastion_image_name   = "ibm-ubuntu-22-04-3-minimal-amd64-1"
 
-  bastion_image_id   = data.ibm_is_image.bastion.id
+  bastion_image_id = data.ibm_is_image.bastion.id
 
   bastion_ssh_keys = [for name in var.ssh_keys : data.ibm_is_ssh_key.bastion[name].id]
 
@@ -66,13 +66,13 @@ locals {
       remote    = cidr
     }],
     var.enable_bootstrap ? [{
-        name      = "allow-outbound-port-443"
-        direction = "outbound"
-        remote    = "0.0.0.0/0"
-        tcp = {
-            port_min = 443
-            port_max = 443
-        }
+      name      = "allow-outbound-port-443"
+      direction = "outbound"
+      remote    = "0.0.0.0/0"
+      tcp = {
+        port_min = 443
+        port_max = 443
+      }
     }] : []
   ])
 

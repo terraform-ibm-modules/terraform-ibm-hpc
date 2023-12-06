@@ -17,7 +17,7 @@ data "ibm_is_vpc" "itself" {
 
 data "ibm_resource_group" "resource_group" {
   count = var.resource_group == null ? 0 : 1
-  name = var.resource_group
+  name  = var.resource_group
 }
 
 /*

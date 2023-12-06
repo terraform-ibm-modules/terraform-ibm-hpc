@@ -139,7 +139,7 @@ locals {
       source      = var.network_cidr
     }
   ]
-   network_acl_443_rules = [
+  network_acl_443_rules = [
     {
       name        = "allow-inbound-443"
       action      = "allow"

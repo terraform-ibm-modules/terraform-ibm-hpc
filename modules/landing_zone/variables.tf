@@ -246,7 +246,7 @@ variable "enable_vpc_flow_logs" {
 ##############################################################################
 
 variable "key_management" {
-  type        = string
+  type = string
   # default     = null
   description = "null/key_protect/hs_crypto"
 }

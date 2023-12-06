@@ -81,7 +81,7 @@ module "bootstrap" {
 }
 
 resource "time_sleep" "wait_150_seconds" {
-  count = (var.enable_bastion && var.enable_bootstrap) ? 1 : 0
+  count           = (var.enable_bastion && var.enable_bootstrap) ? 1 : 0
   create_duration = "150s"
   depends_on      = [module.bootstrap]
 }
@@ -127,7 +127,7 @@ resource "null_resource" "bootstrap_resources_provisioner" {
     EOF
     ]
   }
-  
+
   # triggers = {
   #   always_run = "${timestamp()}"
   # }
@@ -142,27 +142,27 @@ resource "null_resource" "bootstrap_resources_provisioner" {
 resource "null_resource" "bootstrap_resources_destroyer" {
   count = (var.enable_bastion && var.enable_bootstrap) ? 1 : 0
   triggers = {
-    bootstrap_private_ip = local.bootstrap_private_ip
+    bootstrap_private_ip        = local.bootstrap_private_ip
     bastion_private_key_content = local.bastion_private_key_content
-    bastion_fip = local.bastion_fip
-    remote_ansible_path = local.remote_ansible_path
-    resource_group = var.resource_group
-    prefix = var.prefix
-    zones = jsonencode(var.zones)
-    compute_ssh_keys = jsonencode(var.compute_ssh_keys)
-    login_ssh_keys = jsonencode(var.login_ssh_keys)
-    storage_ssh_keys = jsonencode(var.storage_ssh_keys)
-    vpc = local.vpc
-    compute_subnets = jsonencode(local.compute_subnets)
-    login_subnets = jsonencode(local.login_subnets)
-    storage_subnets = jsonencode(local.storage_subnets)
-    protocol_subnets = jsonencode(local.protocol_subnets)
-    bastion_security_group_id = local.bastion_security_group_id
-    bastion_public_key_content = local.bastion_public_key_content
-    boot_volume_encryption_key = local.boot_volume_encryption_key
-    dns_instance_id = local.dns_instance_id
-    dns_custom_resolver_id = local.dns_custom_resolver_id
-    ibmcloud_api_key = var.ibmcloud_api_key
+    bastion_fip                 = local.bastion_fip
+    remote_ansible_path         = local.remote_ansible_path
+    resource_group              = var.resource_group
+    prefix                      = var.prefix
+    zones                       = jsonencode(var.zones)
+    compute_ssh_keys            = jsonencode(var.compute_ssh_keys)
+    login_ssh_keys              = jsonencode(var.login_ssh_keys)
+    storage_ssh_keys            = jsonencode(var.storage_ssh_keys)
+    vpc                         = local.vpc
+    compute_subnets             = jsonencode(local.compute_subnets)
+    login_subnets               = jsonencode(local.login_subnets)
+    storage_subnets             = jsonencode(local.storage_subnets)
+    protocol_subnets            = jsonencode(local.protocol_subnets)
+    bastion_security_group_id   = local.bastion_security_group_id
+    bastion_public_key_content  = local.bastion_public_key_content
+    boot_volume_encryption_key  = local.boot_volume_encryption_key
+    dns_instance_id             = local.dns_instance_id
+    dns_custom_resolver_id      = local.dns_custom_resolver_id
+    ibmcloud_api_key            = var.ibmcloud_api_key
   }
 
   connection {
@@ -178,7 +178,7 @@ resource "null_resource" "bootstrap_resources_destroyer" {
 
   provisioner "remote-exec" {
     when       = destroy
-    on_failure = fail    
+    on_failure = fail
     inline = [<<EOF
       sudo -E terraform -chdir=${self.triggers.remote_ansible_path} init && sudo -E terraform -chdir=${self.triggers.remote_ansible_path} destroy -auto-approve \
           -var 'resource_group=${self.triggers.resource_group}' \
