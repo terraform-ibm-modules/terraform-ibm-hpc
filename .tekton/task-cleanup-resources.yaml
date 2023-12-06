@@ -1,0 +1,132 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: cleanup-resources
+spec:
+  params:
+    - name: terraform_version
+      description: terraform_version 
+      default: "1.5.7"
+    - name: pipeline-debug
+      description: Pipeline debug mode. Value can be true or false. Default to false
+      default: "false"
+    - name: ibmcloud_api_key
+      description: the api key used for authentication
+      default: ibmcloud_api_key
+    - name: bastion_ssh_keys
+      description: bastion_ssh_keys for login to clusters
+      default: ""
+    - name: compute_ssh_keys
+      description: compute_ssh_keys for login to clusters
+      default: ""
+    - name: login_ssh_keys
+      description: login_ssh_keys for login to clusters
+      default: ""
+    - name: storage_ssh_keys
+      description: storage_ssh_keys for login to clusters
+      default: ""
+    - name: zones
+      description: zones for provisioning the clusters
+      default: ""
+    - name: prefix
+      description: prefix for provisioning the clusters
+      default: prefix
+    - name: resource_group
+      description: resource group for provisioning the clusters
+      default: resource_group
+    - name: allowed_cidr
+      description: allowed_cidr for provisioning the clusters
+      default: ""
+    - name: enable_cos_integration
+      description: enable_cos_integration 
+      default: "false"
+    - name: enable_atracker
+      description: enable_atracker 
+      default: "false"
+    - name: enable_vpc_flow_logs
+      description: enable_vpc_flow_logs 
+      default: "false"
+    - name: key_management
+      description: key_management 
+      default: " "
+      
+  workspaces:
+    - name: output
+      description: The git repo will be cloned onto the volume backing this workspace
+      mountPath: /artifacts
+
+  stepTemplate:
+    env:
+      - name: PIPELINE_DEBUG
+        value: $(params.pipeline-debug)
+  steps:
+    - name: cleanup-resources
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      env:
+        - name: ibmcloud_api_key
+          value: $(params.ibmcloud_api_key)
+        - name: bastion_ssh_keys
+          value: $(params.bastion_ssh_keys)
+        - name: compute_ssh_keys
+          value: $(params.compute_ssh_keys)
+        - name: login_ssh_keys
+          value: $(params.login_ssh_keys)
+        - name: storage_ssh_keys
+          value: $(params.storage_ssh_keys)
+        - name: zones
+          value: $(params.zones)
+        - name: prefix
+          value: $(params.prefix)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: allowed_cidr
+          value: $(params.allowed_cidr)
+        - name: enable_cos_integration
+          value: $(params.enable_cos_integration)
+        - name: enable_atracker
+          value: $(params.enable_atracker)
+        - name: enable_vpc_flow_logs
+          value: $(params.enable_vpc_flow_logs)
+        - name: key_management
+          value: $(params.key_management)
+        - name: PIPELINE_DEBUG
+          value: $(params.pipeline-debug)
+        - name: terraform_version
+          value: $(params.terraform_version)
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          unzip terraform_${terraform_version}_linux_amd64.zip
+          mv terraform /usr/local/bin/terraform
+
+          strToArray () {
+              declare -a str_to_array=($(echo $1 | jq -Rc 'split(",")'))
+              echo $str_to_array
+                }
+
+          terraform destroy -auto-approve -lock=false \
+          -var resource_group=$resource_group \
+          -var zones=$(strToArray $zones) \
+          -var bastion_ssh_keys=$(strToArray $bastion_ssh_keys) \
+          -var compute_ssh_keys=$(strToArray $compute_ssh_keys) \
+          -var login_ssh_keys=$(strToArray $login_ssh_keys) \
+          -var storage_ssh_keys=$(strToArray $storage_ssh_keys) \
+          -var prefix=$prefix \
+          -var ibmcloud_api_key=$ibmcloud_api_key \
+          -var allowed_cidr=$(strToArray $allowed_cidr) \
+          -var enable_cos_integration=$enable_cos_integration \
+          -var enable_atracker=$enable_atracker \
+          -var enable_vpc_flow_logs=$enable_vpc_flow_logs \
+          -var key_management=$key_management

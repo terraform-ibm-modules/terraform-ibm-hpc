@@ -1,0 +1,553 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: git-clone-repo
+spec:
+  params:
+    - name: git-access-token
+      description: the token to access the git repository for the clone operations
+    - name: repository
+      description: the git repo
+    - name: branch
+      description: the branch for the git repo
+    - name: revision
+      description: the git revision/commit for the git repo
+      default: ""
+    - name: terraform_version
+      description: terraform_version 
+      default: "1.5.7"
+    - name: golang_version
+      description: golang_version 
+      default: "1.21.0"
+    - name: ansible_version
+      description: ansible_version 
+      default: "4.10.0"
+    - name: ansible_core_version
+      description: ansible_core_version 
+      default: "2.11.12"
+    - name: terraform_provisioner_version
+      description: terraform_provisioner_version 
+      default: "2.3.3"
+    - name: python_version
+      description: python_version 
+      default: "3.9"
+    - name: git-client-image
+      description: The image to use to run git clone commands
+      default: alpine/git
+    - name: git-max-retry
+      description: max retry for the git clone operation
+      default: "1"
+    - name: directory-name
+      description: |
+        name of the new directory to clone into.
+        Default to . in order to clone at the root of the workspace
+      default: "."
+    - name: pipeline-debug
+      description: Pipeline debug mode. Value can be true or false. Default to false
+      default: "false"
+    - name: ibmcloud_api_key
+      description: the api key used for authentication
+      default: ibmcloud_api_key
+    - name: bastion_ssh_keys
+      description: bastion_ssh_keys for login to clusters
+      default: ""
+    - name: compute_ssh_keys
+      description: compute_ssh_keys for login to clusters
+      default: ""
+    - name: login_ssh_keys
+      description: login_ssh_keys for login to clusters
+      default: ""
+    - name: storage_ssh_keys
+      description: storage_ssh_keys for login to clusters
+      default: ""
+    - name: zones
+      description: zones for provisioning the clusters
+      default: ""
+    - name: prefix
+      description: prefix for provisioning the clusters
+      default: prefix
+    - name: resource_group
+      description: resource group for provisioning the clusters
+      default: resource_group
+    - name: allowed_cidr
+      description: allowed_cidr for provisioning the clusters
+      default: ""
+    - name: enable_cos_integration
+      description: enable_cos_integration 
+      default: "false"
+    - name: enable_atracker
+      description: enable_atracker 
+      default: "false"
+    - name: enable_vpc_flow_logs
+      description: enable_vpc_flow_logs 
+      default: "false"
+    - name: key_management
+      description: key_management 
+      default: " "
+    - name: continuous-delivery-context-secret
+      description: name of the secret containing the continuous delivery pipeline context secrets
+      default: secure-properties
+
+  results:
+    - name: git-repository
+      description: The cloned repository
+    - name: git-branch
+      description: The active branch for the repository
+    - name: git-commit
+      description: The current commit id that was cloned
+    - name: git-user
+      description: The auth user that cloned the repository
+      
+  workspaces:
+    - name: output
+      description: The git repo will be cloned onto the volume backing this workspace
+      mountPath: /artifacts
+    - name: secrets
+      mountPath: /secrets
+
+  stepTemplate:
+    env:
+      - name: PIPELINE_DEBUG
+        value: $(params.pipeline-debug)
+
+  steps:
+    - name: cloning-repository
+      image: $(params.git-client-image)
+      env:
+        - name: REPOSITORY
+          value: $(params.repository)
+        - name: BRANCH
+          value: $(params.branch)
+        - name: REVISION
+          value: $(params.revision)
+        - name: DIRECTORY_NAME
+          value: $(params.directory-name)
+      script: |
+        #!/bin/sh
+        set -e -o pipefail
+        if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+        fi
+
+        export HOME="/root"
+        echo $'***** Adding .git at end of Repository if not *****\n'
+        if [[ "$REPOSITORY" != *.git ]]; then
+          echo "Adding .git suffix to Repository URL"
+          REPOSITORY="${REPOSITORY}.git"
+        fi
+
+        echo $'***** Checking Git Token passed or not *****\n'
+        GIT_TOKEN="$(params.git-access-token)"
+        if [ -z "$GIT_TOKEN" ]; then
+          echo "Please pass github access token to clone repository"
+          exit 1
+        else
+          echo "Using git Access Token provided"
+        fi
+
+        echo $'***** Set GIT_Auth_User *****\n'
+        GIT_AUTH_USER="x-oauth-basic"
+
+        echo $'***** Cloning $REPOSITORY *****\n'
+        GIT_URL=$(echo "$REPOSITORY" | sed -e "s/:\/\//:\/\/$GIT_AUTH_USER:$GIT_TOKEN@/g")
+        echo $GIT_URL
+
+        ARTIFACTS_PATH="$(workspaces.output.path)"
+        cd $ARTIFACTS_PATH
+        if [ "$REVISION" ]; then
+          echo $'***** Fetching specific -${REVISION}- commit *****'
+          if [ -z "$BRANCH" ]; then
+            echo $'***** No branch provided *****'
+            _clone_command='git clone -q -n $GIT_URL $DIRECTORY_NAME'
+          elif git ls-remote --heads --exit-code $GIT_URL $BRANCH > /dev/null 2>&1; then
+            _clone_command='git clone -q -b "$BRANCH" $GIT_URL $DIRECTORY_NAME'
+          else
+            echo $'***** Branch $BRANCH does not exists in $REPOSITORY *****'
+            _clone_command='git clone -q -n $GIT_URL $DIRECTORY_NAME'
+          fi
+        else
+          if [ -z "$BRANCH" ]; then
+            echo $'***** No branch provided *****'
+            _clone_command='git clone -q -n $GIT_URL $DIRECTORY_NAME'
+          else
+            _clone_command='git clone -q -b "$BRANCH" $GIT_URL $DIRECTORY_NAME'
+          fi
+        fi
+
+        # ***** Retrying to clone git repo *****
+        _max_retry=$(params.git-max-retry)
+        set +e
+        eval "$_clone_command"
+        _clone_code=$?
+        _retry_counter=1
+        while [ $_retry_counter -le $_max_retry ]; do
+            if [ $_clone_code != 0 ]; then
+              echo "Clone was not successful. Code $_clone_code - Retrying shortly..."
+              sleep 10
+              if [ $_retry_counter -eq $_max_retry ]; then
+                  set -e # reset on the last attempt so we fail if all attemps fail
+              fi
+              eval "$_clone_command"
+              let "_retry_counter++"
+            else
+              break
+            fi
+        done
+        echo "Repository $REPOSITORY successfully cloned"
+
+        GIT_COMMIT=$(git show-ref --head | head -n1 | awk '{print $1}')
+        echo "GIT_REPOSITORY=$REPOSITORY"
+        echo "GIT_AUTH_USER=$GIT_AUTH_USER" 
+        echo "GIT_TOKEN=$GIT_TOKEN" 
+        echo "GIT_COMMIT=$GIT_COMMIT" 
+      
+        # ***** Record task results *****
+        echo -n "${REPOSITORY}" > $(results.git-repository.path)
+        echo -n "${BRANCH}" > $(results.git-branch.path)
+        echo -n "${GIT_COMMIT}" > $(results.git-commit.path)
+        echo -n "${GIT_AUTH_USER}" > $(results.git-user.path)
+
+    - name: pre-requisites-install
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      env:
+        - name: REPOSITORY
+          value: $(params.repository)
+        - name: PIPELINE_DEBUG
+          value: $(params.pipeline-debug)
+        - name: terraform_version
+          value: $(params.terraform_version)
+        - name: golang_version
+          value: $(params.golang_version)
+        - name: ansible_version
+          value: $(params.ansible_version)
+        - name: ansible_core_version
+          value: $(params.ansible_core_version)
+        - name: terraform_provisioner_version
+          value: $(params.terraform_provisioner_version)
+        - name: python_version
+          value: $(params.python_version)
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          TF_DIR="/tmp"
+
+          echo $'***** Installing IBMCLOUD and Plugins *****\n'
+          curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+          ibmcloud plugin install schematics
+          ibmcloud plugin install vpc-infrastructure
+          echo $'***** Installed IBMCLOUD and Plugins *****\n'
+
+          echo $'***** Check Repository Private or Public *****\n'
+          if [[ "$REPOSITORY" == *"github.ibm.com"* ]]; then
+              git config --global url.ssh://git@github.ibm.com/.insteadOf https://github.ibm.com/
+              export GOPRIVATE=github.ibm.com/*
+          fi
+           
+          echo $'***** Installing Golang *****\n'
+          yum install wget -y
+          [ ! -d "$(pwd)/go" ] && 
+          cd $(pwd) && wget https://go.dev/dl/go${golang_version}.linux-amd64.tar.gz && 
+          tar -C $(pwd)/ -xzf go${golang_version}.linux-amd64.tar.gz && 
+          cd $(pwd)/ && 
+          echo "export PATH=\$PATH:$(pwd)/go/bin:\$HOME/go/bin" >> ~/.bashrc && 
+          echo "export GOROOT=$(pwd)/go" >> ~/.bashrc
+          source ~/.bashrc
+          go version
+          which go
+          echo $'***** Golang Installed Successfully *****\n'
+
+          echo $'***** Installing Make *****\n'
+          yum install make
+          make --version 
+          echo $'***** Make Installed *****\n'
+
+          echo $'***** Installing Python *****\n'
+          yum install python${python_version} -y
+          python${python_version} --version
+          echo $'***** Python Installed *****\n'
+
+          echo $'***** Upgrading PIP and Installing Ansible *****\n'
+          python3 -m pip install --upgrade pip
+          pip install --root-user-action=ignore requests
+          python3 -m pip install ansible==${ansible_version} ansible-core==${ansible_core_version}
+          ansible --version
+          echo $'***** PIP Upgraded and Ansible Installed *****\n'
+
+          echo $'***** Installing Terraform-Provisioner *****\n'
+          curl -sL \
+            https://raw.githubusercontent.com/radekg/terraform-provisioner-ansible/master/bin/deploy-release.sh \
+            --output /tmp/deploy-release.sh
+          chmod +x /tmp/deploy-release.sh
+          /tmp/deploy-release.sh -v ${terraform_provisioner_version}
+          rm -rf /tmp/deploy-release.sh
+          echo $'***** Terraform-Provisioner Installed *****\n'
+
+          echo $'***** Installing Terraform *****\n'
+          wget https://releases.hashicorp.com/terraform/${terraform_version}/terraform_${terraform_version}_linux_amd64.zip 
+          unzip terraform_${terraform_version}_linux_amd64.zip
+          mv terraform /usr/local/bin/terraform
+          terraform --version
+          echo $'***** Terraform Installed *****\n'
+
+    - name: hpc-terraform-da-init
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      env:
+        - name: PIPELINE_DEBUG
+          value: $(params.pipeline-debug)
+        - name: terraform_version
+          value: $(params.terraform_version)
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          unzip terraform_${terraform_version}_linux_amd64.zip
+          mv terraform /usr/local/bin/terraform
+
+          terraform init
+
+    - name: hpc-terraform-da-plan
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      env:
+        - name: ibmcloud_api_key
+          value: $(params.ibmcloud_api_key)
+        - name: bastion_ssh_keys
+          value: $(params.bastion_ssh_keys)
+        - name: compute_ssh_keys
+          value: $(params.compute_ssh_keys)
+        - name: login_ssh_keys
+          value: $(params.login_ssh_keys)
+        - name: storage_ssh_keys
+          value: $(params.storage_ssh_keys)
+        - name: zones
+          value: $(params.zones)
+        - name: prefix
+          value: $(params.prefix)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: allowed_cidr
+          value: $(params.allowed_cidr)
+        - name: enable_cos_integration
+          value: $(params.enable_cos_integration)
+        - name: enable_atracker
+          value: $(params.enable_atracker)
+        - name: enable_vpc_flow_logs
+          value: $(params.enable_vpc_flow_logs)
+        - name: key_management
+          value: $(params.key_management)
+        - name: PIPELINE_DEBUG
+          value: $(params.pipeline-debug)
+        - name: terraform_version
+          value: $(params.terraform_version)
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          unzip terraform_${terraform_version}_linux_amd64.zip
+          mv terraform /usr/local/bin/terraform
+
+          strToArray () {
+              declare -a str_to_array=($(echo $1 | jq -Rc 'split(",")'))
+              echo $str_to_array
+                }
+
+          terraform plan -lock=false \
+          -var resource_group=$resource_group \
+          -var zones=$(strToArray $zones) \
+          -var bastion_ssh_keys=$(strToArray $bastion_ssh_keys) \
+          -var compute_ssh_keys=$(strToArray $compute_ssh_keys) \
+          -var login_ssh_keys=$(strToArray $login_ssh_keys) \
+          -var storage_ssh_keys=$(strToArray $storage_ssh_keys) \
+          -var prefix=$prefix \
+          -var ibmcloud_api_key=$ibmcloud_api_key \
+          -var allowed_cidr=$(strToArray $allowed_cidr) \
+          -var enable_cos_integration=$enable_cos_integration \
+          -var enable_atracker=$enable_atracker \
+          -var enable_vpc_flow_logs=$enable_vpc_flow_logs \
+          -var key_management=$key_management
+
+    - name: hpc-terraform-da-apply
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      env:
+        - name: ibmcloud_api_key
+          value: $(params.ibmcloud_api_key)
+        - name: bastion_ssh_keys
+          value: $(params.bastion_ssh_keys)
+        - name: compute_ssh_keys
+          value: $(params.compute_ssh_keys)
+        - name: login_ssh_keys
+          value: $(params.login_ssh_keys)
+        - name: storage_ssh_keys
+          value: $(params.storage_ssh_keys)
+        - name: zones
+          value: $(params.zones)
+        - name: prefix
+          value: $(params.prefix)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: allowed_cidr
+          value: $(params.allowed_cidr)
+        - name: enable_cos_integration
+          value: $(params.enable_cos_integration)
+        - name: enable_atracker
+          value: $(params.enable_atracker)
+        - name: enable_vpc_flow_logs
+          value: $(params.enable_vpc_flow_logs)
+        - name: key_management
+          value: $(params.key_management)
+        - name: PIPELINE_DEBUG
+          value: $(params.pipeline-debug)
+        - name: terraform_version
+          value: $(params.terraform_version)
+        - name: golang_version
+          value: $(params.golang_version)
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+          
+          unzip terraform_${terraform_version}_linux_amd64.zip
+          mv terraform /usr/local/bin/terraform
+
+          cd $(pwd)/ && 
+          echo "export PATH=\$PATH:$(pwd)/go/bin:\$HOME/go/bin" >> ~/.bashrc && 
+          echo "export GOROOT=$(pwd)/go" >> ~/.bashrc
+          source ~/.bashrc
+          go version
+
+          strToArray () {
+              declare -a str_to_array=($(echo $1 | jq -Rc 'split(",")'))
+              echo $str_to_array
+                }
+
+          terraform apply -auto-approve -lock=false \
+          -var resource_group=$resource_group \
+          -var zones=$(strToArray $zones) \
+          -var bastion_ssh_keys=$(strToArray $bastion_ssh_keys) \
+          -var compute_ssh_keys=$(strToArray $compute_ssh_keys) \
+          -var login_ssh_keys=$(strToArray $login_ssh_keys) \
+          -var storage_ssh_keys=$(strToArray $storage_ssh_keys) \
+          -var prefix=$prefix \
+          -var ibmcloud_api_key=$ibmcloud_api_key \
+          -var allowed_cidr=$(strToArray $allowed_cidr) \
+          -var enable_cos_integration=$enable_cos_integration \
+          -var enable_atracker=$enable_atracker \
+          -var enable_vpc_flow_logs=$enable_vpc_flow_logs \
+          -var key_management=$key_management
+
+    - name: hpc-terraform-da-destroy
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      env:
+        - name: ibmcloud_api_key
+          value: $(params.ibmcloud_api_key)
+        - name: bastion_ssh_keys
+          value: $(params.bastion_ssh_keys)
+        - name: compute_ssh_keys
+          value: $(params.compute_ssh_keys)
+        - name: login_ssh_keys
+          value: $(params.login_ssh_keys)
+        - name: storage_ssh_keys
+          value: $(params.storage_ssh_keys)
+        - name: zones
+          value: $(params.zones)
+        - name: prefix
+          value: $(params.prefix)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: allowed_cidr
+          value: $(params.allowed_cidr)
+        - name: enable_cos_integration
+          value: $(params.enable_cos_integration)
+        - name: enable_atracker
+          value: $(params.enable_atracker)
+        - name: enable_vpc_flow_logs
+          value: $(params.enable_vpc_flow_logs)
+        - name: key_management
+          value: $(params.key_management)
+        - name: PIPELINE_DEBUG
+          value: $(params.pipeline-debug)
+        - name: terraform_version
+          value: $(params.terraform_version)
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          unzip terraform_${terraform_version}_linux_amd64.zip
+          mv terraform /usr/local/bin/terraform
+
+          strToArray () {
+              declare -a str_to_array=($(echo $1 | jq -Rc 'split(",")'))
+              echo $str_to_array
+                }
+
+          terraform destroy -auto-approve -lock=false \
+          -var resource_group=$resource_group \
+          -var zones=$(strToArray $zones) \
+          -var bastion_ssh_keys=$(strToArray $bastion_ssh_keys) \
+          -var compute_ssh_keys=$(strToArray $compute_ssh_keys) \
+          -var login_ssh_keys=$(strToArray $login_ssh_keys) \
+          -var storage_ssh_keys=$(strToArray $storage_ssh_keys) \
+          -var prefix=$prefix \
+          -var ibmcloud_api_key=$ibmcloud_api_key \
+          -var allowed_cidr=$(strToArray $allowed_cidr) \
+          -var enable_cos_integration=$enable_cos_integration \
+          -var enable_atracker=$enable_atracker \
+          -var enable_vpc_flow_logs=$enable_vpc_flow_logs \
+          -var key_management=$key_management
+  volumes:
+    - name: secrets
+      secret:
+        secretName: $(params.continuous-delivery-context-secret)

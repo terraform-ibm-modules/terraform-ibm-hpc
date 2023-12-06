@@ -1,0 +1,176 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: pipeline
+spec:
+  params:
+    - name: git-access-token
+      description: the token to access the git repository for the clone operations
+    - name: repository
+      description: the git repo
+    - name: branch
+      description: the branch for the git repo
+    - name: revision
+      description: the git revision/commit for the git repo
+      default: ""
+    - name: pipeline-debug
+      default: "false"
+      description: Enable debug output within pipeline
+    - name: terraform_version
+      description: terraform_version 
+      default: "1.5.7"
+    - name: golang_version
+      description: golang_version 
+      default: "1.21.0"
+    - name: ansible_version
+      description: ansible_version 
+      default: "4.10.0"
+    - name: ansible_core_version
+      description: ansible_core_version 
+      default: "2.11.12"
+    - name: terraform_provisioner_version
+      description: terraform_provisioner_version 
+      default: "2.3.3"
+    - name: python_version
+      description: python_version 
+      default: "3.9"
+    - name: ibmcloud_api_key
+      description: the api key used for authentication
+      default: ibmcloud_api_key
+    - name: bastion_ssh_keys
+      default: ""
+      description: bastion_ssh_keys for login to clusters
+    - name: compute_ssh_keys
+      default: ""
+      description: compute_ssh_keys for login to clusters
+    - name: login_ssh_keys
+      default: ""
+      description: login_ssh_keys for login to clusters
+    - name: storage_ssh_keys
+      default: ""
+      description: storage_ssh_keys for login to clusters
+    - name: zones
+      default: ""
+      description: zones for provisioning the clusters
+    - name: prefix
+      description: prefix for provisioning the clusters
+      default: prefix
+    - name: resource_group
+      description: resource group for provisioning the clusters
+      default: resource_group
+    - name: allowed_cidr
+      default: ""
+      description: allowed_cidr for provisioning the clusters
+    - name: enable_cos_integration
+      description: enable_cos_integration 
+      default: "false"
+    - name: enable_atracker
+      description: enable_atracker 
+      default: "false"
+    - name: enable_vpc_flow_logs
+      description: enable_vpc_flow_logs 
+      default: "false"
+    - name: key_management
+      description: key_management 
+      default: ""
+
+  workspaces:
+    - name: shared-data
+  tasks:
+    - name: wes-pipeline
+      taskRef:
+        name: git-clone-repo
+      workspaces:
+        - name: output
+          workspace: shared-data
+        - name: secrets
+          workspace: shared-data
+      params:
+        - name: git-access-token
+          value: $(params.git-access-token)
+        - name: repository
+          value: $(params.repository)
+        - name: branch
+          value: $(params.branch)
+        - name: revision
+          value: $(params.revision)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: terraform_version
+          value: $(params.terraform_version)
+        - name: golang_version
+          value: $(params.golang_version)
+        - name: ansible_version
+          value: $(params.ansible_version)
+        - name: ansible_core_version
+          value: $(params.ansible_core_version)
+        - name: terraform_provisioner_version
+          value: $(params.terraform_provisioner_version)
+        - name: python_version
+          value: $(params.python_version)
+        - name: ibmcloud_api_key
+          value: $(params.ibmcloud_api_key)
+        - name: bastion_ssh_keys
+          value: $(params.bastion_ssh_keys)
+        - name: compute_ssh_keys
+          value: $(params.compute_ssh_keys)
+        - name: login_ssh_keys
+          value: $(params.login_ssh_keys)
+        - name: storage_ssh_keys
+          value: $(params.storage_ssh_keys)
+        - name: zones
+          value: $(params.zones)
+        - name: prefix
+          value: $(params.prefix)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: allowed_cidr
+          value: $(params.allowed_cidr)
+        - name: enable_cos_integration
+          value: $(params.enable_cos_integration)
+        - name: enable_atracker
+          value: $(params.enable_atracker)
+        - name: enable_vpc_flow_logs
+          value: $(params.enable_vpc_flow_logs)
+        - name: key_management
+          value: $(params.key_management)
+          
+  finally:
+    - name: cleanup-resources
+      taskRef:
+        name: cleanup-resources
+      params:
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: terraform_version
+          value: $(params.terraform_version)
+        - name: ibmcloud_api_key
+          value: $(params.ibmcloud_api_key)
+        - name: bastion_ssh_keys
+          value: $(params.bastion_ssh_keys)
+        - name: compute_ssh_keys
+          value: $(params.compute_ssh_keys)
+        - name: login_ssh_keys
+          value: $(params.login_ssh_keys)
+        - name: storage_ssh_keys
+          value: $(params.storage_ssh_keys)
+        - name: zones
+          value: $(params.zones)
+        - name: prefix
+          value: $(params.prefix)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: allowed_cidr
+          value: $(params.allowed_cidr)
+        - name: enable_cos_integration
+          value: $(params.enable_cos_integration)
+        - name: enable_atracker
+          value: $(params.enable_atracker)
+        - name: enable_vpc_flow_logs
+          value: $(params.enable_vpc_flow_logs)
+        - name: key_management
+          value: $(params.key_management)
+      workspaces:
+        - name: output
+          workspace: shared-data
