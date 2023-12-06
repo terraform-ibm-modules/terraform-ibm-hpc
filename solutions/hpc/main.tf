@@ -81,6 +81,7 @@ module "bootstrap" {
 }
 
 resource "time_sleep" "wait_150_seconds" {
+  count = (var.enable_bastion && var.enable_bootstrap) ? 1 : 0
   create_duration = "150s"
   depends_on      = [module.bootstrap]
 }
