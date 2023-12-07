@@ -29,6 +29,7 @@ module "landing_zone" {
   vpn_peer_cidr          = var.vpn_peer_cidr
   vpn_preshared_key      = var.vpn_preshared_key
   zones                  = var.zones
+  enable_bootstrap       = var.enable_bootstrap
 }
 
 module "bastion" {
@@ -79,9 +80,9 @@ module "bootstrap" {
   dns_custom_resolver_id     = local.dns_custom_resolver_id
 }
 
-resource "time_sleep" "wait_150_seconds" {
+resource "time_sleep" "wait_60_seconds" {
   count           = (var.enable_bastion && var.enable_bootstrap) ? 1 : 0
-  create_duration = "150s"
+  create_duration = "60s"
   depends_on      = [module.bootstrap]
 }
 
@@ -100,6 +101,10 @@ resource "null_resource" "bootstrap_resources_provisioner" {
 
   provisioner "remote-exec" {
     inline = [<<EOF
+      if ! command -v terraform &> /dev/null && ! command -v git &> /dev/null; then
+        echo "Terraform and Git are not installed. Waiting for 90 seconds for userdata to get completed..."
+        sleep 90
+      fi
       if [ ! -d ${local.remote_ansible_path} ]; then sudo git clone -b ${local.da_hpc_repo_tag} ${local.da_hpc_repo_url} ${local.remote_ansible_path}; fi
       sudo -E terraform -chdir=${local.remote_ansible_path} init && sudo -E terraform -chdir=${local.remote_ansible_path} apply -auto-approve \
           -var 'resource_group=${var.resource_group}' \
@@ -134,7 +139,7 @@ resource "null_resource" "bootstrap_resources_provisioner" {
   depends_on = [
     module.bootstrap,
     module.bastion,
-    time_sleep.wait_150_seconds
+    time_sleep.wait_60_seconds
   ]
 }
 
@@ -210,7 +215,7 @@ resource "null_resource" "bootstrap_resources_destroyer" {
     module.bootstrap,
     module.bastion,
     module.dns,
-    time_sleep.wait_150_seconds,
+    time_sleep.wait_60_seconds,
     null_resource.bootstrap_resources_provisioner
   ]
 }

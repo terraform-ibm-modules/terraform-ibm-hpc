@@ -5,7 +5,7 @@
 variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
   type        = string
-  sensitive   = true
+  sensitive   = false
   default     = null
 }
 
@@ -74,7 +74,7 @@ variable "bastion_subnets" {
     zone = string
     cidr = string
   }))
-  default     = []
+  default     = null
   description = "Subnets to launch the bastion host."
 }
 
@@ -102,7 +102,7 @@ variable "security_group_ids" {
 
 variable "bastion_public_key_content" {
   type        = string
-  sensitive   = true
+  sensitive   = false
   default     = null
   description = "Bastion public key content."
 }
@@ -149,7 +149,7 @@ variable "login_subnets" {
     zone = string
     cidr = string
   }))
-  default     = []
+  default     = null
   description = "Subnets to launch the login hosts."
 }
 
@@ -160,7 +160,7 @@ variable "compute_subnets" {
     zone = string
     cidr = string
   }))
-  default     = []
+  default     = null
   description = "Subnets to launch the compute host."
 }
 
@@ -171,7 +171,7 @@ variable "storage_subnets" {
     zone = string
     cidr = string
   }))
-  default     = []
+  default     = null
   description = "Subnets to launch the storage host."
 }
 
@@ -182,7 +182,7 @@ variable "protocol_subnets" {
     zone = string
     cidr = string
   }))
-  default     = []
+  default     = null
   description = "Subnets to launch the bastion host."
 }
 

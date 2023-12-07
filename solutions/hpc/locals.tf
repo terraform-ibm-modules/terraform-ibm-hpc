@@ -26,10 +26,10 @@ locals {
   bastion_ssh_keys            = module.bastion.bastion_ssh_keys
 
   # dependency: landing_zone -> landing_zone_vsi
-  login_subnets    = length(var.login_subnets) > 0 ? var.login_subnets : module.landing_zone.login_subnets
-  compute_subnets  = length(var.compute_subnets) > 0 ? var.compute_subnets : module.landing_zone.compute_subnets
-  storage_subnets  = length(var.storage_subnets) > 0 ? var.storage_subnets : module.landing_zone.storage_subnets
-  protocol_subnets = length(var.protocol_subnets) > 0 ? var.protocol_subnets : module.landing_zone.protocol_subnets
+  login_subnets    = var.login_subnets != null ? var.login_subnets : module.landing_zone.login_subnets
+  compute_subnets  = var.compute_subnets != null ? var.compute_subnets : module.landing_zone.compute_subnets
+  storage_subnets  = var.storage_subnets != null ? var.storage_subnets : module.landing_zone.storage_subnets
+  protocol_subnets = var.protocol_subnets != null ? var.protocol_subnets : module.landing_zone.protocol_subnets
 
   #boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   #skip_iam_authorization_policy = true
@@ -166,5 +166,5 @@ locals {
   bootstrap_path      = "/opt/IBM"
   remote_ansible_path = format("%s/terraform-ibm-hpc", local.bootstrap_path)
   da_hpc_repo_url     = "https://github.com/terraform-ibm-modules/terraform-ibm-hpc"
-  da_hpc_repo_tag     = "develop" ###### change it to main in future
+  da_hpc_repo_tag     = "bootstrap_userdata" ###### change it to main in future
 }

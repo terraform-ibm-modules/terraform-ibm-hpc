@@ -5,7 +5,7 @@
 variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
   type        = string
-  sensitive   = true
+  sensitive   = false
   default     = null
 }
 
@@ -239,6 +239,12 @@ variable "enable_vpc_flow_logs" {
   type        = bool
   default     = true
   description = "Enable Activity tracker"
+}
+
+variable "enable_bootstrap" {
+  type        = bool
+  default     = false
+  description = "Bootstrap should be only used for better deployment performance"
 }
 
 ##############################################################################

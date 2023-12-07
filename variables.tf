@@ -18,7 +18,7 @@ variable "storage_type" {
 
 variable "ibm_customer_number" {
   type        = string
-  sensitive   = true
+  sensitive   = false
   default     = ""
   description = "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
   validation {
@@ -35,7 +35,7 @@ variable "ibm_customer_number" {
 variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
   type        = string
-  sensitive   = true
+  sensitive   = false
   default     = null
 }
 
@@ -78,6 +78,50 @@ variable "vpc" {
   default     = null
 }
 
+variable "login_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = null
+  description = "Subnets to launch the login hosts."
+}
+
+variable "compute_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = null
+  description = "Subnets to launch the compute host."
+}
+
+variable "storage_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = null
+  description = "Subnets to launch the storage host."
+}
+
+variable "protocol_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = null
+  description = "Subnets to launch the bastion host."
+}
+
 variable "network_cidr" {
   description = "Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning."
   type        = string
@@ -105,6 +149,12 @@ variable "enable_bootstrap" {
   description = "Bootstrap should be only used for better deployment performance"
 }
 
+variable "enable_landing_zone" {
+  type        = bool
+  default     = true
+  description = "Run landing zone module."
+}
+
 variable "bootstrap_instance_profile" {
   type        = string
   default     = "mx2-4x32"
@@ -120,6 +170,19 @@ variable "bastion_subnets_cidr" {
   type        = list(string)
   default     = ["10.0.0.0/24"]
   description = "Subnet CIDR block to launch the bastion host."
+}
+
+variable "bastion_security_group_id" {
+  type        = string
+  default     = null
+  description = "Bastion security group id."
+}
+
+variable "bastion_public_key_content" {
+  type        = string
+  sensitive   = false
+  default     = null
+  description = "Bastion public key content."
 }
 
 variable "enable_vpn" {
@@ -258,13 +321,13 @@ variable "compute_image_name" {
 variable "compute_gui_username" {
   type        = string
   default     = "admin"
-  sensitive   = true
+  sensitive   = false
   description = "GUI user to perform system management and monitoring tasks on compute cluster."
 }
 
 variable "compute_gui_password" {
   type        = string
-  sensitive   = true
+  sensitive   = false
   description = "Password for compute cluster GUI"
 }
 */
@@ -327,13 +390,13 @@ variable "protocol_instances" {
 variable "storage_gui_username" {
   type        = string
   default     = "admin"
-  sensitive   = true
+  sensitive   = false
   description = "GUI user to perform system management and monitoring tasks on storage cluster."
 }
 
 variable "storage_gui_password" {
   type        = string
-  sensitive   = true
+  sensitive   = false
   description = "Password for storage cluster GUI"
 }
 */
@@ -448,6 +511,12 @@ variable "hpcs_instance_name" {
   description = "Hyper Protect Crypto Service instance"
 }
 
+variable "boot_volume_encryption_key" {
+  type        = string
+  default     = null
+  description = "CRN of boot volume encryption key"
+}
+
 ##############################################################################
 # TODO: Auth Server (LDAP/AD) Variables
 ##############################################################################
@@ -510,82 +579,3 @@ variable "hpcs_instance_name" {
 #     ]
 #   }
 # }
-
-##############################################################################
-# Variables needed for LZ VSI module
-##############################################################################
-
-variable "bastion_security_group_id" {
-  type        = string
-  default     = null
-  description = "Bastion security group id."
-}
-
-variable "bastion_public_key_content" {
-  type        = string
-  sensitive   = true
-  default     = null
-  description = "Bastion public key content."
-}
-
-variable "login_subnets" {
-  type = list(object({
-    name = string
-    id   = string
-    zone = string
-    cidr = string
-  }))
-  default     = []
-  description = "Subnets to launch the login hosts."
-}
-
-variable "compute_subnets" {
-  type = list(object({
-    name = string
-    id   = string
-    zone = string
-    cidr = string
-  }))
-  default     = []
-  description = "Subnets to launch the compute host."
-}
-
-variable "storage_subnets" {
-  type = list(object({
-    name = string
-    id   = string
-    zone = string
-    cidr = string
-  }))
-  default     = []
-  description = "Subnets to launch the storage host."
-}
-
-variable "protocol_subnets" {
-  type = list(object({
-    name = string
-    id   = string
-    zone = string
-    cidr = string
-  }))
-  default     = []
-  description = "Subnets to launch the bastion host."
-}
-
-# variable "kms_encryption_enabled" {
-#   description = "Enable Key management"
-#   type        = bool
-#   default     = true
-# }
-
-variable "boot_volume_encryption_key" {
-  type        = string
-  default     = null
-  description = "CRN of boot volume encryption key"
-}
-
-variable "enable_landing_zone" {
-  type        = bool
-  default     = true
-  description = "Run landing zone module."
-}

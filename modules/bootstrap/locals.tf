@@ -22,5 +22,5 @@ locals {
   bootstrap_path      = "/opt/IBM"
   remote_ansible_path = format("%s/terraform-ibm-hpc", local.bootstrap_path)
   da_hpc_repo_url     = "https://github.com/terraform-ibm-modules/terraform-ibm-hpc"
-  da_hpc_repo_tag     = "develop" ###### change it to main in future
+  da_hpc_repo_tag     = "bootstrap_userdata" ###### change it to main in future
 }

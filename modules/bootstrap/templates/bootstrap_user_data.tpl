@@ -32,33 +32,6 @@ then
     if (which git); then echo "Git exists, skipping the installation"; else (yum install -y git); fi
     if (which wget); then echo "Wget exists, skipping the installation"; else (yum install -y wget); fi
     if (which unzip); then echo "Unzip exists, skipping the installation"; else (yum install -y unzip); fi
-    sudo wget https://releases.hashicorp.com/terraform/1.5.4/terraform_1.5.4_linux_amd64.zip
-    sudo unzip terraform_1.5.4_linux_amd64.zip -d /usr/bin
-    if [ ${enable_bastion} = false ]; then
-        if [ ! -d ${remote_ansible_path} ]; then sudo git clone -b ${da_hpc_repo_tag} ${da_hpc_repo_url} ${remote_ansible_path}; fi
-        sudo -E terraform -chdir=${remote_ansible_path} init && sudo -E terraform -chdir=${remote_ansible_path} apply -auto-approve \
-            -var 'resource_group=${resource_group}' \
-            -var 'prefix=${prefix}' \
-            -var 'zones=${zones}' \
-            -var 'compute_ssh_keys=${compute_ssh_keys}' \
-            -var 'login_ssh_keys=${login_ssh_keys}' \
-            -var 'storage_ssh_keys=${storage_ssh_keys}' \
-            -var 'vpc=${vpc}' \
-            -var 'compute_subnets=${compute_subnets}' \
-            -var 'login_subnets=${login_subnets}' \
-            -var 'storage_subnets=${storage_subnets}' \
-            -var 'protocol_subnets=${protocol_subnets}' \
-            -var 'bastion_security_group_id=${bastion_security_group_id}' \
-            -var 'bastion_public_key_content=${bastion_public_key_content}' \
-            -var 'bastion_ssh_keys=[]' \
-            -var 'enable_bootstrap=false' \
-            -var 'enable_bastion=false' \
-            -var 'boot_volume_encryption_key=${boot_volume_encryption_key}' \
-            -var 'dns_instance_id=${dns_instance_id}' \
-            -var 'dns_custom_resolver_id=${dns_custom_resolver_id}' \
-            -var 'enable_landing_zone=false' \
-            -var 'ibmcloud_api_key=${ibmcloud_api_key}'
-    fi
 elif grep -q "Ubuntu" /etc/os-release
 then
     apt update
@@ -73,31 +46,32 @@ then
     if (which git); then echo "Git exists, skipping the installation"; else (apt install -y git); fi
     if (which wget); then echo "Wget exists, skipping the installation"; else (apt install -y wget); fi
     if (which unzip); then echo "Unzip exists, skipping the installation"; else (apt install -y unzip); fi
-    sudo wget https://releases.hashicorp.com/terraform/1.5.4/terraform_1.5.4_linux_amd64.zip
-    sudo unzip terraform_1.5.4_linux_amd64.zip -d /usr/bin
-    if [ ${enable_bastion} = false ]; then
-        if [ ! -d ${remote_ansible_path} ]; then sudo git clone -b ${da_hpc_repo_tag} ${da_hpc_repo_url} ${remote_ansible_path}; fi
-        sudo -E terraform -chdir=${remote_ansible_path} init && sudo -E terraform -chdir=${remote_ansible_path} apply -auto-approve \
-            -var 'resource_group=${resource_group}' \
-            -var 'prefix=${prefix}' \
-            -var 'zones=${zones}' \
-            -var 'compute_ssh_keys=${compute_ssh_keys}' \
-            -var 'login_ssh_keys=${login_ssh_keys}' \
-            -var 'storage_ssh_keys=${storage_ssh_keys}' \
-            -var 'vpc=${vpc}' \
-            -var 'compute_subnets=${compute_subnets}' \
-            -var 'login_subnets=${login_subnets}' \
-            -var 'storage_subnets=${storage_subnets}' \
-            -var 'protocol_subnets=${protocol_subnets}' \
-            -var 'bastion_security_group_id=${bastion_security_group_id}' \
-            -var 'bastion_public_key_content=${bastion_public_key_content}' \
-            -var 'bastion_ssh_keys=[]' \
-            -var 'enable_bootstrap=false' \
-            -var 'enable_bastion=false' \
-            -var 'boot_volume_encryption_key=${boot_volume_encryption_key}' \
-            -var 'dns_instance_id=${dns_instance_id}' \
-            -var 'dns_custom_resolver_id=${dns_custom_resolver_id}' \
-            -var 'enable_landing_zone=false' \
-            -var 'ibmcloud_api_key=${ibmcloud_api_key}'
-    fi
+fi
+
+sudo wget https://releases.hashicorp.com/terraform/1.5.4/terraform_1.5.4_linux_amd64.zip
+sudo unzip terraform_1.5.4_linux_amd64.zip -d /usr/bin
+if [ ${enable_bastion} = false ]; then
+    if [ ! -d ${remote_ansible_path} ]; then sudo git clone -b ${da_hpc_repo_tag} ${da_hpc_repo_url} ${remote_ansible_path}; fi
+    sudo -E terraform -chdir=${remote_ansible_path} init && sudo -E terraform -chdir=${remote_ansible_path} apply -auto-approve \
+        -var 'resource_group=${resource_group}' \
+        -var 'prefix=${prefix}' \
+        -var 'zones=${zones}' \
+        -var 'compute_ssh_keys=${compute_ssh_keys}' \
+        -var 'login_ssh_keys=${login_ssh_keys}' \
+        -var 'storage_ssh_keys=${storage_ssh_keys}' \
+        -var 'vpc=${vpc}' \
+        -var 'compute_subnets=${compute_subnets}' \
+        -var 'login_subnets=${login_subnets}' \
+        -var 'storage_subnets=${storage_subnets}' \
+        -var 'protocol_subnets=${protocol_subnets}' \
+        -var 'bastion_security_group_id=${bastion_security_group_id}' \
+        -var 'bastion_public_key_content=${bastion_public_key_content}' \
+        -var 'bastion_ssh_keys=[]' \
+        -var 'enable_bootstrap=false' \
+        -var 'enable_bastion=false' \
+        -var 'boot_volume_encryption_key=${boot_volume_encryption_key}' \
+        -var 'dns_instance_id=${dns_instance_id}' \
+        -var 'dns_custom_resolver_id=${dns_custom_resolver_id}' \
+        -var 'enable_landing_zone=false' \
+        -var 'ibmcloud_api_key=${ibmcloud_api_key}'
 fi
