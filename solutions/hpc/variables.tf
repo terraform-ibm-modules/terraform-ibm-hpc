@@ -18,7 +18,7 @@ variable "storage_type" {
 
 variable "ibm_customer_number" {
   type        = string
-  sensitive   = false
+  sensitive   = true
   default     = ""
   description = "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
   validation {
@@ -35,7 +35,7 @@ variable "ibm_customer_number" {
 variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
   type        = string
-  sensitive   = false
+  sensitive   = true
   default     = null
 }
 
@@ -179,7 +179,7 @@ variable "bastion_security_group_id" {
 
 variable "bastion_public_key_content" {
   type        = string
-  sensitive   = false
+  sensitive   = true
   default     = null
   description = "Bastion public key content."
 }
@@ -320,13 +320,13 @@ variable "compute_image_name" {
 variable "compute_gui_username" {
   type        = string
   default     = "admin"
-  sensitive   = false
+  sensitive   = true
   description = "GUI user to perform system management and monitoring tasks on compute cluster."
 }
 
 variable "compute_gui_password" {
   type        = string
-  sensitive   = false
+  sensitive   = true
   description = "Password for compute cluster GUI"
 }
 */
@@ -389,13 +389,13 @@ variable "protocol_instances" {
 variable "storage_gui_username" {
   type        = string
   default     = "admin"
-  sensitive   = false
+  sensitive   = true
   description = "GUI user to perform system management and monitoring tasks on storage cluster."
 }
 
 variable "storage_gui_password" {
   type        = string
-  sensitive   = false
+  sensitive   = true
   description = "Password for storage cluster GUI"
 }
 */

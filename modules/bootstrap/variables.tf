@@ -5,7 +5,7 @@
 variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
   type        = string
-  sensitive   = false
+  sensitive   = true
   default     = null
 }
 
@@ -102,7 +102,7 @@ variable "security_group_ids" {
 
 variable "bastion_public_key_content" {
   type        = string
-  sensitive   = false
+  sensitive   = true
   default     = null
   description = "Bastion public key content."
 }
