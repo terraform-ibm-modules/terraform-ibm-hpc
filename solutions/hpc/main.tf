@@ -132,9 +132,25 @@ resource "null_resource" "bootstrap_resources_provisioner" {
     ]
   }
 
-  # triggers = {
-  #   always_run = "${timestamp()}"
-  # }
+  triggers = {
+    resource_group              = var.resource_group
+    prefix                      = var.prefix
+    zones                       = jsonencode(var.zones)
+    compute_ssh_keys            = jsonencode(var.compute_ssh_keys)
+    login_ssh_keys              = jsonencode(var.login_ssh_keys)
+    storage_ssh_keys            = jsonencode(var.storage_ssh_keys)
+    vpc                         = local.vpc
+    compute_subnets             = jsonencode(local.compute_subnets)
+    login_subnets               = jsonencode(local.login_subnets)
+    storage_subnets             = jsonencode(local.storage_subnets)
+    protocol_subnets            = jsonencode(local.protocol_subnets)
+    bastion_security_group_id   = local.bastion_security_group_id
+    bastion_public_key_content  = local.bastion_public_key_content
+    boot_volume_encryption_key  = local.boot_volume_encryption_key
+    dns_instance_id             = local.dns_instance_id
+    dns_custom_resolver_id      = local.dns_custom_resolver_id
+    ibmcloud_api_key            = var.ibmcloud_api_key
+  }
 
   depends_on = [
     module.bootstrap,

@@ -15,12 +15,12 @@ output "bastion_ssh_keys" {
 
 output "bastion_public_key_content" {
   description = "Bastion public key content"
-  sensitive   = true
+  sensitive   = false
   value       = one(module.ssh_key[*].public_key_content)
 }
 
 output "bastion_private_key_content" {
   description = "Bastion private key content"
-  sensitive   = true
+  sensitive   = false
   value       = one(module.ssh_key[*].private_key_content)
 }
