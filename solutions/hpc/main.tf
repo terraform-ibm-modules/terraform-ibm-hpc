@@ -78,6 +78,18 @@ module "bootstrap" {
   storage_subnets            = local.storage_subnets
   dns_instance_id            = local.dns_instance_id
   dns_custom_resolver_id     = local.dns_custom_resolver_id
+  login_image_name           = var.login_image_name
+  login_instances            = var.login_instances
+  management_image_name      = var.management_image_name
+  management_instances       = var.management_instances
+  static_compute_instances   = var.static_compute_instances
+  dynamic_compute_instances  = var.dynamic_compute_instances
+  compute_image_name         = var.compute_image_name
+  storage_image_name         = var.storage_image_name
+  storage_instances          = var.storage_instances
+  protocol_instances         = var.protocol_instances
+  nsd_details                = var.nsd_details
+  dns_domain_names           = var.dns_domain_names
 }
 
 resource "time_sleep" "wait_60_seconds" {
@@ -127,29 +139,53 @@ resource "null_resource" "bootstrap_resources_provisioner" {
           -var 'dns_instance_id=${local.dns_instance_id}' \
           -var 'dns_custom_resolver_id=${local.dns_custom_resolver_id}' \
           -var 'enable_landing_zone=false' \
-          -var 'ibmcloud_api_key=${var.ibmcloud_api_key}'
+          -var 'ibmcloud_api_key=${var.ibmcloud_api_key}' \
+          -var 'login_image_name=${var.login_image_name}' \
+          -var 'login_instances=${jsonencode(var.login_instances)}' \
+          -var 'management_image_name=${var.management_image_name}' \
+          -var 'management_instances=${jsonencode(var.management_instances)}' \
+          -var 'static_compute_instances=${jsonencode(var.static_compute_instances)}' \
+          -var 'dynamic_compute_instances=${jsonencode(var.dynamic_compute_instances)}' \
+          -var 'compute_image_name=${var.compute_image_name}' \
+          -var 'storage_image_name=${var.storage_image_name}' \
+          -var 'storage_instances=${jsonencode(var.storage_instances)}' \
+          -var 'protocol_instances=${jsonencode(var.protocol_instances)}' \
+          -var 'nsd_details=${jsonencode(var.nsd_details)}' \
+          -var 'dns_domain_names=${jsonencode(var.dns_domain_names)}'
     EOF
     ]
   }
 
   triggers = {
-    resource_group              = var.resource_group
-    prefix                      = var.prefix
-    zones                       = jsonencode(var.zones)
-    compute_ssh_keys            = jsonencode(var.compute_ssh_keys)
-    login_ssh_keys              = jsonencode(var.login_ssh_keys)
-    storage_ssh_keys            = jsonencode(var.storage_ssh_keys)
-    vpc                         = local.vpc
-    compute_subnets             = jsonencode(local.compute_subnets)
-    login_subnets               = jsonencode(local.login_subnets)
-    storage_subnets             = jsonencode(local.storage_subnets)
-    protocol_subnets            = jsonencode(local.protocol_subnets)
-    bastion_security_group_id   = local.bastion_security_group_id
-    bastion_public_key_content  = local.bastion_public_key_content
-    boot_volume_encryption_key  = local.boot_volume_encryption_key
-    dns_instance_id             = local.dns_instance_id
-    dns_custom_resolver_id      = local.dns_custom_resolver_id
-    ibmcloud_api_key            = var.ibmcloud_api_key
+    resource_group             = var.resource_group
+    prefix                     = var.prefix
+    zones                      = jsonencode(var.zones)
+    compute_ssh_keys           = jsonencode(var.compute_ssh_keys)
+    login_ssh_keys             = jsonencode(var.login_ssh_keys)
+    storage_ssh_keys           = jsonencode(var.storage_ssh_keys)
+    vpc                        = local.vpc
+    compute_subnets            = jsonencode(local.compute_subnets)
+    login_subnets              = jsonencode(local.login_subnets)
+    storage_subnets            = jsonencode(local.storage_subnets)
+    protocol_subnets           = jsonencode(local.protocol_subnets)
+    bastion_security_group_id  = local.bastion_security_group_id
+    bastion_public_key_content = local.bastion_public_key_content
+    boot_volume_encryption_key = local.boot_volume_encryption_key
+    dns_instance_id            = local.dns_instance_id
+    dns_custom_resolver_id     = local.dns_custom_resolver_id
+    ibmcloud_api_key           = var.ibmcloud_api_key
+    login_image_name           = var.login_image_name
+    login_instances            = jsonencode(var.login_instances)
+    management_image_name      = var.management_image_name
+    management_instances       = jsonencode(var.management_instances)
+    static_compute_instances   = jsonencode(var.static_compute_instances)
+    dynamic_compute_instances  = jsonencode(var.dynamic_compute_instances)
+    compute_image_name         = var.compute_image_name
+    storage_image_name         = var.storage_image_name
+    storage_instances          = jsonencode(var.storage_instances)
+    protocol_instances         = jsonencode(var.protocol_instances)
+    nsd_details                = jsonencode(var.nsd_details)
+    dns_domain_names           = jsonencode(var.dns_domain_names)
   }
 
   depends_on = [
@@ -183,6 +219,18 @@ resource "null_resource" "bootstrap_resources_destroyer" {
     dns_instance_id             = local.dns_instance_id
     dns_custom_resolver_id      = local.dns_custom_resolver_id
     ibmcloud_api_key            = var.ibmcloud_api_key
+    login_image_name            = var.login_image_name
+    login_instances             = jsonencode(var.login_instances)
+    management_image_name       = var.management_image_name
+    management_instances        = jsonencode(var.management_instances)
+    static_compute_instances    = jsonencode(var.static_compute_instances)
+    dynamic_compute_instances   = jsonencode(var.dynamic_compute_instances)
+    compute_image_name          = var.compute_image_name
+    storage_image_name          = var.storage_image_name
+    storage_instances           = jsonencode(var.storage_instances)
+    protocol_instances          = jsonencode(var.protocol_instances)
+    nsd_details                 = jsonencode(var.nsd_details)
+    dns_domain_names            = jsonencode(var.dns_domain_names)
   }
 
   connection {
@@ -221,9 +269,25 @@ resource "null_resource" "bootstrap_resources_destroyer" {
           -var 'dns_instance_id=${self.triggers.dns_instance_id}' \
           -var 'dns_custom_resolver_id=${self.triggers.dns_custom_resolver_id}' \
           -var 'enable_landing_zone=false' \
-          -var 'ibmcloud_api_key=${self.triggers.ibmcloud_api_key}'
+          -var 'ibmcloud_api_key=${self.triggers.ibmcloud_api_key}' \
+          -var 'login_image_name=${self.triggers.login_image_name}' \
+          -var 'login_instances=${self.triggers.login_instances}' \
+          -var 'management_image_name=${self.triggers.management_image_name}' \
+          -var 'management_instances=${self.triggers.management_instances}' \
+          -var 'static_compute_instances=${self.triggers.static_compute_instances}' \
+          -var 'dynamic_compute_instances=${self.triggers.dynamic_compute_instances}' \
+          -var 'compute_image_name=${self.triggers.compute_image_name}' \
+          -var 'storage_image_name=${self.triggers.storage_image_name}' \
+          -var 'storage_instances=${self.triggers.storage_instances}' \
+          -var 'protocol_instances=${self.triggers.protocol_instances}' \
+          -var 'nsd_details=${self.triggers.nsd_details}' \
+          -var 'dns_domain_names=${self.triggers.dns_domain_names}'
     EOF
     ]
+  }
+
+  lifecycle {
+    ignore_changes = all
   }
 
   depends_on = [

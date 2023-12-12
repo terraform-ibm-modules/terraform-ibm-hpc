@@ -197,3 +197,141 @@ variable "dns_custom_resolver_id" {
   default     = null
   description = "IBM Cloud DNS custom resolver id."
 }
+
+variable "login_image_name" {
+  type        = string
+  default     = "ibm-redhat-8-6-minimal-amd64-5"
+  description = "Image name to use for provisioning the login instances."
+}
+
+variable "login_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+    })
+  )
+  default = [{
+    profile = "cx2-2x4"
+    count   = 1
+  }]
+  description = "Number of instances to be launched for login."
+}
+
+variable "management_image_name" {
+  type        = string
+  default     = "ibm-redhat-8-6-minimal-amd64-5"
+  description = "Image name to use for provisioning the management cluster instances."
+}
+
+variable "management_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+    })
+  )
+  default = [{
+    profile = "cx2-2x4"
+    count   = 3
+  }]
+  description = "Number of instances to be launched for management."
+}
+
+variable "static_compute_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+    })
+  )
+  default = [{
+    profile = "cx2-2x4"
+    count   = 0
+  }]
+  description = "Min Number of instances to be launched for compute cluster."
+}
+
+variable "dynamic_compute_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+    })
+  )
+  default = [{
+    profile = "cx2-2x4"
+    count   = 250
+  }]
+  description = "MaxNumber of instances to be launched for compute cluster."
+}
+
+variable "compute_image_name" {
+  type        = string
+  default     = "ibm-redhat-8-6-minimal-amd64-5"
+  description = "Image name to use for provisioning the compute cluster instances."
+}
+
+variable "storage_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+    })
+  )
+  default = [{
+    profile = "bx2-2x8"
+    count   = 3
+  }]
+  description = "Number of instances to be launched for storage cluster."
+}
+
+variable "storage_image_name" {
+  type        = string
+  default     = "ibm-redhat-8-6-minimal-amd64-5"
+  description = "Image name to use for provisioning the storage cluster instances."
+}
+
+variable "protocol_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+    })
+  )
+  default = [{
+    profile = "bx2-2x8"
+    count   = 2
+  }]
+  description = "Number of instances to be launched for protocol hosts."
+}
+
+variable "nsd_details" {
+  type = list(
+    object({
+      profile  = string
+      capacity = optional(number)
+      iops     = optional(number)
+    })
+  )
+  default = [{
+    profile = "custom"
+    size    = 100
+    iops    = 100
+  }]
+  description = "Storage scale NSD details"
+}
+
+variable "dns_domain_names" {
+  type = object({
+    compute  = string
+    storage  = string
+    protocol = string
+  })
+  default = {
+    compute  = "comp.com"
+    storage  = "strg.com"
+    protocol = "ces.com"
+  }
+  description = "IBM Cloud HPC DNS domain names."
+}

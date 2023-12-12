@@ -22,5 +22,17 @@ data "template_file" "bootstrap_user_data" {
     dns_instance_id            = var.enable_bastion ? "" : var.dns_instance_id
     dns_custom_resolver_id     = var.enable_bastion ? "" : var.dns_custom_resolver_id
     enable_bastion             = var.enable_bastion ? "" : var.enable_bastion
+    login_image_name           = var.enable_bastion ? "" : var.login_image_name
+    login_instances            = var.enable_bastion ? "" : jsonencode(var.login_instances)
+    management_image_name      = var.enable_bastion ? "" : var.management_image_name
+    management_instances       = var.enable_bastion ? "" : jsonencode(var.management_instances)
+    static_compute_instances   = var.enable_bastion ? "" : jsonencode(var.static_compute_instances)
+    dynamic_compute_instances  = var.enable_bastion ? "" : jsonencode(var.dynamic_compute_instances)
+    compute_image_name         = var.enable_bastion ? "" : var.compute_image_name
+    storage_image_name         = var.enable_bastion ? "" : var.storage_image_name
+    storage_instances          = var.enable_bastion ? "" : jsonencode(var.storage_instances)
+    protocol_instances         = var.enable_bastion ? "" : jsonencode(var.protocol_instances)
+    nsd_details                = var.enable_bastion ? "" : jsonencode(var.nsd_details)
+    dns_domain_names           = var.enable_bastion ? "" : jsonencode(var.dns_domain_names)
   }
 }
