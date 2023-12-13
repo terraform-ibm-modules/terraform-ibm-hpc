@@ -15,7 +15,7 @@ locals {
     profile        = volume["profile"]
     capacity       = volume["capacity"]
     iops           = volume["iops"]
-    resource_group = local.resource_group_id
+    resource_group = var.resource_group
     # TODO: Encryption
     # encryption_key =
   }]
@@ -38,10 +38,10 @@ locals {
   }]
   */
 
-  management_instance_count     = sum(var.management_instances[*]["count"])
-  storage_instance_count        = sum(var.storage_instances[*]["count"])
-  protocol_instance_count       = sum(var.protocol_instances[*]["count"])
-  static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
+  management_instance_count     = length(var.management_instances) > 0 ? sum(var.management_instances[*]["count"]) : 0
+  storage_instance_count        = length(var.storage_instances) > 0 ? sum(var.storage_instances[*]["count"]) : 0
+  protocol_instance_count       = length(var.protocol_instances) > 0 ? sum(var.protocol_instances[*]["count"]) : 0
+  static_compute_instance_count = length(var.static_compute_instances) > 0 ? sum(var.static_compute_instances[*]["count"]) : 0
 
   enable_login      = local.management_instance_count > 0
   enable_management = local.management_instance_count > 0
@@ -110,7 +110,7 @@ locals {
   # TODO: DNS configs
 
   # Security group rules
-  login_security_group_rules = [
+  login_security_group_rules = local.enable_login ? [
     {
       name      = "allow-all-bastion"
       direction = "inbound"
@@ -130,13 +130,18 @@ locals {
       name      = "allow-all-compute"
       direction = "outbound"
       remote    = module.compute_sg[0].security_group_id
+    },
+    {
+      name      = "allow-outbound-temp" ##TODO: Remove this and add specific CIDRs needed
+      direction = "outbound"
+      remote    = "0.0.0.0/0"
     }
-  ]
+  ] : []
   # TODO: Compute & storage can't be added due to SG rule limitation
   /* [ERROR] Error while creating Security Group Rule Exceeded limit of remote rules per security group
   (the limit is 5 remote rules per security group)*/
 
-  compute_security_group_rules = [
+  compute_security_group_rules = local.enable_compute ? [
     {
       name      = "allow-all-bastion"
       direction = "inbound"
@@ -156,9 +161,14 @@ locals {
       name      = "allow-all-login"
       direction = "outbound"
       remote    = module.login_sg[0].security_group_id
+    },
+    {
+      name      = "allow-outbound-temp" ##TODO: Remove this and add specific CIDRs needed
+      direction = "outbound"
+      remote    = "0.0.0.0/0"
     }
-  ]
-  storage_security_group_rules = [
+  ] : []
+  storage_security_group_rules = local.enable_storage ? [
     {
       name      = "allow-all-bastion"
       direction = "inbound"
@@ -178,12 +188,18 @@ locals {
       name      = "allow-all-compute"
       direction = "outbound"
       remote    = module.compute_sg[0].security_group_id
-  }]
+    },
+    {
+      name      = "allow-outbound-temp" ##TODO: Remove this and add specific CIDRs needed
+      direction = "outbound"
+      remote    = "0.0.0.0/0"
+    }
+  ] : []
 
 
   # Derived configs
   # VPC
-  resource_group_id = data.ibm_resource_group.itself.id
+  # resource_group_id = data.ibm_resource_group.itself.id
 
   # Subnets
   # TODO: Multi-zone multi-vNIC VSIs deployment support (bug #https://github.ibm.com/GoldenEye/issues/issues/5830)

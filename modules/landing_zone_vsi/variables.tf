@@ -14,7 +14,7 @@ variable "storage_type" {
 variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
   type        = string
-  sensitive   = true
+  sensitive   = false
   default     = null
 }
 
@@ -73,9 +73,9 @@ variable "bastion_security_group_id" {
 
 variable "bastion_public_key_content" {
   type        = string
-  sensitive   = true
+  sensitive   = false
   default     = null
-  description = "Bastion security group id."
+  description = "Bastion public key content."
 }
 
 ##############################################################################

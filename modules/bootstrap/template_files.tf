@@ -1,13 +1,38 @@
-data "template_file" "bastion_user_data" {
-  template = file("${path.module}/templates/bastion_user_data.tpl")
-  vars = {
-    ssh_public_key_content = local.enable_bastion ? module.ssh_key[0].public_key_content : ""
-  }
-}
-
 data "template_file" "bootstrap_user_data" {
   template = file("${path.module}/templates/bootstrap_user_data.tpl")
   vars = {
-    bastion_public_key_content = local.enable_bastion ? module.ssh_key[0].public_key_content : ""
+    bastion_public_key_content = var.enable_bastion ? "" : (var.bastion_public_key_content != null ? var.bastion_public_key_content : "")
+    remote_ansible_path        = var.enable_bastion ? "" : local.remote_ansible_path
+    da_hpc_repo_tag            = var.enable_bastion ? "" : local.da_hpc_repo_tag
+    da_hpc_repo_url            = var.enable_bastion ? "" : local.da_hpc_repo_url
+    ibmcloud_api_key           = var.enable_bastion ? "" : var.ibmcloud_api_key
+    resource_group             = var.enable_bastion ? "" : var.resource_group
+    prefix                     = var.enable_bastion ? "" : var.prefix
+    zones                      = var.enable_bastion ? "" : jsonencode(var.zones)
+    compute_ssh_keys           = var.enable_bastion ? "" : jsonencode(var.compute_ssh_keys)
+    login_ssh_keys             = var.enable_bastion ? "" : jsonencode(var.login_ssh_keys)
+    storage_ssh_keys           = var.enable_bastion ? "" : jsonencode(var.storage_ssh_keys)
+    vpc                        = var.enable_bastion ? "" : var.vpc
+    compute_subnets            = var.enable_bastion ? "" : jsonencode(var.compute_subnets)
+    login_subnets              = var.enable_bastion ? "" : jsonencode(var.login_subnets)
+    storage_subnets            = var.enable_bastion ? "" : jsonencode(var.storage_subnets)
+    protocol_subnets           = var.enable_bastion ? "" : jsonencode(var.protocol_subnets)
+    boot_volume_encryption_key = var.enable_bastion ? "" : var.boot_volume_encryption_key
+    bastion_security_group_id  = var.enable_bastion ? "" : one(var.security_group_ids)
+    dns_instance_id            = var.enable_bastion ? "" : var.dns_instance_id
+    dns_custom_resolver_id     = var.enable_bastion ? "" : var.dns_custom_resolver_id
+    enable_bastion             = var.enable_bastion ? "" : var.enable_bastion
+    login_image_name           = var.enable_bastion ? "" : var.login_image_name
+    login_instances            = var.enable_bastion ? "" : jsonencode(var.login_instances)
+    management_image_name      = var.enable_bastion ? "" : var.management_image_name
+    management_instances       = var.enable_bastion ? "" : jsonencode(var.management_instances)
+    static_compute_instances   = var.enable_bastion ? "" : jsonencode(var.static_compute_instances)
+    dynamic_compute_instances  = var.enable_bastion ? "" : jsonencode(var.dynamic_compute_instances)
+    compute_image_name         = var.enable_bastion ? "" : var.compute_image_name
+    storage_image_name         = var.enable_bastion ? "" : var.storage_image_name
+    storage_instances          = var.enable_bastion ? "" : jsonencode(var.storage_instances)
+    protocol_instances         = var.enable_bastion ? "" : jsonencode(var.protocol_instances)
+    nsd_details                = var.enable_bastion ? "" : jsonencode(var.nsd_details)
+    dns_domain_names           = var.enable_bastion ? "" : jsonencode(var.dns_domain_names)
   }
 }

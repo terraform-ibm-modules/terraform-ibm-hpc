@@ -7,11 +7,12 @@ locals {
 # locals needed for bootstrap
 locals {
   # dependency: landing_zone -> bootstrap
-  vpc_id                     = var.vpc == null ? one(module.landing_zone.vpc_id) : var.vpc
+  vpc_id                     = var.vpc == null ? one(module.landing_zone.vpc_id) : data.ibm_is_vpc.itself[0].id
+  vpc                        = var.vpc == null ? one(module.landing_zone.vpc_name) : var.vpc
   bastion_subnets            = module.landing_zone.bastion_subnets
   kms_encryption_enabled     = var.key_management != null ? true : false
-  boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
-  existing_kms_instance_guid = var.key_management != null ? module.landing_zone.key_management_guid : null
+  boot_volume_encryption_key = var.key_management != null ? (var.boot_volume_encryption_key != null ? var.boot_volume_encryption_key : one(module.landing_zone.boot_volume_encryption_key)["crn"]) : null
+  existing_kms_instance_guid = var.key_management != null ? one(module.landing_zone.key_management_guid) : null
   # Future use
   # skip_iam_authorization_policy = true
 }
@@ -19,19 +20,21 @@ locals {
 # locals needed for landing_zone_vsi
 locals {
   # dependency: landing_zone -> bootstrap -> landing_zone_vsi
-  bastion_security_group_id  = module.bootstrap.bastion_security_group_id
-  bastion_public_key_content = module.bootstrap.bastion_public_key_content
+  bastion_security_group_id   = var.bastion_security_group_id != null ? var.bastion_security_group_id : module.bastion.bastion_security_group_id
+  bastion_public_key_content  = var.bastion_public_key_content != null ? var.bastion_public_key_content : module.bastion.bastion_public_key_content
+  bastion_private_key_content = var.enable_bastion ? module.bastion.bastion_private_key_content : null
+  bastion_ssh_keys            = module.bastion.bastion_ssh_keys
 
   # dependency: landing_zone -> landing_zone_vsi
-  login_subnets    = module.landing_zone.login_subnets
-  compute_subnets  = module.landing_zone.compute_subnets
-  storage_subnets  = module.landing_zone.storage_subnets
-  protocol_subnets = module.landing_zone.protocol_subnets
+  login_subnets    = var.login_subnets != null ? var.login_subnets : module.landing_zone.login_subnets
+  compute_subnets  = var.compute_subnets != null ? var.compute_subnets : module.landing_zone.compute_subnets
+  storage_subnets  = var.storage_subnets != null ? var.storage_subnets : module.landing_zone.storage_subnets
+  protocol_subnets = var.protocol_subnets != null ? var.protocol_subnets : module.landing_zone.protocol_subnets
 
   #boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   #skip_iam_authorization_policy = true
   #resource_group_id = data.ibm_resource_group.itself.id
-  #vpc_id            = var.vpc == null ? module.landing_zone.vpc_id[0] : data.ibm_is_vpc.itself[0].id
+  # vpc_id            = var.vpc == null ? module.landing_zone.vpc_id[0] : data.ibm_is_vpc.itself[0].id
   #vpc_crn           = var.vpc == null ? module.landing_zone.vpc_crn[0] : data.ibm_is_vpc.itself[0].crn
 }
 
@@ -67,8 +70,17 @@ locals {
 # locals needed for DNS
 locals {
   # dependency: landing_zone -> DNS
-  resource_group_id = one(values(one(module.landing_zone.resource_group_id)))
-  vpc_crn           = var.vpc == null ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
+  # resource_group_id = module.landing_zone.resource_group_id == [] ? data.ibm_resource_group.resource_group[0].id : one(values(one(module.landing_zone.resource_group_id)))
+
+  resource_group = var.resource_group == null ? "workload-rg" : var.resource_group
+
+  resource_group_ids = {
+    # management_rg = var.resource_group == null ? module.landing_zone.resource_group_id[0]["management-rg"] : one(values(one(module.landing_zone.resource_group_id)))
+    service_rg  = var.resource_group == null ? module.landing_zone.resource_group_id[0]["service-rg"] : data.ibm_resource_group.resource_group[0].id
+    workload_rg = var.resource_group == null ? module.landing_zone.resource_group_id[0]["workload-rg"] : data.ibm_resource_group.resource_group[0].id
+  }
+
+  vpc_crn = var.vpc == null ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
   # TODO: Fix existing subnet logic
   #subnets_crn       = var.vpc == null ? module.landing_zone.subnets_crn : ###
   #subnets           = flatten([local.compute_subnets, local.storage_subnets, local.protocol_subnets])
@@ -82,7 +94,9 @@ locals {
 # locals needed for dns-records
 locals {
   # dependency: dns -> dns-records
-  dns_instance_id = module.dns.dns_instance_id
+  dns_instance_id        = module.dns.dns_instance_id
+  dns_custom_resolver_id = module.dns.dns_custom_resolver_id
+  # dns_domain_names = var.enable_bootstrap ? [] : values(var.dns_domain_names)
   compute_dns_zone_id = one(flatten([
     for dns_zone in module.dns.dns_zone_maps : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["compute"]
   ]))
@@ -94,26 +108,34 @@ locals {
   ]))
 
   # dependency: landing_zone_vsi -> dns-records
-  compute_instances  = flatten([module.landing_zone_vsi.management_vsi_data, module.landing_zone_vsi.compute_vsi_data])
-  storage_instances  = flatten([module.landing_zone_vsi.storage_vsi_data, module.landing_zone_vsi.protocol_vsi_data])
-  protocol_instances = flatten([module.landing_zone_vsi.protocol_vsi_data])
+  static_compute_instances = var.enable_bootstrap ? [] : var.static_compute_instances
+  login_instances          = var.enable_bootstrap ? [] : var.login_instances
+  management_instances     = var.enable_bootstrap ? [] : var.management_instances
+  storage_instances        = var.enable_bootstrap ? [] : var.storage_instances
+  protocol_instances       = var.enable_bootstrap ? [] : var.protocol_instances
 
-  compute_dns_records = [
-    for instance in local.compute_instances :
+  compute_instances_data   = var.enable_bootstrap ? [] : flatten([module.landing_zone_vsi.management_vsi_data, module.landing_zone_vsi.compute_vsi_data])
+  storage_instances_data   = var.enable_bootstrap ? [] : flatten([module.landing_zone_vsi.storage_vsi_data, module.landing_zone_vsi.protocol_vsi_data])
+  protocol_instances_data  = var.enable_bootstrap ? [] : flatten([module.landing_zone_vsi.protocol_vsi_data])
+  bootstrap_instances_data = var.enable_bootstrap ? flatten([module.bootstrap.bootstrap_vsi_data]) : []
+  bootstrap_private_ip     = var.enable_bootstrap ? local.bootstrap_instances_data[0]["ipv4_address"] : null
+
+  compute_dns_records = var.enable_bootstrap ? [] : [
+    for instance in local.compute_instances_data :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
     }
   ]
-  storage_dns_records = [
-    for instance in local.storage_instances :
+  storage_dns_records = var.enable_bootstrap ? [] : [
+    for instance in local.storage_instances_data :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
     }
   ]
-  protocol_dns_records = [
-    for instance in local.protocol_instances :
+  protocol_dns_records = var.enable_bootstrap ? [] : [
+    for instance in local.protocol_instances_data :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
@@ -123,17 +145,26 @@ locals {
 
 # locals needed for inventory
 locals {
-  compute_hosts          = local.compute_instances[*]["ipv4_address"]
-  storage_hosts          = local.storage_instances[*]["ipv4_address"]
+  compute_hosts = var.enable_bootstrap ? [] : local.compute_instances_data[*]["ipv4_address"]
+  storage_hosts = var.enable_bootstrap ? [] : local.storage_instances_data[*]["ipv4_address"]
+  # bootstrap_hosts        = var.enable_bootstrap ? local.bootstrap_instances_data[*]["ipv4_address"] : []
   compute_inventory_path = "compute.ini"
   storage_inventory_path = "storage.ini"
 }
 
 # locals needed for playbook
 locals {
-  bastion_fip              = module.bootstrap.bastion_fip
+  bastion_fip              = module.bastion.bastion_fip
   compute_private_key_path = "compute_id_rsa" #checkov:skip=CKV_SECRET_6
   storage_private_key_path = "storage_id_rsa" #checkov:skip=CKV_SECRET_6
   compute_playbook_path    = "compute_ssh.yaml"
   storage_playbook_path    = "storage_ssh.yaml"
+}
+
+# locals needed for Bootstrap null resource
+locals {
+  bootstrap_path      = "/opt/IBM"
+  remote_ansible_path = format("%s/terraform-ibm-hpc", local.bootstrap_path)
+  da_hpc_repo_url     = "https://github.com/terraform-ibm-modules/terraform-ibm-hpc"
+  da_hpc_repo_tag     = "bootstrap_userdata" ###### change it to main in future
 }
