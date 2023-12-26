@@ -79,7 +79,7 @@ variable "vpc" {
 
 variable "subnet_ids" {
   type        = list(string)
-  default     = []
+  default     = null
   description = "List of existing subnet IDs under the VPC, where the cluster will be provisioned."
   # validation {
   #   condition     = contains([0, 2], length(var.subnet_id))

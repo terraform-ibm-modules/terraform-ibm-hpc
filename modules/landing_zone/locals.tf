@@ -151,7 +151,7 @@ locals {
     {
       prefix                       = local.name
       existing_vpc_id              = var.vpc == null ? null : data.ibm_is_vpc.itself[0].id
-      existing_subnet_ids          = var.subnet_ids == null ? [] : var.subnet_ids
+      existing_subnet_ids          = var.subnet_ids == null ? null : var.subnet_ids
       resource_group               = var.resource_group == null ? "workload-rg" : var.resource_group
       clean_default_security_group = true
       clean_default_acl            = true
