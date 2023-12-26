@@ -141,9 +141,17 @@ locals {
   ]
   network_acl_rules = flatten([local.network_acl_inbound_rules, local.network_acl_outbound_rules])
 
-  vpcs = var.vpc == null ? [
+  # existing_subnets_use_public_gateways = {
+  #   "zone-1" = true
+  #   "zone-2" = true
+  #   "zone-3" = true
+  # }
+
+  vpcs = [
     {
       prefix                       = local.name
+      existing_vpc_id              = var.vpc == null ? null : data.ibm_is_vpc.itself[0].id
+      existing_subnet_ids          = var.subnet_ids == null ? [] : var.subnet_ids
       resource_group               = var.resource_group == null ? "workload-rg" : var.resource_group
       clean_default_security_group = true
       clean_default_acl            = true
@@ -155,11 +163,11 @@ locals {
           rules             = local.network_acl_rules
         }
       ],
-      subnets             = local.subnets
+      subnets             = var.subnet_ids == null ? local.subnets : null
       use_public_gateways = local.use_public_gateways
       address_prefixes    = local.address_prefixes
     }
-  ] : []
+  ]
 
   # Define SSH key
   ssh_keys = [

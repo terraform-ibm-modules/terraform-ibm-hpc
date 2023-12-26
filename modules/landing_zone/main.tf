@@ -1,7 +1,7 @@
 module "landing_zone" {
   count                          = var.enable_landing_zone ? 1 : 0
   source                         = "terraform-ibm-modules/landing-zone/ibm"
-  version                        = "4.15.0"
+  version                        = "5.5.0"
   prefix                         = local.prefix
   region                         = local.region
   tags                           = local.tags
@@ -30,6 +30,6 @@ module "landing_zone" {
   appid                          = local.env.appid
   teleport_config_data           = local.env.teleport_config_data
   teleport_vsi                   = local.env.teleport_vsi
-  secrets_manager                = local.env.secrets_manager
+  # secrets_manager                = local.env.secrets_manager
   vpc_placement_groups           = local.env.vpc_placement_groups
 }

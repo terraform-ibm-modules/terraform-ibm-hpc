@@ -77,6 +77,16 @@ variable "vpc" {
   default     = null
 }
 
+variable "subnet_ids" {
+  type        = list(string)
+  default     = []
+  description = "List of existing subnet IDs under the VPC, where the cluster will be provisioned."
+  # validation {
+  #   condition     = contains([0, 2], length(var.subnet_id))
+  #   error_message = "The subnet_id value should either be empty or contain exactly two elements."
+  # }
+}
+
 variable "network_cidr" {
   description = "Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning."
   type        = string

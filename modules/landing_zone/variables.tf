@@ -54,6 +54,12 @@ variable "vpc" {
   default     = null
 }
 
+variable "subnet_ids" {
+  type        = list(string)
+  default     = []
+  description = "List of existing subnet IDs under the VPC, where the cluster will be provisioned."
+}
+
 variable "network_cidr" {
   description = "Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning."
   type        = string

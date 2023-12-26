@@ -7,8 +7,8 @@ locals {
 # locals needed for bootstrap
 locals {
   # dependency: landing_zone -> bootstrap
-  vpc_id                     = var.vpc == null ? one(module.landing_zone.vpc_id) : var.vpc
-  bastion_subnets            = module.landing_zone.bastion_subnets
+  vpc_id                     = var.vpc == null ? one(module.landing_zone.vpc_id) : data.ibm_is_vpc.itself[0].id
+  bastion_subnets            = var.subnet_ids == null ? module.landing_zone.bastion_subnets : module.landing_zone.subnets
   kms_encryption_enabled     = var.key_management != null ? true : false
   boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   existing_kms_instance_guid = var.key_management != null ? module.landing_zone.key_management_guid : null
@@ -23,10 +23,10 @@ locals {
   bastion_public_key_content = module.bootstrap.bastion_public_key_content
 
   # dependency: landing_zone -> landing_zone_vsi
-  login_subnets    = module.landing_zone.login_subnets
-  compute_subnets  = module.landing_zone.compute_subnets
-  storage_subnets  = module.landing_zone.storage_subnets
-  protocol_subnets = module.landing_zone.protocol_subnets
+  login_subnets    = var.subnet_ids == null ? module.landing_zone.login_subnets : module.landing_zone.subnets
+  compute_subnets  = var.subnet_ids == null ? module.landing_zone.compute_subnets : module.landing_zone.subnets
+  storage_subnets  = var.subnet_ids == null ? module.landing_zone.storage_subnets : module.landing_zone.subnets
+  protocol_subnets = var.subnet_ids == null ? module.landing_zone.protocol_subnets : module.landing_zone.subnets
 
   #boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   #skip_iam_authorization_policy = true
