@@ -110,3 +110,14 @@ output "key_management_guid" {
 }
 
 # TODO: Observability data
+
+output "subnets" {
+  description = "subnets"
+  value = [for subnet in flatten(module.landing_zone[*].subnet_data) : {
+    name = subnet["name"]
+    id   = subnet["id"]
+    zone = subnet["zone"]
+    cidr = subnet["cidr"]
+    }
+  ]
+}

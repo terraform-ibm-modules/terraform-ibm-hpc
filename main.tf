@@ -48,6 +48,7 @@ module "hpc" {
   storage_subnets_cidr = var.storage_subnets_cidr
   #storage_type        = var.storage_type
   vpc               = var.vpc
+  subnet_ids        = var.subnet_ids
   vpn_peer_address  = var.vpn_peer_address
   vpn_peer_cidr     = var.vpn_peer_cidr
   vpn_preshared_key = var.vpn_preshared_key
