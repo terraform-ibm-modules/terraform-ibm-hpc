@@ -1,0 +1,17 @@
+[INFO] TestMTUCheck: 2023/11/20 11:12:23 TestMTUCheck validation get Starts ...
+[PASS] TestMTUCheck: 2023/11/20 11:12:24 Successfully ssh into cluster
+[INFO] TestMTUCheck: 2023/11/20 11:12:24 MTU is set to 9000 for compute node
+[PASS] TestMTUCheck: 2023/11/20 11:12:24 MTU check worked as expected
+[INFO] TestMTUCheck: 2023/11/20 11:12:24 TestMTUCheck validation get Ends ...
+[INFO] TestIntelOneMPI: 2023/11/20 11:12:24 TestIntelOneMPI validation get Starts ...
+[PASS] TestIntelOneMPI: 2023/11/20 11:12:24 Successfully ssh into cluster
+[INFO] TestIntelOneMPI: 2023/11/20 11:12:27 Intel OneAPI MPI successfully checked and initialized on compute machine: 10.241.0.28
+[INFO] TestIntelOneMPI: 2023/11/20 11:12:29 Intel OneAPI MPI successfully checked and initialized on compute machine: 10.241.0.29
+[INFO] TestIntelOneMPI: 2023/11/20 11:12:29 Intel OneAPI MPI successfully checked and initialized on all compute machine : [10.241.0.28 10.241.0.29]
+[PASS] TestIntelOneMPI: 2023/11/20 11:12:29 Successfully validated intel one MPI
+[INFO] TestIntelOneMPI: 2023/11/20 11:12:29 Cluster ID is set as expected : HPC-LSF-1
+[INFO] TestIntelOneMPI: 2023/11/20 11:12:29 Master name is set as expected : anbu-fri-tc-sanity
+[INFO] TestIntelOneMPI: 2023/11/20 11:12:30 MTU is set to 9000 for compute node (10.241.0.28)
+[INFO] TestIntelOneMPI: 2023/11/20 11:12:31 MTU is set to 9000 for compute node (10.241.0.29)
+[INFO] TestIntelOneMPI: 2023/11/20 11:12:31 MTU check passed for all compute nodes
+[INFO] TestIntelOneMPI: 2023/11/20 11:12:31 TestIntelOneMPI validation get Ends ...

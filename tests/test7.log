@@ -1,0 +1,3 @@
+[2023-11-28 02:46:34] [INFO] [TestSampleMain] : TestSampleMain validation get Starts ...
+[2023-11-28 02:46:34] [PASS] [TestSampleMain] : Successfully ssh into cluster
+[2023-11-28 02:46:34] [INFO] [TestSampleMain] : Hyperthreading is disabled

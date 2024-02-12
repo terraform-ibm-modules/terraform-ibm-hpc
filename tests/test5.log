@@ -1,0 +1,105 @@
+[2023-11-27 07:02:16] [INFO] [TestMTUCheck] : TestMTUCheck validation get Starts ...
+[2023-11-27 07:02:16] [PASS] [TestMTUCheck] : Successfully ssh into cluster
+[2023-11-27 07:02:16] [INFO] [TestMTUCheck] : TestMTUCheck validation get Ends ...
+[2023-11-27 07:02:16] [INFO] [TestIntelOneMPI] : TestIntelOneMPI validation get Starts ...
+[2023-11-27 07:02:17] [PASS] [TestIntelOneMPI] : Successfully ssh into cluster
+[2023-11-27 07:02:17] [FAIL] [TestIntelOneMPI] : Failed to ssh :failed to run 'ssh 10.241.0.8 'ls /opt/intel/oneapi'' command: failed to execute command 'ssh 10.241.0.8 'ls /opt/intel/oneapi'': Process exited with status 2
+[2023-11-27 07:02:17] [INFO] [TestIntelOneMPI] : Cluster ID is set as expected : HPC-LSF-1
+[2023-11-27 07:02:17] [PASS] [TestIntelOneMPI] : Cluster ID check successful.
+[2023-11-27 07:02:17] [INFO] [TestIntelOneMPI] : Master name is set as expected : anbu-fri-tc-sanity
+[2023-11-27 07:02:17] [PASS] [TestIntelOneMPI] : Master name check successful.
+[2023-11-27 07:02:17] [INFO] [TestIntelOneMPI] : MTU is set to 9000 for (10.241.0.8) node 
+[2023-11-27 07:02:17] [PASS] [TestIntelOneMPI] : MTU check successful.
+[2023-11-27 07:02:17] [INFO] [TestIntelOneMPI] : Job <159> is submitted to default queue <normal>.
+
+[2023-11-27 07:02:18] [INFO] [TestIntelOneMPI] : Waiting for dynamic node creation and job completion
+[2023-11-27 07:03:18] [INFO] [TestIntelOneMPI] : Waiting for dynamic node creation and job completion
+[2023-11-27 07:04:18] [INFO] [TestIntelOneMPI] : Waiting for dynamic node creation and job completion
+[2023-11-27 07:05:18] [INFO] [TestIntelOneMPI] : Waiting for dynamic node creation and job completion
+[2023-11-27 07:06:18] [INFO] [TestIntelOneMPI] : Job 159 has executed successfully
+[2023-11-27 07:06:18] [PASS] [TestIntelOneMPI] : Job submitted and executed successfully.
+[2023-11-27 07:06:48] [INFO] [TestIntelOneMPI] : Daemon stop successfully
+[2023-11-27 07:06:48] [PASS] [TestIntelOneMPI] : LSF daemon stopped successfully.
+[2023-11-27 07:07:19] [INFO] [TestIntelOneMPI] : Daemon start successfully
+[2023-11-27 07:07:19] [PASS] [TestIntelOneMPI] : LSF daemon started successfully.
+[2023-11-27 07:07:19] [INFO] [TestIntelOneMPI] : Worker IPs:[10.241.0.96]
+[2023-11-27 07:07:19] [INFO] [TestIntelOneMPI] : Waiting dynamic node to disappeard : 
+HOST_NAME          STATUS          JL/U    MAX  NJOBS    RUN  SSUSP  USUSP    RSV 
+anbu-fri-tc-sanity-10-241-0-96 ok              -      2      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-1 closed_Full     -      0      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-2 closed_Full     -      0      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-3 closed_Full     -      0      0      0      0      0      0
+
+[2023-11-27 07:08:19] [INFO] [TestIntelOneMPI] : Waiting dynamic node to disappeard : 
+HOST_NAME          STATUS          JL/U    MAX  NJOBS    RUN  SSUSP  USUSP    RSV 
+anbu-fri-tc-sanity-10-241-0-96 ok              -      2      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-1 closed_Full     -      0      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-2 closed_Full     -      0      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-3 closed_Full     -      0      0      0      0      0      0
+
+[2023-11-27 07:09:19] [INFO] [TestIntelOneMPI] : Waiting dynamic node to disappeard : 
+HOST_NAME          STATUS          JL/U    MAX  NJOBS    RUN  SSUSP  USUSP    RSV 
+anbu-fri-tc-sanity-10-241-0-96 ok              -      2      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-1 closed_Full     -      0      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-2 closed_Full     -      0      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-3 closed_Full     -      0      0      0      0      0      0
+
+[2023-11-27 07:10:19] [INFO] [TestIntelOneMPI] : Waiting dynamic node to disappeard : 
+HOST_NAME          STATUS          JL/U    MAX  NJOBS    RUN  SSUSP  USUSP    RSV 
+anbu-fri-tc-sanity-10-241-0-96 ok              -      2      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-1 closed_Full     -      0      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-2 closed_Full     -      0      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-3 closed_Full     -      0      0      0      0      0      0
+
+[2023-11-27 07:11:19] [INFO] [TestIntelOneMPI] : Waiting dynamic node to disappeard : 
+HOST_NAME          STATUS          JL/U    MAX  NJOBS    RUN  SSUSP  USUSP    RSV 
+anbu-fri-tc-sanity-10-241-0-96 ok              -      2      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-1 closed_Full     -      0      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-2 closed_Full     -      0      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-3 closed_Full     -      0      0      0      0      0      0
+
+[2023-11-27 07:12:20] [INFO] [TestIntelOneMPI] : Waiting dynamic node to disappeard : 
+HOST_NAME          STATUS          JL/U    MAX  NJOBS    RUN  SSUSP  USUSP    RSV 
+anbu-fri-tc-sanity-10-241-0-96 ok              -      2      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-1 closed_Full     -      0      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-2 closed_Full     -      0      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-3 closed_Full     -      0      0      0      0      0      0
+
+[2023-11-27 07:13:20] [INFO] [TestIntelOneMPI] : Waiting dynamic node to disappeard : 
+HOST_NAME          STATUS          JL/U    MAX  NJOBS    RUN  SSUSP  USUSP    RSV 
+anbu-fri-tc-sanity-10-241-0-96 ok              -      2      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-1 closed_Full     -      0      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-2 closed_Full     -      0      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-3 closed_Full     -      0      0      0      0      0      0
+
+[2023-11-27 07:14:20] [INFO] [TestIntelOneMPI] : Waiting dynamic node to disappeard : 
+HOST_NAME          STATUS          JL/U    MAX  NJOBS    RUN  SSUSP  USUSP    RSV 
+anbu-fri-tc-sanity-10-241-0-96 ok              -      2      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-1 closed_Full     -      0      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-2 closed_Full     -      0      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-3 closed_Full     -      0      0      0      0      0      0
+
+[2023-11-27 07:15:20] [INFO] [TestIntelOneMPI] : Waiting dynamic node to disappeard : 
+HOST_NAME          STATUS          JL/U    MAX  NJOBS    RUN  SSUSP  USUSP    RSV 
+anbu-fri-tc-sanity-10-241-0-96 ok              -      2      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-1 closed_Full     -      0      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-2 closed_Full     -      0      0      0      0      0      0
+anbu-fri-tc-sanity-mgmt-3 closed_Full     -      0      0      0      0      0      0
+
+[2023-11-27 07:16:20] [INFO] [TestIntelOneMPI] : Dynamic node has disappeared!
+[2023-11-27 07:16:20] [PASS] [TestIntelOneMPI] : Dynamic node disappeared successfully.
+[2023-11-27 07:16:21] [INFO] [TestIntelOneMPI] : Appcenter configuration validated successfully
+[2023-11-27 07:16:21] [PASS] [TestIntelOneMPI] : LSF Application Center configured successfully.
+[2023-11-27 07:16:21] [INFO] [TestIntelOneMPI] : Filesystems [/mnt/lsf, /mnt/binaries, /mnt/data] exist on the node
+[2023-11-27 07:16:21] [INFO] [TestIntelOneMPI] : Directories [conf,das_staging_area,and work] exist on 
+[2023-11-27 07:16:21] [PASS] [TestIntelOneMPI] : LSF file mount as expected.
+[2023-11-27 07:16:22] [INFO] [TestIntelOneMPI] : All LSF daemons are running
+[2023-11-27 07:16:22] [PASS] [TestIntelOneMPI] : LSF Daemon status is running.
+[2023-11-27 07:16:22] [INFO] [TestIntelOneMPI] : TestIntelOneMPI validation ends.
+[2023-11-27 07:16:22] [INFO] [TestFile] : Test File validation get Starts ...
+[2023-11-27 07:16:22] [PASS] [TestFile] : Successfully ssh into cluster
+[2023-11-27 07:16:22] [INFO] [TestFile] : Directory Exist : .
+[2023-11-27 07:16:22] [INFO] [TestFile] : File created successfully: sample.txt
+[2023-11-27 07:16:22] [INFO] [TestFile] : Directory Exist : .
+[2023-11-27 07:16:22] [INFO] [TestFile] : File deleted successfully: sample.txt
+[2023-11-27 07:16:22] [INFO] [TestFile] : Directory Exist : /mnt

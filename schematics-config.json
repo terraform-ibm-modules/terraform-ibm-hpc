@@ -1,0 +1,269 @@
+{
+    "name": "hpcaas-nprtest",
+    "type": [
+      "terraform_v1.4"
+    ],
+    "location": "eu-de",
+    "resource_group": "Default",
+    "description": "",
+    "tags": [],
+    "template_repo": {
+      "url": "https://github.ibm.com/workload-eng-services/HPCaaS"
+    },
+    "template_data": [
+      {
+        "folder": ".",
+        "type": "terraform_v1.4",
+        "env_values":[
+          { 
+            "TF_CLI_ARGS_apply": "-parallelism=250"
+          },
+          { 
+            "TF_CLI_ARGS_plan": "-parallelism=250"
+          },
+          {
+            "TF_CLI_ARGS_destroy": "-parallelism=100"
+          },
+          {
+            "VAR1":"<val1>"
+          },
+          {
+            "VAR2":"<val2>"
+          } 
+        ],
+        "variablestore": [
+          {
+            "name": "TF_PARALLELISM",
+            "value": "250",
+            "type": "string",
+            "secure": false,
+            "description": "Parallelism/ concurrent operations limit. Valid values are between 1 and 256, both inclusive. [Learn more](https://developer.hashicorp.com/terraform/internals/graph#walking-the-graph)."
+          },
+          {
+            "name": "TF_VERSION",
+            "value": "1.4",
+            "type": "string",
+            "secure": false,
+            "description": "The version of the Terraform engine that's used in the Schematics workspace."
+          },
+          {
+            "name": "api_key",
+            "value": "guaNx0wWM32WJMNfGkU0U6pRVtFjZBQ_6Pb4st8FfFUj",
+            "type": "string",
+            "secure": true,
+            "description": "IBM Cloud API key for the IBM Cloud account where the IBM Cloud HPC cluster needs to be deployed. For more information on how to create an API key, see [Managing user API keys](https://cloud.ibm.com/docs/account?topic=account-userapikey)."
+          },
+          {
+            "name": "resource_group",
+            "value": "Default",
+            "type": "string",
+            "secure": false,
+            "description": "Resource group name from your IBM Cloud account where the VPC resources should be deployed. Note: Do not modify the \"Default\" value if you would like to use the auto-scaling capability. For additional information on resource groups, see [Managing resource groups](https://cloud.ibm.com/docs/account?topic=account-rgs)."
+          },
+          {
+            "name": "zone",
+            "value": "[\"eu-de-2\", \"eu-de-3\"]",
+            "type": "list(string)",
+            "secure": false,
+            "description": "IBM Cloud zone name within the selected region where the HPC cluster should be deployed. Only us-east-3 is supported currently. [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region&interface=cli#get-zones-using-the-cli)."
+          },
+          {
+            "name": "cluster_prefix",
+            "value": "hpcaas",
+            "type": "string",
+            "secure": false,
+            "description": "Prefix that is used to name the IBM Cloud HPC cluster and IBM Cloud resources that are provisioned to build the IBM Cloud HPC cluster instance. You cannot create more than one instance of the IBM Cloud HPC cluster with the same name. Ensure that the name is unique."
+          },              
+          {
+            "name": "cluster_id",
+            "value": "npr-testcluster",
+            "type": "string",
+            "secure": false,
+            "description": "Unique ID of the cluster used by IBM Cloud HPC for configuration of resources. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. Other special characters and spaces are not allowed. Do not use the name of any host or user as the name of your cluster. You cannot change the cluster ID after deployment."
+          },
+          {
+            "name": "contract_id",
+            "value": "300",
+            "type": "string",
+            "secure": true,
+            "description": "Contract ID used to differentiate multiple users sharing the resources within same zone."
+          },
+          {
+            "name": "vpc_name",
+            "value": "",
+            "type": "string",
+            "secure": false,
+            "description": "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+          },
+          {
+            "name": "vpc_cidr_block",
+            "value": "[\"10.241.0.0/18\", \"10.241.64.0/18\"]",
+            "type": "list(string)",
+            "secure": false,
+            "description": "Creates the address prefix for the new VPC, when the vpc_name variable is empty. Only a single address prefix is allowed. For more information, see [Setting IP ranges](https://cloud.ibm.com/docs/vpc?topic=vpc-vpc-addressing-plan-design)."
+          },
+          {
+            "name": "vpc_cluster_private_subnets_cidr_blocks",
+            "value": "[\"10.241.0.0/22\", \"10.241.64.0/22\"]",
+            "type": "list(string)",
+            "secure": false,
+            "description": "The CIDR block that's required for the creation of the compute cluster private subnet. Modify the CIDR block if it conflicts with any on-premises CIDR blocks when using a hybrid environment. Make sure to select a CIDR block size that will accommodate the maximum number of management and dynamic compute nodes that you expect to have in your cluster. For more information on CIDR block size selection, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
+          },
+          {
+            "name": "vpc_cluster_login_private_subnets_cidr_blocks",
+            "value": "[\"10.241.4.0/28\"]",
+            "type": "list(string)",
+            "secure": false,
+            "description": "The CIDR block that's required for the creation of the login cluster private subnet. Modify the CIDR block if it conflicts with any on-premises CIDR blocks when using a hybrid environment. Provide only one CIDR block for the creation of the login subnet. Since login subnet is used only for the creation of login virtual server instances, provide a CIDR range of /28."
+          },
+          {
+            "name": "dns_domain",
+            "value": "hpcaas.com",
+            "type": "string",
+            "secure": false,
+            "description": "IBM Cloud DNS Services domain name to be used for the IBM Cloud HPC cluster."
+          },
+          {
+            "name": "remote_allowed_ips",
+            "value": "[\"129.41.58.5\"]",
+            "type": "list(string)",
+            "secure": false,
+            "description": "Comma-separated list of IP addresses that can access the IBM Cloud HPC cluster instance through an SSH interface. For security purposes, provide the public IP addresses assigned to the devices that are authorized to establish SSH connections (for example, [\"169.45.117.34\"]). To fetch the IP address of the device, use [https://ipv4.icanhazip.com/](https://ipv4.icanhazip.com/)."
+          },
+          {
+            "name": "enable_fip",
+            "value": "true",
+            "type": "bool",
+            "secure": false,
+            "description": "The solution supports multiple ways to connect to your HPC cluster for example, using login node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
+          },
+          {
+            "name": "image_name",
+            "value": "hpcaas-lsf10-rhel86-v2",
+            "type": "string",
+            "secure": false,
+            "description": "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the HPC cluster management and compute nodes. By default, uses a base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the HPC cluster through this offering."
+          },
+          {
+            "name": "compute_image_name",
+            "value": "hpcaas-lsf10-rhel86-worker-v1",
+            "type": "string",
+            "secure": false,
+            "description": "Name of the custom image that you want to use to create virtual server instances in IBM Cloud account to deploy the HPC cluster dynamic compute nodes. By default, the solution uses a base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the HPC cluster through this offering."
+          },
+          {
+            "name": "ssh_key_name",
+            "value": "nupur-key",
+            "type": "string",
+            "secure": false,
+            "description": "Comma-separated list of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC cluster node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
+          },
+          {
+            "name": "login_node_instance_type",
+            "value": "bx2-2x8",
+            "type": "string",
+            "secure": false,
+            "description": "Specify the virtual server instance profile type to be used to create the login node for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
+          },
+          {
+            "name": "management_node_instance_type",
+            "value": "bx2-16x64",
+            "type": "string",
+            "secure": false,
+            "description" : "Specify the virtual server instance profile type to be used to create the management nodes for the HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
+          },
+          {
+            "name": "management_node_count",
+            "value": "3",
+            "type": "number",
+            "secure": false,
+            "description": "Number of management nodes. This is the total number of management nodes. Enter a value between 1 and 10."
+          },                                                                             
+          {
+            "name": "compute_node_instance_type",
+            "value": "mx2-32x256",
+            "type": "string",
+            "secure": false,
+            "description": "Specify the virtual server instance profile type name to be used to create the compute nodes for the HPC cluster based on compute_node_type. The compute nodes are the ones where the workload execution takes place and the choice should be made according to the characteristic of workloads. For more information, see [virtual server instance ](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles). Currently only memory based profile family is supported."
+          },
+          {
+            "name": "custom_file_shares",
+            "value": "[{mount_path = \"/mnt/binaries\", size = 100 }, { mount_path = \"/mnt/data\", size = 100 } ]",
+            "type": "list(object({mount_path = string,size = number}))",
+            "secure": false,
+            "description": "Mount point(s) and size(s) in GB of file share(s) that can be used to customize shared file storage layout. Provide the details for up to 5 shares."
+          },
+          {
+            "name": "hyperthreading_enabled",
+            "value": "true",
+            "type": "bool",
+            "secure": false,
+            "description": "Setting this to true will enable hyper-threading in the compute nodes of the cluster (default). Otherwise, hyper-threading will be disabled."
+          },
+          {
+            "name": "vpn_enabled",
+            "value": "false",
+            "type": "bool",
+            "secure": false,
+            "description": "Set the value as true to deploy a VPN gateway for VPC in the cluster."
+          },
+          {
+            "name": "vpn_peer_address",
+            "value": "",
+            "type": "string",
+            "secure": false,
+            "description": "Peer public IP address to which the VPN will be connected."
+          },
+          {
+            "name": "vpn_peer_cidrs",
+            "value": "",
+            "type": "string",
+            "secure": false,
+            "description": "Comma-separated list of peer CIDRs (for example, 192.168.0.0/24) to which the VPN will be connected."
+          },
+          {
+            "name": "vpn_preshared_key",
+            "value": "",
+            "type": "string",
+            "secure": false,
+            "description": "Pre-shared key for the VPN."
+          },
+          {
+            "name": "enable_customer_managed_encryption",
+            "value": "false",
+            "type": "bool",
+            "secure": false,
+            "description": "Opt-in for customer managed encription."
+          },
+          {
+            "name": "kms_instance_name",
+            "value": "",
+            "type": "string",
+            "secure": false,
+            "description": "The key-protect instance ID."
+          },
+          {
+            "name": "kms_key_name",
+            "value": "",
+            "type": "string",
+            "secure": false,
+            "description": "The name of the key."
+          },                        
+          {
+            "name": "enable_app_center",
+            "value": "false",
+            "type": "bool",
+            "description": "Set to true to enable the IBM Spectrum LSF Application Center GUI (default: false). [System requirements](https://www.ibm.com/docs/en/slac/10.2.0?topic=requirements-system-102-fix-pack-14) for IBM Spectrum LSF Application Center Version 10.2 Fix Pack 14."
+          },
+          {
+            "name": "app_center_gui_pwd",
+            "value": "",
+            "type": "string",
+            "secure": true,
+            "description": "Password for Application Center GUI. Note: Password should be at least 8 characters, must have one number, one lowercase letter, one uppercase letter, and at least one special character."
+          }
+        ]
+      }
+    ]
+  }
+  

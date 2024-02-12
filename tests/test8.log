@@ -1,0 +1,5 @@
+[2023-11-28 04:52:09] [INFO] [TestSampleMain] : TestSampleMain validation get Starts ...
+[2023-11-28 04:52:10] [PASS] [TestSampleMain] : Successfully ssh into cluster
+[2023-11-28 04:52:10] [INFO] [TestSampleMain] : Hyperthreading is disabled
+[2023-11-28 04:52:10] [INFO] [TestSampleMain] : Directory exist : .
+[2023-11-28 04:52:10] [INFO] [TestSampleMain] : File created successfully: sample.txt

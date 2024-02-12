@@ -1,0 +1,5 @@
+=== RUN   TestAnbu
+Setting up the test suite...
+--- PASS: TestAnbu (2.75s)
+PASS
+ok  	github.com/terraform-ibm-modules/terraform-ibm-hpc	2.804s
