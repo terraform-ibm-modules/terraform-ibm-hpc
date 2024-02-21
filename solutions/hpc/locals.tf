@@ -9,7 +9,7 @@ locals {
   # dependency: landing_zone -> bootstrap
   vpc_id                     = var.vpc == null ? one(module.landing_zone.vpc_id) : data.ibm_is_vpc.itself[0].id
   vpc_name                   = var.vpc == null ? one(module.landing_zone.vpc_name) : var.vpc
-  bastion_subnets            = length(var.subnet_id) == 0 ? module.landing_zone.bastion_subnets : module.landing_zone.subnets
+  bastion_subnets            = length(var.subnet_id) == 0 ? module.landing_zone.bastion_subnets : local.sorted_subnets
   public_gateways            = module.landing_zone.public_gateways
   kms_encryption_enabled     = var.key_management == "key_protect" ? true : false
   boot_volume_encryption_key = var.key_management == "key_protect" ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
@@ -35,10 +35,18 @@ locals {
 
   # dependency: landing_zone -> landing_zone_vsi
 
-  login_subnets    = length(var.subnet_id) == 0 ? module.landing_zone.login_subnets : module.landing_zone.subnets
-  compute_subnets  = length(var.subnet_id) == 0 ? module.landing_zone.compute_subnets : module.landing_zone.subnets
-  storage_subnets  = length(var.subnet_id) == 0 ? module.landing_zone.storage_subnets : module.landing_zone.subnets
-  protocol_subnets = length(var.subnet_id) == 0 ? module.landing_zone.protocol_subnets : module.landing_zone.subnets
+  subnets_output = module.landing_zone.subnets
+
+  sorted_subnets = length(var.subnet_id) != 0 ? [
+    element(local.subnets_output, index(local.subnets_output[*].id, var.subnet_id[0])),
+    element(local.subnets_output, index(local.subnets_output[*].id, var.subnet_id[1])),
+    element(local.subnets_output, index(local.subnets_output[*].id, var.login_subnet_id))
+  ] : []
+
+  login_subnets    = length(var.subnet_id) == 0 ? module.landing_zone.login_subnets : local.sorted_subnets
+  compute_subnets  = length(var.subnet_id) == 0 ? module.landing_zone.compute_subnets : local.sorted_subnets
+  storage_subnets  = length(var.subnet_id) == 0 ? module.landing_zone.storage_subnets : local.sorted_subnets
+  protocol_subnets = length(var.subnet_id) == 0 ? module.landing_zone.protocol_subnets : local.sorted_subnets
 
   #boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   #skip_iam_authorization_policy = true
@@ -94,7 +102,7 @@ locals {
   #subnets           = flatten([local.compute_subnets, local.storage_subnets, local.protocol_subnets])
   #subnets_crns      = data.ibm_is_subnet.itself[*].crn
   subnets_crn = module.landing_zone.subnets_crn
-  compute_subnets_crn = length(var.subnet_id) == 0 ? module.landing_zone.compute_subnets[*].crn : module.landing_zone.subnets[*].crn
+  compute_subnets_crn = length(var.subnet_id) == 0 ? module.landing_zone.compute_subnets[*].crn : local.sorted_subnets[*].crn
   #boot_volume_encryption_key    = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
 
   # dependency: landing_zone_vsi -> file-share
@@ -103,7 +111,20 @@ locals {
 # locals needed for dns-records
 locals {
   # dependency: dns -> dns-records
-  dns_instance_id = module.dns.dns_instance_id
+    dns_reserved_ip = join("", flatten(toset([
+  for details in data.ibm_is_subnet_reserved_ips.dns_reserved_ips :
+    [for ip in flatten(details[*].reserved_ips[*].target_crn) :
+      ip if can(regex("crn:v1:bluemix:public:dns-svcs:global", ip))
+    ]
+])))
+  dns_service_id  = local.dns_reserved_ip == "" ? "" : split(":", local.dns_reserved_ip)[7]
+  dns_instance_ids = local.dns_reserved_ip == "" ? module.dns.*.dns_instance_id[0] : local.dns_service_id
+  resolver_id = length(data.ibm_dns_custom_resolvers.dns_custom_resolver) > 0 ? join("", data.ibm_dns_custom_resolvers.dns_custom_resolver[0].custom_resolvers.*.custom_resolver_id) : ""
+  sagar_check = var.dns_instance_id != null ?  var.dns_instance_id : local.dns_service_id
+  #dns_instance_id = module.dns.dns_instance_id
+  #dns_instance_id = var.dns_instance_id == null ? module.dns.dns_instance_id : var.dns_instance_id
+  dns_instance_id = var.dns_instance_id == null && local.dns_service_id == ""? module.dns.dns_instance_id : local.sagar_check
+
   compute_dns_zone_id = one(flatten([
     for dns_zone in module.dns.dns_zone_maps : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["compute"]
   ]))
@@ -205,8 +226,18 @@ locals {
   storage_private_key_path = "storage_id_rsa" #checkov:skip=CKV_SECRET_6
   # compute_playbook_path    = "compute_ssh.yaml"
   # storage_playbook_path    = "storage_ssh.yaml"
+  #dns_reserved_ip = join("", flatten(toset([for details in data.ibm_is_subnet_reserved_ips.dns_reserved_ips : flatten(details[*].reserved_ips[*].target_crn)])))
+  #dns_reserved_ip = "crn:v1:bluemix:public:dns-svcs:global:a/ec1b082b25144a52bb1a269c883d5a00:cfdbee46-4b75-4f3f-ab9c-4a6926abf304::"
 }
 
 locals {
   share_path = module.file_storage.mount_path_1
+}
+
+###########################################################################
+# IBM Cloud Dababase for MySQL local variables
+###########################################################################
+locals {
+  db_plan = "standard"
+  db_service_endpoints = "private"
 }

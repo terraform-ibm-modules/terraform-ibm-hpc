@@ -30,9 +30,15 @@ data "ibm_is_vpc_address_prefixes" "existing_vpc" {
 }
 
 data "ibm_is_subnet" "existing_subnet" {
-  // Lookup for this Subnet resources only if var.subnet_id is not empty
-  count      = length(var.subnet_id) > 1 ? length(var.subnet_id) : 0
-  identifier = var.subnet_id[count.index]
+  // Lookup for this Subnet resources only if var.cluster_subnet_ids is not empty
+  count      = (length(var.cluster_subnet_ids) > 1 && var.vpc_name != null) ? length(var.cluster_subnet_ids) : 0
+  identifier = var.cluster_subnet_ids[count.index]
+}
+
+data "ibm_is_subnet" "existing_login_subnet" {
+  // Lookup for this Subnet resources only if var.login_subnet_id is not empty
+  count      = (var.login_subnet_id != null && var.vpc_name != null) ? 1 : 0
+  identifier = var.login_subnet_id
 }
 
 # Validating Contract ID
@@ -54,4 +60,13 @@ data "http" "contract_id_validation" {
       "id" = var.contract_id
     }
   })
+}
+
+data "ibm_is_public_gateways" "public_gateways"{
+}
+
+locals {
+  public_gateways_list = data.ibm_is_public_gateways.public_gateways.public_gateways
+  zone_1_pgw_id = var.vpc_name != null ? [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == data.ibm_is_vpc.existing_vpc[0].id && gateway.zone == var.zones[0]] : []
+  zone_2_pgw_id = var.vpc_name != null ? [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == data.ibm_is_vpc.existing_vpc[0].id && gateway.zone == var.zones[1]] : []
 }

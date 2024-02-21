@@ -134,7 +134,7 @@ module "login_vsi" {
   enable_floating_ip            = false
   security_group_ids            = [var.bastion_security_group_id]
   ssh_key_ids                   = local.bastion_ssh_keys
-  subnets                       = [local.bastion_subnets[0]]
+  subnets                       = length(var.bastion_subnets) == 3 ? [local.bastion_subnets[2]] : [local.bastion_subnets[0]]
   tags                          = local.tags
   user_data                     = "${data.template_file.login_user_data.rendered} ${file("${path.module}/templates/login_vsi.sh")}"
   vpc_id                        = var.vpc_id
@@ -170,6 +170,16 @@ module "ldap_vsi" {
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   #placement_group_id = var.placement_group_ids[(var.management_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
+
+module "generate_db_password" {
+  count              = var.enable_app_center && var.enable_high_availability ? 1 : 0
+  source           = "../../modules/security/password"
+  length           = 15
+  special          = true
+  override_special = "-_"
+  min_numeric      = 1
+}
+
 # module "compute_vsi" {
 #   count                         = length(var.static_compute_instances)
 #   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"

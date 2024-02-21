@@ -36,46 +36,46 @@ locals {
     for prefix in data.ibm_is_vpc_address_prefixes.existing_vpc.*.address_prefixes[0] :
   prefix.cidr if var.zones[1] == prefix.zone.0.name]
 
-// Validation for the private cluster_subnet CIDR input of zone 1
-  validate_private_subnet_cidr_1 = anytrue(concat([length(var.subnet_id) != 0], module.ipvalidation_cluster_subnet[0].results))
-  // Validation for the private cluster_subnet CIDR input of zone 2
-  validate_private_subnet_cidr_2   = anytrue(concat([length(var.subnet_id) != 0], module.ipvalidation_cluster_subnet[1].results))
-  validate_private_subnet_cidr_msg = "Provide appropriate range of subnet CIDR value in vpc_cluster_private_subnets_cidr_blocks from the existing VPC’s CIDR block."
-  validate_private_subnet_cidr_chk = regex("^${local.validate_private_subnet_cidr_msg}$", (local.validate_private_subnet_cidr_1 && local.validate_private_subnet_cidr_2 ? local.validate_private_subnet_cidr_msg : ""))
+# // Validation for the private cluster_subnet CIDR input of zone 1
+#   validate_private_subnet_cidr_1 = anytrue(concat([length(var.cluster_subnet_ids) != 0], module.ipvalidation_cluster_subnet[0].results))
+#   // Validation for the private cluster_subnet CIDR input of zone 2
+#   validate_private_subnet_cidr_2   = anytrue(concat([length(var.cluster_subnet_ids) != 0], module.ipvalidation_cluster_subnet[1].results))
+#   validate_private_subnet_cidr_msg = "Provide appropriate range of subnet CIDR value in vpc_cluster_private_subnets_cidr_blocks from the existing VPC’s CIDR block."
+#   validate_private_subnet_cidr_chk = regex("^${local.validate_private_subnet_cidr_msg}$", (local.validate_private_subnet_cidr_1 && local.validate_private_subnet_cidr_2 ? local.validate_private_subnet_cidr_msg : ""))
 
-  // Validation for the login cluster_subnet CIDR input should be in zone1 address prefix
-  validate_login_subnet_cidr     = anytrue(module.ipvalidation_login_subnet.results)
-  validate_login_subnet_cidr_msg = "Provide appropriate range of subnet CIDR value in vpc_cluster_login_private_subnets_cidr_blocks from the existing VPC’s CIDR block."
-  validate_login_subnet_cidr_chk = regex("^${local.validate_login_subnet_cidr_msg}$", (local.validate_login_subnet_cidr ? local.validate_login_subnet_cidr_msg : ""))
+#   // Validation for the login cluster_subnet CIDR input should be in zone1 address prefix
+#   validate_login_subnet_cidr     = anytrue(module.ipvalidation_login_subnet.results)
+#   validate_login_subnet_cidr_msg = "Provide appropriate range of subnet CIDR value in vpc_cluster_login_private_subnets_cidr_blocks from the existing VPC’s CIDR block."
+#   validate_login_subnet_cidr_chk = regex("^${local.validate_login_subnet_cidr_msg}$", (local.validate_login_subnet_cidr ? local.validate_login_subnet_cidr_msg : ""))
 
-  // Validate that the vpc_cluster_login_private_subnets_cidr_blocks do not conflict with the subnet entries in the primary zone.
-  login_cidr   = var.vpc_cluster_login_private_subnets_cidr_blocks[0]
-  cluster_cidr = length(var.subnet_id) > 1 ? data.ibm_is_subnet.existing_subnet[0].ipv4_cidr_block : var.vpc_cluster_private_subnets_cidr_blocks[0]
-  //Convert the login CIDR, cluster CIDR beginning and ending IP addresses to integers for validation.
-  validate_login = [for i in [cidrhost(local.login_cidr, 0), cidrhost(local.login_cidr, -1), cidrhost(local.cluster_cidr, 0), cidrhost(local.cluster_cidr, -1)] : (((split(".", i)[0]) * pow(256, 3)) #192
-    + ((split(".", i)[1]) * pow(256, 2))
-    + ((split(".", i)[2]) * pow(256, 1))
-  + ((split(".", i)[3]) * pow(256, 0)))]
-  //Assign values to new variables for readability.
-  login_cidr_first_ip   = local.validate_login[0]
-  login_cidr_last_ip    = local.validate_login[1]
-  cluster_cidr_first_ip = local.validate_login[2]
-  cluster_cidr_last_ip  = local.validate_login[3]
-  //The logic for CIDR conflict validation is that the entire login CIDR range should either be less than or greater than the cluster CIDR range.
-  validate_login_conflict     = anytrue([local.login_cidr_first_ip > local.cluster_cidr_first_ip && local.login_cidr_first_ip > local.cluster_cidr_last_ip, local.login_cidr_first_ip < local.cluster_cidr_first_ip && local.login_cidr_last_ip < local.cluster_cidr_first_ip])
-  validate_login_conflict_msg = "The vpc_cluster_login_private_subnets_cidr_blocks conflicts with the subnet entry in the primary zone."
-  validate_login_conflict_chk = regex("^${local.validate_login_conflict_msg}$",
-  (local.validate_login_conflict ? local.validate_login_conflict_msg : ""))
+  # // Validate that the vpc_cluster_login_private_subnets_cidr_blocks do not conflict with the subnet entries in the primary zone.
+  # login_cidr   = var.vpc_cluster_login_private_subnets_cidr_blocks[0]
+  # cluster_cidr = length(var.cluster_subnet_ids) > 1 && var.vpc_name != null ? data.ibm_is_subnet.existing_subnet[0].ipv4_cidr_block : var.vpc_cluster_private_subnets_cidr_blocks[0]
+  # //Convert the login CIDR, cluster CIDR beginning and ending IP addresses to integers for validation.
+  # validate_login = [for i in [cidrhost(local.login_cidr, 0), cidrhost(local.login_cidr, -1), cidrhost(local.cluster_cidr, 0), cidrhost(local.cluster_cidr, -1)] : (((split(".", i)[0]) * pow(256, 3)) #192
+  #   + ((split(".", i)[1]) * pow(256, 2))
+  #   + ((split(".", i)[2]) * pow(256, 1))
+  # + ((split(".", i)[3]) * pow(256, 0)))]
+  # //Assign values to new variables for readability.
+  # login_cidr_first_ip   = local.validate_login[0]
+  # login_cidr_last_ip    = local.validate_login[1]
+  # cluster_cidr_first_ip = local.validate_login[2]
+  # cluster_cidr_last_ip  = local.validate_login[3]
+  # //The logic for CIDR conflict validation is that the entire login CIDR range should either be less than or greater than the cluster CIDR range.
+  # validate_login_conflict     = anytrue([local.login_cidr_first_ip > local.cluster_cidr_first_ip && local.login_cidr_first_ip > local.cluster_cidr_last_ip, local.login_cidr_first_ip < local.cluster_cidr_first_ip && local.login_cidr_last_ip < local.cluster_cidr_first_ip])
+  # validate_login_conflict_msg = "The vpc_cluster_login_private_subnets_cidr_blocks conflicts with the subnet entry in the primary zone."
+  # validate_login_conflict_chk = regex("^${local.validate_login_conflict_msg}$",
+  # (local.validate_login_conflict ? local.validate_login_conflict_msg : ""))
 
   // validation for the boot volume encryption toggling.
-  validate_enable_customer_managed_encryption     = anytrue([alltrue([var.kms_key_name != null, var.kms_instance_name != null]), (var.kms_key_name == null), (var.key_management == null)])
+  validate_enable_customer_managed_encryption     = anytrue([alltrue([var.kms_key_name != null, var.kms_instance_name != null]), (var.kms_key_name == null), (var.key_management != "key_protect")])
   validate_enable_customer_managed_encryption_msg = "Please make sure you are passing the kms_instance_name if you are passing kms_key_name."
   validate_enable_customer_managed_encryption_chk = regex(
     "^${local.validate_enable_customer_managed_encryption_msg}$",
   (local.validate_enable_customer_managed_encryption ? local.validate_enable_customer_managed_encryption_msg : ""))
 
   // validation for the boot volume encryption toggling.
-  validate_null_customer_managed_encryption     = anytrue([alltrue([var.kms_instance_name == null, var.key_management == null]), (var.key_management != null)])
+  validate_null_customer_managed_encryption     = anytrue([alltrue([var.kms_instance_name == null, var.key_management != "key_protect"]), (var.key_management == "key_protect")])
   validate_null_customer_managed_encryption_msg = "Please make sure you are setting key_management as key_protect if you are passing kms_instance_name, kms_key_name."
   validate_null_customer_managed_encryption_chk = regex(
     "^${local.validate_null_customer_managed_encryption_msg}$",
@@ -88,17 +88,29 @@ locals {
     "^${local.password_msg}$",
   (local.validate_app_center_gui_pwd ? local.password_msg : ""))
 
-  // Validate existing subnet should be the subset of vpc_name entered
-  validate_subnet_id_vpc_msg = "Provided subnets should be within the vpc entered."
-  validate_subnet_id_vpc     = anytrue([length(var.subnet_id) == 0, length(var.subnet_id) > 1 ? alltrue([for subnet_id in var.subnet_id : contains(data.ibm_is_vpc.existing_vpc[0].subnets.*.id, subnet_id)]) : false])
+  // Validate existing cluster subnet should be the subset of vpc_name entered
+  validate_subnet_id_vpc_msg = "Provided cluster subnets should be within the vpc entered."
+  validate_subnet_id_vpc     = anytrue([length(var.cluster_subnet_ids) == 0, length(var.cluster_subnet_ids) > 1 && var.vpc_name != null ? alltrue([for subnet_id in var.cluster_subnet_ids : contains(data.ibm_is_vpc.existing_vpc[0].subnets.*.id, subnet_id)]) : false])
   validate_subnet_id_vpc_chk = regex("^${local.validate_subnet_id_vpc_msg}$",
   (local.validate_subnet_id_vpc ? local.validate_subnet_id_vpc_msg : ""))
 
-  // Validate existing subnet should be in the appropriate zone.
-  validate_subnet_id_zone_msg = "Provided subnets should be in appropriate zone."
-  validate_subnet_id_zone     = anytrue([length(var.subnet_id) == 0, length(var.subnet_id) > 1 ? alltrue([data.ibm_is_subnet.existing_subnet[0].zone == var.zones[0] && data.ibm_is_subnet.existing_subnet[1].zone == var.zones[1]]) : false])
+  // Validate existing cluster subnet should be in the appropriate zone.
+  validate_subnet_id_zone_msg = "Provided cluster subnets should be in appropriate zone."
+  validate_subnet_id_zone     = anytrue([length(var.cluster_subnet_ids) == 0, length(var.cluster_subnet_ids) > 1 && var.vpc_name != null ? alltrue([data.ibm_is_subnet.existing_subnet[0].zone == var.zones[0] && data.ibm_is_subnet.existing_subnet[1].zone == var.zones[1]]) : false])
   validate_subnet_id_zone_chk = regex("^${local.validate_subnet_id_zone_msg}$",
   (local.validate_subnet_id_zone ? local.validate_subnet_id_zone_msg : ""))
+
+   // Validate existing login subnet should be the subset of vpc_name entered
+  validate_login_subnet_id_vpc_msg = "Provided login subnet should be within the vpc entered."
+  validate_login_subnet_id_vpc     = anytrue([var.login_subnet_id == null, var.login_subnet_id != null && var.vpc_name != null ? alltrue([for subnet_id in [var.login_subnet_id] : contains(data.ibm_is_vpc.existing_vpc[0].subnets.*.id, subnet_id)]) : false])
+  validate_login_subnet_id_vpc_chk = regex("^${local.validate_login_subnet_id_vpc_msg}$",
+  (local.validate_login_subnet_id_vpc ? local.validate_login_subnet_id_vpc_msg : ""))
+
+  // Validate existing login subnet should be in the appropriate zone.
+  validate_login_subnet_id_zone_msg = "Provided login subnet should be in appropriate zone."
+  validate_login_subnet_id_zone     = anytrue([var.login_subnet_id == null, var.login_subnet_id != null && var.vpc_name != null ? alltrue([data.ibm_is_subnet.existing_login_subnet[0].zone == var.zones[0]]) : false])
+  validate_login_subnet_id_zone_chk = regex("^${local.validate_login_subnet_id_zone_msg}$",
+  (local.validate_login_subnet_id_zone ? local.validate_login_subnet_id_zone_msg : ""))
 
   // Contract ID validation
   validate_contract_id     = length("${var.cluster_id}${var.contract_id}") > 129 ? false : true
@@ -162,8 +174,40 @@ locals {
   (local.validate_ldap_usr_pwd ? local.ldap_usr_password_msg : ""))
 
   // Validate existing subnet public gateways 
-  validate_subnet_name_pg_msg = "Provided existing subnet_ids should have public gateway attached."
-  validate_subnet_name_pg     = anytrue([length(var.subnet_id) == 0, length(var.subnet_id) > 1 ? (data.ibm_is_subnet.existing_subnet[0].public_gateway != "" && data.ibm_is_subnet.existing_subnet[1].public_gateway != "") : false])
+  validate_subnet_name_pg_msg = "Provided existing cluster_subnet_ids should have public gateway attached."
+  validate_subnet_name_pg     = anytrue([length(var.cluster_subnet_ids) == 0, length(var.cluster_subnet_ids) > 1 && var.vpc_name != null ? (data.ibm_is_subnet.existing_subnet[0].public_gateway != "" && data.ibm_is_subnet.existing_subnet[1].public_gateway != "") : false])
   validate_subnet_name_pg_chk = regex("^${local.validate_subnet_name_pg_msg}$",
-  (local.validate_subnet_name_pg ? local.validate_subnet_name_pg_msg : ""))   
+  (local.validate_subnet_name_pg ? local.validate_subnet_name_pg_msg : ""))
+
+  // Validate existing vpc public gateways
+  validate_existing_vpc_pgw_msg = "Provided existing vpc should have the public gateways created in the provided zones."
+  validate_existing_vpc_pgw     = anytrue([(var.vpc_name == null), alltrue([var.vpc_name != null, length(var.cluster_subnet_ids) > 1]), alltrue([var.vpc_name != null, length(var.cluster_subnet_ids) == 0, var.login_subnet_id == null, length(local.zone_1_pgw_id) > 0, length(local.zone_2_pgw_id) > 0])])
+  validate_existing_vpc_pgw_chk = regex("^${local.validate_existing_vpc_pgw_msg}$",
+  (local.validate_existing_vpc_pgw ? local.validate_existing_vpc_pgw_msg : ""))
+
+  // Validate in case of existing subnets provide both login_subnet_id and cluster_subnet_ids.
+  validate_login_subnet_id_msg = "In case of existing subnets provide both login_subnet_id and cluster_subnet_ids."
+  validate_login_subnet_id     = anytrue([alltrue([length(var.cluster_subnet_ids) == 0, var.login_subnet_id == null]), alltrue([length(var.cluster_subnet_ids) != 0, var.login_subnet_id != null])])
+  validate_login_subnet_id_chk = regex("^${local.validate_login_subnet_id_msg}$",
+  (local.validate_login_subnet_id ? local.validate_login_subnet_id_msg : ""))
+
+  // Validate the subnet_id user input value
+  validate_subnet_id_msg = "If the cluster_subnet_ids are provided, the user should also provide the vpc_name."
+  validate_subnet_id     = anytrue([var.vpc_name != null && length(var.cluster_subnet_ids) > 0, length(var.cluster_subnet_ids) == 0])
+  validate_subnet_id_chk = regex("^${local.validate_subnet_id_msg}$",
+  (local.validate_subnet_id ? local.validate_subnet_id_msg : ""))
+
+  // IBM Cloud Database for MySQL Resource Allocation Validation
+  validate_db_template       = (var.enable_app_center && var.ENABLE_HIGH_AVAILABILITY && var.management_node_count>=2) || !var.ENABLE_HIGH_AVAILABILITY || !var.enable_app_center
+  db_template_msg            = "When the Application Center is installed in High Availability, at least two management nodes must be installed."
+  validate_db_template_chk   = regex(
+    "^${local.db_template_msg}$",
+  (local.validate_db_template ? local.db_template_msg : ""))  
+
+  // Management node count validation when Application Center is in High Availability
+  validate_management_node_count       = (var.enable_app_center && var.ENABLE_HIGH_AVAILABILITY && length(var.DB_TEMPLATE) == 4 && var.DB_TEMPLATE[0] == 3 && var.DB_TEMPLATE[1] >= 1024 && var.DB_TEMPLATE[1] <= 114688 && var.DB_TEMPLATE[2] >= 122880 && var.DB_TEMPLATE[2] <= 4194304 && var.DB_TEMPLATE[3] >= 0 && var.DB_TEMPLATE[3] <= 28) || !var.ENABLE_HIGH_AVAILABILITY || !var.enable_app_center
+  management_node_count_msg            = "IBM Cloud Database for MySQL resource allocation must have 3 members, RAM size in the 1024-114688 Mb range, Disk size in the 122880-4194304 Mb range, CPU core in the 0-28 dedicated cores range."
+  validate_management_node_count_chk   = regex(
+    "^${local.management_node_count_msg}$",
+  (local.validate_management_node_count ? local.management_node_count_msg : ""))  
 }

@@ -4,6 +4,47 @@
 # Licensed under the Apache License v2.0
 ###################################################
 
+# Useful variables that reference the main GUI and PERF Manager folders.
+LSF_SUITE_TOP="/opt/ibm/lsfsuite"
+LSF_SUITE_GUI="${LSF_SUITE_TOP}/ext/gui"
+LSF_SUITE_GUI_CONF="${LSF_SUITE_GUI}/conf"
+LSF_SUITE_PERF="${LSF_SUITE_TOP}/ext/perf"
+LSF_SUITE_PERF_CONF="${LSF_SUITE_PERF}/conf"
+LSF_SUITE_PERF_BIN="${LSF_SUITE_PERF}/1.2/bin"
+
+db_certificate_file=${LSF_SUITE_GUI_CONF}/cert.pem
+
+# Function that dump the ICD certificate in the $db_certificate_file
+create_certificate() {
+    # Dump the CA certificate in the ${db_certificate_file} file and set permissions
+    echo ${db_certificate} | base64 -d > ${db_certificate_file}
+    chown lsfadmin:lsfadmin ${db_certificate_file}
+    chmod 644 ${db_certificate_file}
+
+}
+
+# Configures the GUI JDBC datasource file ${LSF_SUITE_PERF_CONF}/datasource.xml
+# to reference the IBM Cloud Database (ICD) instance. If ${enable_app_center} and
+# ${enable_high_availability} are both true, updates the connection string to
+# point to the remote database service instead of the local MySQL server.
+configure_icd_datasource() {
+    local default_connection_string="jdbc:mariadb://localhost:3306/pac?useUnicode=true&amp;characterEncoding=UTF-8&amp;serverTimezone=GMT"
+    local icd_connection_string="jdbc:mariadb://${db_hostname}:${db_port}/pac?useUnicode=true\&amp;characterEncoding=UTF-8\&amp;serverTimezone=GMT\&amp;requireSSL=true\&amp;useSSL=true\&amp;serverSslCert=${db_certificate_file}"
+
+    # Change the connection string to use ICD
+    sed -i "s!Connection=\"${default_connection_string}\"!Connection=\"${icd_connection_string}\"!" ${LSF_SUITE_PERF_CONF}/datasource.xml
+    # Change the connection string to use ICD
+    sed -i "s!Connection=\"${default_connection_string}\"!Connection=\"${icd_connection_string}\"!" ${LSF_SUITE_PERF_CONF}/datasource.xml
+    # Change the Cipher algorithm to AES128 in the Datasource definition
+    sed -i "s|Cipher=\".*\"|Cipher=\"aes128\"|" ${LSF_SUITE_PERF_CONF}/datasource.xml
+    # Encrypt the Database user and password with AES128 Cipher. The encryptTool.sh script requires the setting of the JAVA_HOME
+    db_user_aes128=$(source /opt/ibm/lsfsuite/ext/profile.platform; ${LSF_SUITE_PERF_BIN}/encryptTool.sh "${db_user}")
+    db_password_aes128=$(source /opt/ibm/lsfsuite/ext/profile.platform; ${LSF_SUITE_PERF_BIN}/encryptTool.sh "${db_password}")
+    # Change the username password in the Datasource definition
+    sed -i "s|UserName=\".*\"|UserName=\"${db_user_aes128}\"|" ${LSF_SUITE_PERF_CONF}/datasource.xml
+    sed -i "s|Password=\".*\"|Password=\"${db_password_aes128}\"|" ${LSF_SUITE_PERF_CONF}/datasource.xml
+}
+
 # Local variable declaration
 logfile="/tmp/user_data.log"
 nfs_server_with_mount_path=${mount_path}
@@ -17,6 +58,10 @@ for (( i=1; i<=management_node_count; i++ ))
 do
   ManagementHostNames+=" ${cluster_prefix}-mgmt-$i-001"
 done
+# Space at the beginning of the list must be removed, otherwise the Application Center WEBUI doesn't work 
+# properly in HA. In fact, if LSF_ADDON_HOSTS property has the list of the nodes with a space at the beginning
+# the PAC - LSF interaction has issues.
+ManagementHostNames=${ManagementHostNames# }
 LSF_TOP="/opt/ibm/lsf"
 LSF_CONF="$LSF_TOP/conf"
 LSF_HOSTS_FILE="$LSF_CONF/hosts"
@@ -172,8 +217,40 @@ ls -l /etc/lsf.sudoers
 sudo /opt/ibm/lsf/10.1/install/hostsetup --top="/opt/ibm/lsf/" --setuid
 echo "Added LSF administrators to start LSF daemons" >> $logfile
 
+# Setting up the Application Center
+if [ "$enable_app_center" = true ] && [ "${enable_high_availability}" = true ];
+then
+    if rpm -q lsf-appcenter
+    then
+        echo "Application center packages are found..." >> $logfile
+        echo ${app_center_gui_pwd} | sudo passwd --stdin lsfadmin
+        sed -i '$i\\ALLOW_EVENT_TYPE=JOB_NEW JOB_STATUS JOB_FINISH2 JOB_START JOB_EXECUTE JOB_EXT_MSG JOB_SIGNAL JOB_REQUEUE JOB_MODIFY2 JOB_SWITCH METRIC_LOG' $LSF_ENVDIR/lsbatch/"$cluster_name"/configdir/lsb.params
+        sed -i 's/NEWJOB_REFRESH=y/NEWJOB_REFRESH=Y/g' $LSF_ENVDIR/lsbatch/"$cluster_name"/configdir/lsb.params
+        sed -i 's/NoVNCProxyHost=.*/NoVNCProxyHost=localhost/g' /opt/ibm/lsfsuite/ext/gui/conf/pmc.conf
+        create_certificate
+        configure_icd_datasource
+        echo 'source /opt/ibm/lsfsuite/ext/profile.platform' >> ~/.bashrc
+        echo 'source /opt/ibm/lsfsuite/ext/profile.platform' >> "${lsfadmin_home_dir}"/.bashrc
+        source ~/.bashrc
+        sudo rm -rf /opt/ibm/lsfsuite/ext/gui/3.0/bin/novnc.pem
+        perfadmin start all; sleep 5;  pmcadmin stop; sleep 160; pmcadmin start; sleep 5; pmcadmin list >> $logfile
+        appcenter_status=$(pmcadmin list | grep "WEBGUI" | awk '{print $2}')
+        if [ "$appcenter_status" = "STARTED" ]; then
+            echo "Application Center installation completed..." >> $logfile
+        else
+            echo "Application Center installation failed..." >> $logfile
+        fi
+    fi
+else
+	  echo 'Application Center installation skipped...' >> $logfile
+fi
+
 # TODO: Understand how lsf should work after reboot, need better cron job
-(crontab -l 2>/dev/null; echo "@reboot sleep 30 && source ~/.bashrc && lsf_daemons start && lsf_daemons status") | crontab -
+if [ "$enable_app_center" = "true" ] && [ "${enable_high_availability}" = "true" ]; then 
+    (crontab -l 2>/dev/null; echo "@reboot sleep 30 && source ~/.bashrc && lsf_daemons start && lsf_daemons status && perfadmin start all && sleep 5 && pmcadmin start") | crontab -; 
+else 
+    (crontab -l 2>/dev/null; echo "@reboot sleep 30 && source ~/.bashrc && lsf_daemons start && lsf_daemons status") | crontab -; 
+fi
 
 # Setting up the LDAP configuration
 if [ "$enable_ldap" = "true" ]; then

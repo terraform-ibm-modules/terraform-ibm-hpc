@@ -89,6 +89,17 @@ echo "${cluster_public_key_content}" >> $root_ssh_dir/authorized_keys
 echo "StrictHostKeyChecking no" >> $root_ssh_dir/config
 echo "cluster ssh key has been added to root user" >> $logfile
 
+echo $hyperthreading
+if [ "$hyperthreading" == true ]; then
+  ego_define_ncpus="threads"
+else
+  ego_define_ncpus="cores"
+  for vcpu in $(cat /sys/devices/system/cpu/cpu*/topology/thread_siblings_list | cut -s -d- -f2 | cut -d- -f2 | uniq); do
+    echo 0 > /sys/devices/system/cpu/cpu"$vcpu"/online
+  done
+fi
+
+
 # Setup LSF
 echo "Setting LSF share." >> $logfile
 # Setup file share

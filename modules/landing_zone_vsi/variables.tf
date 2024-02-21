@@ -413,3 +413,28 @@ variable "subnet_id" {
     error_message = "The subnet_id value should either be empty or contain exactly two elements."
   }
 }
+
+##############################################################################
+# High Availability (Hidden Feature)
+##############################################################################
+variable "enable_high_availability" {
+  type        = bool
+  default     = false
+  description = "The solution supports high availability as an hidden feature that is disabled by default. You can enable the feature setting this value to true."
+}
+
+###########################################################################
+# IBM Cloud Dababase for MySQL Instance variables
+###########################################################################
+variable "db_instance_info" {
+  description = "The IBM Cloud Database for MySQL information required to reference the PAC database."
+  type = object({
+    id     = string
+    adminuser     = string
+    adminpassword = string
+    hostname      = string
+    port          = number
+    certificate   = string
+  })
+  default     = null
+}

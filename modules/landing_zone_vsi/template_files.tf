@@ -56,6 +56,16 @@ data "template_file" "management_user_data" {
     ldap_basedns                  = var.enable_ldap == true ? var.ldap_basedns : "null"
     login_ip_address              = var.login_private_ips
     bootdrive_crn                 = var.boot_volume_encryption_key == null ? "" : var.boot_volume_encryption_key
+    # PAC High Availability
+    enable_high_availability      = var.enable_high_availability
+    db_adminuser                  = var.enable_app_center && var.enable_high_availability ?  var.db_instance_info.adminuser : ""
+    db_adminpassword              = var.enable_app_center && var.enable_high_availability ?  var.db_instance_info.adminpassword : ""
+    db_hostname                   = var.enable_app_center && var.enable_high_availability ?  var.db_instance_info.hostname : ""
+    db_port                       = var.enable_app_center && var.enable_high_availability ?  var.db_instance_info.port : ""
+    db_certificate                = var.enable_app_center && var.enable_high_availability ?  var.db_instance_info.certificate : ""
+    db_name                       = var.enable_app_center && var.enable_high_availability ?  local.db_name : ""
+    db_user                       = var.enable_app_center && var.enable_high_availability ?  local.db_user : ""
+    db_password                   = var.enable_app_center && var.enable_high_availability ?  module.generate_db_password[0].password : ""
   }
 }
 
@@ -85,6 +95,7 @@ data "template_file" "login_user_data" {
     cluster_prefix              = var.prefix
     rc_cidr_block_1             = local.compute_subnets[0].cidr
     rc_cidr_block_2             = local.compute_subnets[1].cidr
+    hyperthreading              = var.hyperthreading_enabled
     ldap_server_ip              = local.ldap_server
     ldap_basedns                = var.enable_ldap == true ? var.ldap_basedns : "null"
   }

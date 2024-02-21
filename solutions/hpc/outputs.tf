@@ -79,17 +79,17 @@ output "local_check" {
   value = local.file_shares
 }
 
-output "use_public_gateways" {
-  value = module.landing_zone.use_public_gateways
-}
+# output "use_public_gateways" {
+#   value = module.landing_zone.use_public_gateways
+# }
 
 # output "map" {
 #   value = module.landing_zone.map
 # }
 
-output "public_gateways" {
-  value       = module.landing_zone.public_gateways
-}
+# output "public_gateways" {
+#   value       = module.landing_zone.public_gateways
+# }
 
 output "bastion_fip" {
   value = module.bootstrap.bastion_fip
@@ -102,3 +102,31 @@ output "bastion_fip" {
 output "vpc_name" {
   value = module.landing_zone.vpc_name
 }
+#
+#output "dns_reserved_ip" {
+#  value = local.dns_reserved_ip
+#}
+#
+#output "dns_service_id" {
+#  value = local.dns_service_id
+#}
+#
+#output "dns_instance_ids" {
+#  value = local.dns_instance_ids
+#}
+#
+#output "reserved_ip" {
+#  value = data.ibm_is_subnet_reserved_ips.dns_reserved_ips
+#}
+#
+#output "resolver_id" {
+#  value = local.resolver_id
+#}
+#
+#output "sagar_check" {
+#  value = local.sagar_check
+#}
+#
+#output "dns_instance_id" {
+#  value = local.dns_instance_id
+#}

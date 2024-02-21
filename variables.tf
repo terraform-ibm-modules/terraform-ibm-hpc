@@ -47,7 +47,7 @@ variable "ibmcloud_api_key" {
 ##############################################################################
 
 variable "resource_group" {
-  description = "Resource group name from your IBM Cloud account where the VPC resources should be deployed. Note: Do not modify the \"Default\" value if you would like to use the auto-scaling capability. For additional information on resource groups, see [Managing resource groups](https://cloud.ibm.com/docs/account?topic=account-rgs)."
+  description = "Resource group name from your IBM Cloud account where the VPC resources should be deployed. Note. If the resource group value is set as null, automation creates two different RG with the name (workload-rg and service-rg). For additional information on resource groups, see [Managing resource groups](https://cloud.ibm.com/docs/account?topic=account-rgs)."
   type        = string
   default     = "Default"
 }
@@ -59,6 +59,7 @@ variable "resource_group" {
 variable "cluster_prefix" {
   description = "Prefix that is used to name the IBM Cloud HPC cluster and IBM Cloud resources that are provisioned to build the IBM Cloud HPC cluster instance. You cannot create more than one instance of the IBM Cloud HPC cluster with the same name. Ensure that the name is unique."
   type        = string
+  default     = "hpcaas"
 
   validation {
     error_message = "Prefix must begin and end with a letter and contain only letters, numbers, and - characters."
@@ -85,18 +86,24 @@ variable "vpc_name" {
   default     = null
 }
 
-variable "subnet_id" {
+variable "cluster_subnet_ids" {
   type        = list(string)
   default     = []
-  description = "List of existing subnet IDs under the VPC, where the cluster will be provisioned."
+  description = "List of existing subnet IDs under the VPC, where the cluster will be provisioned. Two subnet ids are required as input value and supported zones for eu-de are eu-de-2, eu-de-3 and for us-east us-east-1, us-east-3. The management nodes and file storage shares will be deployed to the first zone in the list. Compute nodes will be deployed across both first and second zones, where the first zone in the list will be considered as the most preferred zone for compute nodes deployment."
   validation {
-    condition     = contains([0, 2], length(var.subnet_id))
+    condition     = contains([0, 2], length(var.cluster_subnet_ids))
     error_message = "The subnet_id value should either be empty or contain exactly two elements."
   }
 }
 
+variable "login_subnet_id" {
+  type        = string
+  default     = null
+  description = "List of existing subnet ID under the VPC, where the login/Bastion server will be provisioned. One subnet id is required as input value for the creation of login node and bastion in the same zone as the management nodes are created. Note: Provide a different subnet id for login_subnet_id, do not overlap or provide the same subnet id that was already provided for cluster_subnet_ids."
+}
+
 variable "vpc_cidr" {
-  description = "Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning."
+  description = "Creates the address prefix for the new VPC, when the vpc_name variable is empty. The VPC requires an address prefix for each subnet in two different zones. The subnets are created with the specified CIDR blocks, enabling support for two zones within the VPC. For more information, see [Setting IP ranges](https://cloud.ibm.com/docs/vpc?topic=vpc-vpc-addressing-plan-design)."
   type        = string
   default     = "10.241.0.0/18,10.241.64.0/18"
 }
@@ -130,7 +137,7 @@ variable "vpc_cidr" {
 
 variable "bastion_ssh_keys" {
   type        = list(string)
-  description = "The key pair to use to access the bastion host."
+  description = "List of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC bastion node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
 }
 
 variable "login_node_instance_type" {
@@ -192,7 +199,7 @@ variable "remote_allowed_ips" {
   }
   validation {
     condition = alltrue([
-      for a in var.remote_allowed_ips : can(regex("^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$", a))
+      for a in var.remote_allowed_ips : can(regex("^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(/(3[0-2]|2[0-9]|1[0-9]|[0-9]))?$", a))
     ])
     error_message = "The provided IP address format is not valid. Check if the IP address contains a comma instead of a dot, and ensure there are double quotation marks between each IP address range if using multiple IP ranges. For multiple IP address, use the format [\"169.45.117.34\",\"128.122.144.145\"]."
   }
@@ -247,7 +254,7 @@ variable "vpc_cluster_private_subnets_cidr_blocks" {
 
 variable "compute_ssh_keys" {
   type        = list(string)
-  description = "The key pair to use to launch the compute host."
+  description = "List of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC cluster node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
 }
 
 variable "management_image_name" {
@@ -456,7 +463,7 @@ variable "custom_file_shares" {
 variable "dns_instance_id" {
   type        = string
   default     = null
-  description = "IBM Cloud HPC DNS service instance id."
+  description = "Provide the id of existing IBM Cloud DNS services domain name to used for the IBM Cloud HPC cluster."
 }
 
 variable "dns_domain_names" {
@@ -466,11 +473,14 @@ variable "dns_domain_names" {
     #protocol = string
   })
   default = {
-    compute  = "hpcaas.com"
+    compute  = "hpcaasnew.com"
   }
   description = "IBM Cloud DNS Services domain name to be used for the IBM Cloud HPC cluster."
   validation {
-    condition     = can(regex("^([[:alnum:]]*[A-Za-z0-9-]{1,63}\\.)+[A-Za-z]{2,6}$", var.dns_domain_names.compute))
+    condition = can(regex("^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])\\.com$", var.dns_domain_names.compute))
+    #condition = can(regex("^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\\.)+[a-zA-Z]{2,6}$", var.dns_domain_names.compute))
+    #condition = can(regex("^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.[a-zA-Z]{2,6}$", var.dns_domain_names.compute))
+    #condition     = can(regex("^([[:alnum:]]*[A-Za-z0-9-]{1,63}\\.)+[A-Za-z]{2,6}$", var.dns_domain_names.compute))
     error_message = "The domain name provided for compute is not a fully qualified domain name (FQDN). An FQDN can contain letters (a-z, A-Z), digits (0-9), hyphens (-), dots (.), and must start and end with an alphanumeric character."
   }  
 }
@@ -491,13 +501,13 @@ variable "dns_domain_names" {
 variable "enable_cos_integration" {
   type        = bool
   default     = false
-  description = "Integrate COS with HPC solution"
+  description = "Set to true to create an extra cos bucket to integrate with HPC cluster deployment."
 }
 
 variable "cos_instance_name" {
   type        = string
   default     = null
-  description = "Exiting COS instance name"
+  description = "Provide the name of the existing cos instance to store vpc flow logs."
 }
 
 # variable "enable_atracker" {
@@ -519,7 +529,7 @@ variable "enable_vpc_flow_logs" {
 variable "key_management" {
   type        = string
   default     = "key_protect"
-  description = "null/key_protect"
+  description = "Setting this to key_protect will enable customer managed encryption for boot volume and file share. If the key_management is set as null, encryption will be always provider managed."
   validation {
     condition     = var.key_management == "null" || var.key_management == null || var.key_management == "key_protect"
     error_message = "key_management must be either 'null' or 'key_protect'."
@@ -529,13 +539,13 @@ variable "key_management" {
 variable "kms_instance_name" {
   type        = string
   default     = null
-  description = "This will be considered if key_management is not null. Name of the Key Protect instance associated with the Key Management Service. The ID can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
+  description = "Name of the Key Protect instance associated with the Key Management Service. Note: kms_instance_name to be considered only if key_management value is set to key_protect. The name can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
 }
 
 variable "kms_key_name" {
   type        = string
   default     = null
-  description = "This will be considered if key_management is not null.Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. (for example kms_key_name: my-encryption-key)."
+  description = "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. Note: kms_instance_name to be considered only if key_management value is set to key_protect. (for example kms_key_name: my-encryption-key)."
 }
 
 # variable "hpcs_instance_name" {
@@ -668,9 +678,27 @@ variable "ldap_vsi_osimage_name" {
   description = "Image name to be used for provisioning the LDAP instances."
 }
 
-
 variable "skip_iam_authorization_policy" {
   type        = string
   default     = false
-  description = "Skip IAM Authorization policy"
+  description = "Set it to false if authorization policy is required for VPC to access COS. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for VPC flow log](https://cloud.ibm.com/docs/vpc?topic=vpc-ordering-flow-log-collector&interface=ui#fl-before-you-begin-ui)."
 }
+
+##############################################################################
+# High Availability (Hidden Feature)
+##############################################################################
+variable "ENABLE_HIGH_AVAILABILITY" {
+  type        = bool
+  default     = false
+  description = "The solution supports high availability as an hidden feature that is disabled by default. You can enable the feature setting this value to true."
+}
+
+###########################################################################
+# IBM Cloud Dababase for MySQL Variables
+###########################################################################
+variable "DB_TEMPLATE" {
+  type        = list
+  description = "Set the initial resource allocation: members count, RAM (Mb), Disks (Mb) and CPU cores count."
+  default     = [3, 12288, 122880, 3]
+}
+

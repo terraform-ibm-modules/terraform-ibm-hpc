@@ -1,6 +1,0 @@
-ibmcloud_api_key = "0fqtJ7XDE39Z4Dv-OBjFgnRmUE3bgRhsJJMPUgxQpMXf"
-vpc_region = "eu-de"
-resource_group_id = "2cd68a3483634533b41a8993159c27e8"
-vpc_subnet_id = "02b7-b9377542-f03c-416d-8af5-5301adad6326"
-source_image_name = "hpcaas-lsf10-rhel86-compute-v1"
-image_name = "npr-compute-image-test"

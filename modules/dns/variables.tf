@@ -68,3 +68,5 @@ variable "dns_domain_names" {
   default     = null
   description = "IBM Cloud HPC DNS domain names."
 }
+
+variable "resolver_id" {}

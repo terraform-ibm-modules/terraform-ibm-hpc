@@ -1,5 +1,5 @@
 resource "ibm_resource_instance" "itself" {
-  count             = var.dns_instance_id == null ? 1 : 0
+  count             = var.dns_instance_id == "" ? 1 : 0
   name              = format("%s-dns-instance", var.prefix)
   resource_group_id = var.resource_group_id
   location          = "global"
@@ -9,7 +9,7 @@ resource "ibm_resource_instance" "itself" {
 }
 
 locals {
-  dns_instance_id = var.dns_instance_id == null ? ibm_resource_instance.itself[0].guid : var.dns_instance_id
+  dns_instance_id = var.dns_instance_id == "" ? ibm_resource_instance.itself[0].guid : var.dns_instance_id
 }
 
 locals {
@@ -18,7 +18,7 @@ locals {
   tags           = [local.prefix, local.name]
 }
 resource "ibm_dns_custom_resolver" "itself" {
-  #count             = var.dns_custom_resolver_id == null ? 1 : 0
+  count             = var.resolver_id == "" ? 1 : 0
   name              = format("%s-custom-resolver", var.prefix)
   instance_id       = local.dns_instance_id
   enabled           = true
@@ -33,7 +33,7 @@ resource "ibm_dns_custom_resolver" "itself" {
 }
 
 data "ibm_dns_zones" "conditional" {
-  count       = var.dns_instance_id != null ? 1 : 0
+  count       = var.dns_instance_id == "" ? 0 : 1
   instance_id = var.dns_instance_id
 }
 

@@ -23,4 +23,5 @@ rc_cidr_block_2="${rc_cidr_block_2}"
 cluster_prefix="${cluster_prefix}"
 ldap_server_ip="${ldap_server_ip}"
 ldap_basedns="${ldap_basedns}"
+hyperthreading="${hyperthreading}"
 echo "END $(date '+%Y-%m-%d %H:%M:%S')" >> $logfile

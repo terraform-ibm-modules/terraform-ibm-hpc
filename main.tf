@@ -48,8 +48,9 @@ module "hpc" {
   # storage_subnets_cidr = var.storage_subnets_cidr
   #storage_type        = var.storage_type
   vpc               = var.vpc_name
-  existing_subnet_cidrs = var.vpc_name != null && length(var.subnet_id) > 0 ? [data.ibm_is_subnet.existing_subnet[0].ipv4_cidr_block, data.ibm_is_subnet.existing_subnet[1].ipv4_cidr_block] : []
-  subnet_id             = var.subnet_id
+  existing_subnet_cidrs = var.vpc_name != null && length(var.cluster_subnet_ids) > 0 ? [data.ibm_is_subnet.existing_subnet[0].ipv4_cidr_block, data.ibm_is_subnet.existing_subnet[1].ipv4_cidr_block, data.ibm_is_subnet.existing_login_subnet[0].ipv4_cidr_block] : []
+  subnet_id             = var.cluster_subnet_ids
+  login_subnet_id       = var.login_subnet_id
   # vpn_peer_address  = var.vpn_peer_address
   # peer_cidr_list     = var.peer_cidr_list
   # vpn_preshared_key = var.vpn_preshared_key
@@ -63,14 +64,18 @@ module "hpc" {
   TF_VALIDATION_SCRIPT_FILES = var.TF_VALIDATION_SCRIPT_FILES
   kms_instance_name = var.kms_instance_name
   kms_key_name = var.kms_key_name
-  ldap_admin_password = var.ldap_vsi_osimage_name
+  ldap_admin_password           = var.ldap_admin_password
   ldap_vsi_profile              = var.ldap_vsi_profile
-  enable_ldap = var.enable_ldap
+  enable_ldap                   = var.enable_ldap
   ldap_user_name                = var.ldap_user_name
   ldap_user_password            = var.ldap_user_password
   ldap_server                   = var.ldap_server
+  ldap_basedns                  = var.ldap_basedns
   ldap_vsi_osimage_name         = var.ldap_vsi_osimage_name
   enable_app_center             = var.enable_app_center
   app_center_gui_pwd            = var.app_center_gui_pwd
   skip_iam_authorization_policy = var.skip_iam_authorization_policy
+  hyperthreading_enabled        = var.hyperthreading_enabled
+  enable_high_availability      = var.ENABLE_HIGH_AVAILABILITY
+  db_template                   = var.DB_TEMPLATE
 }

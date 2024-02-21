@@ -84,6 +84,12 @@ variable "subnet_id" {
   description = "List of existing subnet IDs under the VPC, where the cluster will be provisioned."
 }
 
+variable "login_subnet_id" {
+  type        = string
+  default     = null
+  description = "List of existing subnet ID under the VPC, where the login/Bastion server will be provisioned."
+}
+
 variable "network_cidr" {
   description = "Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning."
   type        = string
@@ -613,4 +619,22 @@ variable "skip_iam_authorization_policy" {
   type        = string
   default     = null
   description = "Skip IAM Authorization policy"
+}
+
+##############################################################################
+# High Availability (Hidden Feature)
+##############################################################################
+variable "enable_high_availability" {
+  type        = bool
+  default     = false
+  description = "The solution supports high availability as an hidden feature that is disabled by default. You can enable the feature setting this value to true."
+}
+
+###########################################################################
+# IBM Cloud Dababase for MySQL Variables
+###########################################################################
+variable "db_template" {
+  type        = list
+  description = "Set the initial resource allocation: members count, RAM (Mb), Disks (Mb) and CPU cores count."
+  default     = [3, 12288, 122880, 3]
 }

@@ -92,7 +92,7 @@ locals {
         name           = "compute-subnet-${zone}"
         acl_name       = "hpc-acl"
         cidr           = var.compute_subnets_cidr[index(local.active_zones, zone)]
-        public_gateway = true
+        public_gateway = var.vpc == null ? true : false
       },
       # local.storage_instance_count != 0 ? {
       #   name           = "storage-subnet-${zone}"
@@ -174,7 +174,7 @@ locals {
   #       "zone-3" = contains(keys(local.subnet_info), "${local.region}-3") ? local.subnet_info["${local.region}-3"] : false
   #     }
 
-  use_public_gateways_existing_subnet = length(var.subnet_id) == 0 ? null : {
+  use_public_gateways_existing_vpc = {
         "zone-1" = false
         "zone-2" = false
         "zone-3" = false
@@ -183,7 +183,7 @@ locals {
   vpcs = [
     {
       existing_vpc_id              = var.vpc == null ? null : data.ibm_is_vpc.itself[0].id
-      existing_subnets             = length(var.subnet_id) == 0 ? null : [
+      existing_subnets             = (var.vpc != null && length(var.subnet_id) > 0) ? [
         {
           id             = var.subnet_id[0]
           public_gateway = false
@@ -193,8 +193,13 @@ locals {
           id             = var.subnet_id[1]
           public_gateway = false
           # public_gateway = data.ibm_is_subnet.subnet[1].public_gateway != "" ? false : true            
+        },
+        {
+          id             = var.login_subnet_id
+          public_gateway = false
+          # public_gateway = data.ibm_is_subnet.subnet[1].public_gateway != "" ? false : true            
         }
-      ]
+      ] : null
       prefix                       = local.name
       resource_group               = var.resource_group == null ? "workload-rg" : var.resource_group
       clean_default_security_group = true
@@ -207,8 +212,8 @@ locals {
           rules             = local.network_acl_rules
         }
       ],
-      subnets             = length(var.subnet_id) == 0 ? local.subnets : null
-      use_public_gateways = length(var.subnet_id) == 0 ? local.use_public_gateways : local.use_public_gateways_existing_subnet
+      subnets             = (var.vpc != null && length(var.subnet_id) > 0) ? null : local.subnets
+      use_public_gateways = var.vpc == null ? local.use_public_gateways : local.use_public_gateways_existing_vpc
       address_prefixes    = var.vpc == null ? local.address_prefixes : null
     }
   ]

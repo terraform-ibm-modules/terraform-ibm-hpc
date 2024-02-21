@@ -11,7 +11,7 @@ module "landing_zone" {
   # hpcs_instance_name     = var.hpcs_instance_name
   ibmcloud_api_key       = var.ibmcloud_api_key
   key_management         = var.key_management
-  kms_instance_name        = var.kms_instance_name
+  kms_instance_name      = var.kms_instance_name
   kms_key_name           = var.kms_key_name
   ssh_keys               = var.bastion_ssh_keys
   bastion_subnets_cidr   = var.bastion_subnets_cidr
@@ -27,6 +27,7 @@ module "landing_zone" {
   # storage_subnets_cidr   = var.storage_subnets_cidr
   vpc                    = var.vpc
   subnet_id             = var.subnet_id
+  login_subnet_id       = var.login_subnet_id
   # vpn_peer_address       = var.vpn_peer_address
   # vpn_peer_cidr          = var.vpn_peer_cidr
   # vpn_preshared_key      = var.vpn_preshared_key
@@ -55,6 +56,30 @@ module "bootstrap" {
   existing_kms_instance_guid = local.existing_kms_instance_guid
   compute_security_group_id  = local.compute_security_group_id
   skip_iam_authorization_policy = var.skip_iam_authorization_policy
+}
+
+module "generate_db_adminpassword" {
+  count            = var.enable_app_center && var.enable_high_availability ? 1 : 0
+  source           = "../../modules/security/password"
+  length           = 15
+  special          = true
+  override_special = "-_"
+  min_numeric      = 1
+}
+
+module "db" {
+  count              = var.enable_app_center && var.enable_high_availability ? 1 : 0
+  source             = "../../modules/database/mysql"
+  resource_group_id  = local.resource_groups["service_rg"]
+  name               = "${var.prefix}-database"
+  region             = data.ibm_is_region.region.name
+  plan               = local.db_plan
+  service_endpoints  = local.db_service_endpoints
+  adminpassword      = module.generate_db_adminpassword[0].password
+  members            = var.db_template[0]
+  memory             = var.db_template[1]
+  disks              = var.db_template[2]
+  vcpu               = var.db_template[3]
 }
 
 module "landing_zone_vsi" {
@@ -113,6 +138,8 @@ module "landing_zone_vsi" {
   ldap_server                   = var.ldap_server
   ldap_vsi_osimage_name         = var.ldap_vsi_osimage_name
   ldap_primary_ip               = local.ldap_private_ips
+  enable_high_availability      = var.enable_high_availability
+  db_instance_info              = var.enable_app_center && var.enable_high_availability ? module.db[0].db_instance_info : null
 }
 
 module "file_storage" {
@@ -134,9 +161,11 @@ module "dns" {
   resource_group_id      = local.resource_groups["service_rg"]
   vpc_crn                = local.vpc_crn
   subnets_crn            = local.compute_subnets_crn
-  dns_instance_id        = var.dns_instance_id
+#  dns_instance_id        = var.dns_instance_id
+  dns_instance_id        = local.dns_service_id
   #dns_custom_resolver_id = var.dns_custom_resolver_id
   dns_domain_names       = values(var.dns_domain_names)
+  resolver_id            = local.resolver_id
 }
 
 ###################################################
@@ -360,3 +389,27 @@ module "validation_script_executor" {
     module.check_cluster_status
   ]
 }
+
+//// Code for Public Gateway attachment for the existing vpc and new subnets scenario ////
+
+data "ibm_is_public_gateways" "public_gateways"{
+}
+
+locals{
+  public_gateways_list = data.ibm_is_public_gateways.public_gateways.public_gateways
+  zone_1_pgw_ids = [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == local.vpc_id && gateway.zone == var.zones[0]]
+  zone_2_pgw_ids = [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == local.vpc_id && gateway.zone == var.zones[1]]
+}
+
+resource "ibm_is_subnet_public_gateway_attachment" "zone_1_attachment" {
+  count                 = (var.vpc != null && length(var.subnet_id) == 0) ? 1 : 0
+  subnet                = local.compute_subnets[0].id
+  public_gateway        = length(local.zone_1_pgw_ids) > 0 ? local.zone_1_pgw_ids[0] : ""
+}
+
+resource "ibm_is_subnet_public_gateway_attachment" "zone_2_attachment" {
+  count                 = (var.vpc != null && length(var.subnet_id) == 0) ? 1 : 0
+  subnet                = local.compute_subnets[1].id
+  public_gateway        = length(local.zone_2_pgw_ids) > 0 ? local.zone_2_pgw_ids[0] : ""
+}
+

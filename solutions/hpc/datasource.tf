@@ -41,3 +41,30 @@ data "ibm_is_subnet" "itself" {
   identifier = local.subnets[count.index]["id"]
 }
 */
+
+
+data "ibm_is_vpc" "existing_vpc" {
+  // Lookup for this VPC resource only if var.vpc_name is not empty
+  count = var.vpc != null ? 1 : 0
+  name  = var.vpc
+}
+
+#data "ibm_is_subnet" "subnet_id" {
+#  for_each   = var.vpc == "" ? [] : toset(data.ibm_is_vpc.existing_vpc[0].subnets[*].id)
+#  identifier = each.value
+#}
+
+data "ibm_is_subnet" "subnet_id" {
+  for_each   = can(data.ibm_is_vpc.existing_vpc) && length(data.ibm_is_vpc.existing_vpc) > 0 ? toset(flatten([for vpc in data.ibm_is_vpc.existing_vpc : vpc.subnets[*].id])) : toset([])
+  identifier = each.value
+}
+
+data "ibm_is_subnet_reserved_ips" "dns_reserved_ips" {
+  for_each = toset([for subnetsdetails in data.ibm_is_subnet.subnet_id : subnetsdetails.id])
+  subnet   = each.value
+}
+
+data "ibm_dns_custom_resolvers" "dns_custom_resolver" {
+  count       = var.dns_instance_id != null || local.dns_service_id != "" ? 1 : 0
+  instance_id = local.sagar_check
+}

@@ -63,11 +63,41 @@ output "application_center_url" {
 #   value = module.hpc.map
 # }
 
-# output "public_gateways" {
-#   value       = module.hpc.public_gateways
+# output "pgws" {
+#   value = module.hpc.pgws
 # }
 
 # output "test" {
 #   value = local.prefixes_in_given_zone_1
 #   # value       = module.hpc.vpc_name
 # }
+
+#
+#output "dns_reserved_ip" {
+#  value = module.hpc.dns_reserved_ip
+#}
+#
+#output "dns_service_id" {
+#  value = module.hpc.dns_service_id
+#}
+#
+#output "dns_instance_ids" {
+#  value = module.hpc.dns_instance_ids
+#}
+#
+##output "reserved_ip" {
+##  value = module.hpc.reserved_ip
+##}
+#
+#
+#output "resolver_id" {
+#  value = module.hpc.resolver_id
+#}
+#
+#output "sagar_check" {
+#  value = module.hpc.sagar_check
+#}
+#
+#output "dns_instance_id" {
+#  value = module.hpc.dns_instance_id
+#}

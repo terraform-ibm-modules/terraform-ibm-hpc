@@ -60,6 +60,12 @@ variable "subnet_id" {
   description = "List of existing subnet IDs under the VPC, where the cluster will be provisioned."
 }
 
+variable "login_subnet_id" {
+  type        = string
+  default     = null
+  description = "List of existing subnet ID under the VPC, where the login/Bastion server will be provisioned."
+}
+
 variable "network_cidr" {
   description = "Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning."
   type        = string
