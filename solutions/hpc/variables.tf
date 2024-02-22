@@ -401,20 +401,20 @@ variable "dns_instance_id" {
   description = "IBM Cloud HPC DNS service instance id."
 }
 
-#variable "dns_custom_resolver_id" {
-#  type        = string
-#  default     = null
-#  description = "IBM Cloud DNS custom resolver id."
-#}
+variable "dns_custom_resolver_id" {
+  type        = string
+  default     = null
+  description = "IBM Cloud DNS custom resolver id."
+}
 
 variable "dns_domain_names" {
   type = object({
-    compute  = string
+    compute = string
     #storage  = string
     #protocol = string
   })
   default = {
-    compute  = "comp.com"
+    compute = "comp.com"
   }
   description = "IBM Cloud HPC DNS domain names."
 }
@@ -634,7 +634,7 @@ variable "enable_high_availability" {
 # IBM Cloud Dababase for MySQL Variables
 ###########################################################################
 variable "db_template" {
-  type        = list
+  type        = list(any)
   description = "Set the initial resource allocation: members count, RAM (Mb), Disks (Mb) and CPU cores count."
   default     = [3, 12288, 122880, 3]
 }

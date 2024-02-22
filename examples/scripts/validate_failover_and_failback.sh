@@ -18,7 +18,7 @@ validation_failed=0
 # Function to handle validation failures
 handle_validation_failure() {
   echo "Validation issues detected. Script execution failed."
-  # This step is necessary to handle cases where a dynamic node is not created, 
+  # This step is necessary to handle cases where a dynamic node is not created,
   # and jobs remain in a pending state due to exceeding the timeout when job submission.
   # By using 'bkill', we ensure that any lingering jobs are properly terminated.
   bkill 0

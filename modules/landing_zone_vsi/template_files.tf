@@ -17,9 +17,9 @@ data "template_file" "management_user_data" {
     resource_records_apikey_value = var.ibmcloud_api_key
     management_node_count         = var.management_node_count
     # management_node_count         = jsonencode(var.management_instances)
-    api_endpoint_us_east          = local.us-east
-    api_endpoint_eu_de            = local.eu-de
-    image_id                      = local.compute_image_mapping_entry_found ? local.new_compute_image_id : data.ibm_is_image.compute[0].id
+    api_endpoint_us_east = local.us-east
+    api_endpoint_eu_de   = local.eu-de
+    image_id             = local.compute_image_mapping_entry_found ? local.new_compute_image_id : data.ibm_is_image.compute[0].id
     #subnet_id                     = local.subnet_list[0].crn
     #subnet_id_2                   = local.subnet_list[1].crn
     #subnet_id                     = local.compute_subnets[0].id
@@ -44,28 +44,28 @@ data "template_file" "management_user_data" {
     network_interface           = local.vsi_interfaces[0]
     dns_domain                  = var.dns_domain_names["compute"]
     mount_path                  = var.share_path
-    custom_file_shares            = join(" ", [for file_share in var.file_share : file_share])
+    custom_file_shares          = join(" ", [for file_share in var.file_share : file_share])
     #custom_mount_paths            = join(" ", [for mount_path in var.mount_path : mount_path])
     custom_mount_paths = join(" ", [for mount_path_obj in var.mount_path : mount_path_obj.mount_path])
     contract_id        = var.contract_id
     enable_app_center  = var.enable_app_center
     app_center_gui_pwd = var.app_center_gui_pwd
-    enable_ldap                   = var.enable_ldap
-    ldap_server_ip                = local.ldap_server
+    enable_ldap        = var.enable_ldap
+    ldap_server_ip     = local.ldap_server
     #ldap_basedns                  = var.ldap_basedns != null ? "\"${var.ldap_basedns}\"" : "null"
-    ldap_basedns                  = var.enable_ldap == true ? var.ldap_basedns : "null"
-    login_ip_address              = var.login_private_ips
-    bootdrive_crn                 = var.boot_volume_encryption_key == null ? "" : var.boot_volume_encryption_key
+    ldap_basedns     = var.enable_ldap == true ? var.ldap_basedns : "null"
+    login_ip_address = var.login_private_ips
+    bootdrive_crn    = var.boot_volume_encryption_key == null ? "" : var.boot_volume_encryption_key
     # PAC High Availability
-    enable_high_availability      = var.enable_high_availability
-    db_adminuser                  = var.enable_app_center && var.enable_high_availability ?  var.db_instance_info.adminuser : ""
-    db_adminpassword              = var.enable_app_center && var.enable_high_availability ?  var.db_instance_info.adminpassword : ""
-    db_hostname                   = var.enable_app_center && var.enable_high_availability ?  var.db_instance_info.hostname : ""
-    db_port                       = var.enable_app_center && var.enable_high_availability ?  var.db_instance_info.port : ""
-    db_certificate                = var.enable_app_center && var.enable_high_availability ?  var.db_instance_info.certificate : ""
-    db_name                       = var.enable_app_center && var.enable_high_availability ?  local.db_name : ""
-    db_user                       = var.enable_app_center && var.enable_high_availability ?  local.db_user : ""
-    db_password                   = var.enable_app_center && var.enable_high_availability ?  module.generate_db_password[0].password : ""
+    enable_high_availability = var.enable_high_availability
+    db_adminuser             = var.enable_app_center && var.enable_high_availability ? var.db_instance_info.adminuser : ""
+    db_adminpassword         = var.enable_app_center && var.enable_high_availability ? var.db_instance_info.adminpassword : ""
+    db_hostname              = var.enable_app_center && var.enable_high_availability ? var.db_instance_info.hostname : ""
+    db_port                  = var.enable_app_center && var.enable_high_availability ? var.db_instance_info.port : ""
+    db_certificate           = var.enable_app_center && var.enable_high_availability ? var.db_instance_info.certificate : ""
+    db_name                  = var.enable_app_center && var.enable_high_availability ? local.db_name : ""
+    db_user                  = var.enable_app_center && var.enable_high_availability ? local.db_user : ""
+    db_password              = var.enable_app_center && var.enable_high_availability ? module.generate_db_password[0].password : ""
   }
 }
 
@@ -102,7 +102,7 @@ data "template_file" "login_user_data" {
 }
 
 data "template_file" "ldap_user_data" {
-  count = var.enable_ldap == true ? 1 : 0
+  count    = var.enable_ldap == true ? 1 : 0
   template = file("${path.module}/templates/ldap_user_data.tpl")
   vars = {
     ssh_public_key_content = local.enable_management ? module.compute_key[0].public_key_content : ""

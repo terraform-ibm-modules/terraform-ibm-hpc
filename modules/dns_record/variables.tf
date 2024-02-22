@@ -36,12 +36,12 @@ variable "dns_records" {
 
 variable "dns_domain_names" {
   type = object({
-    compute  = string
+    compute = string
     #storage  = string
     #protocol = string
   })
   default = {
-    compute  = "comp.com"
+    compute = "comp.com"
   }
   description = "IBM Cloud HPC DNS domain names."
 }

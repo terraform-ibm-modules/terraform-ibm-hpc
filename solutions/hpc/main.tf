@@ -1,60 +1,60 @@
 module "landing_zone" {
   source = "../../modules/landing_zone"
   # TODO: Add logic
-  allowed_cidr           = var.allowed_cidr
-  compute_subnets_cidr   = var.compute_subnets_cidr
-  cos_instance_name      = var.cos_instance_name
+  allowed_cidr         = var.allowed_cidr
+  compute_subnets_cidr = var.compute_subnets_cidr
+  cos_instance_name    = var.cos_instance_name
   # enable_atracker        = var.enable_atracker
   enable_cos_integration = var.enable_cos_integration
   enable_vpc_flow_logs   = var.enable_vpc_flow_logs
   enable_vpn             = var.enable_vpn
   # hpcs_instance_name     = var.hpcs_instance_name
-  ibmcloud_api_key       = var.ibmcloud_api_key
-  key_management         = var.key_management
-  kms_instance_name      = var.kms_instance_name
-  kms_key_name           = var.kms_key_name
-  ssh_keys               = var.bastion_ssh_keys
-  bastion_subnets_cidr   = var.bastion_subnets_cidr
+  ibmcloud_api_key     = var.ibmcloud_api_key
+  key_management       = var.key_management
+  kms_instance_name    = var.kms_instance_name
+  kms_key_name         = var.kms_key_name
+  ssh_keys             = var.bastion_ssh_keys
+  bastion_subnets_cidr = var.bastion_subnets_cidr
   # management_instances   = var.management_instances
   # compute_instances      = var.static_compute_instances
-  network_cidr           = var.network_cidr
+  network_cidr = var.network_cidr
   # placement_strategy     = var.placement_strategy
-  prefix                 = var.prefix
+  prefix = var.prefix
   # protocol_instances     = var.protocol_instances
   # protocol_subnets_cidr  = var.protocol_subnets_cidr
-  resource_group         = var.resource_group
+  resource_group = var.resource_group
   # storage_instances      = var.storage_instances
   # storage_subnets_cidr   = var.storage_subnets_cidr
-  vpc                    = var.vpc
-  subnet_id             = var.subnet_id
-  login_subnet_id       = var.login_subnet_id
+  vpc             = var.vpc
+  subnet_id       = var.subnet_id
+  login_subnet_id = var.login_subnet_id
   # vpn_peer_address       = var.vpn_peer_address
   # vpn_peer_cidr          = var.vpn_peer_cidr
   # vpn_preshared_key      = var.vpn_preshared_key
-  zones                  = var.zones
-  management_node_count  = var.management_node_count
-  public_gateways = local.public_gateways
+  zones                 = var.zones
+  management_node_count = var.management_node_count
+  public_gateways       = local.public_gateways
 }
 
 module "bootstrap" {
-  source                     = "./../../modules/bootstrap"
-  ibmcloud_api_key           = var.ibmcloud_api_key
-  resource_group             = local.resource_groups["workload_rg"]
-  prefix                     = var.prefix
-  zones                      = var.zones
-  vpc_id                     = local.vpc_id
-  network_cidr               = var.vpc != null && length(var.subnet_id) > 0 ? var.existing_subnet_cidrs : split(",", var.network_cidr)
+  source           = "./../../modules/bootstrap"
+  ibmcloud_api_key = var.ibmcloud_api_key
+  resource_group   = local.resource_groups["workload_rg"]
+  prefix           = var.prefix
+  zones            = var.zones
+  vpc_id           = local.vpc_id
+  network_cidr     = var.vpc != null && length(var.subnet_id) > 0 ? var.existing_subnet_cidrs : split(",", var.network_cidr)
   # enable_bastion             = var.enable_bastion
-  bastion_subnets            = local.bastion_subnets
+  bastion_subnets = local.bastion_subnets
   # peer_cidr_list             = var.peer_cidr_list
   # enable_bootstrap           = var.enable_bootstrap
   # bootstrap_instance_profile = var.bootstrap_instance_profile
-  ssh_keys                   = var.bastion_ssh_keys
-  allowed_cidr               = var.allowed_cidr
-  kms_encryption_enabled     = local.kms_encryption_enabled
-  boot_volume_encryption_key = local.boot_volume_encryption_key
-  existing_kms_instance_guid = local.existing_kms_instance_guid
-  compute_security_group_id  = local.compute_security_group_id
+  ssh_keys                      = var.bastion_ssh_keys
+  allowed_cidr                  = var.allowed_cidr
+  kms_encryption_enabled        = local.kms_encryption_enabled
+  boot_volume_encryption_key    = local.boot_volume_encryption_key
+  existing_kms_instance_guid    = local.existing_kms_instance_guid
+  compute_security_group_id     = local.compute_security_group_id
   skip_iam_authorization_policy = var.skip_iam_authorization_policy
 }
 
@@ -68,18 +68,18 @@ module "generate_db_adminpassword" {
 }
 
 module "db" {
-  count              = var.enable_app_center && var.enable_high_availability ? 1 : 0
-  source             = "../../modules/database/mysql"
-  resource_group_id  = local.resource_groups["service_rg"]
-  name               = "${var.prefix}-database"
-  region             = data.ibm_is_region.region.name
-  plan               = local.db_plan
-  service_endpoints  = local.db_service_endpoints
-  adminpassword      = module.generate_db_adminpassword[0].password
-  members            = var.db_template[0]
-  memory             = var.db_template[1]
-  disks              = var.db_template[2]
-  vcpu               = var.db_template[3]
+  count             = var.enable_app_center && var.enable_high_availability ? 1 : 0
+  source            = "../../modules/database/mysql"
+  resource_group_id = local.resource_groups["service_rg"]
+  name              = "${var.prefix}-database"
+  region            = data.ibm_is_region.region.name
+  plan              = local.db_plan
+  service_endpoints = local.db_service_endpoints
+  adminpassword     = module.generate_db_adminpassword[0].password
+  members           = var.db_template[0]
+  memory            = var.db_template[1]
+  disks             = var.db_template[2]
+  vcpu              = var.db_template[3]
 }
 
 module "landing_zone_vsi" {
@@ -96,13 +96,13 @@ module "landing_zone_vsi" {
   # login_image_name           = var.login_image_name
   # keys               = local.ssh_key_id_list
   # login_instances               = var.login_instances
-  compute_subnets               = local.compute_subnets
-  compute_ssh_keys              = var.compute_ssh_keys
-  management_image_name         = var.management_image_name
+  compute_subnets       = local.compute_subnets
+  compute_ssh_keys      = var.compute_ssh_keys
+  management_image_name = var.management_image_name
   # management_instances          = var.management_instances
   # static_compute_instances      = var.static_compute_instances
   # dynamic_compute_instances     = var.dynamic_compute_instances
-  compute_image_name            = var.compute_image_name
+  compute_image_name = var.compute_image_name
   # storage_subnets               = local.storage_subnets
   # storage_ssh_keys              = var.storage_ssh_keys
   # storage_instances             = var.storage_instances
@@ -161,11 +161,9 @@ module "dns" {
   resource_group_id      = local.resource_groups["service_rg"]
   vpc_crn                = local.vpc_crn
   subnets_crn            = local.compute_subnets_crn
-#  dns_instance_id        = var.dns_instance_id
-  dns_instance_id        = local.dns_service_id
-  #dns_custom_resolver_id = var.dns_custom_resolver_id
+  dns_instance_id        = var.dns_instance_id
+  dns_custom_resolver_id = var.dns_custom_resolver_id
   dns_domain_names       = values(var.dns_domain_names)
-  resolver_id            = local.resolver_id
 }
 
 ###################################################
@@ -281,7 +279,7 @@ module "ldap_inventory" {
 
 module "check_cluster_status" {
   source              = "./../../modules/null/remote_exec"
-  cluster_host        = [local.management_private_ip] #["10.10.10.4"] 
+  cluster_host        = [local.management_private_ip] #["10.10.10.4"]
   cluster_user        = local.cluster_user            #"root"
   cluster_private_key = local.compute_private_key_content
   login_host          = local.bastion_fip
@@ -295,7 +293,7 @@ module "check_cluster_status" {
 }
 
 module "check_node_status" {
-  source              = "./../../modules/null/remote_exec"
+  source = "./../../modules/null/remote_exec"
   # cluster_host        = concat(module.management_vsi[*].primary_network_interface_address, module.management_candidate_vsi[*].primary_network_interface_address)
   cluster_host        = concat(local.management_candidate_private_ips, [local.management_private_ip])
   cluster_user        = local.cluster_user
@@ -392,24 +390,23 @@ module "validation_script_executor" {
 
 //// Code for Public Gateway attachment for the existing vpc and new subnets scenario ////
 
-data "ibm_is_public_gateways" "public_gateways"{
+data "ibm_is_public_gateways" "public_gateways" {
 }
 
-locals{
+locals {
   public_gateways_list = data.ibm_is_public_gateways.public_gateways.public_gateways
-  zone_1_pgw_ids = [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == local.vpc_id && gateway.zone == var.zones[0]]
-  zone_2_pgw_ids = [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == local.vpc_id && gateway.zone == var.zones[1]]
+  zone_1_pgw_ids       = [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == local.vpc_id && gateway.zone == var.zones[0]]
+  zone_2_pgw_ids       = [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == local.vpc_id && gateway.zone == var.zones[1]]
 }
 
 resource "ibm_is_subnet_public_gateway_attachment" "zone_1_attachment" {
-  count                 = (var.vpc != null && length(var.subnet_id) == 0) ? 1 : 0
-  subnet                = local.compute_subnets[0].id
-  public_gateway        = length(local.zone_1_pgw_ids) > 0 ? local.zone_1_pgw_ids[0] : ""
+  count          = (var.vpc != null && length(var.subnet_id) == 0) ? 1 : 0
+  subnet         = local.compute_subnets[0].id
+  public_gateway = length(local.zone_1_pgw_ids) > 0 ? local.zone_1_pgw_ids[0] : ""
 }
 
 resource "ibm_is_subnet_public_gateway_attachment" "zone_2_attachment" {
-  count                 = (var.vpc != null && length(var.subnet_id) == 0) ? 1 : 0
-  subnet                = local.compute_subnets[1].id
-  public_gateway        = length(local.zone_2_pgw_ids) > 0 ? local.zone_2_pgw_ids[0] : ""
+  count          = (var.vpc != null && length(var.subnet_id) == 0) ? 1 : 0
+  subnet         = local.compute_subnets[1].id
+  public_gateway = length(local.zone_2_pgw_ids) > 0 ? local.zone_2_pgw_ids[0] : ""
 }
-

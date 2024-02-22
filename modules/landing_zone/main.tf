@@ -25,11 +25,11 @@ module "landing_zone" {
   wait_till                      = local.env.wait_till
   # iam_account_settings           = local.env.iam_account_settings
   # access_groups                  = local.env.access_groups
-  f5_vsi                         = local.env.f5_vsi
-  f5_template_data               = local.env.f5_template_data
-  appid                          = local.env.appid
-  teleport_config_data           = local.env.teleport_config_data
-  teleport_vsi                   = local.env.teleport_vsi
+  f5_vsi               = local.env.f5_vsi
+  f5_template_data     = local.env.f5_template_data
+  appid                = local.env.appid
+  teleport_config_data = local.env.teleport_config_data
+  teleport_vsi         = local.env.teleport_vsi
   # secrets_manager                = local.env.secrets_manager
   # vpc_placement_groups           = local.env.vpc_placement_groups
 }

@@ -75,8 +75,8 @@ locals {
   # }
   bastion_sg_variable_cidr_list = split(",", var.network_cidr)
   address_prefixes = {
-      "zone-${element(split("-", var.zones[0]), 2)}" = [local.bastion_sg_variable_cidr_list[0]]
-      "zone-${element(split("-", var.zones[1]), 2)}" = [local.bastion_sg_variable_cidr_list[1]]
+    "zone-${element(split("-", var.zones[0]), 2)}" = [local.bastion_sg_variable_cidr_list[0]]
+    "zone-${element(split("-", var.zones[1]), 2)}" = [local.bastion_sg_variable_cidr_list[1]]
   }
 
   # Subnet calculation
@@ -175,29 +175,29 @@ locals {
   #     }
 
   use_public_gateways_existing_vpc = {
-        "zone-1" = false
-        "zone-2" = false
-        "zone-3" = false
-      }
+    "zone-1" = false
+    "zone-2" = false
+    "zone-3" = false
+  }
 
   vpcs = [
     {
-      existing_vpc_id              = var.vpc == null ? null : data.ibm_is_vpc.itself[0].id
-      existing_subnets             = (var.vpc != null && length(var.subnet_id) > 0) ? [
+      existing_vpc_id = var.vpc == null ? null : data.ibm_is_vpc.itself[0].id
+      existing_subnets = (var.vpc != null && length(var.subnet_id) > 0) ? [
         {
           id             = var.subnet_id[0]
           public_gateway = false
-          # public_gateway = data.ibm_is_subnet.subnet[0].public_gateway != "" ? false : true        
+          # public_gateway = data.ibm_is_subnet.subnet[0].public_gateway != "" ? false : true
         },
         {
           id             = var.subnet_id[1]
           public_gateway = false
-          # public_gateway = data.ibm_is_subnet.subnet[1].public_gateway != "" ? false : true            
+          # public_gateway = data.ibm_is_subnet.subnet[1].public_gateway != "" ? false : true
         },
         {
           id             = var.login_subnet_id
           public_gateway = false
-          # public_gateway = data.ibm_is_subnet.subnet[1].public_gateway != "" ? false : true            
+          # public_gateway = data.ibm_is_subnet.subnet[1].public_gateway != "" ? false : true
         }
       ] : null
       prefix                       = local.name
@@ -356,7 +356,7 @@ locals {
           storage_class = "standard"
           endpoint_type = "public"
           force_delete  = true
-          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-slz-key", var.prefix)  : var.kms_key_name) : null
+          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-slz-key", var.prefix) : var.kms_key_name) : null
         } : null
         # var.enable_atracker ? {
         #   name          = "atracker-bucket"
@@ -393,7 +393,7 @@ locals {
     if instance != null
   ]
 
-  active_keys = var.key_management == "key_protect" ? ( var.kms_key_name == null ? [
+  active_keys = var.key_management == "key_protect" ? (var.kms_key_name == null ? [
     var.key_management == "key_protect" ? {
       name = format("%s-vsi-key", var.prefix)
     } : null,
@@ -406,9 +406,9 @@ locals {
     # var.enable_atracker ? {
     #   name = format("%s-atracker-key", var.prefix)
     # } : null
-  ] : [
+    ] : [
     {
-      name = var.kms_key_name
+      name             = var.kms_key_name
       existing_key_crn = data.ibm_kms_key.kms_key[0].keys[0].crn
     }
   ]) : null
@@ -418,7 +418,7 @@ locals {
     use_hs_crypto  = false
     keys           = [for each in local.active_keys : each if each != null]
     use_data       = var.kms_instance_name != null ? true : false
-  } : {
+    } : {
     name           = null
     resource_group = null
     use_hs_crypto  = null
@@ -492,19 +492,19 @@ locals {
     key_management                 = local.key_management
     atracker                       = local.atracker
     # vpc_placement_groups           = local.vpc_placement_groups
-    security_groups                = local.security_groups
-    virtual_private_endpoints      = local.virtual_private_endpoints
-    service_endpoints              = local.service_endpoints
-    add_kms_block_storage_s2s      = local.add_kms_block_storage_s2s
-    clusters                       = local.clusters
-    wait_till                      = local.wait_till
-    iam_account_settings           = local.iam_account_settings
-    access_groups                  = local.access_groups
-    f5_vsi                         = local.f5_vsi
-    f5_template_data               = local.f5_template_data
-    appid                          = local.appid
-    teleport_config_data           = local.teleport_config_data
-    teleport_vsi                   = local.teleport_vsi
-    secrets_manager                = local.secrets_manager
+    security_groups           = local.security_groups
+    virtual_private_endpoints = local.virtual_private_endpoints
+    service_endpoints         = local.service_endpoints
+    add_kms_block_storage_s2s = local.add_kms_block_storage_s2s
+    clusters                  = local.clusters
+    wait_till                 = local.wait_till
+    iam_account_settings      = local.iam_account_settings
+    access_groups             = local.access_groups
+    f5_vsi                    = local.f5_vsi
+    f5_template_data          = local.f5_template_data
+    appid                     = local.appid
+    teleport_config_data      = local.teleport_config_data
+    teleport_vsi              = local.teleport_vsi
+    secrets_manager           = local.secrets_manager
   }
 }

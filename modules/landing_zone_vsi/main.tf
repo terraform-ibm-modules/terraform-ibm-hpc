@@ -68,18 +68,18 @@ module "compute_sg" {
 # }
 
 module "management_vsi" {
-  count                         = 1
+  count = 1
   # count                       = length(var.management_instances)
-  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "3.2.1"
-  vsi_per_subnet                = 1
+  source         = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version        = "3.2.1"
+  vsi_per_subnet = 1
   # vsi_per_subnet              = var.management_instances[count.index]["count"]
-  create_security_group         = false
-  security_group                = null
-  image_id = local.image_mapping_entry_found ? local.new_image_id : data.ibm_is_image.management[0].id
+  create_security_group = false
+  security_group        = null
+  image_id              = local.image_mapping_entry_found ? local.new_image_id : data.ibm_is_image.management[0].id
   # image_id                      = local.compute_image_mapping_entry_found ? local.new_compute_image_id : data.ibm_is_image.compute.id
-  machine_type                  = data.ibm_is_instance_profile.management_node.name
-  prefix                        = format("%s-%s", local.management_node_name, count.index + 1)
+  machine_type = data.ibm_is_instance_profile.management_node.name
+  prefix       = format("%s-%s", local.management_node_name, count.index + 1)
   # prefix                      = count.index == 0 ? local.management_node_name : format("%s-%s", local.management_node_name, count.index)
   resource_group_id             = var.resource_group
   enable_floating_ip            = false
@@ -112,12 +112,12 @@ module "management_candidate_vsi" {
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
-  image_id = local.image_mapping_entry_found ? local.new_image_id : data.ibm_is_image.management[0].id
+  image_id                      = local.image_mapping_entry_found ? local.new_image_id : data.ibm_is_image.management[0].id
   # image_id                      = local.compute_image_mapping_entry_found ? local.new_compute_image_id : data.ibm_is_image.compute.id
-  prefix                        = format("%s-%s", local.management_node_name, count.index + 2)
-  machine_type                  = data.ibm_is_instance_profile.management_node.name
-  vsi_per_subnet                = 1
-  tags                          = local.tags
+  prefix         = format("%s-%s", local.management_node_name, count.index + 2)
+  machine_type   = data.ibm_is_instance_profile.management_node.name
+  vsi_per_subnet = 1
+  tags           = local.tags
 }
 
 module "login_vsi" {
@@ -144,18 +144,18 @@ module "login_vsi" {
 }
 
 module "ldap_vsi" {
-  count                         = local.sagar
+  count = local.sagar
   # count                       = length(var.management_instances)
-  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "3.2.1"
-  vsi_per_subnet                = 1
+  source         = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version        = "3.2.1"
+  vsi_per_subnet = 1
   # vsi_per_subnet              = var.management_instances[count.index]["count"]
-  create_security_group         = false
-  security_group                = null
-  image_id                      = local.ldap_instance_image_id
+  create_security_group = false
+  security_group        = null
+  image_id              = local.ldap_instance_image_id
   # image_id                      = local.compute_image_mapping_entry_found ? local.new_compute_image_id : data.ibm_is_image.compute.id
-  machine_type                  = var.ldap_vsi_profile
-  prefix                        = local.ldap_node_name
+  machine_type = var.ldap_vsi_profile
+  prefix       = local.ldap_node_name
   # prefix                      = count.index == 0 ? local.management_node_name : format("%s-%s", local.management_node_name, count.index)
   resource_group_id             = var.resource_group
   enable_floating_ip            = false
@@ -172,7 +172,7 @@ module "ldap_vsi" {
 }
 
 module "generate_db_password" {
-  count              = var.enable_app_center && var.enable_high_availability ? 1 : 0
+  count            = var.enable_app_center && var.enable_high_availability ? 1 : 0
   source           = "../../modules/security/password"
   length           = 15
   special          = true

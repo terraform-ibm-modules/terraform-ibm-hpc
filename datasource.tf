@@ -1,11 +1,11 @@
 locals {
-    vpc_name = var.vpc_name == null ? one(module.hpc.vpc_name) : var.vpc_name
-    region_name = [for zone in var.zones : join("-", slice(split("-", zone), 0, 2))][0]
-    api_endpoint_region_map = {
-        "us-east" = "https://hpc-api.us-east.codeengine.cloud.ibm.com/v2"
-        "eu-de"   = "https://hpc-api.eu-de.codeengine.cloud.ibm.com/v2"
-    }
-    ldap_server_status = var.enable_ldap == true && var.ldap_server == "null" ? false : true
+  vpc_name    = var.vpc_name == null ? one(module.hpc.vpc_name) : var.vpc_name
+  region_name = [for zone in var.zones : join("-", slice(split("-", zone), 0, 2))][0]
+  api_endpoint_region_map = {
+    "us-east" = "https://hpc-api.us-east.codeengine.cloud.ibm.com/v2"
+    "eu-de"   = "https://hpc-api.eu-de.codeengine.cloud.ibm.com/v2"
+  }
+  ldap_server_status = var.enable_ldap == true && var.ldap_server == "null" ? false : true
 }
 
 data "ibm_is_region" "region" {
@@ -62,11 +62,11 @@ data "http" "contract_id_validation" {
   })
 }
 
-data "ibm_is_public_gateways" "public_gateways"{
+data "ibm_is_public_gateways" "public_gateways" {
 }
 
 locals {
   public_gateways_list = data.ibm_is_public_gateways.public_gateways.public_gateways
-  zone_1_pgw_id = var.vpc_name != null ? [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == data.ibm_is_vpc.existing_vpc[0].id && gateway.zone == var.zones[0]] : []
-  zone_2_pgw_id = var.vpc_name != null ? [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == data.ibm_is_vpc.existing_vpc[0].id && gateway.zone == var.zones[1]] : []
+  zone_1_pgw_id        = var.vpc_name != null ? [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == data.ibm_is_vpc.existing_vpc[0].id && gateway.zone == var.zones[0]] : []
+  zone_2_pgw_id        = var.vpc_name != null ? [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == data.ibm_is_vpc.existing_vpc[0].id && gateway.zone == var.zones[1]] : []
 }

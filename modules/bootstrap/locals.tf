@@ -33,7 +33,7 @@ locals {
   # enable_bootstrap = var.enable_bootstrap
   bastion_node_name   = format("%s-%s", local.prefix, "bastion")
   bootstrap_node_name = format("%s-%s", local.prefix, "bootstrap")
-  login_node_name   = format("%s-%s", local.prefix, "login")
+  login_node_name     = format("%s-%s", local.prefix, "login")
 
   bastion_machine_type = "cx2-4x8"
   bastion_image_name   = "ibm-redhat-8-6-minimal-amd64-4"
@@ -56,7 +56,7 @@ locals {
   */
 
   # Region and Zone calculations
-  region = join("-", slice(split("-", var.zones[0]), 0, 2))
+  region                        = join("-", slice(split("-", var.zones[0]), 0, 2))
   bastion_sg_variable_cidr_list = var.network_cidr
   # Security group rules
   # TODO: Fix SG rules
@@ -90,15 +90,15 @@ locals {
       direction = "outbound"
       remote    = cidr
     }]
-#    [{
-#      name      = "attach-cluster-sg"
-#      direction = "inbound"
-#      remote    = var.compute_security_group_id
-#      tcp       = {
-#        port_min = 22
-#        port_max = 22
-#      }
-#    }]
+    #    [{
+    #      name      = "attach-cluster-sg"
+    #      direction = "inbound"
+    #      remote    = var.compute_security_group_id
+    #      tcp       = {
+    #        port_min = 22
+    #        port_max = 22
+    #      }
+    #    }]
     # var.enable_vpn && length(var.peer_cidr_list) > 0 ? [for cidr in variables.peer_cidr_list : {
     #   name      = format("allow-peer-inbound-%s", index(var.peer_cidr_list, cidr) + 1)
     #   direction = "inbound"

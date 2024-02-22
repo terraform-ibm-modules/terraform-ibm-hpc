@@ -26,7 +26,7 @@ locals {
   # ssh_key_id_list = [
   #   for name in local.ssh_key_list :
   #   data.ibm_is_ssh_key.ssh_key[name].id
-  # ]  
+  # ]
   # dependency: landing_zone -> bootstrap -> landing_zone_vsi
   bastion_security_group_id   = module.bootstrap.bastion_security_group_id
   bastion_public_key_content  = module.bootstrap.bastion_public_key_content
@@ -73,9 +73,9 @@ locals {
       iops       = 1000
     }
   ] : []
-  
+
   # storage_instance_count = sum(var.storage_instances[*]["count"])
-  total_shares           = concat(local.default_share, var.file_shares)
+  total_shares = concat(local.default_share, var.file_shares)
   # total_shares = 10
   file_shares = [
     for count in range(length(local.total_shares)) :
@@ -93,15 +93,15 @@ locals {
   # resource_group_id = one(values(one(module.landing_zone.resource_group_id)))
   resource_groups = {
     # management_rg = var.resource_group == null ? module.landing_zone.resource_group_id[0]["management-rg"] : one(values(one(module.landing_zone.resource_group_id)))
-    service_rg = var.resource_group == null ? module.landing_zone.resource_group_id[0]["service-rg"] : one(values(one(module.landing_zone.resource_group_id)))
+    service_rg  = var.resource_group == null ? module.landing_zone.resource_group_id[0]["service-rg"] : one(values(one(module.landing_zone.resource_group_id)))
     workload_rg = var.resource_group == null ? module.landing_zone.resource_group_id[0]["workload-rg"] : one(values(one(module.landing_zone.resource_group_id)))
-  }  
-  vpc_crn           = var.vpc == null ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
+  }
+  vpc_crn = var.vpc == null ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
   # TODO: Fix existing subnet logic
   #subnets_crn       = var.vpc == null ? module.landing_zone.subnets_crn : ###
   #subnets           = flatten([local.compute_subnets, local.storage_subnets, local.protocol_subnets])
   #subnets_crns      = data.ibm_is_subnet.itself[*].crn
-  subnets_crn = module.landing_zone.subnets_crn
+  subnets_crn         = module.landing_zone.subnets_crn
   compute_subnets_crn = length(var.subnet_id) == 0 ? module.landing_zone.compute_subnets[*].crn : local.sorted_subnets[*].crn
   #boot_volume_encryption_key    = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
 
@@ -111,24 +111,11 @@ locals {
 # locals needed for dns-records
 locals {
   # dependency: dns -> dns-records
-    dns_reserved_ip = join("", flatten(toset([
-  for details in data.ibm_is_subnet_reserved_ips.dns_reserved_ips :
-    [for ip in flatten(details[*].reserved_ips[*].target_crn) :
-      ip if can(regex("crn:v1:bluemix:public:dns-svcs:global", ip))
-    ]
-])))
-  dns_service_id  = local.dns_reserved_ip == "" ? "" : split(":", local.dns_reserved_ip)[7]
-  dns_instance_ids = local.dns_reserved_ip == "" ? module.dns.*.dns_instance_id[0] : local.dns_service_id
-  resolver_id = length(data.ibm_dns_custom_resolvers.dns_custom_resolver) > 0 ? join("", data.ibm_dns_custom_resolvers.dns_custom_resolver[0].custom_resolvers.*.custom_resolver_id) : ""
-  sagar_check = var.dns_instance_id != null ?  var.dns_instance_id : local.dns_service_id
-  #dns_instance_id = module.dns.dns_instance_id
-  #dns_instance_id = var.dns_instance_id == null ? module.dns.dns_instance_id : var.dns_instance_id
-  dns_instance_id = var.dns_instance_id == null && local.dns_service_id == ""? module.dns.dns_instance_id : local.sagar_check
-
+  dns_instance_id = module.dns.dns_instance_id
   compute_dns_zone_id = one(flatten([
     for dns_zone in module.dns.dns_zone_maps : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["compute"]
   ]))
-/*  storage_dns_zone_id = one(flatten([
+  /*  storage_dns_zone_id = one(flatten([
     for dns_zone in module.dns.dns_zone_maps : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["storage"]
   ]))
   protocol_dns_zone_id = one(flatten([
@@ -137,19 +124,19 @@ locals {
 
   # dependency: landing_zone_vsi -> dns-records
   # compute_instances         = flatten([module.landing_zone_vsi.management_vsi_data, module.landing_zone_vsi.compute_vsi_data])
-  compute_instances         = flatten([module.landing_zone_vsi.management_vsi_data])
+  compute_instances = flatten([module.landing_zone_vsi.management_vsi_data])
   #compute_instances         = flatten([module.landing_zone_vsi.management_vsi_data, module.landing_zone_vsi.management_candidate_vsi_data])
   # management_instances_data = flatten([module.landing_zone_vsi.management_vsi_data])
 
-  management_private_ip     = local.compute_instances[0]["ipv4_address"]
+  management_private_ip = local.compute_instances[0]["ipv4_address"]
 
-  management_candidate_vsi_data = flatten([module.landing_zone_vsi.management_candidate_vsi_data])
+  management_candidate_vsi_data    = flatten([module.landing_zone_vsi.management_candidate_vsi_data])
   management_candidate_private_ips = local.management_candidate_vsi_data[*]["ipv4_address"]
 
-  login_vsi_data = flatten([module.landing_zone_vsi.login_vsi_data])
+  login_vsi_data    = flatten([module.landing_zone_vsi.login_vsi_data])
   login_private_ips = local.login_vsi_data[*]["ipv4_address"]
 
-  ldap_vsi_data = flatten([module.landing_zone_vsi.ldap_vsi_data])
+  ldap_vsi_data    = flatten([module.landing_zone_vsi.ldap_vsi_data])
   ldap_private_ips = local.ldap_vsi_data[*]["ipv4_address"]
   # storage_instances         = flatten([module.landing_zone_vsi.storage_vsi_data, module.landing_zone_vsi.protocol_vsi_data])
   # protocol_instances        = flatten([module.landing_zone_vsi.protocol_vsi_data])
@@ -162,25 +149,25 @@ locals {
     }
   ]
   mgmt_candidate_dns_records = [
-     for instance in local.management_candidate_vsi_data :
-     {
-       name  = instance["name"]
-       rdata = instance["ipv4_address"]
-     }
+    for instance in local.management_candidate_vsi_data :
+    {
+      name  = instance["name"]
+      rdata = instance["ipv4_address"]
+    }
   ]
   login_vsi_dns_records = [
-     for instance in local.login_vsi_data :
-     {
-       name  = instance["name"]
-       rdata = instance["ipv4_address"]
-     }
+    for instance in local.login_vsi_data :
+    {
+      name  = instance["name"]
+      rdata = instance["ipv4_address"]
+    }
   ]
   ldap_vsi_dns_records = [
-     for instance in local.ldap_vsi_data :
-     {
-       name  = instance["name"]
-       rdata = instance["ipv4_address"]
-     }
+    for instance in local.ldap_vsi_data :
+    {
+      name  = instance["name"]
+      rdata = instance["ipv4_address"]
+    }
   ]
 
   # storage_dns_records = [
@@ -201,16 +188,16 @@ locals {
 
 # locals needed for inventory
 locals {
-  compute_hosts          = concat(local.compute_instances[*]["ipv4_address"], local.management_candidate_vsi_data[*]["ipv4_address"])
+  compute_hosts = concat(local.compute_instances[*]["ipv4_address"], local.management_candidate_vsi_data[*]["ipv4_address"])
   # storage_hosts          = local.storage_instances[*]["ipv4_address"]
   compute_inventory_path = "compute.ini"
   bastion_inventory_path = "bastion.ini"
   login_inventory_path   = "login.ini"
   ldap_inventory_path    = "ldap.ini"
 
-  bastion_host           = var.enable_fip ? [local.bastion_fip, local.bastion_primary_ip] : [local.bastion_primary_ip]
-  login_host             = local.login_private_ips
-  ldap_host              = local.ldap_private_ips
+  bastion_host = var.enable_fip ? [local.bastion_fip, local.bastion_primary_ip] : [local.bastion_primary_ip]
+  login_host   = local.login_private_ips
+  ldap_host    = local.ldap_private_ips
   # storage_inventory_path = "storage.ini"
 }
 
@@ -226,8 +213,6 @@ locals {
   storage_private_key_path = "storage_id_rsa" #checkov:skip=CKV_SECRET_6
   # compute_playbook_path    = "compute_ssh.yaml"
   # storage_playbook_path    = "storage_ssh.yaml"
-  #dns_reserved_ip = join("", flatten(toset([for details in data.ibm_is_subnet_reserved_ips.dns_reserved_ips : flatten(details[*].reserved_ips[*].target_crn)])))
-  #dns_reserved_ip = "crn:v1:bluemix:public:dns-svcs:global:a/ec1b082b25144a52bb1a269c883d5a00:cfdbee46-4b75-4f3f-ab9c-4a6926abf304::"
 }
 
 locals {
@@ -238,6 +223,6 @@ locals {
 # IBM Cloud Dababase for MySQL local variables
 ###########################################################################
 locals {
-  db_plan = "standard"
+  db_plan              = "standard"
   db_service_endpoints = "private"
 }

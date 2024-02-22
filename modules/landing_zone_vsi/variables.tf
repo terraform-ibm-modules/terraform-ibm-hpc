@@ -276,7 +276,7 @@ variable "compute_image_name" {
 
 variable "dns_domain_names" {
   type = object({
-    compute  = string
+    compute = string
     #storage  = string
     #protocol = string
   })
@@ -429,12 +429,12 @@ variable "enable_high_availability" {
 variable "db_instance_info" {
   description = "The IBM Cloud Database for MySQL information required to reference the PAC database."
   type = object({
-    id     = string
+    id            = string
     adminuser     = string
     adminpassword = string
     hostname      = string
     port          = number
     certificate   = string
   })
-  default     = null
+  default = null
 }

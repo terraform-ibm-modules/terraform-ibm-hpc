@@ -39,7 +39,7 @@ variable "ibmcloud_api_key" {
   validation {
     condition     = var.ibmcloud_api_key != ""
     error_message = "The API key for IBM Cloud must be set."
-  }  
+  }
 }
 
 ##############################################################################
@@ -73,7 +73,7 @@ variable "zones" {
   validation {
     condition     = length(var.zones) == 2
     error_message = "Provide list of zones to deploy the cluster."
-  }  
+  }
 }
 
 ##############################################################################
@@ -468,12 +468,12 @@ variable "dns_instance_id" {
 
 variable "dns_domain_names" {
   type = object({
-    compute  = string
+    compute = string
     #storage  = string
     #protocol = string
   })
   default = {
-    compute  = "hpcaasnew.com"
+    compute = "hpcaas.com"
   }
   description = "IBM Cloud DNS Services domain name to be used for the IBM Cloud HPC cluster."
   validation {
@@ -482,17 +482,17 @@ variable "dns_domain_names" {
     #condition = can(regex("^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.[a-zA-Z]{2,6}$", var.dns_domain_names.compute))
     #condition     = can(regex("^([[:alnum:]]*[A-Za-z0-9-]{1,63}\\.)+[A-Za-z]{2,6}$", var.dns_domain_names.compute))
     error_message = "The domain name provided for compute is not a fully qualified domain name (FQDN). An FQDN can contain letters (a-z, A-Z), digits (0-9), hyphens (-), dots (.), and must start and end with an alphanumeric character."
-  }  
+  }
 }
 
 ################################################
 # TODO : Commented the variable as supporting the existing dns_instance_id will work for custom resolver
 ################################################
-#variable "dns_custom_resolver_id" {
-#  type        = string
-#  default     = null
-#  description = "IBM Cloud DNS custom resolver id."
-#}
+variable "dns_custom_resolver_id" {
+  type        = string
+  default     = null
+  description = "IBM Cloud DNS custom resolver id."
+}
 
 ##############################################################################
 # Observability Variables
@@ -533,7 +533,7 @@ variable "key_management" {
   validation {
     condition     = var.key_management == "null" || var.key_management == null || var.key_management == "key_protect"
     error_message = "key_management must be either 'null' or 'key_protect'."
-  }  
+  }
 }
 
 variable "kms_instance_name" {
@@ -564,7 +564,7 @@ variable "cluster_id" {
   validation {
     condition     = 0 < length(var.cluster_id) && length(var.cluster_id) < 40 && can(regex("^[a-zA-Z0-9_.-]+$", var.cluster_id))
     error_message = "The ID can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. Other special characters and spaces are not allowed."
-  }  
+  }
 }
 
 variable "contract_id" {
@@ -574,7 +574,7 @@ variable "contract_id" {
   validation {
     condition     = can(regex("^[a-zA-Z][a-zA-Z0-9-_]*$", var.contract_id))
     error_message = "Contract ID must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_)."
-  }  
+  }
 }
 
 variable "hyperthreading_enabled" {
@@ -697,8 +697,7 @@ variable "ENABLE_HIGH_AVAILABILITY" {
 # IBM Cloud Dababase for MySQL Variables
 ###########################################################################
 variable "DB_TEMPLATE" {
-  type        = list
+  type        = list(any)
   description = "Set the initial resource allocation: members count, RAM (Mb), Disks (Mb) and CPU cores count."
   default     = [3, 12288, 122880, 3]
 }
-

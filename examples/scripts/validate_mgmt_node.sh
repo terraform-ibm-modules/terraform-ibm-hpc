@@ -21,7 +21,7 @@ validation_failed=0
 # Function to handle validation failures
 handle_validation_failure() {
   echo "Validation issues detected. Script execution failed."
-  # This step is necessary to handle cases where a dynamic node is not created, 
+  # This step is necessary to handle cases where a dynamic node is not created,
   # and jobs remain in a pending state due to exceeding the timeout when job submission.
   # By using 'bkill', we ensure that any lingering jobs are properly terminated.
   bkill 0
@@ -50,7 +50,7 @@ if timeout 480 bash -c '
   # Submit a job that will sleep for 10 seconds
   bsub -n 10 -R "select[cloudhpchost]" sleep 10
   # Wait
-  echo "Waiting 180 seconds for the dynamic node to appear..." 
+  echo "Waiting 180 seconds for the dynamic node to appear..."
   sleep 180
   # Wait for the job to complete
   while bjobs | grep -Ew "PEND|RUN"; do

@@ -57,16 +57,14 @@ variable "dns_instance_id" {
   description = "IBM Cloud HPC DNS service resource id."
 }
 
-#variable "dns_custom_resolver_id" {
-#  type        = string
-#  default     = null
-#  description = "IBM Cloud DNS custom resolver id."
-#}
+variable "dns_custom_resolver_id" {
+  type        = string
+  default     = null
+  description = "IBM Cloud DNS custom resolver id."
+}
 
 variable "dns_domain_names" {
   type        = list(string)
   default     = null
   description = "IBM Cloud HPC DNS domain names."
 }
-
-variable "resolver_id" {}

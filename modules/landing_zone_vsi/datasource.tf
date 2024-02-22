@@ -27,12 +27,12 @@ data "ibm_is_instance_profile" "protocol" {
 # }
 
 data "ibm_is_image" "management" {
-  name = var.management_image_name
+  name  = var.management_image_name
   count = local.image_mapping_entry_found ? 0 : 1
 }
 
 data "ibm_is_image" "compute" {
-  name = var.compute_image_name
+  name  = var.compute_image_name
   count = local.compute_image_mapping_entry_found ? 0 : 1
 }
 

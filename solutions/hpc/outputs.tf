@@ -25,19 +25,19 @@ output "management_ssh" {
   value = local.management_private_ip
 }
 output "login_ssh" {
-  value = join("," , local.login_private_ips)
+  value = join(",", local.login_private_ips)
 }
 
 output "ldap_ssh" {
-  value = join("," , local.ldap_private_ips)
+  value = join(",", local.ldap_private_ips)
 }
 
 output "ssh_to_ldap_node" {
-  value = var.enable_ldap && var.ldap_server == "null"? (var.enable_fip ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 -J vpcuser@${module.bootstrap.bastion_fip} ubuntu@${module.landing_zone_vsi.ldap_server}" : "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J vpcuser@${module.bootstrap.bastion_primary_ip} ubuntu@${module.landing_zone_vsi.ldap_server}") : null
+  value = var.enable_ldap && var.ldap_server == "null" ? (var.enable_fip ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 -J vpcuser@${module.bootstrap.bastion_fip} ubuntu@${module.landing_zone_vsi.ldap_server}" : "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J vpcuser@${module.bootstrap.bastion_primary_ip} ubuntu@${module.landing_zone_vsi.ldap_server}") : null
 }
 
 output "ssh_to_login_node" {
-  value = var.enable_fip ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J vpcuser@${module.bootstrap.bastion_fip} lsfadmin@${join("," , local.login_private_ips)}" : "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J vpcuser@${module.bootstrap.bastion_primary_ip} lsfadmin@${join("," , local.login_private_ips)}"
+  value = var.enable_fip ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J vpcuser@${module.bootstrap.bastion_fip} lsfadmin@${join(",", local.login_private_ips)}" : "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J vpcuser@${module.bootstrap.bastion_primary_ip} lsfadmin@${join(",", local.login_private_ips)}"
 }
 
 output "application_center" {

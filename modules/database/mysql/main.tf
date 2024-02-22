@@ -9,13 +9,13 @@
 ################################################################################
 
 resource "ibm_database" "itself" {
-  resource_group_id   = var.resource_group_id
-  name                = var.name
-  service             = "databases-for-mysql"
-  plan                = var.plan
-  location            = var.region
-  adminpassword       = var.adminpassword
-  service_endpoints   = var.service_endpoints
+  resource_group_id = var.resource_group_id
+  name              = var.name
+  service           = "databases-for-mysql"
+  plan              = var.plan
+  location          = var.region
+  adminpassword     = var.adminpassword
+  service_endpoints = var.service_endpoints
 
   group {
     group_id = "member"

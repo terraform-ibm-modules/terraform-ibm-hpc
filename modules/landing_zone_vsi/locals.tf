@@ -10,7 +10,7 @@ locals {
   # TODO: explore (DA always keep it true)
   skip_iam_authorization_policy = true
 
-///It is for spectrum storage
+  ///It is for spectrum storage
   # block_storage_volumes = [for volume in var.nsd_details : {
   #   name           = format("nsd-%s", index(var.nsd_details, volume) + 1)
   #   profile        = volume["profile"]
@@ -54,14 +54,14 @@ locals {
   # Future use
   # TODO: Fix the logic
   # enable_load_balancer = false
-  enable_compute            = true
-  enable_management         = true
-  ldap_node_name            = format("%s-%s", local.prefix, "ldap")
-  login_node_name           = format("%s-%s", local.prefix, "login")
-  management_node_name      = format("%s-%s", local.prefix, "mgmt")
-  compute_node_name         = format("%s-%s", local.prefix, "comp")
-  storage_node_name         = format("%s-%s", local.prefix, "strg")
-  protocol_node_name        = format("%s-%s", local.prefix, "proto")
+  enable_compute       = true
+  enable_management    = true
+  ldap_node_name       = format("%s-%s", local.prefix, "ldap")
+  login_node_name      = format("%s-%s", local.prefix, "login")
+  management_node_name = format("%s-%s", local.prefix, "mgmt")
+  compute_node_name    = format("%s-%s", local.prefix, "comp")
+  storage_node_name    = format("%s-%s", local.prefix, "strg")
+  protocol_node_name   = format("%s-%s", local.prefix, "proto")
 
   # Future use
   /*
@@ -91,7 +91,7 @@ locals {
   # protocol_image_id = data.ibm_is_image.storage.id
 
   # storage_ssh_keys    = [for name in var.storage_ssh_keys : data.ibm_is_ssh_key.storage[name].id]
-  compute_ssh_keys    = [for name in var.compute_ssh_keys : data.ibm_is_ssh_key.compute[name].id]
+  compute_ssh_keys = [for name in var.compute_ssh_keys : data.ibm_is_ssh_key.compute[name].id]
   # login_ssh_keys      = [for name in var.login_ssh_keys : data.ibm_is_ssh_key.login[name].id]
   management_ssh_keys = local.compute_ssh_keys
   # protocol_ssh_keys   = local.storage_ssh_keys
@@ -248,7 +248,7 @@ locals {
   # TODO: Multi-zone multi-vNIC VSIs deployment support (bug #https://github.ibm.com/GoldenEye/issues/issues/5830)
   # Findings: Singe zone multi-vNICs VSIs deployment & multi-zone single vNIC VSIs deployment are supported.
   # login_subnets    = var.login_subnets
-  compute_subnets  = var.compute_subnets
+  compute_subnets = var.compute_subnets
   # storage_subnets  = var.storage_subnets
   # protocol_subnets = var.protocol_subnets
 
@@ -265,12 +265,12 @@ locals {
   compute_node_max_count = 500
   rc_maxNum              = local.compute_node_max_count
 
-  bastion_subnets = var.bastion_subnets
+  bastion_subnets  = var.bastion_subnets
   bastion_ssh_keys = [for name in var.ssh_keys : data.ibm_is_ssh_key.bastion[name].id]
   #ldap_server                  = var.enable_ldap == true && var.ldap_server == "null" ? var.ldap_primary_ip[0] : var.ldap_server
-  ldap_server                  = var.enable_ldap == true && var.ldap_server == "null" ? length(module.ldap_vsi) > 0 ? var.ldap_primary_ip[0] : null : var.ldap_server
-  ldap_instance_image_id       = var.enable_ldap == true && var.ldap_server == "null" ? data.ibm_is_image.ldap_vsi_image[0].id : "null"
-  ldap_server_status           = var.enable_ldap == true && var.ldap_server == "null" ? false : true
+  ldap_server            = var.enable_ldap == true && var.ldap_server == "null" ? length(module.ldap_vsi) > 0 ? var.ldap_primary_ip[0] : null : var.ldap_server
+  ldap_instance_image_id = var.enable_ldap == true && var.ldap_server == "null" ? data.ibm_is_image.ldap_vsi_image[0].id : "null"
+  ldap_server_status     = var.enable_ldap == true && var.ldap_server == "null" ? false : true
 
   #ldap_server                  = var.enable_ldap == true && var.ldap_server == "null" ? module.ldap_vsi[0].primary_network_interface_address : var.ldap_server
   us-east = "https://hpc-api.us-east.codeengine.cloud.ibm.com/v2"
@@ -288,6 +288,6 @@ locals {
 # IBM Cloud Dababase for MySQL database local variables
 ###########################################################################
 locals {
-  db_name="pac"
-  db_user="pacuser"
+  db_name = "pac"
+  db_user = "pacuser"
 }

@@ -29,6 +29,6 @@ resource "ibm_dns_resource_record" "ptr" {
   name        = var.dns_records[count.index]["rdata"]
   rdata       = format("%s.%s", var.dns_records[count.index]["name"], var.dns_domain_names["compute"])
   #rdata      = format("%s.%s", var.dns_records[count.index]["name"], one(local.dns_domain_name))
-  ttl         = 300
-  depends_on  = [ibm_dns_resource_record.a]
+  ttl        = 300
+  depends_on = [ibm_dns_resource_record.a]
 }

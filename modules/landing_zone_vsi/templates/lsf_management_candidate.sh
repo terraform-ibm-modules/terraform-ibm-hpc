@@ -58,7 +58,7 @@ for (( i=1; i<=management_node_count; i++ ))
 do
   ManagementHostNames+=" ${cluster_prefix}-mgmt-$i-001"
 done
-# Space at the beginning of the list must be removed, otherwise the Application Center WEBUI doesn't work 
+# Space at the beginning of the list must be removed, otherwise the Application Center WEBUI doesn't work
 # properly in HA. In fact, if LSF_ADDON_HOSTS property has the list of the nodes with a space at the beginning
 # the PAC - LSF interaction has issues.
 ManagementHostNames=${ManagementHostNames# }
@@ -246,10 +246,10 @@ else
 fi
 
 # TODO: Understand how lsf should work after reboot, need better cron job
-if [ "$enable_app_center" = "true" ] && [ "${enable_high_availability}" = "true" ]; then 
-    (crontab -l 2>/dev/null; echo "@reboot sleep 30 && source ~/.bashrc && lsf_daemons start && lsf_daemons status && perfadmin start all && sleep 5 && pmcadmin start") | crontab -; 
-else 
-    (crontab -l 2>/dev/null; echo "@reboot sleep 30 && source ~/.bashrc && lsf_daemons start && lsf_daemons status") | crontab -; 
+if [ "$enable_app_center" = "true" ] && [ "${enable_high_availability}" = "true" ]; then
+    (crontab -l 2>/dev/null; echo "@reboot sleep 30 && source ~/.bashrc && lsf_daemons start && lsf_daemons status && perfadmin start all && sleep 5 && pmcadmin start") | crontab -;
+else
+    (crontab -l 2>/dev/null; echo "@reboot sleep 30 && source ~/.bashrc && lsf_daemons start && lsf_daemons status") | crontab -;
 fi
 
 # Setting up the LDAP configuration
