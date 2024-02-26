@@ -15,7 +15,7 @@ variable "ibmcloud_api_key" {
 
 variable "dns_instance_id" {
   type        = string
-  default     = null
+  default     = "null"
   description = "IBM Cloud HPC DNS service resource id."
 }
 

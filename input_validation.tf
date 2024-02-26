@@ -213,7 +213,7 @@ locals {
 
   // Validate the dns_custom_resolver_id should not be given in case of new vpc case
   validate_custom_resolver_id_msg = "If it is the new vpc deployment, do not provide existing dns_custom_resolver_id as that will impact the name resolution of the cluster."
-  validate_custom_resolver_id     = anytrue([var.vpc_name != "null", var.vpc_name == "null" && var.dns_custom_resolver_id == null])
+  validate_custom_resolver_id     = anytrue([var.vpc_name != "null", var.vpc_name == "null" && var.dns_custom_resolver_id == "null"])
   validate_custom_resolver_id_chk = regex("^${local.validate_custom_resolver_id_msg}$",
   (local.validate_custom_resolver_id ? local.validate_custom_resolver_id_msg : ""))
 }

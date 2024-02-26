@@ -5,7 +5,7 @@ output "dns_instance_id" {
 
 #output "dns_custom_resolver_id" {
 #  description = "DNS custom resolver ID"
-#  value       = var.dns_custom_resolver_id == null ? one(ibm_dns_custom_resolver.itself[*].id) : var.dns_custom_resolver_id
+#  value       = var.dns_custom_resolver_id == "null" ? one(ibm_dns_custom_resolver.itself[*].id) : var.dns_custom_resolver_id
 #}
 
 output "dns_zone_maps" {

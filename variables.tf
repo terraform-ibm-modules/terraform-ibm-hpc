@@ -477,7 +477,7 @@ variable "custom_file_shares" {
 
 variable "dns_instance_id" {
   type        = string
-  default     = null
+  default     = "null"
   description = "Provide the id of existing IBM Cloud DNS services domain to skip creating a new DNS service instance name. Note: If dns_instance_id is not equal to null, a new dns zone will be created under the existing dns service instance."
 }
 
@@ -502,7 +502,7 @@ variable "dns_domain_names" {
 
 variable "dns_custom_resolver_id" {
   type        = string
-  default     = null
+  default     = "null"
   description = "Provide the id of existing IBM Cloud DNS custom resolver to skip creating a new custom resolver. Note: A VPC can be associated only to a single custom resolver, please provide the id of custom resolver if it is already associated to the VPC."
 }
 
