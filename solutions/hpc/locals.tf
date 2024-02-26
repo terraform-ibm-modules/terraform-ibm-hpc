@@ -7,8 +7,8 @@ locals {
 # locals needed for bootstrap
 locals {
   # dependency: landing_zone -> bootstrap
-  vpc_id                     = var.vpc == null ? one(module.landing_zone.vpc_id) : data.ibm_is_vpc.itself[0].id
-  vpc_name                   = var.vpc == null ? one(module.landing_zone.vpc_name) : var.vpc
+  vpc_id                     = var.vpc == "null" ? one(module.landing_zone.vpc_id) : data.ibm_is_vpc.itself[0].id
+  vpc_name                   = var.vpc == "null" ? one(module.landing_zone.vpc_name) : var.vpc
   bastion_subnets            = length(var.subnet_id) == 0 ? module.landing_zone.bastion_subnets : local.sorted_subnets
   public_gateways            = module.landing_zone.public_gateways
   kms_encryption_enabled     = var.key_management == "key_protect" ? true : false
@@ -51,14 +51,14 @@ locals {
   #boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   #skip_iam_authorization_policy = true
   #resource_group_id = data.ibm_resource_group.itself.id
-  #vpc_id            = var.vpc == null ? module.landing_zone.vpc_id[0] : data.ibm_is_vpc.itself[0].id
-  #vpc_crn           = var.vpc == null ? module.landing_zone.vpc_crn[0] : data.ibm_is_vpc.itself[0].crn
+  #vpc_id            = var.vpc == "null" ? module.landing_zone.vpc_id[0] : data.ibm_is_vpc.itself[0].id
+  #vpc_crn           = var.vpc == "null" ? module.landing_zone.vpc_crn[0] : data.ibm_is_vpc.itself[0].crn
 }
 
 # locals needed for file-storage
 locals {
   # dependency: landing_zone -> file-storage
-  #vpc_id                        = var.vpc == null ? one(module.landing_zone.vpc_id) : var.vpc
+  #vpc_id                        = var.vpc == "null" ? one(module.landing_zone.vpc_id) : var.vpc
   #boot_volume_encryption_key    = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
 
   # dependency: landing_zone_vsi -> file-share
@@ -96,9 +96,9 @@ locals {
     service_rg  = var.resource_group == null ? module.landing_zone.resource_group_id[0]["service-rg"] : one(values(one(module.landing_zone.resource_group_id)))
     workload_rg = var.resource_group == null ? module.landing_zone.resource_group_id[0]["workload-rg"] : one(values(one(module.landing_zone.resource_group_id)))
   }
-  vpc_crn = var.vpc == null ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
+  vpc_crn = var.vpc == "null" ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
   # TODO: Fix existing subnet logic
-  #subnets_crn       = var.vpc == null ? module.landing_zone.subnets_crn : ###
+  #subnets_crn       = var.vpc == "null" ? module.landing_zone.subnets_crn : ###
   #subnets           = flatten([local.compute_subnets, local.storage_subnets, local.protocol_subnets])
   #subnets_crns      = data.ibm_is_subnet.itself[*].crn
   subnets_crn         = module.landing_zone.subnets_crn

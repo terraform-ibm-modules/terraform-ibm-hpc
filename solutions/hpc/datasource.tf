@@ -11,7 +11,7 @@ data "ibm_is_zone" "itself" {
 */
 
 data "ibm_is_vpc" "itself" {
-  count = var.vpc == null ? 0 : 1
+  count = var.vpc == "null" ? 0 : 1
   name  = var.vpc
 }
 

@@ -43,7 +43,7 @@ module "bootstrap" {
   prefix           = var.prefix
   zones            = var.zones
   vpc_id           = local.vpc_id
-  network_cidr     = var.vpc != null && length(var.subnet_id) > 0 ? var.existing_subnet_cidrs : split(",", var.network_cidr)
+  network_cidr     = var.vpc != "null" && length(var.subnet_id) > 0 ? var.existing_subnet_cidrs : concat(var.compute_subnets_cidr, var.bastion_subnets_cidr)
   # enable_bastion             = var.enable_bastion
   bastion_subnets = local.bastion_subnets
   # peer_cidr_list             = var.peer_cidr_list
@@ -400,13 +400,13 @@ locals {
 }
 
 resource "ibm_is_subnet_public_gateway_attachment" "zone_1_attachment" {
-  count          = (var.vpc != null && length(var.subnet_id) == 0) ? 1 : 0
+  count          = (var.vpc != "null" && length(var.subnet_id) == 0) ? 1 : 0
   subnet         = local.compute_subnets[0].id
   public_gateway = length(local.zone_1_pgw_ids) > 0 ? local.zone_1_pgw_ids[0] : ""
 }
 
 resource "ibm_is_subnet_public_gateway_attachment" "zone_2_attachment" {
-  count          = (var.vpc != null && length(var.subnet_id) == 0) ? 1 : 0
+  count          = (var.vpc != "null" && length(var.subnet_id) == 0) ? 1 : 0
   subnet         = local.compute_subnets[1].id
   public_gateway = length(local.zone_2_pgw_ids) > 0 ? local.zone_2_pgw_ids[0] : ""
 }

@@ -68,14 +68,14 @@ locals {
   # (local.validate_login_conflict ? local.validate_login_conflict_msg : ""))
 
   // validation for the boot volume encryption toggling.
-  validate_enable_customer_managed_encryption     = anytrue([alltrue([var.kms_key_name != null, var.kms_instance_name != null]), (var.kms_key_name == null), (var.key_management != "key_protect")])
+  validate_enable_customer_managed_encryption     = anytrue([alltrue([var.kms_key_name != "null", var.kms_instance_name != "null"]), (var.kms_key_name == "null"), (var.key_management != "key_protect")])
   validate_enable_customer_managed_encryption_msg = "Please make sure you are passing the kms_instance_name if you are passing kms_key_name."
   validate_enable_customer_managed_encryption_chk = regex(
     "^${local.validate_enable_customer_managed_encryption_msg}$",
   (local.validate_enable_customer_managed_encryption ? local.validate_enable_customer_managed_encryption_msg : ""))
 
   // validation for the boot volume encryption toggling.
-  validate_null_customer_managed_encryption     = anytrue([alltrue([var.kms_instance_name == null, var.key_management != "key_protect"]), (var.key_management == "key_protect")])
+  validate_null_customer_managed_encryption     = anytrue([alltrue([var.kms_instance_name == "null", var.key_management != "key_protect"]), (var.key_management == "key_protect")])
   validate_null_customer_managed_encryption_msg = "Please make sure you are setting key_management as key_protect if you are passing kms_instance_name, kms_key_name."
   validate_null_customer_managed_encryption_chk = regex(
     "^${local.validate_null_customer_managed_encryption_msg}$",
@@ -90,25 +90,25 @@ locals {
 
   // Validate existing cluster subnet should be the subset of vpc_name entered
   validate_subnet_id_vpc_msg = "Provided cluster subnets should be within the vpc entered."
-  validate_subnet_id_vpc     = anytrue([length(var.cluster_subnet_ids) == 0, length(var.cluster_subnet_ids) > 1 && var.vpc_name != null ? alltrue([for subnet_id in var.cluster_subnet_ids : contains(data.ibm_is_vpc.existing_vpc[0].subnets.*.id, subnet_id)]) : false])
+  validate_subnet_id_vpc     = anytrue([length(var.cluster_subnet_ids) == 0, length(var.cluster_subnet_ids) > 1 && var.vpc_name != "null" ? alltrue([for subnet_id in var.cluster_subnet_ids : contains(data.ibm_is_vpc.existing_vpc[0].subnets.*.id, subnet_id)]) : false])
   validate_subnet_id_vpc_chk = regex("^${local.validate_subnet_id_vpc_msg}$",
   (local.validate_subnet_id_vpc ? local.validate_subnet_id_vpc_msg : ""))
 
   // Validate existing cluster subnet should be in the appropriate zone.
   validate_subnet_id_zone_msg = "Provided cluster subnets should be in appropriate zone."
-  validate_subnet_id_zone     = anytrue([length(var.cluster_subnet_ids) == 0, length(var.cluster_subnet_ids) > 1 && var.vpc_name != null ? alltrue([data.ibm_is_subnet.existing_subnet[0].zone == var.zones[0] && data.ibm_is_subnet.existing_subnet[1].zone == var.zones[1]]) : false])
+  validate_subnet_id_zone     = anytrue([length(var.cluster_subnet_ids) == 0, length(var.cluster_subnet_ids) > 1 && var.vpc_name != "null" ? alltrue([data.ibm_is_subnet.existing_subnet[0].zone == var.zones[0] && data.ibm_is_subnet.existing_subnet[1].zone == var.zones[1]]) : false])
   validate_subnet_id_zone_chk = regex("^${local.validate_subnet_id_zone_msg}$",
   (local.validate_subnet_id_zone ? local.validate_subnet_id_zone_msg : ""))
 
   // Validate existing login subnet should be the subset of vpc_name entered
   validate_login_subnet_id_vpc_msg = "Provided login subnet should be within the vpc entered."
-  validate_login_subnet_id_vpc     = anytrue([var.login_subnet_id == null, var.login_subnet_id != null && var.vpc_name != null ? alltrue([for subnet_id in [var.login_subnet_id] : contains(data.ibm_is_vpc.existing_vpc[0].subnets.*.id, subnet_id)]) : false])
+  validate_login_subnet_id_vpc     = anytrue([var.login_subnet_id == "null", var.login_subnet_id != "null" && var.vpc_name != "null" ? alltrue([for subnet_id in [var.login_subnet_id] : contains(data.ibm_is_vpc.existing_vpc[0].subnets.*.id, subnet_id)]) : false])
   validate_login_subnet_id_vpc_chk = regex("^${local.validate_login_subnet_id_vpc_msg}$",
   (local.validate_login_subnet_id_vpc ? local.validate_login_subnet_id_vpc_msg : ""))
 
   // Validate existing login subnet should be in the appropriate zone.
   validate_login_subnet_id_zone_msg = "Provided login subnet should be in appropriate zone."
-  validate_login_subnet_id_zone     = anytrue([var.login_subnet_id == null, var.login_subnet_id != null && var.vpc_name != null ? alltrue([data.ibm_is_subnet.existing_login_subnet[0].zone == var.zones[0]]) : false])
+  validate_login_subnet_id_zone     = anytrue([var.login_subnet_id == "null", var.login_subnet_id != "null" && var.vpc_name != "null" ? alltrue([data.ibm_is_subnet.existing_login_subnet[0].zone == var.zones[0]]) : false])
   validate_login_subnet_id_zone_chk = regex("^${local.validate_login_subnet_id_zone_msg}$",
   (local.validate_login_subnet_id_zone ? local.validate_login_subnet_id_zone_msg : ""))
 
@@ -175,25 +175,25 @@ locals {
 
   // Validate existing subnet public gateways
   validate_subnet_name_pg_msg = "Provided existing cluster_subnet_ids should have public gateway attached."
-  validate_subnet_name_pg     = anytrue([length(var.cluster_subnet_ids) == 0, length(var.cluster_subnet_ids) > 1 && var.vpc_name != null ? (data.ibm_is_subnet.existing_subnet[0].public_gateway != "" && data.ibm_is_subnet.existing_subnet[1].public_gateway != "") : false])
+  validate_subnet_name_pg     = anytrue([length(var.cluster_subnet_ids) == 0, length(var.cluster_subnet_ids) > 1 && var.vpc_name != "null" ? (data.ibm_is_subnet.existing_subnet[0].public_gateway != "" && data.ibm_is_subnet.existing_subnet[1].public_gateway != "") : false])
   validate_subnet_name_pg_chk = regex("^${local.validate_subnet_name_pg_msg}$",
   (local.validate_subnet_name_pg ? local.validate_subnet_name_pg_msg : ""))
 
   // Validate existing vpc public gateways
   validate_existing_vpc_pgw_msg = "Provided existing vpc should have the public gateways created in the provided zones."
-  validate_existing_vpc_pgw     = anytrue([(var.vpc_name == null), alltrue([var.vpc_name != null, length(var.cluster_subnet_ids) > 1]), alltrue([var.vpc_name != null, length(var.cluster_subnet_ids) == 0, var.login_subnet_id == null, length(local.zone_1_pgw_id) > 0, length(local.zone_2_pgw_id) > 0])])
+  validate_existing_vpc_pgw     = anytrue([(var.vpc_name == "null"), alltrue([var.vpc_name != "null", length(var.cluster_subnet_ids) > 1]), alltrue([var.vpc_name != "null", length(var.cluster_subnet_ids) == 0, var.login_subnet_id == "null", length(local.zone_1_pgw_id) > 0, length(local.zone_2_pgw_id) > 0])])
   validate_existing_vpc_pgw_chk = regex("^${local.validate_existing_vpc_pgw_msg}$",
   (local.validate_existing_vpc_pgw ? local.validate_existing_vpc_pgw_msg : ""))
 
   // Validate in case of existing subnets provide both login_subnet_id and cluster_subnet_ids.
   validate_login_subnet_id_msg = "In case of existing subnets provide both login_subnet_id and cluster_subnet_ids."
-  validate_login_subnet_id     = anytrue([alltrue([length(var.cluster_subnet_ids) == 0, var.login_subnet_id == null]), alltrue([length(var.cluster_subnet_ids) != 0, var.login_subnet_id != null])])
+  validate_login_subnet_id     = anytrue([alltrue([length(var.cluster_subnet_ids) == 0, var.login_subnet_id == "null"]), alltrue([length(var.cluster_subnet_ids) != 0, var.login_subnet_id != "null"])])
   validate_login_subnet_id_chk = regex("^${local.validate_login_subnet_id_msg}$",
   (local.validate_login_subnet_id ? local.validate_login_subnet_id_msg : ""))
 
   // Validate the subnet_id user input value
   validate_subnet_id_msg = "If the cluster_subnet_ids are provided, the user should also provide the vpc_name."
-  validate_subnet_id     = anytrue([var.vpc_name != null && length(var.cluster_subnet_ids) > 0, length(var.cluster_subnet_ids) == 0])
+  validate_subnet_id     = anytrue([var.vpc_name != "null" && length(var.cluster_subnet_ids) > 0, length(var.cluster_subnet_ids) == 0])
   validate_subnet_id_chk = regex("^${local.validate_subnet_id_msg}$",
   (local.validate_subnet_id ? local.validate_subnet_id_msg : ""))
 
@@ -213,7 +213,7 @@ locals {
 
   // Validate the dns_custom_resolver_id should not be given in case of new vpc case
   validate_custom_resolver_id_msg = "If it is the new vpc deployment, do not provide existing dns_custom_resolver_id as that will impact the name resolution of the cluster."
-  validate_custom_resolver_id     = anytrue([var.vpc_name != null, var.vpc_name == null && var.dns_custom_resolver_id == null])
+  validate_custom_resolver_id     = anytrue([var.vpc_name != "null", var.vpc_name == "null" && var.dns_custom_resolver_id == null])
   validate_custom_resolver_id_chk = regex("^${local.validate_custom_resolver_id_msg}$",
   (local.validate_custom_resolver_id ? local.validate_custom_resolver_id_msg : ""))
 }

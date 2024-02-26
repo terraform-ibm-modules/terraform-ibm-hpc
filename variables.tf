@@ -76,6 +76,25 @@ variable "zones" {
   }
 }
 
+variable "cluster_id" {
+  type        = string
+  description = "Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same contract. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment."
+  validation {
+    condition     = 0 < length(var.cluster_id) && length(var.cluster_id) < 40 && can(regex("^[a-zA-Z0-9_.-]+$", var.cluster_id))
+    error_message = "The ID can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. Other special characters and spaces are not allowed."
+  }
+}
+
+variable "contract_id" {
+  type        = string
+  sensitive   = true
+  description = "Ensure that you have received the contract ID from IBM technical sales. Contract ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_)."
+  validation {
+    condition     = can(regex("^[a-zA-Z][a-zA-Z0-9-_]*$", var.contract_id))
+    error_message = "Contract ID must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_)."
+  }
+}
+
 ##############################################################################
 # VPC Variables
 ##############################################################################
@@ -83,7 +102,7 @@ variable "zones" {
 variable "vpc_name" {
   type        = string
   description = "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
-  default     = null
+  default     = "null"
 }
 
 variable "cluster_subnet_ids" {
@@ -98,7 +117,7 @@ variable "cluster_subnet_ids" {
 
 variable "login_subnet_id" {
   type        = string
-  default     = null
+  default     = "null"
   description = "List of existing subnet ID under the VPC, where the login/Bastion server will be provisioned. One subnet id is required as input value for the creation of login node and bastion in the same zone as the management nodes are created. Note: Provide a different subnet id for login_subnet_id, do not overlap or provide the same subnet id that was already provided for cluster_subnet_ids."
 }
 
@@ -106,6 +125,30 @@ variable "vpc_cidr" {
   description = "Creates the address prefix for the new VPC, when the vpc_name variable is empty. The VPC requires an address prefix for each subnet in two different zones. The subnets are created with the specified CIDR blocks, enabling support for two zones within the VPC. For more information, see [Setting IP ranges](https://cloud.ibm.com/docs/vpc?topic=vpc-vpc-addressing-plan-design)."
   type        = string
   default     = "10.241.0.0/18,10.241.64.0/18"
+}
+
+variable "vpc_cluster_private_subnets_cidr_blocks" {
+  type        = list(string)
+  default     = ["10.241.0.0/20", "10.241.64.0/20"]
+  description = "The CIDR block that's required for the creation of the compute cluster private subnet. Modify the CIDR block if it conflicts with any on-premises CIDR blocks when using a hybrid environment. Make sure to select a CIDR block size that will accommodate the maximum number of management and dynamic compute nodes that you expect to have in your cluster. Requires one CIDR block for each subnet in two different zones. For more information on CIDR block size selection, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
+  validation {
+    condition     = length(var.vpc_cluster_private_subnets_cidr_blocks) == 2
+    error_message = "Multiple zones are supported to deploy resources. Provide a CIDR range of subnets creation."
+  }
+}
+
+variable "vpc_cluster_login_private_subnets_cidr_blocks" {
+  type        = list(string)
+  default     = ["10.241.16.0/28"]
+  description = "The CIDR block that's required for the creation of the login cluster private subnet. Modify the CIDR block if it conflicts with any on-premises CIDR blocks when using a hybrid environment. Provide only one CIDR block for the creation of the login subnet. Since login subnet is used only for the creation of login virtual server instances,  provide a CIDR range of /28."
+  validation {
+    condition     = length(var.vpc_cluster_login_private_subnets_cidr_blocks) <= 1
+    error_message = "Only a single zone is supported to deploy resources. Provide a CIDR range of subnet creation."
+  }
+  validation {
+    condition     = tonumber(regex("/(\\d+)", join(",", var.vpc_cluster_login_private_subnets_cidr_blocks))[0]) <= 28
+    error_message = "This subnet is used to create only a login virtual server instance. Providing a larger CIDR size will waste the usage of available IPs. A CIDR range of /28 is sufficient for the creation of the login subnet."
+  }
 }
 
 # variable "placement_strategy" {
@@ -135,40 +178,6 @@ variable "vpc_cidr" {
 #   description = "Bootstrap should be only used for better deployment performance"
 # }
 
-variable "bastion_ssh_keys" {
-  type        = list(string)
-  description = "List of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC bastion node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
-}
-
-variable "login_node_instance_type" {
-  type        = string
-  default     = "bx2-2x8"
-  description = "Specify the virtual server instance profile type to be used to create the login node for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
-  validation {
-    condition     = can(regex("^[^\\s]+-[0-9]+x[0-9]+", var.login_node_instance_type))
-    error_message = "The profile must be a valid profile name."
-  }
-}
-
-variable "vpc_cluster_login_private_subnets_cidr_blocks" {
-  type        = list(string)
-  default     = ["10.241.16.0/28"]
-  description = "The CIDR block that's required for the creation of the login cluster private subnet. Modify the CIDR block if it conflicts with any on-premises CIDR blocks when using a hybrid environment. Provide only one CIDR block for the creation of the login subnet. Since login subnet is used only for the creation of login virtual server instances,  provide a CIDR range of /28."
-  validation {
-    condition     = length(var.vpc_cluster_login_private_subnets_cidr_blocks) <= 1
-    error_message = "Only a single zone is supported to deploy resources. Provide a CIDR range of subnet creation."
-  }
-  validation {
-    condition     = tonumber(regex("/(\\d+)", join(",", var.vpc_cluster_login_private_subnets_cidr_blocks))[0]) <= 28
-    error_message = "This subnet is used to create only a login virtual server instance. Providing a larger CIDR size will waste the usage of available IPs. A CIDR range of /28 is sufficient for the creation of the login subnet."
-  }
-}
-
-variable "vpn_enabled" {
-  type        = bool
-  default     = false
-  description = "Set the value as true to deploy a VPN gateway for VPC in the cluster."
-}
 
 # variable "peer_cidr_list" {
 #   type        = list(string)
@@ -242,14 +251,9 @@ variable "login_subnets_cidr" {
 #   description = "Number of instances to be launched for login."
 # }
 
-variable "vpc_cluster_private_subnets_cidr_blocks" {
+variable "bastion_ssh_keys" {
   type        = list(string)
-  default     = ["10.241.0.0/20", "10.241.64.0/20"]
-  description = "The CIDR block that's required for the creation of the compute cluster private subnet. Modify the CIDR block if it conflicts with any on-premises CIDR blocks when using a hybrid environment. Make sure to select a CIDR block size that will accommodate the maximum number of management and dynamic compute nodes that you expect to have in your cluster. Requires one CIDR block for each subnet in two different zones. For more information on CIDR block size selection, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
-  validation {
-    condition     = length(var.vpc_cluster_private_subnets_cidr_blocks) == 2
-    error_message = "Multiple zones are supported to deploy resources. Provide a CIDR range of subnets creation."
-  }
+  description = "List of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC bastion and login node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
 }
 
 variable "compute_ssh_keys" {
@@ -257,10 +261,35 @@ variable "compute_ssh_keys" {
   description = "List of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC cluster node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
 }
 
+variable "login_node_instance_type" {
+  type        = string
+  default     = "bx2-2x8"
+  description = "Specify the virtual server instance profile type to be used to create the login node for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
+  validation {
+    condition     = can(regex("^[^\\s]+-[0-9]+x[0-9]+", var.login_node_instance_type))
+    error_message = "The profile must be a valid profile name."
+  }
+}
 variable "management_image_name" {
   type        = string
   default     = "hpcaas-lsf10-rhel88-v3"
   description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster management nodes. By default, the solution uses a base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
+}
+
+variable "compute_image_name" {
+  type        = string
+  default     = "hpcaas-lsf10-rhel88-compute-v2"
+  description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v1). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
+}
+
+variable "management_node_instance_type" {
+  type        = string
+  default     = "bx2-16x64"
+  description = "Specify the virtual server instance profile type to be used to create the management nodes for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
+  validation {
+    condition     = can(regex("^[^\\s]+-[0-9]+x[0-9]+", var.management_node_instance_type))
+    error_message = "The profile must be a valid profile name."
+  }
 }
 
 variable "management_node_count" {
@@ -273,15 +302,6 @@ variable "management_node_count" {
   }
 }
 
-variable "management_node_instance_type" {
-  type        = string
-  default     = "bx2-16x64"
-  description = "Specify the virtual server instance profile type to be used to create the management nodes for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
-  validation {
-    condition     = can(regex("^[^\\s]+-[0-9]+x[0-9]+", var.management_node_instance_type))
-    error_message = "The profile must be a valid profile name."
-  }
-}
 # variable "management_instances" {
 #   type = list(
 #     object({
@@ -324,11 +344,6 @@ variable "management_node_instance_type" {
 #   description = "MaxNumber of instances to be launched for compute cluster."
 # }
 
-variable "compute_image_name" {
-  type        = string
-  default     = "hpcaas-lsf10-rhel88-compute-v2"
-  description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v1). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
-}
 # Future use
 /*
 variable "compute_gui_username" {
@@ -463,7 +478,7 @@ variable "custom_file_shares" {
 variable "dns_instance_id" {
   type        = string
   default     = null
-  description = "Provide the id of existing IBM Cloud DNS services domain name to used for the IBM Cloud HPC cluster."
+  description = "Provide the id of existing IBM Cloud DNS services domain to skip creating a new DNS service instance name. Note: If dns_instance_id is not equal to null, a new dns zone will be created under the existing dns service instance."
 }
 
 variable "dns_domain_names" {
@@ -485,13 +500,10 @@ variable "dns_domain_names" {
   }
 }
 
-################################################
-# TODO : Commented the variable as supporting the existing dns_instance_id will work for custom resolver
-################################################
 variable "dns_custom_resolver_id" {
   type        = string
   default     = null
-  description = "IBM Cloud DNS custom resolver id."
+  description = "Provide the id of existing IBM Cloud DNS custom resolver to skip creating a new custom resolver. Note: A VPC can be associated only to a single custom resolver, please provide the id of custom resolver if it is already associated to the VPC."
 }
 
 ##############################################################################
@@ -522,6 +534,11 @@ variable "enable_vpc_flow_logs" {
   description = "Flag to enable VPC flow logs. If true, a flow log collector will be created."
 }
 
+variable "vpn_enabled" {
+  type        = bool
+  default     = false
+  description = "Set the value as true to deploy a VPN gateway for VPC in the cluster."
+}
 ##############################################################################
 # Encryption Variables
 ##############################################################################
@@ -538,13 +555,13 @@ variable "key_management" {
 
 variable "kms_instance_name" {
   type        = string
-  default     = null
+  default     = "null"
   description = "Name of the Key Protect instance associated with the Key Management Service. Note: kms_instance_name to be considered only if key_management value is set to key_protect. The name can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
 }
 
 variable "kms_key_name" {
   type        = string
-  default     = null
+  default     = "null"
   description = "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. Note: kms_instance_name to be considered only if key_management value is set to key_protect. (for example kms_key_name: my-encryption-key)."
 }
 
@@ -553,29 +570,6 @@ variable "kms_key_name" {
 #   default     = null
 #   description = "Hyper Protect Crypto Service instance"
 # }
-
-##############################################################################
-# TODO: Sagar variables
-##############################################################################
-
-variable "cluster_id" {
-  type        = string
-  description = "Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same contract. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment."
-  validation {
-    condition     = 0 < length(var.cluster_id) && length(var.cluster_id) < 40 && can(regex("^[a-zA-Z0-9_.-]+$", var.cluster_id))
-    error_message = "The ID can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. Other special characters and spaces are not allowed."
-  }
-}
-
-variable "contract_id" {
-  type        = string
-  sensitive   = true
-  description = "Ensure that you have received the contract ID from IBM technical sales. Contract ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_)."
-  validation {
-    condition     = can(regex("^[a-zA-Z][a-zA-Z0-9-_]*$", var.contract_id))
-    error_message = "Contract ID must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_)."
-  }
-}
 
 variable "hyperthreading_enabled" {
   type        = bool
@@ -700,4 +694,24 @@ variable "DB_TEMPLATE" {
   type        = list(any)
   description = "Set the initial resource allocation: members count, RAM (Mb), Disks (Mb) and CPU cores count."
   default     = [3, 12288, 122880, 3]
+}
+
+##############################################################################
+# Environment Variables
+##############################################################################
+
+variable "TF_VERSION" {
+  type        = string
+  default     = "1.4"
+  description = "The version of the Terraform engine that's used in the Schematics workspace."
+}
+
+variable "TF_PARALLELISM" {
+  type        = string
+  default     = "250"
+  description = "Parallelism/ concurrent operations limit. Valid values are between 1 and 256, both inclusive. [Learn more](https://www.terraform.io/docs/internals/graph.html#walking-the-graph)."
+  validation {
+    condition     = 1 <= var.TF_PARALLELISM && var.TF_PARALLELISM <= 256
+    error_message = "Input \"TF_PARALLELISM\" must be greater than or equal to 1 and less than or equal to 256."
+  }
 }

@@ -143,12 +143,12 @@ locals {
 
   compute_security_group_rules = [
     {
-      name      = "allow-all-bastion"
+      name      = "allow-all-bastion-inbound"
       direction = "inbound"
       remote    = var.bastion_security_group_id
     },
     {
-      name      = "allow-port-22"
+      name      = "allow-port-22-inbound"
       direction = "inbound"
       remote    = var.bastion_security_group_id
       tcp = {
@@ -162,12 +162,12 @@ locals {
     #   remote    = module.login_sg[0].security_group_id
     # },
     {
-      name      = "allow-all-compute"
+      name      = "allow-all-compute-inbound"
       direction = "inbound"
-      remote    = module.compute_sg[0].security_group_id
+      remote    = module.compute_sg[0].security_group_id_for_ref
     },
     {
-      name      = "allow-all-compute-0"
+      name      = "allow-all-compute-0-inbound"
       direction = "inbound"
       remote    = local.compute_subnets[0].cidr
       tcp = {
@@ -176,7 +176,7 @@ locals {
       }
     },
     {
-      name      = "allow-all-compute-1"
+      name      = "allow-all-compute-1-inbound"
       direction = "inbound"
       remote    = local.compute_subnets[1].cidr
       tcp = {
@@ -185,7 +185,7 @@ locals {
       }
     },
     {
-      name      = "allow-all-bastion"
+      name      = "allow-all-bastion-outbound"
       direction = "outbound"
       remote    = var.bastion_security_group_id
     },
@@ -195,7 +195,7 @@ locals {
     #   remote    = module.login_sg[0].security_group_id
     # },
     {
-      name      = "allow-all-compute-0"
+      name      = "allow-all-compute-0-outbound"
       direction = "outbound"
       remote    = local.compute_subnets[0].cidr
       tcp = {
@@ -204,7 +204,7 @@ locals {
       }
     },
     {
-      name      = "allow-all-compute-1"
+      name      = "allow-all-compute-1-outbound"
       direction = "outbound"
       remote    = local.compute_subnets[1].cidr
       tcp = {
@@ -213,7 +213,7 @@ locals {
       }
     },
     {
-      name      = "allow-all-outbound"
+      name      = "allow-all-outbound-outbound"
       direction = "outbound"
       remote    = "0.0.0.0/0"
     },
