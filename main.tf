@@ -48,7 +48,7 @@ module "hpc" {
   # storage_subnets_cidr = var.storage_subnets_cidr
   #storage_type        = var.storage_type
   vpc                   = var.vpc_name
-  existing_subnet_cidrs = var.vpc_name != null && length(var.cluster_subnet_ids) > 0 ? [data.ibm_is_subnet.existing_subnet[0].ipv4_cidr_block, data.ibm_is_subnet.existing_subnet[1].ipv4_cidr_block, data.ibm_is_subnet.existing_login_subnet[0].ipv4_cidr_block] : []
+  existing_subnet_cidrs = var.vpc_name != "null" && length(var.cluster_subnet_ids) > 0 ? [data.ibm_is_subnet.existing_subnet[0].ipv4_cidr_block, data.ibm_is_subnet.existing_subnet[1].ipv4_cidr_block, data.ibm_is_subnet.existing_login_subnet[0].ipv4_cidr_block] : []
   subnet_id             = var.cluster_subnet_ids
   login_subnet_id       = var.login_subnet_id
   # vpn_peer_address  = var.vpn_peer_address

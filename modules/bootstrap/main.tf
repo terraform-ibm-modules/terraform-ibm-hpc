@@ -7,12 +7,13 @@ module "ssh_key" {
 module "bastion_sg" {
   count                        = 1
   source                       = "terraform-ibm-modules/security-group/ibm"
-  version                      = "1.0.1"
+  version                      = "2.6.0"
   add_ibm_cloud_internal_rules = true
   resource_group               = var.resource_group
   security_group_name          = format("%s-bastion-sg", local.prefix)
   security_group_rules         = local.bastion_security_group_rules
   vpc_id                       = var.vpc_id
+  tags                         = local.tags  
 }
 
 module "bastion_vsi" {

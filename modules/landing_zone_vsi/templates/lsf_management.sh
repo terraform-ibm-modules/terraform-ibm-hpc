@@ -857,6 +857,15 @@ if [ -n "${nfs_server_with_mount_path}" ]; then
     ln -fs "${nfs_client_mount_path}/$dir" "${LSF_TOP}"
     chown -R lsfadmin:root "${LSF_TOP}"
   done
+  #Create folder in shared file system to store logs
+  mkdir -p "${nfs_client_mount_path}/log/${HOSTNAME}"
+  chown -R lsfadmin:root "${nfs_client_mount_path}/log"
+  #Move all existing logs to the new folder
+  mv ${LSF_TOP}/log/* "${nfs_client_mount_path}/log/${HOSTNAME}"
+  #Remove the original folder and create symlink so the user can still access to default location
+  rm -rf "${LSF_TOP}/log"
+  ln -fs "${nfs_client_mount_path}/log/${HOSTNAME}" "${LSF_TOP}/log"
+  chown -R lsfadmin:root "${LSF_TOP}/log"
 else
   echo "No mount point value found, exiting!" >> $logfile
   exit 1

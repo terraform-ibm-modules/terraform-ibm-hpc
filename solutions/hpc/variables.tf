@@ -75,7 +75,7 @@ variable "zones" {
 variable "vpc" {
   type        = string
   description = "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
-  default     = null
+  default     = "null"
 }
 
 variable "subnet_id" {
@@ -86,7 +86,7 @@ variable "subnet_id" {
 
 variable "login_subnet_id" {
   type        = string
-  default     = null
+  default     = "null"
   description = "List of existing subnet ID under the VPC, where the login/Bastion server will be provisioned."
 }
 
@@ -397,13 +397,13 @@ variable "file_shares" {
 
 variable "dns_instance_id" {
   type        = string
-  default     = null
+  default     = "null"
   description = "IBM Cloud HPC DNS service instance id."
 }
 
 variable "dns_custom_resolver_id" {
   type        = string
-  default     = null
+  default     = "null"
   description = "IBM Cloud DNS custom resolver id."
 }
 
@@ -459,13 +459,13 @@ variable "key_management" {
 
 variable "kms_instance_name" {
   type        = string
-  default     = null
+  default     = "null"
   description = "Name of the Key Protect instance associated with the Key Management Service. The ID can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
 }
 
 variable "kms_key_name" {
   type        = string
-  default     = null
+  default     = "null"
   description = "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. (for example kms_key_name: my-encryption-key)."
 }
 

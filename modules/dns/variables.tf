@@ -53,13 +53,13 @@ variable "subnets_crn" {
 
 variable "dns_instance_id" {
   type        = string
-  default     = null
+  default     = "null"
   description = "IBM Cloud HPC DNS service resource id."
 }
 
 variable "dns_custom_resolver_id" {
   type        = string
-  default     = null
+  default     = "null"
   description = "IBM Cloud DNS custom resolver id."
 }
 

@@ -24,12 +24,13 @@ module "compute_key" {
 module "compute_sg" {
   count                        = local.enable_compute ? 1 : 0
   source                       = "terraform-ibm-modules/security-group/ibm"
-  version                      = "1.0.1"
+  version                      = "2.6.0"
   add_ibm_cloud_internal_rules = true
   resource_group               = var.resource_group
   security_group_name          = format("%s-cluster-sg", local.prefix)
   security_group_rules         = local.compute_security_group_rules
   vpc_id                       = var.vpc_id
+  tags                         = local.tags
 }
 
 # module "storage_sg" {
