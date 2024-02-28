@@ -1,10 +1,11 @@
-package tests
+package test
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
 )
 
 const (
