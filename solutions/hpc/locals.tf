@@ -213,6 +213,7 @@ locals {
   storage_private_key_path = "storage_id_rsa" #checkov:skip=CKV_SECRET_6
   # compute_playbook_path    = "compute_ssh.yaml"
   # storage_playbook_path    = "storage_ssh.yaml"
+  no_addr_prefix = true
 }
 
 locals {

@@ -93,6 +93,8 @@ locals {
         acl_name       = "hpc-acl"
         cidr           = var.compute_subnets_cidr[index(local.active_zones, zone)]
         public_gateway = var.vpc == "null" ? true : false
+        no_addr_prefix = var.no_addr_prefix
+
       },
       # local.storage_instance_count != 0 ? {
       #   name           = "storage-subnet-${zone}"
@@ -111,6 +113,7 @@ locals {
         acl_name       = "hpc-acl"
         cidr           = var.bastion_subnets_cidr[0]
         public_gateway = false
+        no_addr_prefix = var.no_addr_prefix
       } : null
     ] : []
   }
@@ -456,7 +459,8 @@ locals {
   }
   access_groups             = []
   f5_vsi                    = []
-  add_kms_block_storage_s2s = false
+  #add_kms_block_storage_s2s = false
+  skip_kms_block_storage_s2s_auth_policy = true
   clusters                  = []
   wait_till                 = "IngressReady"
   teleport_vsi              = []
@@ -495,7 +499,8 @@ locals {
     security_groups           = local.security_groups
     virtual_private_endpoints = local.virtual_private_endpoints
     service_endpoints         = local.service_endpoints
-    add_kms_block_storage_s2s = local.add_kms_block_storage_s2s
+    #add_kms_block_storage_s2s = local.add_kms_block_storage_s2s
+    skip_kms_block_storage_s2s_auth_policy = local.skip_kms_block_storage_s2s_auth_policy
     clusters                  = local.clusters
     wait_till                 = local.wait_till
     iam_account_settings      = local.iam_account_settings

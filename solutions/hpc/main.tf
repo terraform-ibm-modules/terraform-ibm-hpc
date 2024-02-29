@@ -34,6 +34,7 @@ module "landing_zone" {
   zones                 = var.zones
   management_node_count = var.management_node_count
   public_gateways       = local.public_gateways
+  no_addr_prefix        = local.no_addr_prefix
 }
 
 module "bootstrap" {
@@ -307,6 +308,16 @@ module "check_node_status" {
     module.bootstrap,
     module.check_cluster_status
   ]
+}
+
+module "validate_ldap_server_connection" {
+  source = "./../../modules/null/ldap_remote_exec"
+  ldap_server = var.ldap_server
+  enable_ldap = var.enable_ldap
+  login_private_key = local.bastion_private_key_content
+  login_host  = local.bastion_fip
+  login_user  = "vpcuser"
+  depends_on  = [module.bootstrap]
 }
 
 # Module used to destroy the non-essential resources

@@ -1,7 +1,7 @@
 module "landing_zone" {
   count                          = var.enable_landing_zone ? 1 : 0
   source                         = "terraform-ibm-modules/landing-zone/ibm"
-  version                        = "5.7.0"
+  version                        = "5.17.0"
   prefix                         = local.prefix
   region                         = local.region
   tags                           = local.tags
@@ -19,7 +19,8 @@ module "landing_zone" {
   cos                            = local.env.cos
   service_endpoints              = local.env.service_endpoints
   key_management                 = local.env.key_management
-  add_kms_block_storage_s2s      = local.env.add_kms_block_storage_s2s
+  #add_kms_block_storage_s2s      = local.env.add_kms_block_storage_s2s
+  skip_kms_block_storage_s2s_auth_policy = local.env.skip_kms_block_storage_s2s_auth_policy
   atracker                       = local.env.atracker
   clusters                       = local.env.clusters
   wait_till                      = local.env.wait_till

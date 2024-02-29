@@ -295,3 +295,5 @@ variable "management_node_count" {
     error_message = "Input \"management_node_count\" must be must be greater than or equal to 1 and less than or equal to 10."
   }
 }
+
+variable "no_addr_prefix" {}
