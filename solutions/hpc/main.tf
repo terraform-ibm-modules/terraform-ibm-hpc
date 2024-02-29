@@ -76,7 +76,7 @@ module "db" {
   region            = data.ibm_is_region.region.name
   plan              = local.db_plan
   service_endpoints = local.db_service_endpoints
-  adminpassword     = module.generate_db_adminpassword[0].password
+  adminpassword     = "db-${module.generate_db_adminpassword[0].password}" # with a prefix so we start with a letter
   members           = var.db_template[0]
   memory            = var.db_template[1]
   disks             = var.db_template[2]
