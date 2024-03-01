@@ -92,9 +92,9 @@ locals {
   # dependency: landing_zone -> DNS
   # resource_group_id = one(values(one(module.landing_zone.resource_group_id)))
   resource_groups = {
-    # management_rg = var.resource_group == null ? module.landing_zone.resource_group_id[0]["management-rg"] : one(values(one(module.landing_zone.resource_group_id)))
-    service_rg  = var.resource_group == null ? module.landing_zone.resource_group_id[0]["service-rg"] : one(values(one(module.landing_zone.resource_group_id)))
-    workload_rg = var.resource_group == null ? module.landing_zone.resource_group_id[0]["workload-rg"] : one(values(one(module.landing_zone.resource_group_id)))
+    # management_rg = var.resource_group == "null" ? module.landing_zone.resource_group_id[0]["management-rg"] : one(values(one(module.landing_zone.resource_group_id)))
+    service_rg  = var.resource_group == "null" ? module.landing_zone.resource_group_id[0]["service-rg"] : one(values(one(module.landing_zone.resource_group_id)))
+    workload_rg = var.resource_group == "null" ? module.landing_zone.resource_group_id[0]["workload-rg"] : one(values(one(module.landing_zone.resource_group_id)))
   }
   vpc_crn = var.vpc == "null" ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
   # TODO: Fix existing subnet logic

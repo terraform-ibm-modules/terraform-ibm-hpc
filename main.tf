@@ -79,4 +79,3 @@ module "hpc" {
   enable_high_availability      = var.ENABLE_HIGH_AVAILABILITY
   db_template                   = var.DB_TEMPLATE
 }
-

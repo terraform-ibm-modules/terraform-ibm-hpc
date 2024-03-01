@@ -20,8 +20,8 @@ locals {
 
   # Resource group calculation
   # If user defined then use existing else create new
-  create_resource_group = var.resource_group == null ? true : false
-  resource_groups = var.resource_group == null ? [
+  create_resource_group = var.resource_group == "null" ? true : false
+  resource_groups = var.resource_group == "null" ? [
     {
       name   = "service-rg",
       create = local.create_resource_group,
@@ -44,7 +44,7 @@ locals {
     }
   ]
   # For the variables looking for resource group names only (transit_gateway, key_management, atracker)
-  resource_group = var.resource_group == null ? "service-rg" : var.resource_group
+  resource_group = var.resource_group == "null" ? "service-rg" : var.resource_group
 
   # login_instance_count          = sum(var.login_instances[*]["count"])
   # management_instance_count     = sum(var.management_instances[*]["count"])
@@ -204,7 +204,7 @@ locals {
         }
       ] : null
       prefix                       = local.name
-      resource_group               = var.resource_group == null ? "workload-rg" : var.resource_group
+      resource_group               = var.resource_group == "null" ? "workload-rg" : var.resource_group
       clean_default_security_group = true
       clean_default_acl            = true
       flow_logs_bucket_name        = var.enable_vpc_flow_logs ? "vpc-flow-logs-bucket" : null
@@ -233,7 +233,7 @@ locals {
   /*
   bastion_vsi = {
     name                            = "bastion-vsi"
-    resource_group                  = var.resource_group == null ? "management-rg" : var.resource_group
+    resource_group                  = var.resource_group == "null" ? "management-rg" : var.resource_group
     image_name                      = "ibm-ubuntu-22-04-1-minimal-amd64-4"
     machine_type                    = "cx2-4x8"
     vpc_name                        = var.vpc == "null" ? local.name : var.vpc
