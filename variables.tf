@@ -522,7 +522,7 @@ variable "enable_cos_integration" {
 
 variable "cos_instance_name" {
   type        = string
-  default     = null
+  default     = "null"
   description = "Provide the name of the existing cos instance to store vpc flow logs."
 }
 

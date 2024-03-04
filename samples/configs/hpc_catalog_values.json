@@ -17,7 +17,7 @@
     "dns_instance_id"           : "null",
     "dns_custom_resolver_id"    : "null",
     "enable_cos_integration"    : false,
-    "cos_instance_name"         : null,
+    "cos_instance_name"         : "null",
     "remote_allowed_ips"        : "[\"Please fill here\"]",
     "enable_fip"                : true,
     "management_image_name"     : "hpcaas-lsf10-rhel88-v3",

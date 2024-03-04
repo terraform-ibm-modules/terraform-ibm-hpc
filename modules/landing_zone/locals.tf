@@ -338,11 +338,11 @@ locals {
     (
       var.enable_cos_integration || var.enable_vpc_flow_logs
       ) ? {
-      name           = var.cos_instance_name == null ? "hpc-cos" : var.cos_instance_name
+      name           = var.cos_instance_name == "null" ? "hpc-cos" : var.cos_instance_name
       resource_group = local.resource_group
       plan           = "standard"
       random_suffix  = true
-      use_data       = var.cos_instance_name == null ? false : true
+      use_data       = var.cos_instance_name == "null" ? false : true
       keys           = []
 
       # Extra bucket for solution specific object storage

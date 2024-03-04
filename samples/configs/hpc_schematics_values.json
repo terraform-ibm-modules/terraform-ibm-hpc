@@ -174,7 +174,7 @@
         },
         {
           "name": "cos_instance_name",
-          "value": null,
+          "value": "null",
           "type": "string",
           "secure": false,
           "description": "IBM Cloud DNS Services domain name to be used for the IBM Cloud HPC cluster."
