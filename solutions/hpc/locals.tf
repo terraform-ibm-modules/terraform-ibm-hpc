@@ -43,8 +43,13 @@ locals {
     element(local.subnets_output, index(local.subnets_output[*].id, var.login_subnet_id))
   ] : []
 
+  sorted_compute_subnets =  length(var.subnet_id) == 0 ? [
+    element(module.landing_zone.compute_subnets, index(module.landing_zone.compute_subnets[*].zone, var.zones[0])),
+    element(module.landing_zone.compute_subnets, index(module.landing_zone.compute_subnets[*].zone, var.zones[1]))
+  ] : []
+
   login_subnets    = length(var.subnet_id) == 0 ? module.landing_zone.login_subnets : local.sorted_subnets
-  compute_subnets  = length(var.subnet_id) == 0 ? module.landing_zone.compute_subnets : local.sorted_subnets
+  compute_subnets  = length(var.subnet_id) == 0 ? local.sorted_compute_subnets : local.sorted_subnets
   storage_subnets  = length(var.subnet_id) == 0 ? module.landing_zone.storage_subnets : local.sorted_subnets
   protocol_subnets = length(var.subnet_id) == 0 ? module.landing_zone.protocol_subnets : local.sorted_subnets
 
@@ -102,7 +107,7 @@ locals {
   #subnets           = flatten([local.compute_subnets, local.storage_subnets, local.protocol_subnets])
   #subnets_crns      = data.ibm_is_subnet.itself[*].crn
   subnets_crn         = module.landing_zone.subnets_crn
-  compute_subnets_crn = length(var.subnet_id) == 0 ? module.landing_zone.compute_subnets[*].crn : local.sorted_subnets[*].crn
+  compute_subnets_crn = length(var.subnet_id) == 0 ? local.sorted_compute_subnets[*].crn : local.sorted_subnets[*].crn
   #boot_volume_encryption_key    = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
 
   # dependency: landing_zone_vsi -> file-share
