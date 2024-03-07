@@ -35,6 +35,7 @@
     "kms_key_name"              : "null",
     "enable_app_center"         : false,
     "app_center_gui_pwd"        : "",
+    "app_center_high_availability" : false,
     "enable_vpc_flow_logs"      : false,
     "enable_ldap"                  : false,
     "ldap_basedns"                 : "hpcaas.com",
@@ -44,7 +45,5 @@
     "ldap_user_password"           : "",
     "ldap_vsi_profile"             : "cx2-2x4",
     "ldap_vsi_osimage_name"        : "ibm-ubuntu-22-04-3-minimal-amd64-1",
-    "DB_TEMPLATE"                  : [3, 12288, 122880, 3],
-    "ENABLE_HIGH_AVAILABILITY"     : false,
     "skip_iam_authorization_policy" : false
 }

@@ -47,7 +47,7 @@ app_center_gui_pwd="${app_center_gui_pwd}"
 enable_app_center="${enable_app_center}"
 login_ip_address="${login_ip_address}"
 # PAC High Availability
-enable_high_availability="${enable_high_availability}"
+app_center_high_availability="${app_center_high_availability}"
 db_adminuser="${db_adminuser}"
 db_adminpassword="${db_adminpassword}"
 db_hostname="${db_hostname}"

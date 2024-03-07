@@ -197,16 +197,9 @@ locals {
   validate_subnet_id_chk = regex("^${local.validate_subnet_id_msg}$",
   (local.validate_subnet_id ? local.validate_subnet_id_msg : ""))
 
-  // IBM Cloud Database for MySQL Resource Allocation Validation
-  validate_db_template = (var.enable_app_center && var.ENABLE_HIGH_AVAILABILITY && var.management_node_count >= 2) || !var.ENABLE_HIGH_AVAILABILITY || !var.enable_app_center
-  db_template_msg      = "When the Application Center is installed in High Availability, at least two management nodes must be installed."
-  validate_db_template_chk = regex(
-    "^${local.db_template_msg}$",
-  (local.validate_db_template ? local.db_template_msg : ""))
-
   // Management node count validation when Application Center is in High Availability
-  validate_management_node_count = (var.enable_app_center && var.ENABLE_HIGH_AVAILABILITY && length(var.DB_TEMPLATE) == 4 && var.DB_TEMPLATE[0] == 3 && var.DB_TEMPLATE[1] >= 1024 && var.DB_TEMPLATE[1] <= 114688 && var.DB_TEMPLATE[2] >= 122880 && var.DB_TEMPLATE[2] <= 4194304 && var.DB_TEMPLATE[3] >= 0 && var.DB_TEMPLATE[3] <= 28) || !var.ENABLE_HIGH_AVAILABILITY || !var.enable_app_center
-  management_node_count_msg      = "IBM Cloud Database for MySQL resource allocation must have 3 members, RAM size in the 1024-114688 Mb range, Disk size in the 122880-4194304 Mb range, CPU core in the 0-28 dedicated cores range."
+  validate_management_node_count = (var.enable_app_center && var.app_center_high_availability && var.management_node_count >= 2) || !var.app_center_high_availability || !var.enable_app_center
+  management_node_count_msg      = "When the Application Center is installed in High Availability, at least two management nodes must be installed."
   validate_management_node_count_chk = regex(
     "^${local.management_node_count_msg}$",
   (local.validate_management_node_count ? local.management_node_count_msg : ""))

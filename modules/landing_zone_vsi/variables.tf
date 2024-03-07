@@ -417,10 +417,10 @@ variable "subnet_id" {
 ##############################################################################
 # High Availability (Hidden Feature)
 ##############################################################################
-variable "enable_high_availability" {
+variable "app_center_high_availability" {
   type        = bool
   default     = false
-  description = "The solution supports high availability as an hidden feature that is disabled by default. You can enable the feature setting this value to true."
+  description = "Set to true to enable the IBM Spectrum LSF Application Center GUI High Availability (default: false) ."
 }
 
 ###########################################################################

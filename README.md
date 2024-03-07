@@ -220,8 +220,7 @@ You can now safely remove the resources from your account.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_DB_TEMPLATE"></a> [DB\_TEMPLATE](#input\_DB\_TEMPLATE) | Set the initial resource allocation: members count, RAM (Mb), Disks (Mb) and CPU cores count. | `list(any)` | <pre>[<br>  3,<br>  12288,<br>  122880,<br>  3<br>]</pre> | no |
-| <a name="input_ENABLE_HIGH_AVAILABILITY"></a> [ENABLE\_HIGH\_AVAILABILITY](#input\_ENABLE\_HIGH\_AVAILABILITY) | The solution supports high availability as an hidden feature that is disabled by default. You can enable the feature setting this value to true. | `bool` | `false` | no |
+| <a name="input_app_center_high_availability"></a> [app\_center\_high\_availability](#input\_app\_center\_high\_availability) | Set to true to enable the IBM Spectrum LSF Application Center GUI (default: false) High Availability. | `bool` | `false` | no |
 | <a name="input_TF_PARALLELISM"></a> [TF\_PARALLELISM](#input\_TF\_PARALLELISM) | Parallelism/ concurrent operations limit. Valid values are between 1 and 256, both inclusive. [Learn more](https://www.terraform.io/docs/internals/graph.html#walking-the-graph). | `string` | `"250"` | no |
 | <a name="input_TF_VALIDATION_SCRIPT_FILES"></a> [TF\_VALIDATION\_SCRIPT\_FILES](#input\_TF\_VALIDATION\_SCRIPT\_FILES) | List of script file names used by validation test suites. If provided, these scripts will be executed as part of validation test suites execution. | `list(string)` | `[]` | no |
 | <a name="input_TF_VERSION"></a> [TF\_VERSION](#input\_TF\_VERSION) | The version of the Terraform engine that's used in the Schematics workspace. | `string` | `"1.4"` | no |

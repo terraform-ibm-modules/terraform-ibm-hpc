@@ -74,8 +74,7 @@ module "hpc" {
   ldap_vsi_osimage_name         = var.ldap_vsi_osimage_name
   enable_app_center             = var.enable_app_center
   app_center_gui_pwd            = var.app_center_gui_pwd
+  app_center_high_availability  = var.app_center_high_availability
   skip_iam_authorization_policy = var.skip_iam_authorization_policy
   hyperthreading_enabled        = var.hyperthreading_enabled
-  enable_high_availability      = var.ENABLE_HIGH_AVAILABILITY
-  db_template                   = var.DB_TEMPLATE
 }

@@ -60,7 +60,7 @@ module "bootstrap" {
 }
 
 module "generate_db_adminpassword" {
-  count            = var.enable_app_center && var.enable_high_availability ? 1 : 0
+  count            = var.enable_app_center && var.app_center_high_availability ? 1 : 0
   source           = "../../modules/security/password"
   length           = 15
   special          = true
@@ -69,7 +69,7 @@ module "generate_db_adminpassword" {
 }
 
 module "db" {
-  count             = var.enable_app_center && var.enable_high_availability ? 1 : 0
+  count             = var.enable_app_center && var.app_center_high_availability ? 1 : 0
   source            = "../../modules/database/mysql"
   resource_group_id = local.resource_groups["service_rg"]
   name              = "${var.prefix}-database"
@@ -77,10 +77,10 @@ module "db" {
   plan              = local.db_plan
   service_endpoints = local.db_service_endpoints
   adminpassword     = "db-${module.generate_db_adminpassword[0].password}" # with a prefix so we start with a letter
-  members           = var.db_template[0]
-  memory            = var.db_template[1]
-  disks             = var.db_template[2]
-  vcpu              = var.db_template[3]
+  members           = local.db_template[0]
+  memory            = local.db_template[1]
+  disks             = local.db_template[2]
+  vcpu              = local.db_template[3]
 }
 
 module "landing_zone_vsi" {
@@ -139,8 +139,8 @@ module "landing_zone_vsi" {
   ldap_server                   = var.ldap_server
   ldap_vsi_osimage_name         = var.ldap_vsi_osimage_name
   ldap_primary_ip               = local.ldap_private_ips
-  enable_high_availability      = var.enable_high_availability
-  db_instance_info              = var.enable_app_center && var.enable_high_availability ? module.db[0].db_instance_info : null
+  app_center_high_availability  = var.app_center_high_availability
+  db_instance_info              = var.enable_app_center && var.app_center_high_availability ? module.db[0].db_instance_info : null
 }
 
 module "file_storage" {

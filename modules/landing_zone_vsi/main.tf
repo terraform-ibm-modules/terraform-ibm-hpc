@@ -173,7 +173,7 @@ module "ldap_vsi" {
 }
 
 module "generate_db_password" {
-  count            = var.enable_app_center && var.enable_high_availability ? 1 : 0
+  count            = var.enable_app_center && var.app_center_high_availability ? 1 : 0
   source           = "../../modules/security/password"
   length           = 15
   special          = true

@@ -509,6 +509,12 @@ variable "app_center_gui_pwd" {
   description = "Password for IBM Spectrum LSF Application Center GUI. Note: Password should be at least 8 characters, must have one number, one lowercase letter, one uppercase letter, and at least one special character."
 }
 
+variable "app_center_high_availability" {
+  type        = bool
+  default     = false
+  description = "Set to true to enable the IBM Spectrum LSF Application Center GUI High Availability (default: false)."
+}
+
 variable "management_node_count" {
   type        = number
   default     = 3
@@ -619,22 +625,4 @@ variable "skip_iam_authorization_policy" {
   type        = string
   default     = null
   description = "Skip IAM Authorization policy"
-}
-
-##############################################################################
-# High Availability (Hidden Feature)
-##############################################################################
-variable "enable_high_availability" {
-  type        = bool
-  default     = false
-  description = "The solution supports high availability as an hidden feature that is disabled by default. You can enable the feature setting this value to true."
-}
-
-###########################################################################
-# IBM Cloud Dababase for MySQL Variables
-###########################################################################
-variable "db_template" {
-  type        = list(any)
-  description = "Set the initial resource allocation: members count, RAM (Mb), Disks (Mb) and CPU cores count."
-  default     = [3, 12288, 122880, 3]
 }

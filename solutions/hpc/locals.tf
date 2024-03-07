@@ -231,4 +231,5 @@ locals {
 locals {
   db_plan              = "standard"
   db_service_endpoints = "private"
+  db_template          = [3, 12288, 122880, 3]
 }

@@ -57,15 +57,15 @@ data "template_file" "management_user_data" {
     login_ip_address = var.login_private_ips
     bootdrive_crn    = var.boot_volume_encryption_key == null ? "" : var.boot_volume_encryption_key
     # PAC High Availability
-    enable_high_availability = var.enable_high_availability
-    db_adminuser             = var.enable_app_center && var.enable_high_availability ? var.db_instance_info.adminuser : ""
-    db_adminpassword         = var.enable_app_center && var.enable_high_availability ? var.db_instance_info.adminpassword : ""
-    db_hostname              = var.enable_app_center && var.enable_high_availability ? var.db_instance_info.hostname : ""
-    db_port                  = var.enable_app_center && var.enable_high_availability ? var.db_instance_info.port : ""
-    db_certificate           = var.enable_app_center && var.enable_high_availability ? var.db_instance_info.certificate : ""
-    db_name                  = var.enable_app_center && var.enable_high_availability ? local.db_name : ""
-    db_user                  = var.enable_app_center && var.enable_high_availability ? local.db_user : ""
-    db_password              = var.enable_app_center && var.enable_high_availability ? module.generate_db_password[0].password : ""
+    app_center_high_availability = var.app_center_high_availability
+    db_adminuser             = var.enable_app_center && var.app_center_high_availability ? var.db_instance_info.adminuser : ""
+    db_adminpassword         = var.enable_app_center && var.app_center_high_availability ? var.db_instance_info.adminpassword : ""
+    db_hostname              = var.enable_app_center && var.app_center_high_availability ? var.db_instance_info.hostname : ""
+    db_port                  = var.enable_app_center && var.app_center_high_availability ? var.db_instance_info.port : ""
+    db_certificate           = var.enable_app_center && var.app_center_high_availability ? var.db_instance_info.certificate : ""
+    db_name                  = var.enable_app_center && var.app_center_high_availability ? local.db_name : ""
+    db_user                  = var.enable_app_center && var.app_center_high_availability ? local.db_user : ""
+    db_password              = var.enable_app_center && var.app_center_high_availability ? module.generate_db_password[0].password : ""
   }
 }
 

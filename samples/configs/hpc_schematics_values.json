@@ -283,6 +283,11 @@
           "secure": true,
           "description": "Password for IBM Spectrum LSF Application Center GUI. Note: Password should be at least 8 characters, must have one number, one lowercase letter, one uppercase letter, and at least one special character."
         },
+        {  "name": "app_center_high_availability",
+          "value": "false",
+          "type": "bool",
+          "description": "Set to true to enable the IBM Spectrum LSF Application Center GUI High Availability (default: false)."
+        },
         {
           "name": "enable_vpc_flow_logs",
           "value": "false",
@@ -344,11 +349,6 @@
           "value": "false",
           "type": "string",
           "description": "Image name to be used for provisioning the LDAP instances."
-        },
-        {  "name": "ENABLE_HIGH_AVAILABILITY",
-          "value": "false",
-          "type": "bool",
-          "description": "The solution supports high availability as an hidden feature that is disabled by default. You can enable the feature setting this value to true."
         }
       ]
     }

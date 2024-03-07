@@ -25,7 +25,7 @@ create_certificate() {
 
 # Configures the GUI JDBC datasource file ${LSF_SUITE_PERF_CONF}/datasource.xml
 # to reference the IBM Cloud Database (ICD) instance. If ${enable_app_center} and
-# ${enable_high_availability} are both true, updates the connection string to
+# ${app_center_high_availability} are both true, updates the connection string to
 # point to the remote database service instead of the local MySQL server.
 configure_icd_datasource() {
     local default_connection_string="jdbc:mariadb://localhost:3306/pac?useUnicode=true&amp;characterEncoding=UTF-8&amp;serverTimezone=GMT"
@@ -227,7 +227,7 @@ sudo /opt/ibm/lsf/10.1/install/hostsetup --top="/opt/ibm/lsf/" --setuid
 echo "Added LSF administrators to start LSF daemons" >> $logfile
 
 # Setting up the Application Center
-if [ "$enable_app_center" = true ] && [ "${enable_high_availability}" = true ];
+if [ "$enable_app_center" = true ] && [ "${app_center_high_availability}" = true ];
 then
     if rpm -q lsf-appcenter
     then
@@ -255,7 +255,7 @@ else
 fi
 
 # TODO: Understand how lsf should work after reboot, need better cron job
-if [ "$enable_app_center" = "true" ] && [ "${enable_high_availability}" = "true" ]; then
+if [ "$enable_app_center" = "true" ] && [ "${app_center_high_availability}" = "true" ]; then
     (crontab -l 2>/dev/null; echo "@reboot sleep 30 && source ~/.bashrc && lsf_daemons start && lsf_daemons status && perfadmin start all && sleep 5 && pmcadmin start") | crontab -;
 else
     (crontab -l 2>/dev/null; echo "@reboot sleep 30 && source ~/.bashrc && lsf_daemons start && lsf_daemons status") | crontab -;

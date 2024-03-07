@@ -597,6 +597,12 @@ variable "app_center_gui_pwd" {
   description = "Password for IBM Spectrum LSF Application Center GUI. Note: Password should be at least 8 characters, must have one number, one lowercase letter, one uppercase letter, and at least one special character."
 }
 
+variable "app_center_high_availability" {
+  type        = bool
+  default     = false
+  description = "Set to true to enable the IBM Spectrum LSF Application Center GUI High Availability (default: false) ."
+}
+
 # variable "ssh_key_name" {
 #   type        = string
 #   description = "Comma-separated list of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC cluster node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
@@ -680,24 +686,6 @@ variable "skip_iam_authorization_policy" {
   type        = string
   default     = false
   description = "Set it to false if authorization policy is required for VPC to access COS. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for VPC flow log](https://cloud.ibm.com/docs/vpc?topic=vpc-ordering-flow-log-collector&interface=ui#fl-before-you-begin-ui)."
-}
-
-##############################################################################
-# High Availability (Hidden Feature)
-##############################################################################
-variable "ENABLE_HIGH_AVAILABILITY" {
-  type        = bool
-  default     = false
-  description = "The solution supports high availability as an hidden feature that is disabled by default. You can enable the feature setting this value to true."
-}
-
-###########################################################################
-# IBM Cloud Dababase for MySQL Variables
-###########################################################################
-variable "DB_TEMPLATE" {
-  type        = list(any)
-  description = "Set the initial resource allocation: members count, RAM (Mb), Disks (Mb) and CPU cores count."
-  default     = [3, 12288, 122880, 3]
 }
 
 ##############################################################################

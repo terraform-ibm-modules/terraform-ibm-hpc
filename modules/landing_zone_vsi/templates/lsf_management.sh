@@ -24,7 +24,7 @@ create_certificate() {
 }
 
 # Function for creating PAC database in the IBM Cloud Database (ICD) service when High Availability is enabled.
-# It is invoked when ${enable_app_center} and ${enable_high_availability} are both true.
+# It is invoked when ${enable_app_center} and ${app_center_high_availability} are both true.
 create_appcenter_database() {
     # Required SQL commands to create the PAC database in the IBM Cloud Database (ICD) instance.
     local create_db_command="CREATE DATABASE ${db_name} default character set utf8 default collate utf8_bin;"
@@ -53,7 +53,7 @@ create_appcenter_database() {
 
 # Configures the GUI JDBC datasource file ${LSF_SUITE_PERF_CONF}/datasource.xml
 # to reference the IBM Cloud Database (ICD) instance. If ${enable_app_center} and
-# ${enable_high_availability} are both true, updates the connection string to
+# ${app_center_high_availability} are both true, updates the connection string to
 # point to the remote database service instead of the local MySQL server.
 configure_icd_datasource() {
     local default_connection_string="jdbc:mariadb://localhost:3306/pac?useUnicode=true&amp;characterEncoding=UTF-8&amp;serverTimezone=GMT"
@@ -964,7 +964,7 @@ then
         sed -i '$i\\ALLOW_EVENT_TYPE=JOB_NEW JOB_STATUS JOB_FINISH2 JOB_START JOB_EXECUTE JOB_EXT_MSG JOB_SIGNAL JOB_REQUEUE JOB_MODIFY2 JOB_SWITCH METRIC_LOG' $LSF_ENVDIR/lsbatch/"$cluster_name"/configdir/lsb.params
         sed -i 's/NEWJOB_REFRESH=y/NEWJOB_REFRESH=Y/g' $LSF_ENVDIR/lsbatch/"$cluster_name"/configdir/lsb.params
         sed -i 's/NoVNCProxyHost=.*/NoVNCProxyHost=localhost/g' /opt/ibm/lsfsuite/ext/gui/conf/pmc.conf
-        if [ "${enable_high_availability}" = true ]; then
+        if [ "${app_center_high_availability}" = true ]; then
             echo "LSF_ADDON_HOSTS=\"${ManagementHostNames}\"" >> $LSF_ENVDIR/lsf.conf
             create_certificate
             create_appcenter_database
