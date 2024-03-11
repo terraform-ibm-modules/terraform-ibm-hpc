@@ -1,5 +1,9 @@
 # **CHANGELOG**
 
+## **1.4.1**
+- HA variable name change for application centre.
+- Cluster Status remote execution completion depends on the cloud init status successful status. 
+  
 ## **1.4.0**
 - Support for Deployable architecture framework code base.
 - Support for existing DNS service instance and DNS custom resolvers.
