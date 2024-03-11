@@ -286,7 +286,7 @@ module "check_cluster_status" {
   login_host          = local.bastion_fip
   login_user          = "vpcuser"
   login_private_key   = local.bastion_private_key_content
-  command             = ["lshosts -w; lsid"]
+  command             = ["cloud-init status --wait; lshosts -w; lsid"]
   depends_on = [
     module.landing_zone_vsi,
     module.bootstrap
