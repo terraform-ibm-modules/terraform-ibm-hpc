@@ -48,7 +48,7 @@ module "compute_sg" {
 # module "login_vsi" {
 #   count                         = length(var.login_instances)
 #   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-#   version                       = "3.2.1"
+#   version                       = "4.0.0-rc5"
 #   vsi_per_subnet                = var.login_instances[count.index]["count"]
 #   create_security_group         = false
 #   security_group                = null
@@ -71,17 +71,15 @@ module "compute_sg" {
 module "management_vsi" {
   count = 1
   # count                       = length(var.management_instances)
-  source         = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version        = "3.2.1"
-  vsi_per_subnet = 1
+  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version                       = "4.0.0-rc5"
+  vsi_per_subnet                = 1
   # vsi_per_subnet              = var.management_instances[count.index]["count"]
-  create_security_group = false
-  security_group        = null
-  image_id              = local.image_mapping_entry_found ? local.new_image_id : data.ibm_is_image.management[0].id
-  # image_id                      = local.compute_image_mapping_entry_found ? local.new_compute_image_id : data.ibm_is_image.compute.id
-  machine_type = data.ibm_is_instance_profile.management_node.name
-  prefix       = format("%s-%s", local.management_node_name, count.index + 1)
-  # prefix                      = count.index == 0 ? local.management_node_name : format("%s-%s", local.management_node_name, count.index)
+  create_security_group         = false
+  security_group                = null
+  image_id                      = local.image_mapping_entry_found ? local.new_image_id : data.ibm_is_image.management[0].id
+  machine_type                  = data.ibm_is_instance_profile.management_node.name
+  prefix                        = format("%s-%s", local.management_node_name, count.index + 1)
   resource_group_id             = var.resource_group
   enable_floating_ip            = false
   security_group_ids            = module.compute_sg[*].security_group_id
@@ -93,14 +91,14 @@ module "management_vsi" {
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
-  # placement_group_id            = var.placement_group_ids
+  # placement_group_id          = var.placement_group_ids
   #placement_group_id = var.placement_group_ids[(var.management_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
 module "management_candidate_vsi" {
   count                         = var.management_node_count - 1
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "3.2.1"
+  version                       = "4.0.0-rc5"
   create_security_group         = false
   security_group                = null
   security_group_ids            = module.compute_sg[*].security_group_id
@@ -114,17 +112,16 @@ module "management_candidate_vsi" {
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   image_id                      = local.image_mapping_entry_found ? local.new_image_id : data.ibm_is_image.management[0].id
-  # image_id                      = local.compute_image_mapping_entry_found ? local.new_compute_image_id : data.ibm_is_image.compute.id
-  prefix         = format("%s-%s", local.management_node_name, count.index + 2)
-  machine_type   = data.ibm_is_instance_profile.management_node.name
-  vsi_per_subnet = 1
-  tags           = local.tags
+  prefix                        = format("%s-%s", local.management_node_name, count.index + 2)
+  machine_type                  = data.ibm_is_instance_profile.management_node.name
+  vsi_per_subnet                = 1
+  tags                          = local.tags
 }
 
 module "login_vsi" {
   count                         = 1
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "3.2.1"
+  version                       = "4.0.0-rc5"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -145,18 +142,16 @@ module "login_vsi" {
 }
 
 module "ldap_vsi" {
-  count = local.sagar
+  count                         = local.ldap_enable
   # count                       = length(var.management_instances)
-  source         = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version        = "3.2.1"
-  vsi_per_subnet = 1
-  # vsi_per_subnet              = var.management_instances[count.index]["count"]
-  create_security_group = false
-  security_group        = null
-  image_id              = local.ldap_instance_image_id
-  # image_id                      = local.compute_image_mapping_entry_found ? local.new_compute_image_id : data.ibm_is_image.compute.id
-  machine_type = var.ldap_vsi_profile
-  prefix       = local.ldap_node_name
+  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version                       = "4.0.0-rc5"
+  vsi_per_subnet                = 1
+  create_security_group         = false
+  security_group                = null
+  image_id                      = local.ldap_instance_image_id
+  machine_type                  = var.ldap_vsi_profile
+  prefix                        = local.ldap_node_name
   # prefix                      = count.index == 0 ? local.management_node_name : format("%s-%s", local.management_node_name, count.index)
   resource_group_id             = var.resource_group
   enable_floating_ip            = false
@@ -169,7 +164,7 @@ module "ldap_vsi" {
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
-  #placement_group_id = var.placement_group_ids[(var.management_instances[count.index]["count"])%(length(var.placement_group_ids))]
+  #placement_group_id           = var.placement_group_ids[(var.management_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
 module "generate_db_password" {
@@ -184,7 +179,7 @@ module "generate_db_password" {
 # module "compute_vsi" {
 #   count                         = length(var.static_compute_instances)
 #   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-#   version                       = "3.2.1"
+#   version                       = "4.0.0-rc5"
 #   vsi_per_subnet                = var.static_compute_instances[count.index]["count"]
 #   create_security_group         = false
 #   security_group                = null
@@ -209,7 +204,7 @@ module "generate_db_password" {
 # module "storage_vsi" {
 #   count                         = length(var.storage_instances)
 #   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-#   version                       = "3.2.1"
+#   version                       = "4.0.0-rc5"
 #   vsi_per_subnet                = var.storage_instances[count.index]["count"]
 #   create_security_group         = false
 #   security_group                = null
@@ -235,7 +230,7 @@ module "generate_db_password" {
 # module "protocol_vsi" {
 #   count                         = length(var.protocol_instances)
 #   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-#   version                       = "3.2.1"
+#   version                       = "4.0.0-rc5"
 #   vsi_per_subnet                = var.protocol_instances[count.index]["count"]
 #   create_security_group         = false
 #   security_group                = null

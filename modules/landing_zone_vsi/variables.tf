@@ -359,6 +359,12 @@ variable "management_node_instance_type" {
 }
 
 variable "share_path" {}
+
+variable "alb_hostname" {
+  type    = string
+  default = ""
+}
+
 variable "mount_path" {}
 variable "file_share" {}
 variable "login_private_ips" {}
@@ -415,12 +421,12 @@ variable "subnet_id" {
 }
 
 ##############################################################################
-# High Availability (Hidden Feature)
+# High Availability
 ##############################################################################
 variable "app_center_high_availability" {
   type        = bool
-  default     = false
-  description = "Set to true to enable the IBM Spectrum LSF Application Center GUI High Availability (default: false) ."
+  default     = true
+  description = "Set to false to disable the IBM Spectrum LSF Application Center GUI High Availability (default: true) ."
 }
 
 ###########################################################################

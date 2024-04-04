@@ -435,11 +435,11 @@ variable "cos_instance_name" {
   description = "Exiting COS instance name"
 }
 
-# variable "enable_atracker" {
-#   type        = bool
-#   default     = true
-#   description = "Enable Activity tracker"
-# }
+variable "enable_atracker" {
+  type        = bool
+  default     = true
+  description = "Enable Activity tracker service instance connected to Cloud Object Storage (COS). All the events will be stored into COS so that customers can connect to it and read those events or ingest them in their system."
+}
 
 variable "enable_vpc_flow_logs" {
   type        = bool
@@ -474,6 +474,28 @@ variable "kms_key_name" {
 #   default     = null
 #   description = "Hyper Protect Crypto Service instance"
 # }
+
+##############################################################################
+# SCC Variables
+##############################################################################
+
+variable "enable_scc" {
+  type        = bool
+  default     = false
+  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+}
+
+variable "scc_profile" {
+  type        = string
+  default     = "1c13d739-e09e-4bf4-8715-dd82e4498041"
+  description = "Profile to be set on the SCC Instance (accepting empty, CIS and Financial Services profiles ID)"
+}
+
+variable "scc_location" {
+  description = "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
+  type        = string
+  default     = "us-south"
+}
 
 ##############################################################################
 # TODO: Sagar changes
@@ -511,8 +533,8 @@ variable "app_center_gui_pwd" {
 
 variable "app_center_high_availability" {
   type        = bool
-  default     = false
-  description = "Set to true to enable the IBM Spectrum LSF Application Center GUI High Availability (default: false)."
+  default     = true
+  description = "Set to false to disable the IBM Spectrum LSF Application Center GUI High Availability (default: true)."
 }
 
 variable "management_node_count" {
@@ -625,4 +647,13 @@ variable "skip_iam_authorization_policy" {
   type        = string
   default     = null
   description = "Skip IAM Authorization policy"
+}
+
+###########################################################################
+# IBM Cloud ALB Variables
+###########################################################################
+variable "certificate_instance" {
+  description = "Certificate instance CRN value. It's the CRN value of a certificate stored in the Secret Manager"
+  type        = string
+  default     = ""
 }

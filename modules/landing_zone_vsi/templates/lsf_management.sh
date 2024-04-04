@@ -156,12 +156,10 @@ LSB_RC_MAX_NEWDEMAND=50
 LSF_UDP_TO_TCP_THRESHOLD=9000
 LSF_CALL_LIM_WITH_TCP=N
 LSF_ANNOUNCE_MASTER_TCP_WAITTIME=600
+LSF_CLOUD_UI=Y
 LSF_RSH="ssh -o 'PasswordAuthentication no' -o 'StrictHostKeyChecking no'"
 EOT
 sed -i "s/LSF_MASTER_LIST=.*/LSF_MASTER_LIST=\"${ManagementHostNames}\"/g" $LSF_CONF_FILE
-
-# Update the Job directory
-sed -i 's|<Path>/home</Path>|<Path>/mnt/data</Path>|' /opt/ibm/lsfsuite/ext/gui/conf/Repository.xml
 
 if [ "$hyperthreading" == true ]; then
   ego_define_ncpus="threads"
@@ -176,6 +174,7 @@ echo "EGO_DEFINE_NCPUS=${ego_define_ncpus}" >> $LSF_CONF_FILE
 # 2. setting up lsf.shared
 sed -i "s/^#  icgen2host/   icgen2host/g" $LSF_CONF/lsf.shared
 sed -i '/^End Resource/i cloudhpchost  Boolean ()       ()         (hpc hosts from IBM Cloud HPC pool)' $LSF_CONF/lsf.shared
+sed -i '/^End Resource/i family        String  ()       ()         (account name for the external hosts)' $LSF_CONF/lsf.shared
 
 # 3. setting up lsb.module
 sed -i "s/^#schmod_demand/schmod_demand/g" "$LSF_LSBATCH_CONF/lsb.modules"
@@ -199,6 +198,7 @@ done
 
 # 6. setting up lsf.cluster."$cluster_name"
 sed -i "s/^lsfservers/#lsfservers/g" "$LSF_CONF/lsf.cluster.$cluster_name"
+sed -i 's/LSF_HOST_ADDR_RANGE=\*.\*.\*.\*/LSF_HOST_ADDR_RANGE=10.*.*.*/' "$LSF_CONF/lsf.cluster.$cluster_name"
 for hostname in $ManagementHostNames; do
   sed -i "/^#lsfservers.*/a $hostname ! ! 1 (mg)" "$LSF_CONF/lsf.cluster.$cluster_name"
 done
@@ -214,7 +214,8 @@ grep -rli 'lsfservers' $LSF_CONF/*|xargs sed -i "s/lsfservers/${ManagementHostNa
 
 # Setup LSF resource connector
 # 1. Create hostProviders.json
-cat <<EOT > "$LSF_RC_CONF"/hostProviders.json
+if [ "$regionName" = "eu-de" ] || [ "$regionName" = "us-east" ] || [ "$regionName" = "us-south" ] ; then
+    cat <<EOT > "$LSF_RC_CONF"/hostProviders.json
 {
     "providers":[
         {
@@ -226,6 +227,20 @@ cat <<EOT > "$LSF_RC_CONF"/hostProviders.json
     ]
 }
 EOT
+else
+    cat <<EOT > "$LSF_RC_CONF"/hostProviders.json
+{
+    "providers":[
+        {
+            "name": "ibmcloudgen2",
+            "type": "ibmcloudgen2Prov",
+            "confPath": "resource_connector/ibmcloudgen2",
+            "scriptPath": "resource_connector/ibmcloudgen2"
+        }
+    ]
+}
+EOT
+fi
 
 # 2. Create ibmcloudgen2_config.json
 cat <<EOT > "$LSF_RC_IC_CONF"/ibmcloudgen2_config.json
@@ -235,8 +250,12 @@ cat <<EOT > "$LSF_RC_IC_CONF"/ibmcloudgen2_config.json
   "IBMCLOUDGEN2_MACHINE_PREFIX": "${cluster_prefix}",
   "LogLevel": "INFO",
   "ApiEndPoints": {
-    "us-east": "${api_endpoint_us_east}",
-    "eu-de": "${api_endpoint_eu_de}"
+    "eu-gb": "https://eu-gb.iaas.cloud.ibm.com/v1",
+    "au-syd": "https://au-syd.iaas.cloud.ibm.com/v1",
+    "ca-tor": "https://ca-tor.iaas.cloud.ibm.com/v1",
+    "jp-osa": "https://jp-osa.iaas.cloud.ibm.com/v1",
+    "jp-tok": "https://jp-tok.iaas.cloud.ibm.com/v1",
+    "br-sao": "https://br-sao.iaas.cloud.ibm.com/v1"
   }
 }
 EOT
@@ -252,7 +271,8 @@ cat <<EOT > "$LSF_RC_IBMCLOUDHPC_CONF"/ibmcloudhpc_config.json
     "CLUSTER_ID": "${cluster_name}",
     "ApiEndPoints": {
         "us-east": "${api_endpoint_us_east}",
-        "eu-de": "${api_endpoint_eu_de}"
+        "eu-de": "${api_endpoint_eu_de}",
+        "us-south": "${api_endpoint_us_south}"
     }
 }
 EOT
@@ -282,61 +302,61 @@ RESOURCE_RECORDS_APIKEY=$VPC_APIKEY_VALUE
 EOT
 
 # 6. Create ibmcloudgen2_templates.json
-cat <<EOT > "$LSF_RC_IC_CONF"/ibmcloudgen2_templates.json
-{
-    "templates": [
-        {
-            "templateId": "Template-${cluster_name}-1",
-            "maxNumber": 0,
-            "attributes": {
-                "type": ["String", "X86_64"],
-                "ncores": ["Numeric", "0"],
-                "ncpus": ["Numeric", "0"],
-                "mem": ["Numeric", "0"],
-                "icgen2host": ["Boolean", "1"]
-            },
-            "imageId": "${imageID}",
-            "subnetId": "${subnetID}",
-            "vpcId": "${vpcID}",
-            "vmType": "0",
-            "securityGroupIds": ["${securityGroupID}"],
-            "resourceGroupId": "${rc_rg}",
-            "sshkey_id": "${sshkey_ID}",
-            "region": "${regionName}",
-            "zone": "${zoneName}"
-        },
-        {
-            "templateId": "Template-${cluster_name}-2",
-            "maxNumber": 0,
-            "attributes": {
-                "type": ["String", "X86_64"],
-                "ncores": ["Numeric", "0"],
-                "ncpus": ["Numeric", "0"],
-                "mem": ["Numeric", "0"],
-                "icgen2host": ["Boolean", "1"]
-            },
-            "imageId": "${imageID}",
-            "subnetId": "${subnetID_2}",
-            "vpcId": "${vpcID}",
-            "vmType": "0",
-            "securityGroupIds": ["${securityGroupID}"],
-            "resourceGroupId": "${rc_rg}",
-            "sshkey_id": "${sshkey_ID}",
-            "region": "${regionName}",
-            "zone": "${zoneName_2}"
-        }
-    ]
-}
-EOT
-
-# 7. Create resource template for ibmcloudhc templates
-ibmcloudhpc_templates="$LSF_RC_IBMCLOUDHPC_CONF/ibmcloudhpc_templates.json"
-# Initialize an empty array to hold the JSON objects
+ibmcloudgen2_templates="$LSF_RC_IC_CONF/ibmcloudgen2_templates.json"
+# Initialize array to store JSON objects
 json_array=()
-counter=1
+# Counter for template numbering
+counter=0
+# Array of alphabets
+alphabets=("a" "b" "c" "d" "e" "f" "g" "h" "i" "j" "k" "l" "m" "n" "o" "p" "q" "r" "s" "t" "u" "v" "w" "x" "y" "z")
+
+# Loop over values of i
 for i in 2 4 8 16 32 48 64 96 128; do
-    templateId="Template-${cluster_prefix}-$counter"
-    counter=$((counter + 1))
+  # Reset the counter for alphabets
+
+  # Increment the counter for alphabets
+  counter=$((counter + 1))
+
+  # Get alphabet for template ID
+  alphabet=${alphabets[$(($counter - 1))]}
+  alphabet_2=${alphabets[$(($counter))]}
+
+  if [ "$i" -eq 2 ]; then
+    vmType="mx2-2x16"
+  elif [ "$i" -eq 4 ]; then
+    vmType="mx2-4x32"
+  elif [ "$i" -eq 8 ]; then
+    vmType="mx2-8x64"
+  elif [ "$i" -eq 16 ]; then
+    vmType="mx2-16x128"
+  elif [ "$i" -eq 32 ]; then
+    vmType="mx2-32x256"
+  elif [ "$i" -eq 48 ]; then
+    vmType="mx2-48x384"
+  elif [ "$i" -eq 64 ]; then
+    vmType="mx2-64x512"
+  elif [ "$i" -eq 96 ]; then
+    vmType="mx2-96x768"
+  elif [ "$i" -eq 128 ]; then
+    vmType="mx2-128x1024"
+  else
+    vmType="bx2-256x1024"
+  fi
+
+  # Construct JSON objects with two template IDs
+  for j in 1 2; do
+    # Set template ID based on j
+    if [ "$j" -eq 1 ]; then
+      templateId="Template-$cluster_prefix-$alphabet"
+      subnetId="${subnetID}"
+      zone="${zoneName}"
+    else
+      templateId="Template-${cluster_prefix}-$alphabet_2"
+      zone="${zoneName_2}"
+      subnetId="${subnetID_2}"
+    fi
+
+    # Construct JSON object
     vpcus=$i
     ncores=$((i / 2))
     if $hyperthreading; then
@@ -348,28 +368,107 @@ for i in 2 4 8 16 32 48 64 96 128; do
     mem=$((maxmem * 9 / 10))
     json_object=$(cat <<EOF
 {
-  "templateId": "$templateId",
-  "maxNumber": 500,
-  "attributes": {
-    "type": ["String", "X86_64"],
-    "ncores": ["Numeric", "$ncores"],
-    "ncpus": ["Numeric", "$ncpus"],
-    "mem": ["Numeric", "$mem"],
-    "maxmem": ["Numeric", "$maxmem"],
-    "cloudhpchost": ["Boolean", "1"]
-  },
-  "imageId": "${imageID}",
-  "vpcId": "${vpcID}",
-  "region": "${regionName}",
-  "priority": 10,
-  "ibmcloudhpc_fleetconfig": "ibmcloudhpc_fleetconfig.json"
+ "templateId": "$templateId",
+ "maxNumber": 250,
+ "attributes": {
+  "type": ["String", "X86_64"],
+  "ncores": ["Numeric", "$ncores"],
+  "ncpus": ["Numeric", "$ncpus"],
+  "mem": ["Numeric", "$mem"],
+  "icgen2host": ["Boolean", "1"]
+ },
+ "imageId": "$imageID",
+ "subnetId": "$subnetId",
+ "vpcId": "$vpcID",
+ "vmType": "$vmType",
+ "securityGroupIds": ["$securityGroupID"],
+ "region": "$regionName",
+ "resourceGroupId": "$rc_rg",
+ "sshkey_id": "$sshkey_ID",
+ "zone": "$zone"
 }
 EOF
 )
-  if [[ $i -ne 128 ]]; then
-    json_object="${json_object},"
-  fi
-  json_array+=("$json_object")
+    # Add comma separator if $i is not 128 or $j is not 2
+    if [[ $i -ne 128 || $j -ne 2 ]]; then
+      json_object="${json_object},"
+    fi
+    json_array+=("$json_object")
+  done
+  counter=$((counter + 1))
+done
+
+# Combine the JSON objects into a JSON array
+json_data="{\"templates\": [${json_array[*]}]}"
+
+# Write the JSON data to the output file
+echo "$json_data" > "$ibmcloudgen2_templates"
+echo "JSON templates are created and updated on ibmcloudgen2_templates.json"
+
+# 7. Create resource template for ibmcloudhc templates
+ibmcloudhpc_templates="$LSF_RC_IBMCLOUDHPC_CONF/ibmcloudhpc_templates.json"
+# Initialize an empty array to hold the JSON objects
+json_array=()
+counter=1
+for j in 1 2 3; do
+  for i in 2 4 8 16 32 48 64 96 128 176; do
+    ncores=$((i / 2))
+    # Calculate the template ID dynamically
+    if [ "$j" -eq 1 ]; then
+      templateId="Template-${cluster_prefix}-$counter"
+      userData="family=mx2"
+      family="mx2"
+      maxmem=$((ncores * 16 * 1024))
+      mem=$((maxmem * 9 / 10))
+    elif [ "$j" -eq 2 ]; then
+      templateId="Template-${cluster_prefix}-$counter"
+      userData="family=cx2"
+      family="cx2"
+      maxmem=$((ncores * 4 * 1024))
+      mem=$((maxmem * 9 / 10))
+    else
+      templateId="Template-${cluster_prefix}-$counter"
+      userData="family=mx3d"
+      family="mx3d"
+      maxmem=$((ncores * 20 * 1024))
+      mem=$((maxmem * 9 / 10))
+    fi
+    vpcus=$i
+
+    if $hyperthreading; then
+      ncpus=$vpcus
+    else
+      ncpus=$ncores
+    fi
+    # Construct JSON object
+    json_object=$(cat <<EOF
+{
+ "templateId": "$templateId",
+ "maxNumber": 500,
+ "attributes": {
+  "type": ["String", "X86_64"],
+  "ncores": ["Numeric", "$ncores"],
+  "ncpus": ["Numeric", "$ncpus"],
+  "mem": ["Numeric", "$mem"],
+  "maxmem": ["Numeric", "$maxmem"],
+  "cloudhpchost": ["Boolean", "1"],
+  "family": ["String", "$family"]
+ },
+ "imageId": "${imageID}",
+ "vpcId": "${vpcID}",
+ "region": "${regionName}",
+ "priority": 10,
+ "userData": "$userData",
+ "ibmcloudhpc_fleetconfig": "ibmcloudhpc_fleetconfig_${family}.json"
+}
+EOF
+)
+    json_array+=("$json_object")
+    if [ "$counter" -lt 30 ]; then
+      json_array+=(",")
+    fi
+    counter=$((counter + 1))
+  done
 done
 # Combine the JSON objects into a JSON array
 json_data="{\"templates\": [${json_array[*]}]}"
@@ -377,9 +476,8 @@ json_data="{\"templates\": [${json_array[*]}]}"
 echo "$json_data" > "$ibmcloudhpc_templates"
 echo "JSON templates are created and updated on ibmcloudhpc_templates.json" >> $logfile
 
-
-#7 ibmcloudfleet_config.json
-cat <<EOT > "$LSF_RC_IBMCLOUDHPC_CONF"/ibmcloudhpc_fleetconfig.json
+#8. ibmcloudfleet_config.json
+cat <<EOT > "$LSF_RC_IBMCLOUDHPC_CONF"/ibmcloudhpc_fleetconfig_mx2.json
 {
     "fleet_request": {
         "availability_policy": {
@@ -432,6 +530,130 @@ cat <<EOT > "$LSF_RC_IBMCLOUDHPC_CONF"/ibmcloudhpc_fleetconfig.json
             "families": [
                 {
                     "name": "mx2",
+                    "rank": 1,
+                    "profiles": []
+                }
+            ]
+        }
+    }
+}
+EOT
+
+cat <<EOT > "$LSF_RC_IBMCLOUDHPC_CONF"/ibmcloudhpc_fleetconfig_cx2.json
+{
+    "fleet_request": {
+        "availability_policy": {
+            "host_failure": "restart"
+        },
+        "host_name": {
+            "prefix": "${cluster_prefix}",
+            "domain": "${dns_domain}"
+        },
+        "instance_selection": {
+            "type": "automatic",
+            "optimization": "minimum_price"
+        },
+        "boot_volume_attachment": {
+          "encryption_key": {
+            "crn": "${bootdrive_crn}"
+          }
+        },
+        "zones": [
+            {
+                "name": "${zoneName}",
+                "primary_network_interface": {
+                    "name": "eth0",
+                    "subnet": {
+                        "crn": "${subnetID}"
+                    },
+                    "security_groups": [
+                        {
+                            "id": "${securityGroupID}"
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "${zoneName_2}",
+                "primary_network_interface": {
+                    "name": "eth0",
+                    "subnet": {
+                        "crn": "${subnetID_2}"
+                    },
+                    "security_groups": [
+                        {
+                            "id": "${securityGroupID}"
+                        }
+                    ]
+                }
+            }
+        ],
+        "profile_requirement": {
+            "families": [
+                {
+                    "name": "cx2",
+                    "rank": 1,
+                    "profiles": []
+                }
+            ]
+        }
+    }
+}
+EOT
+
+cat <<EOT > "$LSF_RC_IBMCLOUDHPC_CONF"/ibmcloudhpc_fleetconfig_mx3d.json
+{
+    "fleet_request": {
+        "availability_policy": {
+            "host_failure": "restart"
+        },
+        "host_name": {
+            "prefix": "${cluster_prefix}",
+            "domain": "${dns_domain}"
+        },
+        "instance_selection": {
+            "type": "automatic",
+            "optimization": "minimum_price"
+        },
+        "boot_volume_attachment": {
+          "encryption_key": {
+            "crn": "${bootdrive_crn}"
+          }
+        },
+        "zones": [
+            {
+                "name": "${zoneName}",
+                "primary_network_interface": {
+                    "name": "eth0",
+                    "subnet": {
+                        "crn": "${subnetID}"
+                    },
+                    "security_groups": [
+                        {
+                            "id": "${securityGroupID}"
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "${zoneName_2}",
+                "primary_network_interface": {
+                    "name": "eth0",
+                    "subnet": {
+                        "crn": "${subnetID_2}"
+                    },
+                    "security_groups": [
+                        {
+                            "id": "${securityGroupID}"
+                        }
+                    ]
+                }
+            }
+        ],
+        "profile_requirement": {
+            "families": [
+                {
+                    "name": "mx3d",
                     "rank": 1,
                     "profiles": []
                 }
@@ -595,6 +817,11 @@ if [ -n "\${rc_account}" ]; then
 sed -i "s/\(LSF_LOCAL_RESOURCES=.*\)\"/\1 [resourcemap \${rc_account}*rc_account]\"/" \$LSF_CONF_FILE
 echo "Update LSF_LOCAL_RESOURCES lsf.conf successfully, add [resourcemap \${rc_account}*rc_account]" >> \$logfile
 fi
+# Support for multiprofiles for the Job submission
+if [ -n "\${family}" ]; then
+        sed -i "s/\(LSF_LOCAL_RESOURCES=.*\)\"/\1 [resourcemap \${family}*family]\"/" \$LSF_CONF_FILE
+        echo "update LSF_LOCAL_RESOURCES lsf.conf successfully, add [resourcemap \${pricing}*family]" >> \$logfile
+fi
 # Add additional local resources if needed
 instance_id=\$(dmidecode | grep Family | cut -d ' ' -f 2 |head -1)
 if [ -n "\$instance_id" ]; then
@@ -640,9 +867,17 @@ echo 'LSF_STARTUP_USERS="lsfadmin"' | sudo tee -a /etc/lsf1.sudoers
 echo "LSF_STARTUP_PATH=\$LSF_TOP_VERSION/linux3.10-glibc2.17-x86_64/etc/" | sudo tee -a /etc/lsf.sudoers
 chmod 600 /etc/lsf.sudoers
 ls -l /etc/lsf.sudoers
-sudo /opt/ibm/lsf/10.1/install/hostsetup --top="/opt/ibm/lsf_worker/" --setuid
+
+# Change LSF_CONF= value in lsf_daemons
+cd /opt/ibm/lsf_worker/10.1/linux3.10-glibc2.17-x86_64/etc/
+sed -i "s|/opt/ibm/lsf/|/opt/ibm/lsf_worker/|g" lsf_daemons
+cd -
+
+sudo \${LSF_TOP}/10.1/install/hostsetup --top="\${LSF_TOP}" --setuid
 echo "Added LSF administrators to start LSF daemons" >> $logfile
 
+# Install LSF as a service and start up
+/opt/ibm/lsf_worker/10.1/install/hostsetup --top="/opt/ibm/lsf_worker" --boot="y" --start="y" --dynamic 2>&1 >> $logfile
 cat /opt/ibm/lsf/conf/hosts >> /etc/hosts
 
 # Setting up the LDAP configuration
@@ -802,9 +1037,7 @@ fi
 #update lsf client ip address to LSF_HOSTS_FILE
 echo $login_ip_address   $login_hostname >> $LSF_HOSTS_FILE
 # Startup lsf daemons
-lsf_daemons start &
-sleep 5
-lsf_daemons status >> \$logfile
+systemctl status lsfd >> \$logfile
 echo "END \$(date '+%Y-%m-%d %H:%M:%S')" >> \$logfile
 EOT
 
@@ -857,15 +1090,39 @@ if [ -n "${nfs_server_with_mount_path}" ]; then
     ln -fs "${nfs_client_mount_path}/$dir" "${LSF_TOP}"
     chown -R lsfadmin:root "${LSF_TOP}"
   done
+  # Sharing the lsfsuite..conf folder
+  rm -rf "${nfs_client_mount_path}/gui-conf"
+  mv "${LSF_TOP}/../lsfsuite/ext/gui/conf" "${nfs_client_mount_path}/gui-conf"
+  chown -R lsfadmin:root "${nfs_client_mount_path}/gui-conf"
+  ln -fs "${nfs_client_mount_path}/gui-conf" "${LSF_TOP}/../lsfsuite/ext/gui/conf"
+  chown -R lsfadmin:root "${LSF_TOP}/../lsfsuite/ext/gui/conf"
+  # VNC Sessions
+  mkdir -p "${nfs_client_mount_path}/repository-path"
+  chown -R lsfadmin:root "${nfs_client_mount_path}/repository-path"
+  # Update the Job directory, needed for VNC Sessions
+  sed -i 's|<Path>/home</Path>|<Path>/mnt/lsf/repository-path</Path>|' /opt/ibm/lsfsuite/ext/gui/conf/Repository.xml
   #Create folder in shared file system to store logs
   mkdir -p "${nfs_client_mount_path}/log/${HOSTNAME}"
   chown -R lsfadmin:root "${nfs_client_mount_path}/log"
-  #Move all existing logs to the new folder
-  mv ${LSF_TOP}/log/* "${nfs_client_mount_path}/log/${HOSTNAME}"
+  if [ "$(ls -A ${LSF_TOP}/log)" ]; then
+    #Move all existing logs to the new folder
+    mv ${LSF_TOP}/log/* "${nfs_client_mount_path}/log/${HOSTNAME}"
+  fi
   #Remove the original folder and create symlink so the user can still access to default location
   rm -rf "${LSF_TOP}/log"
   ln -fs "${nfs_client_mount_path}/log/${HOSTNAME}" "${LSF_TOP}/log"
   chown -R lsfadmin:root "${LSF_TOP}/log"
+  #Create log folder for pac and set proper owner
+  mkdir -p "${nfs_client_mount_path}/gui-logs"
+  chown -R lsfadmin:root "${nfs_client_mount_path}/gui-logs"
+  #Move PAC logs to shared folder
+  mkdir -p "${nfs_client_mount_path}/gui-logs/${HOSTNAME}"
+  if [ -d "${LSF_TOP}/../lsfsuite/ext/gui/logs/${HOSTNAME}" ] && [ "$(ls -A ${LSF_TOP}/../lsfsuite/ext/gui/logs/${HOSTNAME})" ]; then
+    mv "${LSF_TOP}/../lsfsuite/ext/gui/logs/${HOSTNAME}" "${nfs_client_mount_path}/gui-logs/${HOSTNAME}"
+  fi
+  chown -R lsfadmin:root "${nfs_client_mount_path}/gui-logs/${HOSTNAME}"
+  ln -fs "${nfs_client_mount_path}/gui-logs/${HOSTNAME}" "${LSF_TOP}/../lsfsuite/ext/gui/logs/${HOSTNAME}"
+  chown -R lsfadmin:root "${LSF_TOP}/../lsfsuite/ext/gui/logs/${HOSTNAME}"
 else
   echo "No mount point value found, exiting!" >> $logfile
   exit 1
@@ -905,18 +1162,34 @@ echo "Setting custom file shares is completed." >> $logfile
 echo "Setting up LSF env is completed" >> $logfile
 # Setup ip-host mapping in LSF_HOSTS_FILE
 python3 -c "import ipaddress; print('\n'.join([str(ip) + ' ${cluster_prefix}-' + str(ip).replace('.', '-') for ip in ipaddress.IPv4Network('${rc_cidr_block}')]) + '\n' + '\n'.join([str(ip) + ' ${cluster_prefix}-' + str(ip).replace('.', '-') for ip in ipaddress.IPv4Network('${rc_cidr_block_2}')]))" >> "$LSF_HOSTS_FILE"
-# Update the entry  to LSF_HOSTS_FILE
-sed -i "s/^$HostIP .*/$HostIP $HostName/g" $LSF_HOSTS_FILE
+
+# Update the entry to LSF_HOSTS_FILE
+while true; do # better try multiple times to cope with occasional NFS "stale file handle" issues
+  sed -i "s/^$HostIP .*/$HostIP $HostName/g" $LSF_HOSTS_FILE
+  grep "^$HostIP $HostName" $LSF_HOSTS_FILE && break
+  echo "retry adding $HostIP $Hostname to LSF host file..." >> $logfile
+  sleep 3
+done
+echo "$HostIP $Hostname added to LSF host file" >> $logfile
+
 for hostname in $ManagementHostNames; do
   while ! grep "$hostname" "$LSF_HOSTS_FILE"; do
     echo "Waiting for $hostname to be added to LSF host file" >> $logfile
     sleep 5
   done
+  echo "$hostname found in LSF host file" >> $logfile
 done
 cat $LSF_HOSTS_FILE >> /etc/hosts
-lsf_daemons start &
+
+if [ "$enable_app_center" = true ] && [ "${app_center_high_availability}" = true ]; then
+  # Add entry for VNC scenario
+  echo "127.0.0.1 pac pac.$dns_domain" >> /etc/hosts
+fi
+
+source /opt/ibm/lsf/conf/profile.lsf
+sudo /opt/ibm/lsf/10.1/install/hostsetup --top="/opt/ibm/lsf" --boot="y" --start="y"
 sleep 5
-lsf_daemons status >> $logfile
+systemctl status lsfd >> $logfile
 echo "END $(date '+%Y-%m-%d %H:%M:%S')" >> $logfile
 
 # Setup lsfadmin user
@@ -963,15 +1236,19 @@ then
         echo ${app_center_gui_pwd} | sudo passwd --stdin lsfadmin
         sed -i '$i\\ALLOW_EVENT_TYPE=JOB_NEW JOB_STATUS JOB_FINISH2 JOB_START JOB_EXECUTE JOB_EXT_MSG JOB_SIGNAL JOB_REQUEUE JOB_MODIFY2 JOB_SWITCH METRIC_LOG' $LSF_ENVDIR/lsbatch/"$cluster_name"/configdir/lsb.params
         sed -i 's/NEWJOB_REFRESH=y/NEWJOB_REFRESH=Y/g' $LSF_ENVDIR/lsbatch/"$cluster_name"/configdir/lsb.params
-        sed -i 's/NoVNCProxyHost=.*/NoVNCProxyHost=localhost/g' /opt/ibm/lsfsuite/ext/gui/conf/pmc.conf
         if [ "${app_center_high_availability}" = true ]; then
             echo "LSF_ADDON_HOSTS=\"${ManagementHostNames}\"" >> $LSF_ENVDIR/lsf.conf
             create_certificate
             create_appcenter_database
             configure_icd_datasource
+            sed -i "s/NoVNCProxyHost=.*/NoVNCProxyHost=pac.${dns_domain}/g" "$LSF_SUITE_GUI_CONF/pmc.conf"
+            sed -i "s|<restHost>.*</restHost>|<restHost>pac.${dns_domain}</restHost>|" $LSF_SUITE_GUI_CONF/pnc-config.xml
+            sed -i "s|<wsHost>.*</wsHost>|<wsHost>pac.${dns_domain}</wsHost>|" $LSF_SUITE_GUI_CONF/pnc-config.xml
         else
             echo LSF_ADDON_HOSTS=$HOSTNAME >> $LSF_ENVDIR/lsf.conf
+            sed -i 's/NoVNCProxyHost=.*/NoVNCProxyHost=localhost/g' "$LSF_SUITE_GUI_CONF/pmc.conf"
         fi
+
         echo 'source /opt/ibm/lsfsuite/ext/profile.platform' >> ~/.bashrc
         echo 'source /opt/ibm/lsfsuite/ext/profile.platform' >> "${lsfadmin_home_dir}"/.bashrc
         source ~/.bashrc

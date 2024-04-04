@@ -95,7 +95,7 @@ locals {
   # login_ssh_keys      = [for name in var.login_ssh_keys : data.ibm_is_ssh_key.login[name].id]
   management_ssh_keys = local.compute_ssh_keys
   # protocol_ssh_keys   = local.storage_ssh_keys
-  sagar = var.enable_ldap == true && var.ldap_server == "null" ? 1 : 0
+  ldap_enable = var.enable_ldap == true && var.ldap_server == "null" ? 1 : 0
 
   # Future use
   /*
@@ -273,8 +273,9 @@ locals {
   ldap_server_status     = var.enable_ldap == true && var.ldap_server == "null" ? false : true
 
   #ldap_server                  = var.enable_ldap == true && var.ldap_server == "null" ? module.ldap_vsi[0].primary_network_interface_address : var.ldap_server
-  us-east = "https://hpc-api.us-east.codeengine.cloud.ibm.com/v2"
-  eu-de   = "https://hpc-api.eu-de.codeengine.cloud.ibm.com/v2"
+  us-east  = "https://hpc-api.us-east.codeengine.cloud.ibm.com/v2"
+  eu-de    = "https://hpc-api.eu-de.codeengine.cloud.ibm.com/v2"
+  us-south = "https://hpc-api.us-south.codeengine.cloud.ibm.com/v2"
   # Security Groups
   # protocol_secondary_security_group = [for subnet in local.protocol_subnets :
   #   {

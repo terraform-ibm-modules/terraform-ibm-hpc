@@ -336,7 +336,7 @@ locals {
 
   active_cos = [
     (
-      var.enable_cos_integration || var.enable_vpc_flow_logs
+      var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker
       ) ? {
       name           = var.cos_instance_name == "null" ? "hpc-cos" : var.cos_instance_name
       resource_group = local.resource_group
@@ -360,14 +360,14 @@ locals {
           endpoint_type = "public"
           force_delete  = true
           kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == "null" ? format("%s-slz-key", var.prefix) : var.kms_key_name) : null
+        } : null,
+        var.enable_atracker ? {
+          name          = "atracker-bucket"
+          storage_class = "standard"
+          endpoint_type = "public"
+          force_delete  = true
+          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == "null" ? format("%s-atracker-key", var.prefix) : var.kms_key_name) : null
         } : null
-        # var.enable_atracker ? {
-        #   name          = "atracker-bucket"
-        #   storage_class = "standard"
-        #   endpoint_type = "public"
-        #   force_delete  = true
-        #   kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == "null" ? format("%s-atracker-key", var.prefix) : var.kms_key_name) : null
-        # } : null
       ]
     } : null
   ]
@@ -405,10 +405,10 @@ locals {
     } : null,
     var.enable_vpc_flow_logs ? {
       name = format("%s-slz-key", var.prefix)
+    } : null,
+    var.enable_atracker ? {
+      name = format("%s-atracker-key", var.prefix)
     } : null
-    # var.enable_atracker ? {
-    #   name = format("%s-atracker-key", var.prefix)
-    # } : null
     ] : [
     {
       name             = var.kms_key_name
@@ -452,7 +452,7 @@ locals {
     resource_group        = local.resource_group
     receive_global_events = false
     collector_bucket_name = "atracker-bucket"
-    add_route             = false
+    add_route             = var.enable_atracker ? true : false
   }
   secrets_manager = {
     use_secrets_manager = false

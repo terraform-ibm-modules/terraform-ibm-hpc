@@ -195,17 +195,17 @@
         },
         {
           "name": "management_image_name",
-          "value": "hpcaas-lsf10-rhel88-v3",
+          "value": "hpcaas-lsf10-rhel88-v4",
           "type": "string",
           "secure": false,
           "description": "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster management nodes. By default, the solution uses a base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the HPC cluster through this offering."
         },
         {
           "name": "compute_image_name",
-          "value": "hpcaas-lsf10-rhel88-compute-v2",
+          "value": "hpcaas-lsf10-rhel88-compute-v3",
           "type": "string",
           "secure": false,
-          "description": "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v1). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
+          "description": "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v2). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
         },
         {
           "name": "login_node_instance_type",
@@ -284,15 +284,26 @@
           "description": "Password for IBM Spectrum LSF Application Center GUI. Note: Password should be at least 8 characters, must have one number, one lowercase letter, one uppercase letter, and at least one special character."
         },
         {  "name": "app_center_high_availability",
-          "value": "false",
+          "value": "true",
           "type": "bool",
-          "description": "Set to true to enable the IBM Spectrum LSF Application Center GUI High Availability (default: false)."
+          "description": "Set to false to disable the IBM Spectrum LSF Application Center GUI High Availability (default: true)."
+        },
+        {  "name": "certificate_instance",
+          "value": "",
+          "type": "string",
+          "description": "Certificate instance CRN value. It's the CRN value of a certificate stored in the Secret Manager. A certificate that was issued by an external certificate authority for your domain name. The certificate will be then provided to the ALB Front End listeners to manage HTTPS connections. It's used if IBM Spectrum LSF Application Center GUI High Availability is enabled."
         },
         {
           "name": "enable_vpc_flow_logs",
           "value": "false",
           "type": "bool",
           "description": "Flag to enable VPC flow logs. If true, a flow log collector will be created."
+        },
+        {
+          "name": "enable_atracker_on_cos",
+          "value": "true",
+          "type": "bool",
+          "description": "Enable Activity tracker service instance connected to Cloud Object Storage (COS). All the events will be stored into COS so that customers can connect to it and read those events or ingest them in their system."
         },
         {
           "name": "enable_ldap",
@@ -349,6 +360,27 @@
           "value": "false",
           "type": "string",
           "description": "Image name to be used for provisioning the LDAP instances."
+        },
+        {
+          "name": "enable_scc",
+          "value": true,
+          "type": "bool",
+          "secure": false,
+          "description": "Setting this to true will enable the creation of a 'Security & Compliance Center' (SCC) instance."
+        },
+        {
+          "name": "scc_profile",
+          "value": "1c13d739-e09e-4bf4-8715-dd82e4498041",
+          "type": "string",
+          "secure": false,
+          "description": "SCC profile ID to be used with the newly created SCC instance."
+        },
+        {
+          "name": "scc_location",
+          "value": "us-south",
+          "type": "string",
+          "secure": false,
+          "description": "Region where to deploy SCC instance."
         }
       ]
     }

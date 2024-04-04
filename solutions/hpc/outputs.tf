@@ -12,6 +12,7 @@ output "landing-zone-vsi" {
   value = module.landing-zone-vsi
 }
 */
+
 output "ssh_command" {
   description = "SSH command to connect to HPC cluster"
   value       = var.enable_fip ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J vpcuser@${module.bootstrap.bastion_fip} lsfadmin@${local.compute_hosts[0]}" : "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J vpcuser@${module.bootstrap.bastion_primary_ip} lsfadmin@${local.compute_hosts[0]}"
@@ -40,8 +41,16 @@ output "ssh_to_login_node" {
   value = var.enable_fip ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J vpcuser@${module.bootstrap.bastion_fip} lsfadmin@${join(",", local.login_private_ips)}" : "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J vpcuser@${module.bootstrap.bastion_primary_ip} lsfadmin@${join(",", local.login_private_ips)}"
 }
 
-output "application_center" {
-  value = var.enable_app_center ? (var.enable_fip ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 -L 8443:localhost:8443 -L 6080:localhost:6080 -J vpcuser@${module.bootstrap.bastion_fip} lsfadmin@${local.management_private_ip}" : "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -L 8443:localhost:8443 -J vpcuser@${module.bootstrap.bastion_primary_ip} lsfadmin@${local.management_private_ip}") : null
+output "application_center_tunnel" {
+  value = var.app_center_high_availability || var.enable_app_center ? local.ssh_cmd : null
+}
+
+output "application_center_url" {
+  value = var.app_center_high_availability ? "https://pac.${var.dns_domain_names.compute}:8443" : (var.enable_app_center ? "https://localhost:8443" : null)
+}
+
+output "application_center_url_NOTE" {
+  value = var.app_center_high_availability ? "you may need '127.0.0.1 pac pac.${var.dns_domain_names.compute}' in your /etc/hosts, to let your browser use the ssh tunnel" : null
 }
 
 output "image_map_entry_found" {
@@ -101,6 +110,12 @@ output "bastion_fip" {
 
 output "vpc_name" {
   value = module.landing_zone.vpc_name
+}
+
+# ALB hostname output value
+output "alb_hostname" {
+  description = "ALB hostname: "
+  value       = module.alb.alb_hostname
 }
 #
 #output "dns_reserved_ip" {

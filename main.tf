@@ -14,7 +14,7 @@ module "hpc" {
   dns_instance_id        = var.dns_instance_id
   dns_domain_names       = var.dns_domain_names
   # dynamic_compute_instances = var.dynamic_compute_instances
-  # enable_atracker           = var.enable_atracker
+  enable_atracker        = var.enable_atracker_on_cos
   # enable_bastion            = var.enable_bastion
   # enable_bootstrap          = var.enable_bootstrap
   enable_cos_integration = var.enable_cos_integration
@@ -77,4 +77,8 @@ module "hpc" {
   app_center_high_availability  = var.app_center_high_availability
   skip_iam_authorization_policy = var.skip_iam_authorization_policy
   hyperthreading_enabled        = var.hyperthreading_enabled
+  enable_scc                    = var.enable_scc
+  scc_profile                   = var.scc_profile
+  scc_location                  = var.scc_location
+  certificate_instance          = var.certificate_instance
 }

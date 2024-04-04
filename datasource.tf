@@ -4,6 +4,7 @@ locals {
   api_endpoint_region_map = {
     "us-east" = "https://hpc-api.us-east.codeengine.cloud.ibm.com/v2"
     "eu-de"   = "https://hpc-api.eu-de.codeengine.cloud.ibm.com/v2"
+    "us-south"= "https://hpc-api.us-south.codeengine.cloud.ibm.com/v2"
   }
   ldap_server_status = var.enable_ldap == true && var.ldap_server == "null" ? false : true
 }

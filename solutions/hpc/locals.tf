@@ -18,6 +18,7 @@ locals {
   # bastion_fip_name = "${local.bastion_node_name}-001-fip"
   # Future use
   # skip_iam_authorization_policy = true
+  cluster_id                 = local.region == "eu-de" || local.region == "us-east" || local.region == "us-south" ? var.cluster_id : "HPC-LSF-1"
 }
 
 # locals needed for landing_zone_vsi
@@ -43,7 +44,7 @@ locals {
     element(local.subnets_output, index(local.subnets_output[*].id, var.login_subnet_id))
   ] : []
 
-  sorted_compute_subnets =  length(var.subnet_id) == 0 ? [
+  sorted_compute_subnets = length(var.subnet_id) == 0 ? [
     element(module.landing_zone.compute_subnets, index(module.landing_zone.compute_subnets[*].zone, var.zones[0])),
     element(module.landing_zone.compute_subnets, index(module.landing_zone.compute_subnets[*].zone, var.zones[1]))
   ] : []
@@ -229,7 +230,34 @@ locals {
 # IBM Cloud Dababase for MySQL local variables
 ###########################################################################
 locals {
-  db_plan              = "standard"
+  mysql_version        = "8.0"
   db_service_endpoints = "private"
   db_template          = [3, 12288, 122880, 3]
+}
+
+###########################################################################
+# IBM Application Load Balancer variables
+###########################################################################
+
+locals {
+  alb_hostname = module.alb.alb_hostname
+}
+
+locals {
+  vsi_management_ids = [
+    for instance in concat(local.management_candidate_vsi_data, local.compute_instances) :
+    {
+      id = instance["id"]
+    }
+  ]
+}
+
+# locals needed for ssh connection
+locals {
+  ssh_forward_host = (var.app_center_high_availability ? "pac.${var.dns_domain_names.compute}" : "localhost")
+  ssh_forwards     = "-L 8443:${local.ssh_forward_host}:8443 -L 6080:${local.ssh_forward_host}:6080"
+  ssh_jump_host    = (var.enable_fip ? module.bootstrap.bastion_fip : module.bootstrap.bastion_primary_ip)
+  ssh_jump_option  = "-J vpcuser@${local.ssh_jump_host}"
+  ssh_host         = var.app_center_high_availability ? local.login_private_ips[0] : local.management_private_ip
+  ssh_cmd          = "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 ${local.ssh_forwards} ${local.ssh_jump_option} lsfadmin@${local.ssh_host}"
 }

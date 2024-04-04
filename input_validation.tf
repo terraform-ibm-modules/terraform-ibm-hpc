@@ -204,9 +204,21 @@ locals {
     "^${local.management_node_count_msg}$",
   (local.validate_management_node_count ? local.management_node_count_msg : ""))
 
+  // IBM Cloud Application load Balancer CRN validation
+  validate_alb_crn       = (var.enable_app_center && var.app_center_high_availability) && can(regex("^crn:v1:bluemix:public:secrets-manager:[a-zA-Z\\-]+:[a-zA-Z0-9\\-]+\\/[a-zA-Z0-9\\-]+:[a-fA-F0-9\\-]+:secret:[a-fA-F0-9\\-]+$", var.certificate_instance)) || !var.app_center_high_availability || !var.enable_app_center
+  alb_crn_template_msg   = "The Application Center Front End listener needs a CRN value of a certificate stored in the Secret Manager"
+  validate_alb_crn_chk   = regex(
+    "^${local.alb_crn_template_msg}$",
+  (local.validate_alb_crn ? local.alb_crn_template_msg : ""))
+
   // Validate the dns_custom_resolver_id should not be given in case of new vpc case
   validate_custom_resolver_id_msg = "If it is the new vpc deployment, do not provide existing dns_custom_resolver_id as that will impact the name resolution of the cluster."
   validate_custom_resolver_id     = anytrue([var.vpc_name != "null", var.vpc_name == "null" && var.dns_custom_resolver_id == "null"])
   validate_custom_resolver_id_chk = regex("^${local.validate_custom_resolver_id_msg}$",
   (local.validate_custom_resolver_id ? local.validate_custom_resolver_id_msg : ""))
+
+  validate_contract_id_new_msg = "Provided cluster_id and contract id cannot be set as empty if the provided region is eu-de and us-east and us-south."
+  validate_contract_id_logic   = local.region_name == "eu-de" || local.region_name == "us-east" || local.region_name == "us-south" ? var.contract_id != "" && var.cluster_id != "" : true
+  validate_contract_id_chk_new = regex("^${local.validate_contract_id_new_msg}$",
+  (local.validate_contract_id_logic ? local.validate_contract_id_new_msg : ""))
 }

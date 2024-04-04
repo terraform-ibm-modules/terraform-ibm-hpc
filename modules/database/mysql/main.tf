@@ -8,28 +8,17 @@
 # Maintainer: Salvatore D'Angelo
 ################################################################################
 
-resource "ibm_database" "itself" {
+module "db" {
+  source            = "terraform-ibm-modules/icd-mysql/ibm"
+  version           = "1.2.0"
   resource_group_id = var.resource_group_id
   name              = var.name
-  service           = "databases-for-mysql"
-  plan              = var.plan
-  location          = var.region
-  adminpassword     = var.adminpassword
+  region            = var.region
   service_endpoints = var.service_endpoints
-
-  group {
-    group_id = "member"
-    members {
-      allocation_count = var.members
-    }
-    memory {
-      allocation_mb = var.memory
-    }
-    disk {
-      allocation_mb = var.disks
-    }
-    cpu {
-      allocation_count = var.vcpu
-    }
-  }
+  mysql_version     = var.mysql_version
+  admin_pass        = var.adminpassword
+  members           = var.members
+  member_memory_mb  = var.memory
+  member_disk_mb    = var.disks
+  member_cpu_count  = var.vcpu
 }

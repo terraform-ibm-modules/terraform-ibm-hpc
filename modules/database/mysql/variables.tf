@@ -3,9 +3,10 @@ variable "name" {
   type        = string
 }
 
-variable "plan" {
-  description = "The database plan (small, medium, large, custom)"
+variable "mysql_version" {
+  description = "MySQL version of the Database"
   type        = string
+  default     = "8.0"
 }
 
 variable "region" {

@@ -53,7 +53,7 @@ variable "resource_group" {
   validation {
     condition     = var.resource_group != null
     error_message = "If you want to provide null for resource_group variable, it should be within double quotes."
-  }  
+  }
 }
 
 ##############################################################################
@@ -276,14 +276,14 @@ variable "login_node_instance_type" {
 }
 variable "management_image_name" {
   type        = string
-  default     = "hpcaas-lsf10-rhel88-v3"
+  default     = "hpcaas-lsf10-rhel88-v4"
   description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster management nodes. By default, the solution uses a base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
 }
 
 variable "compute_image_name" {
   type        = string
-  default     = "hpcaas-lsf10-rhel88-compute-v2"
-  description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v1). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
+  default     = "hpcaas-lsf10-rhel88-compute-v3"
+  description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v2). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
 }
 
 variable "management_node_instance_type" {
@@ -526,11 +526,11 @@ variable "cos_instance_name" {
   description = "Provide the name of the existing cos instance to store vpc flow logs."
 }
 
-# variable "enable_atracker" {
-#   type        = bool
-#   default     = true
-#   description = "Enable Activity tracker"
-# }
+variable "enable_atracker_on_cos" {
+  type        = bool
+  default     = true
+  description = "Enable Activity tracker service instance connected to Cloud Object Storage (COS). All the events will be stored into COS so that customers can connect to it and read those events or ingest them in their system."
+}
 
 variable "enable_vpc_flow_logs" {
   type        = bool
@@ -575,6 +575,40 @@ variable "kms_key_name" {
 #   description = "Hyper Protect Crypto Service instance"
 # }
 
+##############################################################################
+# SCC Variables
+##############################################################################
+
+variable "enable_scc" {
+  type        = bool
+  default     = false
+  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+}
+
+variable "scc_profile" {
+  type        = string
+  default     = "1c13d739-e09e-4bf4-8715-dd82e4498041"
+  description = "Profile to be set on the SCC Instance (accepting empty, CIS and Financial Services profiles ID)"
+  validation {
+    condition     = can(regex("^(|1c13d739-e09e-4bf4-8715-dd82e4498041|bfacb71d-4b84-41ac-9825-e8a3a3eb7405)$", var.scc_profile))
+    error_message = "Provide SCC Profile ID to be used (accepting empty, CIS and Financial Services profiles ID)."
+  }
+}
+
+variable "scc_location" {
+  description = "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
+  type = string
+  default = "us-south"
+  validation {
+    condition     = can(regex("^(|us-south|eu-de|ca-tor|eu-es)$", var.scc_location))
+    error_message = "Provide region where it's possible to deploy an SCC Instance (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es') or leave blank and it will default to 'us-south'."
+  }
+}
+
+##############################################################################
+# TODO: Sagar variables
+##############################################################################
+
 variable "hyperthreading_enabled" {
   type        = bool
   default     = true
@@ -599,8 +633,8 @@ variable "app_center_gui_pwd" {
 
 variable "app_center_high_availability" {
   type        = bool
-  default     = false
-  description = "Set to true to enable the IBM Spectrum LSF Application Center GUI High Availability (default: false) ."
+  default     = true
+  description = "Set to false to disable the IBM Spectrum LSF Application Center GUI High Availability (default: true) ."
 }
 
 # variable "ssh_key_name" {
@@ -688,13 +722,22 @@ variable "skip_iam_authorization_policy" {
   description = "Set it to false if authorization policy is required for VPC to access COS. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for VPC flow log](https://cloud.ibm.com/docs/vpc?topic=vpc-ordering-flow-log-collector&interface=ui#fl-before-you-begin-ui)."
 }
 
+###########################################################################
+# IBM Cloud ALB Variables
+###########################################################################
+variable "certificate_instance" {
+  description = "Certificate instance CRN value. It's the CRN value of a certificate stored in the Secret Manager. A certificate that was issued by an external certificate authority for your domain name. The certificate will be then provided to the ALB Front End listeners to manage HTTPS connections. It's used if IBM Spectrum LSF Application Center GUI High Availability is enabled."
+  type        = string
+  default     = ""
+}
+
 ##############################################################################
 # Environment Variables
 ##############################################################################
 
 variable "TF_VERSION" {
   type        = string
-  default     = "1.4"
+  default     = "1.5"
   description = "The version of the Terraform engine that's used in the Schematics workspace."
 }
 

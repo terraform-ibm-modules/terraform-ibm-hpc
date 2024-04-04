@@ -29,7 +29,7 @@ create_certificate() {
 # point to the remote database service instead of the local MySQL server.
 configure_icd_datasource() {
     local default_connection_string="jdbc:mariadb://localhost:3306/pac?useUnicode=true&amp;characterEncoding=UTF-8&amp;serverTimezone=GMT"
-    local icd_connection_string="jdbc:mariadb://${db_hostname}:${db_port}/pac?useUnicode=true\&amp;characterEncoding=UTF-8\&amp;serverTimezone=GMT\&amp;requireSSL=true\&amp;useSSL=true\&amp;serverSslCert=${db_certificate_file}"
+    local icd_connection_string="jdbc:mariadb://${db_hostname}:${db_port}/${db_name}?useUnicode=true\&amp;characterEncoding=UTF-8\&amp;serverTimezone=GMT\&amp;requireSSL=true\&amp;useSSL=true\&amp;serverSslCert=${db_certificate_file}"
 
     # Change the connection string to use ICD
     sed -i "s!Connection=\"${default_connection_string}\"!Connection=\"${icd_connection_string}\"!" ${LSF_SUITE_PERF_CONF}/datasource.xml
@@ -125,15 +125,32 @@ if [ -n "${nfs_server_with_mount_path}" ]; then
     ln -fs "${nfs_client_mount_path}/$dir" "${LSF_TOP}"
     chown -R lsfadmin:root "${LSF_TOP}"
   done
+  # The lsfsuite..conf folder is shared
+  rm -rf "${LSF_TOP}/../lsfsuite/ext/gui/conf"
+  ln -fs "${nfs_client_mount_path}/gui-conf" "${LSF_TOP}/../lsfsuite/ext/gui/conf"
+  chown -R lsfadmin:root "${LSF_TOP}/../lsfsuite/ext/gui/conf"
   #Create folder in shared file system to store logs
   mkdir -p "${nfs_client_mount_path}/log/${HOSTNAME}"
   chown -R lsfadmin:root "${nfs_client_mount_path}/log"
-  #Move all existing logs to the new folder
-  mv ${LSF_TOP}/log/* "${nfs_client_mount_path}/log/${HOSTNAME}"
+  if [ "$(ls -A ${LSF_TOP}/log)" ]; then
+    #Move all existing logs to the new folder
+    mv ${LSF_TOP}/log/* "${nfs_client_mount_path}/log/${HOSTNAME}"
+  fi
   #Remove the original folder and create symlink so the user can still access to default location
   rm -rf "${LSF_TOP}/log"
   ln -fs "${nfs_client_mount_path}/log/${HOSTNAME}" "${LSF_TOP}/log"
   chown -R lsfadmin:root "${LSF_TOP}/log"
+  #Create log folder for pac and set proper owner
+  mkdir -p "${nfs_client_mount_path}/gui-logs"
+  chown -R lsfadmin:root "${nfs_client_mount_path}/gui-logs"
+  #Move PAC logs to shared folder
+  mkdir -p "${nfs_client_mount_path}/gui-logs/${HOSTNAME}"
+  if [ -d "${LSF_TOP}/../lsfsuite/ext/gui/logs/${HOSTNAME}" ] && [ "$(ls -A ${LSF_TOP}/../lsfsuite/ext/gui/logs/${HOSTNAME})" ]; then
+    mv "${LSF_TOP}/../lsfsuite/ext/gui/logs/${HOSTNAME}" "${nfs_client_mount_path}/gui-logs/${HOSTNAME}"
+  fi
+  chown -R lsfadmin:root "${nfs_client_mount_path}/gui-logs/${HOSTNAME}"
+  ln -fs "${nfs_client_mount_path}/gui-logs/${HOSTNAME}" "${LSF_TOP}/../lsfsuite/ext/gui/logs/${HOSTNAME}"
+  chown -R lsfadmin:root "${LSF_TOP}/../lsfsuite/ext/gui/logs/${HOSTNAME}"
 else
   echo "No mount point value found, exiting!" >> $logfile
   exit 1
@@ -174,21 +191,35 @@ while [ ! -f  "$LSF_HOSTS_FILE" ]; do
   sleep 5s
 done
 
-# Update the entry  to LSF_HOSTS_FILE
-sed -i "s/^$HostIP .*/$HostIP $HostName/g" $LSF_HOSTS_FILE
+# Update the entry to LSF_HOSTS_FILE
+while true; do # better try multiple times to cope with occasional NFS "stale file handle" issues
+  sed -i "s/^$HostIP .*/$HostIP $HostName/g" $LSF_HOSTS_FILE
+  grep "^$HostIP $HostName" $LSF_HOSTS_FILE && break
+  echo "retry adding $HostIP $Hostname to LSF host file..." >> $logfile
+  sleep 3
+done
+echo "$HostIP $Hostname added to LSF host file" >> $logfile
+
 for hostname in $ManagementHostNames; do
   while ! grep "$hostname" "$LSF_HOSTS_FILE"; do
     echo "Waiting for $hostname to be added to LSF host file" >> $logfile
     sleep 5
   done
+  echo "$hostname found in LSF host file" >> $logfile
 done
 cat $LSF_HOSTS_FILE >> /etc/hosts
+
+if [ "$enable_app_center" = true ] && [ "${app_center_high_availability}" = true ]; then
+  # Add entry for VNC scenario
+  echo "127.0.0.1 pac pac.$dns_domain" >> /etc/hosts
+fi
+
 # Startup lsf daemons
 . $LSF_TOP/conf/profile.lsf
 echo "Setting up LSF env is completed" >> $logfile
-lsf_daemons start &
-sleep 5
-lsf_daemons status >> $logfile
+source /opt/ibm/lsf/conf/profile.lsf
+sudo /opt/ibm/lsf/10.1/install/hostsetup --top="/opt/ibm/lsf" --boot="y" --start="y"
+systemctl status lsfd >> $logfile
 echo "END $(date '+%Y-%m-%d %H:%M:%S')" >> $logfile
 
 # Setup lsfadmin user
@@ -235,7 +266,6 @@ then
         echo ${app_center_gui_pwd} | sudo passwd --stdin lsfadmin
         sed -i '$i\\ALLOW_EVENT_TYPE=JOB_NEW JOB_STATUS JOB_FINISH2 JOB_START JOB_EXECUTE JOB_EXT_MSG JOB_SIGNAL JOB_REQUEUE JOB_MODIFY2 JOB_SWITCH METRIC_LOG' $LSF_ENVDIR/lsbatch/"$cluster_name"/configdir/lsb.params
         sed -i 's/NEWJOB_REFRESH=y/NEWJOB_REFRESH=Y/g' $LSF_ENVDIR/lsbatch/"$cluster_name"/configdir/lsb.params
-        sed -i 's/NoVNCProxyHost=.*/NoVNCProxyHost=localhost/g' /opt/ibm/lsfsuite/ext/gui/conf/pmc.conf
         create_certificate
         configure_icd_datasource
         echo 'source /opt/ibm/lsfsuite/ext/profile.platform' >> ~/.bashrc
