@@ -7,16 +7,6 @@
     This module used to run null for LSF utilities
 */
 
-
-variable "cluster_host" {}
-variable "cluster_user" {}
-variable "cluster_private_key" {}
-variable "login_host" {}
-variable "login_user" {}
-variable "login_private_key" {}
-variable "command" {}
-
-
 resource "null_resource" "remote_exec" {
   count = length(var.cluster_host)
   connection {

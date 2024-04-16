@@ -1,7 +1,7 @@
 # This module requires additional logdna provider configuration blocks
 locals {
-  scc_region  = var.location != "" ? var.location : "us-south"
-  scc_scope   = [{
+  scc_region = var.location != "" ? var.location : "us-south"
+  scc_scope = [{
     environment = var.scc_scope_environment
     properties = [
       {
@@ -18,7 +18,7 @@ locals {
 
 module "cos" {
   source                 = "terraform-ibm-modules/cos/ibm"
-  version                = "7.3.2"
+  version                = "7.5.3"
   cos_instance_name      = "${var.prefix}-scc-cos"
   kms_encryption_enabled = false
   retention_enabled      = false
@@ -28,33 +28,38 @@ module "cos" {
 
 module "event_notification" {
   source            = "terraform-ibm-modules/event-notifications/ibm"
-  version           = "1.0.4"
+  version           = "1.3.1"
   resource_group_id = data.ibm_resource_group.rg.id
   name              = "${var.prefix}-scc-event_notification"
   plan              = var.event_notification_plan
-  service_endpoints = var.event_notification_service-endpoints
+  service_endpoints = var.event_notification_service_endpoints
   region            = local.scc_region
   tags              = var.tags
 }
 
 module "create_scc_instance" {
   source                            = "terraform-ibm-modules/scc/ibm"
-  version                           = "1.1.0" # Replace "X.X.X" with a release version to lock into a specific release
+  version                           = "1.4.0"
   instance_name                     = "${var.prefix}-scc-instance"
   plan                              = var.scc_plan
   region                            = local.scc_region
   resource_group_id                 = data.ibm_resource_group.rg.id
+  resource_tags                     = var.tags
   cos_bucket                        = module.cos.bucket_name
   cos_instance_crn                  = module.cos.cos_instance_id
   en_instance_crn                   = module.event_notification.crn
   skip_cos_iam_authorization_policy = false
-  resource_tags                     = var.tags
+  attach_wp_to_scc_instance         = false
+  skip_scc_wp_auth_policy           = true
+  wp_instance_crn                   = null
 }
 
 module "create_profile_attachment" {
   count                  = var.scc_profile == null || var.scc_profile == "" ? 0 : 1
   source                 = "terraform-ibm-modules/scc/ibm//modules/attachment"
-  profile_id             = var.scc_profile # data.ibm_scc_profile.scc_profile.id
+  version                = "1.4.0"
+  profile_name           = var.scc_profile
+  profile_version        = var.scc_profile_version
   scc_instance_id        = module.create_scc_instance.guid
   attachment_name        = "${var.prefix}-scc-attachment"
   attachment_description = var.scc_attachment_description

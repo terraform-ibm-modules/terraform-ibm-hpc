@@ -1,20 +1,6 @@
 ##############################################################################
 # Offering Variations
 ##############################################################################
-# Future use
-/*
-variable "scheduler" {
-  type        = string
-  default     = "LSF"
-  description = "Select one of the scheduler (LSF/Symphony/Slurm/None)"
-}
-
-variable "storage_type" {
-  type        = string
-  default     = "scratch"
-  description = "Select the required storage type(scratch/persistent/eval)."
-}
-*/
 
 variable "ibm_customer_number" {
   type        = string
@@ -102,6 +88,427 @@ variable "existing_subnet_cidrs" {
   default     = null
 }
 
+variable "bastion_ssh_keys" {
+  type        = list(string)
+  description = "The key pair to use to access the bastion host."
+}
+
+variable "bastion_subnets_cidr" {
+  type        = list(string)
+  default     = ["10.0.0.0/24"]
+  description = "Subnet CIDR block to launch the bastion host."
+}
+
+variable "enable_vpn" {
+  type        = bool
+  default     = false
+  description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN, set this value to true."
+}
+
+variable "allowed_cidr" {
+  description = "Network CIDR to access the VPC. This is used to manage network ACL rules for accessing the cluster."
+  type        = list(string)
+  default     = ["10.0.0.0/8"]
+}
+
+variable "compute_subnets_cidr" {
+  type        = list(string)
+  default     = ["10.10.20.0/24", "10.20.20.0/24", "10.30.20.0/24"]
+  description = "Subnet CIDR block to launch the compute cluster host."
+}
+
+variable "compute_ssh_keys" {
+  type        = list(string)
+  description = "The key pair to use to launch the compute host."
+}
+
+variable "management_image_name" {
+  type        = string
+  default     = "ibm-redhat-8-6-minimal-amd64-5"
+  description = "Image name to use for provisioning the management cluster instances."
+}
+
+variable "compute_image_name" {
+  type        = string
+  default     = "ibm-redhat-8-6-minimal-amd64-5"
+  description = "Image name to use for provisioning the compute cluster instances."
+}
+
+variable "file_shares" {
+  type = list(
+    object({
+      mount_path = string,
+      size       = optional(number),
+      iops       = optional(number),
+      nfs_share  = optional(string)
+    })
+  )
+  default = [{
+    mount_path = "/mnt/vpcstorage/tools"
+    size       = 100
+    iops       = 1000
+    }, {
+    mount_path = "/mnt/vpcstorage/data"
+    size       = 100
+    iops       = 1000
+  }]
+  description = "Custom file shares to access shared storage"
+}
+
+variable "storage_security_group_id" {
+  type        = string
+  default     = null
+  description = "Existing storage security group id"
+}
+
+##############################################################################
+# DNS Template Variables
+##############################################################################
+
+variable "dns_instance_id" {
+  type        = string
+  default     = "null"
+  description = "IBM Cloud HPC DNS service instance id."
+}
+
+variable "dns_custom_resolver_id" {
+  type        = string
+  default     = "null"
+  description = "IBM Cloud DNS custom resolver id."
+}
+
+variable "dns_domain_names" {
+  type = object({
+    compute = string
+    #storage  = string
+    #protocol = string
+  })
+  default = {
+    compute = "comp.com"
+  }
+  description = "IBM Cloud HPC DNS domain names."
+}
+
+##############################################################################
+# Observability Variables
+##############################################################################
+
+variable "enable_cos_integration" {
+  type        = bool
+  default     = true
+  description = "Integrate COS with HPC solution"
+}
+
+variable "cos_instance_name" {
+  type        = string
+  default     = null
+  description = "Exiting COS instance name"
+}
+
+variable "enable_atracker" {
+  type        = bool
+  default     = true
+  description = "Enable Activity tracker service instance connected to Cloud Object Storage (COS). All the events will be stored into COS so that customers can connect to it and read those events or ingest them in their system."
+}
+
+variable "enable_vpc_flow_logs" {
+  type        = bool
+  default     = true
+  description = "Enable Activity tracker"
+}
+
+variable "enable_cloud_monitoring" {
+  description = "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure and LSF application metrics from Management Nodes will be ingested."
+  type        = bool
+  default     = true
+}
+
+variable "enable_cloud_monitoring_compute_nodes" {
+  description = "Set true to enable infrastructure metrics ingestion from Compute Nodes."
+  type        = bool
+  default     = false
+}
+
+variable "cloud_monitoring_plan" {
+  description = "Type of service plan for IBM Cloud Monitoring instance. You can choose one of the following: lite, graduated-tier, graduated-tier-sysdig-secure-plus-monitor. For all details visit [IBM Cloud Monitoring Service Plans](https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans)."
+  type        = string
+  default     = "lite"
+  validation {
+    condition     = can(regex("lite|graduated-tier|graduated-tier-sysdig-secure-plus-monitor", var.cloud_monitoring_plan))
+    error_message = "Please enter a valid plan for IBM Cloud Monitoring, for all details visit https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans."
+  }
+}
+
+##############################################################################
+# Encryption Variables
+##############################################################################
+
+variable "key_management" {
+  type        = string
+  default     = "key_protect"
+  description = "null/key_protect"
+}
+
+variable "kms_instance_name" {
+  type        = string
+  default     = "null"
+  description = "Name of the Key Protect instance associated with the Key Management Service. The ID can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
+}
+
+variable "kms_key_name" {
+  type        = string
+  default     = "null"
+  description = "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. (for example kms_key_name: my-encryption-key)."
+}
+
+##############################################################################
+# SCC Variables
+##############################################################################
+
+variable "scc_enable" {
+  type        = bool
+  default     = false
+  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+}
+
+variable "scc_profile" {
+  type        = string
+  default     = "CIS IBM Cloud Foundations Benchmark"
+  description = "Profile to be set on the SCC Instance (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')"
+}
+
+variable "scc_profile_version" {
+  type        = string
+  default     = "1.0.0"
+  description = "Version of Profile to be set on the SCC Instance"
+}
+
+variable "scc_location" {
+  description = "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
+  type        = string
+  default     = "us-south"
+}
+
+variable "cluster_id" {
+  type        = string
+  description = "Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same contract. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment."
+}
+
+variable "contract_id" {
+  type        = string
+  sensitive   = true
+  description = "Ensure that you have received the contract ID from IBM technical sales. Contract ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_)."
+}
+
+variable "hyperthreading_enabled" {
+  type        = bool
+  default     = true
+  description = "Setting this to true will enable hyper-threading in the compute nodes of the cluster (default). Otherwise, hyper-threading will be disabled."
+}
+
+variable "enable_app_center" {
+  type        = bool
+  default     = false
+  description = "Set to true to enable the IBM Spectrum LSF Application Center GUI (default: false). [System requirements](https://www.ibm.com/docs/en/slac/10.2.0?topic=requirements-system-102-fix-pack-14) for IBM Spectrum LSF Application Center Version 10.2 Fix Pack 14."
+}
+
+variable "app_center_gui_pwd" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "Password for IBM Spectrum LSF Application Center GUI. Note: Password should be at least 8 characters, must have one number, one lowercase letter, one uppercase letter, and at least one special character."
+}
+
+variable "app_center_high_availability" {
+  type        = bool
+  default     = true
+  description = "Set to false to disable the IBM Spectrum LSF Application Center GUI High Availability (default: true)."
+}
+
+variable "management_node_count" {
+  type        = number
+  default     = 3
+  description = "Number of management nodes. This is the total number of management nodes. Enter a value between 1 and 10."
+  validation {
+    condition     = 1 <= var.management_node_count && var.management_node_count <= 10
+    error_message = "Input \"management_node_count\" must be must be greater than or equal to 1 and less than or equal to 10."
+  }
+}
+
+variable "management_node_instance_type" {
+  type        = string
+  default     = "bx2-16x64"
+  description = "Specify the virtual server instance profile type to be used to create the management nodes for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
+  validation {
+    condition     = can(regex("^[^\\s]+-[0-9]+x[0-9]+", var.management_node_instance_type))
+    error_message = "The profile must be a valid profile name."
+  }
+}
+
+variable "enable_fip" {
+  type        = bool
+  default     = true
+  description = "The solution supports multiple ways to connect to your IBM Cloud HPC cluster for example, using a login node, or using VPN or direct connection. If connecting to the IBM Cloud HPC cluster using VPN or direct connection, set this value to false."
+}
+
+###########################################################################
+# List of script filenames used by validation test suites.
+# If provided, these scripts will be executed as part of validation test suites execution.
+###########################################################################
+
+# tflint-ignore: terraform_naming_convention
+variable "TF_VALIDATION_SCRIPT_FILES" {
+  type        = list(string)
+  default     = []
+  description = "List of script file names used by validation test suites. If provided, these scripts will be executed as part of validation test suites execution."
+  validation {
+    condition     = alltrue([for filename in var.TF_VALIDATION_SCRIPT_FILES : can(regex(".*\\.sh$", filename))])
+    error_message = "All validation script file names must end with .sh."
+  }
+}
+
+variable "login_node_instance_type" {
+  type        = string
+  default     = "bx2-2x8"
+  description = "Specify the virtual server instance profile type to be used to create the login node for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
+  validation {
+    condition     = can(regex("^[^\\s]+-[0-9]+x[0-9]+", var.login_node_instance_type))
+    error_message = "The profile must be a valid profile name."
+  }
+}
+
+variable "enable_ldap" {
+  type        = bool
+  default     = false
+  description = "Set this option to true to enable LDAP for IBM Cloud HPC, with the default value set to false."
+}
+
+variable "ldap_basedns" {
+  type        = string
+  default     = "hpcaas.com"
+  description = "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."
+}
+
+variable "ldap_server" {
+  type        = string
+  default     = "null"
+  description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
+}
+
+variable "ldap_admin_password" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "The LDAP administrative password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required. It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
+}
+
+variable "ldap_user_name" {
+  type        = string
+  default     = ""
+  description = "Custom LDAP User for performing cluster operations. Note: Username should be between 4 to 32 characters, (any combination of lowercase and uppercase letters).[This value is ignored for an existing LDAP server]"
+}
+
+variable "ldap_user_password" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "The LDAP user password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required.It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
+}
+
+variable "ldap_vsi_profile" {
+  type        = string
+  default     = "cx2-2x4"
+  description = "Profile to be used for LDAP virtual server instance."
+}
+
+variable "ldap_vsi_osimage_name" {
+  type        = string
+  default     = "ibm-ubuntu-22-04-3-minimal-amd64-1"
+  description = "Image name to be used for provisioning the LDAP instances."
+}
+
+variable "skip_iam_authorization_policy" {
+  type        = string
+  default     = null
+  description = "Skip IAM Authorization policy"
+}
+
+###########################################################################
+# IBM Cloud ALB Variables
+###########################################################################
+variable "certificate_instance" {
+  description = "Certificate instance CRN value. It's the CRN value of a certificate stored in the Secret Manager"
+  type        = string
+  default     = ""
+}
+
+###########################################################################
+# Existing Bastion Support variables
+###########################################################################
+
+variable "bastion_instance_name" {
+  type        = string
+  default     = null
+  description = "Bastion instance name."
+}
+
+variable "bastion_instance_public_ip" {
+  type        = string
+  default     = null
+  description = "Bastion instance public ip address."
+}
+
+variable "bastion_security_group_id" {
+  type        = string
+  default     = null
+  description = "Bastion security group id."
+}
+
+variable "bastion_ssh_private_key" {
+  type        = string
+  default     = null
+  description = "Bastion SSH private key path, which will be used to login to bastion host."
+}
+
+###########################################################################
+# Moving commented code at last for future use.
+###########################################################################
+
+# variable "nsd_details" {
+#   type = list(
+#     object({
+#       profile  = string
+#       capacity = optional(number)
+#       iops     = optional(number)
+#     })
+#   )
+#   default = [{
+#     profile = "custom"
+#     size    = 100
+#     iops    = 100
+#   }]
+#   description = "Storage scale NSD details"
+# }
+
+/*
+variable "scheduler" {
+  type        = string
+  default     = "LSF"
+  description = "Select one of the scheduler (LSF/Symphony/Slurm/None)"
+}
+
+variable "storage_type" {
+  type        = string
+  default     = "scratch"
+  description = "Select the required storage type(scratch/persistent/eval)."
+}
+*/
+
+# variable "ssh_key_name" {
+#   type        = string
+#   description = "Comma-separated list of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC cluster node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
+# }
+
 # variable "placement_strategy" {
 #   type        = string
 #   default     = null
@@ -128,23 +535,6 @@ variable "existing_subnet_cidrs" {
 #   description = "Bootstrap should be only used for better deployment performance"
 # }
 
-variable "bastion_ssh_keys" {
-  type        = list(string)
-  description = "The key pair to use to access the bastion host."
-}
-
-variable "bastion_subnets_cidr" {
-  type        = list(string)
-  default     = ["10.0.0.0/24"]
-  description = "Subnet CIDR block to launch the bastion host."
-}
-
-variable "enable_vpn" {
-  type        = bool
-  default     = false
-  description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN, set this value to true."
-}
-
 # variable "peer_cidr_list" {
 #   type        = list(string)
 #   default     = null
@@ -162,12 +552,6 @@ variable "enable_vpn" {
 #   default     = null
 #   description = "The pre-shared key for the VPN."
 # }
-
-variable "allowed_cidr" {
-  description = "Network CIDR to access the VPC. This is used to manage network ACL rules for accessing the cluster."
-  type        = list(string)
-  default     = ["10.0.0.0/8"]
-}
 
 ##############################################################################
 # Compute Variables
@@ -205,23 +589,6 @@ variable "login_subnets_cidr" {
 #   }]
 #   description = "Number of instances to be launched for login."
 # }
-
-variable "compute_subnets_cidr" {
-  type        = list(string)
-  default     = ["10.10.20.0/24", "10.20.20.0/24", "10.30.20.0/24"]
-  description = "Subnet CIDR block to launch the compute cluster host."
-}
-
-variable "compute_ssh_keys" {
-  type        = list(string)
-  description = "The key pair to use to launch the compute host."
-}
-
-variable "management_image_name" {
-  type        = string
-  default     = "ibm-redhat-8-6-minimal-amd64-5"
-  description = "Image name to use for provisioning the management cluster instances."
-}
 
 # variable "management_instances" {
 #   type = list(
@@ -264,12 +631,6 @@ variable "management_image_name" {
 #   }]
 #   description = "MaxNumber of instances to be launched for compute cluster."
 # }
-
-variable "compute_image_name" {
-  type        = string
-  default     = "ibm-redhat-8-6-minimal-amd64-5"
-  description = "Image name to use for provisioning the compute cluster instances."
-}
 # Future use
 /*
 variable "compute_gui_username" {
@@ -355,305 +716,8 @@ variable "storage_gui_password" {
 }
 */
 
-variable "file_shares" {
-  type = list(
-    object({
-      mount_path = string,
-      size       = number,
-      iops       = number
-    })
-  )
-  default = [{
-    mount_path = "/mnt/binaries"
-    size       = 100
-    iops       = 1000
-    }, {
-    mount_path = "/mnt/data"
-    size       = 100
-    iops       = 1000
-  }]
-  description = "Custom file shares to access shared storage"
-}
-
-# variable "nsd_details" {
-#   type = list(
-#     object({
-#       profile  = string
-#       capacity = optional(number)
-#       iops     = optional(number)
-#     })
-#   )
-#   default = [{
-#     profile = "custom"
-#     size    = 100
-#     iops    = 100
-#   }]
-#   description = "Storage scale NSD details"
-# }
-
-##############################################################################
-# DNS Template Variables
-##############################################################################
-
-variable "dns_instance_id" {
-  type        = string
-  default     = "null"
-  description = "IBM Cloud HPC DNS service instance id."
-}
-
-variable "dns_custom_resolver_id" {
-  type        = string
-  default     = "null"
-  description = "IBM Cloud DNS custom resolver id."
-}
-
-variable "dns_domain_names" {
-  type = object({
-    compute = string
-    #storage  = string
-    #protocol = string
-  })
-  default = {
-    compute = "comp.com"
-  }
-  description = "IBM Cloud HPC DNS domain names."
-}
-
-##############################################################################
-# Observability Variables
-##############################################################################
-
-variable "enable_cos_integration" {
-  type        = bool
-  default     = true
-  description = "Integrate COS with HPC solution"
-}
-
-variable "cos_instance_name" {
-  type        = string
-  default     = null
-  description = "Exiting COS instance name"
-}
-
-variable "enable_atracker" {
-  type        = bool
-  default     = true
-  description = "Enable Activity tracker service instance connected to Cloud Object Storage (COS). All the events will be stored into COS so that customers can connect to it and read those events or ingest them in their system."
-}
-
-variable "enable_vpc_flow_logs" {
-  type        = bool
-  default     = true
-  description = "Enable Activity tracker"
-}
-
-##############################################################################
-# Encryption Variables
-##############################################################################
-
-variable "key_management" {
-  type        = string
-  default     = "key_protect"
-  description = "null/key_protect"
-}
-
-variable "kms_instance_name" {
-  type        = string
-  default     = "null"
-  description = "Name of the Key Protect instance associated with the Key Management Service. The ID can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
-}
-
-variable "kms_key_name" {
-  type        = string
-  default     = "null"
-  description = "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. (for example kms_key_name: my-encryption-key)."
-}
-
 # variable "hpcs_instance_name" {
 #   type        = string
 #   default     = null
 #   description = "Hyper Protect Crypto Service instance"
 # }
-
-##############################################################################
-# SCC Variables
-##############################################################################
-
-variable "enable_scc" {
-  type        = bool
-  default     = false
-  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
-}
-
-variable "scc_profile" {
-  type        = string
-  default     = "1c13d739-e09e-4bf4-8715-dd82e4498041"
-  description = "Profile to be set on the SCC Instance (accepting empty, CIS and Financial Services profiles ID)"
-}
-
-variable "scc_location" {
-  description = "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
-  type        = string
-  default     = "us-south"
-}
-
-##############################################################################
-# TODO: Sagar changes
-##############################################################################
-
-variable "cluster_id" {
-  type        = string
-  description = "Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same contract. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment."
-}
-
-variable "contract_id" {
-  type        = string
-  sensitive   = true
-  description = "Ensure that you have received the contract ID from IBM technical sales. Contract ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_)."
-}
-
-variable "hyperthreading_enabled" {
-  type        = bool
-  default     = true
-  description = "Setting this to true will enable hyper-threading in the compute nodes of the cluster (default). Otherwise, hyper-threading will be disabled."
-}
-
-variable "enable_app_center" {
-  type        = bool
-  default     = false
-  description = "Set to true to enable the IBM Spectrum LSF Application Center GUI (default: false). [System requirements](https://www.ibm.com/docs/en/slac/10.2.0?topic=requirements-system-102-fix-pack-14) for IBM Spectrum LSF Application Center Version 10.2 Fix Pack 14."
-}
-
-variable "app_center_gui_pwd" {
-  type        = string
-  sensitive   = true
-  default     = ""
-  description = "Password for IBM Spectrum LSF Application Center GUI. Note: Password should be at least 8 characters, must have one number, one lowercase letter, one uppercase letter, and at least one special character."
-}
-
-variable "app_center_high_availability" {
-  type        = bool
-  default     = true
-  description = "Set to false to disable the IBM Spectrum LSF Application Center GUI High Availability (default: true)."
-}
-
-variable "management_node_count" {
-  type        = number
-  default     = 3
-  description = "Number of management nodes. This is the total number of management nodes. Enter a value between 1 and 10."
-  validation {
-    condition     = 1 <= var.management_node_count && var.management_node_count <= 10
-    error_message = "Input \"management_node_count\" must be must be greater than or equal to 1 and less than or equal to 10."
-  }
-}
-
-variable "management_node_instance_type" {
-  type        = string
-  default     = "bx2-16x64"
-  description = "Specify the virtual server instance profile type to be used to create the management nodes for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
-  validation {
-    condition     = can(regex("^[^\\s]+-[0-9]+x[0-9]+", var.management_node_instance_type))
-    error_message = "The profile must be a valid profile name."
-  }
-}
-
-# variable "ssh_key_name" {
-#   type        = string
-#   description = "Comma-separated list of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC cluster node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
-# }
-
-variable "enable_fip" {
-  type        = bool
-  default     = true
-  description = "The solution supports multiple ways to connect to your IBM Cloud HPC cluster for example, using a login node, or using VPN or direct connection. If connecting to the IBM Cloud HPC cluster using VPN or direct connection, set this value to false."
-}
-
-###########################################################################
-# List of script filenames used by validation test suites.
-# If provided, these scripts will be executed as part of validation test suites execution.
-###########################################################################
-
-variable "TF_VALIDATION_SCRIPT_FILES" {
-  type        = list(string)
-  default     = []
-  description = "List of script file names used by validation test suites. If provided, these scripts will be executed as part of validation test suites execution."
-  validation {
-    condition     = alltrue([for filename in var.TF_VALIDATION_SCRIPT_FILES : can(regex(".*\\.sh$", filename))])
-    error_message = "All validation script file names must end with .sh."
-  }
-}
-
-variable "login_node_instance_type" {
-  type        = string
-  default     = "bx2-2x8"
-  description = "Specify the virtual server instance profile type to be used to create the login node for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
-  validation {
-    condition     = can(regex("^[^\\s]+-[0-9]+x[0-9]+", var.login_node_instance_type))
-    error_message = "The profile must be a valid profile name."
-  }
-}
-
-variable "enable_ldap" {
-  type        = bool
-  default     = false
-  description = "Set this option to true to enable LDAP for IBM Cloud HPC, with the default value set to false."
-}
-
-variable "ldap_basedns" {
-  type        = string
-  default     = "hpcaas.com"
-  description = "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."
-}
-
-variable "ldap_server" {
-  type        = string
-  default     = "null"
-  description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
-}
-
-variable "ldap_admin_password" {
-  type        = string
-  sensitive   = true
-  default     = ""
-  description = "The LDAP administrative password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required. It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
-}
-
-variable "ldap_user_name" {
-  type        = string
-  default     = ""
-  description = "Custom LDAP User for performing cluster operations. Note: Username should be between 4 to 32 characters, (any combination of lowercase and uppercase letters).[This value is ignored for an existing LDAP server]"
-}
-
-variable "ldap_user_password" {
-  type        = string
-  sensitive   = true
-  default     = ""
-  description = "The LDAP user password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required.It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
-}
-
-variable "ldap_vsi_profile" {
-  type        = string
-  default     = "cx2-2x4"
-  description = "Profile to be used for LDAP virtual server instance."
-}
-
-variable "ldap_vsi_osimage_name" {
-  type        = string
-  default     = "ibm-ubuntu-22-04-3-minimal-amd64-1"
-  description = "Image name to be used for provisioning the LDAP instances."
-}
-
-variable "skip_iam_authorization_policy" {
-  type        = string
-  default     = null
-  description = "Skip IAM Authorization policy"
-}
-
-###########################################################################
-# IBM Cloud ALB Variables
-###########################################################################
-variable "certificate_instance" {
-  description = "Certificate instance CRN value. It's the CRN value of a certificate stored in the Secret Manager"
-  type        = string
-  default     = ""
-}

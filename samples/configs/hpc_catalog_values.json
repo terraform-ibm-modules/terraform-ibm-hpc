@@ -48,7 +48,11 @@
     "ldap_vsi_profile"             : "cx2-2x4",
     "ldap_vsi_osimage_name"        : "ibm-ubuntu-22-04-3-minimal-amd64-1",
     "skip_iam_authorization_policy" : false,
-    "enable_scc"                   : true,
-    "scc_profile"                  : "1c13d739-e09e-4bf4-8715-dd82e4498041",
-    "scc_location"                 : "us-south"
+    "scc_enable"                   : true,
+    "scc_profile"                  : "CIS IBM Cloud Foundations Benchmark",
+    "scc_profile_version"          : "1.0.0",
+    "scc_location"                 : "us-south",
+    "enable_cloud_monitoring"      : false,
+    "enable_cloud_monitoring_compute_nodes" : false,
+    "cloud_monitoring_plan"	   : "lite"
 }

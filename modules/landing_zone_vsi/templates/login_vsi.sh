@@ -1,4 +1,5 @@
 #!/bin/sh
+# shellcheck disable=all
 ###################################################
 # Copyright (C) IBM Corp. 2023 All Rights Reserved.
 # Licensed under the Apache License v2.0
@@ -289,7 +290,7 @@ EOF
             sudo sed -i '$ i\session required pam_mkhomedir.so skel=/etc/skel umask=0022\' /etc/pam.d/common-session
 
             # Update nsswitch.conf
-            sudo sed -i 's/^passwd:.*$/passwd: compat systemd ldap/' /etc/nsswitch.conf
+            sudo sed -i 's/^passwd:.*$/passwd: compat systemd ldap/' /etc/nsswitch.conf # pragma: allowlist secret
             sudo sed -i 's/^group:.*$/group: compat systemd ldap/' /etc/nsswitch.conf
             sudo sed -i 's/^shadow:.*$/shadow: compat/' /etc/nsswitch.conf
 

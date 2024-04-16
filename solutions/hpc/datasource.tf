@@ -1,3 +1,12 @@
+data "ibm_is_region" "region" {
+  name = local.region
+}
+
+data "ibm_is_vpc" "itself" {
+  count = var.vpc == "null" ? 0 : 1
+  name  = var.vpc
+}
+
 # Future use
 /*
 data "ibm_is_region" "itself" {
@@ -10,11 +19,6 @@ data "ibm_is_zone" "itself" {
 }
 */
 
-data "ibm_is_vpc" "itself" {
-  count = var.vpc == "null" ? 0 : 1
-  name  = var.vpc
-}
-
 # data "ibm_is_vpc" "vpc" {
 #   name = local.vpc_name
 #   // Depends on creation of new VPC or look up of existing VPC based on value of var.vpc_name,
@@ -25,10 +29,6 @@ data "ibm_is_vpc" "itself" {
 #   #count = var.vpc_name != "" ? 1 : 0
 #   vpc = data.ibm_is_vpc.vpc.id
 # }
-
-data "ibm_is_region" "region" {
-  name = local.region
-}
 
 # data "ibm_is_floating_ips" "fip" {
 #   count = var.enable_fip ? 0 : 1

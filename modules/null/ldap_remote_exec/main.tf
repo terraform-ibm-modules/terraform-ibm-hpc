@@ -1,10 +1,5 @@
-variable "enable_ldap" {}
-variable "ldap_server" {}
-variable "login_private_key" {}
-variable "login_host" {}
-variable "login_user" {}
 
-// The resource is used to validate the existing LDAP server connection.
+# The resource is used to validate the existing LDAP server connection.
 resource "null_resource" "validate_ldap_server_connection" {
   count = var.enable_ldap == true && var.ldap_server != "null" ? 1 : 0
   connection {
