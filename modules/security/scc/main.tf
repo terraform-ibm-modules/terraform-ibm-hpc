@@ -54,6 +54,7 @@ module "create_scc_instance" {
 module "create_profile_attachment" {
   count                  = var.scc_profile == null || var.scc_profile == "" ? 0 : 1
   source                 = "terraform-ibm-modules/scc/ibm//modules/attachment"
+  version                = "1.2.0"
   profile_id             = var.scc_profile # data.ibm_scc_profile.scc_profile.id
   scc_instance_id        = module.create_scc_instance.guid
   attachment_name        = "${var.prefix}-scc-attachment"
