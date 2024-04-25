@@ -362,7 +362,7 @@
           "description": "Image name to be used for provisioning the LDAP instances."
         },
         {
-          "name": "enable_scc",
+          "name": "scc_enable",
           "value": true,
           "type": "bool",
           "secure": false,
@@ -370,10 +370,17 @@
         },
         {
           "name": "scc_profile",
-          "value": "1c13d739-e09e-4bf4-8715-dd82e4498041",
+          "value": "CIS IBM Cloud Foundations Benchmark",
           "type": "string",
           "secure": false,
-          "description": "SCC profile ID to be used with the newly created SCC instance."
+          "description": "SCC Profile Name to be used with the newly created SCC instance."
+        },
+        {
+          "name": "scc_profile_version",
+          "value": "1.0.0",
+          "type": "string",
+          "secure": false,
+          "description": "SCC Profile Version to be used with the newly created SCC instance."
         },
         {
           "name": "scc_location",
@@ -381,7 +388,22 @@
           "type": "string",
           "secure": false,
           "description": "Region where to deploy SCC instance."
-        }
+        },
+        { "name": "enable_cloud_monitoring",
+          "value": "false",
+          "type": "bool",
+          "description": "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure and LSF application metrics from Management Nodes will be ingested."
+        },
+        { "name": "enable_cloud_monitoring_compute_nodes",
+          "value": "false",
+          "type": "bool",
+          "description": "Set true to enable infrastructure metrics ingestion from Compute Nodes."
+        },
+        { "name": "cloud_monitoring_plan",
+          "value": "lite",
+          "type": "string",
+          "description" : "Type of service plan for IBM Cloud Monitoring instance. You can choose one of the following: lite, graduated-tier, graduated-tier-sysdig-secure-plus-monitor (deprecated). For all details visit [IBM Cloud Monitoring Service Plans](https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans)."
+       }
       ]
     }
   ]

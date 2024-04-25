@@ -3,11 +3,11 @@
 ###############################################################
 
 # Variable for IBM Cloud API Key
-variable "ibmcloud_api_key" {
-  type        = string
-  description = "The IBM Cloud API Key"
-  sensitive   = true
-}
+# variable "ibmcloud_api_key" {
+#   type        = string
+#   description = "The IBM Cloud API Key"
+#   sensitive   = true
+# }
 
 # Prefix to append to resources name
 variable "prefix" {
@@ -19,22 +19,22 @@ variable "prefix" {
 # Region
 variable "location" {
   description = "Location where the resource is provisioned"
-  type = string
-  default = "us-south"
+  type        = string
+  default     = "us-south"
 }
 
 # Resource Group Name
 variable "rg" {
   description = "Name of the resource group associated with the instance"
-  type = string
-  default = "default"
+  type        = string
+  default     = "default"
 }
 
 # List of Resource Tags"
 variable "tags" {
   description = "Comma-separated list of tags"
-  type = list(string)
-  default = []
+  type        = list(string)
+  default     = []
 }
 
 # Opt-In feature for SCC Instance
@@ -45,11 +45,11 @@ variable "scc_provision" {
 }
 
 # SCC Instance Location
-variable "scc_location" {
-  type        = string
-  default     = "us-south"
-  description = "SCC Instance region (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
-}
+# variable "scc_location" {
+#   type        = string
+#   default     = "us-south"
+#   description = "SCC Instance region (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
+# }
 
 # SCC Instance Plan
 variable "scc_plan" {
@@ -61,8 +61,15 @@ variable "scc_plan" {
 # SCC Instance Profile
 variable "scc_profile" {
   type        = string
-  default     = "1c13d739-e09e-4bf4-8715-dd82e4498041"
-  description = "Profile to be set on the SCC Instance (accepting empty, CIS and Financial Services profiles ID)"
+  default     = "CIS IBM Cloud Foundations Benchmark"
+  description = "Profile to be set on the SCC Instance (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')"
+}
+
+# SCC Instance Profile Version
+variable "scc_profile_version" {
+  type        = string
+  default     = "1.0.0"
+  description = "Version of Profile to be set on the SCC Instance"
 }
 
 # SCC Scope Environment
@@ -87,11 +94,11 @@ variable "scc_attachment_schedule" {
 }
 
 # SCC Attachment Status
-variable "scc_attachment_status" {
-  type        = string
-  default     = "enabled"
-  description = "Status of the SCC Attachment"
-}
+# variable "scc_attachment_status" {
+#   type        = string
+#   default     = "enabled"
+#   description = "Status of the SCC Attachment"
+# }
 
 # Event Notification Instance Plan
 variable "event_notification_plan" {
@@ -101,7 +108,7 @@ variable "event_notification_plan" {
 }
 
 # Event Notification Instance Service Endpoints
-variable "event_notification_service-endpoints" {
+variable "event_notification_service_endpoints" {
   type        = string
   default     = "public-and-private"
   description = "Event Notifications Service Endpoints to be used"

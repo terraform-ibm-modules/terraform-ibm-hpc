@@ -56,11 +56,6 @@ variable "network_cidr" {
 ##############################################################################
 # Access Variables
 ##############################################################################
-# variable "enable_bastion" {
-#   type        = bool
-#   default     = true
-#   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
-# }
 
 variable "bastion_subnets" {
   type = list(object({
@@ -72,18 +67,6 @@ variable "bastion_subnets" {
   default     = []
   description = "Subnets to launch the bastion host."
 }
-
-# variable "enable_bootstrap" {
-#   type        = bool
-#   default     = false
-#   description = "Bootstrap should be only used for better deployment performance"
-# }
-
-# variable "bootstrap_instance_profile" {
-#   type        = string
-#   default     = "mx2-4x32"
-#   description = "Bootstrap should be only used for better deployment performance"
-# }
 
 variable "ssh_keys" {
   type        = list(string)
@@ -115,10 +98,30 @@ variable "existing_kms_instance_guid" {
   description = "GUID of boot volume encryption key"
 }
 
-variable "compute_security_group_id" {}
-
 variable "skip_iam_authorization_policy" {
   type        = string
   default     = null
   description = "Skip IAM Authorization policy"
+}
+
+###########################################################################
+# Existing Bastion Support variables
+###########################################################################
+
+variable "bastion_instance_name" {
+  type        = string
+  default     = null
+  description = "Bastion instance name."
+}
+
+variable "bastion_instance_public_ip" {
+  type        = string
+  default     = null
+  description = "Bastion instance public ip address."
+}
+
+variable "bastion_security_group_id" {
+  type        = string
+  default     = null
+  description = "Bastion security group id."
 }

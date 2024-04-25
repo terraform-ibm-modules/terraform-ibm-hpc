@@ -33,15 +33,6 @@ resource "ibm_dns_custom_resolver" "itself" {
   }
 }
 
-data "ibm_dns_zones" "conditional" {
-  count       = var.dns_instance_id == "null" ? 0 : 1
-  instance_id = var.dns_instance_id
-}
-
-locals {
-  dns_domain_names = flatten([setsubtract(var.dns_domain_names == null ? [] : var.dns_domain_names, flatten(data.ibm_dns_zones.conditional[*].dns_zones[*]["name"]))])
-}
-
 resource "ibm_dns_zone" "itself" {
   count       = 1
   instance_id = local.dns_instance_id

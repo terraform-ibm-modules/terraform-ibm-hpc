@@ -66,9 +66,9 @@ OK
 $ ibmcloud schematics logs --id us-east.workspace.hpcc-cluster.7cbc3f6b
 ...
  2023/06/05 22:14:29 Terraform apply | Apply complete! Resources: 41 added, 0 changed, 0 destroyed.
- 2023/06/05 22:14:29 Terraform apply | 
+ 2023/06/05 22:14:29 Terraform apply |
  2023/06/05 22:14:29 Terraform apply | Outputs:
- 2023/06/05 22:14:29 Terraform apply | 
+ 2023/06/05 22:14:29 Terraform apply |
  2023/06/05 22:14:29 Terraform apply | image_map_entry_found = "true --  - hpcaas-lsf10-rhel86-v1"
  2023/06/05 22:14:29 Terraform apply | region_name = "us-east"
  2023/06/05 22:14:29 Terraform apply | ssh_command = "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J vpcuser@150.239.215.145 lsfadmin@10.241.0.4"
@@ -95,13 +95,13 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveIn
 ```
 * where `floating_IP_address` is the floating IP address for the bastion node and `management_node_IP_address` is the IP address for the management node.
 
-* Open a browser on the local machine, and run https://localhost:8443 
+* Open a browser on the local machine, and run https://localhost:8443
 
 * To access the Application Center GUI, enter the password you configured when you created your workspace and the default user as "lsfadmin".
 
 * If LDAP is enabled, you can access the LSF Application Center using the LDAP username and password that you configured during IBM Cloud® HPC cluster deployment or using an existing LDAP username and password.
 
-* If IBM Spectrum LSF Application Center GUI is installed in High Availability. The `application_center_tunnel` command is a bit different. Then read also `application_center_url_NOTE` line.
+* If IBM Spectrum LSF Application Center GUI is installed in High Availability. The `application_center_tunnel` command is a bit different. Then read also `application_center_url_note` line.
 ```
 "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 -L 8443:pac.<domain_name>:8443 -L 6080:pac.<domain_name>:6080 -J vpcuser@<floating_IP_address> lsfadmin@<login_vsi_IP_address>"
 application_center_url = "https://pac.<domain_name>:8443"
@@ -139,7 +139,7 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J vpcuser@<floa
 ```
 [lsfadmin@hpccluster-mgmt-1 ~]$ su lsfuser05
 Password:
-[lsfuser05@hpccluster-mgmt-1 lsfadmin]# 
+[lsfuser05@hpccluster-mgmt-1 lsfadmin]#
 ```
 
 * Submit an LSF job as the LDAP user:
@@ -196,6 +196,7 @@ You can now safely remove the resources from your account.
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.3.0, <1.6.0 |
+| <a name="requirement_http"></a> [http](#requirement\_http) | >= 2.0.0 |
 | <a name="requirement_ibm"></a> [ibm](#requirement\_ibm) | >= 1.56.2 |
 
 ## Providers
@@ -250,11 +251,13 @@ You can now safely remove the resources from your account.
 | <a name="input_dns_domain_names"></a> [dns\_domain\_names](#input\_dns\_domain\_names) | IBM Cloud DNS Services domain name to be used for the IBM Cloud HPC cluster. | <pre>object({<br>    compute = string<br>    #storage  = string<br>    #protocol = string<br>  })</pre> | <pre>{<br>  "compute": "hpcaas.com"<br>}</pre> | no |
 | <a name="input_dns_instance_id"></a> [dns\_instance\_id](#input\_dns\_instance\_id) | Provide the id of existing IBM Cloud DNS services domain to skip creating a new DNS service instance name. Note: If dns\_instance\_id is not equal to null, a new dns zone will be created under the existing dns service instance. | `string` | `"null"` | no |
 | <a name="input_enable_app_center"></a> [enable\_app\_center](#input\_enable\_app\_center) | Set to true to enable the IBM Spectrum LSF Application Center GUI (default: false). [System requirements](https://www.ibm.com/docs/en/slac/10.2.0?topic=requirements-system-102-fix-pack-14) for IBM Spectrum LSF Application Center Version 10.2 Fix Pack 14. | `bool` | `false` | no |
-| <a name="input_enable_atracker_on_cos"></a> [enable\_atracker\_on\_cos](#input\_enable\_atracker\_on\_cos) | Enable Activity tracker service instance connected to Cloud Object Storage (COS). All the events will be stored into COS so that customers can connect to it and read those events or ingest them in their system. | `bool` | `true` | no |
+| <a name="input_enable_atracker_on_cos"></a> [enable\_atracker\_on\_cos](#enable\_atracker\_on\_cos) | Set to true to enable the IBM Activity Event Notification on COS instance (default: true). | `bool` | `true` | no |
+| <a name="input_enable_cloud_monitoring"></a> [enable\_cloud\_monitoring](#input\_enable\_cloud\_monitoring) | Set false to disable IBM Cloud Monitoring instance provisioning. | `bool` | `true` | no |
+| <a name="input_enable_cloud_monitoring_compute_nodes"></a> [enable\_cloud\_monitoring\_compute\_nodes](#input\_enable\_cloud\_monitoring\_compute\_nodes) | Set true to enable IBM Cloud Monitoring on Compute Nodes. | `bool` | `false` | no |
+| <a name="input_enable_cloud_monitoring_plan"></a> [enable\_cloud\_monitoring\_plan](#input\_enable\_cloud\_monitoring\_plan) | Type of service plan for IBM Cloud Monitoring instance. You can choose one of the following: lite, graduated-tier, graduated-tier-sysdig-secure-plus-monitor (deprecated). For all details visit [IBM Cloud Monitoring Service Plans](https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans). | `string` | `lite` | no |
 | <a name="input_enable_cos_integration"></a> [enable\_cos\_integration](#input\_enable\_cos\_integration) | Set to true to create an extra cos bucket to integrate with HPC cluster deployment. | `bool` | `false` | no |
 | <a name="input_enable_fip"></a> [enable\_fip](#input\_enable\_fip) | The solution supports multiple ways to connect to your IBM Cloud HPC cluster for example, using a login node, or using VPN or direct connection. If connecting to the IBM Cloud HPC cluster using VPN or direct connection, set this value to false. | `bool` | `true` | no |
 | <a name="input_enable_ldap"></a> [enable\_ldap](#input\_enable\_ldap) | Set this option to true to enable LDAP for IBM Cloud HPC, with the default value set to false. | `bool` | `false` | no |
-| <a name="input_enable_scc"></a> [enable\_scc](#input\_enable\_scc) | Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created. | `bool` | `false` | no |
 | <a name="input_enable_vpc_flow_logs"></a> [enable\_vpc\_flow\_logs](#input\_enable\_vpc\_flow\_logs) | Flag to enable VPC flow logs. If true, a flow log collector will be created. | `bool` | `false` | no |
 | <a name="input_hyperthreading_enabled"></a> [hyperthreading\_enabled](#input\_hyperthreading\_enabled) | Setting this to true will enable hyper-threading in the compute nodes of the cluster (default). Otherwise, hyper-threading will be disabled. | `bool` | `true` | no |
 | <a name="input_ibmcloud_api_key"></a> [ibmcloud\_api\_key](#input\_ibmcloud\_api\_key) | IBM Cloud API key for the IBM Cloud account where the IBM Cloud HPC cluster needs to be deployed. For more information on how to create an API key, see [Managing user API keys](https://cloud.ibm.com/docs/account?topic=account-userapikey). | `string` | n/a | yes |
@@ -275,8 +278,10 @@ You can now safely remove the resources from your account.
 | <a name="input_management_node_instance_type"></a> [management\_node\_instance\_type](#input\_management\_node\_instance\_type) | Specify the virtual server instance profile type to be used to create the management nodes for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles). | `string` | `"bx2-16x64"` | no |
 | <a name="input_remote_allowed_ips"></a> [remote\_allowed\_ips](#input\_remote\_allowed\_ips) | Comma-separated list of IP addresses that can access the IBM Cloud HPC cluster instance through an SSH interface. For security purposes, provide the public IP addresses assigned to the devices that are authorized to establish SSH connections (for example, ["169.45.117.34"]). To fetch the IP address of the device, use [https://ipv4.icanhazip.com/](https://ipv4.icanhazip.com/). | `list(string)` | n/a | yes |
 | <a name="input_resource_group"></a> [resource\_group](#input\_resource\_group) | Resource group name from your IBM Cloud account where the VPC resources should be deployed. Note. If the resource group value is set as null, automation creates two different RG with the name (workload-rg and service-rg). For additional information on resource groups, see [Managing resource groups](https://cloud.ibm.com/docs/account?topic=account-rgs). | `string` | `"Default"` | no |
+| <a name="input_scc_enable"></a> [scc\_enable](#input\_scc\_enable) | Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created. | `bool` | `false` | no |
 | <a name="input_scc_location"></a> [scc\_location](#input\_scc\_location) | Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es') | `string` | `"us-south"` | no |
-| <a name="input_scc_profile"></a> [scc\_profile](#input\_scc\_profile) | Profile to be set on the SCC Instance (accepting empty, CIS and Financial Services profiles ID) | `string` | `"1c13d739-e09e-4bf4-8715-dd82e4498041"` | no |
+| <a name="input_scc_profile"></a> [scc\_profile](#input\_scc\_profile) | Profile to be set on the SCC Instance (accepting empty, CIS and Financial Services profiles ID) | `string` | `"CIS IBM Cloud Foundations Benchmark"` | no |
+| <a name="input_scc_profile_version"></a> [scc\_profile\_version](#input\_scc\_profile\_version) | Version of the Profile to be set on the SCC Instance (accepting empty, CIS and Financial Services profiles ID) | `string` | `"1.0.0"` | no |
 | <a name="input_skip_iam_authorization_policy"></a> [skip\_iam\_authorization\_policy](#input\_skip\_iam\_authorization\_policy) | Set it to false if authorization policy is required for VPC to access COS. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for VPC flow log](https://cloud.ibm.com/docs/vpc?topic=vpc-ordering-flow-log-collector&interface=ui#fl-before-you-begin-ui). | `string` | `false` | no |
 | <a name="input_vpc_cidr"></a> [vpc\_cidr](#input\_vpc\_cidr) | Creates the address prefix for the new VPC, when the vpc\_name variable is empty. The VPC requires an address prefix for each subnet in two different zones. The subnets are created with the specified CIDR blocks, enabling support for two zones within the VPC. For more information, see [Setting IP ranges](https://cloud.ibm.com/docs/vpc?topic=vpc-vpc-addressing-plan-design). | `string` | `"10.241.0.0/18,10.241.64.0/18"` | no |
 | <a name="input_vpc_cluster_login_private_subnets_cidr_blocks"></a> [vpc\_cluster\_login\_private\_subnets\_cidr\_blocks](#input\_vpc\_cluster\_login\_private\_subnets\_cidr\_blocks) | The CIDR block that's required for the creation of the login cluster private subnet. Modify the CIDR block if it conflicts with any on-premises CIDR blocks when using a hybrid environment. Provide only one CIDR block for the creation of the login subnet. Since login subnet is used only for the creation of login virtual server instances,  provide a CIDR range of /28. | `list(string)` | <pre>[<br>  "10.241.16.0/28"<br>]</pre> | no |
@@ -289,12 +294,12 @@ You can now safely remove the resources from your account.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_application_center_tunnel"></a> [application\_center\_tunnel](#output\_application\_center\_tunnel) | n/a |
-| <a name="output_application_center_url"></a> [application\_center\_url](#output\_application\_center\_url) | n/a |
-| <a name="output_application_center_url_NOTE"></a> [application\_center\_url\_NOTE](#output\_application\_center\_url\_NOTE) | n/a |
-| <a name="output_image_entry_found"></a> [image\_entry\_found](#output\_image\_entry\_found) | n/a |
-| <a name="output_region_name"></a> [region\_name](#output\_region\_name) | n/a |
-| <a name="output_ssh_to_ldap_node"></a> [ssh\_to\_ldap\_node](#output\_ssh\_to\_ldap\_node) | n/a |
-| <a name="output_ssh_to_login_node"></a> [ssh\_to\_login\_node](#output\_ssh\_to\_login\_node) | n/a |
+| <a name="output_application_center_tunnel"></a> [application\_center\_tunnel](#output\_application\_center\_tunnel) | Available if IBM Spectrum LSF Application Center GUI is installed |
+| <a name="output_application_center_url"></a> [application\_center\_url](#output\_application\_center\_url) | Available if IBM Spectrum LSF Application Center GUI is installed |
+| <a name="output_application_center_url_note"></a> [application\_center\_url\_note](#output\_application\_center\_url\_note) | Available if IBM Spectrum LSF Application Center GUI is installed in High Availability |
+| <a name="output_image_entry_found"></a> [image\_entry\_found](#output\_image\_entry\_found) | Available if the image name provided is located within the image map |
+| <a name="output_region_name"></a> [region\_name](#output\_region\_name) | The region name in which the cluster resources have been deployed |
+| <a name="output_ssh_to_ldap_node"></a> [ssh\_to\_ldap\_node](#output\_ssh\_to\_ldap\_node) | SSH command to connect to LDAP node |
+| <a name="output_ssh_to_login_node"></a> [ssh\_to\_login\_node](#output\_ssh\_to\_login\_node) | SSH command to connect to Login node |
 | <a name="output_ssh_to_management_node_1"></a> [ssh\_to\_management\_node\_1](#output\_ssh\_to\_management\_node\_1) | SSH command to connect to HPC cluster |
-| <a name="output_vpc_name"></a> [vpc\_name](#output\_vpc\_name) | n/a |
+| <a name="output_vpc_name"></a> [vpc\_name](#output\_vpc\_name) | The VPC name in which the cluster resources have been deployed |

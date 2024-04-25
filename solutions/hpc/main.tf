@@ -1,6 +1,5 @@
 module "landing_zone" {
   source                 = "../../modules/landing_zone"
-  allowed_cidr           = var.allowed_cidr
   compute_subnets_cidr   = var.compute_subnets_cidr
   cos_instance_name      = var.cos_instance_name
   enable_atracker        = var.enable_atracker
@@ -20,20 +19,7 @@ module "landing_zone" {
   subnet_id              = var.subnet_id
   login_subnet_id        = var.login_subnet_id
   zones                  = var.zones
-  management_node_count  = var.management_node_count
-  public_gateways        = local.public_gateways
   no_addr_prefix         = local.no_addr_prefix
-  # vpn_peer_address       = var.vpn_peer_address
-  # vpn_peer_cidr          = var.vpn_peer_cidr
-  # vpn_preshared_key      = var.vpn_preshared_key
-  # storage_instances      = var.storage_instances
-  # storage_subnets_cidr   = var.storage_subnets_cidr
-  # protocol_instances     = var.protocol_instances
-  # protocol_subnets_cidr  = var.protocol_subnets_cidr
-  # placement_strategy     = var.placement_strategy
-  # management_instances   = var.management_instances
-  # compute_instances      = var.static_compute_instances
-  # hpcs_instance_name     = var.hpcs_instance_name
 }
 
 module "bootstrap" {
@@ -50,12 +36,10 @@ module "bootstrap" {
   kms_encryption_enabled        = local.kms_encryption_enabled
   boot_volume_encryption_key    = local.boot_volume_encryption_key
   existing_kms_instance_guid    = local.existing_kms_instance_guid
-  compute_security_group_id     = local.compute_security_group_id
   skip_iam_authorization_policy = var.skip_iam_authorization_policy
-  # peer_cidr_list              = var.peer_cidr_list
-  # enable_bootstrap            = var.enable_bootstrap
-  # bootstrap_instance_profile  = var.bootstrap_instance_profile
-  # enable_bastion              = var.enable_bastion
+  bastion_instance_name         = var.bastion_instance_name
+  bastion_instance_public_ip    = var.bastion_instance_public_ip
+  bastion_security_group_id     = var.bastion_security_group_id
 }
 
 module "generate_db_adminpassword" {
@@ -83,88 +67,84 @@ module "db" {
 }
 
 module "landing_zone_vsi" {
-  source                        = "../../modules/landing_zone_vsi"
-  ibmcloud_api_key              = var.ibmcloud_api_key
-  resource_group                = local.resource_groups["workload_rg"]
-  prefix                        = var.prefix
-  zones                         = var.zones
-  vpc_id                        = local.vpc_id
-  bastion_security_group_id     = local.bastion_security_group_id
-  bastion_public_key_content    = local.bastion_public_key_content
-  compute_subnets               = local.compute_subnets
-  compute_ssh_keys              = var.compute_ssh_keys
-  management_image_name         = var.management_image_name
-  compute_image_name            = var.compute_image_name
-  dns_domain_names              = var.dns_domain_names
-  kms_encryption_enabled        = local.kms_encryption_enabled
-  boot_volume_encryption_key    = local.boot_volume_encryption_key
-  share_path                    = local.share_path
-  alb_hostname                  = local.alb_hostname
-  hyperthreading_enabled        = var.hyperthreading_enabled
-  app_center_gui_pwd            = var.app_center_gui_pwd
-  enable_app_center             = var.enable_app_center
-  contract_id                   = var.contract_id
-  cluster_id                    = var.cluster_id
-  management_node_count         = var.management_node_count
-  management_node_instance_type = var.management_node_instance_type
-  file_share                    = module.file_storage.mount_paths_excluding_first
-  mount_path                    = var.file_shares
-  login_node_instance_type      = var.login_node_instance_type
-  existing_kms_instance_guid    = local.existing_kms_instance_guid
-  bastion_subnets               = local.bastion_subnets
-  ssh_keys                      = var.bastion_ssh_keys
-  enable_ldap                   = var.enable_ldap
-  ldap_basedns                  = var.ldap_basedns
-  subnet_id                     = var.subnet_id
-  login_private_ips             = join("", local.login_private_ips)
-  ldap_vsi_profile              = var.ldap_vsi_profile
-  ldap_admin_password           = var.ldap_admin_password
-  ldap_user_name                = var.ldap_user_name
-  ldap_user_password            = var.ldap_user_password
-  ldap_server                   = var.ldap_server
-  ldap_vsi_osimage_name         = var.ldap_vsi_osimage_name
-  ldap_primary_ip               = local.ldap_private_ips
-  app_center_high_availability  = var.app_center_high_availability
-  db_instance_info              = var.enable_app_center && var.app_center_high_availability ? module.db[0].db_instance_info : null
-  # storage_subnets             = local.storage_subnets
-  # storage_ssh_keys            = var.storage_ssh_keys
-  # storage_instances           = var.storage_instances
-  # storage_image_name          = var.storage_image_name
-  # protocol_subnets            = local.protocol_subnets
-  # protocol_instances          = var.protocol_instances
-  # nsd_details                 = var.nsd_details
-  # management_instances        = var.management_instances
-  # static_compute_instances    = var.static_compute_instances
-  # dynamic_compute_instances   = var.dynamic_compute_instances
-  # login_subnets               = local.login_subnets
-  # login_ssh_keys              = var.login_ssh_keys
-  # login_image_name            = var.login_image_name
-  # keys                        = local.ssh_key_id_list
-  # login_instances             = var.login_instances
+  source                                = "../../modules/landing_zone_vsi"
+  ibmcloud_api_key                      = var.ibmcloud_api_key
+  resource_group                        = local.resource_groups["workload_rg"]
+  prefix                                = var.prefix
+  zones                                 = var.zones
+  vpc_id                                = local.vpc_id
+  bastion_fip                           = local.bastion_fip
+  bastion_security_group_id             = local.bastion_security_group_id
+  bastion_public_key_content            = local.bastion_public_key_content
+  management_candidate_private_ips      = local.management_candidate_private_ips
+  management_private_ip                 = local.management_private_ip
+  cluster_user                          = local.cluster_user
+  compute_private_key_content           = local.compute_private_key_content
+  bastion_private_key_content           = var.bastion_ssh_private_key != null ? var.bastion_ssh_private_key : local.bastion_private_key_content
+  compute_subnets                       = local.compute_subnets
+  compute_ssh_keys                      = var.compute_ssh_keys
+  management_image_name                 = var.management_image_name
+  compute_image_name                    = var.compute_image_name
+  dns_domain_names                      = var.dns_domain_names
+  kms_encryption_enabled                = local.kms_encryption_enabled
+  boot_volume_encryption_key            = local.boot_volume_encryption_key
+  share_path                            = local.share_path
+  alb_hostname                          = local.alb_hostname
+  hyperthreading_enabled                = var.hyperthreading_enabled
+  app_center_gui_pwd                    = var.app_center_gui_pwd
+  enable_app_center                     = var.enable_app_center
+  contract_id                           = var.contract_id
+  cluster_id                            = local.cluster_id
+  management_node_count                 = var.management_node_count
+  management_node_instance_type         = var.management_node_instance_type
+  file_share                            = module.file_storage.mount_paths_excluding_first
+  mount_path                            = var.file_shares
+  login_node_instance_type              = var.login_node_instance_type
+  bastion_subnets                       = local.bastion_subnets
+  ssh_keys                              = var.bastion_ssh_keys
+  enable_ldap                           = var.enable_ldap
+  ldap_basedns                          = var.ldap_basedns
+  login_private_ips                     = join("", local.login_private_ips)
+  ldap_vsi_profile                      = var.ldap_vsi_profile
+  ldap_admin_password                   = var.ldap_admin_password
+  ldap_user_name                        = var.ldap_user_name
+  ldap_user_password                    = var.ldap_user_password
+  ldap_server                           = var.ldap_server
+  ldap_vsi_osimage_name                 = var.ldap_vsi_osimage_name
+  ldap_primary_ip                       = local.ldap_private_ips
+  app_center_high_availability          = var.app_center_high_availability
+  db_instance_info                      = var.enable_app_center && var.app_center_high_availability ? module.db[0].db_instance_info : null
+  storage_security_group_id             = var.storage_security_group_id
+  enable_cloud_monitoring               = var.enable_cloud_monitoring
+  enable_cloud_monitoring_compute_nodes = var.enable_cloud_monitoring_compute_nodes
+  cloud_monitoring_access_key           = var.enable_cloud_monitoring ? module.cloud_monitoring_instance_creation.cloud_monitoring_access_key : ""
+  cloud_monitoring_ingestion_url        = var.enable_cloud_monitoring ? module.cloud_monitoring_instance_creation.cloud_monitoring_ingestion_url : ""
+  cloud_monitoring_prws_key             = var.enable_cloud_monitoring ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_key : ""
+  cloud_monitoring_prws_url             = var.enable_cloud_monitoring ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_url : ""
 }
 
 module "file_storage" {
-  source                        = "../../modules/file_storage"
-  ibmcloud_api_key              = var.ibmcloud_api_key
-  zone                          = var.zones[0] # always the first zone
-  resource_group                = local.resource_groups["workload_rg"]
-  file_shares                   = local.file_shares
-  encryption_key_crn            = local.boot_volume_encryption_key
-  security_group_ids            = local.compute_security_group_id
-  subnet_id                     = local.compute_subnet_id
-  prefix                        = var.prefix
+  source             = "../../modules/file_storage"
+  ibmcloud_api_key   = var.ibmcloud_api_key
+  zone               = var.zones[0] # always the first zone
+  resource_group     = local.resource_groups["workload_rg"]
+  file_shares        = local.file_shares
+  encryption_key_crn = local.boot_volume_encryption_key
+  security_group_ids = local.compute_security_group_id
+  subnet_id          = local.compute_subnet_id
+  prefix             = var.prefix
 }
 
 module "dns" {
-  source                        = "./../../modules/dns"
-  ibmcloud_api_key              = var.ibmcloud_api_key
-  prefix                        = var.prefix
-  resource_group_id             = local.resource_groups["service_rg"]
-  vpc_crn                       = local.vpc_crn
-  subnets_crn                   = local.compute_subnets_crn
-  dns_instance_id               = var.dns_instance_id
-  dns_custom_resolver_id        = var.dns_custom_resolver_id
-  dns_domain_names              = values(var.dns_domain_names)
+  source                 = "./../../modules/dns"
+  ibmcloud_api_key       = var.ibmcloud_api_key
+  prefix                 = var.prefix
+  resource_group_id      = local.resource_groups["service_rg"]
+  vpc_crn                = local.vpc_crn
+  subnets_crn            = local.compute_subnets_crn
+  dns_instance_id        = var.dns_instance_id
+  dns_custom_resolver_id = var.dns_custom_resolver_id
+  dns_domain_names       = values(var.dns_domain_names)
 }
 
 module "alb" {
@@ -220,7 +200,7 @@ module "ldap_vsi_dns_records" {
 }
 
 # DNS entry needed to ALB, can be moved in dns_record module for example
-resource "ibm_dns_resource_record" "pac-cname" {
+resource "ibm_dns_resource_record" "pac_cname" {
   count       = var.enable_app_center && var.app_center_high_availability ? 1 : 0
   instance_id = local.dns_instance_id
   zone_id     = local.compute_dns_zone_id
@@ -274,11 +254,11 @@ module "check_cluster_status" {
   cluster_user        = local.cluster_user            #"root"
   cluster_private_key = local.compute_private_key_content
   login_host          = local.bastion_fip
-  login_user          = "vpcuser"
-  login_private_key   = local.bastion_private_key_content
-  command             = ["cloud-init status --wait; lshosts -w; lsid"]
+  login_user          = "ubuntu"
+  login_private_key   = var.bastion_ssh_private_key != null ? var.bastion_ssh_private_key : local.bastion_private_key_content
+  command             = ["lshosts -w; lsid"]
   depends_on = [
-    module.landing_zone_vsi,
+    module.landing_zone_vsi, # this implies vsi have been configured too
     module.bootstrap
   ]
 }
@@ -289,8 +269,8 @@ module "check_node_status" {
   cluster_user        = local.cluster_user
   cluster_private_key = local.compute_private_key_content
   login_host          = local.bastion_fip
-  login_user          = "vpcuser"
-  login_private_key   = local.bastion_private_key_content
+  login_user          = "ubuntu"
+  login_private_key   = var.bastion_ssh_private_key != null ? var.bastion_ssh_private_key : local.bastion_private_key_content
   command             = ["systemctl --no-pager -n 5 status lsfd"]
   depends_on = [
     module.landing_zone_vsi,
@@ -303,9 +283,9 @@ module "validate_ldap_server_connection" {
   source            = "./../../modules/null/ldap_remote_exec"
   ldap_server       = var.ldap_server
   enable_ldap       = var.enable_ldap
-  login_private_key = local.bastion_private_key_content
+  login_private_key = var.bastion_ssh_private_key != null ? var.bastion_ssh_private_key : local.bastion_private_key_content
   login_host        = local.bastion_fip
-  login_user        = "vpcuser"
+  login_user        = "ubuntu"
   depends_on        = [module.bootstrap]
 }
 
@@ -326,11 +306,11 @@ resource "null_resource" "destroy_compute_resources" {
     conn_host                = local.management_private_ip
     conn_private_key         = local.compute_private_key_content
     conn_bastion_host        = local.bastion_fip
-    conn_bastion_private_key = local.bastion_private_key_content
+    conn_bastion_private_key = var.bastion_ssh_private_key != null ? var.bastion_ssh_private_key : local.bastion_private_key_content
   }
 
   # only works if fip is enabled & vpn is disabled (conn is must)
-  count = var.enable_fip == true && var.enable_vpn == false ? 1 : 0
+  count = false && var.enable_fip == true && var.enable_vpn == false ? 1 : 0
 
   connection {
     type                = "ssh"
@@ -338,7 +318,7 @@ resource "null_resource" "destroy_compute_resources" {
     user                = self.triggers.conn_user
     private_key         = self.triggers.conn_private_key
     bastion_host        = self.triggers.conn_bastion_host
-    bastion_user        = "vpcuser"
+    bastion_user        = "ubuntu"
     bastion_private_key = self.triggers.conn_bastion_private_key
     timeout             = "60m"
   }
@@ -346,9 +326,7 @@ resource "null_resource" "destroy_compute_resources" {
   provisioner "remote-exec" {
     when       = destroy
     on_failure = fail
-    inline = [
-      "badmin qclose all; bkill -u all; while true; do if (bhosts -o status) | grep ok; then sleep 1m; else sleep 2m; exit 0; fi; done"
-    ]
+    inline     = [file("${path.module}/scripts/destroy_script.sh")]
   }
 }
 
@@ -374,8 +352,8 @@ module "validation_script_executor" {
   cluster_user        = local.cluster_user
   cluster_private_key = local.compute_private_key_content
   login_host          = local.bastion_fip
-  login_user          = "vpcuser"
-  login_private_key   = local.bastion_private_key_content
+  login_user          = "ubuntu"
+  login_private_key   = var.bastion_ssh_private_key != null ? var.bastion_ssh_private_key : local.bastion_private_key_content
 
   command = [
     for script_name in var.TF_VALIDATION_SCRIPT_FILES :
@@ -388,7 +366,22 @@ module "validation_script_executor" {
   ]
 }
 
-//// Code for Public Gateway attachment for the existing vpc and new subnets scenario ////
+###################################################
+# Observability Modules
+###################################################
+
+module "cloud_monitoring_instance_creation" {
+  source                         = "../../modules/observability_instance"
+  location                       = local.region
+  ibmcloud_api_key               = var.ibmcloud_api_key
+  rg                             = local.resource_groups["service_rg"]
+  cloud_monitoring_provision     = var.enable_cloud_monitoring
+  cloud_monitoring_plan          = var.cloud_monitoring_plan
+  cloud_monitoring_instance_name = "${var.prefix}-metrics"
+  tags                           = ["hpc", var.prefix]
+}
+
+# Code for Public Gateway attachment for the existing vpc and new subnets scenario
 
 data "ibm_is_public_gateways" "public_gateways" {
 }
@@ -396,7 +389,6 @@ data "ibm_is_public_gateways" "public_gateways" {
 locals {
   public_gateways_list = data.ibm_is_public_gateways.public_gateways.public_gateways
   zone_1_pgw_ids       = [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == local.vpc_id && gateway.zone == var.zones[0]]
-  zone_2_pgw_ids       = [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == local.vpc_id && gateway.zone == var.zones[1]]
 }
 
 resource "ibm_is_subnet_public_gateway_attachment" "zone_1_attachment" {
@@ -405,64 +397,14 @@ resource "ibm_is_subnet_public_gateway_attachment" "zone_1_attachment" {
   public_gateway = length(local.zone_1_pgw_ids) > 0 ? local.zone_1_pgw_ids[0] : ""
 }
 
-resource "ibm_is_subnet_public_gateway_attachment" "zone_2_attachment" {
-  count          = (var.vpc != "null" && length(var.subnet_id) == 0) ? 1 : 0
-  subnet         = local.compute_subnets[1].id
-  public_gateway = length(local.zone_2_pgw_ids) > 0 ? local.zone_2_pgw_ids[0] : ""
-}
-
-// Code for SCC Instance
+# Code for SCC Instance
 module "scc_instance_and_profile" {
-  count            = var.enable_scc ? 1 : 0
-  source           = "./../../modules/security/scc"
-  location         = var.scc_location != "" ? var.scc_location : "us-south"
-  ibmcloud_api_key = var.ibmcloud_api_key
-  rg               = var.resource_group
-  scc_profile      = var.enable_scc ? var.scc_profile : ""
-  tags             = ["hpc", "${var.prefix}"]
-  prefix           = var.prefix
+  count               = var.scc_enable ? 1 : 0
+  source              = "./../../modules/security/scc"
+  location            = var.scc_location != "" ? var.scc_location : "us-south"
+  rg                  = local.resource_groups["service_rg"]
+  scc_profile         = var.scc_enable ? var.scc_profile : ""
+  scc_profile_version = var.scc_profile != "" && var.scc_profile != null ? var.scc_profile_version : ""
+  tags                = ["hpc", var.prefix]
+  prefix              = var.prefix
 }
-
-###################################################
-# TODO : Spectrum scale related code base needed in future
-##################################################
-
-# module "storage_inventory" {
-#   source         = "./../../modules/inventory"
-#   hosts          = local.storage_hosts
-#   inventory_path = local.storage_inventory_path
-# }
-
-# module "compute_playbook" {
-#   source           = "./../../modules/playbook"
-#   bastion_fip      = local.bastion_fip
-#   private_key_path = local.compute_private_key_path
-#   inventory_path   = local.compute_inventory_path
-#   playbook_path    = local.compute_playbook_path
-#   depends_on       = [module.compute_inventory]
-# }
-
-# module "storage_playbook" {
-#   source           = "./../../modules/playbook"
-#   bastion_fip      = local.bastion_fip
-#   private_key_path = local.storage_private_key_path
-#   inventory_path   = local.storage_inventory_path
-#   playbook_path    = local.storage_playbook_path
-#   depends_on       = [module.storage_inventory]
-# }
-
-# module "storage_dns_records" {
-#   source           = "./../../modules/dns_record"
-#   ibmcloud_api_key = var.ibmcloud_api_key
-#   dns_instance_id  = local.dns_instance_id
-#   dns_zone_id      = local.storage_dns_zone_id
-#   dns_records      = local.storage_dns_records
-# }
-
-# module "protocol_dns_records" {
-#   source           = "./../../modules/dns_record"
-#   ibmcloud_api_key = var.ibmcloud_api_key
-#   dns_instance_id  = local.dns_instance_id
-#   dns_zone_id      = local.protocol_dns_zone_id
-#   dns_records      = local.protocol_dns_records
-# }

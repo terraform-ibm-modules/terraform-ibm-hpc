@@ -1,22 +1,3 @@
-# To debug local values
-/*
-output "env_var" {
-  value = local.env
-}
-
-output "landing_zone_data" {
-  value = module.landing_zone[*]
-}
-
-output "vpc_data" {
-  value = module.landing_zone[*].vpc_data
-}
-
-output "subnet_data" {
-  value = module.landing_zone[*].subnet_data
-}
-*/
-
 output "resource_group_id" {
   description = "Resource group ID"
   value       = module.landing_zone[*].resource_group_data
@@ -126,9 +107,5 @@ output "key_management_guid" {
   description = "GUID for KMS instance"
   value       = var.key_management == "key_protect" ? module.landing_zone[0].key_management_guid : null
 }
-
-# output "test" {
-#   value = "hi"
-# }
 
 # TODO: Observability data

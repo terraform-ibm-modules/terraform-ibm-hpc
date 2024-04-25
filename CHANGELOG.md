@@ -2,7 +2,7 @@
 
 ## **1.4.1**
 - HA variable name change for application centre.
-- Cluster Status remote execution completion depends on the cloud init status successful status. 
+- Cluster Status remote execution completion depends on the cloud init status successful status.
 
 ## **1.4.0**
 - Support for Deployable architecture framework code base.
@@ -11,10 +11,10 @@
 - Support Existing VPC and mandate for having three subnets with existing subnets scenario.
 - Support for different SSH keys attribute for login node and cluster nodes for establishing connections.
 - Support for creation of New resource groups.
-  
+
 ## **1.3.1**
 - Bug Fixes for the support of ldap users to access Aplication centre URL.
-  
+
 ## **1.3.0**
 - Support for dedicate LSF login client node to monitor/manage LSF cluster.
 - Support for LDAP users to access the LSF cluster nodes and also access to Application centre GUI with LDAP username and password.

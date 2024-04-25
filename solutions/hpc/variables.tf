@@ -1,20 +1,6 @@
 ##############################################################################
 # Offering Variations
 ##############################################################################
-# Future use
-/*
-variable "scheduler" {
-  type        = string
-  default     = "LSF"
-  description = "Select one of the scheduler (LSF/Symphony/Slurm/None)"
-}
-
-variable "storage_type" {
-  type        = string
-  default     = "scratch"
-  description = "Select the required storage type(scratch/persistent/eval)."
-}
-*/
 
 variable "ibm_customer_number" {
   type        = string
@@ -102,32 +88,6 @@ variable "existing_subnet_cidrs" {
   default     = null
 }
 
-# variable "placement_strategy" {
-#   type        = string
-#   default     = null
-#   description = "VPC placement groups to create (null / host_spread / power_spread)"
-# }
-##############################################################################
-# Access Variables
-##############################################################################
-# variable "enable_bastion" {
-#   type        = bool
-#   default     = true
-#   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
-# }
-
-# variable "enable_bootstrap" {
-#   type        = bool
-#   default     = false
-#   description = "Bootstrap should be only used for better deployment performance"
-# }
-
-# variable "bootstrap_instance_profile" {
-#   type        = string
-#   default     = "mx2-4x32"
-#   description = "Bootstrap should be only used for better deployment performance"
-# }
-
 variable "bastion_ssh_keys" {
   type        = list(string)
   description = "The key pair to use to access the bastion host."
@@ -145,66 +105,11 @@ variable "enable_vpn" {
   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN, set this value to true."
 }
 
-# variable "peer_cidr_list" {
-#   type        = list(string)
-#   default     = null
-#   description = "The peer CIDRs (e.g., 192.168.0.0/24) to which the VPN will be connected."
-# }
-
-# variable "vpn_peer_address" {
-#   type        = string
-#   default     = null
-#   description = "The peer public IP address to which the VPN will be connected."
-# }
-
-# variable "vpn_preshared_key" {
-#   type        = string
-#   default     = null
-#   description = "The pre-shared key for the VPN."
-# }
-
 variable "allowed_cidr" {
   description = "Network CIDR to access the VPC. This is used to manage network ACL rules for accessing the cluster."
   type        = list(string)
   default     = ["10.0.0.0/8"]
 }
-
-##############################################################################
-# Compute Variables
-##############################################################################
-# Future use
-/*
-variable "login_subnets_cidr" {
-  type        = list(string)
-  default     = ["10.10.10.0/24", "10.20.10.0/24", "10.30.10.0/24"]
-  description = "Subnet CIDR block to launch the login host."
-}
-*/
-
-# variable "login_ssh_keys" {
-#   type        = list(string)
-#   description = "The key pair to use to launch the login host."
-# }
-
-# variable "login_image_name" {
-#   type        = string
-#   default     = "ibm-redhat-8-6-minimal-amd64-5"
-#   description = "Image name to use for provisioning the login instances."
-# }
-
-# variable "login_instances" {
-#   type = list(
-#     object({
-#       profile = string
-#       count   = number
-#     })
-#   )
-#   default = [{
-#     profile = "cx2-2x4"
-#     count   = 1
-#   }]
-#   description = "Number of instances to be launched for login."
-# }
 
 variable "compute_subnets_cidr" {
   type        = list(string)
@@ -223,173 +128,38 @@ variable "management_image_name" {
   description = "Image name to use for provisioning the management cluster instances."
 }
 
-# variable "management_instances" {
-#   type = list(
-#     object({
-#       profile = string
-#       count   = number
-#     })
-#   )
-#   default = [{
-#     profile = "cx2-2x4"
-#     count   = 3
-#   }]
-#   description = "Number of instances to be launched for management."
-# }
-
-# variable "static_compute_instances" {
-#   type = list(
-#     object({
-#       profile = string
-#       count   = number
-#     })
-#   )
-#   default = [{
-#     profile = "cx2-2x4"
-#     count   = 0
-#   }]
-#   description = "Min Number of instances to be launched for compute cluster."
-# }
-
-# variable "dynamic_compute_instances" {
-#   type = list(
-#     object({
-#       profile = string
-#       count   = number
-#     })
-#   )
-#   default = [{
-#     profile = "cx2-2x4"
-#     count   = 250
-#   }]
-#   description = "MaxNumber of instances to be launched for compute cluster."
-# }
-
 variable "compute_image_name" {
   type        = string
   default     = "ibm-redhat-8-6-minimal-amd64-5"
   description = "Image name to use for provisioning the compute cluster instances."
 }
-# Future use
-/*
-variable "compute_gui_username" {
-  type        = string
-  default     = "admin"
-  sensitive   = true
-  description = "GUI user to perform system management and monitoring tasks on compute cluster."
-}
-
-variable "compute_gui_password" {
-  type        = string
-  sensitive   = true
-  description = "Password for compute cluster GUI"
-}
-*/
-##############################################################################
-# Scale Storage Variables
-##############################################################################
-
-# variable "storage_subnets_cidr" {
-#   type        = list(string)
-#   default     = ["10.10.30.0/24", "10.20.30.0/24", "10.30.30.0/24"]
-#   description = "Subnet CIDR block to launch the storage cluster host."
-# }
-
-# variable "storage_ssh_keys" {
-#   type        = list(string)
-#   description = "The key pair to use to launch the storage cluster host."
-# }
-
-# variable "storage_instances" {
-#   type = list(
-#     object({
-#       profile = string
-#       count   = number
-#     })
-#   )
-#   default = [{
-#     profile = "bx2-2x8"
-#     count   = 3
-#   }]
-#   description = "Number of instances to be launched for storage cluster."
-# }
-
-# variable "storage_image_name" {
-#   type        = string
-#   default     = "ibm-redhat-8-6-minimal-amd64-5"
-#   description = "Image name to use for provisioning the storage cluster instances."
-# }
-
-# variable "protocol_subnets_cidr" {
-#   type        = list(string)
-#   default     = ["10.10.40.0/24", "10.20.40.0/24", "10.30.40.0/24"]
-#   description = "Subnet CIDR block to launch the storage cluster host."
-# }
-
-# variable "protocol_instances" {
-#   type = list(
-#     object({
-#       profile = string
-#       count   = number
-#     })
-#   )
-#   default = [{
-#     profile = "bx2-2x8"
-#     count   = 2
-#   }]
-#   description = "Number of instances to be launched for protocol hosts."
-# }
-# Future use
-/*
-variable "storage_gui_username" {
-  type        = string
-  default     = "admin"
-  sensitive   = true
-  description = "GUI user to perform system management and monitoring tasks on storage cluster."
-}
-
-variable "storage_gui_password" {
-  type        = string
-  sensitive   = true
-  description = "Password for storage cluster GUI"
-}
-*/
 
 variable "file_shares" {
   type = list(
     object({
       mount_path = string,
-      size       = number,
-      iops       = number
+      size       = optional(number),
+      iops       = optional(number),
+      nfs_share  = optional(string)
     })
   )
   default = [{
-    mount_path = "/mnt/binaries"
+    mount_path = "/mnt/vpcstorage/tools"
     size       = 100
     iops       = 1000
     }, {
-    mount_path = "/mnt/data"
+    mount_path = "/mnt/vpcstorage/data"
     size       = 100
     iops       = 1000
   }]
   description = "Custom file shares to access shared storage"
 }
 
-# variable "nsd_details" {
-#   type = list(
-#     object({
-#       profile  = string
-#       capacity = optional(number)
-#       iops     = optional(number)
-#     })
-#   )
-#   default = [{
-#     profile = "custom"
-#     size    = 100
-#     iops    = 100
-#   }]
-#   description = "Storage scale NSD details"
-# }
+variable "storage_security_group_id" {
+  type        = string
+  default     = null
+  description = "Existing storage security group id"
+}
 
 ##############################################################################
 # DNS Template Variables
@@ -447,6 +217,28 @@ variable "enable_vpc_flow_logs" {
   description = "Enable Activity tracker"
 }
 
+variable "enable_cloud_monitoring" {
+  description = "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure and LSF application metrics from Management Nodes will be ingested."
+  type        = bool
+  default     = true
+}
+
+variable "enable_cloud_monitoring_compute_nodes" {
+  description = "Set true to enable infrastructure metrics ingestion from Compute Nodes."
+  type        = bool
+  default     = false
+}
+
+variable "cloud_monitoring_plan" {
+  description = "Type of service plan for IBM Cloud Monitoring instance. You can choose one of the following: lite, graduated-tier, graduated-tier-sysdig-secure-plus-monitor. For all details visit [IBM Cloud Monitoring Service Plans](https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans)."
+  type        = string
+  default     = "lite"
+  validation {
+    condition     = can(regex("lite|graduated-tier|graduated-tier-sysdig-secure-plus-monitor", var.cloud_monitoring_plan))
+    error_message = "Please enter a valid plan for IBM Cloud Monitoring, for all details visit https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans."
+  }
+}
+
 ##############################################################################
 # Encryption Variables
 ##############################################################################
@@ -469,17 +261,11 @@ variable "kms_key_name" {
   description = "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. (for example kms_key_name: my-encryption-key)."
 }
 
-# variable "hpcs_instance_name" {
-#   type        = string
-#   default     = null
-#   description = "Hyper Protect Crypto Service instance"
-# }
-
 ##############################################################################
 # SCC Variables
 ##############################################################################
 
-variable "enable_scc" {
+variable "scc_enable" {
   type        = bool
   default     = false
   description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
@@ -487,8 +273,14 @@ variable "enable_scc" {
 
 variable "scc_profile" {
   type        = string
-  default     = "1c13d739-e09e-4bf4-8715-dd82e4498041"
-  description = "Profile to be set on the SCC Instance (accepting empty, CIS and Financial Services profiles ID)"
+  default     = "CIS IBM Cloud Foundations Benchmark"
+  description = "Profile to be set on the SCC Instance (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')"
+}
+
+variable "scc_profile_version" {
+  type        = string
+  default     = "1.0.0"
+  description = "Version of Profile to be set on the SCC Instance"
 }
 
 variable "scc_location" {
@@ -496,10 +288,6 @@ variable "scc_location" {
   type        = string
   default     = "us-south"
 }
-
-##############################################################################
-# TODO: Sagar changes
-##############################################################################
 
 variable "cluster_id" {
   type        = string
@@ -557,11 +345,6 @@ variable "management_node_instance_type" {
   }
 }
 
-# variable "ssh_key_name" {
-#   type        = string
-#   description = "Comma-separated list of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC cluster node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
-# }
-
 variable "enable_fip" {
   type        = bool
   default     = true
@@ -573,6 +356,7 @@ variable "enable_fip" {
 # If provided, these scripts will be executed as part of validation test suites execution.
 ###########################################################################
 
+# tflint-ignore: terraform_naming_convention
 variable "TF_VALIDATION_SCRIPT_FILES" {
   type        = list(string)
   default     = []
@@ -656,4 +440,32 @@ variable "certificate_instance" {
   description = "Certificate instance CRN value. It's the CRN value of a certificate stored in the Secret Manager"
   type        = string
   default     = ""
+}
+
+###########################################################################
+# Existing Bastion Support variables
+###########################################################################
+
+variable "bastion_instance_name" {
+  type        = string
+  default     = null
+  description = "Bastion instance name."
+}
+
+variable "bastion_instance_public_ip" {
+  type        = string
+  default     = null
+  description = "Bastion instance public ip address."
+}
+
+variable "bastion_security_group_id" {
+  type        = string
+  default     = null
+  description = "Bastion security group id."
+}
+
+variable "bastion_ssh_private_key" {
+  type        = string
+  default     = null
+  description = "Bastion SSH private key path, which will be used to login to bastion host."
 }
