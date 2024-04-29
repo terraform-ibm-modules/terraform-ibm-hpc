@@ -98,19 +98,20 @@ locals {
     "^${local.validate_contract_id_api_msg}$",
   (local.validate_contract_id_api ? local.validate_contract_id_api_msg : ""))
 
-  # ## Validate custom fileshare
-  # ## Construct a list of Share size(GB) and IOPS range(IOPS)from values provided in https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=ui#dp2-profile
-  # ## List values [[sharesize_start,sharesize_end,min_iops,max_iops], [..]....]
-  # custom_fileshare_iops_range = [[10, 39, 100, 1000], [40, 79, 100, 2000], [80, 99, 100, 4000], [100, 499, 100, 6000], [500, 999, 100, 10000], [1000, 1999, 100, 20000], [2000, 3999, 200, 40000], [4000, 7999, 300, 40000], [8000, 15999, 500, 64000], [16000, 32000, 2000, 96000]]
-  # ## List with input iops value, min and max iops for the input share size.
-  # size_iops_lst = [for values in var.custom_file_shares : [for list_val in local.custom_fileshare_iops_range : [values.iops, list_val[2], list_val[3]] if(values.size >= list_val[0] && values.size <= list_val[1])]]
-  # ## Validate the input iops falls inside the range.
+  # Validate custom fileshare
+  # Construct a list of Share size(GB) and IOPS range(IOPS)from values provided in https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=ui#dp2-profile
+  # List values [[sharesize_start,sharesize_end,min_iops,max_iops], [..]....]
+  custom_fileshare_iops_range = [[10, 39, 100, 1000], [40, 79, 100, 2000], [80, 99, 100, 4000], [100, 499, 100, 6000], [500, 999, 100, 10000], [1000, 1999, 100, 20000], [2000, 3999, 200, 40000], [4000, 7999, 300, 40000], [8000, 15999, 500, 64000], [16000, 32000, 2000, 96000]]
+  # List with input iops value, min and max iops for the input share size.
+  size_iops_lst              = [for values in var.custom_file_shares : [for list_val in local.custom_fileshare_iops_range : [values.size != null ? (values.iops != null ? (values.size >= list_val[0] && values.size <= list_val[1] ? values.iops : null) : null) : null, list_val[2], list_val[3]] if values.size != null]]
+  validate_custom_file_share = alltrue([for iops in local.size_iops_lst : (length(iops) > 0 ? (iops[0][0] != null ? (iops[0][0] >= iops[0][1] && iops[0][0] <= iops[0][2]) : true) : true)])
+  # Validate the input iops falls inside the range.
   # validate_custom_file_share     = alltrue([for iops in local.size_iops_lst : iops[0][0] >= iops[0][1] && iops[0][0] <= iops[0][2]])
-  # validate_custom_file_share_msg = "Provided iops value is not valid for given file share size. Please refer 'File Storage for VPC profiles' page in ibm cloud docs for a valid iops and file share size combination."
-  # # tflint-ignore: terraform_unused_declarations
-  # validate_custom_file_share_chk = regex(
-  #   "^${local.validate_custom_file_share_msg}$",
-  # (local.validate_custom_file_share ? local.validate_custom_file_share_msg : ""))
+  validate_custom_file_share_msg = "Provided iops value is not valid for given file share size. Please refer 'File Storage for VPC profiles' page in ibm cloud docs for a valid iops and file share size combination."
+  # tflint-ignore: terraform_unused_declarations
+  validate_custom_file_share_chk = regex(
+    "^${local.validate_custom_file_share_msg}$",
+  (local.validate_custom_file_share ? local.validate_custom_file_share_msg : ""))
 
   # LDAP base DNS Validation
   validate_ldap_basedns = (var.enable_ldap && trimspace(var.ldap_basedns) != "") || !var.enable_ldap
@@ -217,4 +218,11 @@ locals {
     "^${local.enable_cloud_monitoring_compute_nodes_msg}$",
   (local.validate_enable_cloud_monitoring_compute_nodes ? local.enable_cloud_monitoring_compute_nodes_msg : ""))
 
+  # Existing Bastion validation
+  validate_existing_bastion     = var.bastion_instance_name != null ? (var.bastion_instance_public_ip != null && var.bastion_security_group_id != null && var.bastion_ssh_private_key != null) : local.bastion_instance_status
+  validate_existing_bastion_msg = "If bastion_instance_name is not null, then bastion_instance_public_ip, bastion_security_group_id, and bastion_ssh_private_key should not be null."
+  # tflint-ignore: terraform_unused_declarations
+  validate_existing_bastion_chk = regex(
+    "^${local.validate_existing_bastion_msg}$",
+  (local.validate_existing_bastion ? local.validate_existing_bastion_msg : ""))
 }

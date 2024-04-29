@@ -1,16 +1,16 @@
 output "bastion_primary_ip" {
   description = "Bastion primary IP"
-  value       = var.bastion_instance_public_ip != null ? data.ibm_is_instance.bastion_instance_name[0].primary_network_interface[0].primary_ip[0].address : one(module.bastion_vsi[*]["fip_list"][0]["ipv4_address"])
+  value       = var.bastion_instance_name != null && var.bastion_instance_public_ip != null ? data.ibm_is_instance.bastion_instance_name[0].primary_network_interface[0].primary_ip[0].address : one(module.bastion_vsi[*]["fip_list"][0]["ipv4_address"])
 }
 
 output "bastion_fip" {
   description = "Bastion FIP"
-  value       = var.bastion_instance_public_ip != null ? [var.bastion_instance_public_ip] : module.bastion_vsi[*]["fip_list"][0]["floating_ip"]
+  value       = var.bastion_instance_public_ip != null && var.bastion_instance_name != null ? [var.bastion_instance_public_ip] : module.bastion_vsi[*]["fip_list"][0]["floating_ip"]
 }
 
 output "bastion_fip_id" {
   description = "Bastion FIP ID"
-  value       = var.bastion_instance_public_ip != null ? null : one(module.bastion_vsi[*]["fip_list"][0]["floating_ip_id"])
+  value       = var.bastion_instance_name != null && var.bastion_instance_public_ip != null ? null : one(module.bastion_vsi[*]["fip_list"][0]["floating_ip_id"])
 }
 
 output "bastion_security_group_id" {

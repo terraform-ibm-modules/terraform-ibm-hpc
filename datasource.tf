@@ -7,6 +7,17 @@ locals {
     "us-south" = "https://hpc-api.us-south.codeengine.cloud.ibm.com/v2"
   }
   ldap_server_status = var.enable_ldap == true && var.ldap_server == "null" ? false : true
+
+  # Existing bastion Variables
+  bastion_instance_name      = var.bastion_instance_public_ip != null ? var.bastion_instance_name : null
+  bastion_instance_public_ip = var.bastion_instance_name != null ? var.bastion_instance_public_ip : null
+  bastion_security_group_id  = var.bastion_instance_name != null ? var.bastion_security_group_id : null
+  bastion_ssh_private_key    = var.bastion_instance_name != null ? var.bastion_ssh_private_key : null
+  bastion_instance_status    = var.bastion_instance_name != null ? false : true
+
+  # NFS Mount security group
+  storage_security_group_id = var.storage_security_group_id != null ? var.storage_security_group_id : null
+
 }
 
 data "ibm_is_region" "region" {

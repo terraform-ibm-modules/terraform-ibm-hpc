@@ -212,7 +212,7 @@ variable "custom_file_shares" {
   description = "Mount points and sizes in GB and IOPS range of file shares that can be used to customize shared file storage layout. Provide the details for up to 5 shares. Each file share size in GB supports different range of IOPS. For more information, see [file share IOPS value](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=ui)."
   validation {
     condition     = length([for item in var.custom_file_shares : item if item.nfs_share == null]) <= 5
-    error_message = "The custom file share count \"custom_file_shares\" must be less than or equal to 5. Unlimited NFS mounts are allowed."
+    error_message = "The VPC storage custom file share count \"custom_file_shares\" must be less than or equal to 5. Unlimited NFS mounts are allowed."
   }
   validation {
     condition     = !anytrue([for mounts in var.custom_file_shares : mounts.mount_path == "/mnt/lsf"])
@@ -538,7 +538,7 @@ variable "TF_PARALLELISM" {
 variable "bastion_instance_name" {
   type        = string
   default     = null
-  description = "Bastion instance name."
+  description = "Bastion instance name. If none given then new bastion will be created."
 }
 
 variable "bastion_instance_public_ip" {

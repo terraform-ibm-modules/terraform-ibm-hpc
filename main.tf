@@ -53,12 +53,12 @@ module "hpc" {
   scc_profile_version                   = var.scc_profile_version
   scc_location                          = var.scc_location
   certificate_instance                  = var.certificate_instance
-  storage_security_group_id             = var.storage_security_group_id != null ? var.storage_security_group_id : null
+  storage_security_group_id             = local.storage_security_group_id
   enable_cloud_monitoring               = var.enable_cloud_monitoring
   enable_cloud_monitoring_compute_nodes = var.enable_cloud_monitoring_compute_nodes
   cloud_monitoring_plan                 = var.cloud_monitoring_plan
-  bastion_instance_name                 = var.bastion_instance_name
-  bastion_instance_public_ip            = var.bastion_instance_public_ip
-  bastion_security_group_id             = var.bastion_security_group_id
-  bastion_ssh_private_key               = var.bastion_ssh_private_key
+  bastion_instance_name                 = local.bastion_instance_name
+  bastion_instance_public_ip            = local.bastion_instance_public_ip
+  bastion_security_group_id             = local.bastion_security_group_id
+  bastion_ssh_private_key               = local.bastion_ssh_private_key
 }

@@ -16,7 +16,20 @@ module "bastion_sg" {
   tags                         = local.tags
 }
 
-module "bastion_sg_update" {
+module "bastion_sg_with_ldap_update" {
+  count                          = var.ldap_server == "null" ? 0 : 1
+  source                         = "terraform-ibm-modules/security-group/ibm"
+  version                        = "2.6.0"
+  resource_group                 = var.resource_group
+  add_ibm_cloud_internal_rules   = true
+  use_existing_security_group_id = true
+  existing_security_group_id     = module.bastion_sg[0].security_group_id
+  security_group_rules           = local.ldap_security_group_rule
+  vpc_id                         = var.vpc_id
+  depends_on                     = [module.bastion_sg]
+}
+
+module "existing_bastion_sg_update" {
   count                          = var.bastion_security_group_id != null ? 1 : 0
   source                         = "terraform-ibm-modules/security-group/ibm"
   version                        = "2.6.0"

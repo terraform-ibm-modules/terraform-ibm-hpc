@@ -1,10 +1,3 @@
-variable "ibmcloud_api_key" {
-  description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
-  type        = string
-  sensitive   = true
-  default     = null
-}
-
 variable "zone" {
   description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
   type        = string

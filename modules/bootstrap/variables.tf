@@ -1,15 +1,4 @@
 ##############################################################################
-# Account Variables
-##############################################################################
-
-variable "ibmcloud_api_key" {
-  description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
-  type        = string
-  sensitive   = true
-  default     = null
-}
-
-##############################################################################
 # Resource Groups Variables
 ##############################################################################
 
@@ -31,11 +20,6 @@ variable "prefix" {
     error_message = "Prefix must begin and end with a letter and contain only letters, numbers, and - characters."
     condition     = can(regex("^([A-z]|[a-z][-a-z0-9]*[a-z0-9])$", var.prefix))
   }
-}
-
-variable "zones" {
-  description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
-  type        = list(string)
 }
 
 ##############################################################################
@@ -124,4 +108,14 @@ variable "bastion_security_group_id" {
   type        = string
   default     = null
   description = "Bastion security group id."
+}
+
+###########################################################################
+# LDAP Server variables
+###########################################################################
+
+variable "ldap_server" {
+  type        = string
+  default     = "null"
+  description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
 }

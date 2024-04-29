@@ -32,8 +32,6 @@ locals {
 
   bastion_ssh_keys = [for name in var.ssh_keys : data.ibm_is_ssh_key.bastion[name].id]
 
-  # Region and Zone calculations
-  region                        = join("-", slice(split("-", var.zones[0]), 0, 2))
   bastion_sg_variable_cidr_list = var.network_cidr
   # Security group rules
   # TODO: Fix SG rules
@@ -81,6 +79,19 @@ locals {
       name      = "inbound-rule-for-login-node-connection"
       direction = "inbound"
       remote    = var.bastion_security_group_id
+    }
+  ]
+
+  # Bastion Security Group rule update with LDAP server
+  ldap_security_group_rule = [
+    {
+      name      = "inbound-rule-for-ldap-node-connection"
+      direction = "inbound"
+      remote    = var.ldap_server
+      tcp = {
+        port_min = 389
+        port_max = 389
+      }
     }
   ]
 }

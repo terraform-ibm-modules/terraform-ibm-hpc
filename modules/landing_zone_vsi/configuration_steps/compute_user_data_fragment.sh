@@ -99,7 +99,8 @@ if [ -n "${custom_file_shares}" ]; then
     if mount | grep "${file_share_array[$i]}"; then
       echo "Mount found" >> "$logfile"
     else
-      echo "No mount found" >> "$logfile"
+      echo "No mount found" >> $logfile
+      rm -rf "${mount_path_array[$i]}"
     fi
     # Update permission to 777 for all users to access
     chmod 777 "${mount_path_array[$i]}"

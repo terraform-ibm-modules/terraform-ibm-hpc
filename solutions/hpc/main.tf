@@ -6,7 +6,6 @@ module "landing_zone" {
   enable_cos_integration = var.enable_cos_integration
   enable_vpc_flow_logs   = var.enable_vpc_flow_logs
   enable_vpn             = var.enable_vpn
-  ibmcloud_api_key       = var.ibmcloud_api_key
   key_management         = var.key_management
   kms_instance_name      = var.kms_instance_name
   kms_key_name           = var.kms_key_name
@@ -24,10 +23,8 @@ module "landing_zone" {
 
 module "bootstrap" {
   source                        = "./../../modules/bootstrap"
-  ibmcloud_api_key              = var.ibmcloud_api_key
   resource_group                = local.resource_groups["workload_rg"]
   prefix                        = var.prefix
-  zones                         = var.zones
   vpc_id                        = local.vpc_id
   network_cidr                  = var.vpc != "null" && length(var.subnet_id) > 0 ? var.existing_subnet_cidrs : split(",", var.network_cidr)
   bastion_subnets               = local.bastion_subnets
@@ -40,6 +37,7 @@ module "bootstrap" {
   bastion_instance_name         = var.bastion_instance_name
   bastion_instance_public_ip    = var.bastion_instance_public_ip
   bastion_security_group_id     = var.bastion_security_group_id
+  ldap_server                   = var.ldap_server
 }
 
 module "generate_db_adminpassword" {
@@ -68,8 +66,8 @@ module "db" {
 
 module "landing_zone_vsi" {
   source                                = "../../modules/landing_zone_vsi"
-  ibmcloud_api_key                      = var.ibmcloud_api_key
   resource_group                        = local.resource_groups["workload_rg"]
+  ibmcloud_api_key                      = var.ibmcloud_api_key
   prefix                                = var.prefix
   zones                                 = var.zones
   vpc_id                                = local.vpc_id
@@ -125,7 +123,6 @@ module "landing_zone_vsi" {
 
 module "file_storage" {
   source             = "../../modules/file_storage"
-  ibmcloud_api_key   = var.ibmcloud_api_key
   zone               = var.zones[0] # always the first zone
   resource_group     = local.resource_groups["workload_rg"]
   file_shares        = local.file_shares
@@ -137,7 +134,6 @@ module "file_storage" {
 
 module "dns" {
   source                 = "./../../modules/dns"
-  ibmcloud_api_key       = var.ibmcloud_api_key
   prefix                 = var.prefix
   resource_group_id      = local.resource_groups["service_rg"]
   vpc_crn                = local.vpc_crn
@@ -149,13 +145,11 @@ module "dns" {
 
 module "alb" {
   source               = "./../../modules/alb"
-  ibmcloud_api_key     = var.ibmcloud_api_key
   bastion_subnets      = local.bastion_subnets
   resource_group_id    = local.resource_groups["workload_rg"]
   prefix               = var.prefix
   security_group_ids   = concat(local.compute_security_group_id, [local.bastion_security_group_id])
   vsi_ids              = local.vsi_management_ids
-  zones                = var.zones
   certificate_instance = var.enable_app_center && var.app_center_high_availability ? var.certificate_instance : ""
   create_load_balancer = var.app_center_high_availability && var.enable_app_center
 }
@@ -165,7 +159,6 @@ module "alb" {
 ##################################################
 module "compute_dns_records" {
   source           = "./../../modules/dns_record"
-  ibmcloud_api_key = var.ibmcloud_api_key
   dns_instance_id  = local.dns_instance_id
   dns_zone_id      = local.compute_dns_zone_id
   dns_records      = local.compute_dns_records
@@ -174,7 +167,6 @@ module "compute_dns_records" {
 
 module "compute_candidate_dns_records" {
   source           = "./../../modules/dns_record"
-  ibmcloud_api_key = var.ibmcloud_api_key
   dns_instance_id  = local.dns_instance_id
   dns_zone_id      = local.compute_dns_zone_id
   dns_records      = local.mgmt_candidate_dns_records
@@ -183,7 +175,6 @@ module "compute_candidate_dns_records" {
 
 module "login_vsi_dns_records" {
   source           = "./../../modules/dns_record"
-  ibmcloud_api_key = var.ibmcloud_api_key
   dns_instance_id  = local.dns_instance_id
   dns_zone_id      = local.compute_dns_zone_id
   dns_records      = local.login_vsi_dns_records
@@ -192,7 +183,6 @@ module "login_vsi_dns_records" {
 
 module "ldap_vsi_dns_records" {
   source           = "./../../modules/dns_record"
-  ibmcloud_api_key = var.ibmcloud_api_key
   dns_instance_id  = local.dns_instance_id
   dns_zone_id      = local.compute_dns_zone_id
   dns_records      = local.ldap_vsi_dns_records

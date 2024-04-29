@@ -799,6 +799,7 @@ if [ -n "${custom_file_shares}" ]; then
       echo "Mount found"
     else
       echo "No mount found"
+      rm -rf "${mount_path_array[$i]}"
     fi
     # Update permission to 777 for all users to access
     chmod 777 "${mount_path_array[$i]}"

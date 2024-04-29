@@ -84,6 +84,19 @@ locals {
     }
   ]
 
+  # LDAP security group rule for Cluster
+  ldap_security_group_rule_for_cluster = [
+    {
+      name      = "inbound-rule-for-ldap-node-connection"
+      direction = "inbound"
+      remote    = var.ldap_server
+      tcp = {
+        port_min = 389
+        port_max = 389
+      }
+    }
+  ]
+
   # Subnets
   # TODO: Multi-zone multi-vNIC VSIs deployment support (bug #https://github.ibm.com/GoldenEye/issues/issues/5830)
   # Findings: Singe zone multi-vNICs VSIs deployment & multi-zone single vNIC VSIs deployment are supported.

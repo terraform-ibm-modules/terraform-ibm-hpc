@@ -16,6 +16,19 @@ module "compute_sg" {
   tags                         = local.tags
 }
 
+module "compute_sg_with_ldap_connection" {
+  count                          = var.ldap_server == "null" ? 0 : 1
+  source                         = "terraform-ibm-modules/security-group/ibm"
+  version                        = "2.6.0"
+  resource_group                 = var.resource_group
+  add_ibm_cloud_internal_rules   = true
+  use_existing_security_group_id = true
+  existing_security_group_id     = module.compute_sg[0].security_group_id
+  security_group_rules           = local.ldap_security_group_rule_for_cluster
+  vpc_id                         = var.vpc_id
+  depends_on                     = [module.compute_sg]
+}
+
 module "nfs_storage_sg" {
   count                          = var.storage_security_group_id != null ? 1 : 0
   source                         = "terraform-ibm-modules/security-group/ibm"
