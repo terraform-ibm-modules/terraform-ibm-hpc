@@ -1,10 +1,3 @@
-variable "ibmcloud_api_key" {
-  description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
-  type        = string
-  sensitive   = true
-  default     = null
-}
-
 variable "zone" {
   description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
   type        = string
@@ -56,4 +49,7 @@ variable "subnet_id" {
   default     = null
 }
 
-variable "prefix" {}
+variable "prefix" {
+  description = "A unique identifier for resources. Must begin with a letter and end with a letter or number. This prefix will be prepended to any resources provisioned by this template. Prefixes must be 16 or fewer characters."
+  type        = string
+}

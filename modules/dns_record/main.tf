@@ -1,13 +1,3 @@
-data "ibm_dns_zones" "itself" {
-  instance_id = var.dns_instance_id
-}
-
-locals {
-  dns_domain_name = [
-    for zone in data.ibm_dns_zones.itself.dns_zones : zone["name"] if zone["zone_id"] == var.dns_zone_id
-  ]
-}
-
 resource "ibm_dns_resource_record" "a" {
   count       = length(var.dns_records)
   instance_id = var.dns_instance_id

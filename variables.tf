@@ -1,34 +1,4 @@
 ##############################################################################
-# Offering Variations
-##############################################################################
-# Future use
-/*
-variable "scheduler" {
-  type        = string
-  default     = "LSF"
-  description = "Select one of the scheduler (LSF/Symphony/Slurm/None)"
-}
-
-variable "storage_type" {
-  type        = string
-  default     = "scratch"
-  description = "Select the required storage type(scratch/persistent/eval)."
-}
-*/
-
-#variable "ibm_customer_number" {
-#  type        = string
-#  sensitive   = true
-#  default     = ""
-#  description = "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
-#  validation {
-#    # regex(...) fails if the IBM customer number has special characters.
-#    condition     = can(regex("^[0-9A-Za-z]*([0-9A-Za-z]+,[0-9A-Za-z]+)*$", var.ibm_customer_number))
-#    error_message = "The IBM customer number input value cannot have special characters."
-#  }
-#}
-
-##############################################################################
 # Account Variables
 ##############################################################################
 
@@ -72,10 +42,10 @@ variable "cluster_prefix" {
 }
 
 variable "zones" {
-  description = "IBM Cloud zone names within the selected region where the IBM Cloud HPC cluster should be deployed. Two zone names are required as input value and supported zones for eu-de are eu-de-2, eu-de-3 and for us-east us-east-1, us-east-3. The management nodes and file storage shares will be deployed to the first zone in the list. Compute nodes will be deployed across both first and second zones, where the first zone in the list will be considered as the most preferred zone for compute nodes deployment. [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
+  description = "IBM Cloud zone names within the selected region where the IBM Cloud HPC cluster should be deployed. Single zone name is required as input value and supported zones for eu-de are eu-de-2, eu-de-3 for us-east us-east-1, us-east-3 and for us-south us-south-1 and us-south-3. The management nodes, file storage shares and Compute nodes will be deployed on the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
   type        = list(string)
   validation {
-    condition     = length(var.zones) == 2
+    condition     = length(var.zones) == 1
     error_message = "Provide list of zones to deploy the cluster."
   }
 }
@@ -112,9 +82,9 @@ variable "vpc_name" {
 variable "cluster_subnet_ids" {
   type        = list(string)
   default     = []
-  description = "List of existing subnet IDs under the VPC, where the cluster will be provisioned. Two subnet ids are required as input value and supported zones for eu-de are eu-de-2, eu-de-3 and for us-east us-east-1, us-east-3. The management nodes and file storage shares will be deployed to the first zone in the list. Compute nodes will be deployed across both first and second zones, where the first zone in the list will be considered as the most preferred zone for compute nodes deployment."
+  description = "List of existing subnet ID under the VPC, where the cluster will be provisioned. One subnet id is required as input value and supported zones for eu-de are eu-de-2, eu-de-3, for us-east us-east-1, us-east-3 and for us-south are us-south-1, us-south-3 .The management nodes, file storage shares and Compute nodes will be deployed on the same zone."
   validation {
-    condition     = contains([0, 2], length(var.cluster_subnet_ids))
+    condition     = contains([0, 1], length(var.cluster_subnet_ids))
     error_message = "The subnet_id value should either be empty or contain exactly two elements."
   }
 }
@@ -126,17 +96,17 @@ variable "login_subnet_id" {
 }
 
 variable "vpc_cidr" {
-  description = "Creates the address prefix for the new VPC, when the vpc_name variable is empty. The VPC requires an address prefix for each subnet in two different zones. The subnets are created with the specified CIDR blocks, enabling support for two zones within the VPC. For more information, see [Setting IP ranges](https://cloud.ibm.com/docs/vpc?topic=vpc-vpc-addressing-plan-design)."
+  description = "Creates the address prefix for the new VPC, when the vpc_name variable is empty. The VPC requires an address prefix for each subnet in two different zones. The subnets are created with the specified CIDR blocks. For more information, see [Setting IP ranges](https://cloud.ibm.com/docs/vpc?topic=vpc-vpc-addressing-plan-design)."
   type        = string
-  default     = "10.241.0.0/18,10.241.64.0/18"
+  default     = "10.241.0.0/18"
 }
 
 variable "vpc_cluster_private_subnets_cidr_blocks" {
   type        = list(string)
-  default     = ["10.241.0.0/20", "10.241.64.0/20"]
-  description = "The CIDR block that's required for the creation of the compute cluster private subnet. Modify the CIDR block if it conflicts with any on-premises CIDR blocks when using a hybrid environment. Make sure to select a CIDR block size that will accommodate the maximum number of management and dynamic compute nodes that you expect to have in your cluster. Requires one CIDR block for each subnet in two different zones. For more information on CIDR block size selection, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
+  default     = ["10.241.0.0/20"]
+  description = "The CIDR block that's required for the creation of the compute cluster private subnet. Modify the CIDR block if it conflicts with any on-premises CIDR blocks when using a hybrid environment. Make sure to select a CIDR block size that will accommodate the maximum number of management and dynamic compute nodes that you expect to have in your cluster. Requires one CIDR block. For more information on CIDR block size selection, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
   validation {
-    condition     = length(var.vpc_cluster_private_subnets_cidr_blocks) == 2
+    condition     = length(var.vpc_cluster_private_subnets_cidr_blocks) == 1
     error_message = "Multiple zones are supported to deploy resources. Provide a CIDR range of subnets creation."
   }
 }
@@ -155,51 +125,9 @@ variable "vpc_cluster_login_private_subnets_cidr_blocks" {
   }
 }
 
-# variable "placement_strategy" {
-#   type        = string
-#   default     = null
-#   description = "VPC placement groups to create (null / host_spread / power_spread)"
-# }
-
 ##############################################################################
 # Access Variables
 ##############################################################################
-# variable "enable_bastion" {
-#   type        = bool
-#   default     = true
-#   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
-# }
-
-# variable "enable_bootstrap" {
-#   type        = bool
-#   default     = false
-#   description = "Bootstrap should be only used for better deployment performance"
-# }
-
-# variable "bootstrap_instance_profile" {
-#   type        = string
-#   default     = "mx2-4x32"
-#   description = "Bootstrap should be only used for better deployment performance"
-# }
-
-
-# variable "peer_cidr_list" {
-#   type        = list(string)
-#   default     = null
-#   description = "The peer CIDRs (e.g., 192.168.0.0/24) to which the VPN will be connected."
-# }
-
-# variable "vpn_peer_address" {
-#   type        = string
-#   default     = null
-#   description = "The peer public IP address to which the VPN will be connected."
-# }
-
-# variable "vpn_preshared_key" {
-#   type        = string
-#   default     = null
-#   description = "The pre-shared key for the VPN."
-# }
 
 variable "remote_allowed_ips" {
   type        = list(string)
@@ -221,39 +149,6 @@ variable "remote_allowed_ips" {
 ##############################################################################
 # Compute Variables
 ##############################################################################
-# Future use
-/*
-variable "login_subnets_cidr" {
-  type        = list(string)
-  default     = ["10.10.10.0/24", "10.20.10.0/24", "10.30.10.0/24"]
-  description = "Subnet CIDR block to launch the login host."
-}
-*/
-
-# variable "login_ssh_keys" {
-#   type        = list(string)
-#   description = "The key pair to use to launch the login host."
-# }
-
-# variable "login_image_name" {
-#   type        = string
-#   default     = "ibm-redhat-8-6-minimal-amd64-5"
-#   description = "Image name to use for provisioning the login instances."
-# }
-
-# variable "login_instances" {
-#   type = list(
-#     object({
-#       profile = string
-#       count   = number
-#     })
-#   )
-#   default = [{
-#     profile = "cx2-2x4"
-#     count   = 0
-#   }]
-#   description = "Number of instances to be launched for login."
-# }
 
 variable "bastion_ssh_keys" {
   type        = list(string)
@@ -286,6 +181,12 @@ variable "compute_image_name" {
   description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v2). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
 }
 
+variable "login_image_name" {
+  type        = string
+  default     = "hpcaas-lsf10-rhel88-compute-v3"
+  description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster login node. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v2). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
+}
+
 variable "management_node_instance_type" {
   type        = string
   default     = "bx2-16x64"
@@ -306,144 +207,18 @@ variable "management_node_count" {
   }
 }
 
-# variable "management_instances" {
-#   type = list(
-#     object({
-#       profile = string
-#       count   = number
-#     })
-#   )
-#   default = [{
-#     profile = "bx2-16x64"
-#     count   = 1
-#   }]
-#   description = "Number of instances to be launched for management."
-# }
-
-# variable "static_compute_instances" {
-#   type = list(
-#     object({
-#       profile = string
-#       count   = number
-#     })
-#   )
-#   default = [{
-#     profile = "cx2-2x4"
-#     count   = 0
-#   }]
-#   description = "Min Number of instances to be launched for compute cluster."
-# }
-
-# variable "dynamic_compute_instances" {
-#   type = list(
-#     object({
-#       profile = string
-#       count   = number
-#     })
-#   )
-#   default = [{
-#     profile = "cx2-2x4"
-#     count   = 250
-#   }]
-#   description = "MaxNumber of instances to be launched for compute cluster."
-# }
-
-# Future use
-/*
-variable "compute_gui_username" {
-  type        = string
-  default     = "admin"
-  sensitive   = true
-  description = "GUI user to perform system management and monitoring tasks on compute cluster."
-}
-
-variable "compute_gui_password" {
-  type        = string
-  sensitive   = true
-  description = "Password for compute cluster GUI"
-}
-*/
-##############################################################################
-# Scale Storage Variables
-##############################################################################
-
-# variable "storage_subnets_cidr" {
-#   type        = list(string)
-#   default     = ["10.10.30.0/24", "10.20.30.0/24", "10.30.30.0/24"]
-#   description = "Subnet CIDR block to launch the storage cluster host."
-# }
-
-# variable "storage_ssh_keys" {
-#   type        = list(string)
-#   description = "The key pair to use to launch the storage cluster host."
-# }
-
-# variable "storage_instances" {
-#   type = list(
-#     object({
-#       profile = string
-#       count   = number
-#     })
-#   )
-#   default = [{
-#     profile = "bx2-2x8"
-#     count   = 0
-#   }]
-#   description = "Number of instances to be launched for storage cluster."
-# }
-
-# variable "storage_image_name" {
-#   type        = string
-#   default     = "ibm-redhat-8-6-minimal-amd64-5"
-#   description = "Image name to use for provisioning the storage cluster instances."
-# }
-
-# variable "protocol_subnets_cidr" {
-#   type        = list(string)
-#   default     = ["10.10.40.0/24", "10.20.40.0/24", "10.30.40.0/24"]
-#   description = "Subnet CIDR block to launch the storage cluster host."
-# }
-
-# variable "protocol_instances" {
-#   type = list(
-#     object({
-#       profile = string
-#       count   = number
-#     })
-#   )
-#   default = [{
-#     profile = "bx2-2x8"
-#     count   = 0
-#   }]
-#   description = "Number of instances to be launched for protocol hosts."
-# }
-# Future use
-/*
-variable "storage_gui_username" {
-  type        = string
-  default     = "admin"
-  sensitive   = true
-  description = "GUI user to perform system management and monitoring tasks on storage cluster."
-}
-
-variable "storage_gui_password" {
-  type        = string
-  sensitive   = true
-  description = "Password for storage cluster GUI"
-}
-*/
-
 variable "custom_file_shares" {
   type = list(object({
     mount_path = string,
-    size       = number,
-    iops       = number
+    size       = optional(number),
+    iops       = optional(number),
+    nfs_share  = optional(string)
   }))
-  default     = [{ mount_path = "/mnt/binaries", size = 100, iops = 2000 }, { mount_path = "/mnt/data", size = 100, iops = 6000 }]
+  default     = [{ mount_path = "/mnt/vpcstorage/tools", size = 100, iops = 2000 }, { mount_path = "/mnt/vpcstorage/data", size = 100, iops = 6000 }, { mount_path = "/mnt/scale/tools", nfs_share = "" }]
   description = "Mount points and sizes in GB and IOPS range of file shares that can be used to customize shared file storage layout. Provide the details for up to 5 shares. Each file share size in GB supports different range of IOPS. For more information, see [file share IOPS value](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=ui)."
   validation {
-    condition     = length(var.custom_file_shares) <= 5
-    error_message = "The custom file share count \"custom_file_shares\" must be less than or equal to 5."
+    condition     = length([for item in var.custom_file_shares : item if item.nfs_share == null]) <= 5
+    error_message = "The VPC storage custom file share count \"custom_file_shares\" must be less than or equal to 5. Unlimited NFS mounts are allowed."
   }
   validation {
     condition     = !anytrue([for mounts in var.custom_file_shares : mounts.mount_path == "/mnt/lsf"])
@@ -454,26 +229,16 @@ variable "custom_file_shares" {
     error_message = "Mount path values should not be duplicated."
   }
   validation {
-    condition     = alltrue([for mounts in var.custom_file_shares : (10 <= mounts.size && mounts.size <= 32000)])
+    condition     = alltrue([for mounts in var.custom_file_shares : can(mounts.size) && mounts.size != null ? (10 <= mounts.size && mounts.size <= 32000) : true])
     error_message = "The custom_file_share size must be greater than or equal to 10 and less than or equal to 32000."
   }
 }
 
-# variable "nsd_details" {
-#   type = list(
-#     object({
-#       profile  = string
-#       capacity = optional(number)
-#       iops     = optional(number)
-#     })
-#   )
-#   default = [{
-#     profile = "custom"
-#     size    = 100
-#     iops    = 100
-#   }]
-#   description = "Storage scale NSD details"
-# }
+variable "storage_security_group_id" {
+  type        = string
+  default     = null
+  description = "Existing storage security group id"
+}
 
 ##############################################################################
 # DNS Template Variables
@@ -543,6 +308,29 @@ variable "vpn_enabled" {
   default     = false
   description = "Set the value as true to deploy a VPN gateway for VPC in the cluster."
 }
+
+variable "enable_cloud_monitoring" {
+  description = "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure and LSF application metrics from Management Nodes will be ingested."
+  type        = bool
+  default     = false
+}
+
+variable "enable_cloud_monitoring_compute_nodes" {
+  description = "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure metrics from Compute Nodes will be ingested."
+  type        = bool
+  default     = false
+}
+
+variable "cloud_monitoring_plan" {
+  description = "Type of service plan for IBM Cloud Monitoring instance. You can choose one of the following: lite, graduated-tier. For all details visit [IBM Cloud Monitoring Service Plans](https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans)."
+  type        = string
+  default     = "lite"
+  validation {
+    condition     = can(regex("lite|graduated-tier", var.cloud_monitoring_plan))
+    error_message = "Please enter a valid plan for IBM Cloud Monitoring, for all details visit https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans."
+  }
+}
+
 ##############################################################################
 # Encryption Variables
 ##############################################################################
@@ -569,17 +357,11 @@ variable "kms_key_name" {
   description = "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. Note: kms_instance_name to be considered only if key_management value is set to key_protect. (for example kms_key_name: my-encryption-key)."
 }
 
-# variable "hpcs_instance_name" {
-#   type        = string
-#   default     = null
-#   description = "Hyper Protect Crypto Service instance"
-# }
-
 ##############################################################################
 # SCC Variables
 ##############################################################################
 
-variable "enable_scc" {
+variable "scc_enable" {
   type        = bool
   default     = false
   description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
@@ -587,27 +369,33 @@ variable "enable_scc" {
 
 variable "scc_profile" {
   type        = string
-  default     = "1c13d739-e09e-4bf4-8715-dd82e4498041"
-  description = "Profile to be set on the SCC Instance (accepting empty, CIS and Financial Services profiles ID)"
+  default     = "CIS IBM Cloud Foundations Benchmark"
+  description = "Profile to be set on the SCC Instance (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')"
   validation {
-    condition     = can(regex("^(|1c13d739-e09e-4bf4-8715-dd82e4498041|bfacb71d-4b84-41ac-9825-e8a3a3eb7405)$", var.scc_profile))
-    error_message = "Provide SCC Profile ID to be used (accepting empty, CIS and Financial Services profiles ID)."
+    condition     = can(regex("^(|CIS IBM Cloud Foundations Benchmark|IBM Cloud Framework for Financial Services)$", var.scc_profile))
+    error_message = "Provide SCC Profile Name to be used (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')."
+  }
+}
+
+variable "scc_profile_version" {
+  type        = string
+  default     = "1.0.0"
+  description = "Version of the Profile to be set on the SCC Instance (accepting empty, CIS and Financial Services profiles versions)"
+  validation {
+    condition     = can(regex("^(|\\d+\\.\\d+(\\.\\d+)?)$", var.scc_profile_version))
+    error_message = "Provide SCC Profile Version to be used."
   }
 }
 
 variable "scc_location" {
   description = "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
-  type = string
-  default = "us-south"
+  type        = string
+  default     = "us-south"
   validation {
     condition     = can(regex("^(|us-south|eu-de|ca-tor|eu-es)$", var.scc_location))
     error_message = "Provide region where it's possible to deploy an SCC Instance (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es') or leave blank and it will default to 'us-south'."
   }
 }
-
-##############################################################################
-# TODO: Sagar variables
-##############################################################################
 
 variable "hyperthreading_enabled" {
   type        = bool
@@ -637,11 +425,6 @@ variable "app_center_high_availability" {
   description = "Set to false to disable the IBM Spectrum LSF Application Center GUI High Availability (default: true) ."
 }
 
-# variable "ssh_key_name" {
-#   type        = string
-#   description = "Comma-separated list of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC cluster node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
-# }
-
 variable "enable_fip" {
   type        = bool
   default     = true
@@ -653,6 +436,7 @@ variable "enable_fip" {
 # If provided, these scripts will be executed as part of validation test suites execution.
 ###########################################################################
 
+# tflint-ignore: terraform_naming_convention
 variable "TF_VALIDATION_SCRIPT_FILES" {
   type        = list(string)
   default     = []
@@ -725,8 +509,8 @@ variable "skip_iam_authorization_policy" {
 ###########################################################################
 # IBM Cloud ALB Variables
 ###########################################################################
-variable "certificate_instance" {
-  description = "Certificate instance CRN value. It's the CRN value of a certificate stored in the Secret Manager. A certificate that was issued by an external certificate authority for your domain name. The certificate will be then provided to the ALB Front End listeners to manage HTTPS connections. It's used if IBM Spectrum LSF Application Center GUI High Availability is enabled."
+variable "existing_certificate_instance" {
+  description = "When app_center_high_availability is enable/set as true, The Application Center will be configured for high availability and requires a Application Load Balancer Front End listener to use a certificate CRN value stored in the Secret Manager. Provide the valid 'existing_certificate_instance' to configure the Application load balancer."
   type        = string
   default     = ""
 }
@@ -735,12 +519,14 @@ variable "certificate_instance" {
 # Environment Variables
 ##############################################################################
 
+# tflint-ignore: all
 variable "TF_VERSION" {
   type        = string
   default     = "1.5"
   description = "The version of the Terraform engine that's used in the Schematics workspace."
 }
 
+# tflint-ignore: all
 variable "TF_PARALLELISM" {
   type        = string
   default     = "250"
@@ -749,4 +535,33 @@ variable "TF_PARALLELISM" {
     condition     = 1 <= var.TF_PARALLELISM && var.TF_PARALLELISM <= 256
     error_message = "Input \"TF_PARALLELISM\" must be greater than or equal to 1 and less than or equal to 256."
   }
+}
+
+###########################################################################
+# Existing Bastion Support variables
+###########################################################################
+
+variable "bastion_instance_name" {
+  type        = string
+  default     = null
+  description = "Bastion instance name. If none given then new bastion will be created."
+}
+
+variable "bastion_instance_public_ip" {
+  type        = string
+  default     = null
+  description = "Bastion instance public ip address."
+}
+
+variable "bastion_security_group_id" {
+  type        = string
+  default     = null
+  description = "Bastion security group id."
+}
+
+variable "bastion_ssh_private_key" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Bastion SSH private key path, which will be used to login to bastion host."
 }

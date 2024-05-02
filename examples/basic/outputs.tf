@@ -1,8 +1,13 @@
-# Future use
-/*
-output "hpc_basic_example_output" {
+###################################################
+# Copyright (C) IBM Corp. 2024 All Rights Reserved.
+# Licensed under the Apache License v2.0
+###################################################
+
+##############################################################################
+# Outputs
+##############################################################################
+
+output "cluster_info" {
   value       = module.hpc_basic_example
-  sensitive   = true
-  description = "SSH command to connect to HPC cluster"
+  description = "Hpcaas cluster information."
 }
-*/

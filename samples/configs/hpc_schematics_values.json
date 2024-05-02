@@ -37,7 +37,7 @@
           "value": "250",
           "type": "string",
           "secure": false,
-          "description": "Parallelism/ concurrent operations limit. Valid values are between 1 and 256, both inclusive. [Learn more](https://developer.hashicorp.com/terraform/internals/graph#walking-the-graph)."
+          "description": "Parallelism concurrent operations limit. Valid values are between 1 and 256, both inclusive. [Learn more](https://developer.hashicorp.com/terraform/internals/graph#walking-the-graph)."
         },
         {
           "name": "TF_VERSION",
@@ -65,7 +65,7 @@
           "value": "[\"Please fill here\",\"Please fill here\"]",
           "type": "list(string)",
           "secure": false,
-          "description": "IBM Cloud zone names within the selected region where the IBM Cloud HPC cluster should be deployed. Two zone names are required as input value and supported zones for eu-de are eu-de-2, eu-de-3 and for us-east us-east-1, us-east-3. The management nodes and file storage shares will be deployed to the first zone in the list. Compute nodes will be deployed across both first and second zones, where the first zone in the list will be considered as the most preferred zone for compute nodes deployment. [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
+          "description": "IBM Cloud zone names within the selected region where the IBM Cloud HPC cluster should be deployed. Single zone name is required as input value and supported zones for eu-de are eu-de-2, eu-de-3 for us-east us-east-1, us-east-3 and for us-south us-south-1 and us-south-3. The management nodes, file storage shares and Compute nodes will be deployed on the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
         },
         {
           "name": "cluster_prefix",
@@ -100,7 +100,7 @@
           "value": "[]",
           "type": "list(string)",
           "secure": false,
-          "description": "List of existing subnet IDs under the VPC, where the cluster will be provisioned. Two subnet ids are required as input value and supported zones for eu-de are eu-de-2, eu-de-3 and for us-east us-east-1, us-east-3. The management nodes and file storage shares will be deployed to the first zone in the list. Compute nodes will be deployed across both first and second zones, where the first zone in the list will be considered as the most preferred zone for compute nodes deployment."
+          "description": "List of existing subnet ID under the VPC, where the cluster will be provisioned. One subnet id is required as input value and supported zones for eu-de are eu-de-2, eu-de-3, for us-east us-east-1, us-east-3 and for us-south are us-south-1, us-south-3 .The management nodes, file storage shares and Compute nodes will be deployed on the same zone."
         },
         {
           "name": "login_subnet_id",
@@ -128,14 +128,14 @@
           "value": "10.241.0.0/18,10.241.64.0/18",
           "type": "string",
           "secure": false,
-          "description": "Creates the address prefix for the new VPC, when the vpc_name variable is empty. The VPC requires an address prefix for each subnet in two different zones. The subnets are created with the specified CIDR blocks, enabling support for two zones within the VPC. For more information, see [Setting IP ranges](https://cloud.ibm.com/docs/vpc?topic=vpc-vpc-addressing-plan-design)."
+          "description": "Creates the address prefix for the new VPC, when the vpc_name variable is empty. The VPC requires an address prefix for each subnet in two different zones. The subnets are created with the specified CIDR blocks. For more information, see [Setting IP ranges](https://cloud.ibm.com/docs/vpc?topic=vpc-vpc-addressing-plan-design)."
         },
         {
           "name": "vpc_cluster_private_subnets_cidr_blocks",
           "value": "[\"10.241.0.0/20\", \"10.241.64.0/20\"]",
           "type": "list(string)",
           "secure": false,
-          "description": "The CIDR block that's required for the creation of the compute cluster private subnet. Modify the CIDR block if it conflicts with any on-premises CIDR blocks when using a hybrid environment. Make sure to select a CIDR block size that will accommodate the maximum number of management and dynamic compute nodes that you expect to have in your cluster. Requires one CIDR block for each subnet in two different zones. For more information on CIDR block size selection, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
+          "description": "The CIDR block that's required for the creation of the compute cluster private subnet. Modify the CIDR block if it conflicts with any on-premises CIDR blocks when using a hybrid environment. Make sure to select a CIDR block size that will accommodate the maximum number of management and dynamic compute nodes that you expect to have in your cluster. Requires one CIDR block. For more information on CIDR block size selection, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
         },
         {
           "name": "vpc_cluster_login_private_subnets_cidr_blocks",
@@ -205,7 +205,14 @@
           "value": "hpcaas-lsf10-rhel88-compute-v3",
           "type": "string",
           "secure": false,
-          "description": "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v2). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
+          "description": "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v2). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering; in that case a CRN can be entered here."
+        },
+        {
+          "name": "login_image_name",
+          "value": "hpcaas-lsf10-rhel88-compute-v3",
+          "type": "string",
+          "secure": false,
+          "description": "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster login node. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v2). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
         },
         {
           "name": "login_node_instance_type",
@@ -234,6 +241,11 @@
           "type": "list(object({mount_path = string,size = number,iops = number}))",
           "secure": false,
           "description": "Mount points and sizes in GB and IOPS range of file shares that can be used to customize shared file storage layout. Provide the details for up to 5 shares. Each file share size in GB supports different range of IOPS. For more information, see [file share IOPS value](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=ui)"
+        },
+        { "name": "storage_security_group_id",
+          "value": "null",
+          "type": "string",
+          "description" : "Existing storage security group id"
         },
         {
           "name": "hyperthreading_enabled",
@@ -288,10 +300,10 @@
           "type": "bool",
           "description": "Set to false to disable the IBM Spectrum LSF Application Center GUI High Availability (default: true)."
         },
-        {  "name": "certificate_instance",
+        {  "name": "existing_certificate_instance",
           "value": "",
           "type": "string",
-          "description": "Certificate instance CRN value. It's the CRN value of a certificate stored in the Secret Manager. A certificate that was issued by an external certificate authority for your domain name. The certificate will be then provided to the ALB Front End listeners to manage HTTPS connections. It's used if IBM Spectrum LSF Application Center GUI High Availability is enabled."
+          "description": "When app_center_high_availability is enable/set as true, The Application Center will be configured for high availability and requires a Application Load Balancer Front End listener to use a certificate CRN value stored in the Secret Manager. Provide the valid 'existing_certificate_instance' to configure the Application load balancer."
         },
         {
           "name": "enable_vpc_flow_logs",
@@ -362,7 +374,7 @@
           "description": "Image name to be used for provisioning the LDAP instances."
         },
         {
-          "name": "enable_scc",
+          "name": "scc_enable",
           "value": true,
           "type": "bool",
           "secure": false,
@@ -370,10 +382,17 @@
         },
         {
           "name": "scc_profile",
-          "value": "1c13d739-e09e-4bf4-8715-dd82e4498041",
+          "value": "CIS IBM Cloud Foundations Benchmark",
           "type": "string",
           "secure": false,
-          "description": "SCC profile ID to be used with the newly created SCC instance."
+          "description": "SCC Profile Name to be used with the newly created SCC instance."
+        },
+        {
+          "name": "scc_profile_version",
+          "value": "1.0.0",
+          "type": "string",
+          "secure": false,
+          "description": "SCC Profile Version to be used with the newly created SCC instance."
         },
         {
           "name": "scc_location",
@@ -381,7 +400,43 @@
           "type": "string",
           "secure": false,
           "description": "Region where to deploy SCC instance."
-        }
+        },
+        { "name": "enable_cloud_monitoring",
+          "value": "false",
+          "type": "bool",
+          "description": "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure and LSF application metrics from Management Nodes will be ingested."
+        },
+        { "name": "enable_cloud_monitoring_compute_nodes",
+          "value": "false",
+          "type": "bool",
+          "description": "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure metrics from Compute Nodes will be ingested."
+        },
+        { "name": "cloud_monitoring_plan",
+          "value": "lite",
+          "type": "string",
+          "description" : "Type of service plan for IBM Cloud Monitoring instance. You can choose one of the following: lite, graduated-tier, graduated-tier-sysdig-secure-plus-monitor (deprecated). For all details visit [IBM Cloud Monitoring Service Plans](https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans)."
+       },
+       { "name": "bastion_instance_name",
+         "value": "null",
+         "type": "string",
+         "description" : "Bastion instance name. If none given then new bastion will be created."
+       },
+       { "name": "bastion_instance_public_ip",
+         "value": "null",
+         "type": "string",
+         "description" : "Bastion instance public ip address."
+       },
+       { "name": "bastion_security_group_id",
+         "value": "null",
+         "type": "string",
+         "description" : "Bastion security group id."
+       },
+       { "name": "bastion_ssh_private_key",
+         "value": "null",
+         "type": "string",
+         "description" : "Bastion SSH private key path, which will be used to login to bastion host."
+          "description" : "Type of service plan for IBM Cloud Monitoring instance. You can choose one of the following: lite, graduated-tier. For all details visit [IBM Cloud Monitoring Service Plans](https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans)."
+       }
       ]
     }
   ]
