@@ -1,4 +1,6 @@
 #!/bin/sh
+# shellcheck disable=all
+
 ###################################################
 # Copyright (C) IBM Corp. 2023 All Rights Reserved.
 # Licensed under the Apache License v2.0
@@ -63,9 +65,9 @@ elif grep -q "NAME=\"Ubuntu\"" /etc/os-release; then
     if ! grep -qE "^[[:space:]]*mtu: 9000" $netplan_config; then
         echo "MTU 9000 Packages entries not found"
         # Append the MTU configuration to the Netplan file
-        sudo sed -i '/'$net_int':/a\            mtu: 9000' $netplan_config
-        sudo sed -i '/dhcp4: true/a \            nameservers:\n              search: ['$dns_domain']' $netplan_config
-        sudo sed -i '/'$net_int':/a\            routes:\n              - to: '$cidr_range'\n                via: '$gateway_ip'\n                metric: 100\n                mtu: 9000' $netplan_config
+        sudo sed -i '/'"$net_int"':/a\            mtu: 9000' $netplan_config
+        sudo sed -i '/dhcp4: true/a \            nameservers:\n              search: ['"$dns_domain"']' $netplan_config
+        sudo sed -i '/'"$net_int"':/a\            routes:\n              - to: '"$cidr_range"'\n                via: '"$gateway_ip"'\n                metric: 100\n                mtu: 9000' $netplan_config
         sudo netplan apply
         echo "MTU set to 9000 on Netplan."
     else
@@ -89,7 +91,7 @@ echo "${cluster_public_key_content}" >> $root_ssh_dir/authorized_keys
 echo "StrictHostKeyChecking no" >> $root_ssh_dir/config
 echo "cluster ssh key has been added to root user" >> $logfile
 
-echo $hyperthreading
+echo "$hyperthreading"
 if [ "$hyperthreading" == true ]; then
   ego_define_ncpus="threads"
 else
@@ -165,7 +167,6 @@ cp /mnt/lsf/conf/hosts /etc/hosts
 enable_ldap="${enable_ldap}"
 ldap_server_ip="${ldap_server_ip}"
 base_dn="${ldap_basedns}"
-ldap_logfile=/tmp/ldap_integration.log
 
 # Setting up the LDAP configuration
 if [ "$enable_ldap" = "true" ]; then
@@ -177,7 +178,7 @@ if [ "$enable_ldap" = "true" ]; then
             rhel_version=$(grep -oE 'release [0-9]+' /etc/redhat-release | awk '{print $2}')
 
             if [ "$rhel_version" == "8" ]; then
-                echo "Detected RHEL 8. Proceeding with LDAP client configuration...." >> "$logfile"
+                echo "Detected RHEL 8. Proceeding with LDAP client configuration...." >> $logfile
 
                 # Allow Password authentication
                 sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
@@ -185,22 +186,20 @@ if [ "$enable_ldap" = "true" ]; then
 
                 # Configure LDAP authentication
                 authconfig --enableldap --enableldapauth \
-                            --ldapserver=ldap://${ldap_server_ip} \
+                            --ldapserver=ldap://"${ldap_server_ip}" \
                             --ldapbasedn="dc=${base_dn%%.*},dc=${base_dn#*.}" \
                             --enablemkhomedir --update
 
                 # Check the exit status of the authconfig command
                 if [ $? -eq 0 ]; then
-                    echo "LDAP Authentication enabled successfully." >> "$logfile"
+                    echo "LDAP Authentication enabled successfully." >> $logfile
                 else
-                    echo "Failed to enable LDAP and LDAP Authentication." >> "$logfile"
+                    echo "Failed to enable LDAP and LDAP Authentication." >> $logfile
                     exit 1
                 fi
 
                 # Update LDAP Client configurations in nsswitch.conf
-                sed -i -e 's/^passwd:.*$/passwd: files ldap/' \
-                    -e 's/^shadow:.*$/shadow: files ldap/' \
-                    -e 's/^group:.*$/group: files ldap/' /etc/nsswitch.conf
+                sed -i -e 's/^passwd:.*$/passwd: files ldap/' -e 's/^shadow:.*$/shadow: files ldap/' -e 's/^group:.*$/group: files ldap/' /etc/nsswitch.conf  # pragma: allowlist secret
 
                 # Update PAM configuration files
                 sed -i -e '/^auth/d' /etc/pam.d/password-auth
@@ -234,10 +233,10 @@ EOF
                 systemctl enable nscd
 
                 # Validate the LDAP configuration
-                if ldapsearch -x -H ldap://${ldap_server_ip}/ -b "dc=${base_dn%%.*},dc=${base_dn#*.}" > /dev/null; then
-                    echo "LDAP configuration completed successfully !!" >> "$logfile"
+                if ldapsearch -x -H ldap://"${ldap_server_ip}"/ -b "dc=${base_dn%%.*},dc=${base_dn#*.}" > /dev/null; then
+                    echo "LDAP configuration completed successfully !!" >> $logfile
                 else
-                    echo "LDAP configuration failed !!" >> "$logfile"
+                    echo "LDAP configuration failed !!" >> $logfile
                     exit 1
                 fi
 
@@ -245,18 +244,15 @@ EOF
                 echo ". ${LSF_CONF}/profile.lsf" >> /etc/bashrc
                 source /etc/bashrc
             else
-                echo "This script is designed for RHEL 8. Detected RHEL version: $rhel_version. Exiting." >> "$logfile"
+                echo "This script is designed for RHEL 8. Detected RHEL version: $rhel_version. Exiting." >> $logfile
                 exit 1
             fi
     elif grep -q "NAME=\"Ubuntu\"" /etc/os-release; then
 
-        echo "Detected as Ubuntu. Proceeding with LDAP client configuration..." >> \$logfile
+        echo "Detected as Ubuntu. Proceeding with LDAP client configuration..." >> $logfile
 
         # Update package repositories
-        sudo apt update -y
-
-        # Required LDAP client packages
-        export UTILITYS="ldap-utils libpam-ldap libnss-ldap nscd nslcd"
+        sudo apt-get update -y
 
         # Update SSH configuration to allow password authentication
         sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
@@ -281,7 +277,7 @@ EOF
             cat debconf-ldap-preseed.txt | debconf-set-selections
 
             # Install LDAP client packages
-            sudo apt-get install -y ${UTILITYS}
+            sudo apt-get install -y ldap-utils libpam-ldap libnss-ldap nscd nslcd
 
             sleep 2
 
@@ -289,7 +285,7 @@ EOF
             sudo sed -i '$ i\session required pam_mkhomedir.so skel=/etc/skel umask=0022\' /etc/pam.d/common-session
 
             # Update nsswitch.conf
-            sudo sed -i 's/^passwd:.*$/passwd: compat systemd ldap/' /etc/nsswitch.conf
+            sudo sed -i 's/^passwd:.*$/passwd: compat systemd ldap/' /etc/nsswitch.conf # pragma: allowlist secret
             sudo sed -i 's/^group:.*$/group: compat systemd ldap/' /etc/nsswitch.conf
             sudo sed -i 's/^shadow:.*$/shadow: compat/' /etc/nsswitch.conf
 
@@ -312,15 +308,15 @@ EOF
 
             # Validate the LDAP client service status
             if sudo systemctl is-active --quiet nscd; then
-                echo "LDAP client configuration completed successfully !!"
+                echo "LDAP client configuration completed successfully !!" >> $logfile
             else
-                echo "LDAP client configuration failed. nscd service is not running."
+                echo "LDAP client configuration failed. nscd service is not running." >> $logfile
                 exit 1
             fi
         else
-            echo -e "debconf-ldap-preseed.txt Not found. Skipping LDAP client configuration."
+            echo -e "debconf-ldap-preseed.txt Not found. Skipping LDAP client configuration." >> $logfile
         fi
     else
-        echo "This script is designed for Ubuntu 22 and installation is not supporting. Exiting." >> \$logfile
+        echo "This script is designed for Ubuntu 22 and installation is not supporting. Exiting." >> $logfile
     fi
 fi

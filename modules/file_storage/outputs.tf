@@ -16,9 +16,15 @@ output "mount_paths_info" {
 }
 
 output "mount_path_1" {
+  description = "Mount path"
   #value = ibm_is_share_mount_target.share_target_sg[0].mount_path
   #value = output "mount_path_1" {
   value = length(ibm_is_share_mount_target.share_target_sg) > 0 ? ibm_is_share_mount_target.share_target_sg[0].mount_path : null
+}
+
+output "mount_paths_excluding_first" {
+  description = "Mount paths excluding the first element"
+  value       = length(ibm_is_share_mount_target.share_target_sg[*].mount_path) > 1 ? slice(ibm_is_share_mount_target.share_target_sg[*].mount_path, 1, length(ibm_is_share_mount_target.share_target_sg[*].mount_path)) : []
 }
 
 #output "mount_paths_excluding_first" {
@@ -40,8 +46,3 @@ output "mount_path_1" {
 #  description = "Mount paths excluding the first element"
 #  value       = length(ibm_is_share_mount_target.share_target_sg[*].mount_path) > 1 ? tail(ibm_is_share_mount_target.share_target_sg[*].mount_path, length(ibm_is_share_mount_target.share_target_sg[*].mount_path) - 1) : []
 #}
-
-output "mount_paths_excluding_first" {
-  description = "Mount paths excluding the first element"
-  value       = length(ibm_is_share_mount_target.share_target_sg[*].mount_path) > 1 ? slice(ibm_is_share_mount_target.share_target_sg[*].mount_path, 1, length(ibm_is_share_mount_target.share_target_sg[*].mount_path)) : []
-}

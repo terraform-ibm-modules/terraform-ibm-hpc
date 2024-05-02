@@ -1,4 +1,5 @@
 #!/usr/bin/bash
+# shellcheck disable=all
 
 ###################################################
 # Copyright (C) IBM Corp. 2023 All Rights Reserved.
@@ -49,9 +50,9 @@ elif grep -q "NAME=\"Ubuntu\"" /etc/os-release; then
     if ! grep -qE "^[[:space:]]*mtu: 9000" $netplan_config; then
         echo "MTU 9000 Packages entries not found"
         # Append the MTU configuration to the Netplan file
-        sudo sed -i '/'$net_int':/a\            mtu: 9000' $netplan_config
-        sudo sed -i '/dhcp4: true/a \            nameservers:\n              search: ['$dns_domain']' $netplan_config
-        sudo sed -i '/'$net_int':/a\            routes:\n              - to: '$cidr_range'\n                via: '$gateway_ip'\n                metric: 100\n                mtu: 9000' $netplan_config
+        sudo sed -i '/'"$net_int"':/a\            mtu: 9000' $netplan_config
+        sudo sed -i '/dhcp4: true/a \            nameservers:\n              search: ['"$dns_domain"']' $netplan_config
+        sudo sed -i '/'"$net_int"':/a\            routes:\n              - to: '"$cidr_range"'\n                via: '"$gateway_ip"'\n                metric: 100\n                mtu: 9000' $netplan_config
         sudo netplan apply
         echo "MTU set to 9000 on Netplan."
     else
