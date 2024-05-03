@@ -62,10 +62,10 @@
         },
         {
           "name": "zones",
-          "value": "[\"Please fill here\",\"Please fill here\"]",
+          "value": "[\"Please fill here\"]",
           "type": "list(string)",
           "secure": false,
-          "description": "IBM Cloud zone names within the selected region where the IBM Cloud HPC cluster should be deployed. Single zone name is required as input value and supported zones for eu-de are eu-de-2, eu-de-3 for us-east us-east-1, us-east-3 and for us-south us-south-1 and us-south-3. The management nodes, file storage shares and Compute nodes will be deployed on the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
+          "description": "IBM Cloud zone name within the selected region where the IBM Cloud HPC cluster should be deployed. Single zone name is required as input value and supported zones for eu-de are eu-de-2, eu-de-3 for us-east us-east-1, us-east-3 and for us-south us-south-1 and us-south-3. The management nodes, file storage shares and compute nodes will be deployed on the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
         },
         {
           "name": "cluster_prefix",
@@ -100,7 +100,7 @@
           "value": "[]",
           "type": "list(string)",
           "secure": false,
-          "description": "List of existing subnet ID under the VPC, where the cluster will be provisioned. One subnet id is required as input value and supported zones for eu-de are eu-de-2, eu-de-3, for us-east us-east-1, us-east-3 and for us-south are us-south-1, us-south-3 .The management nodes, file storage shares and Compute nodes will be deployed on the same zone."
+          "description": "List of existing subnet ID under the VPC, where the cluster will be provisioned. One subnet id is required as input value and supported zones for eu-de are eu-de-2, eu-de-3, for us-east us-east-1, us-east-3 and for us-south are us-south-1, us-south-3 .The management nodes, file storage shares and compute nodes will be deployed on the same zone."
         },
         {
           "name": "login_subnet_id",
@@ -125,14 +125,14 @@
         },
         {
           "name": "vpc_cidr",
-          "value": "10.241.0.0/18,10.241.64.0/18",
+          "value": "10.241.0.0/18",
           "type": "string",
           "secure": false,
-          "description": "Creates the address prefix for the new VPC, when the vpc_name variable is empty. The VPC requires an address prefix for each subnet in two different zones. The subnets are created with the specified CIDR blocks. For more information, see [Setting IP ranges](https://cloud.ibm.com/docs/vpc?topic=vpc-vpc-addressing-plan-design)."
+          "description": "Creates the address prefix for the new VPC, when the vpc_name variable is empty. The VPC requires an address prefix for creation of subnet in a single zone. The subnet are created with the specified CIDR blocks. For more information, see [Setting IP ranges](https://cloud.ibm.com/docs/vpc?topic=vpc-vpc-addressing-plan-design)."
         },
         {
           "name": "vpc_cluster_private_subnets_cidr_blocks",
-          "value": "[\"10.241.0.0/20\", \"10.241.64.0/20\"]",
+          "value": "[\"10.241.0.0/20\"]",
           "type": "list(string)",
           "secure": false,
           "description": "The CIDR block that's required for the creation of the compute cluster private subnet. Modify the CIDR block if it conflicts with any on-premises CIDR blocks when using a hybrid environment. Make sure to select a CIDR block size that will accommodate the maximum number of management and dynamic compute nodes that you expect to have in your cluster. Requires one CIDR block. For more information on CIDR block size selection, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
@@ -237,15 +237,15 @@
         },
         {
           "name": "custom_file_shares",
-          "value": "[{mount_path = \"/mnt/binaries\", size = 100, iops = 2000 }, { mount_path = \"/mnt/data\", size = 100, iops = 6000 } ]",
-          "type": "list(object({mount_path = string,size = number,iops = number}))",
+          "value": "[{mount_path = \"/mnt/binaries\", size = 100, iops = 2000 }, { mount_path = \"/mnt/data\", size = 100, iops = 6000 }, { mount_path = \"/mnt/scale/tools\", nfs_share = \"\" } ]",
+          "type": "list(object({mount_path = string,size = optional(number),iops = optional(number),nfs_share = optional(string)}))",
           "secure": false,
           "description": "Mount points and sizes in GB and IOPS range of file shares that can be used to customize shared file storage layout. Provide the details for up to 5 shares. Each file share size in GB supports different range of IOPS. For more information, see [file share IOPS value](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=ui)"
         },
         { "name": "storage_security_group_id",
           "value": "null",
           "type": "string",
-          "description" : "Existing storage security group id"
+          "description" : "Provide the security group id that is created from Scale storage, if the nfs_share is not equal to null from cluster_file_share variable."
         },
         {
           "name": "hyperthreading_enabled",

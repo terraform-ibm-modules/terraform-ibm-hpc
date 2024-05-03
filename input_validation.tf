@@ -219,7 +219,7 @@ locals {
   (local.validate_enable_cloud_monitoring_compute_nodes ? local.enable_cloud_monitoring_compute_nodes_msg : ""))
 
   # Existing Bastion validation
-  validate_existing_bastion     = var.bastion_instance_name != null ? (var.bastion_instance_public_ip != null && var.bastion_security_group_id != null && var.bastion_ssh_private_key != null) : local.bastion_instance_status
+  validate_existing_bastion     = var.bastion_instance_name != "null" ? (var.bastion_instance_public_ip != "null" && var.bastion_security_group_id != "null" && var.bastion_ssh_private_key != "null") : local.bastion_instance_status
   validate_existing_bastion_msg = "If bastion_instance_name is not null, then bastion_instance_public_ip, bastion_security_group_id, and bastion_ssh_private_key should not be null."
   # tflint-ignore: terraform_unused_declarations
   validate_existing_bastion_chk = regex(
@@ -227,9 +227,9 @@ locals {
   (local.validate_existing_bastion ? local.validate_existing_bastion_msg : ""))
 
   # Existing Storage security group validation
-  validate_existing_storage_sg = length([for share in var.custom_file_shares : { mount_path = share.mount_path, nfs_share  = share.nfs_share } if share.nfs_share != null && share.nfs_share != ""]) > 0 ? var.storage_security_group_id != null ? true : false : true
-  validate_existing_storage_sg_msg = "Storage security group ID cannot be null when NFS share is provided."
+  validate_existing_storage_sg     = length([for share in var.custom_file_shares : { mount_path = share.mount_path, nfs_share = share.nfs_share } if share.nfs_share != null && share.nfs_share != ""]) > 0 ? var.storage_security_group_id != "null" ? true : false : true
+  validate_existing_storage_sg_msg = "Storage security group ID cannot be null when NFS share mount path is provided under cluster_file_shares variable."
   validate_existing_storage_sg_chk = regex(
-    "^${local.validate_existing_storage_sg_msg}$", 
+    "^${local.validate_existing_storage_sg_msg}$",
   (local.validate_existing_storage_sg ? local.validate_existing_storage_sg_msg : ""))
 }

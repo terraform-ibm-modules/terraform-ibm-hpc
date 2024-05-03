@@ -42,7 +42,7 @@ variable "cluster_prefix" {
 }
 
 variable "zones" {
-  description = "IBM Cloud zone names within the selected region where the IBM Cloud HPC cluster should be deployed. Single zone name is required as input value and supported zones for eu-de are eu-de-2, eu-de-3 for us-east us-east-1, us-east-3 and for us-south us-south-1 and us-south-3. The management nodes, file storage shares and Compute nodes will be deployed on the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
+  description = "IBM Cloud zone name within the selected region where the IBM Cloud HPC cluster should be deployed. Single zone name is required as input value and supported zones for eu-de are eu-de-2, eu-de-3 for us-east us-east-1, us-east-3 and for us-south us-south-1 and us-south-3. The management nodes, file storage shares and compute nodes will be deployed on the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
   type        = list(string)
   validation {
     condition     = length(var.zones) == 1
@@ -82,10 +82,10 @@ variable "vpc_name" {
 variable "cluster_subnet_ids" {
   type        = list(string)
   default     = []
-  description = "List of existing subnet ID under the VPC, where the cluster will be provisioned. One subnet id is required as input value and supported zones for eu-de are eu-de-2, eu-de-3, for us-east us-east-1, us-east-3 and for us-south are us-south-1, us-south-3 .The management nodes, file storage shares and Compute nodes will be deployed on the same zone."
+  description = "List of existing subnet ID under the VPC, where the cluster will be provisioned. One subnet id is required as input value and supported zones for eu-de are eu-de-2, eu-de-3, for us-east us-east-1, us-east-3 and for us-south are us-south-1, us-south-3 .The management nodes, file storage shares and compute nodes will be deployed on the same zone."
   validation {
     condition     = contains([0, 1], length(var.cluster_subnet_ids))
-    error_message = "The subnet_id value should either be empty or contain exactly two elements."
+    error_message = "The subnet_id value should either be empty or contain exactly one element."
   }
 }
 
@@ -96,7 +96,7 @@ variable "login_subnet_id" {
 }
 
 variable "vpc_cidr" {
-  description = "Creates the address prefix for the new VPC, when the vpc_name variable is empty. The VPC requires an address prefix for each subnet in two different zones. The subnets are created with the specified CIDR blocks. For more information, see [Setting IP ranges](https://cloud.ibm.com/docs/vpc?topic=vpc-vpc-addressing-plan-design)."
+  description = "Creates the address prefix for the new VPC, when the vpc_name variable is empty. The VPC requires an address prefix for creation of subnet in a single zone. The subnet are created with the specified CIDR blocks. For more information, see [Setting IP ranges](https://cloud.ibm.com/docs/vpc?topic=vpc-vpc-addressing-plan-design)."
   type        = string
   default     = "10.241.0.0/18"
 }
@@ -107,7 +107,7 @@ variable "vpc_cluster_private_subnets_cidr_blocks" {
   description = "The CIDR block that's required for the creation of the compute cluster private subnet. Modify the CIDR block if it conflicts with any on-premises CIDR blocks when using a hybrid environment. Make sure to select a CIDR block size that will accommodate the maximum number of management and dynamic compute nodes that you expect to have in your cluster. Requires one CIDR block. For more information on CIDR block size selection, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
   validation {
     condition     = length(var.vpc_cluster_private_subnets_cidr_blocks) == 1
-    error_message = "Multiple zones are supported to deploy resources. Provide a CIDR range of subnets creation."
+    error_message = "Single zone is supported to deploy resources. Provide a CIDR range of subnets creation."
   }
 }
 
@@ -236,8 +236,8 @@ variable "custom_file_shares" {
 
 variable "storage_security_group_id" {
   type        = string
-  default     = null
-  description = "Existing storage security group id"
+  default     = "null"
+  description = "Provide the security group id that is created from Scale storage, if the nfs_share is not equal to null from cluster_file_share variable."
 }
 
 ##############################################################################
@@ -543,25 +543,25 @@ variable "TF_PARALLELISM" {
 
 variable "bastion_instance_name" {
   type        = string
-  default     = null
+  default     = "null"
   description = "Bastion instance name. If none given then new bastion will be created."
 }
 
 variable "bastion_instance_public_ip" {
   type        = string
-  default     = null
+  default     = "null"
   description = "Bastion instance public ip address."
 }
 
 variable "bastion_security_group_id" {
   type        = string
-  default     = null
+  default     = "null"
   description = "Bastion security group id."
 }
 
 variable "bastion_ssh_private_key" {
   type        = string
   sensitive   = true
-  default     = null
+  default     = "null"
   description = "Bastion SSH private key path, which will be used to login to bastion host."
 }
