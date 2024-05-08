@@ -4,7 +4,7 @@ locals {
 }
 
 module "hpc_basic_example" {
-  source             = "../.."
+  source             = "../../solutions/hpc"
   ibmcloud_api_key   = var.ibmcloud_api_key
   resource_group     = var.resource_group
   cluster_prefix     = var.cluster_prefix

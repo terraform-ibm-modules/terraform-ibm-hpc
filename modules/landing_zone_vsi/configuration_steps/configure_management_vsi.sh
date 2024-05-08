@@ -847,7 +847,7 @@ logfile=/tmp/lsf_start_pac.log
 echo "\$(date +'%Y%m%d_%H%M%S'): START" > \$logfile
 
 # Wait mount point just to be sure it is ready
-while [ ! mountpoint /mnt/lsf ]; do 
+while [ ! mountpoint /mnt/lsf ]; do
         sleep 1;
 done
 echo "\$(date +'%Y%m%d_%H%M%S'): File system '/mnt/lsf' is mounted" >> \$logfile

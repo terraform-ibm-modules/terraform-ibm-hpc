@@ -435,7 +435,6 @@
          "value": "null",
          "type": "string",
          "description" : "Bastion SSH private key path, which will be used to login to bastion host."
-          "description" : "Type of service plan for IBM Cloud Monitoring instance. You can choose one of the following: lite, graduated-tier. For all details visit [IBM Cloud Monitoring Service Plans](https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans)."
        }
       ]
     }
