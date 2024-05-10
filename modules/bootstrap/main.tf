@@ -56,7 +56,7 @@ module "bastion_vsi" {
   enable_floating_ip            = true
   security_group_ids            = module.bastion_sg[*].security_group_id
   ssh_key_ids                   = local.bastion_ssh_keys
-  subnets                       = length(var.bastion_subnets) == 3 ? [local.bastion_subnets[2]] : [local.bastion_subnets[0]]
+  subnets                       = length(var.bastion_subnets) == 2 ? [local.bastion_subnets[1]] : [local.bastion_subnets[0]]
   tags                          = local.tags
   user_data                     = data.template_file.bastion_user_data.rendered
   vpc_id                        = var.vpc_id

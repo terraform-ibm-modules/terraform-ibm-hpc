@@ -2,9 +2,9 @@ locals {
   vpc_name    = var.vpc_name == "null" ? one(module.hpc.vpc_name) : var.vpc_name
   region_name = [for zone in var.zones : join("-", slice(split("-", zone), 0, 2))][0]
   api_endpoint_region_map = {
-    "us-east"  = "https://hpc-api.us-east.codeengine.cloud.ibm.com/v2"
-    "eu-de"    = "https://hpc-api.eu-de.codeengine.cloud.ibm.com/v2"
-    "us-south" = "https://hpc-api.us-south.codeengine.cloud.ibm.com/v2"
+    "us-east"  = "https://hpc-api.us-east.codeengine.cloud.ibm.com/v3"
+    "eu-de"    = "https://hpc-api.eu-de.codeengine.cloud.ibm.com/v3"
+    "us-south" = "https://hpc-api.us-south.codeengine.cloud.ibm.com/v3"
   }
   ldap_server_status = var.enable_ldap == true && var.ldap_server == "null" ? false : true
 
@@ -18,6 +18,13 @@ locals {
   # NFS Mount security group
   storage_security_group_id = var.storage_security_group_id != "null" ? var.storage_security_group_id : null
 
+  # Decode the JSON reply got from the Code Engine API
+  # https://hpc-api.<REGION>.codeengine.cloud.ibm.com/v3/capacity_reservations
+  reservation_data = jsondecode(data.http.contract_id_validation.response_body)
+  # Verify if in the capacity_reservations list there is one with the name equal to the Contract ID.
+  contract_id_found = try(length([for res in local.reservation_data.capacity_reservations : res if res.name == var.contract_id]), 0) > 0
+  # Verify if the status code is 200
+  valid_status_code = contains(["200"], tostring(data.http.contract_id_validation.status_code))
 }
 
 data "ibm_is_region" "region" {
@@ -57,21 +64,13 @@ data "ibm_is_subnet" "existing_login_subnet" {
 data "ibm_iam_auth_token" "auth_token" {}
 
 data "http" "contract_id_validation" {
-  url    = "${local.api_endpoint_region_map[local.region_name]}/capacity_requests/check"
-  method = "POST"
+  url    = "${local.api_endpoint_region_map[local.region_name]}/capacity_reservations"
+  method = "GET"
   request_headers = {
-    accept        = "application/json"
+    Accept        = "application/json"
     Authorization = data.ibm_iam_auth_token.auth_token.iam_access_token
-    Content-Type  = "application/json"
+    #Content-Type  = "application/json"
   }
-  request_body = jsonencode({
-    "cluster" = {
-      "id" = "${var.contract_id}_${var.cluster_id}"
-    }
-    "contract" = {
-      "id" = var.contract_id
-    }
-  })
 }
 
 data "ibm_is_public_gateways" "public_gateways" {

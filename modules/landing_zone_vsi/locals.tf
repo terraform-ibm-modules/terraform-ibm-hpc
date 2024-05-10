@@ -125,9 +125,9 @@ locals {
   ldap_instance_image_id = var.enable_ldap == true && var.ldap_server == "null" ? data.ibm_is_image.ldap_vsi_image[0].id : "null"
 
   # The below logic is needed to point the API endpoints for the dynanic host creation
-  us_east  = "https://hpc-api.us-east.codeengine.cloud.ibm.com/v2"
-  eu_de    = "https://hpc-api.eu-de.codeengine.cloud.ibm.com/v2"
-  us_south = "https://hpc-api.us-south.codeengine.cloud.ibm.com/v2"
+  us_east  = "https://api.us-east.codeengine.cloud.ibm.com/v2beta"
+  eu_de    = "https://api.eu-de.codeengine.cloud.ibm.com/v2beta"
+  us_south = "https://api.us-south.codeengine.cloud.ibm.com/v2beta"
 }
 
 ###########################################################################
