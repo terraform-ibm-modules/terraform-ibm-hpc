@@ -27,6 +27,7 @@ rc_cidr_block="${rc_cidr_block}"
 rc_max_num=${rc_max_num}
 rc_rg=${rc_rg}
 cluster_name="${cluster_name}"
+ce_project_guid="${ce_project_guid}"
 cluster_prefix="${cluster_prefix}"
 cluster_private_key_content="${cluster_private_key_content}"
 cluster_public_key_content="${cluster_public_key_content}"

@@ -1,3 +1,10 @@
+module "local_exec_script" {
+  source             = "../../modules/null/local_exec_script"
+  script_path        = "./scripts/check_reservation.sh"
+  script_arguments   = "--region ${data.ibm_is_region.region.name} --resource-group-id ${local.resource_groups["workload_rg"]} --reservation-id ${var.contract_id} --output /tmp/hpcaas-check-reservation.log"
+  script_environment = { IBM_CLOUD_API_KEY = var.ibmcloud_api_key }
+}
+
 module "landing_zone" {
   source                 = "../../modules/landing_zone"
   compute_subnets_cidr   = var.compute_subnets_cidr
@@ -120,6 +127,9 @@ module "landing_zone_vsi" {
   cloud_monitoring_ingestion_url        = var.enable_cloud_monitoring ? module.cloud_monitoring_instance_creation.cloud_monitoring_ingestion_url : ""
   cloud_monitoring_prws_key             = var.enable_cloud_monitoring ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_key : ""
   cloud_monitoring_prws_url             = var.enable_cloud_monitoring ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_url : ""
+  depends_on = [
+    module.local_exec_script
+  ]
 }
 
 module "file_storage" {

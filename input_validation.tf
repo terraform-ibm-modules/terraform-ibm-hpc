@@ -91,8 +91,8 @@ locals {
     "^${local.validate_contract_id_msg}$",
   (local.validate_contract_id ? local.validate_contract_id_msg : ""))
 
-  validate_contract_id_api     = contains(["200", "204"], tostring(data.http.contract_id_validation.status_code)) ? true : false
-  validate_contract_id_api_msg = "The contractID name must be unique globally. The Status code of validation is: ${data.http.contract_id_validation.status_code}"
+  validate_contract_id_api     = local.valid_status_code && local.contract_id_found
+  validate_contract_id_api_msg = "The provided contract id doesn't have a valid reservation or the contract id is not on the same account as HPC deployment."
   # tflint-ignore: terraform_unused_declarations
   validate_contract_id_api_chk = regex(
     "^${local.validate_contract_id_api_msg}$",

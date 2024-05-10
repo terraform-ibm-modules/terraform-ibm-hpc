@@ -276,6 +276,7 @@ EOT
     "LogLevel": "INFO",
     "CONTRACT_ID": "${contract_id}",
     "CLUSTER_ID": "${cluster_name}",
+    "PROJECT_ID": "${ce_project_guid}",
     "ApiEndPoints": {
         "us-east": "${api_endpoint_us_east}",
         "eu-de": "${api_endpoint_eu_de}",
@@ -384,48 +385,43 @@ EOF
   echo "$json_data" > "$ibmcloudgen2_templates"
   echo "JSON templates are created and updated on ibmcloudgen2_templates.json"
 
-  # 7. Create resource template for ibmcloudhpc templates
-  ibmcloudhpc_templates="$LSF_RC_IBMCLOUDHPC_CONF/ibmcloudhpc_templates.json"
-  # Incrementally build a json string
-  json_string=""
-  for j in 1 2 3; do
-    for i in 2 4 8 16 32 48 64 96 128 176; do
-      ncores=$((i / 2))
-      # Calculate the template ID dynamically
-      if [ "$j" -eq 1 ]; then
-        templateId="Template-${cluster_prefix}-$((j*1000+i))"
-        userData="family=mx2"
-        family="mx2"
-        maxmem=$((ncores * 16 * 1024))
-        mem=$((maxmem * 9 / 10))
-      elif [ "$j" -eq 2 ]; then
-        templateId="Template-${cluster_prefix}-$((j*1000+i))"
-        userData="family=cx2"
-        family="cx2"
-        maxmem=$((ncores * 4 * 1024))
-        mem=$((maxmem * 9 / 10))
-      else
-        templateId="Template-${cluster_prefix}-$((j*1000+i))"
-        userData="family=mx3d"
-        family="mx3d"
-        maxmem=$((ncores * 20 * 1024))
-        mem=$((maxmem * 9 / 10))
-      fi
-      vpcus=$i
+# 7. Create resource template for ibmcloudhpc templates
+ibmcloudhpc_templates="$LSF_RC_IBMCLOUDHPC_CONF/ibmcloudhpc_templates.json"
+# Incrementally build a json string
+json_string=""
+for region in "eu-de" "us-east" "us-south"; do
+    if [ "$region" = "$regionName" ]; then
+        for i in 2 4 8 16 32 48 64 96 128 176; do
+            ncores=$((i / 2))
 
-      if $hyperthreading; then
-        ncpus=$vpcus
-       else
-        ncpus=$ncores
-      fi
-      if [ "${imageID:0:4}" == "crn:" ]; then
-        imagetype="imageCrn"
-      else
-        imagetype="imageId"
-      fi
+            if [ "$region" = "eu-de" ] || [ "$region" = "us-east" ]; then
+                templateId="Template-${cluster_prefix}-$((1000+i))"
+                family="mx2"
+                userData="family=mx2"
+                maxmem=$((ncores * 16 * 1024))
+                mem=$((maxmem * 9 / 10))
+            elif [ "$region" = "us-south" ]; then
+                templateId="Template-${cluster_prefix}-$((1000+i))"
+                family="mx3d"
+                userData="family=mx3d"
+                maxmem=$((ncores * 20 * 1024))
+                mem=$((maxmem * 9 / 10))
+            fi
+            vpcus=$i
 
-      # Construct JSON object (including final comma)
-      json_string+=$(cat <<EOF
+            if $hyperthreading; then
+                ncpus=$vpcus
+            else
+                ncpus=$ncores
+            fi
+            if [ "${imageID:0:4}" == "crn:" ]; then
+ 	            imagetype="imageCrn"
+	          else
+  	          imagetype="imageId"
+	           fi
+
+            # Construct JSON object (including final comma)
+            json_string+=$(cat <<EOF
 {
  "templateId": "$templateId",
  "maxNumber": "$rc_max_num",
@@ -446,15 +442,17 @@ EOF
  "ibmcloudhpc_fleetconfig": "ibmcloudhpc_fleetconfig_${family}.json"
 },
 EOF
-      )
-    done
-  done
-  json_string="${json_string%,}" # remove last comma
-  # Combine the JSON objects into a JSON array
-  json_data="{\"templates\": [${json_string}]}"
-  # Write the JSON data to the output file
-  echo "$json_data" > "$ibmcloudhpc_templates"
-  echo "JSON templates are created and updated on ibmcloudhpc_templates.json"
+)
+        done
+    fi
+done
+json_string="${json_string%,}" # remove last comma
+# Combine the JSON objects into a JSON array
+json_data="{\"templates\": [${json_string}]}"
+# Write the JSON data to the output file
+echo "$json_data" > "$ibmcloudhpc_templates"
+echo "JSON templates are created and updated on ibmcloudhpc_templates.json"
+
 
   # 8. ibmcloudfleet_config.json
   for i in mx2 cx2 mx3d; do
@@ -592,7 +590,7 @@ if [ -n "${nfs_server_with_mount_path}" ]; then
   rm -rf "${nfs_client_mount_path}"
   mkdir -p "${nfs_client_mount_path}"
   # Mount LSF TOP
-  mount -t nfs4 -o sec=sys,vers=4.1 "$nfs_server_with_mount_path" "$nfs_client_mount_path"
+  mount -t nfs -o sec=sys "$nfs_server_with_mount_path" "$nfs_client_mount_path"
   # Verify mount
   if mount | grep "$nfs_client_mount_path"; then
     echo "Mount found"
@@ -675,7 +673,7 @@ if [ -n "${custom_file_shares}" ]; then
     rm -rf "${mount_path_array[$i]}"
     mkdir -p "${mount_path_array[$i]}"
     # Mount LSF TOP
-    mount -t nfs4 -o sec=sys,vers=4.1 "${file_share_array[$i]}" "${mount_path_array[$i]}"
+    mount -t nfs -o sec=sys "${file_share_array[$i]}" "${mount_path_array[$i]}"
     # Verify mount
     if mount | grep "${file_share_array[$i]}"; then
       echo "Mount found"
@@ -847,7 +845,7 @@ logfile=/tmp/lsf_start_pac.log
 echo "\$(date +'%Y%m%d_%H%M%S'): START" > \$logfile
 
 # Wait mount point just to be sure it is ready
-while [ ! mountpoint /mnt/lsf ]; do 
+while [ ! mountpoint /mnt/lsf ]; do
         sleep 1;
 done
 echo "\$(date +'%Y%m%d_%H%M%S'): File system '/mnt/lsf' is mounted" >> \$logfile

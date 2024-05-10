@@ -63,7 +63,7 @@ if [ -n "${nfs_server_with_mount_path}" ]; then
   rm -rf "${nfs_client_mount_path}"
   mkdir -p "${nfs_client_mount_path}"
   # Mount LSF TOP
-  mount -t nfs4 -o sec=sys,vers=4.1 "$nfs_server_with_mount_path" "$nfs_client_mount_path" >> $logfile
+  mount -t nfs -o sec=sys "$nfs_server_with_mount_path" "$nfs_client_mount_path" >> $logfile
   # Verify mount
   if mount | grep "$nfs_client_mount_path"; then
     echo "Mount found" >> $logfile
@@ -94,7 +94,7 @@ if [ -n "${custom_file_shares}" ]; then
     rm -rf "${mount_path_array[$i]}"
     mkdir -p "${mount_path_array[$i]}"
     # Mount LSF TOP
-    mount -t nfs4 -o sec=sys,vers=4.1 "${file_share_array[$i]}" "${mount_path_array[$i]}" >> $logfile
+    mount -t nfs -o sec=sys "${file_share_array[$i]}" "${mount_path_array[$i]}" >> $logfile
     # Verify mount
     if mount | grep "${file_share_array[$i]}"; then
       echo "Mount found" >> $logfile
@@ -348,68 +348,34 @@ fi
 
 #update lsf client ip address to LSF_HOSTS_FILE
 echo "$login_ip_address $login_hostname" >> $LSF_HOSTS_FILE
-
 # Startup lsf daemons
-systemctl status lsfd >> $logfile
+systemctl status lsfd >> "$logfile"
 
 # Setting up the Metrics Agent
+
 if [ "$cloud_monitoring_access_key" != "" ] && [ "$cloud_monitoring_ingestion_url" != "" ]; then
 
-  SYSDIG_CONFIG_FILE="/opt/draios/etc/dragent.yaml"
+    SYSDIG_CONFIG_FILE="/opt/draios/etc/dragent.yaml"
 
-  #packages installation
-  echo "Writing sysdig config file" >> "$logfile"
     #packages installation
-    echo "Writing sysdig config file" >> $logfile
+    echo "Writing sysdig config file" >> "$logfile"
 
     #sysdig config file
-    echo "Setting customerid access key" >> $logfile
+    echo "Setting customerid access key" >> "$logfile"
     sed -i "s/==ACCESSKEY==/$cloud_monitoring_access_key/g" $SYSDIG_CONFIG_FILE
     sed -i "s/==COLLECTOR==/$cloud_monitoring_ingestion_url/g" $SYSDIG_CONFIG_FILE
     echo "tags: type:compute,lsf:true" >> $SYSDIG_CONFIG_FILE
-
-    echo "Restarting sysdig agent" >> $logfile
-    systemctl enable dragent
-    systemctl restart dragent
-  else
-    echo "Skipping metrics agent configuration due to missing parameters" >> $logfile
-  fi
-  else
-    echo "Metrics agent configuration skipped since monitoring provisioning is not enabled" >> $logfile
-  #sysdig config file
-  echo "Setting customerid access key" >> "$logfile"
-  sed -i "s/==ACCESSKEY==/$cloud_monitoring_access_key/g" $SYSDIG_CONFIG_FILE
-  sed -i "s/==COLLECTOR==/$cloud_monitoring_ingestion_url/g" $SYSDIG_CONFIG_FILE
-  echo "tags: type:compute,lsf:true" >> $SYSDIG_CONFIG_FILE
-  #Monitoring configured
-  touch /tmp/monitoring_configured
 else
-  echo "Metrics agent configuration skipped due to missing mandatory info" >> "$logfile"
+    echo "Skipping metrics agent configuration due to missing parameters" >> "$logfile"
 fi
 
 if [ "$enable_compute_node_monitoring" = true ]; then
-    #if you want metrics running on compute nodes, uncomment the line below
-    touch /home/lsfadmin/enable_monitoring
-else
-  echo "Skipping metrics agent start because enable_compute_node_monitoring set to false" >> "$logfile"
-fi
 
-# Crontab command to check every minute if monitoring is enabled
-cat <<EOM > /root/enable_disable_monitoring.sh
-if [ -e /tmp/monitoring_configured ]; then
-  if [ -e /home/lsfadmin/enable_monitoring ] && [ ! -e /tmp/monitoring_running ]; then
+    echo "Restarting sysdig agent" >> "$logfile"
     systemctl enable dragent
-    systemctl start dragent
-    touch /tmp/monitoring_running
-  elif  [ ! -e /home/lsfadmin/enable_monitoring ] && [ -e /tmp/monitoring_running ]; then
-    systemctl stop dragent
-    systemctl disable dragent
-    rm /tmp/monitoring_running
-  fi
+    systemctl restart dragent
+  else
+    echo "Metrics agent start skipped since monitoring provisioning is not enabled" >> "$logfile"
 fi
-EOM
-chmod +x /root/enable_disable_monitoring.sh
-(crontab -l 2>/dev/null; echo "* * * * *  /root/enable_disable_monitoring.sh") | crontab -
-/root/enable_disable_monitoring.sh
 
-echo "END $(date '+%Y-%m-%d %H:%M:%S')" >> $logfile
+echo "END $(date '+%Y-%m-%d %H:%M:%S')" >> "$logfile"

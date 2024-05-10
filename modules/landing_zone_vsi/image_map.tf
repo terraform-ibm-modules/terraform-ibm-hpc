@@ -1,9 +1,5 @@
 locals {
   image_region_map = {
-    "hpcaas-lsf10-rhel88-v3" = {
-      "us-east" = "r014-4f27c07b-d7d9-4530-838c-46333ce10f2f"
-      "eu-de"   = "r010-44df5aba-4f76-4940-909e-0dd305f98bcd"
-    },
     "hpcaas-lsf10-rhel88-v4" = {
       "us-south" = "r006-cd41baee-e2b6-46c0-80e8-a95b24043062"
       "eu-de"    = "r010-01ad0f29-83ff-4338-b2fe-c38ec5219338"
@@ -33,14 +29,21 @@ locals {
       "br-sao"   = "r042-5aa8f150-a2bf-435b-8bde-5ea02e51eab4"
       "au-syd"   = "r026-d75c6c1d-5679-4a8b-884c-e3effee28e27"
       "jp-tok"   = "r022-db5c1b0b-683a-4c82-802e-c4696dcb4f24"
-    }
-    "hpcaas-lsf10-rhel88-compute-v2" = {
-      "us-east" = "r014-ab4e0a87-4799-40b9-92c5-9efdb0d255df"
-      "eu-de"   = "r010-1dc095d3-c358-4767-b3e1-77aa739498b5"
     },
-    "hpcaas-lsf10-ubuntu2204-compute-v1" = {
-      "us-east" = "r014-2874a5a3-9899-4d21-ba3b-863a65ac2a3c"
-      "eu-de"   = "r010-6e221138-123a-488b-a2c1-072d057ec9f8"
+    "hpcaas-lsf10-rhel88-v5" = {
+      "us-east"  = "r014-61c8395f-5075-4874-88f5-c20aa042778f"
+      "eu-de"    = "r010-f682ab95-0fc5-45fc-95c9-668fbf1f50b7"
+      "us-south" = "r006-165a5b10-f558-4417-b076-3047d4412264"
+    },
+    "hpcaas-lsf10-rhel88-compute-v4" = {
+      "us-east"  = "r014-c8abd999-3187-453f-ab0c-a5cf2827cf28"
+      "eu-de"    = "r010-76d4cc13-8ce1-436b-bcf4-8028a464eca3"
+      "us-south" = "r006-34199033-5291-4bf8-8ba4-1bfcc77833a6"
+    },
+    "hpcaas-lsf10-ubuntu2204-compute-v3" = {
+      "us-east"  = "r014-a4fa760d-fa5f-4d17-9205-44a700bb75c7"
+      "eu-de"    = "r010-8aa62be6-6760-44a0-8544-5ef18097197d"
+      "us-south" = "r006-46cac42c-8062-4994-9284-2eb584c0808c"
     }
   }
 }
