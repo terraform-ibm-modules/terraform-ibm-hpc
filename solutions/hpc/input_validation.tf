@@ -9,13 +9,13 @@
 # Module for the private cluster_subnet and login subnet cidr validation.
 module "ipvalidation_cluster_subnet" {
   count              = length(var.vpc_cluster_private_subnets_cidr_blocks)
-  source             = "./modules/custom/subnet_cidr_check"
+  source             = "../../modules/custom/subnet_cidr_check"
   subnet_cidr        = var.vpc_cluster_private_subnets_cidr_blocks[count.index]
   vpc_address_prefix = [local.prefixes_in_given_zone_1][count.index]
 }
 
 module "ipvalidation_login_subnet" {
-  source             = "./modules/custom/subnet_cidr_check"
+  source             = "../../modules/custom/subnet_cidr_check"
   subnet_cidr        = var.vpc_cluster_login_private_subnets_cidr_blocks[0]
   vpc_address_prefix = local.prefixes_in_given_zone_login
 }
@@ -162,7 +162,7 @@ locals {
 
   # Validate existing vpc public gateways
   validate_existing_vpc_pgw_msg = "Provided existing vpc should have the public gateways created in the provided zones."
-  validate_existing_vpc_pgw     = anytrue([(var.vpc_name == "null"), alltrue([var.vpc_name != "null", length(var.cluster_subnet_ids) == 1]), alltrue([var.vpc_name != "null", length(var.cluster_subnet_ids) == 0, var.login_subnet_id == "null", length(local.zone_1_pgw_id) > 0])])
+  validate_existing_vpc_pgw     = anytrue([(var.vpc_name == "null"), alltrue([var.vpc_name != "null", length(var.cluster_subnet_ids) == 1]), alltrue([var.vpc_name != "null", length(var.cluster_subnet_ids) == 0, var.login_subnet_id == "null", length(local.zone_1_pgw_ids) > 0])])
   # tflint-ignore: terraform_unused_declarations
   validate_existing_vpc_pgw_chk = regex("^${local.validate_existing_vpc_pgw_msg}$",
   (local.validate_existing_vpc_pgw ? local.validate_existing_vpc_pgw_msg : ""))
@@ -205,7 +205,7 @@ locals {
   (local.validate_custom_resolver_id ? local.validate_custom_resolver_id_msg : ""))
 
   validate_contract_id_new_msg = "Provided cluster_id and contract id cannot be set as empty if the provided region is eu-de and us-east and us-south."
-  validate_contract_id_logic   = local.region_name == "eu-de" || local.region_name == "us-east" || local.region_name == "us-south" ? var.contract_id != "" && var.cluster_id != "" : true
+  validate_contract_id_logic   = local.region == "eu-de" || local.region == "us-east" || local.region == "us-south" ? var.contract_id != "" && var.cluster_id != "" : true
   # tflint-ignore: terraform_unused_declarations
   validate_contract_id_chk_new = regex("^${local.validate_contract_id_new_msg}$",
   (local.validate_contract_id_logic ? local.validate_contract_id_new_msg : ""))
@@ -229,6 +229,7 @@ locals {
   # Existing Storage security group validation
   validate_existing_storage_sg     = length([for share in var.custom_file_shares : { mount_path = share.mount_path, nfs_share = share.nfs_share } if share.nfs_share != null && share.nfs_share != ""]) > 0 ? var.storage_security_group_id != "null" ? true : false : true
   validate_existing_storage_sg_msg = "Storage security group ID cannot be null when NFS share mount path is provided under cluster_file_shares variable."
+  # tflint-ignore: terraform_unused_declarations
   validate_existing_storage_sg_chk = regex(
     "^${local.validate_existing_storage_sg_msg}$",
   (local.validate_existing_storage_sg ? local.validate_existing_storage_sg_msg : ""))

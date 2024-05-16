@@ -32,3 +32,9 @@ variable "command" {
   description = "These are the list of commands to execute."
   type        = list(string)
 }
+
+variable "timeout" {
+  description = "Timeout for connection attempts."
+  type        = string
+  default     = "5m"
+}

@@ -71,36 +71,6 @@ variable "compute_ssh_keys" {
   description = "List of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC cluster node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
 }
 
-variable "login_node_instance_type" {
-  type        = string
-  default     = "bx2-2x8"
-  description = "Specify the virtual server instance profile type to be used to create the login node for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
-  validation {
-    condition     = can(regex("^[^\\s]+-[0-9]+x[0-9]+", var.login_node_instance_type))
-    error_message = "The profile must be a valid profile name."
-  }
-}
-
-variable "management_node_instance_type" {
-  type        = string
-  default     = "bx2-16x64"
-  description = "Specify the virtual server instance profile type to be used to create the management nodes for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
-  validation {
-    condition     = can(regex("^[^\\s]+-[0-9]+x[0-9]+", var.management_node_instance_type))
-    error_message = "The profile must be a valid profile name."
-  }
-}
-
-variable "management_node_count" {
-  type        = number
-  default     = 3
-  description = "Number of management nodes. This is the total number of management nodes. Enter a value between 1 and 10."
-  validation {
-    condition     = 1 <= var.management_node_count && var.management_node_count <= 10
-    error_message = "Input \"management_node_count\" must be must be greater than or equal to 1 and less than or equal to 10."
-  }
-}
-
 variable "remote_allowed_ips" {
   type        = list(string)
   description = "Comma-separated list of IP addresses that can access the IBM Cloud HPC cluster instance through an SSH interface. For security purposes, provide the public IP addresses assigned to the devices that are authorized to establish SSH connections (for example, [\"169.45.117.34\"]). To fetch the IP address of the device, use [https://ipv4.icanhazip.com/](https://ipv4.icanhazip.com/)."

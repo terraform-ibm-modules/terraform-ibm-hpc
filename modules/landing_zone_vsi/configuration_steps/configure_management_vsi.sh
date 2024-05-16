@@ -702,6 +702,7 @@ fi
 # Update the entry to LSF_HOSTS_FILE
 
 if [ "$on_primary" == "true" ]; then
+  echo "$login_ip_address $login_hostname" >> $LSF_HOSTS_FILE
   for hostname in $ManagementHostNames; do
     while true; do
       echo "querying DNS: $hostname"
