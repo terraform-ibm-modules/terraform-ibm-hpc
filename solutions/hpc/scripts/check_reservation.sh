@@ -151,14 +151,11 @@ get_token() {
     local token
     local error_message
 
+    # The IBM tool https://github.com/ibm/detect-secrets detected the secret we passed to the API.
+    # However, this is aa public secret so no real exposure exists.
+
     # This is the curl used to retrieve the JWT token given the IBM Cloud API Key in input
-    response=$(curl -s -w "%{http_code}" \
-        --request POST \
-        --url ${IAM_ENDPOINT_URL} \
-        --header 'Authorization: Basic Yng6Yng=' \
-        --header 'Content-Type: application/x-www-form-urlencoded' \
-        --data grant_type=urn:ibm:params:oauth:grant-type:apikey \
-        --data apikey="${api_key}")
+    response=$(curl -s -w "%{http_code}" --request POST --url ${IAM_ENDPOINT_URL} --header 'Authorization: Basic Yng6Yng=' --header 'Content-Type: application/x-www-form-urlencoded' --data grant_type=urn:ibm:params:oauth:grant-type:apikey --data apikey="${api_key}") # pragma: allowlist secret
 
     # The curl return a reply with the following format { ... JSON ... }HTTPSTATUS.
     # These two lines separate the HTTP STATUS from the JSON reply.
@@ -418,8 +415,11 @@ associate_ce_project_to_reservation() {
 # - LOG_FILE
 parse_args "$@"
 
-if [ -z "$IBM_CLOUD_API_KEY" ]; then
-    log "ERROR: environment variable IBM_CLOUD_API_KEY not provided."
+# The IBM tool https://github.com/ibm/detect-secrets detected a secret keyword.
+# However, it detected only the API keyword but no real secret expure exists here.
+if [ -z "$IBM_CLOUD_API_KEY" ]; then  # pragma: allowlist secret
+    log "ERROR: environment variable IBM_CLOUD_API_KEY not provided. Run the command:"
+    log "       export IBM_CLOUD_API_KEY=\"<your API Key>\"" # pragma: allowlist secret
     exit 1
 fi
 

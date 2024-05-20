@@ -37,7 +37,7 @@
           "value": "250",
           "type": "string",
           "secure": false,
-          "description": "Parallelism/ concurrent operations limit. Valid values are between 1 and 256, both inclusive. [Learn more](https://www.terraform.io/docs/internals/graph.html#walking-the-graph)."
+          "description": "Parallelism concurrent operations limit. Valid values are between 1 and 256, both inclusive. [Learn more](https://www.terraform.io/docs/internals/graph.html#walking-the-graph)."
         },
         {
           "name": "TF_VERSION",
@@ -317,7 +317,7 @@
           "description": "Flag to enable VPC flow logs. If true, a flow log collector will be created."
         },
         {
-          "name": "enable_atracker_on_cos",
+          "name": "observability_atracker_on_cos_enable",
           "value": "true",
           "type": "bool",
           "secure": false,
@@ -421,48 +421,48 @@
           "secure": false,
           "description": "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
         },
-        { "name": "enable_cloud_monitoring",
+        { "name": "observability_monitoring_enable",
           "value": "false",
           "type": "bool",
           "secure": false,
           "description": "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure and LSF application metrics from Management Nodes will be ingested."
         },
-        { 
-          "name": "enable_cloud_monitoring_compute_nodes",
+        {
+          "name": "observability_monitoring_on_compute_nodes_enable",
           "value": "false",
           "type": "bool",
           "secure": false,
           "description": "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure metrics from Compute Nodes will be ingested."
         },
-        { 
-          "name": "cloud_monitoring_plan",
-          "value": "lite",
+        {
+          "name": "observability_monitoring_plan",
+          "value": "graduated-tier",
           "type": "string",
           "secure": false,
           "description" : "Type of service plan for IBM Cloud Monitoring instance. You can choose one of the following: lite, graduated-tier. For all details visit [IBM Cloud Monitoring Service Plans](https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans)."
         },
-        { 
+        {
           "name": "bastion_instance_name",
           "value": "null",
           "type": "string",
           "secure": false,
           "description" : "Bastion instance name. If none given then new bastion will be created."
         },
-        { 
+        {
           "name": "bastion_instance_public_ip",
           "value": "null",
           "type": "string",
           "secure": false,
           "description" : "Bastion instance public ip address."
         },
-        { 
+        {
           "name": "bastion_security_group_id",
           "value": "null",
           "type": "string",
           "secure": false,
           "description" : "Bastion security group id."
         },
-        { 
+        {
           "name": "bastion_ssh_private_key",
           "value": "null",
           "type": "string",

@@ -11,11 +11,11 @@ data "ibm_kms_key" "kms_key" {
 }
 
 data "ibm_is_vpc" "itself" {
-  count = var.vpc == "null" ? 0 : 1
+  count = var.vpc == null ? 0 : 1
   name  = var.vpc
 }
 
 data "ibm_is_subnet" "subnet" {
-  count      = (var.vpc != "null" && length(var.subnet_id) > 0) ? 1 : 0
+  count      = (var.vpc != null && length(var.subnet_id) > 0) ? 1 : 0
   identifier = var.subnet_id[count.index]
 }

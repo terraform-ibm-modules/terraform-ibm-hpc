@@ -369,7 +369,7 @@ else
     echo "Skipping metrics agent configuration due to missing parameters" >> "$logfile"
 fi
 
-if [ "$enable_compute_node_monitoring" = true ]; then
+if [ "$observability_monitoring_on_compute_nodes_enable" = true ]; then
 
     echo "Restarting sysdig agent" >> "$logfile"
     systemctl enable dragent

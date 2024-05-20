@@ -530,8 +530,8 @@ login_hostname="${login_hostname}"
 enable_ldap="${enable_ldap}"
 ldap_server_ip="${ldap_server_ip}"
 base_dn="${ldap_basedns}"
-enable_cloud_monitoring="${enable_cloud_monitoring}"
-enable_compute_node_monitoring="${enable_compute_node_monitoring}"
+observability_monitoring_enable="${observability_monitoring_enable}"
+observability_monitoring_on_compute_nodes_enable="${observability_monitoring_on_compute_nodes_enable}"
 cloud_monitoring_access_key="${cloud_monitoring_access_key}"
 cloud_monitoring_ingestion_url="${cloud_monitoring_ingestion_url}"
 
@@ -702,6 +702,7 @@ fi
 # Update the entry to LSF_HOSTS_FILE
 
 if [ "$on_primary" == "true" ]; then
+  echo "$login_ip_address $login_hostname" >> $LSF_HOSTS_FILE
   for hostname in $ManagementHostNames; do
     while true; do
       echo "querying DNS: $hostname"
@@ -964,7 +965,7 @@ systemctl enable lsf_prometheus_exporter
 systemctl restart lsf_prometheus_exporter
 
 # Setting up the Metrics Agent
-if [ "$enable_cloud_monitoring" = true ]; then
+if [ "$observability_monitoring_enable" = true ]; then
 
   if [ "$cloud_monitoring_access_key" != "" ] && [ "$cloud_monitoring_ingestion_url" != "" ]; then
 

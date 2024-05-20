@@ -9,13 +9,13 @@
 # Module for the private cluster_subnet and login subnet cidr validation.
 module "ipvalidation_cluster_subnet" {
   count              = length(var.vpc_cluster_private_subnets_cidr_blocks)
-  source             = "./modules/custom/subnet_cidr_check"
+  source             = "../../modules/custom/subnet_cidr_check"
   subnet_cidr        = var.vpc_cluster_private_subnets_cidr_blocks[count.index]
   vpc_address_prefix = [local.prefixes_in_given_zone_1][count.index]
 }
 
 module "ipvalidation_login_subnet" {
-  source             = "./modules/custom/subnet_cidr_check"
+  source             = "../../modules/custom/subnet_cidr_check"
   subnet_cidr        = var.vpc_cluster_login_private_subnets_cidr_blocks[0]
   vpc_address_prefix = local.prefixes_in_given_zone_login
 }
@@ -57,28 +57,28 @@ locals {
 
   # Validate existing cluster subnet should be the subset of vpc_name entered
   validate_subnet_id_vpc_msg = "Provided cluster subnets should be within the vpc entered."
-  validate_subnet_id_vpc     = anytrue([length(var.cluster_subnet_ids) == 0, length(var.cluster_subnet_ids) == 1 && var.vpc_name != "null" ? alltrue([for subnet_id in var.cluster_subnet_ids : contains(data.ibm_is_vpc.existing_vpc[0].subnets[*].id, subnet_id)]) : false])
+  validate_subnet_id_vpc     = anytrue([length(var.cluster_subnet_ids) == 0, length(var.cluster_subnet_ids) == 1 && var.vpc_name != null ? alltrue([for subnet_id in var.cluster_subnet_ids : contains(data.ibm_is_vpc.existing_vpc[0].subnets[*].id, subnet_id)]) : false])
   # tflint-ignore: terraform_unused_declarations
   validate_subnet_id_vpc_chk = regex("^${local.validate_subnet_id_vpc_msg}$",
   (local.validate_subnet_id_vpc ? local.validate_subnet_id_vpc_msg : ""))
 
   # Validate existing cluster subnet should be in the appropriate zone.
   validate_subnet_id_zone_msg = "Provided cluster subnets should be in appropriate zone."
-  validate_subnet_id_zone     = anytrue([length(var.cluster_subnet_ids) == 0, length(var.cluster_subnet_ids) == 1 && var.vpc_name != "null" ? alltrue([data.ibm_is_subnet.existing_subnet[0].zone == var.zones[0]]) : false])
+  validate_subnet_id_zone     = anytrue([length(var.cluster_subnet_ids) == 0, length(var.cluster_subnet_ids) == 1 && var.vpc_name != null ? alltrue([data.ibm_is_subnet.existing_subnet[0].zone == var.zones[0]]) : false])
   # tflint-ignore: terraform_unused_declarations
   validate_subnet_id_zone_chk = regex("^${local.validate_subnet_id_zone_msg}$",
   (local.validate_subnet_id_zone ? local.validate_subnet_id_zone_msg : ""))
 
   # Validate existing login subnet should be the subset of vpc_name entered
   validate_login_subnet_id_vpc_msg = "Provided login subnet should be within the vpc entered."
-  validate_login_subnet_id_vpc     = anytrue([var.login_subnet_id == "null", var.login_subnet_id != "null" && var.vpc_name != "null" ? alltrue([for subnet_id in [var.login_subnet_id] : contains(data.ibm_is_vpc.existing_vpc[0].subnets[*].id, subnet_id)]) : false])
+  validate_login_subnet_id_vpc     = anytrue([var.login_subnet_id == null, var.login_subnet_id != null && var.vpc_name != null ? alltrue([for subnet_id in [var.login_subnet_id] : contains(data.ibm_is_vpc.existing_vpc[0].subnets[*].id, subnet_id)]) : false])
   # tflint-ignore: terraform_unused_declarations
   validate_login_subnet_id_vpc_chk = regex("^${local.validate_login_subnet_id_vpc_msg}$",
   (local.validate_login_subnet_id_vpc ? local.validate_login_subnet_id_vpc_msg : ""))
 
   # Validate existing login subnet should be in the appropriate zone.
   validate_login_subnet_id_zone_msg = "Provided login subnet should be in appropriate zone."
-  validate_login_subnet_id_zone     = anytrue([var.login_subnet_id == "null", var.login_subnet_id != "null" && var.vpc_name != "null" ? alltrue([data.ibm_is_subnet.existing_login_subnet[0].zone == var.zones[0]]) : false])
+  validate_login_subnet_id_zone     = anytrue([var.login_subnet_id == null, var.login_subnet_id != null && var.vpc_name != null ? alltrue([data.ibm_is_subnet.existing_login_subnet[0].zone == var.zones[0]]) : false])
   # tflint-ignore: terraform_unused_declarations
   validate_login_subnet_id_zone_chk = regex("^${local.validate_login_subnet_id_zone_msg}$",
   (local.validate_login_subnet_id_zone ? local.validate_login_subnet_id_zone_msg : ""))
@@ -155,28 +155,28 @@ locals {
 
   # Validate existing subnet public gateways
   validate_subnet_name_pg_msg = "Provided existing cluster_subnet_ids should have public gateway attached."
-  validate_subnet_name_pg     = anytrue([length(var.cluster_subnet_ids) == 0, length(var.cluster_subnet_ids) == 1 && var.vpc_name != "null" ? (data.ibm_is_subnet.existing_subnet[0].public_gateway != "") : false])
+  validate_subnet_name_pg     = anytrue([length(var.cluster_subnet_ids) == 0, length(var.cluster_subnet_ids) == 1 && var.vpc_name != null ? (data.ibm_is_subnet.existing_subnet[0].public_gateway != "") : false])
   # tflint-ignore: terraform_unused_declarations
   validate_subnet_name_pg_chk = regex("^${local.validate_subnet_name_pg_msg}$",
   (local.validate_subnet_name_pg ? local.validate_subnet_name_pg_msg : ""))
 
   # Validate existing vpc public gateways
   validate_existing_vpc_pgw_msg = "Provided existing vpc should have the public gateways created in the provided zones."
-  validate_existing_vpc_pgw     = anytrue([(var.vpc_name == "null"), alltrue([var.vpc_name != "null", length(var.cluster_subnet_ids) == 1]), alltrue([var.vpc_name != "null", length(var.cluster_subnet_ids) == 0, var.login_subnet_id == "null", length(local.zone_1_pgw_id) > 0])])
+  validate_existing_vpc_pgw     = anytrue([(var.vpc_name == null), alltrue([var.vpc_name != null, length(var.cluster_subnet_ids) == 1]), alltrue([var.vpc_name != null, length(var.cluster_subnet_ids) == 0, var.login_subnet_id == null, length(local.zone_1_pgw_ids) > 0])])
   # tflint-ignore: terraform_unused_declarations
   validate_existing_vpc_pgw_chk = regex("^${local.validate_existing_vpc_pgw_msg}$",
   (local.validate_existing_vpc_pgw ? local.validate_existing_vpc_pgw_msg : ""))
 
   # Validate in case of existing subnets provide both login_subnet_id and cluster_subnet_ids.
   validate_login_subnet_id_msg = "In case of existing subnets provide both login_subnet_id and cluster_subnet_ids."
-  validate_login_subnet_id     = anytrue([alltrue([length(var.cluster_subnet_ids) == 0, var.login_subnet_id == "null"]), alltrue([length(var.cluster_subnet_ids) != 0, var.login_subnet_id != "null"])])
+  validate_login_subnet_id     = anytrue([alltrue([length(var.cluster_subnet_ids) == 0, var.login_subnet_id == null]), alltrue([length(var.cluster_subnet_ids) != 0, var.login_subnet_id != null])])
   # tflint-ignore: terraform_unused_declarations
   validate_login_subnet_id_chk = regex("^${local.validate_login_subnet_id_msg}$",
   (local.validate_login_subnet_id ? local.validate_login_subnet_id_msg : ""))
 
   # Validate the subnet_id user input value
   validate_subnet_id_msg = "If the cluster_subnet_ids are provided, the user should also provide the vpc_name."
-  validate_subnet_id     = anytrue([var.vpc_name != "null" && length(var.cluster_subnet_ids) > 0, length(var.cluster_subnet_ids) == 0])
+  validate_subnet_id     = anytrue([var.vpc_name != null && length(var.cluster_subnet_ids) > 0, length(var.cluster_subnet_ids) == 0])
   # tflint-ignore: terraform_unused_declarations
   validate_subnet_id_chk = regex("^${local.validate_subnet_id_msg}$",
   (local.validate_subnet_id ? local.validate_subnet_id_msg : ""))
@@ -199,24 +199,24 @@ locals {
 
   # Validate the dns_custom_resolver_id should not be given in case of new vpc case
   validate_custom_resolver_id_msg = "If it is the new vpc deployment, do not provide existing dns_custom_resolver_id as that will impact the name resolution of the cluster."
-  validate_custom_resolver_id     = anytrue([var.vpc_name != "null", var.vpc_name == "null" && var.dns_custom_resolver_id == "null"])
+  validate_custom_resolver_id     = anytrue([var.vpc_name != null, var.vpc_name == null && var.dns_custom_resolver_id == "null"])
   # tflint-ignore: terraform_unused_declarations
   validate_custom_resolver_id_chk = regex("^${local.validate_custom_resolver_id_msg}$",
   (local.validate_custom_resolver_id ? local.validate_custom_resolver_id_msg : ""))
 
   validate_contract_id_new_msg = "Provided cluster_id and contract id cannot be set as empty if the provided region is eu-de and us-east and us-south."
-  validate_contract_id_logic   = local.region_name == "eu-de" || local.region_name == "us-east" || local.region_name == "us-south" ? var.contract_id != "" && var.cluster_id != "" : true
+  validate_contract_id_logic   = local.region == "eu-de" || local.region == "us-east" || local.region == "us-south" ? var.contract_id != "" && var.cluster_id != "" : true
   # tflint-ignore: terraform_unused_declarations
   validate_contract_id_chk_new = regex("^${local.validate_contract_id_new_msg}$",
   (local.validate_contract_id_logic ? local.validate_contract_id_new_msg : ""))
 
   # IBM Cloud Monitoring validation
-  validate_enable_cloud_monitoring_compute_nodes = (var.enable_cloud_monitoring && var.enable_cloud_monitoring_compute_nodes) || (var.enable_cloud_monitoring && var.enable_cloud_monitoring_compute_nodes == false) || (var.enable_cloud_monitoring == false && var.enable_cloud_monitoring_compute_nodes == false)
-  enable_cloud_monitoring_compute_nodes_msg      = "Please enable also IBM Cloud Monitoring to ingest metrics from Compute nodes"
+  validate_observability_monitoring_enable_compute_nodes = (var.observability_monitoring_enable && var.observability_monitoring_on_compute_nodes_enable) || (var.observability_monitoring_enable && var.observability_monitoring_on_compute_nodes_enable == false) || (var.observability_monitoring_enable == false && var.observability_monitoring_on_compute_nodes_enable == false)
+  observability_monitoring_enable_compute_nodes_msg      = "Please enable also IBM Cloud Monitoring to ingest metrics from Compute nodes"
   # tflint-ignore: terraform_unused_declarations
-  enable_cloud_monitoring_compute_nodes_chk = regex(
-    "^${local.enable_cloud_monitoring_compute_nodes_msg}$",
-  (local.validate_enable_cloud_monitoring_compute_nodes ? local.enable_cloud_monitoring_compute_nodes_msg : ""))
+  observability_monitoring_enable_compute_nodes_chk = regex(
+    "^${local.observability_monitoring_enable_compute_nodes_msg}$",
+  (local.validate_observability_monitoring_enable_compute_nodes ? local.observability_monitoring_enable_compute_nodes_msg : ""))
 
   # Existing Bastion validation
   validate_existing_bastion     = var.bastion_instance_name != "null" ? (var.bastion_instance_public_ip != "null" && var.bastion_security_group_id != "null" && var.bastion_ssh_private_key != "null") : local.bastion_instance_status
@@ -229,6 +229,7 @@ locals {
   # Existing Storage security group validation
   validate_existing_storage_sg     = length([for share in var.custom_file_shares : { mount_path = share.mount_path, nfs_share = share.nfs_share } if share.nfs_share != null && share.nfs_share != ""]) > 0 ? var.storage_security_group_id != "null" ? true : false : true
   validate_existing_storage_sg_msg = "Storage security group ID cannot be null when NFS share mount path is provided under cluster_file_shares variable."
+  # tflint-ignore: terraform_unused_declarations
   validate_existing_storage_sg_chk = regex(
     "^${local.validate_existing_storage_sg_msg}$",
   (local.validate_existing_storage_sg ? local.validate_existing_storage_sg_msg : ""))

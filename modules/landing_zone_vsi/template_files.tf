@@ -70,7 +70,7 @@ data "template_file" "management_values" {
     rc_max_num                    = local.rc_max_num
     rc_rg                         = var.resource_group
     cluster_name                  = var.cluster_id
-    ce_project_guid               = "${file("${abspath(path.root)}/assets/hpcaas-ce-project-guid")}"
+    ce_project_guid               = file("${abspath("${path.module}/../../solutions/hpc")}/assets/hpcaas-ce-project-guid")
     cluster_prefix                = var.prefix
     cluster_private_key_content   = local.enable_management ? module.compute_key[0].private_key_content : ""
     cluster_public_key_content    = local.enable_management ? module.compute_key[0].public_key_content : ""
@@ -100,11 +100,11 @@ data "template_file" "management_values" {
     db_user                      = var.enable_app_center && var.app_center_high_availability ? local.db_user : ""
     db_password                  = var.enable_app_center && var.app_center_high_availability ? module.generate_db_password[0].password : ""
     # Observability
-    enable_cloud_monitoring        = var.enable_cloud_monitoring
-    enable_compute_node_monitoring = var.enable_cloud_monitoring_compute_nodes
-    cloud_monitoring_access_key    = var.cloud_monitoring_access_key
-    cloud_monitoring_ingestion_url = var.cloud_monitoring_ingestion_url
-    cloud_monitoring_prws_key      = var.cloud_monitoring_prws_key
-    cloud_monitoring_prws_url      = var.cloud_monitoring_prws_url
+    observability_monitoring_enable                  = var.observability_monitoring_enable
+    observability_monitoring_on_compute_nodes_enable = var.observability_monitoring_on_compute_nodes_enable
+    cloud_monitoring_access_key                      = var.cloud_monitoring_access_key
+    cloud_monitoring_ingestion_url                   = var.cloud_monitoring_ingestion_url
+    cloud_monitoring_prws_key                        = var.cloud_monitoring_prws_key
+    cloud_monitoring_prws_url                        = var.cloud_monitoring_prws_url
   }
 }

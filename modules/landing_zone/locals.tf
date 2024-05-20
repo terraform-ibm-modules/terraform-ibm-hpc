@@ -58,7 +58,7 @@ locals {
         name           = "compute-subnet-${zone}"
         acl_name       = "hpc-acl"
         cidr           = var.compute_subnets_cidr[index(local.active_zones, zone)]
-        public_gateway = var.vpc == "null" ? true : false
+        public_gateway = var.vpc == null ? true : false
         no_addr_prefix = var.no_addr_prefix
 
       },
@@ -105,8 +105,8 @@ locals {
 
   vpcs = [
     {
-      existing_vpc_id = var.vpc == "null" ? null : data.ibm_is_vpc.itself[0].id
-      existing_subnets = (var.vpc != "null" && length(var.subnet_id) > 0) ? [
+      existing_vpc_id = var.vpc == null ? null : data.ibm_is_vpc.itself[0].id
+      existing_subnets = (var.vpc != null && length(var.subnet_id) > 0) ? [
         {
           id             = var.subnet_id[0]
           public_gateway = false
@@ -128,9 +128,9 @@ locals {
           rules             = local.network_acl_rules
         }
       ],
-      subnets             = (var.vpc != "null" && length(var.subnet_id) > 0) ? null : local.subnets
-      use_public_gateways = var.vpc == "null" ? local.use_public_gateways : local.use_public_gateways_existing_vpc
-      address_prefixes    = var.vpc == "null" ? local.address_prefixes : null
+      subnets             = (var.vpc != null && length(var.subnet_id) > 0) ? null : local.subnets
+      use_public_gateways = var.vpc == null ? local.use_public_gateways : local.use_public_gateways_existing_vpc
+      address_prefixes    = var.vpc == null ? local.address_prefixes : null
     }
   ]
 

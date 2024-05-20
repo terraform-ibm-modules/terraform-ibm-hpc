@@ -44,7 +44,7 @@ variable "zones" {
 variable "vpc" {
   type        = string
   description = "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
-  default     = "null"
+  default     = null
 }
 
 variable "subnet_id" {
@@ -55,7 +55,7 @@ variable "subnet_id" {
 
 variable "login_subnet_id" {
   type        = string
-  default     = "null"
+  default     = null
   description = "List of existing subnet ID under the VPC, where the login/Bastion server will be provisioned."
 }
 

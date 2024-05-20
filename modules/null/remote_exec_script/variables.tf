@@ -68,3 +68,9 @@ variable "with_bash" {
   type        = bool
   default     = false
 }
+
+variable "trigger_string" {
+  description = "Changing this string will trigger a re-run"
+  type        = string
+  default     = ""
+}

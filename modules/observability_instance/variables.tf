@@ -16,10 +16,10 @@ variable "log_analysis_plan" {
   default     = "7-day"
 }
 
-variable "cloud_monitoring_plan" {
-  description = "Type of service cloud_monitoring_plan."
+variable "observability_monitoring_plan" {
+  description = "Type of service observability_monitoring_plan."
   type        = string
-  default     = "lite"
+  default     = "graduated-tier"
 }
 
 variable "location" {

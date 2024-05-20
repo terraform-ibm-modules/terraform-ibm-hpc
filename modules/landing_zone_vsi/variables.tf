@@ -372,16 +372,16 @@ variable "storage_security_group_id" {
 # Observability Variables
 ##############################################################################
 
-variable "enable_cloud_monitoring" {
+variable "observability_monitoring_enable" {
   description = "Set true to enable IBM Cloud Monitoring instance provisioning."
   type        = bool
-  default     = true
+  default     = false
 }
 
-variable "enable_cloud_monitoring_compute_nodes" {
+variable "observability_monitoring_on_compute_nodes_enable" {
   description = "Set true to enable IBM Cloud Monitoring on Compute Nodes."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "cloud_monitoring_access_key" {

@@ -161,6 +161,7 @@ module "wait_management_vsi_booted" {
   login_user          = "ubuntu"
   login_private_key   = var.bastion_private_key_content
   command             = ["cloud-init status --wait;hostname;date;df;id"]
+  timeout             = "8m" # let's be patient, the VSI may need time to boot completely
   depends_on = [
     module.management_vsi
   ]
@@ -175,6 +176,7 @@ module "wait_management_candidate_vsi_booted" {
   login_user          = "ubuntu"
   login_private_key   = var.bastion_private_key_content
   command             = ["cloud-init status --wait;hostname;date;df;id"]
+  timeout             = "8m" # let's be patient, the VSI may need time to boot completely
   depends_on = [
     module.management_candidate_vsi
   ]
@@ -198,6 +200,7 @@ module "do_management_vsi_configuration" {
   depends_on = [
     module.wait_management_vsi_booted
   ]
+  trigger_string      = join(",", module.management_vsi[0].ids)
 }
 
 module "do_management_candidate_vsi_configuration" {
@@ -218,4 +221,5 @@ module "do_management_candidate_vsi_configuration" {
   depends_on = [
     module.wait_management_candidate_vsi_booted
   ]
+  trigger_string      = join(",", flatten(module.management_candidate_vsi[*].ids))
 }
