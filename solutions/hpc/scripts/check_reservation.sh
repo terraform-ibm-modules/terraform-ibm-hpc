@@ -17,7 +17,7 @@ V2BETA_CONTEXT_ROOT="v2beta"
 
 TMP_DIR="/tmp"
 HTTP_OUTPUT_FILE="${TMP_DIR}/hpcaas_http_output.log"
-CODE_ENGINE_PROJECT_GUID_FILE="${PROJECT_FOLDER}/assets/hpcaas-ce-project-guid"
+CODE_ENGINE_PROJECT_GUID_FILE="${PROJECT_FOLDER}/assets/hpcaas-ce-project-guid.cfg"
 
 RESERVATION_ID=""
 REGION=""
