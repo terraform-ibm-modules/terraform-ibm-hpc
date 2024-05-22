@@ -43,8 +43,8 @@
             ],
             "flavors": [
                 {
-                    "label": "Cluster-with-LSF-v10-1-0-14",
-                    "name" : "Cluster-with-LSF-v10-1-0-14",
+                    "label": "Cluster-with-LSF-v10.1.0.14",
+                    "name" : "Cluster-with-LSF-v10.1.0.14",
                     "install_type": "fullstack",
                     "working_directory": "solutions/hpc",
                     "compliance": {
