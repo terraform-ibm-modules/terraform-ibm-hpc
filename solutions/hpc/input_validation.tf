@@ -9,13 +9,13 @@
 # Module for the private cluster_subnet and login subnet cidr validation.
 module "ipvalidation_cluster_subnet" {
   count              = length(var.vpc_cluster_private_subnets_cidr_blocks)
-  source             = "./modules/custom/subnet_cidr_check"
+  source             = "../../modules/custom/subnet_cidr_check"
   subnet_cidr        = var.vpc_cluster_private_subnets_cidr_blocks[count.index]
   vpc_address_prefix = [local.prefixes_in_given_zone_1][count.index]
 }
 
 module "ipvalidation_login_subnet" {
-  source             = "./modules/custom/subnet_cidr_check"
+  source             = "../../modules/custom/subnet_cidr_check"
   subnet_cidr        = var.vpc_cluster_login_private_subnets_cidr_blocks[0]
   vpc_address_prefix = local.prefixes_in_given_zone_login
 }
@@ -84,19 +84,19 @@ locals {
   (local.validate_login_subnet_id_zone ? local.validate_login_subnet_id_zone_msg : ""))
 
   # Contract ID validation
-  validate_contract_id     = length("${var.cluster_id}${var.contract_id}") > 129 ? false : true
-  validate_contract_id_msg = "The length of contract_id and cluster_id combination should not exceed 128 characters."
+  validate_reservation_id     = length("${var.cluster_id}${var.reservation_id}") > 129 ? false : true
+  validate_reservation_id_msg = "The length of reservation_id and cluster_id combination should not exceed 128 characters."
   # tflint-ignore: terraform_unused_declarations
-  validate_contract_id_chk = regex(
-    "^${local.validate_contract_id_msg}$",
-  (local.validate_contract_id ? local.validate_contract_id_msg : ""))
+  validate_reservation_id_chk = regex(
+    "^${local.validate_reservation_id_msg}$",
+  (local.validate_reservation_id ? local.validate_reservation_id_msg : ""))
 
-  validate_contract_id_api     = local.valid_status_code && local.contract_id_found
-  validate_contract_id_api_msg = "The provided contract id doesn't have a valid reservation or the contract id is not on the same account as HPC deployment."
+  validate_reservation_id_api     = local.valid_status_code && local.reservation_id_found
+  validate_reservation_id_api_msg = "The provided contract id doesn't have a valid reservation or the contract id is not on the same account as HPC deployment."
   # tflint-ignore: terraform_unused_declarations
-  validate_contract_id_api_chk = regex(
-    "^${local.validate_contract_id_api_msg}$",
-  (local.validate_contract_id_api ? local.validate_contract_id_api_msg : ""))
+  validate_reservation_id_api_chk = regex(
+    "^${local.validate_reservation_id_api_msg}$",
+  (local.validate_reservation_id_api ? local.validate_reservation_id_api_msg : ""))
 
   # Validate custom fileshare
   # Construct a list of Share size(GB) and IOPS range(IOPS)from values provided in https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=ui#dp2-profile
@@ -162,7 +162,7 @@ locals {
 
   # Validate existing vpc public gateways
   validate_existing_vpc_pgw_msg = "Provided existing vpc should have the public gateways created in the provided zones."
-  validate_existing_vpc_pgw     = anytrue([(var.vpc_name == "null"), alltrue([var.vpc_name != "null", length(var.cluster_subnet_ids) == 1]), alltrue([var.vpc_name != "null", length(var.cluster_subnet_ids) == 0, var.login_subnet_id == "null", length(local.zone_1_pgw_id) > 0])])
+  validate_existing_vpc_pgw     = anytrue([(var.vpc_name == "null"), alltrue([var.vpc_name != "null", length(var.cluster_subnet_ids) == 1]), alltrue([var.vpc_name != "null", length(var.cluster_subnet_ids) == 0, var.login_subnet_id == "null", length(local.zone_1_pgw_ids) > 0])])
   # tflint-ignore: terraform_unused_declarations
   validate_existing_vpc_pgw_chk = regex("^${local.validate_existing_vpc_pgw_msg}$",
   (local.validate_existing_vpc_pgw ? local.validate_existing_vpc_pgw_msg : ""))
@@ -204,19 +204,19 @@ locals {
   validate_custom_resolver_id_chk = regex("^${local.validate_custom_resolver_id_msg}$",
   (local.validate_custom_resolver_id ? local.validate_custom_resolver_id_msg : ""))
 
-  validate_contract_id_new_msg = "Provided cluster_id and contract id cannot be set as empty if the provided region is eu-de and us-east and us-south."
-  validate_contract_id_logic   = local.region_name == "eu-de" || local.region_name == "us-east" || local.region_name == "us-south" ? var.contract_id != "" && var.cluster_id != "" : true
+  validate_reservation_id_new_msg = "Provided cluster_id and contract id cannot be set as empty if the provided region is eu-de and us-east and us-south."
+  validate_reservation_id_logic   = local.region == "eu-de" || local.region == "us-east" || local.region == "us-south" ? var.reservation_id != "" && var.cluster_id != "" : true
   # tflint-ignore: terraform_unused_declarations
-  validate_contract_id_chk_new = regex("^${local.validate_contract_id_new_msg}$",
-  (local.validate_contract_id_logic ? local.validate_contract_id_new_msg : ""))
+  validate_reservation_id_chk_new = regex("^${local.validate_reservation_id_new_msg}$",
+  (local.validate_reservation_id_logic ? local.validate_reservation_id_new_msg : ""))
 
   # IBM Cloud Monitoring validation
-  validate_enable_cloud_monitoring_compute_nodes = (var.enable_cloud_monitoring && var.enable_cloud_monitoring_compute_nodes) || (var.enable_cloud_monitoring && var.enable_cloud_monitoring_compute_nodes == false) || (var.enable_cloud_monitoring == false && var.enable_cloud_monitoring_compute_nodes == false)
-  enable_cloud_monitoring_compute_nodes_msg      = "Please enable also IBM Cloud Monitoring to ingest metrics from Compute nodes"
+  validate_observability_monitoring_enable_compute_nodes = (var.observability_monitoring_enable && var.observability_monitoring_on_compute_nodes_enable) || (var.observability_monitoring_enable && var.observability_monitoring_on_compute_nodes_enable == false) || (var.observability_monitoring_enable == false && var.observability_monitoring_on_compute_nodes_enable == false)
+  observability_monitoring_enable_compute_nodes_msg      = "Please enable also IBM Cloud Monitoring to ingest metrics from Compute nodes"
   # tflint-ignore: terraform_unused_declarations
-  enable_cloud_monitoring_compute_nodes_chk = regex(
-    "^${local.enable_cloud_monitoring_compute_nodes_msg}$",
-  (local.validate_enable_cloud_monitoring_compute_nodes ? local.enable_cloud_monitoring_compute_nodes_msg : ""))
+  observability_monitoring_enable_compute_nodes_chk = regex(
+    "^${local.observability_monitoring_enable_compute_nodes_msg}$",
+  (local.validate_observability_monitoring_enable_compute_nodes ? local.observability_monitoring_enable_compute_nodes_msg : ""))
 
   # Existing Bastion validation
   validate_existing_bastion     = var.bastion_instance_name != "null" ? (var.bastion_instance_public_ip != "null" && var.bastion_security_group_id != "null" && var.bastion_ssh_private_key != "null") : local.bastion_instance_status
@@ -229,6 +229,7 @@ locals {
   # Existing Storage security group validation
   validate_existing_storage_sg     = length([for share in var.custom_file_shares : { mount_path = share.mount_path, nfs_share = share.nfs_share } if share.nfs_share != null && share.nfs_share != ""]) > 0 ? var.storage_security_group_id != "null" ? true : false : true
   validate_existing_storage_sg_msg = "Storage security group ID cannot be null when NFS share mount path is provided under cluster_file_shares variable."
+  # tflint-ignore: terraform_unused_declarations
   validate_existing_storage_sg_chk = regex(
     "^${local.validate_existing_storage_sg_msg}$",
   (local.validate_existing_storage_sg ? local.validate_existing_storage_sg_msg : ""))

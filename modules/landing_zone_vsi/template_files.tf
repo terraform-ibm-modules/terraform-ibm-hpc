@@ -70,7 +70,7 @@ data "template_file" "management_values" {
     rc_max_num                    = local.rc_max_num
     rc_rg                         = var.resource_group
     cluster_name                  = var.cluster_id
-    ce_project_guid               = "${file("${abspath(path.root)}/assets/hpcaas-ce-project-guid")}"
+    ce_project_guid               = file("${abspath("${path.module}/../../solutions/hpc")}/assets/hpcaas-ce-project-guid.cfg")
     cluster_prefix                = var.prefix
     cluster_private_key_content   = local.enable_management ? module.compute_key[0].private_key_content : ""
     cluster_public_key_content    = local.enable_management ? module.compute_key[0].public_key_content : ""
@@ -86,9 +86,15 @@ data "template_file" "management_values" {
     app_center_gui_pwd            = var.app_center_gui_pwd
     enable_ldap                   = var.enable_ldap
     ldap_server_ip                = local.ldap_server
+    ldap_server_hostname          = length(local.ldap_hostnames) > 0 ? local.ldap_hostnames[0] : "null"
     ldap_basedns                  = var.enable_ldap == true ? var.ldap_basedns : "null"
-    login_ip_address              = var.login_private_ips
     bootdrive_crn                 = var.boot_volume_encryption_key == null ? "" : var.boot_volume_encryption_key
+    management_ip                 = local.management_private_ip
+    management_hostname           = local.management_hostname
+    management_cand_ips           = join(",", local.management_candidate_private_ips)
+    management_cand_hostnames     = join(",", local.management_candidate_hostnames)
+    login_ip                      = local.login_private_ips[0]
+    login_hostname                = local.login_hostnames[0]
     # PAC High Availability
     app_center_high_availability = var.app_center_high_availability
     db_adminuser                 = var.enable_app_center && var.app_center_high_availability ? var.db_instance_info.adminuser : ""
@@ -100,11 +106,11 @@ data "template_file" "management_values" {
     db_user                      = var.enable_app_center && var.app_center_high_availability ? local.db_user : ""
     db_password                  = var.enable_app_center && var.app_center_high_availability ? module.generate_db_password[0].password : ""
     # Observability
-    enable_cloud_monitoring        = var.enable_cloud_monitoring
-    enable_compute_node_monitoring = var.enable_cloud_monitoring_compute_nodes
-    cloud_monitoring_access_key    = var.cloud_monitoring_access_key
-    cloud_monitoring_ingestion_url = var.cloud_monitoring_ingestion_url
-    cloud_monitoring_prws_key      = var.cloud_monitoring_prws_key
-    cloud_monitoring_prws_url      = var.cloud_monitoring_prws_url
+    observability_monitoring_enable                  = var.observability_monitoring_enable
+    observability_monitoring_on_compute_nodes_enable = var.observability_monitoring_on_compute_nodes_enable
+    cloud_monitoring_access_key                      = var.cloud_monitoring_access_key
+    cloud_monitoring_ingestion_url                   = var.cloud_monitoring_ingestion_url
+    cloud_monitoring_prws_key                        = var.cloud_monitoring_prws_key
+    cloud_monitoring_prws_url                        = var.cloud_monitoring_prws_url
   }
 }

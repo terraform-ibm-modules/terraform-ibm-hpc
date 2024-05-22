@@ -45,7 +45,7 @@ module "management_vsi" {
   count = 1
   # count                       = length(var.management_instances)
   source         = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version        = "4.0.0-rc5"
+  version        = "4.0.0"
   vsi_per_subnet = 1
   # vsi_per_subnet              = var.management_instances[count.index]["count"]
   create_security_group         = false
@@ -70,7 +70,7 @@ module "management_vsi" {
 module "management_candidate_vsi" {
   count                         = var.management_node_count - 1
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.0.0-rc5"
+  version                       = "4.0.0"
   create_security_group         = false
   security_group                = null
   security_group_ids            = module.compute_sg[*].security_group_id
@@ -93,7 +93,7 @@ module "management_candidate_vsi" {
 module "login_vsi" {
   count                         = 1
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.0.0-rc5"
+  version                       = "4.0.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -117,7 +117,7 @@ module "ldap_vsi" {
   count = local.ldap_enable
   # count                       = length(var.management_instances)
   source                = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version               = "4.0.0-rc5"
+  version               = "4.0.0"
   vsi_per_subnet        = 1
   create_security_group = false
   security_group        = null
@@ -154,13 +154,14 @@ module "ssh_key" {
 
 module "wait_management_vsi_booted" {
   source              = "./../../modules/null/remote_exec"
-  cluster_host        = concat([var.management_private_ip])
+  cluster_host        = concat([local.management_private_ip])
   cluster_user        = var.cluster_user #"root"
   cluster_private_key = var.compute_private_key_content
   login_host          = var.bastion_fip
   login_user          = "ubuntu"
   login_private_key   = var.bastion_private_key_content
   command             = ["cloud-init status --wait;hostname;date;df;id"]
+  timeout             = "8m" # let's be patient, the VSI may need time to boot completely
   depends_on = [
     module.management_vsi
   ]
@@ -168,13 +169,14 @@ module "wait_management_vsi_booted" {
 
 module "wait_management_candidate_vsi_booted" {
   source              = "./../../modules/null/remote_exec"
-  cluster_host        = concat(var.management_candidate_private_ips)
+  cluster_host        = concat(local.management_candidate_private_ips)
   cluster_user        = var.cluster_user #"root"
   cluster_private_key = var.compute_private_key_content
   login_host          = var.bastion_fip
   login_user          = "ubuntu"
   login_private_key   = var.bastion_private_key_content
   command             = ["cloud-init status --wait;hostname;date;df;id"]
+  timeout             = "8m" # let's be patient, the VSI may need time to boot completely
   depends_on = [
     module.management_candidate_vsi
   ]
@@ -182,7 +184,7 @@ module "wait_management_candidate_vsi_booted" {
 
 module "do_management_vsi_configuration" {
   source              = "./../../modules/null/remote_exec_script"
-  cluster_host        = concat([var.management_private_ip])
+  cluster_host        = concat([local.management_private_ip])
   cluster_user        = var.cluster_user #"root"
   cluster_private_key = var.compute_private_key_content
   login_host          = var.bastion_fip
@@ -198,11 +200,12 @@ module "do_management_vsi_configuration" {
   depends_on = [
     module.wait_management_vsi_booted
   ]
+  trigger_string = join(",", module.management_vsi[0].ids)
 }
 
 module "do_management_candidate_vsi_configuration" {
   source              = "./../../modules/null/remote_exec_script"
-  cluster_host        = concat(var.management_candidate_private_ips)
+  cluster_host        = concat(local.management_candidate_private_ips)
   cluster_user        = var.cluster_user #"root"
   cluster_private_key = var.compute_private_key_content
   login_host          = var.bastion_fip
@@ -218,4 +221,5 @@ module "do_management_candidate_vsi_configuration" {
   depends_on = [
     module.wait_management_candidate_vsi_booted
   ]
+  trigger_string = join(",", flatten(module.management_candidate_vsi[*].ids))
 }

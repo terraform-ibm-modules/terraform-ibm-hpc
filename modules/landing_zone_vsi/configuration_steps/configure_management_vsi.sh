@@ -19,24 +19,17 @@ source management_values
 
 # Local variable declaration
 default_cluster_name="HPCCluster"
-login_hostname="${cluster_prefix}-login-001"
-login_ip_address=${login_ip_address}
 nfs_server_with_mount_path=${mount_path}
-HostIP=$(hostname -I | awk '{print $1}')
-HostName=$(hostname)
 enable_ldap="${enable_ldap}"
 ldap_server_ip="${ldap_server_ip}"
 base_dn="${ldap_basedns}"
-ManagementHostName="${HostName}"
-ManagementHostNamePrimary="${cluster_prefix}-mgmt-1-001"
-ManagementHostNames=""
-for (( i=1; i<=management_node_count; i++ )); do
-  ManagementHostNames+=" ${cluster_prefix}-mgmt-$i-001"
-done
-# Space at the beginning of the list must be removed, otherwise the Application Center WEBUI doesn't work
-# properly in HA. In fact, if LSF_ADDON_HOSTS property has the list of the nodes with a space at the beginning
-# the PAC - LSF interaction has issues.
-ManagementHostNames=${ManagementHostNames# }
+
+this_hostname="$(hostname)"
+mgmt_hostname_primary="$management_hostname"
+mgmt_hostnames="${management_hostname},${management_cand_hostnames}"
+mgmt_hostnames="${mgmt_hostnames//,/ }" # replace commas with spaces
+mgmt_hostnames="${mgmt_hostnames# }" # remove an initial space
+mgmt_hostnames="${mgmt_hostnames% }" # remove a final space
 
 LSF_TOP="/opt/ibm/lsf"
 LSF_CONF="$LSF_TOP/conf"
@@ -61,7 +54,7 @@ LSF_SUITE_PERF_CONF="${LSF_SUITE_PERF}/conf"
 LSF_SUITE_PERF_BIN="${LSF_SUITE_PERF}/1.2/bin"
 
 # important: is this a primary or secondary management node?
-if [ "$HostName" == "$ManagementHostNamePrimary" ]; then
+if [ "$this_hostname" == "$mgmt_hostname_primary" ]; then
   on_primary="true"
 else
   on_primary="false"
@@ -167,12 +160,22 @@ LSF_ANNOUNCE_MASTER_TCP_WAITTIME=600
 LSF_CLOUD_UI=Y
 LSF_RSH="ssh -o 'PasswordAuthentication no' -o 'StrictHostKeyChecking no'"
 EOT
-  sed -i "s/LSF_MASTER_LIST=.*/LSF_MASTER_LIST=\"${ManagementHostNames}\"/g" $LSF_CONF_FILE
+  sed -i "s/LSF_MASTER_LIST=.*/LSF_MASTER_LIST=\"${mgmt_hostnames}\"/g" $LSF_CONF_FILE
 
   if [ "$hyperthreading" == true ]; then
     ego_define_ncpus="threads"
   else
     ego_define_ncpus="cores"
+
+    cat << 'EOT' > /root/lsf_hyperthreading
+#!/bin/sh
+for vcpu in $(cat /sys/devices/system/cpu/cpu*/topology/thread_siblings_list | cut -s -d- -f2 | cut -d- -f2 | uniq); do
+    echo "0" > "/sys/devices/system/cpu/cpu"$vcpu"/online"
+done
+EOT
+    chmod 755 /root/lsf_hyperthreading
+    command="/root/lsf_hyperthreading"
+    sh $command && (crontab -l 2>/dev/null; echo "@reboot $command") | crontab -
   fi
   echo "EGO_DEFINE_NCPUS=${ego_define_ncpus}" >> $LSF_CONF_FILE
 
@@ -197,25 +200,25 @@ End Queue
 EOT
 
   # 5. setting up lsb.hosts
-  for hostname in $ManagementHostNames; do
+  for hostname in $mgmt_hostnames; do
     sed -i "/^default    !.*/a $hostname  0 () () () () () (Y)" "$LSF_LSBATCH_CONF/lsb.hosts"
   done
 
   # 6. setting up lsf.cluster."$cluster_name"
   sed -i "s/^lsfservers/#lsfservers/g" "$LSF_CONF/lsf.cluster.$cluster_name"
   sed -i 's/LSF_HOST_ADDR_RANGE=\*.\*.\*.\*/LSF_HOST_ADDR_RANGE=10.*.*.*/' "$LSF_CONF/lsf.cluster.$cluster_name"
-  for hostname in $ManagementHostNames; do
+  for hostname in $mgmt_hostnames; do
     sed -i "/^#lsfservers.*/a $hostname ! ! 1 (mg)" "$LSF_CONF/lsf.cluster.$cluster_name"
   done
 
   # Updating the value of login node as Intel for lsfserver to update cluster file name
   sed -i "/^#lsfservers.*/a $login_hostname Intel_E5 X86_64 0 ()" "$LSF_CONF/lsf.cluster.$cluster_name"
-  echo "LSF_SERVER_HOSTS=\"$ManagementHostNames\"" >> $LSF_CONF_FILE
+  echo "LSF_SERVER_HOSTS=\"$mgmt_hostnames\"" >> $LSF_CONF_FILE
 
   # Update ego.conf
-  sed -i "s/EGO_MASTER_LIST=.*/EGO_MASTER_LIST=\"${ManagementHostNames}\"/g" "$LSF_EGO_CONF_FILE"
+  sed -i "s/EGO_MASTER_LIST=.*/EGO_MASTER_LIST=\"${mgmt_hostnames}\"/g" "$LSF_EGO_CONF_FILE"
   # 0.5 Update lsfservers with newly added lsf management nodes
-  grep -rli 'lsfservers' $LSF_CONF/*|xargs sed -i "s/lsfservers/${ManagementHostName}/g"
+  grep -rli 'lsfservers' $LSF_CONF/*|xargs sed -i "s/lsfservers/${this_hostname}/g"
 
   # Setup LSF resource connector
   echo "Setting up LSF resource connector"
@@ -386,27 +389,25 @@ EOF
   echo "JSON templates are created and updated on ibmcloudgen2_templates.json"
 
 # 7. Create resource template for ibmcloudhpc templates
-ibmcloudhpc_templates="$LSF_RC_IBMCLOUDHPC_CONF/ibmcloudhpc_templates.json"
-# Incrementally build a json string
-json_string=""
-for region in "eu-de" "us-east" "us-south"; do
+  ibmcloudhpc_templates="$LSF_RC_IBMCLOUDHPC_CONF/ibmcloudhpc_templates.json"
+  # Incrementally build a json string
+  json_string=""
+  for region in "eu-de" "us-east" "us-south"; do
     if [ "$region" = "$regionName" ]; then
         for i in 2 4 8 16 32 48 64 96 128 176; do
             ncores=$((i / 2))
-
             if [ "$region" = "eu-de" ] || [ "$region" = "us-east" ]; then
-                templateId="Template-${cluster_prefix}-$((1000+i))"
                 family="mx2"
-                userData="family=mx2"
-                maxmem=$((ncores * 16 * 1024))
-                mem=$((maxmem * 9 / 10))
+                maxmem_mx2=$((ncores * 16 * 1024))
+                mem_mx2=$((maxmem_mx2 * 9 / 10))
             elif [ "$region" = "us-south" ]; then
-                templateId="Template-${cluster_prefix}-$((1000+i))"
-                family="mx3d"
-                userData="family=mx3d"
-                maxmem=$((ncores * 20 * 1024))
-                mem=$((maxmem * 9 / 10))
+                family="mx2,mx3d"  # Include both "mx2" and "mx3d" families
+                maxmem_mx2=$((ncores * 16 * 1024))
+                mem_mx2=$((maxmem_mx2 * 9 / 10))
+                maxmem_mx3d=$((ncores * 20 * 1024))
+                mem_mx3d=$((maxmem_mx3d * 9 / 10))
             fi
+
             vpcus=$i
 
             if $hyperthreading; then
@@ -414,14 +415,26 @@ for region in "eu-de" "us-east" "us-south"; do
             else
                 ncpus=$ncores
             fi
-            if [ "${imageID:0:4}" == "crn:" ]; then
- 	            imagetype="imageCrn"
-	          else
-  	          imagetype="imageId"
-	           fi
 
-            # Construct JSON object (including final comma)
-            json_string+=$(cat <<EOF
+            if [ "${imageID:0:4}" == "crn:" ]; then
+                imagetype="imageCrn"
+            else
+                imagetype="imageId"
+            fi
+
+            # Construct JSON objects for both "mx2" and "mx3d" configurations
+            IFS=',' read -ra families <<< "$family"
+            for fam in "${families[@]}"; do
+                templateId="Template-${cluster_prefix}-$((1000+i))-$fam"  # Add family to templateId
+                if [ "$fam" = "mx2" ]; then
+                    maxmem_val="$maxmem_mx2"  # Use mx2 specific maxmem value
+                    mem_val="$mem_mx2"  # Use mx2 specific mem value
+                elif [ "$fam" = "mx3d" ]; then
+                    maxmem_val="$maxmem_mx3d"
+                    mem_val="$mem_mx3d"
+                fi
+                # Construct JSON object (including final comma)
+                json_string+=$(cat <<EOF
 {
  "templateId": "$templateId",
  "maxNumber": "$rc_max_num",
@@ -429,23 +442,25 @@ for region in "eu-de" "us-east" "us-south"; do
   "type": ["String", "X86_64"],
   "ncores": ["Numeric", "$ncores"],
   "ncpus": ["Numeric", "$ncpus"],
-  "mem": ["Numeric", "$mem"],
-  "maxmem": ["Numeric", "$maxmem"],
+  "mem": ["Numeric", "$mem_val"],
+  "maxmem": ["Numeric", "$maxmem_val"],
   "cloudhpchost": ["Boolean", "1"],
-  "family": ["String", "$family"]
+  "family": ["String", "$fam"]
  },
  "$imagetype": "$imageID",
  "vpcId": "${vpcID}",
  "region": "${regionName}",
  "priority": 10,
- "userData": "$userData",
- "ibmcloudhpc_fleetconfig": "ibmcloudhpc_fleetconfig_${family}.json"
+ "userData": "family=$fam",
+ "ibmcloudhpc_fleetconfig": "ibmcloudhpc_fleetconfig_${fam}.json"
 },
 EOF
 )
+            done
         done
     fi
 done
+
 json_string="${json_string%,}" # remove last comma
 # Combine the JSON objects into a JSON array
 json_data="{\"templates\": [${json_string}]}"
@@ -454,9 +469,22 @@ echo "$json_data" > "$ibmcloudhpc_templates"
 echo "JSON templates are created and updated on ibmcloudhpc_templates.json"
 
 
-  # 8. ibmcloudfleet_config.json
-  for i in mx2 cx2 mx3d; do
-  cat <<EOT > "$LSF_RC_IBMCLOUDHPC_CONF"/ibmcloudhpc_fleetconfig_${i}.json
+
+# 8. Define the directory to store fleet configuration files
+fleet_config_dir="$LSF_RC_IBMCLOUDHPC_CONF"
+# Loop through regions
+for region in "eu-de" "us-east" "us-south"; do
+    # Define the fleet configuration family based on the region
+    if [ "$regionName" = "us-south" ]; then
+        families=("mx2" "mx3d")
+    else
+        families=("mx2")
+    fi
+
+    # Loop through families
+    for family in "${families[@]}"; do
+        # Create fleet configuration file for the region and family
+        cat <<EOT > "${fleet_config_dir}/ibmcloudhpc_fleetconfig_${family}.json"
 {
     "fleet_request": {
         "availability_policy": {
@@ -471,9 +499,9 @@ echo "JSON templates are created and updated on ibmcloudhpc_templates.json"
             "optimization": "minimum_price"
         },
         "boot_volume_attachment": {
-          "encryption_key": {
-            "crn": "${bootdrive_crn}"
-          }
+            "encryption_key": {
+                "crn": "${bootdrive_crn}"
+            }
         },
         "zones": [
             {
@@ -494,7 +522,7 @@ echo "JSON templates are created and updated on ibmcloudhpc_templates.json"
         "profile_requirement": {
             "families": [
                 {
-                    "name": "$i",
+                    "name": "${family}",
                     "rank": 1,
                     "profiles": []
                 }
@@ -503,9 +531,13 @@ echo "JSON templates are created and updated on ibmcloudhpc_templates.json"
     }
 }
 EOT
-  done
-  chown lsfadmin:root "$LSF_RC_IBMCLOUDHPC_CONF"/ibmcloudhpc_fleetconfig*
-  chmod 644 "$LSF_RC_IBMCLOUDHPC_CONF"/ibmcloudhpc_fleetconfig*
+    done
+done
+
+# Set permissions for fleet configuration files
+chown lsfadmin:root "${fleet_config_dir}/ibmcloudhpc_fleetconfig_"*
+chmod 644 "${fleet_config_dir}/ibmcloudhpc_fleetconfig_"*
+echo "Fleet configuration files created and updated."
 
   # 9. create user_data.json for compute nodes
   (
@@ -519,19 +551,19 @@ cluster_prefix="${cluster_prefix}"
 rc_cidr_block="${rc_cidr_block}"
 network_interface="${network_interface}"
 dns_domain="${dns_domain}"
-ManagementHostNames="${ManagementHostNames}"
+ManagementHostNames="${mgmt_hostnames}"
 lsf_public_key="${cluster_public_key_content}"
 hyperthreading=${hyperthreading}
 nfs_server_with_mount_path="${nfs_server_with_mount_path}"
 custom_file_shares="${custom_file_shares}"
 custom_mount_paths="${custom_mount_paths}"
-login_ip_address="${login_ip_address}"
+login_ip_address="${login_ip}"
 login_hostname="${login_hostname}"
 enable_ldap="${enable_ldap}"
 ldap_server_ip="${ldap_server_ip}"
 base_dn="${ldap_basedns}"
-enable_cloud_monitoring="${enable_cloud_monitoring}"
-enable_compute_node_monitoring="${enable_compute_node_monitoring}"
+observability_monitoring_enable="${observability_monitoring_enable}"
+observability_monitoring_on_compute_nodes_enable="${observability_monitoring_on_compute_nodes_enable}"
 cloud_monitoring_access_key="${cloud_monitoring_access_key}"
 cloud_monitoring_ingestion_url="${cloud_monitoring_ingestion_url}"
 
@@ -560,7 +592,7 @@ EOT
 
   # Uncomment the below line to enable Datamanager
   cat <<EOT >> $LSF_CONF_FILE
-#LSF_DATA_HOSTS=${HostName}
+#LSF_DATA_HOSTS=${this_hostname}
 # LSF_DATA_PORT=1729
 EOT
 
@@ -700,9 +732,10 @@ else
 fi
 
 # Update the entry to LSF_HOSTS_FILE
-
 if [ "$on_primary" == "true" ]; then
-  for hostname in $ManagementHostNames; do
+  echo "$login_ip $login_hostname" >> $LSF_HOSTS_FILE
+  for hostname in $mgmt_hostnames; do
+    # we map hostnames to ips with DNS, even if we have the ips list already
     while true; do
       echo "querying DNS: $hostname"
       ip="$(dig +short "$hostname.${dns_domain}")"
@@ -716,7 +749,7 @@ if [ "$on_primary" == "true" ]; then
   done
 fi
 
-for hostname in $ManagementHostNames; do
+for hostname in $mgmt_hostnames; do
   while ! grep "$hostname" "$LSF_HOSTS_FILE"; do
     echo "Waiting for $hostname to be added to LSF host file"
     sleep 5
@@ -773,7 +806,7 @@ if [ "$do_app_center" = true ] ; then
       # Update the Job directory, needed for VNC Sessions
       sed -i 's|<Path>/home</Path>|<Path>/mnt/lsf/repository-path</Path>|' "$LSF_SUITE_GUI_CONF/Repository.xml"
       if [ "${app_center_high_availability}" = true ]; then
-        echo "LSF_ADDON_HOSTS=\"${ManagementHostNames}\"" >> $LSF_CONF/lsf.conf
+        echo "LSF_ADDON_HOSTS=\"${mgmt_hostnames}\"" >> $LSF_CONF/lsf.conf
         create_appcenter_database
         sed -i "s/NoVNCProxyHost=.*/NoVNCProxyHost=pac.${dns_domain}/g" "$LSF_SUITE_GUI_CONF/pmc.conf"
         sed -i "s|<restHost>.*</restHost>|<restHost>pac.${dns_domain}</restHost>|" $LSF_SUITE_GUI_CONF/pnc-config.xml
@@ -964,7 +997,7 @@ systemctl enable lsf_prometheus_exporter
 systemctl restart lsf_prometheus_exporter
 
 # Setting up the Metrics Agent
-if [ "$enable_cloud_monitoring" = true ]; then
+if [ "$observability_monitoring_enable" = true ]; then
 
   if [ "$cloud_monitoring_access_key" != "" ] && [ "$cloud_monitoring_ingestion_url" != "" ]; then
 

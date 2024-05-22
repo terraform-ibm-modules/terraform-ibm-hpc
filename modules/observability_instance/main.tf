@@ -27,7 +27,7 @@ module "observability_instance" {
   # IBM Cloud Monitoring
   cloud_monitoring_provision     = var.cloud_monitoring_provision
   cloud_monitoring_instance_name = local.cloud_monitoring_instance_name
-  cloud_monitoring_plan          = var.cloud_monitoring_plan
+  cloud_monitoring_plan          = var.observability_monitoring_plan
   cloud_monitoring_tags          = var.tags
   # Activity Tracker
   activity_tracker_plan          = var.activity_tracker_plan

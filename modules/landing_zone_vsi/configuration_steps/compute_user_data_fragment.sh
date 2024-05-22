@@ -125,9 +125,15 @@ if [ "$hyperthreading" == true ]; then
   ego_define_ncpus="threads"
 else
   ego_define_ncpus="cores"
-  for vcpu in $(cat /sys/devices/system/cpu/cpu*/topology/thread_siblings_list | cut -s -d- -f2 | cut -d- -f2 | uniq); do
-    echo 0 > /sys/devices/system/cpu/cpu"$vcpu"/online
-  done
+  cat << 'EOT' > /root/lsf_hyperthreading
+#!/bin/sh
+for vcpu in $(cat /sys/devices/system/cpu/cpu*/topology/thread_siblings_list | cut -s -d- -f2 | cut -d- -f2 | uniq); do
+    echo "0" > "/sys/devices/system/cpu/cpu"$vcpu"/online"
+done
+EOT
+  chmod 755 /root/lsf_hyperthreading
+  command="/root/lsf_hyperthreading"
+  sh $command && (crontab -l 2>/dev/null; echo "@reboot $command") | crontab -
 fi
 echo "EGO_DEFINE_NCPUS=${ego_define_ncpus}" >> $LSF_CONF_FILE
 
@@ -369,7 +375,7 @@ else
     echo "Skipping metrics agent configuration due to missing parameters" >> "$logfile"
 fi
 
-if [ "$enable_compute_node_monitoring" = true ]; then
+if [ "$observability_monitoring_on_compute_nodes_enable" = true ]; then
 
     echo "Restarting sysdig agent" >> "$logfile"
     systemctl enable dragent

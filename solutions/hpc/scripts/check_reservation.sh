@@ -10,24 +10,21 @@ PROJECT_FOLDER=$(realpath "$SCRIPT_FOLDER/..")
 IAM_ENDPOINT_URL="https://iam.cloud.ibm.com/identity/token"
 RESOURCE_CONTROLLER_ENDPOINT_URL="https://resource-controller.cloud.ibm.com"
 CODE_ENGINE_API_ENDPOINT_URL="https://api.REGION.codeengine.cloud.ibm.com"
-HPC_API_ENDPOINT_URL="https://hpc-api.REGION.codeengine.cloud.ibm.com"
 V2_CONTEXT_ROOT="v2"
-V3_CONTEXT_ROOT="v3"
 V2BETA_CONTEXT_ROOT="v2beta"
 
 TMP_DIR="/tmp"
 HTTP_OUTPUT_FILE="${TMP_DIR}/hpcaas_http_output.log"
-CODE_ENGINE_PROJECT_GUID_FILE="${PROJECT_FOLDER}/assets/hpcaas-ce-project-guid"
+CODE_ENGINE_PROJECT_GUID_FILE="${PROJECT_FOLDER}/assets/hpcaas-ce-project-guid.cfg"
 
-RESERVATION_ID=""
 REGION=""
 RESOURCE_GROUP_ID=""
 
-LOG_FILE="/dev/stdout"
+LOG_FILE="/tmp/hpcaas-check-reservation.log"
 
 # Script return code:
 # 0 - Success, a Reservation for the input RESERVATION_ID exists and a Code Engine Project exists for it.
-# 1 - IBM_CLOUD_API_KEY environment variable not provided.
+# 1 - IBM_CLOUD_API_KEY and/or RESERVATION_ID environment variables are not provided.
 # 2 - Parsing error, the script was not invoked correctly.
 # 3 - Cannot retrieve JWT token, the script cannot exchange the IBM Cloud API key with a JWT token.
 # 4 - Cannot retrieve a GUID for the input Reservation ID.
@@ -35,6 +32,24 @@ LOG_FILE="/dev/stdout"
 # 6 - Cannot create the Code Engine project.
 # 7 - Code Engine project creation timeout expired.
 # 8 - Cannot associate the Code Engine project with guid GUID to the Reservation with id RESERVATION_ID.
+
+####################################################################################################
+# init_logging
+#
+# Description:
+#     this function initialize the hpcaas-check-reservation.log file
+####################################################################################################
+init_logging() {
+    # Calculate the folder of the log file
+    LOG_FILE_FOLDER=$(dirname "${LOG_FILE}")
+    # Verify the folder exists, if not create it
+    if [ ! -d "${LOG_FILE_FOLDER}" ]; then
+        # Se non esiste, crea la directory
+        mkdir -p "${LOG_FILE_FOLDER}"
+    fi
+    # Remove everything from the log file
+    echo "" > "${LOG_FILE}"
+}
 
 ####################################################################################################
 # log
@@ -51,7 +66,8 @@ log() {
 
     # Create the timestamp to add in the log message
     timestamp=$(date +'%Y%m%d %H:%M:%S')
-    # Print the message in the log file
+    # Print the message on the output and in the log file
+    echo "[$timestamp] ${message}"
     echo "[$timestamp] ${message}" >> "${LOG_FILE}"
 }
 
@@ -64,7 +80,6 @@ log() {
 usage() {
     log "Usage: $0 [options]"
     log "Options:"
-    log "  --reservation-id    id  | -r id : Specify the Reservation ID"
     log "  --region            id  | -e id : Specify the Region"
     log "  --resource-group-id id  | -e id : Specify the Resource Group ID"
     log "  [--output <file>]       | -o [--output <file>] : Specify the log file. Default is stdout."
@@ -76,7 +91,6 @@ usage() {
 #
 # Description:
 #     this function parse the input parameters. The following parameters are supported:
-#     --reservation-id    id  | -r id
 #     --region            id  | -e id
 #     --resource-group-id id  | -e id : Specify the Resource Group ID
 #    [--output <file>]        | -o [--output <file>] : Specify the log file. Default is stdout
@@ -88,9 +102,6 @@ usage() {
 parse_args() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            --reservation-id|-r)
-                shift
-                RESERVATION_ID="$1";;
             --region|-e)
                 shift
                 REGION="$1";;
@@ -108,9 +119,9 @@ parse_args() {
         shift
     done
     # Verify if the required options have been provided
-    if [[ -z "${RESERVATION_ID}" || -z "${REGION}" || -z "${RESOURCE_GROUP_ID}" ]]; then
+    if [[ -z "${REGION}" || -z "${RESOURCE_GROUP_ID}" ]]; then
         log "ERROR: parsing of the input arguments failed."
-        log "ERROR Details: the options --reservation-id, --region, and --resource-group-id are required."
+        log "ERROR Details: the options --region, and --resource-group-id are required."
         usage
     fi
 
@@ -151,14 +162,11 @@ get_token() {
     local token
     local error_message
 
+    # The IBM tool https://github.com/ibm/detect-secrets detected the secret we passed to the API.
+    # However, this is aa public secret so no real exposure exists.
+
     # This is the curl used to retrieve the JWT token given the IBM Cloud API Key in input
-    response=$(curl -s -w "%{http_code}" \
-        --request POST \
-        --url ${IAM_ENDPOINT_URL} \
-        --header 'Authorization: Basic Yng6Yng=' \
-        --header 'Content-Type: application/x-www-form-urlencoded' \
-        --data grant_type=urn:ibm:params:oauth:grant-type:apikey \
-        --data apikey="${api_key}")
+    response=$(curl -s -w "%{http_code}" --request POST --url ${IAM_ENDPOINT_URL} --header 'Authorization: Basic Yng6Yng=' --header 'Content-Type: application/x-www-form-urlencoded' --data grant_type=urn:ibm:params:oauth:grant-type:apikey --data apikey="${api_key}") # pragma: allowlist secret
 
     # The curl return a reply with the following format { ... JSON ... }HTTPSTATUS.
     # These two lines separate the HTTP STATUS from the JSON reply.
@@ -206,7 +214,7 @@ get_guid_from_reservation_id() {
     # This curl check if the input reservation id exists
     result=$(curl -s -w "%{http_code}" -o ${HTTP_OUTPUT_FILE} \
         -H "Authorization: Bearer ${jwt_token}" \
-        "${HPC_API_ENDPOINT_URL}/${V3_CONTEXT_ROOT}/capacity_reservations")
+        "${CODE_ENGINE_API_ENDPOINT_URL}/${V2BETA_CONTEXT_ROOT}/capacity_reservations")
 
     # The curl return a reply with the following format { ... JSON ... }HTTPSTATUS.
     # These two lines separate the HTTP STATUS from the JSON reply.
@@ -324,7 +332,7 @@ wait_ce_project_creation() {
     local region="$2"
     local ce_project_guid="$3"
     # 3 minutes and 20s timeout
-    local timeout=200
+    local timeout=300
     local start_time
     local http_code
     local response_message
@@ -417,9 +425,20 @@ associate_ce_project_to_reservation() {
 # - RESOURCE_GROUP_ID
 # - LOG_FILE
 parse_args "$@"
+# Initialize the logging file
+init_logging
 
-if [ -z "$IBM_CLOUD_API_KEY" ]; then
-    log "ERROR: environment variable IBM_CLOUD_API_KEY not provided."
+# The IBM tool https://github.com/ibm/detect-secrets detected a secret keyword.
+# However, it detected only the API keyword but no real secret expure exists here.
+if [ -z "$IBM_CLOUD_API_KEY" ]; then  # pragma: allowlist secret
+    log "ERROR: environment variable IBM_CLOUD_API_KEY not provided. Run the command:"
+    log "       export IBM_CLOUD_API_KEY=\"<your API Key>\"" # pragma: allowlist secret
+    exit 1
+fi
+
+if [ -z "$RESERVATION_ID" ]; then
+    log "ERROR: environment variable RESERVATION_ID not provided.  Run the command:"
+    log "       export RESERVATION_ID=\"<your Reservation ID>\""
     exit 1
 fi
 
@@ -427,7 +446,6 @@ fi
 # - Code Engine API Endpoint URL correctly
 # - HPC API Endpoint URL correctly
 CODE_ENGINE_API_ENDPOINT_URL=${CODE_ENGINE_API_ENDPOINT_URL//REGION/${REGION}}
-HPC_API_ENDPOINT_URL=${HPC_API_ENDPOINT_URL//REGION/${REGION}}
 
 # Try to exchange the IBM Cloud API key for a JWT token.
 log "INFO: Retrieving the JWT Token for the IBM_CLOUD_API_KEY."
@@ -439,28 +457,31 @@ if  ! JWT_TOKEN=$(get_token "${IBM_CLOUD_API_KEY}"); then
 fi
 
 # HPC Tile has the parameter RESERVATION_ID that is meaningful name like Contract-IBM-WDC-OB
-# As first step, we need to get the RESERVATION_GUID starting from the RESERVATION_ID
-log "INFO: Getting the Reservation GUID starting from the ID ${RESERVATION_ID}."
+# As first step, we need to get the RESERVATION_GUID starting from the RESERVATION_ID. To do that,
+# we retrieve a JSOn file contaaining the list of all the reservations.
+log "INFO: Getting the Reservation GUID starting from the ID <obfuscated id>."
 response=$(get_guid_from_reservation_id "${JWT_TOKEN}")
 http_code=$(echo "${response}" | head -n 1)
 response_message=$(echo "${response}" | tail -n +2)
 
 # Check if the RESERVATION_GUID is available
 if [ "${http_code}" != "200" ]; then
-    log "ERROR: Reservation GUID for the ID ${RESERVATION_ID}, wasn't found."
+    log "ERROR: Reservation GUID for the ID <obfuscated id>, wasn't found."
     log "ERROR Details: ${response_message}."
     exit 4
 fi
 
+# Now we have to check if in the JSON list exists a reservation equal to RESERVATION_ID
 RESERVATION_GUID=$(echo "${response_message}" | jq -r ".capacity_reservations[] | select (.name == \"${RESERVATION_ID}\") | .id")
 if [ -z "$RESERVATION_GUID" ]; then
-    log "ERROR: Reservation GUID for the ID ${RESERVATION_ID}, wasn't found."
+    log "ERROR: Reservation GUID for the ID <obfuscated id>, wasn't found."
     exit 4
 fi
 
-log "INFO: Reservation (ID: ${RESERVATION_ID}) has the GUID: ${RESERVATION_GUID}."
+# We found the RESERVATION_GUID associated with the RESERVATION_ID
+log "INFO: Reservation (ID: <obfuscated id>) has the GUID: ${RESERVATION_GUID}."
 
-# The first step is to validate the RESERVATION_ID and verify if a Code Engine Project exists for it.
+# Now we have to check if the reservation RESERVATION_ID has a Code Engine Project exists for it.
 log "INFO: Verifying the existence of a Reservation (GUID: ${RESERVATION_GUID})."
 response=$(check_reservation "${JWT_TOKEN}" "${RESERVATION_GUID}")
 http_code=$(echo "${response}" | head -n 1)

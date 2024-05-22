@@ -113,3 +113,15 @@ variable "event_notification_service_endpoints" {
   default     = "public-and-private"
   description = "Event Notifications Service Endpoints to be used"
 }
+
+# COS Instance CRN
+variable "cos_instance_crn" {
+  type        = string
+  description = "CRN of the COS instance created by Landing Zone Module"
+}
+
+# COS Bucket for SCC
+variable "cos_bucket" {
+  type        = string
+  description = "Name of the COS Bucket created for SCC Instance"
+}

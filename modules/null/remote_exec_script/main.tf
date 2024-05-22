@@ -29,6 +29,9 @@ resource "null_resource" "remote_exec_script_cp_files" {
     command = "true"
   }
 
+  triggers = {
+    trigger_string = var.trigger_string
+  }
 }
 
 resource "null_resource" "remote_exec_script_cp_dirs" {
@@ -53,6 +56,9 @@ resource "null_resource" "remote_exec_script_cp_dirs" {
     command = "true"
   }
 
+  triggers = {
+    trigger_string = var.trigger_string
+  }
 }
 
 resource "null_resource" "remote_exec_script_new_file" {
@@ -80,6 +86,9 @@ resource "null_resource" "remote_exec_script_new_file" {
   depends_on = [
     null_resource.remote_exec_script_cp_dirs # we may want to create the file in a subpath created with the cp_dirs
   ]
+  triggers = {
+    trigger_string = var.trigger_string
+  }
 }
 
 resource "null_resource" "remote_exec_script_run" {
@@ -111,4 +120,7 @@ resource "null_resource" "remote_exec_script_run" {
     null_resource.remote_exec_script_cp_dirs,
     null_resource.remote_exec_script_new_file
   ]
+  triggers = {
+    trigger_string = var.trigger_string
+  }
 }

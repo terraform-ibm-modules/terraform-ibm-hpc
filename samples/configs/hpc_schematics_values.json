@@ -37,7 +37,7 @@
           "value": "250",
           "type": "string",
           "secure": false,
-          "description": "Parallelism/ concurrent operations limit. Valid values are between 1 and 256, both inclusive. [Learn more](https://www.terraform.io/docs/internals/graph.html#walking-the-graph)."
+          "description": "Parallelism concurrent operations limit. Valid values are between 1 and 256, both inclusive. [Learn more](https://www.terraform.io/docs/internals/graph.html#walking-the-graph)."
         },
         {
           "name": "TF_VERSION",
@@ -62,7 +62,7 @@
         },
         {
           "name": "zones",
-          "value": "[\"Please fill here\"]",
+          "value": "[\"us-east-1\"]",
           "type": "list(string)",
           "secure": false,
           "description": "IBM Cloud zone name within the selected region where the IBM Cloud HPC cluster should be deployed. Single zone name is required as input value and supported zones for eu-de are eu-de-2, eu-de-3 for us-east us-east-1, us-east-3 and for us-south us-south-1 and us-south-3. The management nodes, file storage shares and compute nodes will be deployed on the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
@@ -72,7 +72,7 @@
           "value": "hpcaas",
           "type": "string",
           "secure": false,
-          "description": "Prefix that is used to name the IBM Cloud HPC cluster and IBM Cloud resources that are provisioned to build the IBM Cloud HPC cluster instance. You cannot create more than one instance of the IBM Cloud HPC cluster with the same name. Ensure that the name is unique."
+          "description": "Prefix that is used to name the IBM Cloud HPC cluster and IBM Cloud resources that are provisioned to build the IBM Cloud HPC cluster instance. You cannot create more than one instance of the IBM Cloud HPC cluster with the same name. Ensure that the name is unique. Prefix must begin and end with a letter and contain only letters, numbers, and - characters."
         },
         {
           "name": "cluster_id",
@@ -195,24 +195,25 @@
         },
         {
           "name": "management_image_name",
-          "value": "hpcaas-lsf10-rhel88-v4",
+          "value": "hpcaas-lsf10-rhel88-v6",
           "type": "string",
           "secure": false,
-          "description": "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster management nodes. By default, the solution uses a base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
+          "description": "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster management nodes. By default, the solution uses a base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
         },
         {
           "name": "compute_image_name",
-          "value": "hpcaas-lsf10-rhel88-compute-v3",
+          "value": "hpcaas-lsf10-rhel88-compute-v5",
           "type": "string",
           "secure": false,
-          "description": "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v2). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
+          "description": "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v4). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
+
         },
         {
           "name": "login_image_name",
-          "value": "hpcaas-lsf10-rhel88-compute-v3",
+          "value": "hpcaas-lsf10-rhel88-compute-v5",
           "type": "string",
           "secure": false,
-          "description": "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster login node. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v2). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
+          "description": "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster login node. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v4). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
         },
         {
           "name": "login_node_instance_type",
@@ -317,7 +318,7 @@
           "description": "Flag to enable VPC flow logs. If true, a flow log collector will be created."
         },
         {
-          "name": "enable_atracker_on_cos",
+          "name": "observability_atracker_on_cos_enable",
           "value": "true",
           "type": "bool",
           "secure": false,
@@ -421,48 +422,55 @@
           "secure": false,
           "description": "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
         },
-        { "name": "enable_cloud_monitoring",
+        {
+          "name": "scc_event_notification_plan",
+          "value": "lite",
+          "type": "string",
+          "secure": false,
+          "description": "Event Notifications Instance plan to be used (it's used with S.C.C. instance), possible values 'lite' and 'standard'"
+        },
+        { "name": "observability_monitoring_enable",
           "value": "false",
           "type": "bool",
           "secure": false,
           "description": "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure and LSF application metrics from Management Nodes will be ingested."
         },
-        { 
-          "name": "enable_cloud_monitoring_compute_nodes",
+        {
+          "name": "observability_monitoring_on_compute_nodes_enable",
           "value": "false",
           "type": "bool",
           "secure": false,
           "description": "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure metrics from Compute Nodes will be ingested."
         },
-        { 
-          "name": "cloud_monitoring_plan",
-          "value": "lite",
+        {
+          "name": "observability_monitoring_plan",
+          "value": "graduated-tier",
           "type": "string",
           "secure": false,
           "description" : "Type of service plan for IBM Cloud Monitoring instance. You can choose one of the following: lite, graduated-tier. For all details visit [IBM Cloud Monitoring Service Plans](https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans)."
         },
-        { 
+        {
           "name": "bastion_instance_name",
           "value": "null",
           "type": "string",
           "secure": false,
           "description" : "Bastion instance name. If none given then new bastion will be created."
         },
-        { 
+        {
           "name": "bastion_instance_public_ip",
           "value": "null",
           "type": "string",
           "secure": false,
           "description" : "Bastion instance public ip address."
         },
-        { 
+        {
           "name": "bastion_security_group_id",
           "value": "null",
           "type": "string",
           "secure": false,
           "description" : "Bastion security group id."
         },
-        { 
+        {
           "name": "bastion_ssh_private_key",
           "value": "null",
           "type": "string",
