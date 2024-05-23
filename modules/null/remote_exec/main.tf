@@ -17,6 +17,7 @@ resource "null_resource" "remote_exec" {
     bastion_host        = var.login_host
     bastion_user        = var.login_user
     bastion_private_key = var.login_private_key
+    timeout             = var.timeout
   }
 
   provisioner "remote-exec" {

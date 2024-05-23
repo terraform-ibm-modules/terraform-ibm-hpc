@@ -12,13 +12,3 @@ output "scc_en_crn" {
   description = "The CRN of the event notification instance created in this module"
   value       = var.scc_provision ? module.event_notification.crn : null
 }
-
-output "scc_cos_instance_id" {
-  description = "The COS instance ID created in this module"
-  value       = var.scc_provision ? module.cos.cos_instance_id : null
-}
-
-output "scc_cos_bucket" {
-  description = "The COS bucket created in this module"
-  value       = var.scc_provision ? module.cos.bucket_name : null
-}

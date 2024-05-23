@@ -76,15 +76,6 @@ variable "bastion_public_key_content" {
   default     = null
   description = "Bastion security group id."
 }
-variable "management_candidate_private_ips" {
-  type        = list(string)
-  description = "List of IPs of candidate management nodes."
-}
-
-variable "management_private_ip" {
-  type        = string
-  description = "IP of primary management node."
-}
 
 variable "cluster_user" {
   type        = string
@@ -372,16 +363,16 @@ variable "storage_security_group_id" {
 # Observability Variables
 ##############################################################################
 
-variable "enable_cloud_monitoring" {
+variable "observability_monitoring_enable" {
   description = "Set true to enable IBM Cloud Monitoring instance provisioning."
   type        = bool
-  default     = true
+  default     = false
 }
 
-variable "enable_cloud_monitoring_compute_nodes" {
+variable "observability_monitoring_on_compute_nodes_enable" {
   description = "Set true to enable IBM Cloud Monitoring on Compute Nodes."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "cloud_monitoring_access_key" {

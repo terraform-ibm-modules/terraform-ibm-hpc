@@ -16,19 +16,9 @@ locals {
   }]
 }
 
-module "cos" {
-  source                 = "terraform-ibm-modules/cos/ibm"
-  version                = "7.5.3"
-  cos_instance_name      = "${var.prefix}-scc-cos"
-  kms_encryption_enabled = false
-  retention_enabled      = false
-  resource_group_id      = var.rg
-  bucket_name            = "${var.prefix}-scc-cb"
-}
-
 module "event_notification" {
   source            = "terraform-ibm-modules/event-notifications/ibm"
-  version           = "1.3.1"
+  version           = "1.3.4"
   resource_group_id = var.rg
   name              = "${var.prefix}-scc-event_notification"
   plan              = var.event_notification_plan
@@ -39,14 +29,14 @@ module "event_notification" {
 
 module "create_scc_instance" {
   source                            = "terraform-ibm-modules/scc/ibm"
-  version                           = "1.4.0"
+  version                           = "1.4.2"
   instance_name                     = "${var.prefix}-scc-instance"
   plan                              = var.scc_plan
   region                            = local.scc_region
   resource_group_id                 = var.rg
   resource_tags                     = var.tags
-  cos_bucket                        = module.cos.bucket_name
-  cos_instance_crn                  = module.cos.cos_instance_id
+  cos_bucket                        = var.cos_bucket
+  cos_instance_crn                  = var.cos_instance_crn
   en_instance_crn                   = module.event_notification.crn
   skip_cos_iam_authorization_policy = false
   attach_wp_to_scc_instance         = false
@@ -57,7 +47,7 @@ module "create_scc_instance" {
 module "create_profile_attachment" {
   count                  = var.scc_profile == null || var.scc_profile == "" ? 0 : 1
   source                 = "terraform-ibm-modules/scc/ibm//modules/attachment"
-  version                = "1.4.0"
+  version                = "1.4.2"
   profile_name           = var.scc_profile
   profile_version        = var.scc_profile_version
   scc_instance_id        = module.create_scc_instance.guid

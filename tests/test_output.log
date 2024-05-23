@@ -1,0 +1,960 @@
+=== RUN   TestRunAppCenter
+=== PAUSE TestRunAppCenter
+=== RUN   TestRunLDAPAndPac
+=== PAUSE TestRunLDAPAndPac
+=== CONT  TestRunAppCenter
+Started executing the test suite...
+=== CONT  TestRunLDAPAndPac
+TestRunAppCenter 2024-05-23T04:37:54-04:00 tests.go:254: TEMP CREATED:  /tmp/terraform-4145402565
+TestRunLDAPAndPac 2024-05-23T04:37:54-04:00 tests.go:254: TEMP CREATED:  /tmp/terraform-954350989
+TestRunLDAPAndPac 2024-05-23T04:37:54-04:00 tests.go:759: START: Init / Apply / Consistency Check
+TestRunLDAPAndPac 2024-05-23T04:37:54-04:00 tests.go:825: START: Init / Apply
+TestRunAppCenter 2024-05-23T04:37:54-04:00 tests.go:759: START: Init / Apply / Consistency Check
+TestRunAppCenter 2024-05-23T04:37:54-04:00 tests.go:825: START: Init / Apply
+TestRunAppCenter 2024-05-23T04:37:54-04:00 retry.go:91: terraform [init -upgrade=true]
+TestRunAppCenter 2024-05-23T04:37:54-04:00 logger.go:66: Running command terraform with args [init -upgrade=true]
+TestRunLDAPAndPac 2024-05-23T04:37:54-04:00 retry.go:91: terraform [init -upgrade=true]
+TestRunLDAPAndPac 2024-05-23T04:37:54-04:00 logger.go:66: Running command terraform with args [init -upgrade=true]
+TestRunLDAPAndPac 2024-05-23T04:37:54-04:00 logger.go:66: 
+TestRunLDAPAndPac 2024-05-23T04:37:54-04:00 logger.go:66: [0m[1mInitializing the backend...[0m
+TestRunAppCenter 2024-05-23T04:37:54-04:00 logger.go:66: 
+TestRunAppCenter 2024-05-23T04:37:54-04:00 logger.go:66: [0m[1mInitializing the backend...[0m
+TestRunLDAPAndPac 2024-05-23T04:37:54-04:00 logger.go:66: [0m[1mUpgrading modules...[0m
+TestRunAppCenter 2024-05-23T04:37:54-04:00 logger.go:66: [0m[1mUpgrading modules...[0m
+TestRunAppCenter 2024-05-23T04:37:55-04:00 logger.go:66: - alb in ../../modules/alb
+TestRunLDAPAndPac 2024-05-23T04:37:55-04:00 logger.go:66: - alb in ../../modules/alb
+TestRunAppCenter 2024-05-23T04:37:55-04:00 logger.go:66: - bastion_inventory in ../../modules/inventory
+TestRunLDAPAndPac 2024-05-23T04:37:55-04:00 logger.go:66: - bastion_inventory in ../../modules/inventory
+TestRunAppCenter 2024-05-23T04:37:55-04:00 logger.go:66: - bootstrap in ../../modules/bootstrap
+TestRunLDAPAndPac 2024-05-23T04:37:55-04:00 logger.go:66: - bootstrap in ../../modules/bootstrap
+TestRunAppCenter 2024-05-23T04:37:55-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/security-group/ibm 2.6.0 for bootstrap.bastion_sg...
+TestRunLDAPAndPac 2024-05-23T04:37:55-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/security-group/ibm 2.6.0 for bootstrap.bastion_sg...
+TestRunLDAPAndPac 2024-05-23T04:37:57-04:00 logger.go:66: - bootstrap.bastion_sg in .terraform/modules/bootstrap.bastion_sg
+TestRunLDAPAndPac 2024-05-23T04:37:57-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/security-group/ibm 2.6.0 for bootstrap.bastion_sg_with_ldap_update...
+TestRunLDAPAndPac 2024-05-23T04:37:57-04:00 logger.go:66: - bootstrap.bastion_sg_with_ldap_update in .terraform/modules/bootstrap.bastion_sg_with_ldap_update
+TestRunLDAPAndPac 2024-05-23T04:37:57-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone-vsi/ibm 4.0.0-rc5 for bootstrap.bastion_vsi...
+TestRunAppCenter 2024-05-23T04:37:57-04:00 logger.go:66: - bootstrap.bastion_sg in .terraform/modules/bootstrap.bastion_sg
+TestRunAppCenter 2024-05-23T04:37:57-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/security-group/ibm 2.6.0 for bootstrap.bastion_sg_with_ldap_update...
+TestRunAppCenter 2024-05-23T04:37:57-04:00 logger.go:66: - bootstrap.bastion_sg_with_ldap_update in .terraform/modules/bootstrap.bastion_sg_with_ldap_update
+TestRunAppCenter 2024-05-23T04:37:57-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone-vsi/ibm 4.0.0-rc5 for bootstrap.bastion_vsi...
+TestRunLDAPAndPac 2024-05-23T04:37:59-04:00 logger.go:66: - bootstrap.bastion_vsi in .terraform/modules/bootstrap.bastion_vsi
+TestRunLDAPAndPac 2024-05-23T04:37:59-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/security-group/ibm 2.6.0 for bootstrap.existing_bastion_sg_update...
+TestRunLDAPAndPac 2024-05-23T04:37:59-04:00 logger.go:66: - bootstrap.existing_bastion_sg_update in .terraform/modules/bootstrap.existing_bastion_sg_update
+TestRunLDAPAndPac 2024-05-23T04:37:59-04:00 logger.go:66: - bootstrap.ssh_key in ../../modules/key
+TestRunLDAPAndPac 2024-05-23T04:37:59-04:00 logger.go:66: - check_cluster_status in ../../modules/null/remote_exec
+TestRunLDAPAndPac 2024-05-23T04:37:59-04:00 logger.go:66: - check_node_status in ../../modules/null/remote_exec
+TestRunLDAPAndPac 2024-05-23T04:37:59-04:00 logger.go:66: - cloud_monitoring_instance_creation in ../../modules/observability_instance
+TestRunLDAPAndPac 2024-05-23T04:37:59-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/observability-instances/ibm 2.12.2 for cloud_monitoring_instance_creation.observability_instance...
+TestRunAppCenter 2024-05-23T04:37:59-04:00 logger.go:66: - bootstrap.bastion_vsi in .terraform/modules/bootstrap.bastion_vsi
+TestRunAppCenter 2024-05-23T04:37:59-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/security-group/ibm 2.6.0 for bootstrap.existing_bastion_sg_update...
+TestRunAppCenter 2024-05-23T04:37:59-04:00 logger.go:66: - bootstrap.existing_bastion_sg_update in .terraform/modules/bootstrap.existing_bastion_sg_update
+TestRunAppCenter 2024-05-23T04:37:59-04:00 logger.go:66: - bootstrap.ssh_key in ../../modules/key
+TestRunAppCenter 2024-05-23T04:37:59-04:00 logger.go:66: - check_cluster_status in ../../modules/null/remote_exec
+TestRunAppCenter 2024-05-23T04:37:59-04:00 logger.go:66: - check_node_status in ../../modules/null/remote_exec
+TestRunAppCenter 2024-05-23T04:37:59-04:00 logger.go:66: - cloud_monitoring_instance_creation in ../../modules/observability_instance
+TestRunAppCenter 2024-05-23T04:37:59-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/observability-instances/ibm 2.12.2 for cloud_monitoring_instance_creation.observability_instance...
+TestRunAppCenter 2024-05-23T04:38:02-04:00 logger.go:66: - cloud_monitoring_instance_creation.observability_instance in .terraform/modules/cloud_monitoring_instance_creation.observability_instance
+TestRunAppCenter 2024-05-23T04:38:02-04:00 logger.go:66: - cloud_monitoring_instance_creation.observability_instance.activity_tracker in .terraform/modules/cloud_monitoring_instance_creation.observability_instance/modules/activity_tracker
+TestRunAppCenter 2024-05-23T04:38:02-04:00 logger.go:66: - cloud_monitoring_instance_creation.observability_instance.cloud_monitoring in .terraform/modules/cloud_monitoring_instance_creation.observability_instance/modules/cloud_monitoring
+TestRunAppCenter 2024-05-23T04:38:02-04:00 logger.go:66: - cloud_monitoring_instance_creation.observability_instance.log_analysis in .terraform/modules/cloud_monitoring_instance_creation.observability_instance/modules/log_analysis
+TestRunAppCenter 2024-05-23T04:38:02-04:00 logger.go:66: - compute_candidate_dns_records in ../../modules/dns_record
+TestRunAppCenter 2024-05-23T04:38:02-04:00 logger.go:66: - compute_dns_records in ../../modules/dns_record
+TestRunAppCenter 2024-05-23T04:38:02-04:00 logger.go:66: - compute_inventory in ../../modules/inventory
+TestRunAppCenter 2024-05-23T04:38:02-04:00 logger.go:66: - db in ../../modules/database/mysql
+TestRunLDAPAndPac 2024-05-23T04:38:02-04:00 logger.go:66: - cloud_monitoring_instance_creation.observability_instance in .terraform/modules/cloud_monitoring_instance_creation.observability_instance
+TestRunLDAPAndPac 2024-05-23T04:38:02-04:00 logger.go:66: - cloud_monitoring_instance_creation.observability_instance.activity_tracker in .terraform/modules/cloud_monitoring_instance_creation.observability_instance/modules/activity_tracker
+TestRunLDAPAndPac 2024-05-23T04:38:02-04:00 logger.go:66: - cloud_monitoring_instance_creation.observability_instance.cloud_monitoring in .terraform/modules/cloud_monitoring_instance_creation.observability_instance/modules/cloud_monitoring
+TestRunLDAPAndPac 2024-05-23T04:38:02-04:00 logger.go:66: - cloud_monitoring_instance_creation.observability_instance.log_analysis in .terraform/modules/cloud_monitoring_instance_creation.observability_instance/modules/log_analysis
+TestRunLDAPAndPac 2024-05-23T04:38:02-04:00 logger.go:66: - compute_candidate_dns_records in ../../modules/dns_record
+TestRunLDAPAndPac 2024-05-23T04:38:02-04:00 logger.go:66: - compute_dns_records in ../../modules/dns_record
+TestRunLDAPAndPac 2024-05-23T04:38:02-04:00 logger.go:66: - compute_inventory in ../../modules/inventory
+TestRunLDAPAndPac 2024-05-23T04:38:02-04:00 logger.go:66: - db in ../../modules/database/mysql
+TestRunAppCenter 2024-05-23T04:38:02-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/icd-mysql/ibm 1.2.0 for db.db...
+TestRunLDAPAndPac 2024-05-23T04:38:02-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/icd-mysql/ibm 1.2.0 for db.db...
+TestRunAppCenter 2024-05-23T04:38:03-04:00 logger.go:66: - db.db in .terraform/modules/db.db
+TestRunAppCenter 2024-05-23T04:38:04-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/cbr/ibm 1.19.1 for db.db.cbr_rule...
+TestRunLDAPAndPac 2024-05-23T04:38:04-04:00 logger.go:66: - db.db in .terraform/modules/db.db
+TestRunLDAPAndPac 2024-05-23T04:38:04-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/cbr/ibm 1.19.1 for db.db.cbr_rule...
+TestRunAppCenter 2024-05-23T04:38:05-04:00 logger.go:66: - db.db.cbr_rule in .terraform/modules/db.db.cbr_rule/modules/cbr-rule-module
+TestRunAppCenter 2024-05-23T04:38:05-04:00 logger.go:66: - dns in ../../modules/dns
+TestRunAppCenter 2024-05-23T04:38:05-04:00 logger.go:66: - file_storage in ../../modules/file_storage
+TestRunAppCenter 2024-05-23T04:38:05-04:00 logger.go:66: - generate_db_adminpassword in ../../modules/security/password
+TestRunAppCenter 2024-05-23T04:38:05-04:00 logger.go:66: - ipvalidation_cluster_subnet in ../../modules/custom/subnet_cidr_check
+TestRunAppCenter 2024-05-23T04:38:05-04:00 logger.go:66: - ipvalidation_login_subnet in ../../modules/custom/subnet_cidr_check
+TestRunAppCenter 2024-05-23T04:38:05-04:00 logger.go:66: - landing_zone in ../../modules/landing_zone
+TestRunAppCenter 2024-05-23T04:38:06-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone/ibm 5.17.0 for landing_zone.landing_zone...
+TestRunLDAPAndPac 2024-05-23T04:38:06-04:00 logger.go:66: - db.db.cbr_rule in .terraform/modules/db.db.cbr_rule/modules/cbr-rule-module
+TestRunLDAPAndPac 2024-05-23T04:38:06-04:00 logger.go:66: - dns in ../../modules/dns
+TestRunLDAPAndPac 2024-05-23T04:38:06-04:00 logger.go:66: - file_storage in ../../modules/file_storage
+TestRunLDAPAndPac 2024-05-23T04:38:06-04:00 logger.go:66: - generate_db_adminpassword in ../../modules/security/password
+TestRunLDAPAndPac 2024-05-23T04:38:06-04:00 logger.go:66: - ipvalidation_cluster_subnet in ../../modules/custom/subnet_cidr_check
+TestRunLDAPAndPac 2024-05-23T04:38:06-04:00 logger.go:66: - ipvalidation_login_subnet in ../../modules/custom/subnet_cidr_check
+TestRunLDAPAndPac 2024-05-23T04:38:06-04:00 logger.go:66: - landing_zone in ../../modules/landing_zone
+TestRunLDAPAndPac 2024-05-23T04:38:06-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone/ibm 5.17.0 for landing_zone.landing_zone...
+TestRunAppCenter 2024-05-23T04:38:09-04:00 logger.go:66: - landing_zone.landing_zone in .terraform/modules/landing_zone.landing_zone
+TestRunAppCenter 2024-05-23T04:38:09-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone-vsi/ibm 3.2.1 for landing_zone.landing_zone.bastion_host...
+TestRunLDAPAndPac 2024-05-23T04:38:10-04:00 logger.go:66: - landing_zone.landing_zone in .terraform/modules/landing_zone.landing_zone
+TestRunLDAPAndPac 2024-05-23T04:38:10-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone-vsi/ibm 3.2.1 for landing_zone.landing_zone.bastion_host...
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.bastion_host in .terraform/modules/landing_zone.landing_zone.bastion_host
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values in .terraform/modules/landing_zone.landing_zone/dynamic_values
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.appid in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/appid
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.bastion_vsi_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/bastion_vsi_list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.bastion_vsi_map.composed_bastion_vsi_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.bastion_vsi_map.vsi_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.bastion_vsi_map.vsi_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.clusters in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/clusters
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.clusters.cluster_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.clusters.cluster_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.clusters.composed_cluster_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/cos
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_bucket_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/nested_list_to_map_and_merge
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_bucket_map.list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_bucket_map.parent_merge_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_bucket_to_instance_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_data_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_data_source_id_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map_value
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_key_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/nested_list_to_map_and_merge
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_key_map.list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_key_map.parent_merge_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_resource_id_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map_value
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.f5 in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/f5
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.f5.composed_f5_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.f5.f5_cloud_init in .terraform/modules/landing_zone.landing_zone/f5_config
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.f5.f5_primary_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.f5.f5_secondary_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.f5.f5_vsi_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.f5_cloud_init in .terraform/modules/landing_zone.landing_zone/f5_config
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.security_group_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.security_group_rules_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/nested_list_to_map_and_merge
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.security_group_rules_map.list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.security_group_rules_map.parent_merge_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.service_authorizations in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/service_authorizations
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.service_authorizations.atracker_to_cos in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.service_authorizations.cos_to_key_management in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.service_authorizations.flow_logs_to_cos in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.service_authorizations.kms_to_block_storage in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.service_authorizations.kube_to_kms in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.unit_test_appid in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/appid
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cluster_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/clusters
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cluster_map.cluster_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cluster_map.cluster_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cluster_map.composed_cluster_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cluster_no_worker_pools in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/cluster_worker_pools
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cluster_no_worker_pools.worker_pool_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cluster_no_worker_pools.worker_pool_subnet_creation_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cluster_no_worker_pools.worker_pool_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/cos
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_bucket_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/nested_list_to_map_and_merge
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_bucket_map.list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_bucket_map.parent_merge_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_bucket_to_instance_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_data_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_data_source_id_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map_value
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_key_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/nested_list_to_map_and_merge
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_key_map.list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_key_map.parent_merge_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_resource_id_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map_value
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/cos
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_bucket_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/nested_list_to_map_and_merge
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_bucket_map.list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_bucket_map.parent_merge_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_bucket_to_instance_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_data_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_data_source_id_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map_value
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_key_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/nested_list_to_map_and_merge
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_key_map.list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_key_map.parent_merge_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_resource_id_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map_value
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_f5 in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/f5
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_f5.composed_f5_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_f5.f5_cloud_init in .terraform/modules/landing_zone.landing_zone/f5_config
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_f5.f5_primary_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_f5.f5_secondary_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_f5.f5_vsi_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_get_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_list_to_map_if_lookup in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_list_to_map_value_no_replace in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map_value
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_list_to_map_value_replace in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map_value
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_nest_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/nested_list_to_map_and_merge
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_nest_to_map.list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_nest_to_map.parent_merge_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_nest_to_map_prepend in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/nested_list_to_map_and_merge
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_nest_to_map_prepend.list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_nest_to_map_prepend.parent_merge_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_ssh_key in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/vsi
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_ssh_key.composed_vsi_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_ssh_key.vsi_image_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_ssh_key.vsi_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_ssh_key.vsi_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpe in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/vpe
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpe.vpe_gateway_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpe.vpe_ip_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpe.vpe_ip_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpe.vpe_service_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpe.vpe_subnet_reserved_ip_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpn in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/vpn
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpn.vpn_gateway_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpn.vpn_gateway_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpn.vpn_subnet_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vsi_images in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/vsi
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vsi_images.composed_vsi_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vsi_images.vsi_image_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vsi_images.vsi_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vsi_images.vsi_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vsi_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/bastion_vsi_list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vsi_list_to_map.composed_bastion_vsi_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vsi_list_to_map.vsi_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vsi_list_to_map.vsi_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_worker_pools in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/cluster_worker_pools
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_worker_pools.worker_pool_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_worker_pools.worker_pool_subnet_creation_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_worker_pools.worker_pool_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpc_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpe in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/vpe
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpe.vpe_gateway_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpe.vpe_ip_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpe.vpe_ip_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpe.vpe_service_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpe.vpe_subnet_reserved_ip_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpn in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/vpn
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpn.vpn_gateway_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpn.vpn_gateway_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpn.vpn_subnet_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vsi in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/vsi
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vsi.composed_vsi_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vsi.vsi_image_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vsi.vsi_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vsi.vsi_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.worker_pools in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/cluster_worker_pools
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.worker_pools.worker_pool_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.worker_pools.worker_pool_subnet_creation_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.worker_pools.worker_pool_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone-vsi/ibm 3.2.1 for landing_zone.landing_zone.f5_vsi...
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.f5_vsi in .terraform/modules/landing_zone.landing_zone.f5_vsi
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.key_management in .terraform/modules/landing_zone.landing_zone/kms
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.key_management.dynamic_values in .terraform/modules/landing_zone.landing_zone/kms/dynamic_values
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.key_management.unit_test_hs_crypto in .terraform/modules/landing_zone.landing_zone/kms/dynamic_values
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.key_management.unit_test_kms_data in .terraform/modules/landing_zone.landing_zone/kms/dynamic_values
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.key_management.unit_test_kms_resource in .terraform/modules/landing_zone.landing_zone/kms/dynamic_values
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.placement_group_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.ssh_keys in .terraform/modules/landing_zone.landing_zone/ssh_key
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: - landing_zone.landing_zone.teleport_config in .terraform/modules/landing_zone.landing_zone/teleport_config
+TestRunAppCenter 2024-05-23T04:38:11-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone-vpc/ibm 7.17.1 for landing_zone.landing_zone.vpc...
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.bastion_host in .terraform/modules/landing_zone.landing_zone.bastion_host
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values in .terraform/modules/landing_zone.landing_zone/dynamic_values
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.appid in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/appid
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.bastion_vsi_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/bastion_vsi_list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.bastion_vsi_map.composed_bastion_vsi_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.bastion_vsi_map.vsi_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.bastion_vsi_map.vsi_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.clusters in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/clusters
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.clusters.cluster_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.clusters.cluster_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.clusters.composed_cluster_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/cos
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_bucket_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/nested_list_to_map_and_merge
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_bucket_map.list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_bucket_map.parent_merge_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_bucket_to_instance_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_data_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_data_source_id_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map_value
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_key_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/nested_list_to_map_and_merge
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_key_map.list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_key_map.parent_merge_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.cos.cos_resource_id_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map_value
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.f5 in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/f5
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.f5.composed_f5_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.f5.f5_cloud_init in .terraform/modules/landing_zone.landing_zone/f5_config
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.f5.f5_primary_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.f5.f5_secondary_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.f5.f5_vsi_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.f5_cloud_init in .terraform/modules/landing_zone.landing_zone/f5_config
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.security_group_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.security_group_rules_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/nested_list_to_map_and_merge
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.security_group_rules_map.list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.security_group_rules_map.parent_merge_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.service_authorizations in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/service_authorizations
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.service_authorizations.atracker_to_cos in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.service_authorizations.cos_to_key_management in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.service_authorizations.flow_logs_to_cos in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.service_authorizations.kms_to_block_storage in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.service_authorizations.kube_to_kms in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.unit_test_appid in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/appid
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cluster_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/clusters
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cluster_map.cluster_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cluster_map.cluster_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cluster_map.composed_cluster_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cluster_no_worker_pools in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/cluster_worker_pools
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cluster_no_worker_pools.worker_pool_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cluster_no_worker_pools.worker_pool_subnet_creation_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cluster_no_worker_pools.worker_pool_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/cos
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_bucket_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/nested_list_to_map_and_merge
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_bucket_map.list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_bucket_map.parent_merge_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_bucket_to_instance_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_data_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_data_source_id_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map_value
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_key_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/nested_list_to_map_and_merge
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_key_map.list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_key_map.parent_merge_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos.cos_resource_id_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map_value
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/cos
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_bucket_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/nested_list_to_map_and_merge
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_bucket_map.list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_bucket_map.parent_merge_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_bucket_to_instance_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_data_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_data_source_id_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map_value
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_key_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/nested_list_to_map_and_merge
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_key_map.list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_key_map.parent_merge_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_cos_with_suffix.cos_resource_id_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map_value
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_f5 in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/f5
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_f5.composed_f5_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_f5.f5_cloud_init in .terraform/modules/landing_zone.landing_zone/f5_config
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_f5.f5_primary_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_f5.f5_secondary_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_f5.f5_vsi_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_get_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_list_to_map_if_lookup in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_list_to_map_value_no_replace in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map_value
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_list_to_map_value_replace in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map_value
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_nest_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/nested_list_to_map_and_merge
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_nest_to_map.list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_nest_to_map.parent_merge_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_nest_to_map_prepend in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/nested_list_to_map_and_merge
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_nest_to_map_prepend.list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_nest_to_map_prepend.parent_merge_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_ssh_key in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/vsi
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_ssh_key.composed_vsi_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_ssh_key.vsi_image_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_ssh_key.vsi_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_ssh_key.vsi_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpe in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/vpe
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpe.vpe_gateway_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpe.vpe_ip_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpe.vpe_ip_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpe.vpe_service_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpe.vpe_subnet_reserved_ip_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpn in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/vpn
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpn.vpn_gateway_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpn.vpn_gateway_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vpn.vpn_subnet_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vsi_images in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/vsi
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vsi_images.composed_vsi_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vsi_images.vsi_image_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vsi_images.vsi_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vsi_images.vsi_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vsi_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/bastion_vsi_list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vsi_list_to_map.composed_bastion_vsi_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vsi_list_to_map.vsi_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_vsi_list_to_map.vsi_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_worker_pools in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/cluster_worker_pools
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_worker_pools.worker_pool_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_worker_pools.worker_pool_subnet_creation_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.ut_worker_pools.worker_pool_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpc_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpe in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/vpe
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpe.vpe_gateway_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpe.vpe_ip_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpe.vpe_ip_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpe.vpe_service_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpe.vpe_subnet_reserved_ip_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpn in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/vpn
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpn.vpn_gateway_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpn.vpn_gateway_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vpn.vpn_subnet_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vsi in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/vsi
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vsi.composed_vsi_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vsi.vsi_image_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vsi.vsi_list_to_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.vsi.vsi_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.worker_pools in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/cluster_worker_pools
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.worker_pools.worker_pool_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.worker_pools.worker_pool_subnet_creation_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: - landing_zone.landing_zone.dynamic_values.worker_pools.worker_pool_subnets in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/get_subnets
+TestRunLDAPAndPac 2024-05-23T04:38:12-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone-vsi/ibm 3.2.1 for landing_zone.landing_zone.f5_vsi...
+TestRunLDAPAndPac 2024-05-23T04:38:13-04:00 logger.go:66: - landing_zone.landing_zone.f5_vsi in .terraform/modules/landing_zone.landing_zone.f5_vsi
+TestRunLDAPAndPac 2024-05-23T04:38:13-04:00 logger.go:66: - landing_zone.landing_zone.key_management in .terraform/modules/landing_zone.landing_zone/kms
+TestRunLDAPAndPac 2024-05-23T04:38:13-04:00 logger.go:66: - landing_zone.landing_zone.key_management.dynamic_values in .terraform/modules/landing_zone.landing_zone/kms/dynamic_values
+TestRunLDAPAndPac 2024-05-23T04:38:13-04:00 logger.go:66: - landing_zone.landing_zone.key_management.unit_test_hs_crypto in .terraform/modules/landing_zone.landing_zone/kms/dynamic_values
+TestRunLDAPAndPac 2024-05-23T04:38:13-04:00 logger.go:66: - landing_zone.landing_zone.key_management.unit_test_kms_data in .terraform/modules/landing_zone.landing_zone/kms/dynamic_values
+TestRunLDAPAndPac 2024-05-23T04:38:13-04:00 logger.go:66: - landing_zone.landing_zone.key_management.unit_test_kms_resource in .terraform/modules/landing_zone.landing_zone/kms/dynamic_values
+TestRunLDAPAndPac 2024-05-23T04:38:13-04:00 logger.go:66: - landing_zone.landing_zone.placement_group_map in .terraform/modules/landing_zone.landing_zone/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:13-04:00 logger.go:66: - landing_zone.landing_zone.ssh_keys in .terraform/modules/landing_zone.landing_zone/ssh_key
+TestRunLDAPAndPac 2024-05-23T04:38:13-04:00 logger.go:66: - landing_zone.landing_zone.teleport_config in .terraform/modules/landing_zone.landing_zone/teleport_config
+TestRunLDAPAndPac 2024-05-23T04:38:13-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone-vpc/ibm 7.17.1 for landing_zone.landing_zone.vpc...
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone.landing_zone.vpc in .terraform/modules/landing_zone.landing_zone.vpc
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone.landing_zone.vpc.dynamic_values in .terraform/modules/landing_zone.landing_zone.vpc/dynamic_values
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone.landing_zone.vpc.dynamic_values.address_prefixes in .terraform/modules/landing_zone.landing_zone.vpc/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone.landing_zone.vpc.dynamic_values.prefix_map in .terraform/modules/landing_zone.landing_zone.vpc/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone.landing_zone.vpc.dynamic_values.routes in .terraform/modules/landing_zone.landing_zone.vpc/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone.landing_zone.vpc.unit_tests in .terraform/modules/landing_zone.landing_zone.vpc/dynamic_values
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone.landing_zone.vpc.unit_tests.address_prefixes in .terraform/modules/landing_zone.landing_zone.vpc/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone.landing_zone.vpc.unit_tests.prefix_map in .terraform/modules/landing_zone.landing_zone.vpc/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone.landing_zone.vpc.unit_tests.routes in .terraform/modules/landing_zone.landing_zone.vpc/dynamic_values/config_modules/list_to_map
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone-vsi/ibm 3.2.1 for landing_zone.landing_zone.vsi...
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone.landing_zone.vsi in .terraform/modules/landing_zone.landing_zone.vsi
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone_vsi in ../../modules/landing_zone_vsi
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone_vsi.compute_key in ../../modules/key
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/security-group/ibm 2.6.0 for landing_zone_vsi.compute_sg...
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone_vsi.compute_sg in .terraform/modules/landing_zone_vsi.compute_sg
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/security-group/ibm 2.6.0 for landing_zone_vsi.compute_sg_with_ldap_connection...
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone_vsi.compute_sg_with_ldap_connection in .terraform/modules/landing_zone_vsi.compute_sg_with_ldap_connection
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone_vsi.do_management_candidate_vsi_configuration in ../../modules/null/remote_exec_script
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone_vsi.do_management_vsi_configuration in ../../modules/null/remote_exec_script
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone_vsi.generate_db_password in ../../modules/security/password
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone-vsi/ibm 4.0.0-rc5 for landing_zone_vsi.ldap_vsi...
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone_vsi.ldap_vsi in .terraform/modules/landing_zone_vsi.ldap_vsi
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone-vsi/ibm 4.0.0-rc5 for landing_zone_vsi.login_vsi...
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone_vsi.login_vsi in .terraform/modules/landing_zone_vsi.login_vsi
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone-vsi/ibm 4.0.0-rc5 for landing_zone_vsi.management_candidate_vsi...
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone_vsi.management_candidate_vsi in .terraform/modules/landing_zone_vsi.management_candidate_vsi
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone-vsi/ibm 4.0.0-rc5 for landing_zone_vsi.management_vsi...
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone_vsi.management_vsi in .terraform/modules/landing_zone_vsi.management_vsi
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/security-group/ibm 2.6.0 for landing_zone_vsi.nfs_storage_sg...
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone_vsi.nfs_storage_sg in .terraform/modules/landing_zone_vsi.nfs_storage_sg
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone_vsi.ssh_key in ../../modules/key
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone_vsi.wait_management_candidate_vsi_booted in ../../modules/null/remote_exec
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - landing_zone_vsi.wait_management_vsi_booted in ../../modules/null/remote_exec
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - ldap_inventory in ../../modules/inventory
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - ldap_vsi_dns_records in ../../modules/dns_record
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - local_exec_script in ../../modules/null/local_exec_script
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - login_fip_removal in ../../modules/null/local_exec
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - login_inventory in ../../modules/inventory
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - login_vsi_dns_records in ../../modules/dns_record
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: - scc_instance_and_profile in ../../modules/security/scc
+TestRunAppCenter 2024-05-23T04:38:14-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/scc/ibm 1.4.2 for scc_instance_and_profile.create_profile_attachment...
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone.landing_zone.vpc in .terraform/modules/landing_zone.landing_zone.vpc
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone.landing_zone.vpc.dynamic_values in .terraform/modules/landing_zone.landing_zone.vpc/dynamic_values
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone.landing_zone.vpc.dynamic_values.address_prefixes in .terraform/modules/landing_zone.landing_zone.vpc/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone.landing_zone.vpc.dynamic_values.prefix_map in .terraform/modules/landing_zone.landing_zone.vpc/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone.landing_zone.vpc.dynamic_values.routes in .terraform/modules/landing_zone.landing_zone.vpc/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone.landing_zone.vpc.unit_tests in .terraform/modules/landing_zone.landing_zone.vpc/dynamic_values
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone.landing_zone.vpc.unit_tests.address_prefixes in .terraform/modules/landing_zone.landing_zone.vpc/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone.landing_zone.vpc.unit_tests.prefix_map in .terraform/modules/landing_zone.landing_zone.vpc/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone.landing_zone.vpc.unit_tests.routes in .terraform/modules/landing_zone.landing_zone.vpc/dynamic_values/config_modules/list_to_map
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone-vsi/ibm 3.2.1 for landing_zone.landing_zone.vsi...
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone.landing_zone.vsi in .terraform/modules/landing_zone.landing_zone.vsi
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone_vsi in ../../modules/landing_zone_vsi
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone_vsi.compute_key in ../../modules/key
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/security-group/ibm 2.6.0 for landing_zone_vsi.compute_sg...
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone_vsi.compute_sg in .terraform/modules/landing_zone_vsi.compute_sg
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/security-group/ibm 2.6.0 for landing_zone_vsi.compute_sg_with_ldap_connection...
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone_vsi.compute_sg_with_ldap_connection in .terraform/modules/landing_zone_vsi.compute_sg_with_ldap_connection
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone_vsi.do_management_candidate_vsi_configuration in ../../modules/null/remote_exec_script
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone_vsi.do_management_vsi_configuration in ../../modules/null/remote_exec_script
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone_vsi.generate_db_password in ../../modules/security/password
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone-vsi/ibm 4.0.0-rc5 for landing_zone_vsi.ldap_vsi...
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone_vsi.ldap_vsi in .terraform/modules/landing_zone_vsi.ldap_vsi
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone-vsi/ibm 4.0.0-rc5 for landing_zone_vsi.login_vsi...
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone_vsi.login_vsi in .terraform/modules/landing_zone_vsi.login_vsi
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone-vsi/ibm 4.0.0-rc5 for landing_zone_vsi.management_candidate_vsi...
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone_vsi.management_candidate_vsi in .terraform/modules/landing_zone_vsi.management_candidate_vsi
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/landing-zone-vsi/ibm 4.0.0-rc5 for landing_zone_vsi.management_vsi...
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone_vsi.management_vsi in .terraform/modules/landing_zone_vsi.management_vsi
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/security-group/ibm 2.6.0 for landing_zone_vsi.nfs_storage_sg...
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone_vsi.nfs_storage_sg in .terraform/modules/landing_zone_vsi.nfs_storage_sg
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone_vsi.ssh_key in ../../modules/key
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone_vsi.wait_management_candidate_vsi_booted in ../../modules/null/remote_exec
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - landing_zone_vsi.wait_management_vsi_booted in ../../modules/null/remote_exec
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - ldap_inventory in ../../modules/inventory
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - ldap_vsi_dns_records in ../../modules/dns_record
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - local_exec_script in ../../modules/null/local_exec_script
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - login_fip_removal in ../../modules/null/local_exec
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - login_inventory in ../../modules/inventory
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - login_vsi_dns_records in ../../modules/dns_record
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: - scc_instance_and_profile in ../../modules/security/scc
+TestRunLDAPAndPac 2024-05-23T04:38:15-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/scc/ibm 1.4.2 for scc_instance_and_profile.create_profile_attachment...
+TestRunAppCenter 2024-05-23T04:38:16-04:00 logger.go:66: - scc_instance_and_profile.create_profile_attachment in .terraform/modules/scc_instance_and_profile.create_profile_attachment/modules/attachment
+TestRunAppCenter 2024-05-23T04:38:16-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/scc/ibm 1.4.2 for scc_instance_and_profile.create_scc_instance...
+TestRunAppCenter 2024-05-23T04:38:16-04:00 logger.go:66: - scc_instance_and_profile.create_scc_instance in .terraform/modules/scc_instance_and_profile.create_scc_instance
+TestRunAppCenter 2024-05-23T04:38:16-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/event-notifications/ibm 1.3.4 for scc_instance_and_profile.event_notification...
+TestRunLDAPAndPac 2024-05-23T04:38:18-04:00 logger.go:66: - scc_instance_and_profile.create_profile_attachment in .terraform/modules/scc_instance_and_profile.create_profile_attachment/modules/attachment
+TestRunLDAPAndPac 2024-05-23T04:38:18-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/scc/ibm 1.4.2 for scc_instance_and_profile.create_scc_instance...
+TestRunLDAPAndPac 2024-05-23T04:38:18-04:00 logger.go:66: - scc_instance_and_profile.create_scc_instance in .terraform/modules/scc_instance_and_profile.create_scc_instance
+TestRunLDAPAndPac 2024-05-23T04:38:18-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/event-notifications/ibm 1.3.4 for scc_instance_and_profile.event_notification...
+TestRunAppCenter 2024-05-23T04:38:19-04:00 logger.go:66: - scc_instance_and_profile.event_notification in .terraform/modules/scc_instance_and_profile.event_notification
+TestRunAppCenter 2024-05-23T04:38:19-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/cbr/ibm 1.19.1 for scc_instance_and_profile.event_notification.cbr_rule...
+TestRunAppCenter 2024-05-23T04:38:19-04:00 logger.go:66: - scc_instance_and_profile.event_notification.cbr_rule in .terraform/modules/scc_instance_and_profile.event_notification.cbr_rule/modules/cbr-rule-module
+TestRunAppCenter 2024-05-23T04:38:19-04:00 logger.go:66: - validate_ldap_server_connection in ../../modules/null/ldap_remote_exec
+TestRunAppCenter 2024-05-23T04:38:19-04:00 logger.go:66: - validation_script_executor in ../../modules/null/remote_exec
+TestRunAppCenter 2024-05-23T04:38:19-04:00 logger.go:66: 
+TestRunAppCenter 2024-05-23T04:38:19-04:00 logger.go:66: [0m[1mInitializing provider plugins...[0m
+TestRunAppCenter 2024-05-23T04:38:19-04:00 logger.go:66: - Finding hashicorp/tls versions matching "~> 4.0"...
+TestRunAppCenter 2024-05-23T04:38:19-04:00 logger.go:66: - Finding ibm-cloud/ibm versions matching ">= 1.54.0, >= 1.56.1, >= 1.56.2, >= 1.59.0, >= 1.60.0, >= 1.61.0, >= 1.64.1, 1.64.2, < 2.0.0"...
+TestRunAppCenter 2024-05-23T04:38:19-04:00 logger.go:66: - Finding hashicorp/template versions matching "~> 2.0"...
+TestRunAppCenter 2024-05-23T04:38:19-04:00 logger.go:66: - Finding hashicorp/local versions matching "~> 2.0"...
+TestRunAppCenter 2024-05-23T04:38:19-04:00 logger.go:66: - Finding hashicorp/null versions matching ">= 3.0.0, 3.2.2"...
+TestRunAppCenter 2024-05-23T04:38:19-04:00 logger.go:66: - Finding hashicorp/random versions matching ">= 3.0.0, >= 3.4.3, < 4.0.0"...
+TestRunAppCenter 2024-05-23T04:38:19-04:00 logger.go:66: - Finding logdna/logdna versions matching ">= 1.14.2, < 2.0.0"...
+TestRunAppCenter 2024-05-23T04:38:19-04:00 logger.go:66: - Finding hashicorp/time versions matching ">= 0.9.1, < 1.0.0"...
+TestRunAppCenter 2024-05-23T04:38:19-04:00 logger.go:66: - Finding hashicorp/http versions matching ">= 2.0.0, 3.4.2"...
+TestRunAppCenter 2024-05-23T04:38:19-04:00 logger.go:66: - Installing hashicorp/tls v4.0.5...
+TestRunLDAPAndPac 2024-05-23T04:38:20-04:00 logger.go:66: - scc_instance_and_profile.event_notification in .terraform/modules/scc_instance_and_profile.event_notification
+TestRunLDAPAndPac 2024-05-23T04:38:20-04:00 logger.go:66: Downloading registry.terraform.io/terraform-ibm-modules/cbr/ibm 1.19.1 for scc_instance_and_profile.event_notification.cbr_rule...
+TestRunLDAPAndPac 2024-05-23T04:38:20-04:00 logger.go:66: - scc_instance_and_profile.event_notification.cbr_rule in .terraform/modules/scc_instance_and_profile.event_notification.cbr_rule/modules/cbr-rule-module
+TestRunLDAPAndPac 2024-05-23T04:38:20-04:00 logger.go:66: - validate_ldap_server_connection in ../../modules/null/ldap_remote_exec
+TestRunLDAPAndPac 2024-05-23T04:38:20-04:00 logger.go:66: - validation_script_executor in ../../modules/null/remote_exec
+TestRunAppCenter 2024-05-23T04:38:20-04:00 logger.go:66: - Installed hashicorp/tls v4.0.5 (signed by HashiCorp)
+TestRunLDAPAndPac 2024-05-23T04:38:20-04:00 logger.go:66: 
+TestRunLDAPAndPac 2024-05-23T04:38:20-04:00 logger.go:66: [0m[1mInitializing provider plugins...[0m
+TestRunLDAPAndPac 2024-05-23T04:38:20-04:00 logger.go:66: - Finding ibm-cloud/ibm versions matching ">= 1.54.0, >= 1.56.1, >= 1.56.2, >= 1.59.0, >= 1.60.0, >= 1.61.0, >= 1.64.1, 1.64.2, < 2.0.0"...
+TestRunLDAPAndPac 2024-05-23T04:38:20-04:00 logger.go:66: - Finding hashicorp/time versions matching ">= 0.9.1, < 1.0.0"...
+TestRunAppCenter 2024-05-23T04:38:20-04:00 logger.go:66: - Installing hashicorp/template v2.2.0...
+TestRunLDAPAndPac 2024-05-23T04:38:20-04:00 logger.go:66: - Finding hashicorp/local versions matching "~> 2.0"...
+TestRunLDAPAndPac 2024-05-23T04:38:20-04:00 logger.go:66: - Finding hashicorp/template versions matching "~> 2.0"...
+TestRunLDAPAndPac 2024-05-23T04:38:20-04:00 logger.go:66: - Finding hashicorp/tls versions matching "~> 4.0"...
+TestRunLDAPAndPac 2024-05-23T04:38:20-04:00 logger.go:66: - Finding logdna/logdna versions matching ">= 1.14.2, < 2.0.0"...
+TestRunLDAPAndPac 2024-05-23T04:38:20-04:00 logger.go:66: - Finding hashicorp/null versions matching ">= 3.0.0, 3.2.2"...
+TestRunAppCenter 2024-05-23T04:38:20-04:00 logger.go:66: - Installed hashicorp/template v2.2.0 (signed by HashiCorp)
+TestRunLDAPAndPac 2024-05-23T04:38:20-04:00 logger.go:66: - Finding hashicorp/random versions matching ">= 3.0.0, >= 3.4.3, < 4.0.0"...
+TestRunLDAPAndPac 2024-05-23T04:38:20-04:00 logger.go:66: - Finding hashicorp/http versions matching ">= 2.0.0, 3.4.2"...
+TestRunAppCenter 2024-05-23T04:38:21-04:00 logger.go:66: - Installing hashicorp/local v2.5.1...
+TestRunLDAPAndPac 2024-05-23T04:38:21-04:00 logger.go:66: - Installing hashicorp/time v0.11.1...
+TestRunLDAPAndPac 2024-05-23T04:38:21-04:00 logger.go:66: - Installed hashicorp/time v0.11.1 (signed by HashiCorp)
+TestRunAppCenter 2024-05-23T04:38:21-04:00 logger.go:66: - Installed hashicorp/local v2.5.1 (signed by HashiCorp)
+TestRunLDAPAndPac 2024-05-23T04:38:21-04:00 logger.go:66: - Installing hashicorp/tls v4.0.5...
+TestRunAppCenter 2024-05-23T04:38:21-04:00 logger.go:66: - Installing hashicorp/http v3.4.2...
+TestRunLDAPAndPac 2024-05-23T04:38:22-04:00 logger.go:66: - Installed hashicorp/tls v4.0.5 (signed by HashiCorp)
+TestRunAppCenter 2024-05-23T04:38:22-04:00 logger.go:66: - Installed hashicorp/http v3.4.2 (signed by HashiCorp)
+TestRunLDAPAndPac 2024-05-23T04:38:23-04:00 logger.go:66: - Installing logdna/logdna v1.16.0...
+TestRunAppCenter 2024-05-23T04:38:23-04:00 logger.go:66: - Installing ibm-cloud/ibm v1.64.2...
+TestRunLDAPAndPac 2024-05-23T04:38:24-04:00 logger.go:66: - Installed logdna/logdna v1.16.0 (self-signed, key ID [0m[1mC1BF174AEF506BE8[0m[0m)
+TestRunLDAPAndPac 2024-05-23T04:38:25-04:00 logger.go:66: - Installing ibm-cloud/ibm v1.64.2...
+TestRunAppCenter 2024-05-23T04:38:25-04:00 logger.go:66: - Installed ibm-cloud/ibm v1.64.2 (self-signed, key ID [0m[1mAAD3B791C49CC253[0m[0m)
+TestRunAppCenter 2024-05-23T04:38:25-04:00 logger.go:66: - Installing hashicorp/null v3.2.2...
+TestRunAppCenter 2024-05-23T04:38:25-04:00 logger.go:66: - Installed hashicorp/null v3.2.2 (signed by HashiCorp)
+TestRunAppCenter 2024-05-23T04:38:26-04:00 logger.go:66: - Installing hashicorp/random v3.6.2...
+TestRunAppCenter 2024-05-23T04:38:26-04:00 logger.go:66: - Installed hashicorp/random v3.6.2 (signed by HashiCorp)
+TestRunLDAPAndPac 2024-05-23T04:38:27-04:00 logger.go:66: - Installed ibm-cloud/ibm v1.64.2 (self-signed, key ID [0m[1mAAD3B791C49CC253[0m[0m)
+TestRunLDAPAndPac 2024-05-23T04:38:27-04:00 logger.go:66: - Installing hashicorp/local v2.5.1...
+TestRunAppCenter 2024-05-23T04:38:27-04:00 logger.go:66: - Installing logdna/logdna v1.16.0...
+TestRunLDAPAndPac 2024-05-23T04:38:27-04:00 logger.go:66: - Installed hashicorp/local v2.5.1 (signed by HashiCorp)
+TestRunLDAPAndPac 2024-05-23T04:38:27-04:00 logger.go:66: - Installing hashicorp/template v2.2.0...
+TestRunAppCenter 2024-05-23T04:38:28-04:00 logger.go:66: - Installed logdna/logdna v1.16.0 (self-signed, key ID [0m[1mC1BF174AEF506BE8[0m[0m)
+TestRunLDAPAndPac 2024-05-23T04:38:28-04:00 logger.go:66: - Installed hashicorp/template v2.2.0 (signed by HashiCorp)
+TestRunLDAPAndPac 2024-05-23T04:38:28-04:00 logger.go:66: - Installing hashicorp/null v3.2.2...
+TestRunAppCenter 2024-05-23T04:38:28-04:00 logger.go:66: - Installing hashicorp/time v0.11.1...
+TestRunLDAPAndPac 2024-05-23T04:38:29-04:00 logger.go:66: - Installed hashicorp/null v3.2.2 (signed by HashiCorp)
+TestRunAppCenter 2024-05-23T04:38:29-04:00 logger.go:66: - Installed hashicorp/time v0.11.1 (signed by HashiCorp)
+TestRunAppCenter 2024-05-23T04:38:29-04:00 logger.go:66: 
+TestRunAppCenter 2024-05-23T04:38:29-04:00 logger.go:66: Partner and community providers are signed by their developers.
+TestRunAppCenter 2024-05-23T04:38:29-04:00 logger.go:66: If you'd like to know more about provider signing, you can read about it here:
+TestRunAppCenter 2024-05-23T04:38:29-04:00 logger.go:66: https://www.terraform.io/docs/cli/plugins/signing.html
+TestRunAppCenter 2024-05-23T04:38:29-04:00 logger.go:66: 
+TestRunAppCenter 2024-05-23T04:38:29-04:00 logger.go:66: Terraform has created a lock file [1m.terraform.lock.hcl[0m to record the provider
+TestRunAppCenter 2024-05-23T04:38:29-04:00 logger.go:66: selections it made above. Include this file in your version control repository
+TestRunAppCenter 2024-05-23T04:38:29-04:00 logger.go:66: so that Terraform can guarantee to make the same selections by default when
+TestRunAppCenter 2024-05-23T04:38:29-04:00 logger.go:66: you run "terraform init" in the future.[0m
+TestRunLDAPAndPac 2024-05-23T04:38:29-04:00 logger.go:66: - Installing hashicorp/random v3.6.2...
+TestRunAppCenter 2024-05-23T04:38:30-04:00 logger.go:66: 
+TestRunAppCenter 2024-05-23T04:38:30-04:00 logger.go:66: [0m[1m[32mTerraform has been successfully initialized![0m[32m[0m
+TestRunAppCenter 2024-05-23T04:38:30-04:00 logger.go:66: [0m[32m
+TestRunAppCenter 2024-05-23T04:38:30-04:00 logger.go:66: You may now begin working with Terraform. Try running "terraform plan" to see
+TestRunAppCenter 2024-05-23T04:38:30-04:00 logger.go:66: any changes that are required for your infrastructure. All Terraform commands
+TestRunAppCenter 2024-05-23T04:38:30-04:00 logger.go:66: should now work.
+TestRunAppCenter 2024-05-23T04:38:30-04:00 logger.go:66: 
+TestRunAppCenter 2024-05-23T04:38:30-04:00 logger.go:66: If you ever set or change modules or backend configuration for Terraform,
+TestRunAppCenter 2024-05-23T04:38:30-04:00 logger.go:66: rerun this command to reinitialize your working directory. If you forget, other
+TestRunAppCenter 2024-05-23T04:38:30-04:00 logger.go:66: commands will detect it and remind you to do so if necessary.[0m
+TestRunAppCenter 2024-05-23T04:38:30-04:00 retry.go:91: terraform [apply -input=false -auto-approve -var compute_image_name=hpcaas-lsf10-rhel88-compute-v4 -var enable_app_center=true -var login_image_name=hpcaas-lsf10-rhel88-compute-v4 -var bastion_ssh_keys=["anbu-key"] -var zones=["us-east-1"] -var management_node_count=2 -var cluster_prefix=anbuone -var management_node_instance_type=bx2-16x64 -var compute_ssh_keys=["anbu-key"] -var resource_group=Default -var app_center_high_availability=false -var management_image_name=hpcaas-lsf10-rhel88-v5 -var login_node_instance_type=bx2-2x8 -var dns_domain_names={"compute" = "wes.com"} -var remote_allowed_ips=["141.125.106.124"] -var cluster_id=HPC-LSF-2 -var app_center_gui_pwd=Pass@123 -var key_management=key_protect -var hyperthreading_enabled=true -var reservation_id=Contract-IBM -lock=false]
+TestRunAppCenter 2024-05-23T04:38:30-04:00 logger.go:66: Running command terraform with args [apply -input=false -auto-approve -var compute_image_name=hpcaas-lsf10-rhel88-compute-v4 -var enable_app_center=true -var login_image_name=hpcaas-lsf10-rhel88-compute-v4 -var bastion_ssh_keys=["anbu-key"] -var zones=["us-east-1"] -var management_node_count=2 -var cluster_prefix=anbuone -var management_node_instance_type=bx2-16x64 -var compute_ssh_keys=["anbu-key"] -var resource_group=Default -var app_center_high_availability=false -var management_image_name=hpcaas-lsf10-rhel88-v5 -var login_node_instance_type=bx2-2x8 -var dns_domain_names={"compute" = "wes.com"} -var remote_allowed_ips=["141.125.106.124"] -var cluster_id=HPC-LSF-2 -var app_center_gui_pwd=Pass@123 -var key_management=key_protect -var hyperthreading_enabled=true -var reservation_id=Contract-IBM -lock=false]
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: - Installed hashicorp/random v3.6.2 (signed by HashiCorp)
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: - Installing hashicorp/http v3.4.2...
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: - Installed hashicorp/http v3.4.2 (signed by HashiCorp)
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: 
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: Partner and community providers are signed by their developers.
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: If you'd like to know more about provider signing, you can read about it here:
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: https://www.terraform.io/docs/cli/plugins/signing.html
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: 
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: Terraform has created a lock file [1m.terraform.lock.hcl[0m to record the provider
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: selections it made above. Include this file in your version control repository
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: so that Terraform can guarantee to make the same selections by default when
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: you run "terraform init" in the future.[0m
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: 
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: [0m[1m[32mTerraform has been successfully initialized![0m[32m[0m
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: [0m[32m
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: You may now begin working with Terraform. Try running "terraform plan" to see
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: any changes that are required for your infrastructure. All Terraform commands
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: should now work.
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: 
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: If you ever set or change modules or backend configuration for Terraform,
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: rerun this command to reinitialize your working directory. If you forget, other
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: commands will detect it and remind you to do so if necessary.[0m
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 retry.go:91: terraform [apply -input=false -auto-approve -var app_center_high_availability=false -var ldap_user_name=tester -var management_node_instance_type=bx2-16x64 -var ldap_basedns=cicd.com -var ldap_user_password=Pass@123 -var app_center_gui_pwd=Pass@123 -var compute_image_name=hpcaas-lsf10-rhel88-compute-v4 -var management_image_name=hpcaas-lsf10-rhel88-v5 -var enable_ldap=true -var login_image_name=hpcaas-lsf10-rhel88-compute-v4 -var resource_group=Default -var ldap_admin_password=Pass@123 -var key_management=key_protect -var zones=["us-east-1"] -var dns_domain_names={"compute" = "wes.com"} -var reservation_id=Contract-IBM -var bastion_ssh_keys=["anbu-key"] -var cluster_prefix=anbutwo -var management_node_count=2 -var compute_ssh_keys=["anbu-key"] -var login_node_instance_type=bx2-2x8 -var enable_app_center=true -var remote_allowed_ips=["141.125.106.124"] -var cluster_id=HPC-LSF-2 -var hyperthreading_enabled=true -lock=false]
+TestRunLDAPAndPac 2024-05-23T04:38:30-04:00 logger.go:66: Running command terraform with args [apply -input=false -auto-approve -var app_center_high_availability=false -var ldap_user_name=tester -var management_node_instance_type=bx2-16x64 -var ldap_basedns=cicd.com -var ldap_user_password=Pass@123 -var app_center_gui_pwd=Pass@123 -var compute_image_name=hpcaas-lsf10-rhel88-compute-v4 -var management_image_name=hpcaas-lsf10-rhel88-v5 -var enable_ldap=true -var login_image_name=hpcaas-lsf10-rhel88-compute-v4 -var resource_group=Default -var ldap_admin_password=Pass@123 -var key_management=key_protect -var zones=["us-east-1"] -var dns_domain_names={"compute" = "wes.com"} -var reservation_id=Contract-IBM -var bastion_ssh_keys=["anbu-key"] -var cluster_prefix=anbutwo -var management_node_count=2 -var compute_ssh_keys=["anbu-key"] -var login_node_instance_type=bx2-2x8 -var enable_app_center=true -var remote_allowed_ips=["141.125.106.124"] -var cluster_id=HPC-LSF-2 -var hyperthreading_enabled=true -lock=false]
+TestRunAppCenter 2024-05-23T04:38:31-04:00 logger.go:66: [31m╷[0m[0m
+TestRunAppCenter 2024-05-23T04:38:31-04:00 logger.go:66: [31m│[0m [0m[1m[31mError: [0m[0m[1mValue for undeclared variable[0m
+TestRunAppCenter 2024-05-23T04:38:31-04:00 logger.go:66: [31m│[0m [0m
+TestRunAppCenter 2024-05-23T04:38:31-04:00 logger.go:66: [31m│[0m [0m[0mA variable named "reservation_id" was assigned on the command line, but the
+TestRunAppCenter 2024-05-23T04:38:31-04:00 logger.go:66: [31m│[0m [0mroot module does not declare a variable of that name. To use this value,
+TestRunAppCenter 2024-05-23T04:38:31-04:00 logger.go:66: [31m│[0m [0madd a "variable" block to the configuration.
+TestRunAppCenter 2024-05-23T04:38:31-04:00 logger.go:66: [31m╵[0m[0m
+TestRunAppCenter 2024-05-23T04:38:31-04:00 logger.go:66: [31m╷[0m[0m
+TestRunAppCenter 2024-05-23T04:38:31-04:00 logger.go:66: [31m│[0m [0m[1m[31mError: [0m[0m[1mNo value for required variable[0m
+TestRunAppCenter 2024-05-23T04:38:31-04:00 logger.go:66: [31m│[0m [0m
+TestRunAppCenter 2024-05-23T04:38:31-04:00 logger.go:66: [31m│[0m [0m[0m  on variables.tf line 62:
+TestRunAppCenter 2024-05-23T04:38:31-04:00 logger.go:66: [31m│[0m [0m  62: [4mvariable "contract_id"[0m {[0m
+TestRunAppCenter 2024-05-23T04:38:31-04:00 logger.go:66: [31m│[0m [0m
+TestRunAppCenter 2024-05-23T04:38:31-04:00 logger.go:66: [31m│[0m [0mThe root module input variable "contract_id" is not set, and has no default
+TestRunAppCenter 2024-05-23T04:38:31-04:00 logger.go:66: [31m│[0m [0mvalue. Use a -var or -var-file command line argument to provide a value for
+TestRunAppCenter 2024-05-23T04:38:31-04:00 logger.go:66: [31m│[0m [0mthis variable.
+TestRunAppCenter 2024-05-23T04:38:31-04:00 logger.go:66: [31m╵[0m[0m
+TestRunAppCenter 2024-05-23T04:38:31-04:00 retry.go:99: Returning due to fatal error: FatalError{Underlying: error while running command: exit status 1; [31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mValue for undeclared variable[0m
+[31m│[0m [0m
+[31m│[0m [0m[0mA variable named "reservation_id" was assigned on the command line, but the
+[31m│[0m [0mroot module does not declare a variable of that name. To use this value,
+[31m│[0m [0madd a "variable" block to the configuration.
+[31m╵[0m[0m
+[31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mNo value for required variable[0m
+[31m│[0m [0m
+[31m│[0m [0m[0m  on variables.tf line 62:
+[31m│[0m [0m  62: [4mvariable "contract_id"[0m {[0m
+[31m│[0m [0m
+[31m│[0m [0mThe root module input variable "contract_id" is not set, and has no default
+[31m│[0m [0mvalue. Use a -var or -var-file command line argument to provide a value for
+[31m│[0m [0mthis variable.
+[31m╵[0m[0m}
+=== NAME  TestRunAppCenter
+    tests.go:827: 
+        	Error Trace:	/root/go/pkg/mod/github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper@v1.31.7/testhelper/tests.go:827
+        	            				/root/go/pkg/mod/github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper@v1.31.7/testhelper/tests.go:760
+        	            				/root/version-da-3.7/HPCaaS/tests/lsf/lsf_cluster_test_validation.go:142
+        	            				/root/version-da-3.7/HPCaaS/tests/other_test.go:91
+        	Error:      	Expected nil, but got: retry.FatalError{Underlying:(*shell.ErrWithCmdOutput)(0xc0000100c0)}
+        	Test:       	TestRunAppCenter
+        	Messages:   	Failed%!(EXTRA retry.FatalError=FatalError{Underlying: error while running command: exit status 1; [31m╷[0m[0m
+        	            	[31m│[0m [0m[1m[31mError: [0m[0m[1mValue for undeclared variable[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0m[0mA variable named "reservation_id" was assigned on the command line, but the
+        	            	[31m│[0m [0mroot module does not declare a variable of that name. To use this value,
+        	            	[31m│[0m [0madd a "variable" block to the configuration.
+        	            	[31m╵[0m[0m
+        	            	[31m╷[0m[0m
+        	            	[31m│[0m [0m[1m[31mError: [0m[0m[1mNo value for required variable[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0m[0m  on variables.tf line 62:
+        	            	[31m│[0m [0m  62: [4mvariable "contract_id"[0m {[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0mThe root module input variable "contract_id" is not set, and has no default
+        	            	[31m│[0m [0mvalue. Use a -var or -var-file command line argument to provide a value for
+        	            	[31m│[0m [0mthis variable.
+        	            	[31m╵[0m[0m})
+TestRunAppCenter 2024-05-23T04:38:31-04:00 tests.go:828: FINISHED: Init / Apply
+TestRunAppCenter 2024-05-23T04:38:31-04:00 retry.go:91: terraform [output -no-color -json]
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 logger.go:66: [31m╷[0m[0m
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 logger.go:66: [31m│[0m [0m[1m[31mError: [0m[0m[1mValue for undeclared variable[0m
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 logger.go:66: [31m│[0m [0m
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 logger.go:66: [31m│[0m [0m[0mA variable named "reservation_id" was assigned on the command line, but the
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 logger.go:66: [31m│[0m [0mroot module does not declare a variable of that name. To use this value,
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 logger.go:66: [31m│[0m [0madd a "variable" block to the configuration.
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 logger.go:66: [31m╵[0m[0m
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 logger.go:66: [31m╷[0m[0m
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 logger.go:66: [31m│[0m [0m[1m[31mError: [0m[0m[1mNo value for required variable[0m
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 logger.go:66: [31m│[0m [0m
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 logger.go:66: [31m│[0m [0m[0m  on variables.tf line 62:
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 logger.go:66: [31m│[0m [0m  62: [4mvariable "contract_id"[0m {[0m
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 logger.go:66: [31m│[0m [0m
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 logger.go:66: [31m│[0m [0mThe root module input variable "contract_id" is not set, and has no default
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 logger.go:66: [31m│[0m [0mvalue. Use a -var or -var-file command line argument to provide a value for
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 logger.go:66: [31m│[0m [0mthis variable.
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 logger.go:66: [31m╵[0m[0m
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 retry.go:99: Returning due to fatal error: FatalError{Underlying: error while running command: exit status 1; [31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mValue for undeclared variable[0m
+[31m│[0m [0m
+[31m│[0m [0m[0mA variable named "reservation_id" was assigned on the command line, but the
+[31m│[0m [0mroot module does not declare a variable of that name. To use this value,
+[31m│[0m [0madd a "variable" block to the configuration.
+[31m╵[0m[0m
+[31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mNo value for required variable[0m
+[31m│[0m [0m
+[31m│[0m [0m[0m  on variables.tf line 62:
+[31m│[0m [0m  62: [4mvariable "contract_id"[0m {[0m
+[31m│[0m [0m
+[31m│[0m [0mThe root module input variable "contract_id" is not set, and has no default
+[31m│[0m [0mvalue. Use a -var or -var-file command line argument to provide a value for
+[31m│[0m [0mthis variable.
+[31m╵[0m[0m}
+=== NAME  TestRunLDAPAndPac
+    tests.go:827: 
+        	Error Trace:	/root/go/pkg/mod/github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper@v1.31.7/testhelper/tests.go:827
+        	            				/root/go/pkg/mod/github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper@v1.31.7/testhelper/tests.go:760
+        	            				/root/version-da-3.7/HPCaaS/tests/lsf/lsf_cluster_test_validation.go:451
+        	            				/root/version-da-3.7/HPCaaS/tests/other_test.go:374
+        	Error:      	Expected nil, but got: retry.FatalError{Underlying:(*shell.ErrWithCmdOutput)(0xc00097c1f8)}
+        	Test:       	TestRunLDAPAndPac
+        	Messages:   	Failed%!(EXTRA retry.FatalError=FatalError{Underlying: error while running command: exit status 1; [31m╷[0m[0m
+        	            	[31m│[0m [0m[1m[31mError: [0m[0m[1mValue for undeclared variable[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0m[0mA variable named "reservation_id" was assigned on the command line, but the
+        	            	[31m│[0m [0mroot module does not declare a variable of that name. To use this value,
+        	            	[31m│[0m [0madd a "variable" block to the configuration.
+        	            	[31m╵[0m[0m
+        	            	[31m╷[0m[0m
+        	            	[31m│[0m [0m[1m[31mError: [0m[0m[1mNo value for required variable[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0m[0m  on variables.tf line 62:
+        	            	[31m│[0m [0m  62: [4mvariable "contract_id"[0m {[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0mThe root module input variable "contract_id" is not set, and has no default
+        	            	[31m│[0m [0mvalue. Use a -var or -var-file command line argument to provide a value for
+        	            	[31m│[0m [0mthis variable.
+        	            	[31m╵[0m[0m})
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 tests.go:828: FINISHED: Init / Apply
+TestRunLDAPAndPac 2024-05-23T04:38:32-04:00 retry.go:91: terraform [output -no-color -json]
+TestRunAppCenter 2024-05-23T04:38:33-04:00 tests.go:440: Skipping automatic Test Teardown
+=== NAME  TestRunAppCenter
+    lsf_cluster_test_validation.go:143: 
+        	Error Trace:	/root/version-da-3.7/HPCaaS/tests/lsf/lsf_cluster_test_validation.go:143
+        	            				/root/version-da-3.7/HPCaaS/tests/other_test.go:91
+        	Error:      	Received unexpected error:
+        	            	FatalError{Underlying: error while running command: exit status 1; [31m╷[0m[0m
+        	            	[31m│[0m [0m[1m[31mError: [0m[0m[1mValue for undeclared variable[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0m[0mA variable named "reservation_id" was assigned on the command line, but the
+        	            	[31m│[0m [0mroot module does not declare a variable of that name. To use this value,
+        	            	[31m│[0m [0madd a "variable" block to the configuration.
+        	            	[31m╵[0m[0m
+        	            	[31m╷[0m[0m
+        	            	[31m│[0m [0m[1m[31mError: [0m[0m[1mNo value for required variable[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0m[0m  on variables.tf line 62:
+        	            	[31m│[0m [0m  62: [4mvariable "contract_id"[0m {[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0mThe root module input variable "contract_id" is not set, and has no default
+        	            	[31m│[0m [0mvalue. Use a -var or -var-file command line argument to provide a value for
+        	            	[31m│[0m [0mthis variable.
+        	            	[31m╵[0m[0m}
+        	Test:       	TestRunAppCenter
+        	Messages:   	Error running consistency test: FatalError{Underlying: error while running command: exit status 1; [31m╷[0m[0m
+        	            	[31m│[0m [0m[1m[31mError: [0m[0m[1mValue for undeclared variable[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0m[0mA variable named "reservation_id" was assigned on the command line, but the
+        	            	[31m│[0m [0mroot module does not declare a variable of that name. To use this value,
+        	            	[31m│[0m [0madd a "variable" block to the configuration.
+        	            	[31m╵[0m[0m
+        	            	[31m╷[0m[0m
+        	            	[31m│[0m [0m[1m[31mError: [0m[0m[1mNo value for required variable[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0m[0m  on variables.tf line 62:
+        	            	[31m│[0m [0m  62: [4mvariable "contract_id"[0m {[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0mThe root module input variable "contract_id" is not set, and has no default
+        	            	[31m│[0m [0mvalue. Use a -var or -var-file command line argument to provide a value for
+        	            	[31m│[0m [0mthis variable.
+        	            	[31m╵[0m[0m}
+TestRunAppCenter 2024-05-23T04:38:33-04:00 retry.go:91: terraform [output -no-color -json]
+TestRunLDAPAndPac 2024-05-23T04:38:33-04:00 tests.go:440: Skipping automatic Test Teardown
+=== NAME  TestRunLDAPAndPac
+    lsf_cluster_test_validation.go:452: 
+        	Error Trace:	/root/version-da-3.7/HPCaaS/tests/lsf/lsf_cluster_test_validation.go:452
+        	            				/root/version-da-3.7/HPCaaS/tests/other_test.go:374
+        	Error:      	Received unexpected error:
+        	            	FatalError{Underlying: error while running command: exit status 1; [31m╷[0m[0m
+        	            	[31m│[0m [0m[1m[31mError: [0m[0m[1mValue for undeclared variable[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0m[0mA variable named "reservation_id" was assigned on the command line, but the
+        	            	[31m│[0m [0mroot module does not declare a variable of that name. To use this value,
+        	            	[31m│[0m [0madd a "variable" block to the configuration.
+        	            	[31m╵[0m[0m
+        	            	[31m╷[0m[0m
+        	            	[31m│[0m [0m[1m[31mError: [0m[0m[1mNo value for required variable[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0m[0m  on variables.tf line 62:
+        	            	[31m│[0m [0m  62: [4mvariable "contract_id"[0m {[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0mThe root module input variable "contract_id" is not set, and has no default
+        	            	[31m│[0m [0mvalue. Use a -var or -var-file command line argument to provide a value for
+        	            	[31m│[0m [0mthis variable.
+        	            	[31m╵[0m[0m}
+        	Test:       	TestRunLDAPAndPac
+        	Messages:   	Error running consistency test: FatalError{Underlying: error while running command: exit status 1; [31m╷[0m[0m
+        	            	[31m│[0m [0m[1m[31mError: [0m[0m[1mValue for undeclared variable[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0m[0mA variable named "reservation_id" was assigned on the command line, but the
+        	            	[31m│[0m [0mroot module does not declare a variable of that name. To use this value,
+        	            	[31m│[0m [0madd a "variable" block to the configuration.
+        	            	[31m╵[0m[0m
+        	            	[31m╷[0m[0m
+        	            	[31m│[0m [0m[1m[31mError: [0m[0m[1mNo value for required variable[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0m[0m  on variables.tf line 62:
+        	            	[31m│[0m [0m  62: [4mvariable "contract_id"[0m {[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0mThe root module input variable "contract_id" is not set, and has no default
+        	            	[31m│[0m [0mvalue. Use a -var or -var-file command line argument to provide a value for
+        	            	[31m│[0m [0mthis variable.
+        	            	[31m╵[0m[0m}
+TestRunLDAPAndPac 2024-05-23T04:38:33-04:00 retry.go:91: terraform [output -no-color -json]
+TestRunAppCenter 2024-05-23T04:38:34-04:00 tests.go:364: START: Destroy
+TestRunAppCenter 2024-05-23T04:38:34-04:00 retry.go:91: terraform [destroy -auto-approve -input=false -var zones=["us-east-1"] -var bastion_ssh_keys=["anbu-key"] -var resource_group=Default -var app_center_high_availability=false -var management_image_name=hpcaas-lsf10-rhel88-v5 -var login_node_instance_type=bx2-2x8 -var management_node_count=2 -var cluster_prefix=anbuone -var management_node_instance_type=bx2-16x64 -var compute_ssh_keys=["anbu-key"] -var key_management=key_protect -var hyperthreading_enabled=true -var reservation_id=Contract-IBM -var dns_domain_names={"compute" = "wes.com"} -var remote_allowed_ips=["141.125.106.124"] -var cluster_id=HPC-LSF-2 -var app_center_gui_pwd=Pass@123 -var login_image_name=hpcaas-lsf10-rhel88-compute-v4 -var compute_image_name=hpcaas-lsf10-rhel88-compute-v4 -var enable_app_center=true -lock=false]
+TestRunAppCenter 2024-05-23T04:38:34-04:00 command.go:100: Running command terraform with args [destroy -auto-approve -input=false -var zones=["us-east-1"] -var bastion_ssh_keys=["anbu-key"] -var resource_group=Default -var app_center_high_availability=false -var management_image_name=hpcaas-lsf10-rhel88-v5 -var login_node_instance_type=bx2-2x8 -var management_node_count=2 -var cluster_prefix=anbuone -var management_node_instance_type=bx2-16x64 -var compute_ssh_keys=["anbu-key"] -var key_management=key_protect -var hyperthreading_enabled=true -var reservation_id=Contract-IBM -var dns_domain_names={"compute" = "wes.com"} -var remote_allowed_ips=["141.125.106.124"] -var cluster_id=HPC-LSF-2 -var app_center_gui_pwd=Pass@123 -var login_image_name=hpcaas-lsf10-rhel88-compute-v4 -var compute_image_name=hpcaas-lsf10-rhel88-compute-v4 -var enable_app_center=true -lock=false]
+TestRunLDAPAndPac 2024-05-23T04:38:35-04:00 tests.go:364: START: Destroy
+TestRunLDAPAndPac 2024-05-23T04:38:35-04:00 retry.go:91: terraform [destroy -auto-approve -input=false -var resource_group=Default -var ldap_admin_password=Pass@123 -var key_management=key_protect -var zones=["us-east-1"] -var dns_domain_names={"compute" = "wes.com"} -var reservation_id=Contract-IBM -var bastion_ssh_keys=["anbu-key"] -var cluster_prefix=anbutwo -var management_node_count=2 -var compute_ssh_keys=["anbu-key"] -var login_node_instance_type=bx2-2x8 -var enable_app_center=true -var remote_allowed_ips=["141.125.106.124"] -var cluster_id=HPC-LSF-2 -var hyperthreading_enabled=true -var app_center_high_availability=false -var ldap_user_name=tester -var management_node_instance_type=bx2-16x64 -var ldap_basedns=cicd.com -var ldap_user_password=Pass@123 -var app_center_gui_pwd=Pass@123 -var compute_image_name=hpcaas-lsf10-rhel88-compute-v4 -var management_image_name=hpcaas-lsf10-rhel88-v5 -var enable_ldap=true -var login_image_name=hpcaas-lsf10-rhel88-compute-v4 -lock=false]
+TestRunLDAPAndPac 2024-05-23T04:38:35-04:00 command.go:100: Running command terraform with args [destroy -auto-approve -input=false -var resource_group=Default -var ldap_admin_password=Pass@123 -var key_management=key_protect -var zones=["us-east-1"] -var dns_domain_names={"compute" = "wes.com"} -var reservation_id=Contract-IBM -var bastion_ssh_keys=["anbu-key"] -var cluster_prefix=anbutwo -var management_node_count=2 -var compute_ssh_keys=["anbu-key"] -var login_node_instance_type=bx2-2x8 -var enable_app_center=true -var remote_allowed_ips=["141.125.106.124"] -var cluster_id=HPC-LSF-2 -var hyperthreading_enabled=true -var app_center_high_availability=false -var ldap_user_name=tester -var management_node_instance_type=bx2-16x64 -var ldap_basedns=cicd.com -var ldap_user_password=Pass@123 -var app_center_gui_pwd=Pass@123 -var compute_image_name=hpcaas-lsf10-rhel88-compute-v4 -var management_image_name=hpcaas-lsf10-rhel88-v5 -var enable_ldap=true -var login_image_name=hpcaas-lsf10-rhel88-compute-v4 -lock=false]
+TestRunAppCenter 2024-05-23T04:38:35-04:00 command.go:185: [31m╷[0m[0m
+TestRunAppCenter 2024-05-23T04:38:35-04:00 command.go:185: [31m│[0m [0m[1m[31mError: [0m[0m[1mValue for undeclared variable[0m
+TestRunAppCenter 2024-05-23T04:38:35-04:00 command.go:185: [31m│[0m [0m
+TestRunAppCenter 2024-05-23T04:38:35-04:00 command.go:185: [31m│[0m [0m[0mA variable named "reservation_id" was assigned on the command line, but the
+TestRunAppCenter 2024-05-23T04:38:35-04:00 command.go:185: [31m│[0m [0mroot module does not declare a variable of that name. To use this value,
+TestRunAppCenter 2024-05-23T04:38:35-04:00 command.go:185: [31m│[0m [0madd a "variable" block to the configuration.
+TestRunAppCenter 2024-05-23T04:38:35-04:00 command.go:185: [31m╵[0m[0m
+TestRunAppCenter 2024-05-23T04:38:35-04:00 command.go:185: [31m╷[0m[0m
+TestRunAppCenter 2024-05-23T04:38:35-04:00 command.go:185: [31m│[0m [0m[1m[31mError: [0m[0m[1mNo value for required variable[0m
+TestRunAppCenter 2024-05-23T04:38:35-04:00 command.go:185: [31m│[0m [0m
+TestRunAppCenter 2024-05-23T04:38:35-04:00 command.go:185: [31m│[0m [0m[0m  on variables.tf line 62:
+TestRunAppCenter 2024-05-23T04:38:35-04:00 command.go:185: [31m│[0m [0m  62: [4mvariable "contract_id"[0m {[0m
+TestRunAppCenter 2024-05-23T04:38:35-04:00 command.go:185: [31m│[0m [0m
+TestRunAppCenter 2024-05-23T04:38:35-04:00 command.go:185: [31m│[0m [0mThe root module input variable "contract_id" is not set, and has no default
+TestRunAppCenter 2024-05-23T04:38:35-04:00 command.go:185: [31m│[0m [0mvalue. Use a -var or -var-file command line argument to provide a value for
+TestRunAppCenter 2024-05-23T04:38:35-04:00 command.go:185: [31m│[0m [0mthis variable.
+TestRunAppCenter 2024-05-23T04:38:35-04:00 command.go:185: [31m╵[0m[0m
+TestRunAppCenter 2024-05-23T04:38:35-04:00 retry.go:99: Returning due to fatal error: FatalError{Underlying: error while running command: exit status 1; [31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mValue for undeclared variable[0m
+[31m│[0m [0m
+[31m│[0m [0m[0mA variable named "reservation_id" was assigned on the command line, but the
+[31m│[0m [0mroot module does not declare a variable of that name. To use this value,
+[31m│[0m [0madd a "variable" block to the configuration.
+[31m╵[0m[0m
+[31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mNo value for required variable[0m
+[31m│[0m [0m
+[31m│[0m [0m[0m  on variables.tf line 62:
+[31m│[0m [0m  62: [4mvariable "contract_id"[0m {[0m
+[31m│[0m [0m
+[31m│[0m [0mThe root module input variable "contract_id" is not set, and has no default
+[31m│[0m [0mvalue. Use a -var or -var-file command line argument to provide a value for
+[31m│[0m [0mthis variable.
+[31m╵[0m[0m}
+=== NAME  TestRunAppCenter
+    tests.go:366: 
+        	Error Trace:	/root/go/pkg/mod/github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper@v1.31.7/testhelper/tests.go:366
+        	            				/root/go/pkg/mod/github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper@v1.31.7/testhelper/tests.go:300
+        	Error:      	Received unexpected error:
+        	            	FatalError{Underlying: error while running command: exit status 1; [31m╷[0m[0m
+        	            	[31m│[0m [0m[1m[31mError: [0m[0m[1mValue for undeclared variable[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0m[0mA variable named "reservation_id" was assigned on the command line, but the
+        	            	[31m│[0m [0mroot module does not declare a variable of that name. To use this value,
+        	            	[31m│[0m [0madd a "variable" block to the configuration.
+        	            	[31m╵[0m[0m
+        	            	[31m╷[0m[0m
+        	            	[31m│[0m [0m[1m[31mError: [0m[0m[1mNo value for required variable[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0m[0m  on variables.tf line 62:
+        	            	[31m│[0m [0m  62: [4mvariable "contract_id"[0m {[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0mThe root module input variable "contract_id" is not set, and has no default
+        	            	[31m│[0m [0mvalue. Use a -var or -var-file command line argument to provide a value for
+        	            	[31m│[0m [0mthis variable.
+        	            	[31m╵[0m[0m}
+        	Test:       	TestRunAppCenter
+TestRunAppCenter 2024-05-23T04:38:35-04:00 tests.go:367: FatalError{Underlying: error while running command: exit status 1; [31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mValue for undeclared variable[0m
+[31m│[0m [0m
+[31m│[0m [0m[0mA variable named "reservation_id" was assigned on the command line, but the
+[31m│[0m [0mroot module does not declare a variable of that name. To use this value,
+[31m│[0m [0madd a "variable" block to the configuration.
+[31m╵[0m[0m
+[31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mNo value for required variable[0m
+[31m│[0m [0m
+[31m│[0m [0m[0m  on variables.tf line 62:
+[31m│[0m [0m  62: [4mvariable "contract_id"[0m {[0m
+[31m│[0m [0m
+[31m│[0m [0mThe root module input variable "contract_id" is not set, and has no default
+[31m│[0m [0mvalue. Use a -var or -var-file command line argument to provide a value for
+[31m│[0m [0mthis variable.
+[31m╵[0m[0m}
+TestRunAppCenter 2024-05-23T04:38:35-04:00 tests.go:434: END: Destroy
+--- FAIL: TestRunAppCenter (41.27s)
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 command.go:185: [31m╷[0m[0m
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 command.go:185: [31m│[0m [0m[1m[31mError: [0m[0m[1mValue for undeclared variable[0m
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 command.go:185: [31m│[0m [0m
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 command.go:185: [31m│[0m [0m[0mA variable named "reservation_id" was assigned on the command line, but the
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 command.go:185: [31m│[0m [0mroot module does not declare a variable of that name. To use this value,
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 command.go:185: [31m│[0m [0madd a "variable" block to the configuration.
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 command.go:185: [31m╵[0m[0m
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 command.go:185: [31m╷[0m[0m
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 command.go:185: [31m│[0m [0m[1m[31mError: [0m[0m[1mNo value for required variable[0m
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 command.go:185: [31m│[0m [0m
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 command.go:185: [31m│[0m [0m[0m  on variables.tf line 62:
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 command.go:185: [31m│[0m [0m  62: [4mvariable "contract_id"[0m {[0m
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 command.go:185: [31m│[0m [0m
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 command.go:185: [31m│[0m [0mThe root module input variable "contract_id" is not set, and has no default
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 command.go:185: [31m│[0m [0mvalue. Use a -var or -var-file command line argument to provide a value for
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 command.go:185: [31m│[0m [0mthis variable.
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 command.go:185: [31m╵[0m[0m
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 retry.go:99: Returning due to fatal error: FatalError{Underlying: error while running command: exit status 1; [31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mValue for undeclared variable[0m
+[31m│[0m [0m
+[31m│[0m [0m[0mA variable named "reservation_id" was assigned on the command line, but the
+[31m│[0m [0mroot module does not declare a variable of that name. To use this value,
+[31m│[0m [0madd a "variable" block to the configuration.
+[31m╵[0m[0m
+[31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mNo value for required variable[0m
+[31m│[0m [0m
+[31m│[0m [0m[0m  on variables.tf line 62:
+[31m│[0m [0m  62: [4mvariable "contract_id"[0m {[0m
+[31m│[0m [0m
+[31m│[0m [0mThe root module input variable "contract_id" is not set, and has no default
+[31m│[0m [0mvalue. Use a -var or -var-file command line argument to provide a value for
+[31m│[0m [0mthis variable.
+[31m╵[0m[0m}
+=== NAME  TestRunLDAPAndPac
+    tests.go:366: 
+        	Error Trace:	/root/go/pkg/mod/github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper@v1.31.7/testhelper/tests.go:366
+        	            				/root/go/pkg/mod/github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper@v1.31.7/testhelper/tests.go:300
+        	Error:      	Received unexpected error:
+        	            	FatalError{Underlying: error while running command: exit status 1; [31m╷[0m[0m
+        	            	[31m│[0m [0m[1m[31mError: [0m[0m[1mValue for undeclared variable[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0m[0mA variable named "reservation_id" was assigned on the command line, but the
+        	            	[31m│[0m [0mroot module does not declare a variable of that name. To use this value,
+        	            	[31m│[0m [0madd a "variable" block to the configuration.
+        	            	[31m╵[0m[0m
+        	            	[31m╷[0m[0m
+        	            	[31m│[0m [0m[1m[31mError: [0m[0m[1mNo value for required variable[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0m[0m  on variables.tf line 62:
+        	            	[31m│[0m [0m  62: [4mvariable "contract_id"[0m {[0m
+        	            	[31m│[0m [0m
+        	            	[31m│[0m [0mThe root module input variable "contract_id" is not set, and has no default
+        	            	[31m│[0m [0mvalue. Use a -var or -var-file command line argument to provide a value for
+        	            	[31m│[0m [0mthis variable.
+        	            	[31m╵[0m[0m}
+        	Test:       	TestRunLDAPAndPac
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 tests.go:367: FatalError{Underlying: error while running command: exit status 1; [31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mValue for undeclared variable[0m
+[31m│[0m [0m
+[31m│[0m [0m[0mA variable named "reservation_id" was assigned on the command line, but the
+[31m│[0m [0mroot module does not declare a variable of that name. To use this value,
+[31m│[0m [0madd a "variable" block to the configuration.
+[31m╵[0m[0m
+[31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mNo value for required variable[0m
+[31m│[0m [0m
+[31m│[0m [0m[0m  on variables.tf line 62:
+[31m│[0m [0m  62: [4mvariable "contract_id"[0m {[0m
+[31m│[0m [0m
+[31m│[0m [0mThe root module input variable "contract_id" is not set, and has no default
+[31m│[0m [0mvalue. Use a -var or -var-file command line argument to provide a value for
+[31m│[0m [0mthis variable.
+[31m╵[0m[0m}
+TestRunLDAPAndPac 2024-05-23T04:38:36-04:00 tests.go:434: END: Destroy
+--- FAIL: TestRunLDAPAndPac (41.80s)
+FAIL
+exit status 1
+FAIL	github.com/terraform-ibm-modules/terraform-ibm-hpc	42.042s

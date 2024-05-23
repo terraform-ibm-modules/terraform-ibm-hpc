@@ -104,17 +104,17 @@ locals {
 
   # Check whether an entry is found in the mapping file for the given management node image
   image_mapping_entry_found = contains(keys(local.image_region_map), var.management_image_name)
-  new_image_id              = local.image_mapping_entry_found ? lookup(lookup(local.image_region_map, var.management_image_name), local.region) : "Image not found with the given name"
+  new_image_id              = local.image_mapping_entry_found ? local.image_region_map[var.management_image_name][local.region] : "Image not found with the given name"
 
   # Check whether an entry is found in the mapping file for the given compute node image
   compute_image_found_in_map = contains(keys(local.image_region_map), var.compute_image_name)
   # If not found, assume the name is the id already (customer provided image)
-  new_compute_image_id    = local.compute_image_found_in_map ? lookup(lookup(local.image_region_map, var.compute_image_name), local.region) : var.compute_image_name
+  new_compute_image_id    = local.compute_image_found_in_map ? local.image_region_map[var.compute_image_name][local.region] : var.compute_image_name
   compute_image_from_data = !local.compute_image_found_in_map && !startswith(local.new_compute_image_id, "crn:")
 
   # Check whether an entry is found in the mapping file for the given login node image
   login_image_mapping_entry_found = contains(keys(local.image_region_map), var.login_image_name)
-  new_login_image_id              = local.login_image_mapping_entry_found ? lookup(lookup(local.image_region_map, var.login_image_name), local.region) : "Image not found with the given name"
+  new_login_image_id              = local.login_image_mapping_entry_found ? local.image_region_map[var.login_image_name][local.region] : "Image not found with the given name"
 
   compute_node_max_count = 500
   rc_max_num             = local.compute_node_max_count
@@ -128,6 +128,24 @@ locals {
   us_east  = "https://api.us-east.codeengine.cloud.ibm.com/v2beta"
   eu_de    = "https://api.eu-de.codeengine.cloud.ibm.com/v2beta"
   us_south = "https://api.us-south.codeengine.cloud.ibm.com/v2beta"
+
+  # ip/names of vsis
+  management_vsi_data   = flatten(module.management_vsi[*]["list"])
+  management_private_ip = local.management_vsi_data[0]["ipv4_address"]
+  management_hostname   = local.management_vsi_data[0]["name"]
+
+  management_candidate_vsi_data    = flatten(module.management_candidate_vsi[*]["list"])
+  management_candidate_private_ips = local.management_candidate_vsi_data[*]["ipv4_address"]
+  management_candidate_hostnames   = local.management_candidate_vsi_data[*]["name"]
+
+  login_vsi_data    = flatten(module.login_vsi[*]["list"])
+  login_private_ips = local.login_vsi_data[*]["ipv4_address"]
+  login_hostnames   = local.login_vsi_data[*]["name"]
+
+  ldap_vsi_data     = flatten(module.ldap_vsi[*]["list"])
+  #ldap_private_ips  = local.ldap_vsi_data[*]["ipv4_address"]
+  ldap_hostnames    = local.ldap_vsi_data[*]["name"]
+
 }
 
 ###########################################################################

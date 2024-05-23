@@ -125,6 +125,16 @@ variable "enable_vpc_flow_logs" {
 }
 
 ##############################################################################
+# SCC Variables
+##############################################################################
+
+variable "scc_enable" {
+  type        = bool
+  default     = false
+  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+}
+
+##############################################################################
 # Encryption Variables
 ##############################################################################
 

@@ -45,7 +45,7 @@ module "existing_bastion_sg_update" {
 module "bastion_vsi" {
   count                         = var.bastion_instance_name != null ? 0 : 1
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.0.0-rc5"
+  version                       = "4.0.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null

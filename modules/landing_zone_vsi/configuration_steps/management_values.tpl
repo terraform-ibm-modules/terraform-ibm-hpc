@@ -41,7 +41,12 @@ custom_mount_paths="${custom_mount_paths}"
 contract_id="${contract_id}"
 app_center_gui_pwd="${app_center_gui_pwd}"
 enable_app_center="${enable_app_center}"
-login_ip_address="${login_ip_address}"
+management_ip=${management_ip}
+management_hostname=${management_hostname}
+management_cand_ips=${management_cand_ips}
+management_cand_hostnames=${management_cand_hostnames}
+login_ip=${login_ip}
+login_hostname=${login_hostname}
 # PAC High Availability
 app_center_high_availability="${app_center_high_availability}"
 db_adminuser="${db_adminuser}"
@@ -56,12 +61,13 @@ alb_hostname="${alb_hostname}"
 # LDAP Server
 enable_ldap="${enable_ldap}"
 ldap_server_ip="${ldap_server_ip}"
+ldap_server_hostname="${ldap_server_hostname}"
 ldap_basedns="${ldap_basedns}"
 bootdrive_crn="${bootdrive_crn}"
 # Observability
-enable_cloud_monitoring="${enable_cloud_monitoring}"
+observability_monitoring_enable="${observability_monitoring_enable}"
+observability_monitoring_on_compute_nodes_enable="${observability_monitoring_on_compute_nodes_enable}"
 cloud_monitoring_access_key="${cloud_monitoring_access_key}"
 cloud_monitoring_ingestion_url="${cloud_monitoring_ingestion_url}"
-enable_compute_node_monitoring="${enable_compute_node_monitoring}"
 cloud_monitoring_prws_key="${cloud_monitoring_prws_key}"
 cloud_monitoring_prws_url="${cloud_monitoring_prws_url}"
