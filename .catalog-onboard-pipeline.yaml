@@ -1,0 +1,24 @@
+---
+apiVersion: v1
+offerings:
+# below is an example of a Deployable Architecture (DA) solution
+- name: deploy-arch-ibm-hpc # must match the offering name in the ibm_catalog.json
+  kind: solution
+  catalog_id: 8611e025-10b2-488e-8261-a7f584a5114b
+  offering_id: bf3c07f8-5a62-4289-8ea0-94dbb2b410e6
+  # list all of the variations (flavors) you have included in the ibm_catalog.json
+  variations:
+    - name: Cluster-with-LSF-v10.1.0.14
+      mark_ready: false # have pipeline mark as visible if validation passes
+      install_type: fullstack # ensure value matches what is in ibm_catalog.json (fullstack or extension)
+      destroy_resources_on_failure: false # defaults to false if not specified so resources can be inspected to debug failures during validation
+      destroy_workspace_on_failure: false # defaults to false if not specified so schematics workspace can be inspected to debug failures during validation
+      import_only: false  # defaults to false - set to true if you do not want to do any validation, but be aware offering can't be publish if not validated
+      validation_rg: validation # the resource group in which to do validation in. Will be created if does not exist. If not specified, default value is 'validation'
+      # scc details needed if your offering is claiming any compliance controls
+      scc:
+        # must be an instance in the same account the validation is being done in
+        instance_id: 1c7d5f78-9262-44c3-b779-b28fe4d88c37
+        region: us-south
+      # pre_validation: tests/scripts/pre-validation.sh # optionally run a command before validation runs
+      # post_validation: tests/scripts/post-validation.sh  # optionally run a command after validation completes
