@@ -2,13 +2,6 @@
 # Input variables
 ###############################################################
 
-# Variable for IBM Cloud API Key
-# variable "ibmcloud_api_key" {
-#   type        = string
-#   description = "The IBM Cloud API Key"
-#   sensitive   = true
-# }
-
 # Prefix to append to resources name
 variable "prefix" {
   type        = string

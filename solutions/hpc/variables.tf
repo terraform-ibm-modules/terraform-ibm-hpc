@@ -31,13 +31,17 @@ variable "resource_group" {
 ##############################################################################
 
 variable "cluster_prefix" {
-  description = "Prefix that is used to name the IBM Cloud HPC cluster and IBM Cloud resources that are provisioned to build the IBM Cloud HPC cluster instance. You cannot create more than one instance of the IBM Cloud HPC cluster with the same name. Ensure that the name is unique. Prefix must begin and end with a letter and contain only letters, numbers, and - characters."
+  description = "Prefix that is used to name the IBM Cloud HPC cluster and IBM Cloud resources that are provisioned to build the IBM Cloud HPC cluster instance. You cannot create more than one instance of the IBM Cloud HPC cluster with the same name. Ensure that the name is unique. Prefix must start with a lowercase letter and contain only lowercase letters, digits, and hyphens in between. Hyphens must be followed by at least one lowercase letter or digit. There are no leading, trailing, or consecutive hyphens."
   type        = string
   default     = "hpcaas"
 
   validation {
-    error_message = "Prefix must begin and end with a letter and contain only letters, numbers, and - characters."
-    condition     = can(regex("^[a-zA-Z][-a-zA-Z0-9]*[a-zA-Z]$", var.cluster_prefix))
+    error_message = "Prefix must start with a lowercase letter and contain only lowercase letters, digits, and hyphens in between. Hyphens must be followed by at least one lowercase letter or digit. There are no leading, trailing, or consecutive hyphens."
+    condition     = can(regex("^[a-z](?:[a-z0-9]*(-[a-z0-9]+)*)?$", var.cluster_prefix))
+  }
+  validation {
+    condition     = length(var.cluster_prefix) <= 16
+    error_message = "The cluster_prefix must be 16 characters or fewer."
   }
 }
 

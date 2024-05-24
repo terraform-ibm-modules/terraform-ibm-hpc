@@ -73,7 +73,7 @@ Before running tests, export the IBM Cloud API key:
 ```sh
 export TF_VAR_ibmcloud_api_key=your_api_key //pragma: allowlist secret
 ```
- 
+
 Replace `your_api_key` with your actual API key. //pragma: allowlist secret
 
 ## Analyzing Test Results

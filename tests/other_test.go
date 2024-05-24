@@ -83,7 +83,6 @@ func TestRunAppCenter(t *testing.T) {
 	require.NoError(t, err, "Error setting up test options: %v", err)
 	options.TerraformVars["enable_app_center"] = strings.ToLower(envVars.EnableAppCenter)
 	options.TerraformVars["app_center_gui_pwd"] = envVars.AppCenterGuiPassword //pragma: allowlist secret
-	options.TerraformVars["cluster_prefix"] = "anbuone"
 
 	options.SkipTestTearDown = true
 	defer options.TestTearDown()
@@ -365,7 +364,6 @@ func TestRunLDAPAndPac(t *testing.T) {
 	options.TerraformVars["ldap_admin_password"] = envVars.LdapAdminPassword //pragma: allowlist secret
 	options.TerraformVars["ldap_user_name"] = envVars.LdapUserName
 	options.TerraformVars["ldap_user_password"] = envVars.LdapUserPassword //pragma: allowlist secret
-	options.TerraformVars["cluster_prefix"] = "anbutwo"
 
 	// Skip test teardown for further inspection
 	options.SkipTestTearDown = true

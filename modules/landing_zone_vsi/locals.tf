@@ -142,9 +142,9 @@ locals {
   login_private_ips = local.login_vsi_data[*]["ipv4_address"]
   login_hostnames   = local.login_vsi_data[*]["name"]
 
-  ldap_vsi_data     = flatten(module.ldap_vsi[*]["list"])
+  ldap_vsi_data = flatten(module.ldap_vsi[*]["list"])
   #ldap_private_ips  = local.ldap_vsi_data[*]["ipv4_address"]
-  ldap_hostnames    = local.ldap_vsi_data[*]["name"]
+  ldap_hostnames = local.ldap_vsi_data[*]["name"]
 
 }
 

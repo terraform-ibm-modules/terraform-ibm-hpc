@@ -389,55 +389,63 @@ EOF
   echo "JSON templates are created and updated on ibmcloudgen2_templates.json"
 
 # 7. Create resource template for ibmcloudhpc templates
-  ibmcloudhpc_templates="$LSF_RC_IBMCLOUDHPC_CONF/ibmcloudhpc_templates.json"
-  # Incrementally build a json string
-  json_string=""
-  for region in "eu-de" "us-east" "us-south"; do
-    if [ "$region" = "$regionName" ]; then
-        for i in 2 4 8 16 32 48 64 96 128 176; do
-            ncores=$((i / 2))
-            if [ "$region" = "eu-de" ] || [ "$region" = "us-east" ]; then
-                family="mx2"
-                maxmem_mx2=$((ncores * 16 * 1024))
-                mem_mx2=$((maxmem_mx2 * 9 / 10))
-            elif [ "$region" = "us-south" ]; then
-                family="mx2,mx3d"  # Include both "mx2" and "mx3d" families
-                maxmem_mx2=$((ncores * 16 * 1024))
-                mem_mx2=$((maxmem_mx2 * 9 / 10))
-                maxmem_mx3d=$((ncores * 20 * 1024))
-                mem_mx3d=$((maxmem_mx3d * 9 / 10))
-            fi
+# Define the output JSON file path
+ibmcloudhpc_templates="$LSF_RC_IBMCLOUDHPC_CONF/ibmcloudhpc_templates.json"
 
-            vpcus=$i
+# Initialize an empty JSON string
+json_string=""
 
-            if $hyperthreading; then
-                ncpus=$vpcus
-            else
-                ncpus=$ncores
-            fi
+# Loop through the specified regions
+for region in "eu-de" "us-east" "us-south"; do
+  if [ "$region" = "$regionName" ]; then
+    # Loop through the core counts
+    for i in 2 4 8 16 32 48 64 96 128 176; do
+      ncores=$((i / 2))
+      if [ "$region" = "eu-de" ] || [ "$region" = "us-east" ]; then
+        family="mx2"
+        maxmem_mx2=$((ncores * 16 * 1024))
+        mem_mx2=$((maxmem_mx2 * 9 / 10))
+      elif [ "$region" = "us-south" ]; then
+        family="mx2,mx3d"  # Include both "mx2" and "mx3d" families
+        maxmem_mx2=$((ncores * 16 * 1024))
+        mem_mx2=$((maxmem_mx2 * 9 / 10))
+        maxmem_mx3d=$((ncores * 20 * 1024))
+        mem_mx3d=$((maxmem_mx3d * 9 / 10))
+      fi
 
-            if [ "${imageID:0:4}" == "crn:" ]; then
-                imagetype="imageCrn"
-            else
-                imagetype="imageId"
-            fi
+      vpcus=$i
 
-            # Construct JSON objects for both "mx2" and "mx3d" configurations
-            IFS=',' read -ra families <<< "$family"
-            for fam in "${families[@]}"; do
-                templateId="Template-${cluster_prefix}-$((1000+i))-$fam"  # Add family to templateId
-                if [ "$fam" = "mx2" ]; then
-                    maxmem_val="$maxmem_mx2"  # Use mx2 specific maxmem value
-                    mem_val="$mem_mx2"  # Use mx2 specific mem value
-                elif [ "$fam" = "mx3d" ]; then
-                    maxmem_val="$maxmem_mx3d"
-                    mem_val="$mem_mx3d"
-                fi
-                # Construct JSON object (including final comma)
-                json_string+=$(cat <<EOF
+      if $hyperthreading; then
+        ncpus=$vpcus
+      else
+        ncpus=$ncores
+      fi
+
+      if [ "${imageID:0:4}" == "crn:" ]; then
+        imagetype="imageCrn"
+      else
+        imagetype="imageId"
+      fi
+
+      # Split the family string into an array and iterate over it
+      IFS=',' read -ra families <<< "$family"
+      for fam in "${families[@]}"; do
+        templateId="Template-${cluster_prefix}-$((1000+i))-$fam"  # Add family to templateId
+        if [ "$fam" = "mx2" ]; then
+          maxmem_val="$maxmem_mx2"  # Use mx2 specific maxmem value
+          mem_val="$mem_mx2"  # Use mx2 specific mem value
+          priority=10  # Priority for mx2
+        elif [ "$fam" = "mx3d" ]; then
+          maxmem_val="$maxmem_mx3d"  # Use mx3d specific maxmem value
+          mem_val="$mem_mx3d"  # Use mx3d specific mem value
+          priority=20  # Priority for mx3d in us-south
+        fi
+
+        # Construct JSON object and append it to the JSON string
+        json_string+=$(cat <<EOF
 {
  "templateId": "$templateId",
- "maxNumber": "$rc_max_num",
+ "maxNumber": $rc_max_num,
  "attributes": {
   "type": ["String", "X86_64"],
   "ncores": ["Numeric", "$ncores"],
@@ -450,25 +458,24 @@ EOF
  "$imagetype": "$imageID",
  "vpcId": "${vpcID}",
  "region": "${regionName}",
- "priority": 10,
+ "priority": $priority,
  "userData": "family=$fam",
  "ibmcloudhpc_fleetconfig": "ibmcloudhpc_fleetconfig_${fam}.json"
 },
 EOF
 )
-            done
-        done
-    fi
+      done
+    done
+  fi
 done
 
-json_string="${json_string%,}" # remove last comma
+# Remove the trailing comma from the JSON string
+json_string="${json_string%,}"
 # Combine the JSON objects into a JSON array
 json_data="{\"templates\": [${json_string}]}"
 # Write the JSON data to the output file
 echo "$json_data" > "$ibmcloudhpc_templates"
-echo "JSON templates are created and updated on ibmcloudhpc_templates.json"
-
-
+echo "JSON templates are created and updated in ibmcloudhpc_templates.json"
 
 # 8. Define the directory to store fleet configuration files
 fleet_config_dir="$LSF_RC_IBMCLOUDHPC_CONF"

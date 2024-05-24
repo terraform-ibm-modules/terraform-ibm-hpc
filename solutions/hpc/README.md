@@ -4,7 +4,7 @@
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.3, < 1.7 |
 | <a name="requirement_http"></a> [http](#requirement\_http) | 3.4.2 |
-| <a name="requirement_ibm"></a> [ibm](#requirement\_ibm) | 1.64.2 |
+| <a name="requirement_ibm"></a> [ibm](#requirement\_ibm) | 1.65.1 |
 | <a name="requirement_null"></a> [null](#requirement\_null) | 3.2.2 |
 
 ## Providers
@@ -12,7 +12,7 @@
 | Name | Version |
 |------|---------|
 | <a name="provider_http"></a> [http](#provider\_http) | 3.4.2 |
-| <a name="provider_ibm"></a> [ibm](#provider\_ibm) | 1.64.2 |
+| <a name="provider_ibm"></a> [ibm](#provider\_ibm) | 1.65.1 |
 | <a name="provider_null"></a> [null](#provider\_null) | 3.2.2 |
 
 ## Modules
@@ -50,19 +50,19 @@
 
 | Name | Type |
 |------|------|
-| [ibm_dns_resource_record.pac_cname](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.64.2/docs/resources/dns_resource_record) | resource |
-| [ibm_is_subnet_public_gateway_attachment.zone_1_attachment](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.64.2/docs/resources/is_subnet_public_gateway_attachment) | resource |
+| [ibm_dns_resource_record.pac_cname](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.65.1/docs/resources/dns_resource_record) | resource |
+| [ibm_is_subnet_public_gateway_attachment.zone_1_attachment](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.65.1/docs/resources/is_subnet_public_gateway_attachment) | resource |
 | [null_resource.destroy_compute_resources](https://registry.terraform.io/providers/hashicorp/null/3.2.2/docs/resources/resource) | resource |
 | [http_http.reservation_id_validation](https://registry.terraform.io/providers/hashicorp/http/3.4.2/docs/data-sources/http) | data source |
-| [ibm_iam_auth_token.auth_token](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.64.2/docs/data-sources/iam_auth_token) | data source |
-| [ibm_is_public_gateways.public_gateways](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.64.2/docs/data-sources/is_public_gateways) | data source |
-| [ibm_is_region.region](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.64.2/docs/data-sources/is_region) | data source |
-| [ibm_is_subnet.existing_login_subnet](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.64.2/docs/data-sources/is_subnet) | data source |
-| [ibm_is_subnet.existing_subnet](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.64.2/docs/data-sources/is_subnet) | data source |
-| [ibm_is_vpc.existing_vpc](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.64.2/docs/data-sources/is_vpc) | data source |
-| [ibm_is_vpc.itself](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.64.2/docs/data-sources/is_vpc) | data source |
-| [ibm_is_vpc.vpc](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.64.2/docs/data-sources/is_vpc) | data source |
-| [ibm_is_vpc_address_prefixes.existing_vpc](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.64.2/docs/data-sources/is_vpc_address_prefixes) | data source |
+| [ibm_iam_auth_token.auth_token](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.65.1/docs/data-sources/iam_auth_token) | data source |
+| [ibm_is_public_gateways.public_gateways](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.65.1/docs/data-sources/is_public_gateways) | data source |
+| [ibm_is_region.region](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.65.1/docs/data-sources/is_region) | data source |
+| [ibm_is_subnet.existing_login_subnet](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.65.1/docs/data-sources/is_subnet) | data source |
+| [ibm_is_subnet.existing_subnet](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.65.1/docs/data-sources/is_subnet) | data source |
+| [ibm_is_vpc.existing_vpc](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.65.1/docs/data-sources/is_vpc) | data source |
+| [ibm_is_vpc.itself](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.65.1/docs/data-sources/is_vpc) | data source |
+| [ibm_is_vpc.vpc](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.65.1/docs/data-sources/is_vpc) | data source |
+| [ibm_is_vpc_address_prefixes.existing_vpc](https://registry.terraform.io/providers/IBM-Cloud/ibm/1.65.1/docs/data-sources/is_vpc_address_prefixes) | data source |
 
 ## Inputs
 
@@ -79,7 +79,7 @@
 | <a name="input_bastion_ssh_keys"></a> [bastion\_ssh\_keys](#input\_bastion\_ssh\_keys) | List of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC bastion and login node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys). | `list(string)` | n/a | yes |
 | <a name="input_bastion_ssh_private_key"></a> [bastion\_ssh\_private\_key](#input\_bastion\_ssh\_private\_key) | Bastion SSH private key path, which will be used to login to bastion host. | `string` | `"null"` | no |
 | <a name="input_cluster_id"></a> [cluster\_id](#input\_cluster\_id) | Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same reservations. This can be up to 39 alphanumeric characters including the underscore (\_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment. | `string` | n/a | yes |
-| <a name="input_cluster_prefix"></a> [cluster\_prefix](#input\_cluster\_prefix) | Prefix that is used to name the IBM Cloud HPC cluster and IBM Cloud resources that are provisioned to build the IBM Cloud HPC cluster instance. You cannot create more than one instance of the IBM Cloud HPC cluster with the same name. Ensure that the name is unique. Prefix must begin and end with a letter and contain only letters, numbers, and - characters. | `string` | `"hpcaas"` | no |
+| <a name="input_cluster_prefix"></a> [cluster\_prefix](#input\_cluster\_prefix) | Prefix that is used to name the IBM Cloud HPC cluster and IBM Cloud resources that are provisioned to build the IBM Cloud HPC cluster instance. You cannot create more than one instance of the IBM Cloud HPC cluster with the same name. Ensure that the name is unique. Prefix must start with a lowercase letter and contain only lowercase letters, digits, and hyphens in between. Hyphens must be followed by at least one lowercase letter or digit. There are no leading, trailing, or consecutive hyphens. | `string` | `"hpcaas"` | no |
 | <a name="input_cluster_subnet_ids"></a> [cluster\_subnet\_ids](#input\_cluster\_subnet\_ids) | List of existing subnet ID under the VPC, where the cluster will be provisioned. One subnet id is required as input value and supported zones for eu-de are eu-de-2, eu-de-3, for us-east us-east-1, us-east-3 and for us-south are us-south-1, us-south-3 .The management nodes, file storage shares and compute nodes will be deployed on the same zone. | `list(string)` | `[]` | no |
 | <a name="input_compute_image_name"></a> [compute\_image\_name](#input\_compute\_image\_name) | Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v4). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering. | `string` | `"hpcaas-lsf10-rhel88-compute-v5"` | no |
 | <a name="input_compute_ssh_keys"></a> [compute\_ssh\_keys](#input\_compute\_ssh\_keys) | List of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC cluster node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys). | `list(string)` | n/a | yes |

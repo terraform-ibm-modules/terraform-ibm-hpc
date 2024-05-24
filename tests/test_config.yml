@@ -18,7 +18,7 @@ kms_key_name:
 hyperthreading_enabled: true
 dns_domain_names : wes.com
 enable_app_center: true
-app_center_gui_pwd: Pass@123 # pragma: allowlist secret 
+app_center_gui_pwd: Pass@123 # pragma: allowlist secret
 enable_ldap: true
 ldap_basedns: cicd.com
 ldap_admin_password: Pass@123 # pragma: allowlist secret
