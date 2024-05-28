@@ -221,12 +221,6 @@ variable "share_path" {
   description = "Provide the exact path to where the VPC file share needs to be mounted"
 }
 
-variable "alb_hostname" {
-  description = "ALB hostname"
-  type        = string
-  default     = ""
-}
-
 variable "mount_path" {
   type = list(object({
     mount_path = string,

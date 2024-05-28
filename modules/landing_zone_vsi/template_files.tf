@@ -78,7 +78,6 @@ data "template_file" "management_values" {
     network_interface             = local.vsi_interfaces[0]
     dns_domain                    = var.dns_domain_names["compute"]
     mount_path                    = var.share_path
-    alb_hostname                  = var.alb_hostname
     custom_mount_paths            = join(" ", concat(local.vpc_file_share[*]["mount_path"], local.nfs_file_share[*]["mount_path"]))
     custom_file_shares            = join(" ", concat([for file_share in var.file_share : file_share], local.nfs_file_share[*]["nfs_share"]))
     contract_id                   = var.contract_id

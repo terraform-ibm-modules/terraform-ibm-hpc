@@ -57,7 +57,6 @@ db_name="${db_name}"
 db_user="${db_user}"
 db_password="${db_password}"
 db_certificate="${db_certificate}"
-alb_hostname="${alb_hostname}"
 # LDAP Server
 enable_ldap="${enable_ldap}"
 ldap_server_ip="${ldap_server_ip}"

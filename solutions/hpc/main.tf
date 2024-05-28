@@ -37,17 +37,17 @@ module "bootstrap" {
   resource_group                = local.resource_groups["workload_rg"]
   prefix                        = var.cluster_prefix
   vpc_id                        = local.vpc_id
-  network_cidr                  = var.vpc_name != "null" && length(var.cluster_subnet_ids) > 0 ? local.existing_subnet_cidrs : split(",", var.vpc_cidr)
+  network_cidr                  = var.vpc_name != null && length(var.cluster_subnet_ids) > 0 ? local.existing_subnet_cidrs : split(",", var.vpc_cidr)
   bastion_subnets               = local.bastion_subnets
   ssh_keys                      = var.bastion_ssh_keys
-  allowed_cidr                  = var.remote_allowed_ips
+  allowed_cidr                  = local.allowed_cidr
   kms_encryption_enabled        = local.kms_encryption_enabled
   boot_volume_encryption_key    = local.boot_volume_encryption_key
   existing_kms_instance_guid    = local.existing_kms_instance_guid
   skip_iam_authorization_policy = var.skip_iam_authorization_policy
-  bastion_instance_name         = local.bastion_instance_name
+  bastion_instance_name         = var.bastion_instance_name
   bastion_instance_public_ip    = local.bastion_instance_public_ip
-  bastion_security_group_id     = var.bastion_instance_name != "null" ? var.bastion_security_group_id : null
+  bastion_security_group_id     = var.bastion_instance_name != null ? var.bastion_security_group_id : null
   ldap_server                   = var.ldap_server
 }
 
@@ -97,7 +97,6 @@ module "landing_zone_vsi" {
   kms_encryption_enabled                           = local.kms_encryption_enabled
   boot_volume_encryption_key                       = local.boot_volume_encryption_key
   share_path                                       = local.share_path
-  alb_hostname                                     = local.alb_hostname
   hyperthreading_enabled                           = var.hyperthreading_enabled
   app_center_gui_pwd                               = var.app_center_gui_pwd
   enable_app_center                                = var.enable_app_center
@@ -122,7 +121,7 @@ module "landing_zone_vsi" {
   ldap_primary_ip                                  = local.ldap_private_ips
   app_center_high_availability                     = var.app_center_high_availability
   db_instance_info                                 = var.enable_app_center && var.app_center_high_availability ? module.db[0].db_instance_info : null
-  storage_security_group_id                        = local.storage_security_group_id
+  storage_security_group_id                        = var.storage_security_group_id
   observability_monitoring_enable                  = var.observability_monitoring_enable
   observability_monitoring_on_compute_nodes_enable = var.observability_monitoring_on_compute_nodes_enable
   cloud_monitoring_access_key                      = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_access_key : ""
@@ -165,7 +164,20 @@ module "alb" {
   security_group_ids   = concat(local.compute_security_group_id, [local.bastion_security_group_id])
   vsi_ids              = local.vsi_management_ids
   certificate_instance = var.enable_app_center && var.app_center_high_availability ? var.existing_certificate_instance : ""
-  create_load_balancer = var.app_center_high_availability && var.enable_app_center
+  create_load_balancer = !local.alb_created_by_api && var.app_center_high_availability && var.enable_app_center
+}
+
+module "alb_api" {
+  source               = "./../../modules/alb_api"
+  ibmcloud_api_key     = var.ibmcloud_api_key
+  region               = data.ibm_is_region.region.name
+  bastion_subnets      = local.bastion_subnets
+  resource_group_id    = local.resource_groups["workload_rg"]
+  prefix               = var.cluster_prefix
+  security_group_ids   = concat(local.compute_security_group_id, [local.bastion_security_group_id])
+  vsi_ips              = concat([local.management_private_ip], local.management_candidate_private_ips)
+  certificate_instance = var.enable_app_center && var.app_center_high_availability ? var.existing_certificate_instance : ""
+  create_load_balancer = local.alb_created_by_api && var.app_center_high_availability && var.enable_app_center
 }
 
 ###################################################

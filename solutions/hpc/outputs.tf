@@ -42,3 +42,48 @@ output "application_center_url_note" {
   description = "Available if IBM Spectrum LSF Application Center GUI is installed in High Availability"
   value       = var.enable_app_center && var.app_center_high_availability ? "you may need '127.0.0.1 pac pac.${var.dns_domain_names.compute}' in your /etc/hosts, to let your browser use the ssh tunnel" : null
 }
+
+output "remote_allowed_cidr" {
+  description = "The following IPs/networks are allow-listed for incoming connections"
+  value       = local.allowed_cidr
+}
+
+output "management_hostname" {
+  description = "Management node has this hostname:"
+  value       = local.print_extra_outputs ? local.management_hostname : null
+}
+
+output "management_ip" {
+  description = "Management node has this IP:"
+  value       = local.print_extra_outputs ? local.management_private_ip : null
+}
+
+output "management_candidate_hostnames" {
+  description = "Management candidate nodes have these hostnames:"
+  value       = local.print_extra_outputs ? local.management_candidate_hostnames : null
+}
+
+output "management_candidate_ips" {
+  description = "Management candidate nodes have these IPs:"
+  value       = local.print_extra_outputs ? local.management_candidate_private_ips : null
+}
+
+output "login_hostnames" {
+  description = "Login nodes have these hostnames:"
+  value       = local.print_extra_outputs ? local.login_hostnames : null
+}
+
+output "login_ips" {
+  description = "Login nodes have these IPs:"
+  value       = local.print_extra_outputs ? local.login_private_ips : null
+}
+
+output "ldap_hostnames" {
+  description = "LDAP nodes have these hostnames:"
+  value       = local.print_extra_outputs ? local.ldap_hostnames : null
+}
+
+output "ldap_ips" {
+  description = "LDAP nodes have these IPs:"
+  value       = local.print_extra_outputs ? local.ldap_private_ips : null
+}
