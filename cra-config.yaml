@@ -8,5 +8,5 @@ CRA_TARGETS:
         TF_VAR_cluster_id: "HPC-LSF-1"
         TF_VAR_bastion_ssh_keys: "[\"geretain-hpc\"]"
         TF_VAR_compute_ssh_keys: "[\"geretain-hpc\"]"
-        TF_VAR_reservation_id: "Contract-IBM-WDC-OB"
+        TF_VAR_reservation_id: "Contract-IBM-WES-DA"
         TF_VAR_remote_allowed_ips: "[\"49.205.130.187\"]"
