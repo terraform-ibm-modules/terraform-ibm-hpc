@@ -12,14 +12,15 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
+
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/common_utils"
 	lsf "github.com/terraform-ibm-modules/terraform-ibm-hpc/lsf"
 )
 
 // Constants for better organization
 const (
-	terraformDir = "solutions/hpc" // Path of the Terraform directory
-
+	// Path of the Terraform directory
+	terraformDir = "solutions/hpc"
 )
 
 // Terraform resource names to ignore during consistency checks
@@ -222,6 +223,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("error reading configuration from yaml: %v", err)
 	}
+
 	os.Exit(m.Run())
 
 }
@@ -238,7 +240,7 @@ func TestRunBasic(t *testing.T) {
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// HPC cluster prefix
-	hpcClusterPrefix := "cicd-hpc-basic"
+	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
@@ -246,6 +248,7 @@ func TestRunBasic(t *testing.T) {
 	// Create test options
 	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
 	require.NoError(t, err, "Error setting up test options: %v", err)
+
 	options.SkipTestTearDown = true
 	defer options.TestTearDown()
 

@@ -93,7 +93,7 @@ module "landing_zone_vsi" {
   management_image_name                            = var.management_image_name
   compute_image_name                               = var.compute_image_name
   login_image_name                                 = var.login_image_name
-  dns_domain_names                                 = var.dns_domain_names
+  dns_domain_names                                 = var.dns_domain_name
   kms_encryption_enabled                           = local.kms_encryption_enabled
   boot_volume_encryption_key                       = local.boot_volume_encryption_key
   share_path                                       = local.share_path
@@ -128,6 +128,7 @@ module "landing_zone_vsi" {
   cloud_monitoring_ingestion_url                   = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_ingestion_url : ""
   cloud_monitoring_prws_key                        = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_key : ""
   cloud_monitoring_prws_url                        = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_url : ""
+  bastion_instance_name                            = var.bastion_instance_name
   depends_on = [
     module.local_exec_script,
     module.validate_ldap_server_connection
@@ -153,7 +154,7 @@ module "dns" {
   subnets_crn            = local.compute_subnets_crn
   dns_instance_id        = var.dns_instance_id
   dns_custom_resolver_id = var.dns_custom_resolver_id
-  dns_domain_names       = values(var.dns_domain_names)
+  dns_domain_names       = values(var.dns_domain_name)
 }
 
 module "alb" {
@@ -188,7 +189,7 @@ module "compute_dns_records" {
   dns_instance_id  = local.dns_instance_id
   dns_zone_id      = local.compute_dns_zone_id
   dns_records      = local.compute_dns_records
-  dns_domain_names = var.dns_domain_names
+  dns_domain_names = var.dns_domain_name
 }
 
 module "compute_candidate_dns_records" {
@@ -196,7 +197,7 @@ module "compute_candidate_dns_records" {
   dns_instance_id  = local.dns_instance_id
   dns_zone_id      = local.compute_dns_zone_id
   dns_records      = local.mgmt_candidate_dns_records
-  dns_domain_names = var.dns_domain_names
+  dns_domain_names = var.dns_domain_name
 }
 
 module "login_vsi_dns_records" {
@@ -204,7 +205,7 @@ module "login_vsi_dns_records" {
   dns_instance_id  = local.dns_instance_id
   dns_zone_id      = local.compute_dns_zone_id
   dns_records      = local.login_vsi_dns_records
-  dns_domain_names = var.dns_domain_names
+  dns_domain_names = var.dns_domain_name
 }
 
 module "ldap_vsi_dns_records" {
@@ -212,7 +213,7 @@ module "ldap_vsi_dns_records" {
   dns_instance_id  = local.dns_instance_id
   dns_zone_id      = local.compute_dns_zone_id
   dns_records      = local.ldap_vsi_dns_records
-  dns_domain_names = var.dns_domain_names
+  dns_domain_names = var.dns_domain_name
 }
 
 # DNS entry needed to ALB, can be moved in dns_record module for example

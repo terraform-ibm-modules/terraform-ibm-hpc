@@ -1,5 +1,5 @@
 {
-  "name": "hpcaas-test",
+  "name": "nprr-test",
   "type": [
     "terraform_v1.5"
   ],
@@ -8,11 +8,12 @@
   "description": "",
   "tags": [],
   "template_repo": {
-    "url": "https://github.com/terraform-ibm-modules/terraform-ibm-hpc/tree/hpcaas"
+    "url": "https://github.com/terraform-ibm-modules/terraform-ibm-hpc",
+    "branch": "null-test-28"
   },
   "template_data": [
     {
-      "folder": ".",
+      "folder": "solutions/hpc",
       "type": "terraform_v1.5",
       "env_values":[
         {
@@ -48,7 +49,7 @@
         },
         {
           "name": "ibmcloud_api_key",
-          "value": "Please fill here",
+          "value": "guaNx0wWM32WJMNfGkU0U6pRVtFjZBQ_6Pb4st8FfFUj",
           "type": "string",
           "secure": true,
           "description": "IBM Cloud API key for the IBM Cloud account where the IBM Cloud HPC cluster needs to be deployed. For more information on how to create an API key, see [Managing user API keys](https://cloud.ibm.com/docs/account?topic=account-userapikey)."
@@ -69,28 +70,28 @@
         },
         {
           "name": "cluster_prefix",
-          "value": "hpcaas",
+          "value": "nprrr",
           "type": "string",
           "secure": false,
           "description": "Prefix that is used to name the IBM Cloud HPC cluster and IBM Cloud resources that are provisioned to build the IBM Cloud HPC cluster instance. You cannot create more than one instance of the IBM Cloud HPC cluster with the same name. Ensure that the name is unique. Prefix must start with a lowercase letter and contain only lowercase letters, digits, and hyphens in between. Hyphens must be followed by at least one lowercase letter or digit. There are no leading, trailing, or consecutive hyphens."
         },
         {
           "name": "cluster_id",
-          "value": "Please fill here",
+          "value": "HPC-LSF-2",
           "type": "string",
           "secure": false,
           "description": "Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same reservations. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment."
         },
         {
           "name": "reservation_id",
-          "value": "Please fill here",
+          "value": "Contract-IBM-WDC-OB",
           "type": "string",
           "secure": true,
           "description": "Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_)."
         },
         {
           "name": "vpc_name",
-          "value": "null",
+          "value": null,
           "type": "string",
           "secure": false,
           "description": "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
@@ -104,21 +105,21 @@
         },
         {
           "name": "login_subnet_id",
-          "value": "null",
+          "value": null,
           "type": "string",
           "secure": false,
           "description": "List of existing subnet ID under the VPC, where the login/Bastion server will be provisioned. One subnet id is required as input value for the creation of login node and bastion in the same zone as the management nodes are created. Note: Provide a different subnet id for login_subnet_id, do not overlap or provide the same subnet id that was already provided for cluster_subnet_ids."
         },
         {
           "name": "bastion_ssh_keys",
-          "value": "[\"Please fill here\"]",
+          "value": "[\"nupur-key\"]",
           "type": "list(string)",
           "secure": false,
           "description": "List of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC bastion and login node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
         },
         {
           "name": "compute_ssh_keys",
-          "value": "[\"Please fill here\"]",
+          "value": "[\"nupur-key\"]",
           "type": "list(string)",
           "secure": false,
           "description": "List of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC cluster node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
@@ -145,7 +146,7 @@
           "description": "The CIDR block that's required for the creation of the login cluster private subnet. Modify the CIDR block if it conflicts with any on-premises CIDR blocks when using a hybrid environment. Provide only one CIDR block for the creation of the login subnet. Since login subnet is used only for the creation of login virtual server instances,  provide a CIDR range of /28."
         },
         {
-          "name": "dns_domain_names",
+          "name": "dns_domain_name",
           "value": "{compute= \"hpcaas.com\"}",
           "type": "object({compute = string})",
           "secure": false,
@@ -153,14 +154,14 @@
         },
         {
           "name": "dns_instance_id",
-          "value": "null",
+          "value": null,
           "type": "string",
           "secure": false,
           "description": "Provide the id of existing IBM Cloud DNS services domain to skip creating a new DNS service instance name. Note: If dns_instance_id is not equal to null, a new dns zone will be created under the existing dns service instance."
         },
         {
           "name": "dns_custom_resolver_id",
-          "value": "null",
+          "value": null,
           "type": "string",
           "secure": false,
           "description": "Provide the id of existing IBM Cloud DNS custom resolver to skip creating a new custom resolver. Note: A VPC can be associated only to a single custom resolver, please provide the id of custom resolver if it is already associated to the VPC."
@@ -174,14 +175,14 @@
         },
         {
           "name": "cos_instance_name",
-          "value": "null",
+          "value": null,
           "type": "string",
           "secure": false,
           "description": "Provide the name of the existing cos instance to store vpc flow logs."
         },
         {
           "name": "remote_allowed_ips",
-          "value": "[\"Please fill here\"]",
+          "value": "[\"49.207.195.71\"]",
           "type": "list(string)",
           "secure": false,
           "description": "Comma-separated list of IP addresses that can access the IBM Cloud HPC cluster instance through an SSH interface. For security purposes, provide the public IP addresses assigned to the devices that are authorized to establish SSH connections (for example, [\"169.45.117.34\"]). To fetch the IP address of the device, use [https://ipv4.icanhazip.com/](https://ipv4.icanhazip.com/)."
@@ -238,13 +239,13 @@
         },
         {
           "name": "custom_file_shares",
-          "value": "[{mount_path = \"/mnt/binaries\", size = 100, iops = 2000 }, { mount_path = \"/mnt/data\", size = 100, iops = 6000 }, { mount_path = \"/mnt/scale/tools\", nfs_share = \"\" } ]",
+          "value": "[{mount_path = \"/mnt/vpcstorage/tools\", size = 100, iops = 2000 }, { mount_path = \"/mnt/vpcstorage/data\", size = 100, iops = 6000 }, { mount_path = \"/mnt/scale/tools\", nfs_share = \"\" } ]",
           "type": "list(object({mount_path = string,size = optional(number),iops = optional(number),nfs_share = optional(string)}))",
           "secure": false,
           "description": "Mount points and sizes in GB and IOPS range of file shares that can be used to customize shared file storage layout. Provide the details for up to 5 shares. Each file share size in GB supports different range of IOPS. For more information, see [file share IOPS value](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=ui)"
         },
         { "name": "storage_security_group_id",
-          "value": "null",
+          "value": null,
           "type": "string",
           "secure": false,
           "description" : "Provide the security group id that is created from Scale storage, if the nfs_share is not equal to null from cluster_file_share variable."
@@ -272,14 +273,14 @@
         },
         {
           "name": "kms_instance_name",
-          "value": "null",
+          "value": null,
           "type": "string",
           "secure": false,
           "description": "Name of the Key Protect instance associated with the Key Management Service. Note: kms_instance_name to be considered only if key_management value is set to key_protect. The name can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
         },
         {
           "name": "kms_key_name",
-          "value": "null",
+          "value": null,
           "type": "string",
           "secure": false,
           "description": "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. Note: kms_instance_name to be considered only if key_management value is set to key_protect. (for example kms_key_name: my-encryption-key)."
@@ -319,17 +320,10 @@
         },
         {
           "name": "observability_atracker_on_cos_enable",
-          "value": "true",
+          "value": "false",
           "type": "bool",
           "secure": false,
           "description": "Enable Activity tracker service instance connected to Cloud Object Storage (COS). All the events will be stored into COS so that customers can connect to it and read those events or ingest them in their system."
-        },
-        {
-          "name": "TF_VALIDATION_SCRIPT_FILES",
-          "value": "[]",
-          "type": "list(string)",
-          "secure": false,
-          "description": "List of script file names used by validation test suites. If provided, these scripts will be executed as part of validation test suites execution."
         },
         {
           "name": "enable_ldap",
@@ -451,28 +445,28 @@
         },
         {
           "name": "bastion_instance_name",
-          "value": "null",
+          "value": null,
           "type": "string",
           "secure": false,
           "description" : "Bastion instance name. If none given then new bastion will be created."
         },
         {
           "name": "bastion_instance_public_ip",
-          "value": "null",
+          "value": null,
           "type": "string",
           "secure": false,
           "description" : "Bastion instance public ip address."
         },
         {
           "name": "bastion_security_group_id",
-          "value": "null",
+          "value": null,
           "type": "string",
           "secure": false,
           "description" : "Bastion security group id."
         },
         {
           "name": "bastion_ssh_private_key",
-          "value": "null",
+          "value": null,
           "type": "string",
           "secure": false,
           "description" : "Bastion SSH private key path, which will be used to login to bastion host."

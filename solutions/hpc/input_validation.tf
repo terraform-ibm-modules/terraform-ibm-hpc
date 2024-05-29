@@ -92,7 +92,7 @@ locals {
   (local.validate_reservation_id ? local.validate_reservation_id_msg : ""))
 
   validate_reservation_id_api     = local.valid_status_code && local.reservation_id_found
-  validate_reservation_id_api_msg = "The provided contract id doesn't have a valid reservation or the contract id is not on the same account as HPC deployment."
+  validate_reservation_id_api_msg = "The provided reservation id doesn't have a valid reservation or the reservation id is not on the same account as HPC deployment."
   # tflint-ignore: terraform_unused_declarations
   validate_reservation_id_api_chk = regex(
     "^${local.validate_reservation_id_api_msg}$",
@@ -204,7 +204,7 @@ locals {
   validate_custom_resolver_id_chk = regex("^${local.validate_custom_resolver_id_msg}$",
   (local.validate_custom_resolver_id ? local.validate_custom_resolver_id_msg : ""))
 
-  validate_reservation_id_new_msg = "Provided cluster_id and contract id cannot be set as empty if the provided region is eu-de and us-east and us-south."
+  validate_reservation_id_new_msg = "Provided cluster_id and reservation id cannot be set as empty if the provided region is eu-de and us-east and us-south."
   validate_reservation_id_logic   = local.region == "eu-de" || local.region == "us-east" || local.region == "us-south" ? var.reservation_id != "" && var.cluster_id != "" : true
   # tflint-ignore: terraform_unused_declarations
   validate_reservation_id_chk_new = regex("^${local.validate_reservation_id_new_msg}$",

@@ -26,15 +26,15 @@ func VerifyManagementNodeConfig(
 
 	// Verify cluster ID
 	checkClusterIDErr := LSFCheckClusterID(t, sshMgmtClient, expectedClusterID, logger)
-	utils.LogVerificationResult(t, checkClusterIDErr, "check Cluster ID", logger)
+	utils.LogVerificationResult(t, checkClusterIDErr, "check Cluster ID on management node", logger)
 
 	// Verify master name
 	checkMasterNameErr := LSFCheckMasterName(t, sshMgmtClient, expectedMasterName, logger)
-	utils.LogVerificationResult(t, checkMasterNameErr, "check Master name", logger)
+	utils.LogVerificationResult(t, checkMasterNameErr, "check Master name on management node", logger)
 
 	// Verify Reservation ID
 	ReservationIDErr := HPCCheckReservationID(t, sshMgmtClient, expectedReservationID, logger)
-	utils.LogVerificationResult(t, ReservationIDErr, "check Reservation ID", logger)
+	utils.LogVerificationResult(t, ReservationIDErr, "check Reservation ID on management node", logger)
 
 	// MTU check for management nodes
 	mtuCheckErr := LSFMTUCheck(t, sshMgmtClient, managementNodeIPList, logger)
@@ -50,7 +50,7 @@ func VerifyManagementNodeConfig(
 
 	// LSF version check
 	versionErr := CheckLSFVersion(t, sshMgmtClient, lsfVersion, logger)
-	utils.LogVerificationResult(t, versionErr, "check LSF version", logger)
+	utils.LogVerificationResult(t, versionErr, "check LSF version on management node", logger)
 
 	//File Mount
 	fileMountErr := HPCCheckFileMount(t, sshMgmtClient, managementNodeIPList, "management", logger)
@@ -58,7 +58,7 @@ func VerifyManagementNodeConfig(
 
 	//Run job
 	jobErr := LSFRunJobs(t, sshMgmtClient, jobCommand, logger)
-	utils.LogVerificationResult(t, jobErr, "check Run job", logger)
+	utils.LogVerificationResult(t, jobErr, "check Run job on management node", logger)
 }
 
 // VerifySSHKey verifies SSH keys for both management and compute nodes.
@@ -100,15 +100,15 @@ func FailoverAndFailback(t *testing.T, sshMgmtClient *ssh.Client, jobCommand str
 
 	//Stop sbatchd
 	stopDaemonsErr := LSFControlBctrld(t, sshMgmtClient, "stop", logger)
-	utils.LogVerificationResult(t, stopDaemonsErr, "check bctrl stop", logger)
+	utils.LogVerificationResult(t, stopDaemonsErr, "check bctrl stop on management node", logger)
 
 	//Run job
 	jobErr := LSFRunJobs(t, sshMgmtClient, jobCommand, logger)
-	utils.LogVerificationResult(t, jobErr, "check Run job", logger)
+	utils.LogVerificationResult(t, jobErr, "check Run job on management node", logger)
 
 	//Start sbatchd
 	startDaemonsErr := LSFControlBctrld(t, sshMgmtClient, "start", logger)
-	utils.LogVerificationResult(t, startDaemonsErr, "check bctrl start", logger)
+	utils.LogVerificationResult(t, startDaemonsErr, "check bctrl start on management node", logger)
 }
 
 // RestartLsfDaemon restarts the LSF (Load Sharing Facility) daemons.
@@ -175,7 +175,7 @@ func VerifyComputetNodeConfig(
 
 	// File mount
 	fileMountErr := HPCCheckFileMount(t, sshMgmtClient, computeNodeIPList, "compute", logger)
-	utils.LogVerificationResult(t, fileMountErr, "File mount check on management node", logger)
+	utils.LogVerificationResult(t, fileMountErr, "File mount check on compute node", logger)
 
 	// Intel One mpi
 	intelOneMpiErr := LSFCheckIntelOneMpiOnComputeNodes(t, sshMgmtClient, computeNodeIPList, logger)
@@ -212,15 +212,15 @@ func VerifyLoginNodeConfig(
 
 	// Verify cluster ID
 	checkClusterIDErr := LSFCheckClusterID(t, sshLoginClient, expectedClusterID, logger)
-	utils.LogVerificationResult(t, checkClusterIDErr, "check Cluster ID", logger)
+	utils.LogVerificationResult(t, checkClusterIDErr, "check Cluster ID on login node", logger)
 
 	// Verify master name
 	checkMasterNameErr := LSFCheckMasterName(t, sshLoginClient, expectedMasterName, logger)
-	utils.LogVerificationResult(t, checkMasterNameErr, "check Master name", logger)
+	utils.LogVerificationResult(t, checkMasterNameErr, "check Master name on login node", logger)
 
 	// Verify Reservation ID
 	ReservationIDErr := HPCCheckReservationID(t, sshLoginClient, expectedReservationID, logger)
-	utils.LogVerificationResult(t, ReservationIDErr, "check Reservation ID", logger)
+	utils.LogVerificationResult(t, ReservationIDErr, "check Reservation ID on login node", logger)
 
 	// MTU check for login nodes
 	mtuCheckErr := LSFMTUCheck(t, sshLoginClient, []string{loginNodeIP}, logger)
@@ -244,7 +244,7 @@ func VerifyLoginNodeConfig(
 
 	//Run job
 	jobErr := LSFRunJobs(t, sshLoginClient, jobCommand, logger)
-	utils.LogVerificationResult(t, jobErr, "check Run job", logger)
+	utils.LogVerificationResult(t, jobErr, "check Run job on login node", logger)
 }
 
 // VerifyTestTerraformOutputs is a function that verifies the Terraform outputs for a test scenario.
@@ -335,11 +335,11 @@ func VerifyManagementNodeLDAPConfig(
 
 	// Check file mount
 	fileMountErr := HPCCheckFileMountAsLDAPUser(t, sshLdapClient, "management", logger)
-	utils.LogVerificationResult(t, fileMountErr, "check file mount on the management node", logger)
+	utils.LogVerificationResult(t, fileMountErr, "check file mount as an LDAP user on the management node", logger)
 
 	// Run job
 	jobErr := LSFRunJobsAsLDAPUser(t, sshLdapClient, jobCommand, ldapUserName, logger)
-	utils.LogVerificationResult(t, jobErr, "check Run job", logger)
+	utils.LogVerificationResult(t, jobErr, "check Run job as an LDAP user on the management node", logger)
 
 	// Verify LSF commands on management node as LDAP user
 	lsfCmdErr := VerifyLSFCommands(t, sshLdapClient, ldapUserName, logger)
@@ -388,11 +388,11 @@ func VerifyLoginNodeLDAPConfig(
 
 	// Check file mount
 	fileMountErr := HPCCheckFileMountAsLDAPUser(t, sshLdapClient, "login", logger)
-	utils.LogVerificationResult(t, fileMountErr, "check file mount on the login node", logger)
+	utils.LogVerificationResult(t, fileMountErr, "check file mount as an LDAP user on the login node", logger)
 
 	// Run job
 	jobErr := LSFRunJobsAsLDAPUser(t, sshLdapClient, jobCommand, ldapUserName, logger)
-	utils.LogVerificationResult(t, jobErr, "check Run job", logger)
+	utils.LogVerificationResult(t, jobErr, "check Run job as an LDAP user on the login node", logger)
 
 	// Verify LSF commands on login node as LDAP user
 	lsfCmdErr := VerifyLSFCommands(t, sshLdapClient, ldapUserName, logger)
@@ -425,11 +425,11 @@ func VerifyComputeNodeLDAPConfig(
 
 	// Verify LDAP configuration
 	ldapErr := VerifyLDAPConfig(t, sshLdapClient, "compute", ldapServerIP, ldapDomainName, ldapUserName, logger)
-	utils.LogVerificationResult(t, ldapErr, "ldap configuration check", logger)
+	utils.LogVerificationResult(t, ldapErr, "ldap configuration check on the compute node", logger)
 
 	// Check file mount
 	fileMountErr := HPCCheckFileMountAsLDAPUser(t, sshLdapClient, "compute", logger)
-	utils.LogVerificationResult(t, fileMountErr, "check file mount on the compute node", logger)
+	utils.LogVerificationResult(t, fileMountErr, "check file mount as an LDAP user on the compute node", logger)
 
 	// Verify LSF commands
 	lsfCmdErr := VerifyLSFCommands(t, sshLdapClient, ldapUserName, logger)

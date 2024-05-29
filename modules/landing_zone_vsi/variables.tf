@@ -390,3 +390,13 @@ variable "cloud_monitoring_prws_url" {
   description = "IBM Cloud Monitoring Prometheus Remote Write ingestion url"
   type        = string
 }
+
+###########################################################################
+# Existing Bastion Support variables
+###########################################################################
+
+variable "bastion_instance_name" {
+  type        = string
+  default     = null
+  description = "Bastion instance name."
+}

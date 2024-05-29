@@ -22,7 +22,7 @@ func TestRunCustomRGAsNull(t *testing.T) {
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// HPC cluster prefix
-	hpcClusterPrefix := "cicd-hpc-custom-rg"
+	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
 
 	// Create test options
 	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, LSF_CUSTOM_RESOURCE_GROUP_VALUE_AS_NULL, ignoreDestroys)
@@ -46,7 +46,7 @@ func TestRunCustomRGAsNonDefault(t *testing.T) {
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// HPC cluster prefix
-	hpcClusterPrefix := "cicd-hpc-nondefault-rg"
+	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
@@ -71,7 +71,7 @@ func TestRunAppCenter(t *testing.T) {
 	setupTestSuite(t)
 
 	// HPC cluster prefix
-	hpcClusterPrefix := "cicd-hpc-appcen"
+	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
 
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
@@ -103,7 +103,7 @@ func TestRunDefault(t *testing.T) {
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// HPC cluster prefix
-	hpcClusterPrefix := "cicd-hpc-default"
+	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
@@ -132,24 +132,25 @@ func TestRunInUsEastRegion(t *testing.T) {
 
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// Define the HPC cluster prefix
-	hpcClusterPrefix := "cicd-hpc-us-east"
+	// HPC cluster prefix
+	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
 
-	// Create test options, set up test environment
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
-	require.NoError(t, err, "Error setting up test options: %v", err)
-
+	// Extract US East zone, cluster ID, and reservation ID
 	usEastZone := utils.SplitAndTrim(envVars.USEastZone, ",")
 	usEastClusterID := envVars.USEastClusterID
 	usEastReservationID := envVars.USEastReservationID
 
-	// Ensure Reservation ID contains 'WES' and cluster ID and zone are provided
+	// Ensure Reservation , cluster ID and zone are provided
 	if len(usEastClusterID) == 0 || len(usEastZone) == 0 || len(usEastReservationID) == 0 {
-		require.FailNow(t, "Reservation ID must contain 'WES', and both cluster ID and zone must be provided.")
+		require.FailNow(t, "Reservation ID ,cluster ID and zone must be provided.")
 	}
+
+	// Create test options, set up test environment
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Set Terraform variables
 	options.TerraformVars["zones"] = usEastZone
@@ -173,24 +174,25 @@ func TestRunInEuGbRegion(t *testing.T) {
 
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// Define the HPC cluster prefix
-	hpcClusterPrefix := "cicd-hpc-eu-gb"
+	// HPC cluster prefix
+	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
 
-	// Create test options, set up test environment
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
-	require.NoError(t, err, "Error setting up test options: %v", err)
-
+	// Extract EU GB zone, cluster ID, and reservation ID
 	euGbZone := utils.SplitAndTrim(envVars.EUGBZone, ",")
 	euGbClusterID := envVars.EUGBClusterID
 	euGbReservationID := envVars.EUGBReservationID
 
-	// Ensure Reservation ID contains 'FRA' and cluster ID and zone are provided
+	// Ensure Reservation ID ,cluster ID and zone are provided
 	if len(euGbClusterID) == 0 || len(euGbZone) == 0 || len(euGbReservationID) == 0 {
-		require.FailNow(t, "Reservation ID must contain 'FRA', and both cluster ID and zone must be provided.")
+		require.FailNow(t, "Reservation ID, cluster ID and zone must be provided.")
 	}
+
+	// Create test options, set up test environment
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Set Terraform variables
 	options.TerraformVars["zones"] = euGbZone
@@ -214,24 +216,25 @@ func TestRunInUSSouthRegion(t *testing.T) {
 
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// Define the HPC cluster prefix
-	hpcClusterPrefix := "cicd-hpc-us-south"
+	// HPC cluster prefix
+	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
 
-	// Create test options, set up test environment
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
-	require.NoError(t, err, "Error setting up test options: %v", err)
-
+	// Extract US South zone, cluster ID, and reservation ID
 	usSouthZone := utils.SplitAndTrim(envVars.USSouthZone, ",")
 	usSouthClusterID := envVars.USSouthClusterID
 	usSouthReservationID := envVars.USSouthReservationID
 
-	// Ensure Reservation ID contains 'DAL' and cluster ID and zone are provided
+	// Ensure cluster ID ,Reservation ID and zone are provided
 	if len(usSouthClusterID) == 0 || len(usSouthZone) == 0 || len(usSouthReservationID) == 0 {
-		require.FailNow(t, "Reservation ID must contain 'DAL', and cluster ID and zone must be provided.")
+		require.FailNow(t, "Reservation ID ,cluster ID and zone must be provided.")
 	}
+
+	// Create test options, set up test environment
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Set Terraform variables
 	options.TerraformVars["zones"] = usSouthZone
@@ -255,8 +258,8 @@ func TestRunLDAP(t *testing.T) {
 
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// Define the HPC cluster prefix
-	hpcClusterPrefix := "cicd-hpc-ldap"
+	// HPC cluster prefix
+	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
@@ -290,7 +293,6 @@ func TestRunLDAP(t *testing.T) {
 
 // TestRunUsingExistingKMS validates cluster creation using an existing KMS.
 func TestRunUsingExistingKMS(t *testing.T) {
-
 	// Parallelize the test to run concurrently with others
 	t.Parallel()
 
@@ -299,32 +301,37 @@ func TestRunUsingExistingKMS(t *testing.T) {
 
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// Define the HPC cluster prefix
-	hpcClusterPrefix := "cicd-hpc-exist-kms"
+	// Service instance name
+	randomString := utils.GenerateRandomString()
+	kmsInstanceName := "cicd-" + randomString
+
+	// HPC cluster prefix
+	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
 
-	err := lsf.CreateServiceInstanceandKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, lsf.KMS_KEY_INSTANCE_NAME, lsf.KMS_KEY_NAME, testLogger)
-	if err != nil {
-		require.FailNow(t, "Service instance and KMS key creation failed")
-	}
+	err := lsf.CreateServiceInstanceandKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
+	require.NoError(t, err, "Service instance and KMS key creation failed")
+
+	defer lsf.DeleteServiceInstanceAndAssociatedKeys(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, kmsInstanceName, testLogger)
+
+	testLogger.Info(t, "Service instance and KMS key created successfully "+t.Name())
+
 	// Create test options, set up test environment
 	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Set Terraform variables
 	options.TerraformVars["key_management"] = "key_protect"
-	options.TerraformVars["kms_instance_name"] = lsf.KMS_KEY_INSTANCE_NAME
+	options.TerraformVars["kms_instance_name"] = kmsInstanceName
 	options.TerraformVars["kms_key_name"] = lsf.KMS_KEY_NAME
 
-	defer lsf.DeleteServiceInstanceAndAssociatedKeys(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, lsf.KMS_KEY_INSTANCE_NAME, testLogger)
 	// Skip test teardown for further inspection
 	options.SkipTestTearDown = true
 	defer options.TestTearDown()
 
 	lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
-
 }
 
 // TestRunLDAPAndPac validates cluster creation with both Application Center (PAC) and LDAP enabled.
@@ -337,8 +344,8 @@ func TestRunLDAPAndPac(t *testing.T) {
 
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// Define the HPC cluster prefix
-	hpcClusterPrefix := "cicd-hpc-pac-ldap"
+	// HPC cluster prefix
+	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()

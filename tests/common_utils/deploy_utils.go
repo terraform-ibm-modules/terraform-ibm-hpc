@@ -8,7 +8,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var ip string
+var (
+	ip                 string
+	reservationIDSouth string
+	reservationIDEast  string
+)
 
 // Config represents the structure of the configuration file.
 type Config struct {
@@ -67,11 +71,15 @@ func GetConfigFromYAML(filePath string) (Config, error) {
 		return config, fmt.Errorf("failed to decode YAML: %v", err)
 	}
 
-	ip, err := GetPublicIP()
+	ip, err = GetPublicIP()
 	if err != nil {
 		return config, fmt.Errorf("failed to get remote allowed IPs: %v", err)
 	}
 	config.RemoteAllowedIPs = ip
+
+	//Retrieve reservation ID from Secret Manager
+	reservationIDSouth = *GetSecretsManagerKey(PRIVATE_KEY_SM_ID, PRIVATE_KEY_SM_REGION, PRIVATE_KEY_SECRET_SOUTH)
+	reservationIDEast = *GetSecretsManagerKey(PRIVATE_KEY_SM_ID, PRIVATE_KEY_SM_REGION, PRIVATE_KEY_SECRET_EAST)
 
 	if err := setEnvFromConfig(&config); err != nil {
 		return config, fmt.Errorf("failed to set environment variables: %v", err)
@@ -125,7 +133,7 @@ func setEnvFromConfig(config *Config) error {
 	for key, value := range envVars {
 		val, ok := os.LookupEnv(key)
 		switch {
-		case strings.Contains(key, "KEY_MANAGEMENT") && (val == "null" && ok):
+		case strings.Contains(key, "KEY_MANAGEMENT") && val == "null" && ok:
 			os.Setenv(key, "null")
 		case strings.Contains(key, "REMOTE_ALLOWED_IPS") && !ok && value == "":
 			os.Setenv(key, ip)
@@ -143,5 +151,18 @@ func setEnvFromConfig(config *Config) error {
 		}
 	}
 
+	for key, value := range envVars {
+		_, ok := os.LookupEnv(key)
+		switch {
+		case key == "RESERVATION_ID" && !ok && value == "":
+			os.Setenv("RESERVATION_ID", GetValueForKey(map[string]string{"us-south": reservationIDSouth, "us-east": reservationIDEast}, strings.ToLower(GetRegion(os.Getenv("ZONE")))))
+		case key == "US_EAST_RESERVATION_ID" && !ok && value == "":
+			os.Setenv("US_EAST_RESERVATION_ID", reservationIDEast)
+		case key == "EU_GB_RESERVATION_ID" && !ok && value == "":
+			os.Setenv("EU_GB_RESERVATION_ID", reservationIDEast)
+		case key == "US_SOUTH_RESERVATION_ID" && !ok && value == "":
+			os.Setenv("US_SOUTH_RESERVATION_ID", reservationIDSouth)
+		}
+	}
 	return nil
 }

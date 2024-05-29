@@ -1,0 +1,8 @@
+package tests
+
+const (
+	PRIVATE_KEY_SM_ID        = "103a2267-c682-42e5-9393-4ed8f8e738c2"
+	PRIVATE_KEY_SM_REGION    = "us-south"
+	PRIVATE_KEY_SECRET_SOUTH = "60296a5c-8f7f-d645-029b-1bc12b750cfc"
+	PRIVATE_KEY_SECRET_EAST  = "1d8cbd2f-ca23-352a-2bc0-2f7ffc8b44d9"
+)

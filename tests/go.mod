@@ -21,9 +21,11 @@ require (
 	github.com/IBM-Cloud/bluemix-go v0.0.0-20240423071914-9e96525baef4 // indirect
 	github.com/IBM-Cloud/power-go-client v1.6.0 // indirect
 	github.com/IBM/cloud-databases-go-sdk v0.7.0 // indirect
+	github.com/IBM/go-sdk-core v1.1.0 // indirect
 	github.com/IBM/go-sdk-core/v5 v5.17.1 // indirect
 	github.com/IBM/platform-services-go-sdk v0.62.11 // indirect
 	github.com/IBM/project-go-sdk v0.3.0 // indirect
+	github.com/IBM/secrets-manager-go-sdk v1.2.0 // indirect
 	github.com/IBM/vpc-go-sdk v0.50.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.0.0 // indirect
@@ -35,6 +37,7 @@ require (
 	github.com/cloudflare/circl v1.3.8 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
@@ -117,6 +120,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240506185236-b8a5c65736ae // indirect
 	google.golang.org/grpc v1.63.2 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
+	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 

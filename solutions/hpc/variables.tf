@@ -256,7 +256,7 @@ variable "dns_instance_id" {
   description = "Provide the id of existing IBM Cloud DNS services domain to skip creating a new DNS service instance name. Note: If dns_instance_id is not equal to null, a new dns zone will be created under the existing dns service instance."
 }
 
-variable "dns_domain_names" {
+variable "dns_domain_name" {
   type = object({
     compute = string
     #storage  = string
@@ -267,7 +267,7 @@ variable "dns_domain_names" {
   }
   description = "IBM Cloud DNS Services domain name to be used for the IBM Cloud HPC cluster."
   validation {
-    condition = can(regex("^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])\\.com$", var.dns_domain_names.compute))
+    condition = can(regex("^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])\\.com$", var.dns_domain_name.compute))
     #condition = can(regex("^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\\.)+[a-zA-Z]{2,6}$", var.dns_domain_names.compute))
     #condition = can(regex("^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.[a-zA-Z]{2,6}$", var.dns_domain_names.compute))
     #condition     = can(regex("^([[:alnum:]]*[A-Za-z0-9-]{1,63}\\.)+[A-Za-z]{2,6}$", var.dns_domain_names.compute))
@@ -451,22 +451,6 @@ variable "enable_fip" {
   description = "The solution supports multiple ways to connect to your IBM Cloud HPC cluster for example, using a login node, or using VPN or direct connection. If connecting to the IBM Cloud HPC cluster using VPN or direct connection, set this value to false."
 }
 
-###########################################################################
-# List of script filenames used by validation test suites.
-# If provided, these scripts will be executed as part of validation test suites execution.
-###########################################################################
-
-# tflint-ignore: terraform_naming_convention
-variable "TF_VALIDATION_SCRIPT_FILES" {
-  type        = list(string)
-  default     = []
-  description = "List of script file names used by validation test suites. If provided, these scripts will be executed as part of validation test suites execution."
-  validation {
-    condition     = alltrue([for filename in var.TF_VALIDATION_SCRIPT_FILES : can(regex(".*\\.sh$", filename))])
-    error_message = "All validation script file names must end with .sh."
-  }
-}
-
 ##############################################################################
 # ldap Variables
 ##############################################################################
@@ -557,6 +541,16 @@ variable "TF_PARALLELISM" {
   }
 }
 
+# tflint-ignore: terraform_naming_convention
+variable "TF_VALIDATION_SCRIPT_FILES" {
+  type        = list(string)
+  default     = []
+  description = "List of script file names used by validation test suites. If provided, these scripts will be executed as part of validation test suites execution."
+  validation {
+    condition     = alltrue([for filename in var.TF_VALIDATION_SCRIPT_FILES : can(regex(".*\\.sh$", filename))])
+    error_message = "All validation script file names must end with .sh."
+  }
+}
 ###########################################################################
 # Existing Bastion Support variables
 ###########################################################################

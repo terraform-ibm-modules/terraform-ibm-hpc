@@ -35,12 +35,12 @@ output "application_center_tunnel" {
 
 output "application_center_url" {
   description = "Available if IBM Spectrum LSF Application Center GUI is installed"
-  value       = var.enable_app_center ? var.app_center_high_availability ? "https://pac.${var.dns_domain_names.compute}:8443" : "https://localhost:8443" : null
+  value       = var.enable_app_center ? var.app_center_high_availability ? "https://pac.${var.dns_domain_name.compute}:8443" : "https://localhost:8443" : null
 }
 
 output "application_center_url_note" {
   description = "Available if IBM Spectrum LSF Application Center GUI is installed in High Availability"
-  value       = var.enable_app_center && var.app_center_high_availability ? "you may need '127.0.0.1 pac pac.${var.dns_domain_names.compute}' in your /etc/hosts, to let your browser use the ssh tunnel" : null
+  value       = var.enable_app_center && var.app_center_high_availability ? "you may need '127.0.0.1 pac pac.${var.dns_domain_name.compute}' in your /etc/hosts, to let your browser use the ssh tunnel" : null
 }
 
 output "remote_allowed_cidr" {

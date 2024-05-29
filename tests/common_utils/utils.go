@@ -15,6 +15,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/IBM/go-sdk-core/core"
+	"github.com/IBM/secrets-manager-go-sdk/secretsmanagerv2"
+	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
 	"golang.org/x/crypto/ssh"
@@ -22,7 +25,7 @@ import (
 
 const (
 	// TimeLayout is the layout string for date and time format (DDMonHHMMSS).
-	TimeLayout = "02Jan150405"
+	TimeLayout = "02Jan"
 )
 
 // GetValueFromIniFile retrieves a value from an INI file based on the provided section and key.
@@ -593,9 +596,10 @@ func GetServerIPsWithLDAP(t *testing.T, options *testhelper.TestOptions, logger 
 
 // GenerateTimestampedClusterPrefix generates a cluster prefix by appending a timestamp to the given prefix.
 func GenerateTimestampedClusterPrefix(prefix string) string {
-	// Place current time in the string.
+	//Place current time in the string.
 	t := time.Now()
 	return strings.ToLower(prefix + "-" + t.Format(TimeLayout))
+
 }
 
 // GetPublicIP returns the public IP address using ifconfig.io API
@@ -614,4 +618,46 @@ func GetOrDefault(envVar, defaultValue string) string {
 		return envVar
 	}
 	return defaultValue
+}
+
+func GenerateRandomString() string {
+	// Generate a unique identifier
+	uniqueID := random.UniqueId()
+
+	// Convert the unique identifier to lowercase
+	lowerUniqueID := strings.ToLower(uniqueID)
+
+	// Get the last four characters of the lowercase unique identifier
+	if len(lowerUniqueID) > 4 {
+		return lowerUniqueID[len(lowerUniqueID)-4:]
+	}
+	// If the uniqueID is shorter than 4 characters, return the whole string
+	return lowerUniqueID
+}
+
+func GetSecretsManagerKey(sm_id string, sm_region string, sm_key_id string) *string {
+	secretsManagerService, err := secretsmanagerv2.NewSecretsManagerV2(&secretsmanagerv2.SecretsManagerV2Options{
+		URL: fmt.Sprintf("https://%s.%s.secrets-manager.appdomain.cloud", sm_id, sm_region),
+		Authenticator: &core.IamAuthenticator{
+			ApiKey: os.Getenv("TF_VAR_ibmcloud_api_key"),
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	getSecretOptions := secretsManagerService.NewGetSecretOptions(
+		sm_key_id,
+	)
+
+	secret, _, err := secretsManagerService.GetSecret(getSecretOptions)
+	if err != nil {
+		panic(err)
+	}
+	return secret.(*secretsmanagerv2.ArbitrarySecret).Payload
+}
+
+// GetValueForKey retrieves the value associated with the specified key from the given map.
+func GetValueForKey(inputMap map[string]string, key string) string {
+	return inputMap[key]
 }
