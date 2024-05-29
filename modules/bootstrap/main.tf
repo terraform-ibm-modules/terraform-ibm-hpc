@@ -7,7 +7,7 @@ module "ssh_key" {
 module "bastion_sg" {
   count                        = 1
   source                       = "terraform-ibm-modules/security-group/ibm"
-  version                      = "2.6.0"
+  version                      = "2.6.1"
   add_ibm_cloud_internal_rules = true
   resource_group               = var.resource_group
   security_group_name          = format("%s-bastion-sg", local.prefix)
@@ -19,7 +19,7 @@ module "bastion_sg" {
 module "bastion_sg_with_ldap_update" {
   count                          = var.ldap_server == "null" ? 0 : 1
   source                         = "terraform-ibm-modules/security-group/ibm"
-  version                        = "2.6.0"
+  version                        = "2.6.1"
   resource_group                 = var.resource_group
   add_ibm_cloud_internal_rules   = true
   use_existing_security_group_id = true
@@ -32,7 +32,7 @@ module "bastion_sg_with_ldap_update" {
 module "existing_bastion_sg_update" {
   count                          = var.bastion_security_group_id != null ? 1 : 0
   source                         = "terraform-ibm-modules/security-group/ibm"
-  version                        = "2.6.0"
+  version                        = "2.6.1"
   resource_group                 = var.resource_group
   add_ibm_cloud_internal_rules   = true
   use_existing_security_group_id = true

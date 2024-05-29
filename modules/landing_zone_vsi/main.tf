@@ -7,7 +7,7 @@ module "compute_key" {
 module "compute_sg" {
   count                        = local.enable_compute ? 1 : 0
   source                       = "terraform-ibm-modules/security-group/ibm"
-  version                      = "2.6.0"
+  version                      = "2.6.1"
   add_ibm_cloud_internal_rules = true
   resource_group               = var.resource_group
   security_group_name          = format("%s-cluster-sg", local.prefix)
@@ -19,7 +19,7 @@ module "compute_sg" {
 module "compute_sg_with_ldap_connection" {
   count                          = var.ldap_server == "null" ? 0 : 1
   source                         = "terraform-ibm-modules/security-group/ibm"
-  version                        = "2.6.0"
+  version                        = "2.6.1"
   resource_group                 = var.resource_group
   add_ibm_cloud_internal_rules   = true
   use_existing_security_group_id = true
@@ -32,7 +32,7 @@ module "compute_sg_with_ldap_connection" {
 module "ssh_connection_to_login_node_via_cluster_nodes" {
   count                          = var.bastion_instance_name != null ? 1 : 0
   source                         = "terraform-ibm-modules/security-group/ibm"
-  version                        = "2.6.0"
+  version                        = "2.6.1"
   resource_group                 = var.resource_group
   add_ibm_cloud_internal_rules   = true
   use_existing_security_group_id = true
@@ -45,7 +45,7 @@ module "ssh_connection_to_login_node_via_cluster_nodes" {
 module "nfs_storage_sg" {
   count                          = var.storage_security_group_id != null ? 1 : 0
   source                         = "terraform-ibm-modules/security-group/ibm"
-  version                        = "2.6.0"
+  version                        = "2.6.1"
   resource_group                 = var.resource_group
   add_ibm_cloud_internal_rules   = true
   use_existing_security_group_id = true
