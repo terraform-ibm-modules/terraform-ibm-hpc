@@ -8,11 +8,12 @@
   "description": "",
   "tags": [],
   "template_repo": {
-    "url": "https://github.com/terraform-ibm-modules/terraform-ibm-hpc/tree/hpcaas"
+    "url": "https://github.com/terraform-ibm-modules/terraform-ibm-hpc",
+    "branch": "main"
   },
   "template_data": [
     {
-      "folder": ".",
+      "folder": "solutions/hpc",
       "type": "terraform_v1.5",
       "env_values":[
         {
@@ -145,7 +146,7 @@
           "description": "The CIDR block that's required for the creation of the login cluster private subnet. Modify the CIDR block if it conflicts with any on-premises CIDR blocks when using a hybrid environment. Provide only one CIDR block for the creation of the login subnet. Since login subnet is used only for the creation of login virtual server instances,  provide a CIDR range of /28."
         },
         {
-          "name": "dns_domain_names",
+          "name": "dns_domain_name",
           "value": "{compute= \"hpcaas.com\"}",
           "type": "object({compute = string})",
           "secure": false,
@@ -238,7 +239,7 @@
         },
         {
           "name": "custom_file_shares",
-          "value": "[{mount_path = \"/mnt/binaries\", size = 100, iops = 2000 }, { mount_path = \"/mnt/data\", size = 100, iops = 6000 }, { mount_path = \"/mnt/scale/tools\", nfs_share = \"\" } ]",
+          "value": "[{mount_path = \"/mnt/vpcstorage/tools\", size = 100, iops = 2000 }, { mount_path = \"/mnt/vpcstorage/data\", size = 100, iops = 6000 }, { mount_path = \"/mnt/scale/tools\", nfs_share = \"\" } ]",
           "type": "list(object({mount_path = string,size = optional(number),iops = optional(number),nfs_share = optional(string)}))",
           "secure": false,
           "description": "Mount points and sizes in GB and IOPS range of file shares that can be used to customize shared file storage layout. Provide the details for up to 5 shares. Each file share size in GB supports different range of IOPS. For more information, see [file share IOPS value](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=ui)"
@@ -323,13 +324,6 @@
           "type": "bool",
           "secure": false,
           "description": "Enable Activity tracker service instance connected to Cloud Object Storage (COS). All the events will be stored into COS so that customers can connect to it and read those events or ingest them in their system."
-        },
-        {
-          "name": "TF_VALIDATION_SCRIPT_FILES",
-          "value": "[]",
-          "type": "list(string)",
-          "secure": false,
-          "description": "List of script file names used by validation test suites. If provided, these scripts will be executed as part of validation test suites execution."
         },
         {
           "name": "enable_ldap",

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
+
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/common_utils"
 )
 
@@ -28,8 +29,8 @@ func ValidateClusterConfiguration(t *testing.T, options *testhelper.TestOptions,
 	expectedResourceGroup := options.TerraformVars["resource_group"].(string)
 	expectedKeyManagement := options.TerraformVars["key_management"].(string)
 	expectedZone := options.TerraformVars["zones"].([]string)[0]
-	expectedDnsDomainName, ok := options.TerraformVars["dns_domain_names"].(map[string]string)["compute"]
-	assert.False(t, !ok, "Key 'compute' does not exist in dns_domain_names map or dns_domain_names is not of type map[string]string")
+	expectedDnsDomainName, ok := options.TerraformVars["dns_domain_name"].(map[string]string)["compute"]
+	assert.False(t, !ok, "Key 'compute' does not exist in dns_domain_name map or dns_domain_name is not of type map[string]string")
 
 	expectedHyperthreadingEnabled, _ := strconv.ParseBool(options.TerraformVars["hyperthreading_enabled"].(string))
 	JOB_COMMAND_LOW := GetJobCommand(expectedZone, "low")
@@ -132,8 +133,8 @@ func ValidateClusterConfigurationWithAPPCenter(t *testing.T, options *testhelper
 	expectedResourceGroup := options.TerraformVars["resource_group"].(string)
 	expectedKeyManagement := options.TerraformVars["key_management"].(string)
 	expectedZone := options.TerraformVars["zones"].([]string)[0]
-	expectedDnsDomainName, ok := options.TerraformVars["dns_domain_names"].(map[string]string)["compute"]
-	assert.False(t, !ok, "Key 'compute' does not exist in dns_domain_names map or dns_domain_names is not of type map[string]string")
+	expectedDnsDomainName, ok := options.TerraformVars["dns_domain_name"].(map[string]string)["compute"]
+	assert.False(t, !ok, "Key 'compute' does not exist in dns_domain_name map or dns_domain_name is not of type map[string]string")
 	expectedHyperthreadingEnabled, _ := strconv.ParseBool(options.TerraformVars["hyperthreading_enabled"].(string))
 	JOB_COMMAND_LOW := GetJobCommand(expectedZone, "low")
 	JOB_COMMAND_MED := GetJobCommand(expectedZone, "med")
@@ -315,8 +316,8 @@ func ValidateLDAPClusterConfiguration(t *testing.T, options *testhelper.TestOpti
 	expectedLdapAdminPassword := options.TerraformVars["ldap_admin_password"].(string)
 	expectedLdapUserName := options.TerraformVars["ldap_user_name"].(string)
 	expectedLdapUserPassword := options.TerraformVars["ldap_user_password"].(string)
-	expectedDnsDomainName, ok := options.TerraformVars["dns_domain_names"].(map[string]string)["compute"]
-	assert.False(t, !ok, "Key 'compute' does not exist in dns_domain_names map or dns_domain_names is not of type map[string]string")
+	expectedDnsDomainName, ok := options.TerraformVars["dns_domain_name"].(map[string]string)["compute"]
+	assert.False(t, !ok, "Key 'compute' does not exist in dns_domain_name map or dns_domain_name is not of type map[string]string")
 
 	expectedZone := options.TerraformVars["zones"].([]string)[0]
 
@@ -438,8 +439,8 @@ func ValidatePACANDLDAPClusterConfiguration(t *testing.T, options *testhelper.Te
 	expectedLdapAdminPassword := options.TerraformVars["ldap_admin_password"].(string)
 	expectedLdapUserName := options.TerraformVars["ldap_user_name"].(string)
 	expectedLdapUserPassword := options.TerraformVars["ldap_user_password"].(string)
-	expectedDnsDomainName, ok := options.TerraformVars["dns_domain_names"].(map[string]string)["compute"]
-	assert.False(t, !ok, "Key 'compute' does not exist in dns_domain_names map or dns_domain_names is not of type map[string]string")
+	expectedDnsDomainName, ok := options.TerraformVars["dns_domain_name"].(map[string]string)["compute"]
+	assert.False(t, !ok, "Key 'compute' does not exist in dns_domain_name map or dns_domain_name is not of type map[string]string")
 
 	expectedZone := options.TerraformVars["zones"].([]string)[0]
 

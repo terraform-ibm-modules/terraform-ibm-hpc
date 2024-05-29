@@ -20,6 +20,7 @@
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_alb"></a> [alb](#module\_alb) | ./../../modules/alb | n/a |
+| <a name="module_alb_api"></a> [alb\_api](#module\_alb\_api) | ./../../modules/alb_api | n/a |
 | <a name="module_bastion_inventory"></a> [bastion\_inventory](#module\_bastion\_inventory) | ./../../modules/inventory | n/a |
 | <a name="module_bootstrap"></a> [bootstrap](#module\_bootstrap) | ./../../modules/bootstrap | n/a |
 | <a name="module_check_cluster_status"></a> [check\_cluster\_status](#module\_check\_cluster\_status) | ./../../modules/null/remote_exec | n/a |
@@ -141,7 +142,16 @@
 | <a name="output_application_center_url"></a> [application\_center\_url](#output\_application\_center\_url) | Available if IBM Spectrum LSF Application Center GUI is installed |
 | <a name="output_application_center_url_note"></a> [application\_center\_url\_note](#output\_application\_center\_url\_note) | Available if IBM Spectrum LSF Application Center GUI is installed in High Availability |
 | <a name="output_image_entry_found"></a> [image\_entry\_found](#output\_image\_entry\_found) | Available if the image name provided is located within the image map |
+| <a name="output_ldap_hostnames"></a> [ldap\_hostnames](#output\_ldap\_hostnames) | LDAP nodes have these hostnames: |
+| <a name="output_ldap_ips"></a> [ldap\_ips](#output\_ldap\_ips) | LDAP nodes have these IPs: |
+| <a name="output_login_hostnames"></a> [login\_hostnames](#output\_login\_hostnames) | Login nodes have these hostnames: |
+| <a name="output_login_ips"></a> [login\_ips](#output\_login\_ips) | Login nodes have these IPs: |
+| <a name="output_management_candidate_hostnames"></a> [management\_candidate\_hostnames](#output\_management\_candidate\_hostnames) | Management candidate nodes have these hostnames: |
+| <a name="output_management_candidate_ips"></a> [management\_candidate\_ips](#output\_management\_candidate\_ips) | Management candidate nodes have these IPs: |
+| <a name="output_management_hostname"></a> [management\_hostname](#output\_management\_hostname) | Management node has this hostname: |
+| <a name="output_management_ip"></a> [management\_ip](#output\_management\_ip) | Management node has this IP: |
 | <a name="output_region_name"></a> [region\_name](#output\_region\_name) | The region name in which the cluster resources have been deployed |
+| <a name="output_remote_allowed_cidr"></a> [remote\_allowed\_cidr](#output\_remote\_allowed\_cidr) | The following IPs/networks are allow-listed for incoming connections |
 | <a name="output_ssh_to_ldap_node"></a> [ssh\_to\_ldap\_node](#output\_ssh\_to\_ldap\_node) | SSH command to connect to LDAP node |
 | <a name="output_ssh_to_login_node"></a> [ssh\_to\_login\_node](#output\_ssh\_to\_login\_node) | SSH command to connect to Login node |
 | <a name="output_ssh_to_management_node_1"></a> [ssh\_to\_management\_node\_1](#output\_ssh\_to\_management\_node\_1) | SSH command to connect to HPC cluster |

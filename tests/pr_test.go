@@ -12,14 +12,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
+
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/common_utils"
-	lsf "github.com/terraform-ibm-modules/terraform-ibm-hpc/lsf"
 )
 
 // Constants for better organization
 const (
-	terraformDir = "solutions/hpc" // Path of the Terraform directory
-
+	// Path of the Terraform directory
+	terraformDir = "solutions/hpc"
 )
 
 // Terraform resource names to ignore during consistency checks
@@ -56,7 +56,7 @@ type EnvVars struct {
 	KMSInstanceName            string
 	KMSKeyName                 string
 	HyperthreadingEnabled      string
-	DnsDomainNames             string
+	DnsDomainName              string
 	EnableAppCenter            string
 	AppCenterGuiPassword       string
 	EnableLdap                 string
@@ -68,9 +68,9 @@ type EnvVars struct {
 	USEastZone                 string
 	USEastReservationID        string
 	USEastClusterID            string
-	EUGBZone                   string
-	EUGBReservationID          string
-	EUGBClusterID              string
+	EUDEZone                   string
+	EUDEReservationID          string
+	EUDEClusterID              string
 	SSHFilePath                string
 	USSouthZone                string
 	USSouthReservationID       string
@@ -97,7 +97,7 @@ func GetEnvVars() EnvVars {
 		KMSInstanceName:            os.Getenv("KMS_INSTANCE_NAME"),
 		KMSKeyName:                 os.Getenv("KMS_KEY_NAME"),
 		HyperthreadingEnabled:      os.Getenv("HYPERTHREADING_ENABLED"),
-		DnsDomainNames:             os.Getenv("DNS_DOMAIN_NAMES"),
+		DnsDomainName:              os.Getenv("DNS_DOMAIN_NAME"),
 		EnableAppCenter:            os.Getenv("ENABLE_APP_CENTER"),
 		AppCenterGuiPassword:       os.Getenv("APP_CENTER_GUI_PASSWORD"),
 		EnableLdap:                 os.Getenv("ENABLE_LDAP"),
@@ -109,9 +109,9 @@ func GetEnvVars() EnvVars {
 		USEastZone:                 os.Getenv("US_EAST_ZONE"),
 		USEastReservationID:        os.Getenv("US_EAST_RESERVATION_ID"),
 		USEastClusterID:            os.Getenv("US_EAST_CLUSTER_ID"),
-		EUGBZone:                   os.Getenv("EU_GB_ZONE"),
-		EUGBReservationID:          os.Getenv("EU_GB_RESERVATION_ID"),
-		EUGBClusterID:              os.Getenv("EU_GB_CLUSTER_ID"),
+		EUDEZone:                   os.Getenv("EU_DE_ZONE"),
+		EUDEReservationID:          os.Getenv("EU_DE_RESERVATION_ID"),
+		EUDEClusterID:              os.Getenv("EU_DE_CLUSTER_ID"),
 		USSouthZone:                os.Getenv("US_SOUTH_ZONE"),
 		USSouthReservationID:       os.Getenv("US_SOUTH_RESERVATION_ID"),
 		USSouthClusterID:           os.Getenv("US_SOUTH_CLUSTER_ID"),
@@ -154,19 +154,12 @@ func setupOptions(t *testing.T, hpcClusterPrefix, terraformDir, resourceGroup st
 	envVars := GetEnvVars()
 
 	// Validate required environment variables
-	requiredVars := []string{"SSHFilePath", "SSHKey", "ClusterID", "Zone", "ReservationID"}
+	requiredVars := []string{"SSHKey", "ClusterID", "Zone", "ReservationID"}
 	for _, fieldName := range requiredVars {
 		// Check if the field value is empty
 		if fieldValue := reflect.ValueOf(envVars).FieldByName(fieldName).String(); fieldValue == "" {
 			return nil, fmt.Errorf("missing required environment variable: %s", fieldName)
 		}
-	}
-
-	// Check if the SSH private key file exists
-	if _, err := os.Stat(envVars.SSHFilePath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("SSH private key file '%s' does not exist", envVars.SSHFilePath)
-	} else if err != nil {
-		return nil, fmt.Errorf("error checking SSH private key file: %v", err)
 	}
 
 	// Generate timestamped cluster prefix
@@ -196,7 +189,7 @@ func setupOptions(t *testing.T, hpcClusterPrefix, terraformDir, resourceGroup st
 			"hyperthreading_enabled":               strings.ToLower(envVars.HyperthreadingEnabled),
 			"app_center_high_availability":         false,
 			"observability_atracker_on_cos_enable": false,
-			"dns_domain_names":                     map[string]string{"compute": envVars.DnsDomainNames},
+			"dns_domain_name":                      map[string]string{"compute": envVars.DnsDomainName},
 		},
 	}
 
@@ -222,12 +215,13 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("error reading configuration from yaml: %v", err)
 	}
+
 	os.Exit(m.Run())
 
 }
 
-// TestRunBasic validates the cluster configuration and creation of an HPC cluster.
-func TestRunBasic(t *testing.T) {
+// TestRunDefault create basic cluster of an HPC cluster.
+func TestRunDefault(t *testing.T) {
 
 	// Parallelize the test
 	t.Parallel()
@@ -238,7 +232,7 @@ func TestRunBasic(t *testing.T) {
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// HPC cluster prefix
-	hpcClusterPrefix := "cicd-hpc-basic"
+	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
@@ -246,9 +240,10 @@ func TestRunBasic(t *testing.T) {
 	// Create test options
 	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
 	require.NoError(t, err, "Error setting up test options: %v", err)
-	options.SkipTestTearDown = true
-	defer options.TestTearDown()
 
-	lsf.ValidateClusterConfiguration(t, options, testLogger)
+	// Run the test and handle errors
+	output, err := options.RunTestConsistency()
+	require.NoError(t, err, "Error running consistency test: %v", err)
+	require.NotNil(t, output, "Expected non-nil output, but got nil")
 
 }

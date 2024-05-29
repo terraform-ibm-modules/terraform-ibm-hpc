@@ -81,7 +81,7 @@ variable "reservation_id" {
 variable "vpc_name" {
   type        = string
   description = "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
-  default     = "null"
+  default     = null
 }
 
 variable "cluster_subnet_ids" {
@@ -96,7 +96,7 @@ variable "cluster_subnet_ids" {
 
 variable "login_subnet_id" {
   type        = string
-  default     = "null"
+  default     = null
   description = "List of existing subnet ID under the VPC, where the login/Bastion server will be provisioned. One subnet id is required as input value for the creation of login node and bastion in the same zone as the management nodes are created. Note: Provide a different subnet id for login_subnet_id, do not overlap or provide the same subnet id that was already provided for cluster_subnet_ids."
 }
 
@@ -242,7 +242,7 @@ variable "custom_file_shares" {
 
 variable "storage_security_group_id" {
   type        = string
-  default     = "null"
+  default     = null
   description = "Provide the security group id that is created from Scale storage, if the nfs_share is not equal to null from cluster_file_share variable."
 }
 
@@ -252,11 +252,11 @@ variable "storage_security_group_id" {
 
 variable "dns_instance_id" {
   type        = string
-  default     = "null"
+  default     = null
   description = "Provide the id of existing IBM Cloud DNS services domain to skip creating a new DNS service instance name. Note: If dns_instance_id is not equal to null, a new dns zone will be created under the existing dns service instance."
 }
 
-variable "dns_domain_names" {
+variable "dns_domain_name" {
   type = object({
     compute = string
     #storage  = string
@@ -267,7 +267,7 @@ variable "dns_domain_names" {
   }
   description = "IBM Cloud DNS Services domain name to be used for the IBM Cloud HPC cluster."
   validation {
-    condition = can(regex("^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])\\.com$", var.dns_domain_names.compute))
+    condition = can(regex("^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])\\.com$", var.dns_domain_name.compute))
     #condition = can(regex("^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\\.)+[a-zA-Z]{2,6}$", var.dns_domain_names.compute))
     #condition = can(regex("^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.[a-zA-Z]{2,6}$", var.dns_domain_names.compute))
     #condition     = can(regex("^([[:alnum:]]*[A-Za-z0-9-]{1,63}\\.)+[A-Za-z]{2,6}$", var.dns_domain_names.compute))
@@ -277,7 +277,7 @@ variable "dns_domain_names" {
 
 variable "dns_custom_resolver_id" {
   type        = string
-  default     = "null"
+  default     = null
   description = "Provide the id of existing IBM Cloud DNS custom resolver to skip creating a new custom resolver. Note: A VPC can be associated only to a single custom resolver, please provide the id of custom resolver if it is already associated to the VPC."
 }
 
@@ -293,7 +293,7 @@ variable "enable_cos_integration" {
 
 variable "cos_instance_name" {
   type        = string
-  default     = "null"
+  default     = null
   description = "Provide the name of the existing cos instance to store vpc flow logs."
 }
 
@@ -353,13 +353,13 @@ variable "key_management" {
 
 variable "kms_instance_name" {
   type        = string
-  default     = "null"
+  default     = null
   description = "Name of the Key Protect instance associated with the Key Management Service. Note: kms_instance_name to be considered only if key_management value is set to key_protect. The name can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
 }
 
 variable "kms_key_name" {
   type        = string
-  default     = "null"
+  default     = null
   description = "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. Note: kms_instance_name to be considered only if key_management value is set to key_protect. (for example kms_key_name: my-encryption-key)."
 }
 
@@ -449,22 +449,6 @@ variable "enable_fip" {
   type        = bool
   default     = true
   description = "The solution supports multiple ways to connect to your IBM Cloud HPC cluster for example, using a login node, or using VPN or direct connection. If connecting to the IBM Cloud HPC cluster using VPN or direct connection, set this value to false."
-}
-
-###########################################################################
-# List of script filenames used by validation test suites.
-# If provided, these scripts will be executed as part of validation test suites execution.
-###########################################################################
-
-# tflint-ignore: terraform_naming_convention
-variable "TF_VALIDATION_SCRIPT_FILES" {
-  type        = list(string)
-  default     = []
-  description = "List of script file names used by validation test suites. If provided, these scripts will be executed as part of validation test suites execution."
-  validation {
-    condition     = alltrue([for filename in var.TF_VALIDATION_SCRIPT_FILES : can(regex(".*\\.sh$", filename))])
-    error_message = "All validation script file names must end with .sh."
-  }
 }
 
 ##############################################################################
@@ -557,31 +541,41 @@ variable "TF_PARALLELISM" {
   }
 }
 
+# tflint-ignore: terraform_naming_convention
+variable "TF_VALIDATION_SCRIPT_FILES" {
+  type        = list(string)
+  default     = []
+  description = "List of script file names used by validation test suites. If provided, these scripts will be executed as part of validation test suites execution."
+  validation {
+    condition     = alltrue([for filename in var.TF_VALIDATION_SCRIPT_FILES : can(regex(".*\\.sh$", filename))])
+    error_message = "All validation script file names must end with .sh."
+  }
+}
 ###########################################################################
 # Existing Bastion Support variables
 ###########################################################################
 
 variable "bastion_instance_name" {
   type        = string
-  default     = "null"
+  default     = null
   description = "Bastion instance name. If none given then new bastion will be created."
 }
 
 variable "bastion_instance_public_ip" {
   type        = string
-  default     = "null"
+  default     = null
   description = "Bastion instance public ip address."
 }
 
 variable "bastion_security_group_id" {
   type        = string
-  default     = "null"
+  default     = null
   description = "Bastion security group id."
 }
 
 variable "bastion_ssh_private_key" {
   type        = string
   sensitive   = true
-  default     = "null"
+  default     = null
   description = "Bastion SSH private key path, which will be used to login to bastion host."
 }

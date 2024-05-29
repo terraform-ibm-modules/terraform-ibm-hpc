@@ -3,12 +3,12 @@ data "ibm_is_region" "region" {
 }
 
 data "ibm_is_vpc" "itself" {
-  count = var.vpc_name == "null" ? 0 : 1
+  count = var.vpc_name == null ? 0 : 1
   name  = var.vpc_name
 }
 
 locals {
-  vpc_name = var.vpc_name == "null" ? one(module.landing_zone.vpc_name) : var.vpc_name
+  vpc_name = var.vpc_name == null ? one(module.landing_zone.vpc_name) : var.vpc_name
   # region_name = [for zone in var.zones : join("-", slice(split("-", zone), 0, 2))][0]
   api_endpoint_region_map = {
     "us-east"  = "https://api.us-east.codeengine.cloud.ibm.com/v2beta"
@@ -29,7 +29,7 @@ locals {
 
 data "ibm_is_vpc" "existing_vpc" {
   # Lookup for this VPC resource only if var.vpc_name is not empty
-  count = var.vpc_name != "null" ? 1 : 0
+  count = var.vpc_name != null ? 1 : 0
   name  = var.vpc_name
 }
 
@@ -46,13 +46,13 @@ data "ibm_is_vpc_address_prefixes" "existing_vpc" {
 
 data "ibm_is_subnet" "existing_subnet" {
   # Lookup for this Subnet resources only if var.cluster_subnet_ids is not empty
-  count      = (length(var.cluster_subnet_ids) == 1 && var.vpc_name != "null") ? length(var.cluster_subnet_ids) : 0
+  count      = (length(var.cluster_subnet_ids) == 1 && var.vpc_name != null) ? length(var.cluster_subnet_ids) : 0
   identifier = var.cluster_subnet_ids[count.index]
 }
 
 data "ibm_is_subnet" "existing_login_subnet" {
   # Lookup for this Subnet resources only if var.login_subnet_id is not empty
-  count      = (var.login_subnet_id != "null" && var.vpc_name != "null") ? 1 : 0
+  count      = (var.login_subnet_id != null && var.vpc_name != null) ? 1 : 0
   identifier = var.login_subnet_id
 }
 
@@ -76,11 +76,11 @@ data "ibm_is_public_gateways" "public_gateways" {
 
 locals {
   public_gateways_list = data.ibm_is_public_gateways.public_gateways.public_gateways
-  zone_1_pgw_ids       = var.vpc_name != "null" ? [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == local.vpc_id && gateway.zone == var.zones[0]] : []
+  zone_1_pgw_ids       = var.vpc_name != null ? [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == local.vpc_id && gateway.zone == var.zones[0]] : []
 }
 
 resource "ibm_is_subnet_public_gateway_attachment" "zone_1_attachment" {
-  count          = (var.vpc_name != "null" && length(var.cluster_subnet_ids) == 0) ? 1 : 0
+  count          = (var.vpc_name != null && length(var.cluster_subnet_ids) == 0) ? 1 : 0
   subnet         = local.compute_subnets[0].id
   public_gateway = length(local.zone_1_pgw_ids) > 0 ? local.zone_1_pgw_ids[0] : ""
 }

@@ -3,6 +3,7 @@ package tests
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -15,6 +16,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/IBM/go-sdk-core/core"
+	"github.com/IBM/secrets-manager-go-sdk/secretsmanagerv2"
+	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
 	"golang.org/x/crypto/ssh"
@@ -22,7 +26,7 @@ import (
 
 const (
 	// TimeLayout is the layout string for date and time format (DDMonHHMMSS).
-	TimeLayout = "02Jan150405"
+	TimeLayout = "02Jan"
 )
 
 // GetValueFromIniFile retrieves a value from an INI file based on the provided section and key.
@@ -412,18 +416,23 @@ func FindImageNamesByCriteria(name string) (string, error) {
 //Create IBMCloud Resources
 
 // LoginIntoIBMCloudUsingCLI logs into IBM Cloud using CLI.
+// LoginIntoIBMCloudUsingCLI logs into IBM Cloud using CLI.
 func LoginIntoIBMCloudUsingCLI(t *testing.T, apiKey, region, resourceGroup string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
 	// Configure IBM Cloud CLI
-	configCmd := exec.Command("ibmcloud", "config", "--check-version=false")
-	if err := configCmd.Run(); err != nil {
-		return fmt.Errorf("failed to configure IBM Cloud CLI: %w", err)
+	configCmd := exec.CommandContext(ctx, "ibmcloud", "config", "--check-version=false")
+	configOutput, err := configCmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to configure IBM Cloud CLI: %w. Output: %s", err, string(configOutput))
 	}
 
-	// Login to IBM Cloud and
-	// Set the target resource group
-	loginCmd := exec.Command("ibmcloud", "login", "--apikey", apiKey, "-r", region, "-g", resourceGroup)
-	if err := loginCmd.Run(); err != nil {
-		return fmt.Errorf("failed to login to IBM Cloud: %w", err)
+	// Login to IBM Cloud and set the target resource group
+	loginCmd := exec.CommandContext(ctx, "ibmcloud", "login", "--apikey", apiKey, "-r", region, "-g", resourceGroup)
+	loginOutput, err := loginCmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to login to IBM Cloud: %w. Output: %s", err, string(loginOutput))
 	}
 
 	return nil
@@ -593,9 +602,10 @@ func GetServerIPsWithLDAP(t *testing.T, options *testhelper.TestOptions, logger 
 
 // GenerateTimestampedClusterPrefix generates a cluster prefix by appending a timestamp to the given prefix.
 func GenerateTimestampedClusterPrefix(prefix string) string {
-	// Place current time in the string.
+	//Place current time in the string.
 	t := time.Now()
 	return strings.ToLower(prefix + "-" + t.Format(TimeLayout))
+
 }
 
 // GetPublicIP returns the public IP address using ifconfig.io API
@@ -614,4 +624,51 @@ func GetOrDefault(envVar, defaultValue string) string {
 		return envVar
 	}
 	return defaultValue
+}
+
+func GenerateRandomString() string {
+	// Generate a unique identifier
+	uniqueID := random.UniqueId()
+
+	// Convert the unique identifier to lowercase
+	lowerUniqueID := strings.ToLower(uniqueID)
+
+	// Get the last four characters of the lowercase unique identifier
+	if len(lowerUniqueID) > 4 {
+		return lowerUniqueID[len(lowerUniqueID)-4:]
+	}
+	// If the uniqueID is shorter than 4 characters, return the whole string
+	return lowerUniqueID
+}
+
+// GetSecretsManagerKey retrieves a secret from IBM Secrets Manager.
+func GetSecretsManagerKey(smID, smRegion, smKeyID string) (*string, error) {
+	secretsManagerService, err := secretsmanagerv2.NewSecretsManagerV2(&secretsmanagerv2.SecretsManagerV2Options{
+		URL: fmt.Sprintf("https://%s.%s.secrets-manager.appdomain.cloud", smID, smRegion),
+		Authenticator: &core.IamAuthenticator{
+			ApiKey: os.Getenv("TF_VAR_ibmcloud_api_key"),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	getSecretOptions := secretsManagerService.NewGetSecretOptions(smKeyID)
+
+	secret, _, err := secretsManagerService.GetSecret(getSecretOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	secretPayload, ok := secret.(*secretsmanagerv2.ArbitrarySecret)
+	if !ok {
+		return nil, fmt.Errorf("unexpected secret type: %T", secret)
+	}
+
+	return secretPayload.Payload, nil
+}
+
+// GetValueForKey retrieves the value associated with the specified key from the given map.
+func GetValueForKey(inputMap map[string]string, key string) string {
+	return inputMap[key]
 }

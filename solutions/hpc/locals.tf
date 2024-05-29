@@ -1,3 +1,10 @@
+###########################################################################
+# Switch to enable extra output (debugging)
+###########################################################################
+locals {
+  print_extra_outputs = false
+}
+
 # locals needed for landing_zone
 locals {
   # Region and Zone calculations
@@ -7,7 +14,7 @@ locals {
 # locals needed for bootstrap
 locals {
   # dependency: landing_zone -> bootstrap
-  vpc_id                     = var.vpc_name == "null" ? one(module.landing_zone.vpc_id) : data.ibm_is_vpc.itself[0].id
+  vpc_id                     = var.vpc_name == null ? one(module.landing_zone.vpc_id) : data.ibm_is_vpc.itself[0].id
   bastion_subnets            = length(var.cluster_subnet_ids) == 0 ? module.landing_zone.bastion_subnets : local.sorted_subnets
   kms_encryption_enabled     = var.key_management == "key_protect" ? true : false
   boot_volume_encryption_key = var.key_management == "key_protect" ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
@@ -84,7 +91,7 @@ locals {
     service_rg  = var.resource_group == "null" ? module.landing_zone.resource_group_id[0]["service-rg"] : one(values(one(module.landing_zone.resource_group_id)))
     workload_rg = var.resource_group == "null" ? module.landing_zone.resource_group_id[0]["workload-rg"] : one(values(one(module.landing_zone.resource_group_id)))
   }
-  vpc_crn = var.vpc_name == "null" ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
+  vpc_crn = var.vpc_name == null ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
   # TODO: Fix existing subnet logic
   # subnets_crn         = module.landing_zone.subnets_crn
   compute_subnets_crn = length(var.cluster_subnet_ids) == 0 ? local.sorted_compute_subnets[*].crn : local.sorted_subnets[*].crn
@@ -95,26 +102,26 @@ locals {
   # dependency: dns -> dns-records
   dns_instance_id = module.dns.dns_instance_id
   compute_dns_zone_id = one(flatten([
-    for dns_zone in module.dns.dns_zone_maps : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["compute"]
+    for dns_zone in module.dns.dns_zone_maps : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_name["compute"]
   ]))
 
 
   # dependency: landing_zone_vsi -> dns-records
   management_vsi_data   = flatten(module.landing_zone_vsi.management_vsi_data)
   management_private_ip = local.management_vsi_data[0]["ipv4_address"]
-  #management_hostname   = local.management_vsi_data[0]["name"]
+  management_hostname   = local.management_vsi_data[0]["name"]
 
   management_candidate_vsi_data    = flatten(module.landing_zone_vsi.management_candidate_vsi_data)
   management_candidate_private_ips = local.management_candidate_vsi_data[*]["ipv4_address"]
-  #management_candidate_hostnames   = local.management_candidate_vsi_data[*]["name"]
+  management_candidate_hostnames   = local.management_candidate_vsi_data[*]["name"]
 
   login_vsi_data    = flatten(module.landing_zone_vsi.login_vsi_data)
   login_private_ips = local.login_vsi_data[*]["ipv4_address"]
-  #login_hostnames   = local.login_vsi_data[*]["name"]
+  login_hostnames   = local.login_vsi_data[*]["name"]
 
   ldap_vsi_data    = flatten(module.landing_zone_vsi.ldap_vsi_data)
   ldap_private_ips = local.ldap_vsi_data[*]["ipv4_address"]
-  #ldap_hostnames   = local.ldap_vsi_data[*]["name"]
+  ldap_hostnames   = local.ldap_vsi_data[*]["name"]
 
   compute_dns_records = [
     for instance in local.management_vsi_data :
@@ -188,7 +195,11 @@ locals {
 ###########################################################################
 
 locals {
-  alb_hostname = module.alb.alb_hostname
+  # alb_created_by_api:
+  # - true -> use ibmcloud API
+  # - false -> use ibmcloud terraform provider (not recommended, dramatically slower)
+  alb_created_by_api = true
+  alb_hostname       = local.alb_created_by_api ? module.alb_api.alb_hostname : module.alb.alb_hostname
 }
 
 locals {
@@ -202,7 +213,7 @@ locals {
 
 # locals needed for ssh connection
 locals {
-  ssh_forward_host = (var.app_center_high_availability ? "pac.${var.dns_domain_names.compute}" : "localhost")
+  ssh_forward_host = (var.app_center_high_availability ? "pac.${var.dns_domain_name.compute}" : "localhost")
   ssh_forwards     = "-L 8443:${local.ssh_forward_host}:8443 -L 6080:${local.ssh_forward_host}:6080"
   ssh_jump_host    = local.bastion_instance_public_ip != null ? local.bastion_instance_public_ip : var.enable_fip ? module.bootstrap.bastion_fip[0] : module.bootstrap.bastion_primary_ip
   ssh_jump_option  = "-J ubuntu@${local.ssh_jump_host}"
@@ -212,14 +223,19 @@ locals {
 
 # Existing bastion Variables
 locals {
-  bastion_instance_name      = var.bastion_instance_name != "null" ? var.bastion_instance_name : null
-  bastion_instance_public_ip = var.bastion_instance_name != "null" ? var.bastion_instance_public_ip : null
-  # bastion_security_group_id  = var.bastion_instance_name != "null" ? var.bastion_security_group_id : module.bootstrap.bastion_security_group_id
-  bastion_ssh_private_key = var.bastion_instance_name != "null" ? var.bastion_ssh_private_key : null
-  bastion_instance_status = var.bastion_instance_name != "null" ? false : true
+  # bastion_instance_name      = var.bastion_instance_name != null ? var.bastion_instance_name : null
+  bastion_instance_public_ip = var.bastion_instance_name != null ? var.bastion_instance_public_ip : null
+  # bastion_security_group_id  = var.bastion_instance_name != null ? var.bastion_security_group_id : module.bootstrap.bastion_security_group_id
+  bastion_ssh_private_key = var.bastion_instance_name != null ? var.bastion_ssh_private_key : null
+  bastion_instance_status = var.bastion_instance_name != null ? false : true
 
-  # NFS Mount security group
-  storage_security_group_id = var.storage_security_group_id != "null" ? var.storage_security_group_id : null
+  existing_subnet_cidrs = var.vpc_name != null && length(var.cluster_subnet_ids) == 1 ? [data.ibm_is_subnet.existing_subnet[0].ipv4_cidr_block, data.ibm_is_subnet.existing_login_subnet[0].ipv4_cidr_block] : []
+}
 
-  existing_subnet_cidrs = var.vpc_name != "null" && length(var.cluster_subnet_ids) == 1 ? [data.ibm_is_subnet.existing_subnet[0].ipv4_cidr_block, data.ibm_is_subnet.existing_login_subnet[0].ipv4_cidr_block] : []
+####################################################
+# The code below does some internal processing of variables and locals
+# (e.g. concatenating lists).
+
+locals {
+  allowed_cidr = concat(var.remote_allowed_ips) # nothing more at the moment
 }

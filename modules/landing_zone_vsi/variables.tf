@@ -221,12 +221,6 @@ variable "share_path" {
   description = "Provide the exact path to where the VPC file share needs to be mounted"
 }
 
-variable "alb_hostname" {
-  description = "ALB hostname"
-  type        = string
-  default     = ""
-}
-
 variable "mount_path" {
   type = list(object({
     mount_path = string,
@@ -395,4 +389,14 @@ variable "cloud_monitoring_prws_key" {
 variable "cloud_monitoring_prws_url" {
   description = "IBM Cloud Monitoring Prometheus Remote Write ingestion url"
   type        = string
+}
+
+###########################################################################
+# Existing Bastion Support variables
+###########################################################################
+
+variable "bastion_instance_name" {
+  type        = string
+  default     = null
+  description = "Bastion instance name."
 }

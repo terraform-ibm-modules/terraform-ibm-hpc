@@ -97,6 +97,19 @@ locals {
     }
   ]
 
+  # SSH connection to the Login node via Cluster nodes.
+  ssh_connection_to_login_node_via_cluster_nodes = [
+    {
+      name      = "inbound-rule-for-login-node-ssh-connection"
+      direction = "inbound"
+      remote    = module.compute_sg[0].security_group_id
+      tcp = {
+        port_min = 22
+        port_max = 22
+      }
+    }
+  ]
+
   # Subnets
   # TODO: Multi-zone multi-vNIC VSIs deployment support (bug #https://github.ibm.com/GoldenEye/issues/issues/5830)
   # Findings: Singe zone multi-vNICs VSIs deployment & multi-zone single vNIC VSIs deployment are supported.

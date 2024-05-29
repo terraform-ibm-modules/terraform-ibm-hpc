@@ -58,7 +58,7 @@ locals {
         name           = "compute-subnet-${zone}"
         acl_name       = "hpc-acl"
         cidr           = var.compute_subnets_cidr[index(local.active_zones, zone)]
-        public_gateway = var.vpc == "null" ? true : false
+        public_gateway = var.vpc == null ? true : false
         no_addr_prefix = var.no_addr_prefix
 
       },
@@ -105,8 +105,8 @@ locals {
 
   vpcs = [
     {
-      existing_vpc_id = var.vpc == "null" ? null : data.ibm_is_vpc.itself[0].id
-      existing_subnets = (var.vpc != "null" && length(var.subnet_id) > 0) ? [
+      existing_vpc_id = var.vpc == null ? null : data.ibm_is_vpc.itself[0].id
+      existing_subnets = (var.vpc != null && length(var.subnet_id) > 0) ? [
         {
           id             = var.subnet_id[0]
           public_gateway = false
@@ -128,9 +128,9 @@ locals {
           rules             = local.network_acl_rules
         }
       ],
-      subnets             = (var.vpc != "null" && length(var.subnet_id) > 0) ? null : local.subnets
-      use_public_gateways = var.vpc == "null" ? local.use_public_gateways : local.use_public_gateways_existing_vpc
-      address_prefixes    = var.vpc == "null" ? local.address_prefixes : null
+      subnets             = (var.vpc != null && length(var.subnet_id) > 0) ? null : local.subnets
+      use_public_gateways = var.vpc == null ? local.use_public_gateways : local.use_public_gateways_existing_vpc
+      address_prefixes    = var.vpc == null ? local.address_prefixes : null
     }
   ]
 
@@ -162,11 +162,11 @@ locals {
     (
       var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker || var.scc_enable
       ) ? {
-      name           = var.cos_instance_name == "null" ? "hpc-cos" : var.cos_instance_name
+      name           = var.cos_instance_name == null ? "hpc-cos" : var.cos_instance_name
       resource_group = local.resource_group
       plan           = "standard"
       random_suffix  = true
-      use_data       = var.cos_instance_name == "null" ? false : true
+      use_data       = var.cos_instance_name == null ? false : true
       keys           = []
 
       # Extra bucket for solution specific object storage
@@ -176,21 +176,21 @@ locals {
           storage_class = "standard"
           endpoint_type = "public"
           force_delete  = true
-          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == "null" ? format("%s-key", var.prefix) : var.kms_key_name) : null
+          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-key", var.prefix) : var.kms_key_name) : null
         } : null,
         var.enable_vpc_flow_logs ? {
           name          = "vpc-flow-logs-bucket"
           storage_class = "standard"
           endpoint_type = "public"
           force_delete  = true
-          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == "null" ? format("%s-slz-key", var.prefix) : var.kms_key_name) : null
+          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-slz-key", var.prefix) : var.kms_key_name) : null
         } : null,
         var.enable_atracker ? {
           name          = "atracker-bucket"
           storage_class = "standard"
           endpoint_type = "public"
           force_delete  = true
-          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == "null" ? format("%s-atracker-key", var.prefix) : var.kms_key_name) : null
+          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-atracker-key", var.prefix) : var.kms_key_name) : null
         } : null,
         var.scc_enable ? {
           name          = "scc-bucket"
@@ -227,7 +227,7 @@ locals {
     if instance != null
   ]
 
-  active_keys = var.key_management == "key_protect" ? (var.kms_key_name == "null" ? [
+  active_keys = var.key_management == "key_protect" ? (var.kms_key_name == null ? [
     var.key_management == "key_protect" ? {
       name = format("%s-vsi-key", var.prefix)
     } : null,
@@ -247,11 +247,11 @@ locals {
     }
   ]) : null
   key_management = var.key_management == "key_protect" ? {
-    name           = var.kms_instance_name != "null" ? var.kms_instance_name : format("%s-kms", var.prefix) # var.key_management == "hs_crypto" ? var.hpcs_instance_name : format("%s-kms", var.prefix)
+    name           = var.kms_instance_name != null ? var.kms_instance_name : format("%s-kms", var.prefix) # var.key_management == "hs_crypto" ? var.hpcs_instance_name : format("%s-kms", var.prefix)
     resource_group = local.resource_group
     use_hs_crypto  = false
     keys           = [for each in local.active_keys : each if each != null]
-    use_data       = var.kms_instance_name != "null" ? true : false
+    use_data       = var.kms_instance_name != null ? true : false
     } : {
     name           = null
     resource_group = null

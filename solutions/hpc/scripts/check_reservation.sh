@@ -12,6 +12,7 @@ RESOURCE_CONTROLLER_ENDPOINT_URL="https://resource-controller.cloud.ibm.com"
 CODE_ENGINE_API_ENDPOINT_URL="https://api.REGION.codeengine.cloud.ibm.com"
 V2_CONTEXT_ROOT="v2"
 V2BETA_CONTEXT_ROOT="v2beta"
+RESOURCE_PLAN_GUID="2e390ff1-fe87-458f-9a23-dfb6719509e1"
 
 TMP_DIR="/tmp"
 HTTP_OUTPUT_FILE="${TMP_DIR}/hpcaas_http_output.log"
@@ -285,7 +286,6 @@ create_ce_project() {
     local resource_group_id="$3"
     local timestamp
     local project_name
-    local resource_plan_id
     local parameters
     local allow_cleanup
     local result
@@ -294,7 +294,6 @@ create_ce_project() {
 
     timestamp=$(date "+%Y%m%d%H%M%S")
     project_name="HPC-Default-${timestamp}"
-    resource_plan_id="814fb158-af9c-4d3c-a06b-c7da42392845"
     parameters='{"name":"'"${project_name}"'","profile":"hpc"}'
     allow_cleanup=false
 
@@ -303,7 +302,7 @@ create_ce_project() {
         -X POST \
         -H "Authorization: Bearer ${jwt_token}" \
         -H "Content-Type: application/json" \
-        -d "{\"name\":\"${project_name}\",\"resource_plan_id\":\"${resource_plan_id}\",\"resource_group\":\"${resource_group_id}\",\"parameters\":${parameters},\"target\":\"${region}\",\"allow_cleanup\":${allow_cleanup}}" \
+        -d "{\"name\":\"${project_name}\",\"resource_plan_id\":\"${RESOURCE_PLAN_GUID}\",\"resource_group\":\"${resource_group_id}\",\"parameters\":${parameters},\"target\":\"${region}\",\"allow_cleanup\":${allow_cleanup}}" \
         "${RESOURCE_CONTROLLER_ENDPOINT_URL}/${V2_CONTEXT_ROOT}/resource_instances")
 
     # The curl return a reply with the following format { ... JSON ... }HTTPSTATUS.

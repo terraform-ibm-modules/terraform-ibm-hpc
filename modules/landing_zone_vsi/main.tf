@@ -29,6 +29,19 @@ module "compute_sg_with_ldap_connection" {
   depends_on                     = [module.compute_sg]
 }
 
+module "ssh_connection_to_login_node_via_cluster_nodes" {
+  count                          = var.bastion_instance_name != null ? 1 : 0
+  source                         = "terraform-ibm-modules/security-group/ibm"
+  version                        = "2.6.0"
+  resource_group                 = var.resource_group
+  add_ibm_cloud_internal_rules   = true
+  use_existing_security_group_id = true
+  existing_security_group_id     = var.bastion_security_group_id
+  security_group_rules           = local.ssh_connection_to_login_node_via_cluster_nodes
+  vpc_id                         = var.vpc_id
+  depends_on                     = [module.compute_sg]
+}
+
 module "nfs_storage_sg" {
   count                          = var.storage_security_group_id != null ? 1 : 0
   source                         = "terraform-ibm-modules/security-group/ibm"

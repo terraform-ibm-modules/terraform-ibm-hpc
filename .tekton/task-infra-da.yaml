@@ -1,0 +1,468 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: wes-hpc-da
+spec:
+  params:
+    - name: ibmcloud-api
+      description: the ibmcloud api
+      default: https://cloud.ibm.com
+    - name: continuous-delivery-context-secret
+      description: name of the secret containing the continuous delivery pipeline context secrets
+      default: secure-properties
+    - name: ibmcloud-apikey-secret-key
+      description: field in the secret that contains the api key used to login to ibmcloud
+      default: ibmcloud_api_key
+    - name: pipeline-debug
+      description: Pipeline debug mode. Value can be 0 or 1. Default to 0
+      default: "0"
+    - name: pr-branch
+      description: The source branch for the PullRequest
+      default: ""
+    - name: directory-name
+      default: "."
+    - name: repository
+      description: the git repo url
+    - name: ssh_keys
+      default: ""
+      description: List of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC bastion and login node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys).
+    - name: zones
+      default: ""
+      description: IBM Cloud zone names within the selected region where the IBM Cloud HPC cluster should be deployed. Two zone names are required as input value and supported zones for eu-de are eu-de-2, eu-de-3 and for us-east us-east-1, us-east-3. The management nodes and file storage shares will be deployed to the first zone in the list. Compute nodes will be deployed across both first and second zones, where the first zone in the list will be considered as the most preferred zone for compute nodes deployment. [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli).
+    - name: cluster_prefix
+      description: Prefix that is used to name the IBM Cloud HPC cluster and IBM Cloud resources that are provisioned to build the IBM Cloud HPC cluster instance. You cannot create more than one instance of the IBM Cloud HPC cluster with the same name. Ensure that the name is unique.
+      default: cicd-wes
+    - name: resource_group
+      description: Resource group name from your IBM Cloud account where the VPC resources should be deployed. Note. If the resource group value is set as null, automation creates two different RG with the name (workload-rg and service-rg). For additional information on resource groups, see [Managing resource groups](https://cloud.ibm.com/docs/account?topic=account-rgs).
+      default: Default
+    - name: remote_allowed_ips
+      default: ""
+      description: Comma-separated list of IP addresses that can access the IBM Cloud HPC cluster instance through an SSH interface. For security purposes, provide the public IP addresses assigned to the devices that are authorized to establish SSH connections (for example, [\"169.45.117.34\"]). To fetch the IP address of the device, use [https://ipv4.icanhazip.com/](https://ipv4.icanhazip.com/).
+    - name: compute_image_name_rhel
+      description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v1). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
+      default: ""
+    - name: compute_image_name_ubuntu
+      description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v1). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
+      default: ""
+    - name: login_image_name
+      description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster login node. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v2). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
+      default: ""
+    - name: cluster_id
+      description: Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same reservation. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment.
+      default: ""
+    - name: reservation_id
+      description: Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_).
+      default: ""
+    - name: us_east_reservation_id
+      description: Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_).
+      default: ""
+    - name: eu_de_reservation_id
+      description: Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_).
+      default: ""
+    - name: us_south_reservation_id
+      description: Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_).
+      default: ""
+  workspaces:
+    - name: workspace
+      mountPath: /artifacts
+  stepTemplate:
+    env:
+      - name: API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: $(params.continuous-delivery-context-secret)
+            key: $(params.ibmcloud-apikey-secret-key)
+            optional: true
+      - name: PIPELINE_DEBUG
+        value: $(params.pipeline-debug)
+  steps:
+    - name: pre-requisites-install
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.29
+      env:
+        - name: REPOSITORY
+          value: $(params.repository)
+      workingDir: /artifacts
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          #!/bin/bash
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          TF_DIR="/tmp"
+
+          #######################################
+          # IBM Cloud
+          #######################################
+          echo $'***** Installing IBMCLOUD and Plugins *****\n'
+          curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+          ibmcloud plugin install schematics -f
+          ibmcloud plugin install vpc-infrastructure -f
+          ibmcloud plugin install kp -f
+          echo $'***** Installed IBMCLOUD and Plugins *****\n'
+          echo $'***** Check Repository Private or Public *****\n'
+          if [[ "$REPOSITORY" == *"github.ibm.com"* ]]; then
+              git config --global url.ssh://git@github.ibm.com/.insteadOf https://github.ibm.com/
+              export GOPRIVATE=github.ibm.com/*
+          fi
+
+          #######################################
+          # Golang
+          #######################################
+          echo $'***** Installing Golang *****\n'
+          yum install wget -y
+          [ ! -d "$(pwd)/go" ] &&
+          cd $(pwd) && wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz &&
+          tar -C $(pwd)/ -xzf go1.21.0.linux-amd64.tar.gz &&
+          cd $(pwd)/ &&
+          echo "export PATH=\$PATH:$(pwd)/go/bin:\$HOME/go/bin" >> ~/.bashrc &&
+          echo "export GOROOT=$(pwd)/go" >> ~/.bashrc
+          source ~/.bashrc
+          go version
+          which go
+          echo $'***** Golang Installed Successfully *****\n'
+
+          #######################################
+          # python
+          #######################################
+          echo $'***** Installing Python *****\n'
+          yum install python3.9 -y
+          python3.9 --version
+
+          if python3 --version &> /dev/null; then
+            PYTHON=python3
+          elif python --version &> /dev/null; then
+            PYTHON=python3
+          else
+            echo "python or python3 not detected. Please install python, ensure it is on your \$PATH, and retry."
+            exit 1
+          fi
+          echo $'***** Python Installed *****\n'
+
+          #######################################
+          # pip
+          #######################################
+          echo $'***** Upgrading/Installing PIP *****\n'
+          python3 -m pip install --upgrade pip
+          pip install --root-user-action=ignore requests
+          if ! ${PYTHON} -m pip &> /dev/null; then
+            echo "Unable to detect pip after running: ${PYTHON} -m pip. Please ensure pip is installed and try again."
+            exit 1
+          fi
+          echo $'***** Upgraded/Installed PIP *****\n'
+
+          #######################################
+          # ansible
+          #######################################
+          echo $'***** Installing Ansible and Ansible core *****\n'
+          python3 -m pip install ansible==4.10.0 ansible-core==2.11.12
+          ansible --version
+          echo $'***** Ansible and Ansible core Installed *****\n'
+
+          #######################################
+          # terraform-provisioner
+          #######################################
+          echo $'***** Installing Terraform-Provisioner *****\n'
+          curl -sL \
+            https://raw.githubusercontent.com/radekg/terraform-provisioner-ansible/master/bin/deploy-release.sh \
+            --output /tmp/deploy-release.sh
+          chmod +x /tmp/deploy-release.sh
+          /tmp/deploy-release.sh -v 2.3.3
+          rm -rf /tmp/deploy-release.sh
+          echo $'***** Terraform-Provisioner Installed *****\n'
+
+          #######################################
+          # terraform
+          #######################################
+          echo $'***** Installing Terraform *****\n'
+          wget https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip
+          unzip terraform_1.5.7_linux_amd64.zip
+          mv terraform /usr/local/bin/terraform
+          terraform --version
+    - name: hpc-deployable-architecture-rhel
+      onError: continue
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      env:
+        - name: pr-branch
+          value: $(params.pr-branch)
+        - name: ssh_keys
+          value: $(params.ssh_keys)
+        - name: zones
+          value: $(params.zones)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: cluster_id
+          value: $(params.cluster_id)
+        - name: reservation_id
+          value: $(params.reservation_id)
+        - name: us_east_reservation_id
+          value: $(params.us_east_reservation_id)
+        - name: eu_de_reservation_id
+          value: $(params.eu_de_reservation_id)
+        - name: us_south_reservation_id
+          value: $(params.us_south_reservation_id)
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          unzip terraform_1.5.7_linux_amd64.zip
+          mv terraform /usr/local/bin/terraform
+          terraform --version
+
+          cd $(pwd)/ &&
+          echo "export PATH=\$PATH:$(pwd)/go/bin:\$HOME/go/bin" >> ~/.bashrc &&
+          echo "export GOROOT=$(pwd)/go" >> ~/.bashrc
+          source ~/.bashrc
+          go version
+
+          mkdir /artifacts/.ssh
+          ssh_key_pair=$(eval "ssh-keygen -t rsa -N '' -f /artifacts/.ssh/id_rsa <<< y")
+
+          ibmcloud_login () {
+            local regions=("$1")
+            local API_KEY=("$2")
+            local for_create_or_delete="$3"
+            echo "$regions"
+            CICD_SSH_KEY="cicd-onepipeline"
+            # Looping all region to create SSH-KEYS
+            for region in ${regions[@]};
+              do
+                echo "$region"
+                disable_update_check=$(eval "ibmcloud config --check-version=false")
+                auhtenticate=$(eval "ibmcloud login --apikey $API_KEY -r $region")
+                echo "$auhtenticate"
+                if [[ $auhtenticate = *OK* ]]; then
+                  if echo $for_create_or_delete | grep -q "create"; then
+                    check_key=$(eval "ibmcloud is keys | grep $CICD_SSH_KEY | awk '{print $2}'")
+                    if [[ -z "$check_key" ]]; then
+                      echo "$CICD_SSH_KEY creating in $region"
+                      ssh_key_create=$(eval "ibmcloud is key-create $CICD_SSH_KEY @/artifacts/.ssh/id_rsa.pub  --resource-group-name $resource_group")
+                      if [[ $ssh_key_create = *Created* ]]; then
+                        echo "$CICD_SSH_KEY created in $region"
+                      else
+                        echo "ssh-key creation failed in $region"
+                        exit 1
+                      fi
+                    else
+                      echo "$CICD_SSH_KEY already exists in region $region"
+                    fi
+                  fi
+                  if echo $for_create_or_delete | grep -q "delete"; then
+                    ssh_key_delete=$(eval "ibmcloud is key-delete $CICD_SSH_KEY -f")
+                    if [[ $ssh_key_delete = *deleted* ]]; then
+                      echo "$CICD_SSH_KEY deleted in $region"
+                    else
+                      echo "ssh-key deletion failed in $region"
+                    fi
+                  fi
+                else
+                  echo "Issue Login with IBMCLOUD $auhtenticate"
+                  exit 1
+                fi
+              done
+                  }
+
+          regions="us-south eu-de us-east"
+          ibmcloud_login "${regions}" "${API_KEY}" "create"
+
+          export TF_VAR_ibmcloud_api_key=$API_KEY
+
+          # Check artifacts/tests folder exists or not
+          DIRECTORY="/artifacts/tests"
+          if [ -d "$DIRECTORY" ]; then
+            cd $DIRECTORY
+              LOG_FILE=pipeline-rhel-$(date +%d%m%Y).cicd
+              if [ "${PR_BRANCH}" ]; then
+                echo "**************Validating PR_TEST on PR_RAISED**************"
+                SSH_KEY=cicd-onepipeline US_EAST_RESERVATION_ID=$us_east_reservation_id RESERVATION_ID=$reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic" | tee -a $LOG_FILE
+              else
+                echo "**************Validating PR_TEST and OTHER_TEST on COMMIT**************"
+                SSH_KEY=cicd-onepipeline US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id RESERVATION_ID=$reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m | tee -a $LOG_FILE
+              fi
+          else
+            pwd
+            ls -a
+            echo "$DIRECTORY does not exists"
+          fi
+
+          # Deleting created SSH-KEY
+          regions="us-south eu-de us-east"
+          ibmcloud_login "${regions}" "${API_KEY}" "delete"
+
+          echo "*******************************************************"
+          count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
+          if [ $count == 0 ]; then
+            echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
+            exit 1
+          else
+            cat $DIRECTORY/test_output/log*
+          fi
+          echo "*******************************************************"
+
+          count=`ls -1 $DIRECTORY/*.cicd 2>/dev/null | wc -l`
+          if [ $count == 0 ]; then
+            echo "Test Suite have not initated, check with packages or binaries installation"
+            exit 1
+          fi
+    - name: hpc-deployable-architecture-ubuntu
+      onError: continue
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      env:
+        - name: pr-branch
+          value: $(params.pr-branch)
+        - name: ssh_keys
+          value: $(params.ssh_keys)
+        - name: zones
+          value: $(params.zones)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: cluster_id
+          value: $(params.cluster_id)
+        - name: reservation_id
+          value: $(params.reservation_id)
+        - name: us_east_reservation_id
+          value: $(params.us_east_reservation_id)
+        - name: eu_de_reservation_id
+          value: $(params.eu_de_reservation_id)
+        - name: us_south_reservation_id
+          value: $(params.us_south_reservation_id)
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          unzip terraform_1.5.7_linux_amd64.zip
+          mv terraform /usr/local/bin/terraform
+          terraform --version
+
+          cd $(pwd)/ &&
+          echo "export PATH=\$PATH:$(pwd)/go/bin:\$HOME/go/bin" >> ~/.bashrc &&
+          echo "export GOROOT=$(pwd)/go" >> ~/.bashrc
+          source ~/.bashrc
+          go version
+
+          mkdir /artifacts/.ssh
+          ssh_key_pair=$(eval "ssh-keygen -t rsa -N '' -f /artifacts/.ssh/id_rsa <<< y")
+
+          ibmcloud_login () {
+            local regions=("$1")
+            local API_KEY=("$2")
+            local for_create_or_delete="$3"
+            echo "$regions"
+            CICD_SSH_KEY="cicd-onepipeline"
+            # Looping all region to create SSH-KEYS
+            for region in ${regions[@]};
+              do
+                echo "$region"
+                disable_update_check=$(eval "ibmcloud config --check-version=false")
+                auhtenticate=$(eval "ibmcloud login --apikey $API_KEY -r $region")
+                echo "$auhtenticate"
+                if [[ $auhtenticate = *OK* ]]; then
+                  if echo $for_create_or_delete | grep -q "create"; then
+                    check_key=$(eval "ibmcloud is keys | grep $CICD_SSH_KEY | awk '{print $2}'")
+                    if [[ -z "$check_key" ]]; then
+                      echo "$CICD_SSH_KEY creating in $region"
+                      ssh_key_create=$(eval "ibmcloud is key-create $CICD_SSH_KEY @/artifacts/.ssh/id_rsa.pub  --resource-group-name $resource_group")
+                      if [[ $ssh_key_create = *Created* ]]; then
+                        echo "$CICD_SSH_KEY created in $region"
+                      else
+                        echo "ssh-key creation failed in $region"
+                        exit 1
+                      fi
+                    else
+                      echo "$CICD_SSH_KEY already exists in region $region"
+                    fi
+                  fi
+                  if echo $for_create_or_delete | grep -q "delete"; then
+                    ssh_key_delete=$(eval "ibmcloud is key-delete $CICD_SSH_KEY -f")
+                    if [[ $ssh_key_delete = *deleted* ]]; then
+                      echo "$CICD_SSH_KEY deleted in $region"
+                    else
+                      echo "ssh-key deletion failed in $region"
+                    fi
+                  fi
+                else
+                  echo "Issue Login with IBMCLOUD $auhtenticate"
+                  exit 1
+                fi
+              done
+                  }
+
+          regions="us-south eu-de us-east"
+          ibmcloud_login "${regions}" "${API_KEY}" "create"
+
+          export TF_VAR_ibmcloud_api_key=$API_KEY
+
+          # Check artifacts/tests folder exists or not
+          DIRECTORY="/artifacts/tests"
+          if [ -d "$DIRECTORY" ]; then
+            cd $DIRECTORY
+              LOG_FILE=pipeline-ubuntu-$(date +%d%m%Y).cicd
+              if [ "${PR_BRANCH}" ]; then
+                echo "**************Validating PR_TEST on PR_RAISED**************"
+                SSH_KEY=cicd-onepipeline US_EAST_RESERVATION_ID=$us_east_reservation_id RESERVATION_ID=$reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic" | tee -a $LOG_FILE
+              else
+                echo "**************Validating PR_TEST and OTHER_TEST on COMMIT**************"
+                SSH_KEY=cicd-onepipeline US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id RESERVATION_ID=$reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m | tee -a $LOG_FILE
+              fi
+          else
+            pwd
+            ls -a
+            echo "$DIRECTORY does not exists"
+          fi
+
+          # Deleting created SSH-KEY
+          regions="us-south eu-de us-east"
+          ibmcloud_login "${regions}" "${API_KEY}" "delete"
+
+          echo "*******************************************************"
+          count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
+          if [ $count == 0 ]; then
+            echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
+            exit 1
+          else
+            cat $DIRECTORY/test_output/log*
+          fi
+          echo "*******************************************************"
+
+          count=`ls -1 $DIRECTORY/*.cicd 2>/dev/null | wc -l`
+          if [ $count == 0 ]; then
+            echo "Test Suite have not initated, check with packages or binaries installation"
+            exit 1
+          fi

@@ -660,7 +660,6 @@ func runSSHCommandAndGetPaths(sClient *ssh.Client) ([]string, error) {
 			return strings.Split(strings.TrimSpace(output), "\n"), nil
 		}
 
-		fmt.Printf("Error executing SSH command (attempt %d): %s\n", attempt+1, err)
 		time.Sleep(30 * time.Second)
 	}
 
