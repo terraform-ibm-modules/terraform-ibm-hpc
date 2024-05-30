@@ -74,11 +74,30 @@ variable "alb_pools" {
     lb_pool_listener = object({
       port     = number
       protocol = string
+      idle_connection_timeout = number
     })
   }))
   default = [
     {
-      name                     = "%s-alb-pool-0"
+      name                     = "%s-alb-pool-8443"
+      algorithm                = "round_robin"
+      protocol                 = "https"
+      health_delay             = 5
+      health_retries           = 5
+      health_timeout           = 2
+      health_type              = "https"
+      health_monitor_url       = "/platform/"
+      health_monitor_port      = 8443
+      session_persistence_type = "http_cookie"
+      lb_pool_members_port     = 8443
+      lb_pool_listener = {
+        port     = 8443
+        protocol = "https"
+        idle_connection_timeout = 50
+      }
+    },
+    {
+      name                     = "%s-alb-pool-8444"
       algorithm                = "round_robin"
       protocol                 = "https"
       health_delay             = 5
@@ -88,14 +107,15 @@ variable "alb_pools" {
       health_monitor_url       = "/"
       health_monitor_port      = 8444
       session_persistence_type = "http_cookie"
-      lb_pool_members_port     = 8443
+      lb_pool_members_port     = 8444
       lb_pool_listener = {
-        port     = 8443
+        port     = 8444
         protocol = "https"
+        idle_connection_timeout = 7200
       }
     },
     {
-      name                     = "%s-alb-pool-1"
+      name                     = "%s-alb-pool-6080"
       algorithm                = "round_robin"
       protocol                 = "https"
       health_delay             = 5
@@ -109,6 +129,7 @@ variable "alb_pools" {
       lb_pool_listener = {
         port     = 6080
         protocol = "https"
+        idle_connection_timeout = 50
       }
   }]
 }

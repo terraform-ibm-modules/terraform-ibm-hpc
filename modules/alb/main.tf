@@ -23,15 +23,16 @@ resource "ibm_is_lb_pool" "alb_backend_pools" {
 }
 
 resource "ibm_is_lb_listener" "alb_frontend_listener" {
-  count                = var.create_load_balancer ? length(var.alb_pools) : 0
-  lb                   = ibm_is_lb.alb[0].id
-  port                 = var.alb_pools[count.index]["lb_pool_listener"]["port"]
-  protocol             = var.alb_pools[count.index]["lb_pool_listener"]["protocol"]
-  certificate_instance = var.certificate_instance
-  default_pool         = lookup(local.pool_ids, format(var.alb_pools[count.index]["name"], var.prefix), null)
+  count                   = var.create_load_balancer ? length(var.alb_pools) : 0
+  lb                      = ibm_is_lb.alb[0].id
+  port                    = var.alb_pools[count.index]["lb_pool_listener"]["port"]
+  protocol                = var.alb_pools[count.index]["lb_pool_listener"]["protocol"]
+  idle_connection_timeout = var.alb_pools[count.index]["lb_pool_listener"]["idle_connection_timeout"]
+  certificate_instance    = var.certificate_instance
+  default_pool            = lookup(local.pool_ids, format(var.alb_pools[count.index]["name"], var.prefix), null)
 }
 
-resource "ibm_is_lb_pool_member" "alb_candidate_members_0" {
+resource "ibm_is_lb_pool_member" "alb_candidate_members_8443" {
   count     = var.create_load_balancer ? length(var.vsi_ids) : 0
   lb        = ibm_is_lb.alb[0].id
   pool      = element(split("/", lookup(local.pool_ids, format(var.alb_pools[0]["name"], var.prefix), null)), 1)
@@ -39,10 +40,18 @@ resource "ibm_is_lb_pool_member" "alb_candidate_members_0" {
   target_id = var.vsi_ids[count.index]["id"]
 }
 
-resource "ibm_is_lb_pool_member" "alb_candidate_members_1" {
-  count     = var.create_load_balancer ? length(var.vsi_ids) : 0
+resource "ibm_is_lb_pool_member" "alb_candidate_members_8444" {
+  count     = var.create_load_balancer ? 1 : 0
   lb        = ibm_is_lb.alb[0].id
   pool      = element(split("/", lookup(local.pool_ids, format(var.alb_pools[1]["name"], var.prefix), null)), 1)
   port      = var.alb_pools[1]["lb_pool_members_port"]
+  target_id = var.vsi_ids[0]["id"]
+}
+
+resource "ibm_is_lb_pool_member" "alb_candidate_members_6080" {
+  count     = var.create_load_balancer ? length(var.vsi_ids) : 0
+  lb        = ibm_is_lb.alb[0].id
+  pool      = element(split("/", lookup(local.pool_ids, format(var.alb_pools[2]["name"], var.prefix), null)), 1)
+  port      = var.alb_pools[2]["lb_pool_members_port"]
   target_id = var.vsi_ids[count.index]["id"]
 }

@@ -223,7 +223,7 @@ locals {
 
 locals {
   vsi_management_ids = [
-    for instance in concat(local.management_candidate_vsi_data, local.management_vsi_data) :
+    for instance in concat(local.management_vsi_data, local.management_candidate_vsi_data) :
     {
       id = instance["id"]
     }

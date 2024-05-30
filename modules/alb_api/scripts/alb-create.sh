@@ -49,7 +49,7 @@ template_listener='
     {
       "protocol": "https",
       "port": REPLACEME_port,
-      "idle_connection_timeout": 50,
+      "idle_connection_timeout": REPLACEME_idle_connection_timeout,
       "default_pool": {
         "name": "REPLACEME_name"
       },
@@ -69,7 +69,7 @@ template_pool='
         "delay": 5,
         "max_retries": 5,
         "timeout": 2,
-        "url_path": "/",
+        "url_path": "REPLACEME_url_path",
         "port": REPLACEME_port
       },
       "session_persistence": {
@@ -90,9 +90,14 @@ jreq="${jreq//REPLACEME_bastion_subnet_id/$bastion_subnet_id}"
 
 # listeners
 ls=""
-for port in 8443 6080; do
+for port in 8443 6080 8444; do
   l="$template_listener"
   l="${l/REPLACEME_port/$port}"
+  if [ $port -eq 8444 ]; then
+    l="${l/REPLACEME_idle_connection_timeout/7200}"
+  else
+    l="${l/REPLACEME_idle_connection_timeout/50}"
+  fi
   l="${l/REPLACEME_name/${prefix}-alb-pool-$port}"
   l="${l/REPLACEME_certificate_instance/${certificate_instance}}"
   ls+="${l},"
@@ -102,18 +107,30 @@ jreq="${jreq//REPLACEME_listeners/$ls}"
 
 # pools
 ps=""
-for port in 8443 6080; do
+for port in 8443 6080 8444; do
   p="$template_pool"
   p="${p/REPLACEME_name/${prefix}-alb-pool-$port}"
   p="${p/REPLACEME_port/$port}"
+  if [ $port -eq 8443 ]; then
+    p="${p/REPLACEME_url_path/\/platform\/}"
+  else
+    p="${p/REPLACEME_url_path/\/}"
+  fi
   ms=""
   IFS=',' read -r -a ips <<<"$pool_ips"
-  for ip in "${ips[@]}"; do
-    m="$template_member"
-    m="${m/REPLACEME_address/$ip}"
-    m="${m/REPLACEME_port/$port}"
-    ms+="$m,"
-  done
+  if [ $port -eq 8444 ]; then
+      m="$template_member"
+      m="${m/REPLACEME_address/$firstip}"
+      m="${m/REPLACEME_port/$port}"
+      ms+="$m,"
+  else
+    for ip in "${ips[@]}"; do
+      m="$template_member"
+      m="${m/REPLACEME_address/$ip}"
+      m="${m/REPLACEME_port/$port}"
+      ms+="$m,"
+    done
+  fi
   ms="${ms%,}"
   p="${p//REPLACEME_members/$ms}"
   ps+="$p,"

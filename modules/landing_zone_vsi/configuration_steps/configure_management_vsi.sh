@@ -816,11 +816,13 @@ if [ "$do_app_center" = true ] ; then
         echo "LSF_ADDON_HOSTS=\"${mgmt_hostnames}\"" >> $LSF_CONF/lsf.conf
         create_appcenter_database
         sed -i "s/NoVNCProxyHost=.*/NoVNCProxyHost=pac.${dns_domain}/g" "$LSF_SUITE_GUI_CONF/pmc.conf"
-        sed -i "s|<restHost>.*</restHost>|<restHost>pac.${dns_domain}</restHost>|" $LSF_SUITE_GUI_CONF/pnc-config.xml
+        sed -i "s|<restHost>.*</restHost>|<restHost>${mgmt_hostname_primary}</restHost>|" $LSF_SUITE_GUI_CONF/pnc-config.xml
         sed -i "s|<wsHost>.*</wsHost>|<wsHost>pac.${dns_domain}</wsHost>|" $LSF_SUITE_GUI_CONF/pnc-config.xml
       else
         echo "LSF_ADDON_HOSTS=$HOSTNAME" >> $LSF_CONF/lsf.conf
         sed -i 's/NoVNCProxyHost=.*/NoVNCProxyHost=localhost/g' "$LSF_SUITE_GUI_CONF/pmc.conf"
+        sed -i "s|<restHost>.*</restHost>|<restHost>${mgmt_hostname_primary}</restHost>|" $LSF_SUITE_GUI_CONF/pnc-config.xml
+        sed -i "s|<wsHost>.*</wsHost>|<wsHost>localhost</wsHost>|" $LSF_SUITE_GUI_CONF/pnc-config.xml
       fi
     fi
 
