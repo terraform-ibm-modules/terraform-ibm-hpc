@@ -11,6 +11,11 @@ import (
 	lsf "github.com/terraform-ibm-modules/terraform-ibm-hpc/lsf"
 )
 
+// Constants for better organization
+const (
+	createVpcTerraformDir = "examples/create_vpc/solutions/hpc" // Brand new VPC
+)
+
 // TestRunBasic validates the cluster configuration and creation of an HPC cluster.
 func TestRunBasic(t *testing.T) {
 
@@ -23,7 +28,7 @@ func TestRunBasic(t *testing.T) {
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// HPC cluster prefix
-	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
+	hpcClusterPrefix := utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
@@ -50,7 +55,7 @@ func TestRunCustomRGAsNull(t *testing.T) {
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// HPC cluster prefix
-	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
+	hpcClusterPrefix := utils.GenerateRandomString()
 
 	// Create test options
 	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, LSF_CUSTOM_RESOURCE_GROUP_VALUE_AS_NULL, ignoreDestroys)
@@ -74,7 +79,7 @@ func TestRunCustomRGAsNonDefault(t *testing.T) {
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// HPC cluster prefix
-	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
+	hpcClusterPrefix := utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
@@ -99,7 +104,7 @@ func TestRunAppCenter(t *testing.T) {
 	setupTestSuite(t)
 
 	// HPC cluster prefix
-	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
+	hpcClusterPrefix := utils.GenerateRandomString()
 
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
@@ -130,7 +135,7 @@ func TestRunNoKMSAndHTOff(t *testing.T) {
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// HPC cluster prefix
-	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
+	hpcClusterPrefix := utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
@@ -160,7 +165,7 @@ func TestRunInUsEastRegion(t *testing.T) {
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// HPC cluster prefix
-	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
+	hpcClusterPrefix := utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
@@ -191,7 +196,7 @@ func TestRunInUsEastRegion(t *testing.T) {
 	lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
 }
 
-// TestRunInEuGbRegion validates cluster creation in the Frankfurt region.
+// TestRunInEuDeRegion validates cluster creation in the Frankfurt region.
 func TestRunInEuDeRegion(t *testing.T) {
 	// Parallelize the test to run concurrently with others
 	t.Parallel()
@@ -202,12 +207,12 @@ func TestRunInEuDeRegion(t *testing.T) {
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// HPC cluster prefix
-	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
+	hpcClusterPrefix := utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
 
-	// Extract EU GB zone, cluster ID, and reservation ID
+	// Extract EU DE zone, cluster ID, and reservation ID
 	euDeZone := utils.SplitAndTrim(envVars.EUDEZone, ",")
 	euDeClusterID := envVars.EUDEClusterID
 	euDeReservationID := envVars.EUDEReservationID
@@ -244,7 +249,7 @@ func TestRunInUSSouthRegion(t *testing.T) {
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// HPC cluster prefix
-	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
+	hpcClusterPrefix := utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
@@ -286,7 +291,7 @@ func TestRunLDAP(t *testing.T) {
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// HPC cluster prefix
-	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
+	hpcClusterPrefix := utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
@@ -333,7 +338,7 @@ func TestRunUsingExistingKMS(t *testing.T) {
 	kmsInstanceName := "cicd-" + randomString
 
 	// HPC cluster prefix
-	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
+	hpcClusterPrefix := utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
@@ -371,7 +376,7 @@ func TestRunLDAPAndPac(t *testing.T) {
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// HPC cluster prefix
-	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
+	hpcClusterPrefix := utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
@@ -403,4 +408,259 @@ func TestRunLDAPAndPac(t *testing.T) {
 	defer options.TestTearDown()
 
 	lsf.ValidatePACANDLDAPClusterConfiguration(t, options, testLogger)
+}
+
+// TestRunCreateVpc as brand new
+func TestRunCreateVpc(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Brand new VPC creation initiated for "+t.Name())
+
+	// Define the HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Create test options, set up test environment
+	options, err := setupOptionsVpc(t, hpcClusterPrefix, createVpcTerraformDir, envVars.DefaultResourceGroup)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	// Run the test
+	output, err := options.RunTest()
+	require.NoError(t, err, "Error running consistency test: %v", err)
+	require.NotNil(t, output, "Expected non-nil output, but got nil")
+
+	outputs := (options.LastTestTerraformOutputs)
+	vpcName := outputs["vpc_name"].(string)
+	bastionsubnetId, computesubnetIds := utils.GetSubnetIds(outputs)
+
+	RunHpcExistingVpcSubnetId(t, vpcName, bastionsubnetId, computesubnetIds)
+	RunHpcExistingVpcCidr(t, vpcName)
+}
+
+// RunHpcExistingVpcCidr with Cidr blocks
+func RunHpcExistingVpcCidr(t *testing.T, vpcName string) {
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Static values for CIDR other than default CIDR
+	vpcClusterPrivateSubnetsCidrBlocks := "10.241.48.0/21,10.241.120.0/22"
+	vpcClusterLoginPrivateSubnetsCidrBlocks := "10.241.60.0/22"
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Create test options
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	options.TerraformVars["vpc_name"] = vpcName
+	options.TerraformVars["vpc_cluster_private_subnets_cidr_blocks"] = utils.SplitAndTrim(vpcClusterPrivateSubnetsCidrBlocks, ",")
+	options.TerraformVars["vpc_cluster_login_private_subnets_cidr_blocks"] = utils.SplitAndTrim(vpcClusterLoginPrivateSubnetsCidrBlocks, ",")
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	lsf.ValidateClusterConfiguration(t, options, testLogger)
+}
+
+// RunHpcExistingVpcSubnetId with compute and login subnet id's
+func RunHpcExistingVpcSubnetId(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string) {
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Create test options
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	options.TerraformVars["vpc_name"] = vpcName
+	options.TerraformVars["login_subnet_id"] = bastionsubnetId
+	options.TerraformVars["cluster_subnet_ids"] = utils.SplitAndTrim(computesubnetIds, ",")
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	lsf.ValidateClusterConfiguration(t, options, testLogger)
+}
+
+// TestRunCreateVpcWithCustomDns brand new VPC with DNS
+func TestRunVpcWithCustomDns(t *testing.T) {
+
+	// Parallelize the test
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Define the HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Create test options, set up test environment
+	options, err := setupOptionsVpc(t, hpcClusterPrefix, createVpcTerraformDir, envVars.DefaultResourceGroup)
+	options.TerraformVars["enable_hub"] = true
+
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	// Run the test
+	output, err := options.RunTestConsistency()
+	require.NoError(t, err, "Error running consistency test: %v", err)
+	require.NotNil(t, output, "Expected non-nil output, but got nil")
+
+	outputs := (options.LastTestTerraformOutputs)
+	vpcName := outputs["vpc_name"].(string)
+	instanceId, customResolverId := utils.GetDnsCustomResolverIds(outputs)
+	bastionsubnetId, computesubnetIds := utils.GetSubnetIds(outputs)
+
+	RunHpcExistingVpcCustomDnsExist(t, vpcName, bastionsubnetId, computesubnetIds, instanceId, customResolverId)
+	RunHpcExistingVpcCustomExistDnsNew(t, vpcName, bastionsubnetId, computesubnetIds, customResolverId)
+	RunHpcNewVpcCustomNullExistDns(t, instanceId)
+	RunHpcNewVpcExistCustomDnsNull(t, customResolverId)
+}
+
+// RunHpcExistingVpcCustomDns with existing custom_reslover_id and dns_instance_id
+func RunHpcExistingVpcCustomDnsExist(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string, instanceId string, customResolverId string) {
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Create test options
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	options.TerraformVars["vpc_name"] = vpcName
+	options.TerraformVars["login_subnet_id"] = bastionsubnetId
+	options.TerraformVars["cluster_subnet_ids"] = utils.SplitAndTrim(computesubnetIds, ",")
+	options.TerraformVars["dns_instance_id"] = instanceId
+	options.TerraformVars["dns_custom_resolver_id"] = customResolverId
+
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	lsf.ValidateClusterConfiguration(t, options, testLogger)
+}
+
+// RunHpcExistingVpcCustomExistDnsNew with existing custom_reslover_id and new dns_instance_id
+func RunHpcExistingVpcCustomExistDnsNew(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string, customResolverId string) {
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Create test options
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	options.TerraformVars["vpc_name"] = vpcName
+	options.TerraformVars["login_subnet_id"] = bastionsubnetId
+	options.TerraformVars["cluster_subnet_ids"] = utils.SplitAndTrim(computesubnetIds, ",")
+	options.TerraformVars["dns_custom_resolver_id"] = customResolverId
+
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	lsf.ValidateClusterConfiguration(t, options, testLogger)
+}
+
+// RunHpcNewVpcCustomNullExistDns with custom_reslover_id null and existing dns_instance_id
+func RunHpcNewVpcCustomNullExistDns(t *testing.T, instanceId string) {
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Create test options
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	options.TerraformVars["dns_instance_id"] = instanceId
+
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	lsf.ValidateClusterConfiguration(t, options, testLogger)
+}
+
+// RunHpcNewVpcExistCustomDnsNull with existing custom_reslover_id and dns_instance_id null
+func RunHpcNewVpcExistCustomDnsNull(t *testing.T, customResolverId string) {
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Create test options
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	options.TerraformVars["dns_instance_id"] = customResolverId
+
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	lsf.ValidateClusterConfiguration(t, options, testLogger)
 }

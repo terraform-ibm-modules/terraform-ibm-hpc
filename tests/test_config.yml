@@ -1,7 +1,7 @@
 default_resource_group: Default
 non_default_resource_group: WES_TEST
-zone: us-east-1
-cluster_id: HPC-LSF-1
+zone: us-east-3
+cluster_id: HPC-LSF-2
 reservation_id:
 remote_allowed_ips:
 ssh_key: geretain-hpc
@@ -24,12 +24,12 @@ ldap_basedns: cicd.com
 ldap_admin_password: Pass@123 # pragma: allowlist secret
 ldap_user_name: tester
 ldap_user_password: Pass@123 # pragma: allowlist secret
-us_east_zone: us-east-1
+us_east_zone: us-east-3
 us_east_reservation_id:
-us_east_cluster_id: HPC-LSF-1
-eu_gb_zone: eu-de-2
-eu_gb_reservation_id:
-eu_gb_cluster_id: HPC-LSF-1
+us_east_cluster_id: HPC-LSF-2
+eu_de_zone: eu-de-3
+eu_de_reservation_id:
+eu_de_cluster_id: HPC-LSF-1
 us_south_zone: us-south-1
 us_south_reservation_id:
 us_south_cluster_id: HPC-LSF-1

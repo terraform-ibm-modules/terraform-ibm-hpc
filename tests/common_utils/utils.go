@@ -26,7 +26,7 @@ import (
 
 const (
 	// TimeLayout is the layout string for date and time format (DDMonHHMMSS).
-	TimeLayout = "02Jan"
+	TimeLayout = "Jan02"
 )
 
 // GetValueFromIniFile retrieves a value from an INI file based on the provided section and key.
@@ -604,7 +604,7 @@ func GetServerIPsWithLDAP(t *testing.T, options *testhelper.TestOptions, logger 
 func GenerateTimestampedClusterPrefix(prefix string) string {
 	//Place current time in the string.
 	t := time.Now()
-	return strings.ToLower(prefix + "-" + t.Format(TimeLayout))
+	return strings.ToLower("cicd" + "-" + t.Format(TimeLayout) + "-" + prefix)
 
 }
 
@@ -671,4 +671,51 @@ func GetSecretsManagerKey(smID, smRegion, smKeyID string) (*string, error) {
 // GetValueForKey retrieves the value associated with the specified key from the given map.
 func GetValueForKey(inputMap map[string]string, key string) string {
 	return inputMap[key]
+}
+
+// Getting BastionID and ComputeID from separately created brand new VPC
+func GetSubnetIds(outputs map[string]interface{}) (string, string) {
+	subnetDetailsList := outputs["subnet_detail_list"]
+	var bastion []string
+	var compute []string
+	for _, val := range subnetDetailsList.(map[string]interface{}) {
+		for key1, val1 := range val.(map[string]interface{}) {
+			isContains := strings.Contains(key1, "bastion")
+			if isContains {
+				for key2, val2 := range val1.(map[string]interface{}) {
+					if key2 == "id" {
+						bastion = append(bastion, val2.(string))
+					}
+				}
+			} else {
+				for key2, val2 := range val1.(map[string]interface{}) {
+					if key2 == "id" {
+						compute = append(compute, val2.(string))
+					}
+				}
+			}
+
+		}
+	}
+	bastionsubnetId := strings.Join(bastion, ",")
+	computesubnetIds := strings.Join(compute, ",")
+	return bastionsubnetId, computesubnetIds
+}
+
+// Getting DNSInstanceID and CustomResolverID from separately created brand new VPC
+func GetDnsCustomResolverIds(outputs map[string]interface{}) (string, string) {
+	customResolverHub := outputs["custom_resolver_hub"]
+	var instanceId string
+	var customResolverId string
+	for _, details := range customResolverHub.([]interface{}) {
+		for key, val := range details.(map[string]interface{}) {
+			if key == "instance_id" {
+				instanceId = val.(string)
+			}
+			if key == "custom_resolver_id" {
+				customResolverId = val.(string)
+			}
+		}
+	}
+	return instanceId, customResolverId
 }

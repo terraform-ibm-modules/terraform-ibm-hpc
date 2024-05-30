@@ -31,7 +31,7 @@ variable "resource_group" {
 ##############################################################################
 
 variable "cluster_prefix" {
-  description = "Prefix that is used to name the IBM Cloud HPC cluster and IBM Cloud resources that are provisioned to build the IBM Cloud HPC cluster instance. You cannot create more than one instance of the IBM Cloud HPC cluster with the same name. Ensure that the name is unique. Prefix must start with a lowercase letter and contain only lowercase letters, digits, and hyphens in between. Hyphens must be followed by at least one lowercase letter or digit. There are no leading, trailing, or consecutive hyphens."
+  description = "Prefix that is used to name the IBM Cloud HPC cluster and IBM Cloud resources that are provisioned to build the IBM Cloud HPC cluster instance. You cannot create more than one instance of the IBM Cloud HPC cluster with the same name. Ensure that the name is unique. Prefix must start with a lowercase letter and contain only lowercase letters, digits, and hyphens in between. Hyphens must be followed by at least one lowercase letter or digit. There are no leading, trailing, or consecutive hyphens.Character length for cluster_prefix should be less than 16."
   type        = string
   default     = "hpcaas"
 
@@ -46,12 +46,12 @@ variable "cluster_prefix" {
 }
 
 variable "zones" {
-  description = "IBM Cloud zone name within the selected region where the IBM Cloud HPC cluster should be deployed. Single zone name is required as input value and supported zones for eu-de are eu-de-2, eu-de-3 for us-east us-east-1, us-east-3 and for us-south us-south-1 and us-south-3. The management nodes, file storage shares and compute nodes will be deployed on the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
+  description = "The IBM Cloud zone name within the selected region where the IBM Cloud HPC cluster should be deployed and requires a single zone input value. Supported zones are: eu-de-2 and eu-de-3 for eu-de, us-east-1 and us-east-3 for us-east, and us-south-1 for us-south. The management nodes, file storage shares, and compute nodes will be deployed in the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
   type        = list(string)
   default     = ["us-east-1"]
   validation {
     condition     = length(var.zones) == 1
-    error_message = "Provide list of zones to deploy the cluster."
+    error_message = "HPC product deployment supports only a single zone. Provide a value for a single zone from the supported regions: eu-de-2 or eu-de-3 for eu-de, us-east-1 or us-east-3 for us-east, and us-south-1 for us-south."
   }
 }
 
@@ -87,17 +87,17 @@ variable "vpc_name" {
 variable "cluster_subnet_ids" {
   type        = list(string)
   default     = []
-  description = "List of existing subnet ID under the VPC, where the cluster will be provisioned. One subnet id is required as input value and supported zones for eu-de are eu-de-2, eu-de-3, for us-east us-east-1, us-east-3 and for us-south are us-south-1, us-south-3 .The management nodes, file storage shares and compute nodes will be deployed on the same zone."
+  description = "Provide the list of existing subnet ID under the existing VPC where the cluster will be provisioned. One subnet ID is required as input value. Supported zones are: eu-de-2 and eu-de-3 for eu-de, us-east-1 and us-east-3 for us-east, and us-south-1 for us-south. The management nodes, file storage shares, and compute nodes will be deployed in the same zone."
   validation {
     condition     = contains([0, 1], length(var.cluster_subnet_ids))
-    error_message = "The subnet_id value should either be empty or contain exactly one element."
+    error_message = "The subnet_id value should either be empty or contain exactly one element. Provide only a single subnet value from the supported zones."
   }
 }
 
 variable "login_subnet_id" {
   type        = string
   default     = null
-  description = "List of existing subnet ID under the VPC, where the login/Bastion server will be provisioned. One subnet id is required as input value for the creation of login node and bastion in the same zone as the management nodes are created. Note: Provide a different subnet id for login_subnet_id, do not overlap or provide the same subnet id that was already provided for cluster_subnet_ids."
+  description = "Provide the list of existing subnet ID under the existing VPC, where the login/bastion server will be provisioned. One subnet id is required as input value for the creation of login node and bastion in the same zone as the management nodes. Note: Provide a different subnet id for login_subnet_id, do not overlap or provide the same subnet id that was already provided for cluster_subnet_ids."
 }
 
 variable "vpc_cidr" {
@@ -109,7 +109,7 @@ variable "vpc_cidr" {
 variable "vpc_cluster_private_subnets_cidr_blocks" {
   type        = list(string)
   default     = ["10.241.0.0/20"]
-  description = "The CIDR block that's required for the creation of the compute cluster private subnet. Modify the CIDR block if it conflicts with any on-premises CIDR blocks when using a hybrid environment. Make sure to select a CIDR block size that will accommodate the maximum number of management and dynamic compute nodes that you expect to have in your cluster. Requires one CIDR block. For more information on CIDR block size selection, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
+  description = "Provide the CIDR block required for the creation of the compute cluster's private subnet. One CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Ensure the selected CIDR block size can accommodate the maximum number of management and dynamic compute nodes expected in your cluster. For more information on CIDR block size selection, refer to the documentation, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
   validation {
     condition     = length(var.vpc_cluster_private_subnets_cidr_blocks) == 1
     error_message = "Single zone is supported to deploy resources. Provide a CIDR range of subnets creation."
@@ -119,7 +119,7 @@ variable "vpc_cluster_private_subnets_cidr_blocks" {
 variable "vpc_cluster_login_private_subnets_cidr_blocks" {
   type        = list(string)
   default     = ["10.241.16.0/28"]
-  description = "The CIDR block that's required for the creation of the login cluster private subnet. Modify the CIDR block if it conflicts with any on-premises CIDR blocks when using a hybrid environment. Provide only one CIDR block for the creation of the login subnet. Since login subnet is used only for the creation of login virtual server instances,  provide a CIDR range of /28."
+  description = "Provide the CIDR block required for the creation of the login cluster's private subnet. Only one CIDR block is needed. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Since the login subnet is used only for the creation of login virtual server instances, provide a CIDR range of /28."
   validation {
     condition     = length(var.vpc_cluster_login_private_subnets_cidr_blocks) <= 1
     error_message = "Only a single zone is supported to deploy resources. Provide a CIDR range of subnet creation."
@@ -157,12 +157,12 @@ variable "remote_allowed_ips" {
 
 variable "bastion_ssh_keys" {
   type        = list(string)
-  description = "List of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC bastion and login node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
+  description = "Provide the list of SSH key names configured in your IBM Cloud account to establish a connection to the IBM Cloud HPC bastion and login node. Ensure the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by following the provided instructions.[SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
 }
 
 variable "compute_ssh_keys" {
   type        = list(string)
-  description = "List of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC cluster node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
+  description = "Provide the list of SSH key names configured in your IBM Cloud account to establish a connection to the IBM Cloud HPC cluster node. Ensure the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by following the provided instructions.[SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
 }
 
 variable "login_node_instance_type" {
@@ -177,20 +177,20 @@ variable "login_node_instance_type" {
 variable "management_image_name" {
   type        = string
   default     = "hpcaas-lsf10-rhel88-v6"
-  description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster management nodes. By default, the solution uses a base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
+  description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster management nodes. By default, the solution uses a RHEL88 base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
 
 }
 
 variable "compute_image_name" {
   type        = string
   default     = "hpcaas-lsf10-rhel88-compute-v5"
-  description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v4). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
+  description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-8 base OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v4). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
 }
 
 variable "login_image_name" {
   type        = string
   default     = "hpcaas-lsf10-rhel88-compute-v5"
-  description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster login node. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v2). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
+  description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster login node. By default, the solution uses a RHEL 8-8 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v4). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
 }
 
 variable "management_node_instance_type" {
@@ -243,7 +243,7 @@ variable "custom_file_shares" {
 variable "storage_security_group_id" {
   type        = string
   default     = null
-  description = "Provide the security group id that is created from Scale storage, if the nfs_share is not equal to null from cluster_file_share variable."
+  description = "Provide the storage security group ID created from the Spectrum Scale storage cluster if the nfs_share value is updated to use the scale fileset mountpoints under the cluster_file_share variable."
 }
 
 ##############################################################################
@@ -344,7 +344,7 @@ variable "observability_monitoring_plan" {
 variable "key_management" {
   type        = string
   default     = "key_protect"
-  description = "Setting this to key_protect will enable customer managed encryption for boot volume and file share. If the key_management is set as null, encryption will be always provider managed."
+  description = "Set the value as key_protect to enable customer managed encryption for boot volume and file share. If the key_management is set as null, encryption will be always provider managed."
   validation {
     condition     = var.key_management == "null" || var.key_management == null || var.key_management == "key_protect"
     error_message = "key_management must be either 'null' or 'key_protect'."
@@ -354,13 +354,13 @@ variable "key_management" {
 variable "kms_instance_name" {
   type        = string
   default     = null
-  description = "Name of the Key Protect instance associated with the Key Management Service. Note: kms_instance_name to be considered only if key_management value is set to key_protect. The name can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
+  description = "Provide the name of the existing Key Protect instance associated with the Key Management Service. Note: To use existing kms_instance_name shall be considered only if key_management value is set as key_protect under key_management variable. The name can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
 }
 
 variable "kms_key_name" {
   type        = string
   default     = null
-  description = "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. Note: kms_instance_name to be considered only if key_management value is set to key_protect. (for example kms_key_name: my-encryption-key)."
+  description = "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. Note: kms_key_name to be considered only if key_management value is set as key_protect under key_management variable.(for example kms_key_name: my-encryption-key)."
 }
 
 ##############################################################################
@@ -442,7 +442,7 @@ variable "app_center_gui_pwd" {
 variable "app_center_high_availability" {
   type        = bool
   default     = true
-  description = "Set to false to disable the IBM Spectrum LSF Application Center GUI High Availability (default: true) ."
+  description = "Set to false to disable the IBM Spectrum LSF Application Center GUI High Availability (default: true)."
 }
 
 variable "enable_fip" {
@@ -495,13 +495,13 @@ variable "ldap_user_password" {
 variable "ldap_vsi_profile" {
   type        = string
   default     = "cx2-2x4"
-  description = "Profile to be used for LDAP virtual server instance."
+  description = "Specify the virtual server instance profile type to be used to create the ldap node for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
 }
 
 variable "ldap_vsi_osimage_name" {
   type        = string
   default     = "ibm-ubuntu-22-04-3-minimal-amd64-1"
-  description = "Image name to be used for provisioning the LDAP instances."
+  description = "Image name to be used for provisioning the LDAP instances. By default ldap server are created on Ubuntu based OS flavour."
 }
 
 variable "skip_iam_authorization_policy" {

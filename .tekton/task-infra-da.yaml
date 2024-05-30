@@ -188,7 +188,7 @@ spec:
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       env:
-        - name: pr-branch
+        - name: PR_BRANCH
           value: $(params.pr-branch)
         - name: ssh_keys
           value: $(params.ssh_keys)
@@ -244,7 +244,7 @@ spec:
             local API_KEY=("$2")
             local for_create_or_delete="$3"
             echo "$regions"
-            CICD_SSH_KEY="cicd-onepipeline"
+            CICD_SSH_KEY="cicd-onepipeline-$(date +%d-%m)"
             # Looping all region to create SSH-KEYS
             for region in ${regions[@]};
               do
@@ -259,13 +259,14 @@ spec:
                       echo "$CICD_SSH_KEY creating in $region"
                       ssh_key_create=$(eval "ibmcloud is key-create $CICD_SSH_KEY @/artifacts/.ssh/id_rsa.pub  --resource-group-name $resource_group")
                       if [[ $ssh_key_create = *Created* ]]; then
+                        export SSH_FILE_PATH="/artifacts/.ssh/id_rsa"
                         echo "$CICD_SSH_KEY created in $region"
                       else
                         echo "ssh-key creation failed in $region"
                         exit 1
                       fi
                     else
-                      echo "$CICD_SSH_KEY already exists in region $region"
+                      echo "$CICD_SSH_KEY already exists in region $region."
                     fi
                   fi
                   if echo $for_create_or_delete | grep -q "delete"; then
@@ -295,10 +296,10 @@ spec:
               LOG_FILE=pipeline-rhel-$(date +%d%m%Y).cicd
               if [ "${PR_BRANCH}" ]; then
                 echo "**************Validating PR_TEST on PR_RAISED**************"
-                SSH_KEY=cicd-onepipeline US_EAST_RESERVATION_ID=$us_east_reservation_id RESERVATION_ID=$reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic" | tee -a $LOG_FILE
+                SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic" | tee -a $LOG_FILE
               else
                 echo "**************Validating PR_TEST and OTHER_TEST on COMMIT**************"
-                SSH_KEY=cicd-onepipeline US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id RESERVATION_ID=$reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m | tee -a $LOG_FILE
+                SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic" | tee -a $LOG_FILE
               fi
           else
             pwd
@@ -329,7 +330,7 @@ spec:
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       env:
-        - name: pr-branch
+        - name: PR_BRANCH
           value: $(params.pr-branch)
         - name: ssh_keys
           value: $(params.ssh_keys)
@@ -385,7 +386,7 @@ spec:
             local API_KEY=("$2")
             local for_create_or_delete="$3"
             echo "$regions"
-            CICD_SSH_KEY="cicd-onepipeline"
+            CICD_SSH_KEY="cicd-onepipeline-$(date +%d-%m)"
             # Looping all region to create SSH-KEYS
             for region in ${regions[@]};
               do
@@ -400,13 +401,14 @@ spec:
                       echo "$CICD_SSH_KEY creating in $region"
                       ssh_key_create=$(eval "ibmcloud is key-create $CICD_SSH_KEY @/artifacts/.ssh/id_rsa.pub  --resource-group-name $resource_group")
                       if [[ $ssh_key_create = *Created* ]]; then
+                        export SSH_FILE_PATH="/artifacts/.ssh/id_rsa"
                         echo "$CICD_SSH_KEY created in $region"
                       else
                         echo "ssh-key creation failed in $region"
                         exit 1
                       fi
                     else
-                      echo "$CICD_SSH_KEY already exists in region $region"
+                      echo "$CICD_SSH_KEY already exists in region $region."
                     fi
                   fi
                   if echo $for_create_or_delete | grep -q "delete"; then
@@ -436,14 +438,15 @@ spec:
               LOG_FILE=pipeline-ubuntu-$(date +%d%m%Y).cicd
               if [ "${PR_BRANCH}" ]; then
                 echo "**************Validating PR_TEST on PR_RAISED**************"
-                SSH_KEY=cicd-onepipeline US_EAST_RESERVATION_ID=$us_east_reservation_id RESERVATION_ID=$reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic" | tee -a $LOG_FILE
+                SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic" | tee -a $LOG_FILE
               else
                 echo "**************Validating PR_TEST and OTHER_TEST on COMMIT**************"
-                SSH_KEY=cicd-onepipeline US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id RESERVATION_ID=$reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m | tee -a $LOG_FILE
+                SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic" | tee -a $LOG_FILE
               fi
           else
             pwd
             ls -a
+            pwd
             echo "$DIRECTORY does not exists"
           fi
 
@@ -454,7 +457,7 @@ spec:
           echo "*******************************************************"
           count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
           if [ $count == 0 ]; then
-            echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
+            echo "Test Suite have not initated and log file not created, check with packages or binaries installations"
             exit 1
           else
             cat $DIRECTORY/test_output/log*
@@ -463,6 +466,6 @@ spec:
 
           count=`ls -1 $DIRECTORY/*.cicd 2>/dev/null | wc -l`
           if [ $count == 0 ]; then
-            echo "Test Suite have not initated, check with packages or binaries installation"
+            echo "Test Suite have not initated, check with packages or binaries installations"
             exit 1
           fi

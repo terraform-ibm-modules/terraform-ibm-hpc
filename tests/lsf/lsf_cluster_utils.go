@@ -151,7 +151,7 @@ func LSFCheckMasterName(t *testing.T, sClient *ssh.Client, expectedMasterName st
 }
 
 // HPCCheckReservationID verifies if the provided SSH client's 'lsid' command output
-// contains the expected Contract ID. Logs and returns an error if verification fails.
+// contains the expected Reservation ID. Logs and returns an error if verification fails.
 func HPCCheckReservationID(t *testing.T, sClient *ssh.Client, expectedReservationID string, logger *utils.AggregatedLogger) error {
 
 	ibmCloudHPCConfigPath := "/opt/ibm/lsf/conf/resource_connector/ibmcloudhpc/conf/ibmcloudhpc_config.json"
@@ -159,10 +159,10 @@ func HPCCheckReservationID(t *testing.T, sClient *ssh.Client, expectedReservatio
 	command := fmt.Sprintf("cat %s", ibmCloudHPCConfigPath)
 	output, err := utils.RunCommandInSSHSession(sClient, command)
 	if err != nil || !utils.VerifyDataContains(t, output, expectedReservationID, logger) {
-		return fmt.Errorf("failed Contract ID verification: %w", err)
+		return fmt.Errorf("failed Reservation ID verification: %w", err)
 	}
 	// Log success if no errors occurred
-	logger.Info(t, fmt.Sprintf("Contract ID verified: %s", expectedReservationID))
+	logger.Info(t, fmt.Sprintf("Reservation ID verified: %s", expectedReservationID))
 	return nil
 }
 
@@ -1222,7 +1222,7 @@ func VerifyEncryption(t *testing.T, apiKey, region, resourceGroup, clusterPrefix
 
 // ValidateRequiredEnvironmentVariables checks if the required environment variables are set and valid
 func ValidateRequiredEnvironmentVariables(envVars map[string]string) error {
-	requiredVars := []string{"SSH_FILE_PATH", "SSH_KEY", "CLUSTER_ID", "ZONE", "CONTRACT_ID"}
+	requiredVars := []string{"SSH_FILE_PATH", "SSH_KEY", "CLUSTER_ID", "ZONE", "RESERVATION_ID"}
 	for _, fieldName := range requiredVars {
 		fieldValue, ok := envVars[fieldName]
 		if !ok || fieldValue == "" {

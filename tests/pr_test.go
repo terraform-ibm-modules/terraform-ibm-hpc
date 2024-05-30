@@ -142,6 +142,46 @@ func setupTestSuite(t *testing.T) {
 	}
 }
 
+// setupOptionsVpc creates a test options object with the given parameters to creating brand new vpc
+func setupOptionsVpc(t *testing.T, hpcClusterPrefix, terraformDir, resourceGroup string) (*testhelper.TestOptions, error) {
+
+	// Check if TF_VAR_ibmcloud_api_key is set
+	if os.Getenv("TF_VAR_ibmcloud_api_key") == "" {
+		return nil, fmt.Errorf("TF_VAR_ibmcloud_api_key is not set")
+	}
+
+	// Retrieve environment variables
+	envVars := GetEnvVars()
+
+	// Validate required environment variables
+	requiredVars := []string{"SSHKey", "Zone"}
+	for _, fieldName := range requiredVars {
+		// Check if the field value is empty
+		if fieldValue := reflect.ValueOf(envVars).FieldByName(fieldName).String(); fieldValue == "" {
+			return nil, fmt.Errorf("missing required environment variable: %s", fieldName)
+		}
+	}
+
+	// Generate timestamped cluster prefix
+	// prefix := utils.GenerateTimestampedClusterPrefix(hpcClusterPrefix)
+	prefix := hpcClusterPrefix + "mani"
+
+	// Create test options
+	options := &testhelper.TestOptions{
+		Testing:        t,
+		TerraformDir:   terraformDir,
+		IgnoreDestroys: testhelper.Exemptions{List: ignoreDestroys},
+		TerraformVars: map[string]interface{}{
+			"cluster_prefix":     prefix,
+			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+			"resource_group":     resourceGroup,
+		},
+	}
+	return options, nil
+}
+
 // setupOptions creates a test options object with the given parameters.
 func setupOptions(t *testing.T, hpcClusterPrefix, terraformDir, resourceGroup string, ignoreDestroys []string) (*testhelper.TestOptions, error) {
 
@@ -232,7 +272,7 @@ func TestRunDefault(t *testing.T) {
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// HPC cluster prefix
-	hpcClusterPrefix := "cicd-" + utils.GenerateRandomString()
+	hpcClusterPrefix := utils.GenerateRandomString()
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()

@@ -412,3 +412,7 @@ module "scc_instance_and_profile" {
   cos_bucket              = [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0]
   cos_instance_crn        = module.landing_zone.cos_instance_crns[0]
 }
+
+module "my_ip" {
+  source = "../../modules/my_ip"
+}

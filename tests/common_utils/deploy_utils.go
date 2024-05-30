@@ -13,7 +13,6 @@ var (
 	ip                 string
 	reservationIDSouth string
 	reservationIDEast  string
-	permanentResources map[string]interface{}
 )
 
 // Define a struct with fields that match the structure of the YAML data
@@ -62,54 +61,52 @@ type Config struct {
 
 // GetConfigFromYAML reads configuration from a YAML file and sets environment variables based on the configuration.
 // It returns a Config struct populated with the configuration values.
-func GetConfigFromYAML(filePath string) (Config, error) {
+func GetConfigFromYAML(filePath string) (*Config, error) {
 	var config Config
 
+	// Open the YAML file
 	file, err := os.Open(filePath)
 	if err != nil {
-		return config, fmt.Errorf("failed to open YAML file %s: %v", filePath, err)
+		return nil, fmt.Errorf("failed to open YAML file %s: %v", filePath, err)
 	}
 	defer file.Close()
 
-	err = yaml.NewDecoder(file).Decode(&config)
-	if err != nil {
-		return config, fmt.Errorf("failed to decode YAML: %v", err)
+	// Decode the YAML file into the config struct
+	if err := yaml.NewDecoder(file).Decode(&config); err != nil {
+		return nil, fmt.Errorf("failed to decode YAML: %v", err)
 	}
 
-	ip, err = GetPublicIP()
+	// Get the public IP
+	ip, err := GetPublicIP()
 	if err != nil {
-		return config, fmt.Errorf("failed to get remote allowed IPs: %v", err)
+		return nil, fmt.Errorf("failed to get public IP: %v", err)
 	}
 	config.RemoteAllowedIPs = ip
 
-	permanentResources, err = common.LoadMapFromYaml(yamlLocation)
+	// Load permanent resources from YAML
+	permanentResources, err := common.LoadMapFromYaml(yamlLocation)
 	if err != nil {
-		return config, err
+		return nil, fmt.Errorf("failed to load permanent resources from YAML: %v", err)
 	}
 
-	// Retrieve reservation IDs from Secret Manager
-
+	// Retrieve reservation ID from Secret Manager                        // pragma: allowlist secret
 	reservationIDEastPtr, err := GetSecretsManagerKey(
 		permanentResources["secretsManagerGuid"].(string),
 		permanentResources["secretsManagerRegion"].(string),
 		permanentResources["reservation_id_secret_id"].(string),
 	)
-
 	if err != nil {
-
 		fmt.Printf("error retrieving reservation id from secrets: %v", err) // pragma: allowlist secret
-
 	} else if reservationIDEastPtr != nil {
-
 		reservationIDEast = *reservationIDEastPtr
-
 	}
 
+	// Set environment variables from config
 	if err := setEnvFromConfig(&config); err != nil {
-		return config, fmt.Errorf("failed to set environment variables: %v", err)
+		return nil, fmt.Errorf("failed to set environment variables: %v", err)
 	}
 
-	return config, nil
+	return &config, nil
 }
 
 // setEnvFromConfig sets environment variables based on the provided configuration.

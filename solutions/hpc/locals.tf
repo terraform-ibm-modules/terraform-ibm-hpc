@@ -1,10 +1,29 @@
 ###########################################################################
-# Switch to enable extra output (debugging)
-###########################################################################
 locals {
+  # (overridable) switch to enable extra outputs (debugging)
   print_extra_outputs = false
+
+  # (overridable) switch to add the current (plan execution) IP to allowed CIDR list
+  add_current_ip_to_allowed_cidr = false
+
+  # (overridable) list of extra entries for allowed CIDR list
+  remote_allowed_ips_extra = []
 }
 
+###########################################################################
+# Local tweaks support
+###########################################################################
+# You can enable local tweaks files to customize your local deployment with things
+# never intended to be included in the standard code.
+# You can use override files to override some values of switches (see above)
+# or you can force other values defined in the plan or include extra resources.
+#
+# See the directory "localtweak_examples" for more.
+
+
+###########################################################################
+###########################################################################
+###########################################################################
 # locals needed for landing_zone
 locals {
   # Region and Zone calculations
@@ -237,5 +256,5 @@ locals {
 # (e.g. concatenating lists).
 
 locals {
-  allowed_cidr = concat(var.remote_allowed_ips) # nothing more at the moment
+  allowed_cidr = concat(var.remote_allowed_ips, local.remote_allowed_ips_extra, local.add_current_ip_to_allowed_cidr ? module.my_ip.my_cidr : [])
 }

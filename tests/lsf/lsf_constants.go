@@ -21,8 +21,6 @@ const (
 
 var (
 	LSF_CUSTOM_RESOURCE_GROUP_OTHER_THAN_DEFAULT = "WES_TEST"
-	LSF_US_EAST_ZONES                            = []string{"us-east-3"}
-	LSF_EU_GB_ZONES                              = []string{"eu-de-2"}
 	KMS_KEY_INSTANCE_NAME                        = "cicd-key-instance"
 	KMS_KEY_NAME                                 = "cicd-key-name"
 )
