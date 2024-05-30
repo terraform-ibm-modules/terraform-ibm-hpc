@@ -1,3 +1,4 @@
+
 variable "resource_group_id" {
   description = "String describing resource groups to create or reference"
   type        = string
@@ -72,8 +73,8 @@ variable "alb_pools" {
     session_persistence_type = string
     lb_pool_members_port     = number
     lb_pool_listener = object({
-      port     = number
-      protocol = string
+      port                    = number
+      protocol                = string
       idle_connection_timeout = number
     })
   }))
@@ -91,8 +92,8 @@ variable "alb_pools" {
       session_persistence_type = "http_cookie"
       lb_pool_members_port     = 8443
       lb_pool_listener = {
-        port     = 8443
-        protocol = "https"
+        port                    = 8443
+        protocol                = "https"
         idle_connection_timeout = 50
       }
     },
@@ -109,8 +110,8 @@ variable "alb_pools" {
       session_persistence_type = "http_cookie"
       lb_pool_members_port     = 8444
       lb_pool_listener = {
-        port     = 8444
-        protocol = "https"
+        port                    = 8444
+        protocol                = "https"
         idle_connection_timeout = 7200
       }
     },
@@ -127,8 +128,8 @@ variable "alb_pools" {
       session_persistence_type = "http_cookie"
       lb_pool_members_port     = 6080
       lb_pool_listener = {
-        port     = 6080
-        protocol = "https"
+        port                    = 6080
+        protocol                = "https"
         idle_connection_timeout = 50
       }
   }]
