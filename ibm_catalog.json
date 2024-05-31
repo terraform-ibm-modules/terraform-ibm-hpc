@@ -164,7 +164,7 @@
                             "key": "dns_instance_id"
                         },
                         {
-                            "key": "dns_domain_names"
+                            "key": "dns_domain_name"
                         },
                         {
                             "key": "dns_custom_resolver_id"

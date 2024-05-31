@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,7 +19,6 @@ import (
 
 	"github.com/IBM/go-sdk-core/core"
 	"github.com/IBM/secrets-manager-go-sdk/secretsmanagerv2"
-	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
 	"golang.org/x/crypto/ssh"
@@ -626,19 +626,23 @@ func GetOrDefault(envVar, defaultValue string) string {
 	return defaultValue
 }
 
+// GenerateRandomString generates a random string of length 4 using lowercase characters
 func GenerateRandomString() string {
-	// Generate a unique identifier
-	uniqueID := random.UniqueId()
+	// Define the character set containing lowercase letters
+	charset := "abcdefghijklmnopqrstuvwxyz"
 
-	// Convert the unique identifier to lowercase
-	lowerUniqueID := strings.ToLower(uniqueID)
+	b := make([]byte, 4)
 
-	// Get the last four characters of the lowercase unique identifier
-	if len(lowerUniqueID) > 4 {
-		return lowerUniqueID[len(lowerUniqueID)-4:]
+	// Loop through each index of the byte slice
+	for i := range b {
+		// Generate a random index within the length of the character set
+		randomIndex := rand.Intn(len(charset))
+
+		b[i] = charset[randomIndex]
 	}
-	// If the uniqueID is shorter than 4 characters, return the whole string
-	return lowerUniqueID
+
+	// Convert the byte slice to a string and return it
+	return string(b)
 }
 
 // GetSecretsManagerKey retrieves a secret from IBM Secrets Manager.

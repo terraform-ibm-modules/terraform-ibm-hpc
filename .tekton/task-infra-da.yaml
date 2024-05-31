@@ -244,7 +244,7 @@ spec:
             local API_KEY=("$2")
             local for_create_or_delete="$3"
             echo "$regions"
-            CICD_SSH_KEY="cicd-onepipeline-$(date +%d-%m)"
+            CICD_SSH_KEY="cicd-rhel-$(date +%d-%m)-$RANDOM"
             # Looping all region to create SSH-KEYS
             for region in ${regions[@]};
               do
@@ -296,10 +296,10 @@ spec:
               LOG_FILE=pipeline-rhel-$(date +%d%m%Y).cicd
               if [ "${PR_BRANCH}" ]; then
                 echo "**************Validating PR_TEST on PR_RAISED**************"
-                SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic" | tee -a $LOG_FILE
+                SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_rhel  LOGIN_NODE_IMAGE_NAME=$login_image_name ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic" | tee -a $LOG_FILE
               else
                 echo "**************Validating PR_TEST and OTHER_TEST on COMMIT**************"
-                SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic" | tee -a $LOG_FILE
+                SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_rhel LOGIN_NODE_IMAGE_NAME=$login_image_name ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m | tee -a $LOG_FILE
               fi
           else
             pwd
@@ -386,7 +386,7 @@ spec:
             local API_KEY=("$2")
             local for_create_or_delete="$3"
             echo "$regions"
-            CICD_SSH_KEY="cicd-onepipeline-$(date +%d-%m)"
+            CICD_SSH_KEY="cicd-ubuntu-$(date +%d-%m)-$RANDOM"
             # Looping all region to create SSH-KEYS
             for region in ${regions[@]};
               do
@@ -438,10 +438,10 @@ spec:
               LOG_FILE=pipeline-ubuntu-$(date +%d%m%Y).cicd
               if [ "${PR_BRANCH}" ]; then
                 echo "**************Validating PR_TEST on PR_RAISED**************"
-                SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic" | tee -a $LOG_FILE
+                SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu LOGIN_NODE_IMAGE_NAME=$login_image_name ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic" | tee -a $LOG_FILE
               else
                 echo "**************Validating PR_TEST and OTHER_TEST on COMMIT**************"
-                SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic" | tee -a $LOG_FILE
+                SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu LOGIN_NODE_IMAGE_NAME=$login_image_name ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m | tee -a $LOG_FILE
               fi
           else
             pwd

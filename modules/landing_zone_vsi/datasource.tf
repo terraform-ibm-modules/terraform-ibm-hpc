@@ -9,7 +9,7 @@ data "ibm_is_image" "compute" {
 }
 
 data "ibm_is_image" "login" {
-  name  = var.management_image_name
+  name  = var.login_image_name
   count = local.login_image_mapping_entry_found ? 0 : 1
 }
 

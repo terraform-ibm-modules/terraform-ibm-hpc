@@ -53,3 +53,15 @@ variable "prefix" {
   description = "A unique identifier for resources. Must begin with a letter and end with a letter or number. This prefix will be prepended to any resources provisioned by this template. Prefixes must be 16 or fewer characters."
   type        = string
 }
+
+variable "existing_kms_instance_guid" {
+  type        = string
+  default     = null
+  description = "GUID of boot volume encryption key"
+}
+
+variable "skip_iam_share_authorization_policy" {
+  type        = string
+  default     = true
+  description = "Set it to false if authorization policy is required for VPC file share to access kms. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for VPC file share](https://cloud.ibm.com/docs/vpc?topic=vpc-file-s2s-auth&interface=ui)."
+}

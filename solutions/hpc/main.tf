@@ -136,14 +136,16 @@ module "landing_zone_vsi" {
 }
 
 module "file_storage" {
-  source             = "../../modules/file_storage"
-  zone               = var.zones[0] # always the first zone
-  resource_group     = local.resource_groups["workload_rg"]
-  file_shares        = local.file_shares
-  encryption_key_crn = local.boot_volume_encryption_key
-  security_group_ids = local.compute_security_group_id
-  subnet_id          = local.compute_subnet_id
-  prefix             = var.cluster_prefix
+  source                              = "../../modules/file_storage"
+  zone                                = var.zones[0] # always the first zone
+  resource_group                      = local.resource_groups["workload_rg"]
+  file_shares                         = local.file_shares
+  encryption_key_crn                  = local.boot_volume_encryption_key
+  security_group_ids                  = local.compute_security_group_id
+  subnet_id                           = local.compute_subnet_id
+  prefix                              = var.cluster_prefix
+  existing_kms_instance_guid          = local.existing_kms_instance_guid
+  skip_iam_share_authorization_policy = var.skip_iam_share_authorization_policy
 }
 
 module "dns" {
