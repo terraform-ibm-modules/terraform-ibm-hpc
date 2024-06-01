@@ -412,9 +412,6 @@ func TestRunLDAPAndPac(t *testing.T) {
 
 // TestRunCreateVpc as brand new
 func TestRunCreateVpc(t *testing.T) {
-	// Parallelize the test to run concurrently with others
-	t.Parallel()
-
 	// Setup test suite
 	setupTestSuite(t)
 
@@ -449,6 +446,8 @@ func TestRunCreateVpc(t *testing.T) {
 
 // RunHpcExistingVpcCidr with Cidr blocks
 func RunHpcExistingVpcCidr(t *testing.T, vpcName string) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
 
 	// Setup test suite
 	setupTestSuite(t)
@@ -481,6 +480,8 @@ func RunHpcExistingVpcCidr(t *testing.T, vpcName string) {
 
 // RunHpcExistingVpcSubnetId with compute and login subnet id's
 func RunHpcExistingVpcSubnetId(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
 
 	// Setup test suite
 	setupTestSuite(t)
@@ -509,10 +510,6 @@ func RunHpcExistingVpcSubnetId(t *testing.T, vpcName string, bastionsubnetId str
 
 // TestRunCreateVpcWithCustomDns brand new VPC with DNS
 func TestRunVpcWithCustomDns(t *testing.T) {
-
-	// Parallelize the test
-	t.Parallel()
-
 	// Setup test suite
 	setupTestSuite(t)
 
@@ -552,6 +549,8 @@ func TestRunVpcWithCustomDns(t *testing.T) {
 
 // RunHpcExistingVpcCustomDns with existing custom_reslover_id and dns_instance_id
 func RunHpcExistingVpcCustomDnsExist(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string, instanceId string, customResolverId string) {
+	// Parallelize the test
+	t.Parallel()
 
 	// Setup test suite
 	setupTestSuite(t)
@@ -583,6 +582,8 @@ func RunHpcExistingVpcCustomDnsExist(t *testing.T, vpcName string, bastionsubnet
 
 // RunHpcExistingVpcCustomExistDnsNew with existing custom_reslover_id and new dns_instance_id
 func RunHpcExistingVpcCustomExistDnsNew(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string, customResolverId string) {
+	// Parallelize the test
+	t.Parallel()
 
 	// Setup test suite
 	setupTestSuite(t)
@@ -613,6 +614,8 @@ func RunHpcExistingVpcCustomExistDnsNew(t *testing.T, vpcName string, bastionsub
 
 // RunHpcNewVpcCustomNullExistDns with custom_reslover_id null and existing dns_instance_id
 func RunHpcNewVpcCustomNullExistDns(t *testing.T, instanceId string) {
+	// Parallelize the test
+	t.Parallel()
 
 	// Setup test suite
 	setupTestSuite(t)
@@ -640,6 +643,8 @@ func RunHpcNewVpcCustomNullExistDns(t *testing.T, instanceId string) {
 
 // RunHpcNewVpcExistCustomDnsNull with existing custom_reslover_id and dns_instance_id null
 func RunHpcNewVpcExistCustomDnsNull(t *testing.T, customResolverId string) {
+	// Parallelize the test
+	t.Parallel()
 
 	// Setup test suite
 	setupTestSuite(t)

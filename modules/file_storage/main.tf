@@ -13,7 +13,7 @@ resource "ibm_is_share" "share" {
 }
 
 resource "ibm_iam_authorization_policy" "policy" {
-  count                       = var.skip_iam_share_authorization_policy == false ? 1 : 0
+  count                       = var.kms_encryption_enabled == false || var.skip_iam_share_authorization_policy ? 0 : 1
   source_service_name         = "is"
   source_resource_type        = "share"
   target_service_name         = "kms"

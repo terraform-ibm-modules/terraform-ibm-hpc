@@ -61,7 +61,13 @@ variable "existing_kms_instance_guid" {
 }
 
 variable "skip_iam_share_authorization_policy" {
-  type        = string
+  type        = bool
   default     = false
   description = "Set it to false if authorization policy is required for VPC file share to access kms. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for VPC file share](https://cloud.ibm.com/docs/vpc?topic=vpc-file-s2s-auth&interface=ui)."
+}
+
+variable "kms_encryption_enabled" {
+  description = "Enable Key management"
+  type        = bool
+  default     = true
 }

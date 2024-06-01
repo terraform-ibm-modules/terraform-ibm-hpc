@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: wes-hpc-da
+  name: wes-hpc-da-rhel
 spec:
   params:
     - name: ibmcloud-api
@@ -77,119 +77,10 @@ spec:
       - name: PIPELINE_DEBUG
         value: $(params.pipeline-debug)
   steps:
-    - name: pre-requisites-install
-      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.29
-      env:
-        - name: REPOSITORY
-          value: $(params.repository)
-      workingDir: /artifacts
-      command: ["/bin/sh", "-c"]
-      args:
-        - |
-          #!/bin/bash
-          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
-            pwd
-            env
-            trap env EXIT
-            set -x
-          fi
-
-          TF_DIR="/tmp"
-
-          #######################################
-          # IBM Cloud
-          #######################################
-          echo $'***** Installing IBMCLOUD and Plugins *****\n'
-          curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
-          ibmcloud plugin install schematics -f
-          ibmcloud plugin install vpc-infrastructure -f
-          ibmcloud plugin install kp -f
-          echo $'***** Installed IBMCLOUD and Plugins *****\n'
-          echo $'***** Check Repository Private or Public *****\n'
-          if [[ "$REPOSITORY" == *"github.ibm.com"* ]]; then
-              git config --global url.ssh://git@github.ibm.com/.insteadOf https://github.ibm.com/
-              export GOPRIVATE=github.ibm.com/*
-          fi
-
-          #######################################
-          # Golang
-          #######################################
-          echo $'***** Installing Golang *****\n'
-          yum install wget -y
-          [ ! -d "$(pwd)/go" ] &&
-          cd $(pwd) && wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz &&
-          tar -C $(pwd)/ -xzf go1.21.0.linux-amd64.tar.gz &&
-          cd $(pwd)/ &&
-          echo "export PATH=\$PATH:$(pwd)/go/bin:\$HOME/go/bin" >> ~/.bashrc &&
-          echo "export GOROOT=$(pwd)/go" >> ~/.bashrc
-          source ~/.bashrc
-          go version
-          which go
-          echo $'***** Golang Installed Successfully *****\n'
-
-          #######################################
-          # python
-          #######################################
-          echo $'***** Installing Python *****\n'
-          yum install python3.9 -y
-          python3.9 --version
-
-          if python3 --version &> /dev/null; then
-            PYTHON=python3
-          elif python --version &> /dev/null; then
-            PYTHON=python3
-          else
-            echo "python or python3 not detected. Please install python, ensure it is on your \$PATH, and retry."
-            exit 1
-          fi
-          echo $'***** Python Installed *****\n'
-
-          #######################################
-          # pip
-          #######################################
-          echo $'***** Upgrading/Installing PIP *****\n'
-          python3 -m pip install --upgrade pip
-          pip install --root-user-action=ignore requests
-          if ! ${PYTHON} -m pip &> /dev/null; then
-            echo "Unable to detect pip after running: ${PYTHON} -m pip. Please ensure pip is installed and try again."
-            exit 1
-          fi
-          echo $'***** Upgraded/Installed PIP *****\n'
-
-          #######################################
-          # ansible
-          #######################################
-          echo $'***** Installing Ansible and Ansible core *****\n'
-          python3 -m pip install ansible==4.10.0 ansible-core==2.11.12
-          ansible --version
-          echo $'***** Ansible and Ansible core Installed *****\n'
-
-          #######################################
-          # terraform-provisioner
-          #######################################
-          echo $'***** Installing Terraform-Provisioner *****\n'
-          curl -sL \
-            https://raw.githubusercontent.com/radekg/terraform-provisioner-ansible/master/bin/deploy-release.sh \
-            --output /tmp/deploy-release.sh
-          chmod +x /tmp/deploy-release.sh
-          /tmp/deploy-release.sh -v 2.3.3
-          rm -rf /tmp/deploy-release.sh
-          echo $'***** Terraform-Provisioner Installed *****\n'
-
-          #######################################
-          # terraform
-          #######################################
-          echo $'***** Installing Terraform *****\n'
-          wget https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip
-          unzip terraform_1.5.7_linux_amd64.zip
-          mv terraform /usr/local/bin/terraform
-          terraform --version
-    - name: hpc-deployable-architecture-rhel
+    - name: rhel-suite-1
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       env:
-        - name: PR_BRANCH
-          value: $(params.pr-branch)
         - name: ssh_keys
           value: $(params.ssh_keys)
         - name: zones
@@ -198,8 +89,6 @@ spec:
           value: $(params.resource_group)
         - name: compute_image_name_rhel
           value: $(params.compute_image_name_rhel)
-        - name: compute_image_name_ubuntu
-          value: $(params.compute_image_name_ubuntu)
         - name: login_image_name
           value: $(params.login_image_name)
         - name: cluster_id
@@ -226,7 +115,7 @@ spec:
             set -x
           fi
 
-          unzip terraform_1.5.7_linux_amd64.zip
+          unzip -n terraform_1.5.7_linux_amd64.zip
           mv terraform /usr/local/bin/terraform
           terraform --version
 
@@ -236,80 +125,38 @@ spec:
           source ~/.bashrc
           go version
 
-          mkdir /artifacts/.ssh
-          ssh_key_pair=$(eval "ssh-keygen -t rsa -N '' -f /artifacts/.ssh/id_rsa <<< y")
-
-          ibmcloud_login () {
-            local regions=("$1")
-            local API_KEY=("$2")
-            local for_create_or_delete="$3"
-            echo "$regions"
-            CICD_SSH_KEY="cicd-rhel-$(date +%d-%m)-$RANDOM"
-            # Looping all region to create SSH-KEYS
-            for region in ${regions[@]};
-              do
-                echo "$region"
-                disable_update_check=$(eval "ibmcloud config --check-version=false")
-                auhtenticate=$(eval "ibmcloud login --apikey $API_KEY -r $region")
-                echo "$auhtenticate"
-                if [[ $auhtenticate = *OK* ]]; then
-                  if echo $for_create_or_delete | grep -q "create"; then
-                    check_key=$(eval "ibmcloud is keys | grep $CICD_SSH_KEY | awk '{print $2}'")
-                    if [[ -z "$check_key" ]]; then
-                      echo "$CICD_SSH_KEY creating in $region"
-                      ssh_key_create=$(eval "ibmcloud is key-create $CICD_SSH_KEY @/artifacts/.ssh/id_rsa.pub  --resource-group-name $resource_group")
-                      if [[ $ssh_key_create = *Created* ]]; then
-                        export SSH_FILE_PATH="/artifacts/.ssh/id_rsa"
-                        echo "$CICD_SSH_KEY created in $region"
-                      else
-                        echo "ssh-key creation failed in $region"
-                        exit 1
-                      fi
-                    else
-                      echo "$CICD_SSH_KEY already exists in region $region."
-                    fi
-                  fi
-                  if echo $for_create_or_delete | grep -q "delete"; then
-                    ssh_key_delete=$(eval "ibmcloud is key-delete $CICD_SSH_KEY -f")
-                    if [[ $ssh_key_delete = *deleted* ]]; then
-                      echo "$CICD_SSH_KEY deleted in $region"
-                    else
-                      echo "ssh-key deletion failed in $region"
-                    fi
-                  fi
-                else
-                  echo "Issue Login with IBMCLOUD $auhtenticate"
-                  exit 1
-                fi
-              done
-                  }
-
-          regions="us-south eu-de us-east"
-          ibmcloud_login "${regions}" "${API_KEY}" "create"
+          echo -e "************** Going to run in RHEL-Suite-1 **************
+          1.TestRunBasic
+          2.TestRunAppCenter
+          3.TestRunInUsEastRegion
+          4.TestRunInEuDeRegion
+          5.TestRunInUSSouthRegion
+          6.TestRunNoKMSAndHTOff"
 
           export TF_VAR_ibmcloud_api_key=$API_KEY
+          export SSH_FILE_PATH="/artifacts/.ssh/id_rsa"
+          CICD_SSH_KEY="cicd-toolchain"
 
           # Check artifacts/tests folder exists or not
           DIRECTORY="/artifacts/tests"
           if [ -d "$DIRECTORY" ]; then
             cd $DIRECTORY
-              LOG_FILE=pipeline-rhel-$(date +%d%m%Y).cicd
-              if [ "${PR_BRANCH}" ]; then
-                echo "**************Validating PR_TEST on PR_RAISED**************"
-                SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_rhel  LOGIN_NODE_IMAGE_NAME=$login_image_name ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic" | tee -a $LOG_FILE
-              else
-                echo "**************Validating PR_TEST and OTHER_TEST on COMMIT**************"
-                SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_rhel LOGIN_NODE_IMAGE_NAME=$login_image_name ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m | tee -a $LOG_FILE
-              fi
+              LOG_FILE=pipeline-RHEL-Suite-1-$(date +%d%m%Y).cicd
+              echo "**************Validating on RHEL-Suite-1**************"
+              SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_rhel LOGIN_NODE_IMAGE_NAME=$login_image_name ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic|TestRunAppCenter|TestRunInUsEastRegion|TestRunInEuDeRegion|TestRunInUSSouthRegion|TestRunNoKMSAndHTOff" | tee -a $LOG_FILE
           else
             pwd
             ls -a
             echo "$DIRECTORY does not exists"
+            exit 1
           fi
 
-          # Deleting created SSH-KEY
-          regions="us-south eu-de us-east"
-          ibmcloud_login "${regions}" "${API_KEY}" "delete"
+          # Check any error message on the plan/apply log
+          error_check=$(eval "grep -E -w 'FAIL|Error|ERROR' $DIRECTORY/$LOG_FILE")
+          if [[ "$error_check" ]]; then
+            echo "Found Error/FAIL/ERROR in plan/apply log. Please check log."
+            exit 1
+          fi
 
           echo "*******************************************************"
           count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
@@ -326,12 +173,10 @@ spec:
             echo "Test Suite have not initated, check with packages or binaries installation"
             exit 1
           fi
-    - name: hpc-deployable-architecture-ubuntu
+    - name: rhel-suite-2
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       env:
-        - name: PR_BRANCH
-          value: $(params.pr-branch)
         - name: ssh_keys
           value: $(params.ssh_keys)
         - name: zones
@@ -340,8 +185,6 @@ spec:
           value: $(params.resource_group)
         - name: compute_image_name_rhel
           value: $(params.compute_image_name_rhel)
-        - name: compute_image_name_ubuntu
-          value: $(params.compute_image_name_ubuntu)
         - name: login_image_name
           value: $(params.login_image_name)
         - name: cluster_id
@@ -368,7 +211,7 @@ spec:
             set -x
           fi
 
-          unzip terraform_1.5.7_linux_amd64.zip
+          unzip -n terraform_1.5.7_linux_amd64.zip
           mv terraform /usr/local/bin/terraform
           terraform --version
 
@@ -378,86 +221,42 @@ spec:
           source ~/.bashrc
           go version
 
-          mkdir /artifacts/.ssh
-          ssh_key_pair=$(eval "ssh-keygen -t rsa -N '' -f /artifacts/.ssh/id_rsa <<< y")
-
-          ibmcloud_login () {
-            local regions=("$1")
-            local API_KEY=("$2")
-            local for_create_or_delete="$3"
-            echo "$regions"
-            CICD_SSH_KEY="cicd-ubuntu-$(date +%d-%m)-$RANDOM"
-            # Looping all region to create SSH-KEYS
-            for region in ${regions[@]};
-              do
-                echo "$region"
-                disable_update_check=$(eval "ibmcloud config --check-version=false")
-                auhtenticate=$(eval "ibmcloud login --apikey $API_KEY -r $region")
-                echo "$auhtenticate"
-                if [[ $auhtenticate = *OK* ]]; then
-                  if echo $for_create_or_delete | grep -q "create"; then
-                    check_key=$(eval "ibmcloud is keys | grep $CICD_SSH_KEY | awk '{print $2}'")
-                    if [[ -z "$check_key" ]]; then
-                      echo "$CICD_SSH_KEY creating in $region"
-                      ssh_key_create=$(eval "ibmcloud is key-create $CICD_SSH_KEY @/artifacts/.ssh/id_rsa.pub  --resource-group-name $resource_group")
-                      if [[ $ssh_key_create = *Created* ]]; then
-                        export SSH_FILE_PATH="/artifacts/.ssh/id_rsa"
-                        echo "$CICD_SSH_KEY created in $region"
-                      else
-                        echo "ssh-key creation failed in $region"
-                        exit 1
-                      fi
-                    else
-                      echo "$CICD_SSH_KEY already exists in region $region."
-                    fi
-                  fi
-                  if echo $for_create_or_delete | grep -q "delete"; then
-                    ssh_key_delete=$(eval "ibmcloud is key-delete $CICD_SSH_KEY -f")
-                    if [[ $ssh_key_delete = *deleted* ]]; then
-                      echo "$CICD_SSH_KEY deleted in $region"
-                    else
-                      echo "ssh-key deletion failed in $region"
-                    fi
-                  fi
-                else
-                  echo "Issue Login with IBMCLOUD $auhtenticate"
-                  exit 1
-                fi
-              done
-                  }
-
-          regions="us-south eu-de us-east"
-          ibmcloud_login "${regions}" "${API_KEY}" "create"
+          echo "************** Going to run in RHEL-Suite-2 **************
+          1.TestRunLDAP
+          2.TestRunUsingExistingKMS
+          3.TestRunLDAPAndPac
+          4.TestRunCustomRGAsNull
+          5.TestRunCustomRGAsNonDefault"
 
           export TF_VAR_ibmcloud_api_key=$API_KEY
+          export SSH_FILE_PATH="/artifacts/.ssh/id_rsa"
+          CICD_SSH_KEY="cicd-toolchain"
 
           # Check artifacts/tests folder exists or not
           DIRECTORY="/artifacts/tests"
           if [ -d "$DIRECTORY" ]; then
             cd $DIRECTORY
-              LOG_FILE=pipeline-ubuntu-$(date +%d%m%Y).cicd
-              if [ "${PR_BRANCH}" ]; then
-                echo "**************Validating PR_TEST on PR_RAISED**************"
-                SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu LOGIN_NODE_IMAGE_NAME=$login_image_name ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic" | tee -a $LOG_FILE
-              else
-                echo "**************Validating PR_TEST and OTHER_TEST on COMMIT**************"
-                SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu LOGIN_NODE_IMAGE_NAME=$login_image_name ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m | tee -a $LOG_FILE
-              fi
+              LOG_FILE=pipeline-RHEL-Suite-2-$(date +%d%m%Y).cicd
+              echo "**************Validating on RHEL-Suite-2**************"
+              SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_rhel LOGIN_NODE_IMAGE_NAME=$login_image_name ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunLDAP|TestRunUsingExistingKMS|TestRunLDAPAndPac|TestRunCustomRGAsNull|TestRunCustomRGAsNonDefault" | tee -a $LOG_FILE
           else
             pwd
             ls -a
-            pwd
             echo "$DIRECTORY does not exists"
+            exit 1
           fi
 
-          # Deleting created SSH-KEY
-          regions="us-south eu-de us-east"
-          ibmcloud_login "${regions}" "${API_KEY}" "delete"
+          # Check any error message on the plan/apply log
+          error_check=$(eval "grep -E -w 'FAIL|Error|ERROR' $DIRECTORY/$LOG_FILE")
+          if [[ "$error_check" ]]; then
+            echo "Found Error/FAIL/ERROR in plan/apply log. Please check log."
+            exit 1
+          fi
 
           echo "*******************************************************"
           count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
           if [ $count == 0 ]; then
-            echo "Test Suite have not initated and log file not created, check with packages or binaries installations"
+            echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
             exit 1
           else
             cat $DIRECTORY/test_output/log*
@@ -466,6 +265,104 @@ spec:
 
           count=`ls -1 $DIRECTORY/*.cicd 2>/dev/null | wc -l`
           if [ $count == 0 ]; then
-            echo "Test Suite have not initated, check with packages or binaries installations"
+            echo "Test Suite have not initated, check with packages or binaries installation"
+            exit 1
+          fi
+    - name: rhel-suite-3
+      onError: continue
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      env:
+        - name: ssh_keys
+          value: $(params.ssh_keys)
+        - name: zones
+          value: $(params.zones)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: cluster_id
+          value: $(params.cluster_id)
+        - name: reservation_id
+          value: $(params.reservation_id)
+        - name: us_east_reservation_id
+          value: $(params.us_east_reservation_id)
+        - name: eu_de_reservation_id
+          value: $(params.eu_de_reservation_id)
+        - name: us_south_reservation_id
+          value: $(params.us_south_reservation_id)
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          unzip -n terraform_1.5.7_linux_amd64.zip
+          mv terraform /usr/local/bin/terraform
+          terraform --version
+
+          cd $(pwd)/ &&
+          echo "export PATH=\$PATH:$(pwd)/go/bin:\$HOME/go/bin" >> ~/.bashrc &&
+          echo "export GOROOT=$(pwd)/go" >> ~/.bashrc
+          source ~/.bashrc
+          go version
+
+          echo "************** Going to run in UBUNTU-Suite-3 **************
+          1.TestRunCreateVpc
+            1.1 RunHpcExistingVpcSubnetId
+            1.2 RunHpcExistingVpcCidr
+          2.TestRunVpcWithCustomDns
+            2.1 RunHpcExistingVpcCustomDnsExist
+            2.2 RunHpcExistingVpcCustomExistDnsNew
+            2.3 RunHpcNewVpcCustomNullExistDns
+            2.4 RunHpcNewVpcExistCustomDnsNull"
+
+          export TF_VAR_ibmcloud_api_key=$API_KEY
+          export SSH_FILE_PATH="/artifacts/.ssh/id_rsa"
+          CICD_SSH_KEY="cicd-toolchain"
+
+          # Check artifacts/tests folder exists or not
+          DIRECTORY="/artifacts/tests"
+          if [ -d "$DIRECTORY" ]; then
+            cd $DIRECTORY
+              LOG_FILE=pipeline-RHEL-Suite-3-$(date +%d%m%Y).cicd
+              echo "**************Validating on RHEL-Suite-3**************"
+              SSH_KEY=$CICD_SSH_KEY US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_rhel LOGIN_NODE_IMAGE_NAME=$login_image_name ZONE=$zones RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunCreateVpc|TestRunVpcWithCustomDns" | tee -a $LOG_FILE
+          else
+            pwd
+            ls -a
+            echo "$DIRECTORY does not exists"
+            exit 1
+          fi
+
+          # Check any error message on the plan/apply log
+          error_check=$(eval "grep -E -w 'FAIL|Error|ERROR' $DIRECTORY/$LOG_FILE")
+          if [[ "$error_check" ]]; then
+            echo "Found Error/FAIL/ERROR in plan/apply log. Please check log."
+            exit 1
+          fi
+
+          echo "*******************************************************"
+          count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
+          if [ $count == 0 ]; then
+            echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
+            exit 1
+          else
+            cat $DIRECTORY/test_output/log*
+          fi
+          echo "*******************************************************"
+
+          count=`ls -1 $DIRECTORY/*.cicd 2>/dev/null | wc -l`
+          if [ $count == 0 ]; then
+            echo "Test Suite have not initated, check with packages or binaries installation"
             exit 1
           fi

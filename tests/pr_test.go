@@ -163,8 +163,7 @@ func setupOptionsVpc(t *testing.T, hpcClusterPrefix, terraformDir, resourceGroup
 	}
 
 	// Generate timestamped cluster prefix
-	// prefix := utils.GenerateTimestampedClusterPrefix(hpcClusterPrefix)
-	prefix := hpcClusterPrefix + "mani"
+	prefix := utils.GenerateTimestampedClusterPrefix(hpcClusterPrefix)
 
 	// Create test options
 	options := &testhelper.TestOptions{

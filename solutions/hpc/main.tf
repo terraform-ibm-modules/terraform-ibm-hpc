@@ -146,6 +146,7 @@ module "file_storage" {
   prefix                              = var.cluster_prefix
   existing_kms_instance_guid          = local.existing_kms_instance_guid
   skip_iam_share_authorization_policy = var.skip_iam_share_authorization_policy
+  kms_encryption_enabled              = local.kms_encryption_enabled
 }
 
 module "dns" {

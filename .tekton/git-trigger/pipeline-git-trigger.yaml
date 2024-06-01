@@ -106,10 +106,32 @@ spec:
       workspaces:
         - name: output
           workspace: pipeline-ws
-    - name: wes-hpc-da-infra-creation
+    - name: pre-requisites-install
       runAfter: [git-clone]
       taskRef:
-        name: wes-hpc-da
+        name: pre-requisites-install
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+    - name: ssh-key-creation
+      runAfter: [git-clone, pre-requisites-install]
+      taskRef:
+        name: ssh-key-creation
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: resource_group
+          value: $(params.resource_group)
+    - name: wes-hpc-da-rhel
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: wes-hpc-da-rhel
       workspaces:
         - name: workspace
           workspace: pipeline-ws
@@ -144,8 +166,56 @@ spec:
           value: $(params.eu_de_reservation_id)
         - name: us_south_reservation_id
           value: $(params.us_south_reservation_id)
+    - name: wes-hpc-da-ubuntu
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: wes-hpc-da-ubuntu
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: ssh_keys
+          value: $(params.ssh_keys)
+        - name: zones
+          value: $(params.zones)
+        - name: cluster_prefix
+          value: $(params.cluster_prefix)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: remote_allowed_ips
+          value: $(params.remote_allowed_ips)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: cluster_id
+          value: $(params.cluster_id)
+        - name: reservation_id
+          value: $(params.reservation_id)
+        - name: us_east_reservation_id
+          value: $(params.us_east_reservation_id)
+        - name: eu_de_reservation_id
+          value: $(params.eu_de_reservation_id)
+        - name: us_south_reservation_id
+          value: $(params.us_south_reservation_id)
+    - name: ssh-key-deletion
+      runAfter: [wes-hpc-da-rhel, wes-hpc-da-ubuntu]
+      taskRef:
+        name: ssh-key-deletion
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
     - name: git-content-inspect
-      runAfter: [git-clone, wes-hpc-da-infra-creation]
+      runAfter: [git-clone, wes-hpc-da-rhel, wes-hpc-da-ubuntu]
       taskRef:
         name: inspect-git-content
       workspaces:
@@ -167,7 +237,7 @@ spec:
         - name: git-user
           value: $(tasks.git-clone.results.git-user)
     - name: inspect-wes-hpc-infra-log
-      runAfter: [git-clone, wes-hpc-da-infra-creation]
+      runAfter: [git-clone, wes-hpc-da-rhel, wes-hpc-da-ubuntu]
       workspaces:
         - name: workspace
           workspace: pipeline-ws
@@ -177,7 +247,7 @@ spec:
             description: The git repo will be cloned onto the volume backing this workspace
             mountPath: /artifacts
         steps:
-          - name: inspect-infra-error
+          - name: inspect-infra-error-rhel-suite
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
             command: ["/bin/bash", "-c"]
@@ -185,7 +255,46 @@ spec:
               - |
                 #!/bin/bash
                 pwd
-                LOG_FILE="pipeline*"
+                LOG_FILE="pipeline-RHEL-Suite*"
+                DIRECTORY="/artifacts/tests"
+                if [ -d "$DIRECTORY" ]; then
+                  # Check any error message on the plan/apply log
+                  error_check=$(eval "grep -E -w 'FAIL|Error|ERROR' $DIRECTORY/$LOG_FILE")
+                  if [[ "$error_check" ]]; then
+                    echo "$error_check"
+                    echo "Found Error/FAIL/ERROR in plan/apply log. Please check log."
+                    exit 1
+                  else
+                    count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
+                    if [ $count == 0 ]; then
+                    echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
+                    exit 1
+                    else
+                      echo "*******************************************************""
+                      cat $DIRECTORY/test_output/log*
+                      echo "*******************************************************""
+                      echo "No Error Found, infra got SUCCESS"
+                    fi
+                  fi
+                else
+                  echo "$DIRECTORY does not exits"
+                  exit 1
+                fi
+
+                count=`ls -1 $DIRECTORY/*.cicd 2>/dev/null | wc -l`
+                if [ $count == 0 ]; then
+                  echo "Test Suite have not initated, check with packages or binaries installations"
+                  exit 1
+                fi
+          - name: inspect-infra-error-ubuntu-suite
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                pwd
+                LOG_FILE="pipeline-UBUNTU-Suite*"
                 DIRECTORY="/artifacts/tests"
                 if [ -d "$DIRECTORY" ]; then
                   # Check any error message on the plan/apply log
