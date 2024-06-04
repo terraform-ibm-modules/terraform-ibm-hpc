@@ -1,11 +1,11 @@
 ##############################################################################
 # Offering Variations
 ##############################################################################
-variable "storage_type" {
-  type        = string
-  default     = "scratch"
-  description = "Select the required storage type(scratch/persistent/eval)."
-}
+# variable "storage_type" {
+#   type        = string
+#   default     = "scratch"
+#   description = "Select the required storage type(scratch/persistent/eval)."
+# }
 
 ##############################################################################
 # Account Variables
@@ -56,15 +56,14 @@ variable "vpc_id" {
   description = "ID of an existing VPC in which the cluster resources will be deployed."
 }
 
-variable "placement_group_ids" {
-  type        = string
-  default     = null
-  description = "VPC placement group ids"
-}
-
 ##############################################################################
 # Access Variables
 ##############################################################################
+
+variable "bastion_fip" {
+  type        = string
+  description = "Bastion FIP."
+}
 
 variable "bastion_security_group_id" {
   type        = string
@@ -78,45 +77,24 @@ variable "bastion_public_key_content" {
   description = "Bastion security group id."
 }
 
+variable "cluster_user" {
+  type        = string
+  description = "Linux user for cluster administration."
+}
+
+variable "compute_private_key_content" {
+  type        = string
+  description = "Compute private key content"
+}
+
+variable "bastion_private_key_content" {
+  type        = string
+  description = "Bastion private key content"
+}
+
 ##############################################################################
 # Compute Variables
 ##############################################################################
-
-variable "login_subnets" {
-  type = list(object({
-    name = string
-    id   = string
-    zone = string
-    cidr = string
-  }))
-  default     = []
-  description = "Subnets to launch the login hosts."
-}
-
-variable "login_ssh_keys" {
-  type        = list(string)
-  description = "The key pair to use to launch the login host."
-}
-
-variable "login_image_name" {
-  type        = string
-  default     = "ibm-redhat-8-6-minimal-amd64-5"
-  description = "Image name to use for provisioning the login instances."
-}
-
-variable "login_instances" {
-  type = list(
-    object({
-      profile = string
-      count   = number
-    })
-  )
-  default = [{
-    profile = "cx2-2x4"
-    count   = 1
-  }]
-  description = "Number of instances to be launched for login."
-}
 
 variable "compute_subnets" {
   type = list(object({
@@ -124,6 +102,7 @@ variable "compute_subnets" {
     id   = string
     zone = string
     cidr = string
+    crn  = string
   }))
   default     = []
   description = "Subnets to launch the compute host."
@@ -136,137 +115,20 @@ variable "compute_ssh_keys" {
 
 variable "management_image_name" {
   type        = string
-  default     = "ibm-redhat-8-6-minimal-amd64-5"
+  default     = "hpcaas-lsf10-rhel88-v3"
   description = "Image name to use for provisioning the management cluster instances."
-}
-
-variable "management_instances" {
-  type = list(
-    object({
-      profile = string
-      count   = number
-    })
-  )
-  default = [{
-    profile = "cx2-2x4"
-    count   = 3
-  }]
-  description = "Number of instances to be launched for management."
-}
-
-variable "static_compute_instances" {
-  type = list(
-    object({
-      profile = string
-      count   = number
-    })
-  )
-  default = [{
-    profile = "cx2-2x4"
-    count   = 0
-  }]
-  description = "Min Number of instances to be launched for compute cluster."
-}
-
-variable "dynamic_compute_instances" {
-  type = list(
-    object({
-      profile = string
-      count   = number
-    })
-  )
-  default = [{
-    profile = "cx2-2x4"
-    count   = 250
-  }]
-  description = "MaxNumber of instances to be launched for compute cluster."
 }
 
 variable "compute_image_name" {
   type        = string
-  default     = "ibm-redhat-8-6-minimal-amd64-5"
+  default     = "hpcaas-lsf10-rhel88-compute-v2"
   description = "Image name to use for provisioning the compute cluster instances."
 }
 
-##############################################################################
-# Scale Storage Variables
-##############################################################################
-
-variable "storage_subnets" {
-  type = list(object({
-    name = string
-    id   = string
-    zone = string
-    cidr = string
-  }))
-  default     = []
-  description = "Subnets to launch the storage host."
-}
-
-variable "storage_ssh_keys" {
-  type        = list(string)
-  description = "The key pair to use to launch the storage cluster host."
-}
-
-variable "storage_instances" {
-  type = list(
-    object({
-      profile = string
-      count   = number
-    })
-  )
-  default = [{
-    profile = "bx2-2x8"
-    count   = 3
-  }]
-  description = "Number of instances to be launched for storage cluster."
-}
-
-variable "storage_image_name" {
+variable "login_image_name" {
   type        = string
-  default     = "ibm-redhat-8-6-minimal-amd64-5"
-  description = "Image name to use for provisioning the storage cluster instances."
-}
-
-variable "protocol_subnets" {
-  type = list(object({
-    name = string
-    id   = string
-    zone = string
-    cidr = string
-  }))
-  default     = []
-  description = "Subnets to launch the bastion host."
-}
-
-variable "protocol_instances" {
-  type = list(
-    object({
-      profile = string
-      count   = number
-    })
-  )
-  default = [{
-    profile = "bx2-2x8"
-    count   = 2
-  }]
-  description = "Number of instances to be launched for protocol hosts."
-}
-
-variable "nsd_details" {
-  type = list(
-    object({
-      profile  = string
-      capacity = optional(number)
-      iops     = optional(number)
-    })
-  )
-  default = [{
-    profile = "custom"
-    size    = 100
-    iops    = 100
-  }]
-  description = "NSD details"
+  default     = "hpcaas-lsf10-rhel88-compute-v2"
+  description = "Image name to use for provisioning the login instance."
 }
 
 ##############################################################################
@@ -275,9 +137,9 @@ variable "nsd_details" {
 
 variable "dns_domain_names" {
   type = object({
-    compute  = string
-    storage  = string
-    protocol = string
+    compute = string
+    #storage  = string
+    #protocol = string
   })
   default = {
     compute  = "comp.com"
@@ -304,6 +166,237 @@ variable "boot_volume_encryption_key" {
   description = "CRN of boot volume encryption key"
 }
 
+variable "cluster_id" {
+  type        = string
+  description = "Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same contract. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment."
+}
+
+variable "contract_id" {
+  type        = string
+  sensitive   = true
+  description = "Ensure that you have received the contract ID from IBM technical sales. Contract ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_)."
+}
+
+variable "hyperthreading_enabled" {
+  type        = bool
+  default     = true
+  description = "Setting this to true will enable hyper-threading in the compute nodes of the cluster (default). Otherwise, hyper-threading will be disabled."
+}
+
+variable "enable_app_center" {
+  type        = bool
+  default     = false
+  description = "Set to true to enable the IBM Spectrum LSF Application Center GUI (default: false). [System requirements](https://www.ibm.com/docs/en/slac/10.2.0?topic=requirements-system-102-fix-pack-14) for IBM Spectrum LSF Application Center Version 10.2 Fix Pack 14."
+}
+
+variable "app_center_gui_pwd" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "Password for IBM Spectrum LSF Application Center GUI. Note: Password should be at least 8 characters, must have one number, one lowercase letter, one uppercase letter, and at least one special character."
+}
+
+variable "management_node_count" {
+  type        = number
+  default     = 3
+  description = "Number of management nodes. This is the total number of management nodes. Enter a value between 1 and 10."
+  validation {
+    condition     = 1 <= var.management_node_count && var.management_node_count <= 10
+    error_message = "Input \"management_node_count\" must be must be greater than or equal to 1 and less than or equal to 10."
+  }
+}
+
+variable "management_node_instance_type" {
+  type        = string
+  default     = "bx2-16x64"
+  description = "Specify the virtual server instance profile type to be used to create the management nodes for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
+  validation {
+    condition     = can(regex("^[^\\s]+-[0-9]+x[0-9]+", var.management_node_instance_type))
+    error_message = "The profile must be a valid profile name."
+  }
+}
+
+variable "share_path" {
+  type        = string
+  description = "Provide the exact path to where the VPC file share needs to be mounted"
+}
+
+variable "mount_path" {
+  type = list(object({
+    mount_path = string,
+    size       = optional(number),
+    iops       = optional(number),
+    nfs_share  = optional(string)
+  }))
+  description = "Provide the path for the vpc file share to be mounted on to the HPC Cluster nodes"
+}
+
+variable "file_share" {
+  type        = list(string)
+  description = "VPC file share mount points considering the ip address and the file share name"
+}
+
+variable "login_private_ips" {
+  description = "Login private IPs"
+  type        = string
+}
+
+variable "login_node_instance_type" {
+  type        = string
+  default     = "bx2-2x8"
+  description = "Specify the virtual server instance profile type to be used to create the login node for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
+  validation {
+    condition     = can(regex("^[^\\s]+-[0-9]+x[0-9]+", var.login_node_instance_type))
+    error_message = "The profile must be a valid profile name."
+  }
+}
+
+variable "bastion_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the bastion host."
+}
+
+variable "ssh_keys" {
+  type        = list(string)
+  description = "The key pair to use to access the host."
+}
+
+variable "enable_ldap" {
+  type        = bool
+  default     = false
+  description = "Set this option to true to enable LDAP for IBM Cloud HPC, with the default value set to false."
+}
+
+variable "ldap_basedns" {
+  type        = string
+  default     = "hpcaas.com"
+  description = "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."
+}
+
+variable "ldap_server" {
+  type        = string
+  default     = "null"
+  description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
+}
+
+variable "ldap_admin_password" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "The LDAP administrative password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required. It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
+}
+
+variable "ldap_user_name" {
+  type        = string
+  default     = ""
+  description = "Custom LDAP User for performing cluster operations. Note: Username should be between 4 to 32 characters, (any combination of lowercase and uppercase letters).[This value is ignored for an existing LDAP server]"
+}
+
+variable "ldap_user_password" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "The LDAP user password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required.It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
+}
+
+variable "ldap_vsi_profile" {
+  type        = string
+  default     = "cx2-2x4"
+  description = "Profile to be used for LDAP virtual server instance."
+}
+
+variable "ldap_vsi_osimage_name" {
+  type        = string
+  default     = "ibm-ubuntu-22-04-3-minimal-amd64-1"
+  description = "Image name to be used for provisioning the LDAP instances."
+}
+
+variable "ldap_primary_ip" {
+  type        = list(string)
+  description = "List of LDAP primary IPs."
+}
+
 ##############################################################################
-# TODO: Auth Server (LDAP/AD) Variables
+# High Availability
 ##############################################################################
+variable "app_center_high_availability" {
+  type        = bool
+  default     = true
+  description = "Set to false to disable the IBM Spectrum LSF Application Center GUI High Availability (default: true) ."
+}
+
+###########################################################################
+# IBM Cloud Dababase for MySQL Instance variables
+###########################################################################
+variable "db_instance_info" {
+  description = "The IBM Cloud Database for MySQL information required to reference the PAC database."
+  type = object({
+    id            = string
+    adminuser     = string
+    adminpassword = string
+    hostname      = string
+    port          = number
+    certificate   = string
+  })
+  default = null
+}
+
+variable "storage_security_group_id" {
+  type        = string
+  default     = null
+  description = "Existing Scale storage security group id"
+}
+
+##############################################################################
+# Observability Variables
+##############################################################################
+
+variable "observability_monitoring_enable" {
+  description = "Set true to enable IBM Cloud Monitoring instance provisioning."
+  type        = bool
+  default     = false
+}
+
+variable "observability_monitoring_on_compute_nodes_enable" {
+  description = "Set true to enable IBM Cloud Monitoring on Compute Nodes."
+  type        = bool
+  default     = false
+}
+
+variable "cloud_monitoring_access_key" {
+  description = "IBM Cloud Monitoring access key for agents to use"
+  type        = string
+  sensitive   = true
+}
+
+variable "cloud_monitoring_ingestion_url" {
+  description = "IBM Cloud Monitoring ingestion url for agents to use"
+  type        = string
+}
+
+variable "cloud_monitoring_prws_key" {
+  description = "IBM Cloud Monitoring Prometheus Remote Write ingestion key"
+  type        = string
+  sensitive   = true
+}
+
+variable "cloud_monitoring_prws_url" {
+  description = "IBM Cloud Monitoring Prometheus Remote Write ingestion url"
+  type        = string
+}
+
+###########################################################################
+# Existing Bastion Support variables
+###########################################################################
+
+variable "bastion_instance_name" {
+  type        = string
+  default     = null
+  description = "Bastion instance name."
+}

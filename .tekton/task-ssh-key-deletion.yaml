@@ -1,0 +1,81 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: ssh-key-deletion
+spec:
+  params:
+    - name: ibmcloud-api
+      description: the ibmcloud api
+      default: https://cloud.ibm.com
+    - name: continuous-delivery-context-secret
+      description: name of the secret containing the continuous delivery pipeline context secrets
+      default: secure-properties
+    - name: ibmcloud-apikey-secret-key
+      description: field in the secret that contains the api key used to login to ibmcloud
+      default: ibmcloud_api_key
+    - name: pipeline-debug
+      description: Pipeline debug mode. Value can be 0 or 1. Default to 0
+      default: "0"
+  workspaces:
+    - name: workspace
+      mountPath: /artifacts
+  stepTemplate:
+    env:
+      - name: API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: $(params.continuous-delivery-context-secret)
+            key: $(params.ibmcloud-apikey-secret-key)
+            optional: true
+      - name: PIPELINE_DEBUG
+        value: $(params.pipeline-debug)
+  steps:
+    - name: ssh-key-deletion
+      onError: continue
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          ibmcloud_login () {
+            local regions=("$1")
+            local API_KEY=("$2")
+            local for_create_or_delete="$3"
+            echo "$regions"
+            CICD_SSH_KEY="cicd-toolchain"
+            # Looping all region to create SSH-KEYS
+            for region in ${regions[@]};
+              do
+                echo "$region"
+                disable_update_check=$(eval "ibmcloud config --check-version=false")
+                auhtenticate=$(eval "ibmcloud login --apikey $API_KEY -r $region")
+                echo "$auhtenticate"
+                if [[ $auhtenticate = *OK* ]]; then
+                  if echo $for_create_or_delete | grep -q "delete"; then
+                    ssh_key_delete=$(eval "ibmcloud is key-delete $CICD_SSH_KEY -f")
+                    if [[ $ssh_key_delete = *deleted* ]]; then
+                      echo "$CICD_SSH_KEY deleted in $region"
+                    else
+                      echo "ssh-key deletion failed in $region"
+                    fi
+                  fi
+                else
+                  echo "Issue Login with IBMCLOUD $auhtenticate"
+                  exit 1
+                fi
+              done
+                  }
+
+          regions="us-south eu-de us-east"
+          ibmcloud_login "${regions}" "${API_KEY}" "delete"

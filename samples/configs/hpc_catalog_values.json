@@ -1,0 +1,11 @@
+{
+    "ibmcloud_api_key"          : "Please fill here",
+    "resource_group"            : "Default",
+    "zones"                     : "[\"us-east-1\"]",
+    "cluster_prefix"            : "hpcaas",
+    "cluster_id"                : "Please fill here",
+    "reservation_id"            : "Please fill here",
+    "bastion_ssh_keys"          : "[\"Please fill here\"]",
+    "compute_ssh_keys"          : "[\"Please fill here\"]",
+    "remote_allowed_ips"        : "[\"Please fill here\"]"
+}

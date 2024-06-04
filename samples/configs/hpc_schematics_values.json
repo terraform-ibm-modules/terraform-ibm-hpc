@@ -1,0 +1,116 @@
+{
+  "name": "hpcaas-test",
+  "type": [
+    "terraform_v1.5"
+  ],
+  "location": "eu-de",
+  "resource_group": "Default",
+  "description": "",
+  "tags": [],
+  "template_repo": {
+    "url": "https://github.com/terraform-ibm-modules/terraform-ibm-hpc",
+    "branch": "main"
+  },
+  "template_data": [
+    {
+      "folder": "solutions/hpc",
+      "type": "terraform_v1.5",
+      "env_values":[
+        {
+          "TF_CLI_ARGS_apply": "-parallelism=250"
+        },
+        {
+          "TF_CLI_ARGS_plan": "-parallelism=250"
+        },
+        {
+          "TF_CLI_ARGS_destroy": "-parallelism=100"
+        },
+        {
+          "VAR1":"<val1>"
+        },
+        {
+          "VAR2":"<val2>"
+        }
+      ],
+      "variablestore": [
+        {
+          "name": "TF_PARALLELISM",
+          "value": "250",
+          "type": "string",
+          "secure": false,
+          "description": "Parallelism concurrent operations limit. Valid values are between 1 and 256, both inclusive. [Learn more](https://www.terraform.io/docs/internals/graph.html#walking-the-graph)."
+        },
+        {
+          "name": "TF_VERSION",
+          "value": "1.5",
+          "type": "string",
+          "secure": false,
+          "description": "The version of the Terraform engine that's used in the Schematics workspace."
+        },
+        {
+          "name": "ibmcloud_api_key",
+          "value": "Please fill here",
+          "type": "string",
+          "secure": true,
+          "description": "IBM Cloud API key for the IBM Cloud account where the IBM Cloud HPC cluster needs to be deployed. For more information on how to create an API key, see [Managing user API keys](https://cloud.ibm.com/docs/account?topic=account-userapikey)."
+        },
+        {
+          "name": "resource_group",
+          "value": "Default",
+          "type": "string",
+          "secure": false,
+          "description": "Resource group name from your IBM Cloud account where the VPC resources should be deployed. Note. If the resource group value is set as null, automation creates two different RG with the name (workload-rg and service-rg). For additional information on resource groups, see [Managing resource groups](https://cloud.ibm.com/docs/account?topic=account-rgs)."
+        },
+        {
+          "name": "zones",
+          "value": "[\"us-east-1\"]",
+          "type": "list(string)",
+          "secure": false,
+          "description": "The IBM Cloud zone name within the selected region where the IBM Cloud HPC cluster should be deployed and requires a single input value. Supported zones are: eu-de-2 and eu-de-3 for eu-de, us-east-1 and us-east-3 for us-east, and us-south-1 for us-south. The management nodes, file storage shares, and compute nodes will be deployed in the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
+        },
+        {
+          "name": "cluster_prefix",
+          "value": "hpcaas",
+          "type": "string",
+          "secure": false,
+          "description": "Prefix that is used to name the IBM Cloud HPC cluster and IBM Cloud resources that are provisioned to build the IBM Cloud HPC cluster instance. You cannot create more than one instance of the IBM Cloud HPC cluster with the same name. Ensure that the name is unique. Prefix must start with a lowercase letter and contain only lowercase letters, digits, and hyphens in between. Hyphens must be followed by at least one lowercase letter or digit. There are no leading, trailing, or consecutive hyphens.Character length for cluster_prefix should be less than 16."
+        },
+        {
+          "name": "cluster_id",
+          "value": "Please fill here",
+          "type": "string",
+          "secure": false,
+          "description": "Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same reservations. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment."
+        },
+        {
+          "name": "reservation_id",
+          "value": "Please fill here",
+          "type": "string",
+          "secure": true,
+          "description": "Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_)."
+        },
+        {
+          "name": "bastion_ssh_keys",
+          "value": "[\"Please fill here\"]",
+          "type": "list(string)",
+          "secure": false,
+          "description": "Provide the list of SSH key names configured in your IBM Cloud account to establish a connection to the IBM Cloud HPC bastion and login node. Ensure the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by following the provided instructions.[SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
+        },
+        {
+          "name": "compute_ssh_keys",
+          "value": "[\"Please fill here\"]",
+          "type": "list(string)",
+          "secure": false,
+          "description": "Provide the list of SSH key names configured in your IBM Cloud account to establish a connection to the IBM Cloud HPC cluster node. Ensure the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by following the provided instructions.[SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
+        },
+        {
+          "name": "remote_allowed_ips",
+          "value": "[\"Please fill here\"]",
+          "type": "list(string)",
+          "secure": false,
+          "description": "Comma-separated list of IP addresses that can access the IBM Cloud HPC cluster instance through an SSH interface. For security purposes, provide the public IP addresses assigned to the devices that are authorized to establish SSH connections (for example, [\"169.45.117.34\"]). To fetch the IP address of the device, use [https://ipv4.icanhazip.com/](https://ipv4.icanhazip.com/)."
+        }
+      ]
+    }
+  ]
+}

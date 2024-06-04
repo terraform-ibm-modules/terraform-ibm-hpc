@@ -1,22 +1,3 @@
-# To debug local values
-/*
-output "env_var" {
-  value = local.env
-}
-
-output "landing_zone_data" {
-  value = module.landing_zone[*]
-}
-
-output "vpc_data" {
-  value = module.landing_zone[*].vpc_data
-}
-
-output "subnet_data" {
-  value = module.landing_zone[*].subnet_data
-}
-*/
-
 output "resource_group_id" {
   description = "Resource group ID"
   value       = module.landing_zone[*].resource_group_data
@@ -37,6 +18,22 @@ output "vpc_crn" {
   value       = module.landing_zone[*].vpc_data[0].vpc_crn
 }
 
+output "public_gateways" {
+  description = "Public Gateway IDs"
+  value       = module.landing_zone[*].vpc_data[0].public_gateways
+}
+
+output "subnets" {
+  description = "subnets"
+  value = [for subnet in flatten(module.landing_zone[*].subnet_data) : {
+    name = subnet["name"]
+    id   = subnet["id"]
+    zone = subnet["zone"]
+    cidr = subnet["cidr"]
+    crn  = subnet["crn"]
+    }
+  ]
+}
 
 output "bastion_subnets" {
   description = "Bastion subnets"
@@ -67,6 +64,8 @@ output "compute_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
+    crn  = subnet["crn"]
+    #ipv4_cidr_block = subnet["ipv4_cidr_block "]
     } if strcontains(subnet["name"], "-hpc-compute-subnet-zone-")
   ]
 }
@@ -101,12 +100,22 @@ output "subnets_crn" {
 # TODO: Find a way to get CRN needed for VSI boot drive encryption
 output "boot_volume_encryption_key" {
   description = "Boot volume encryption key"
-  value       = var.key_management != null ? module.landing_zone[*].key_map[format("%s-vsi-key", var.prefix)] : null
+  value       = var.key_management == "key_protect" ? (var.kms_key_name == null ? module.landing_zone[*].key_map[format("%s-vsi-key", var.prefix)] : module.landing_zone[*].key_map[var.kms_key_name]) : null
 }
 
 output "key_management_guid" {
   description = "GUID for KMS instance"
-  value       = var.key_management != null ? module.landing_zone[0].key_management_guid : null
+  value       = var.key_management == "key_protect" ? module.landing_zone[0].key_management_guid : null
+}
+
+output "cos_instance_crns" {
+  description = "CRN of the COS instance created by Landing Zone Module"
+  value       = flatten(module.landing_zone[*].cos_data[*].crn)
+}
+
+output "cos_buckets_names" {
+  description = "Name of the COS Bucket created for SCC Instance"
+  value       = flatten(module.landing_zone[*].cos_bucket_names)
 }
 
 # TODO: Observability data

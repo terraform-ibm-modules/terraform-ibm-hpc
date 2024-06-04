@@ -1,0 +1,122 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: pre-requisites-install
+spec:
+  params:
+    - name: pipeline-debug
+      description: Pipeline debug mode. Value can be 0 or 1. Default to 0
+      default: "0"
+  workspaces:
+    - name: workspace
+      mountPath: /artifacts
+  stepTemplate:
+    env:
+      - name: PIPELINE_DEBUG
+        value: $(params.pipeline-debug)
+  steps:
+    - name: pre-requisites-install
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.29
+      workingDir: /artifacts
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          #!/bin/bash
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          TF_DIR="/tmp"
+
+          #######################################
+          # IBM Cloud
+          #######################################
+          echo $'***** Installing IBMCLOUD and Plugins *****\n'
+          curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+          ibmcloud plugin install schematics -f
+          ibmcloud plugin install vpc-infrastructure -f
+          ibmcloud plugin install key-protect -f
+          echo $'***** Installed IBMCLOUD and Plugins *****\n'
+          echo $'***** Check Repository Private or Public *****\n'
+          if [[ "$REPOSITORY" == *"github.ibm.com"* ]]; then
+              git config --global url.ssh://git@github.ibm.com/.insteadOf https://github.ibm.com/
+              export GOPRIVATE=github.ibm.com/*
+          fi
+
+          #######################################
+          # Golang
+          #######################################
+          echo $'***** Installing Golang *****\n'
+          yum install wget -y
+          [ ! -d "$(pwd)/go" ] &&
+          cd $(pwd) && wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz &&
+          tar -C $(pwd)/ -xzf go1.21.0.linux-amd64.tar.gz &&
+          cd $(pwd)/ &&
+          echo "export PATH=\$PATH:$(pwd)/go/bin:\$HOME/go/bin" >> ~/.bashrc &&
+          echo "export GOROOT=$(pwd)/go" >> ~/.bashrc
+          source ~/.bashrc
+          go version
+          which go
+          echo $'***** Golang Installed Successfully *****\n'
+
+          #######################################
+          # python
+          #######################################
+          echo $'***** Installing Python *****\n'
+          yum install python3.9 -y
+          python3.9 --version
+
+          if python3 --version &> /dev/null; then
+            PYTHON=python3
+          elif python --version &> /dev/null; then
+            PYTHON=python3
+          else
+            echo "python or python3 not detected. Please install python, ensure it is on your \$PATH, and retry."
+            exit 1
+          fi
+          echo $'***** Python Installed *****\n'
+
+          #######################################
+          # pip
+          #######################################
+          echo $'***** Upgrading/Installing PIP *****\n'
+          python3 -m pip install --upgrade pip
+          pip install --root-user-action=ignore requests
+          if ! ${PYTHON} -m pip &> /dev/null; then
+            echo "Unable to detect pip after running: ${PYTHON} -m pip. Please ensure pip is installed and try again."
+            exit 1
+          fi
+          echo $'***** Upgraded/Installed PIP *****\n'
+
+          #######################################
+          # ansible
+          #######################################
+          echo $'***** Installing Ansible and Ansible core *****\n'
+          python3 -m pip install ansible==4.10.0 ansible-core==2.11.12
+          ansible --version
+          echo $'***** Ansible and Ansible core Installed *****\n'
+
+          #######################################
+          # terraform-provisioner
+          #######################################
+          echo $'***** Installing Terraform-Provisioner *****\n'
+          curl -sL \
+            https://raw.githubusercontent.com/radekg/terraform-provisioner-ansible/master/bin/deploy-release.sh \
+            --output /tmp/deploy-release.sh
+          chmod +x /tmp/deploy-release.sh
+          /tmp/deploy-release.sh -v 2.3.3
+          rm -rf /tmp/deploy-release.sh
+          echo $'***** Terraform-Provisioner Installed *****\n'
+
+          #######################################
+          # terraform
+          #######################################
+          echo $'***** Installing Terraform *****\n'
+          wget https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip
+          unzip terraform_1.5.7_linux_amd64.zip
+          mv terraform /usr/local/bin/terraform
+          terraform --version

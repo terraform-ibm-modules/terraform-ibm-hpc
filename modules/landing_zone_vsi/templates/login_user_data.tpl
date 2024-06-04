@@ -1,29 +1,26 @@
 #!/usr/bin/bash
-
 ###################################################
 # Copyright (C) IBM Corp. 2023 All Rights Reserved.
 # Licensed under the Apache License v2.0
 ###################################################
 
-#!/usr/bin/env bash
-if grep -E -q "CentOS|Red Hat" /etc/os-release
-then
-    USER=vpcuser
-elif grep -q "Ubuntu" /etc/os-release
-then
-    USER=ubuntu
-fi
-sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo \'Please login as the user \\\\\"$USER\\\\\" rather than the user \\\\\"root\\\\\".\';echo;sleep 5; exit 142\" /" /root/.ssh/authorized_keys
+logfile=/tmp/user_data.log
+echo "Export user data (variable values)"
+echo "START $(date '+%Y-%m-%d %H:%M:%S')" >> $logfile
 
-# input parameters
-echo "${bastion_public_key_content}" >> /~/.ssh/authorized_keys
-echo "${login_public_key_content}" >> ~/.ssh/authorized_keys
-echo "StrictHostKeyChecking no" >> ~/.ssh/config
-echo "${login_private_key_content}" > ~/.ssh/id_rsa
-chmod 600 ~/.ssh/id_rsa
-
-# network setup
-echo "DOMAIN=${login_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${login_interfaces}"
-echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${login_interfaces}"
-chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
-systemctl restart NetworkManager
+%EXPORT_USER_DATA%
+#input parameters
+network_interface=${network_interface}
+dns_domain="${dns_domain}"
+cluster_private_key_content="${cluster_private_key_content}"
+cluster_public_key_content="${cluster_public_key_content}"
+mount_path="${mount_path}"
+enable_ldap="${enable_ldap}"
+network_interface=""${network_interface}""
+rc_cidr_block="${rc_cidr_block}"
+rc_cidr_block_1="${rc_cidr_block_1}"
+cluster_prefix="${cluster_prefix}"
+ldap_server_ip="${ldap_server_ip}"
+ldap_basedns="${ldap_basedns}"
+hyperthreading="${hyperthreading}"
+echo "END $(date '+%Y-%m-%d %H:%M:%S')" >> $logfile

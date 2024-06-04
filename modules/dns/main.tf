@@ -5,10 +5,17 @@ resource "ibm_resource_instance" "itself" {
   location          = "global"
   service           = "dns-svcs"
   plan              = "standard-dns"
+  tags              = local.tags
 }
 
 locals {
   dns_instance_id = var.dns_instance_id == null ? ibm_resource_instance.itself[0].guid : var.dns_instance_id
+}
+
+locals {
+  name   = "hpc"
+  prefix = var.prefix
+  tags   = [local.prefix, local.name]
 }
 
 resource "ibm_dns_custom_resolver" "itself" {
@@ -18,7 +25,7 @@ resource "ibm_dns_custom_resolver" "itself" {
   enabled           = true
   high_availability = length(var.subnets_crn) > 1 ? true : false
   dynamic "locations" {
-    for_each = length(var.subnets_crn) > 3 ? slice(var.subnets_crn, 0, 3) : var.subnets_crn
+    for_each = length(var.subnets_crn) > 3 ? slice(var.subnets_crn, 0, 2) : var.subnets_crn
     content {
       subnet_crn = locations.value
       enabled    = true
@@ -26,19 +33,10 @@ resource "ibm_dns_custom_resolver" "itself" {
   }
 }
 
-data "ibm_dns_zones" "conditional" {
-  count       = var.dns_instance_id != null ? 1 : 0
-  instance_id = var.dns_instance_id
-}
-
-locals {
-  dns_domain_names = flatten([setsubtract(var.dns_domain_names == null ? [] : var.dns_domain_names, flatten(data.ibm_dns_zones.conditional[*].dns_zones[*]["name"]))])
-}
-
 resource "ibm_dns_zone" "itself" {
-  count       = length(local.dns_domain_names)
+  count       = 1
   instance_id = local.dns_instance_id
-  name        = local.dns_domain_names[count.index]
+  name        = var.dns_domain_names[0]
 }
 
 data "ibm_dns_zones" "itself" {
@@ -53,9 +51,9 @@ locals {
 }
 
 resource "ibm_dns_permitted_network" "itself" {
-  count       = length(var.dns_domain_names)
+  count       = 1
   instance_id = local.dns_instance_id
   vpc_crn     = var.vpc_crn
-  zone_id     = one(values(local.dns_zone_maps[count.index]))
+  zone_id     = split("/", ibm_dns_zone.itself[0].id)[1]
   type        = "vpc"
 }

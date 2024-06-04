@@ -1,15 +1,4 @@
 ##############################################################################
-# Account Variables
-##############################################################################
-
-variable "ibmcloud_api_key" {
-  description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
-  type        = string
-  sensitive   = true
-  default     = null
-}
-
-##############################################################################
 # DNS Variables
 ##############################################################################
 
@@ -32,4 +21,16 @@ variable "dns_records" {
   }))
   default     = null
   description = "IBM Cloud HPC DNS record."
+}
+
+variable "dns_domain_names" {
+  type = object({
+    compute = string
+    #storage  = string
+    #protocol = string
+  })
+  default = {
+    compute = "comp.com"
+  }
+  description = "IBM Cloud HPC DNS domain names."
 }

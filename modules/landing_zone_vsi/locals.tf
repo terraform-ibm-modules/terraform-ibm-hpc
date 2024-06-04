@@ -1,203 +1,192 @@
 # define variables
 locals {
-  # Future use
-  # products       = "scale"
   name           = "hpc"
   prefix         = var.prefix
   tags           = [local.prefix, local.name]
   vsi_interfaces = ["eth0", "eth1"]
-  bms_interfaces = ["ens1", "ens2"]
   # TODO: explore (DA always keep it true)
   skip_iam_authorization_policy = true
-
-  block_storage_volumes = [for volume in var.nsd_details : {
-    name           = format("nsd-%s", index(var.nsd_details, volume) + 1)
-    profile        = volume["profile"]
-    capacity       = volume["capacity"]
-    iops           = volume["iops"]
-    resource_group = local.resource_group_id
-    # TODO: Encryption
-    # encryption_key =
-  }]
-  # TODO: Update the LB configurable
-  # Bug: 5847 - LB profile & subnets are not configurable
-  /*
-  load_balancers = [{
-    name              = "hpc"
-    type              = "private"
-    listener_port     = 80
-    listener_protocol = "http"
-    connection_limit  = 10
-    algorithm         = "round_robin"
-    protocol          = "http"
-    health_delay      = 60
-    health_retries    = 5
-    health_timeout    = 30
-    health_type       = "http"
-    pool_member_port  = 80
-  }]
-  */
-
-  management_instance_count     = sum(var.management_instances[*]["count"])
-  storage_instance_count        = sum(var.storage_instances[*]["count"])
-  protocol_instance_count       = sum(var.protocol_instances[*]["count"])
-  static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
-
-  enable_login      = local.management_instance_count > 0
-  enable_management = local.management_instance_count > 0
-  enable_compute    = local.management_instance_count > 0 || local.static_compute_instance_count > 0 || local.protocol_instance_count > 0
-  enable_storage    = local.storage_instance_count > 0
-  # TODO: Fix the logic
-  enable_block_storage = var.storage_type == "scratch" ? true : false
-  enable_protocol      = local.storage_instance_count > 0 && local.protocol_instance_count > 0
-  # Future use
-  # TODO: Fix the logic
-  # enable_load_balancer = false
-
-  login_node_name      = format("%s-%s", local.prefix, "login")
-  management_node_name = format("%s-%s", local.prefix, "mgmt")
-  compute_node_name    = format("%s-%s", local.prefix, "comp")
-  storage_node_name    = format("%s-%s", local.prefix, "strg")
-  protocol_node_name   = format("%s-%s", local.prefix, "proto")
-
-  # Future use
-  /*
-  management_instance_count     = sum(var.management_instances[*]["count"])
-  management_instance_profile   = flatten([for item in var.management_instances: [
-    for count in range(item["count"]) : var.management_instances[index(var.management_instances, item)]["profile"]
-  ]])
-  static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
-  storage_instance_count        = sum(var.storage_instances[*]["count"])
-  protocol_instance_count       = sum(var.protocol_instances[*]["count"])
-  */
-
-  # Future use
-  /*
-  login_image_name      = var.login_image_name
-  management_image_name = var.management_image_name
-  compute_image_name    = var.compute_image_name
-  storage_image_name    = var.storage_image_name
-  protocol_image_name   = var.storage_image_name
-  */
-
-  management_image_id = data.ibm_is_image.management.id
-  login_image_id      = data.ibm_is_image.login.id
-  compute_image_id    = data.ibm_is_image.compute.id
-  storage_image_id    = data.ibm_is_image.storage.id
-  protocol_image_id   = data.ibm_is_image.storage.id
-
-  storage_ssh_keys    = [for name in var.storage_ssh_keys : data.ibm_is_ssh_key.storage[name].id]
-  compute_ssh_keys    = [for name in var.compute_ssh_keys : data.ibm_is_ssh_key.compute[name].id]
-  login_ssh_keys      = [for name in var.login_ssh_keys : data.ibm_is_ssh_key.login[name].id]
-  management_ssh_keys = local.compute_ssh_keys
-  protocol_ssh_keys   = local.storage_ssh_keys
-
-  # Future use
-  /*
-  # Scale static configs
-  scale_cloud_deployer_path     = "/opt/IBM/ibm-spectrumscale-cloud-deploy"
-  scale_cloud_install_repo_url  = "https://github.com/IBM/ibm-spectrum-scale-cloud-install"
-  scale_cloud_install_repo_name = "ibm-spectrum-scale-cloud-install"
-  scale_cloud_install_branch    = "5.1.8.1"
-  scale_cloud_infra_repo_url    = "https://github.com/IBM/ibm-spectrum-scale-install-infra"
-  scale_cloud_infra_repo_name   = "ibm-spectrum-scale-install-infra"
-  scale_cloud_infra_repo_tag    = "v2.7.0"
-  */
+  enable_compute                = true
+  enable_management             = true
+  ldap_node_name                = format("%s-%s", local.prefix, "ldap")
+  login_node_name               = format("%s-%s", local.prefix, "login")
+  management_node_name          = format("%s-%s", local.prefix, "mgmt")
+  compute_ssh_keys              = [for name in var.compute_ssh_keys : data.ibm_is_ssh_key.compute[name].id]
+  management_ssh_keys           = local.compute_ssh_keys
+  ldap_enable                   = var.enable_ldap == true && var.ldap_server == "null" ? 1 : 0
 
   # Region and Zone calculations
   region = join("-", slice(split("-", var.zones[0]), 0, 2))
-
-  # TODO: DNS configs
-
-  # Security group rules
-  login_security_group_rules = [
-    {
-      name      = "allow-all-bastion"
-      direction = "inbound"
-      remote    = var.bastion_security_group_id
-    },
-    {
-      name      = "allow-all-compute"
-      direction = "inbound"
-      remote    = module.compute_sg[0].security_group_id
-    },
-    {
-      name      = "allow-all-bastion"
-      direction = "outbound"
-      remote    = var.bastion_security_group_id
-    },
-    {
-      name      = "allow-all-compute"
-      direction = "outbound"
-      remote    = module.compute_sg[0].security_group_id
-    }
-  ]
-  # TODO: Compute & storage can't be added due to SG rule limitation
+  # # TODO: Compute & storage can't be added due to SG rule limitation
   /* [ERROR] Error while creating Security Group Rule Exceeded limit of remote rules per security group
   (the limit is 5 remote rules per security group)*/
 
   compute_security_group_rules = [
     {
-      name      = "allow-all-bastion"
+      name      = "allow-all-bastion-inbound"
       direction = "inbound"
       remote    = var.bastion_security_group_id
     },
     {
-      name      = "allow-all-login"
+      name      = "allow-port-22-inbound"
       direction = "inbound"
-      remote    = module.login_sg[0].security_group_id
+      remote    = var.bastion_security_group_id
+      tcp = {
+        port_min = 22
+        port_max = 22
+      }
     },
     {
-      name      = "allow-all-bastion"
+      name      = "allow-all-compute-inbound"
+      direction = "inbound"
+      remote    = module.compute_sg[0].security_group_id_for_ref
+    },
+    {
+      name      = "allow-all-compute-0-inbound"
+      direction = "inbound"
+      remote    = local.compute_subnets[0].cidr
+      tcp = {
+        port_min = 2049
+        port_max = 2049
+      }
+    },
+    {
+      name      = "allow-all-storage-inbound"
+      direction = "inbound"
+      remote    = var.storage_security_group_id != null ? var.storage_security_group_id : module.compute_sg[0].security_group_id_for_ref
+    },
+    {
+      name      = "allow-all-bastion-outbound"
       direction = "outbound"
       remote    = var.bastion_security_group_id
     },
     {
-      name      = "allow-all-login"
+      name      = "allow-all-compute-0-outbound"
       direction = "outbound"
-      remote    = module.login_sg[0].security_group_id
+      remote    = local.compute_subnets[0].cidr
+      tcp = {
+        port_min = 2049
+        port_max = 2049
+      }
+    },
+    {
+      name      = "allow-all-outbound-outbound"
+      direction = "outbound"
+      remote    = "0.0.0.0/0"
+    },
+  ]
+
+  storage_nfs_security_group_rules = [
+    {
+      name      = "allow-all-hpcaas-compute-sg"
+      direction = "inbound"
+      remote    = module.compute_sg[0].security_group_id
     }
   ]
-  storage_security_group_rules = [
+
+  # LDAP security group rule for Cluster
+  ldap_security_group_rule_for_cluster = [
     {
-      name      = "allow-all-bastion"
+      name      = "inbound-rule-for-ldap-node-connection"
       direction = "inbound"
-      remote    = var.bastion_security_group_id
-    },
+      remote    = var.ldap_server
+      tcp = {
+        port_min = 389
+        port_max = 389
+      }
+    }
+  ]
+
+  # SSH connection to the Login node via Cluster nodes.
+  ssh_connection_to_login_node_via_cluster_nodes = [
     {
-      name      = "allow-all-compute"
+      name      = "inbound-rule-for-login-node-ssh-connection"
       direction = "inbound"
       remote    = module.compute_sg[0].security_group_id
-    },
-    {
-      name      = "allow-all-bastion"
-      direction = "outbound"
-      remote    = var.bastion_security_group_id
-    },
-    {
-      name      = "allow-all-compute"
-      direction = "outbound"
-      remote    = module.compute_sg[0].security_group_id
-  }]
-
-
-  # Derived configs
-  # VPC
-  resource_group_id = data.ibm_resource_group.itself.id
+      tcp = {
+        port_min = 22
+        port_max = 22
+      }
+    }
+  ]
 
   # Subnets
   # TODO: Multi-zone multi-vNIC VSIs deployment support (bug #https://github.ibm.com/GoldenEye/issues/issues/5830)
   # Findings: Singe zone multi-vNICs VSIs deployment & multi-zone single vNIC VSIs deployment are supported.
-  login_subnets    = var.login_subnets
-  compute_subnets  = var.compute_subnets
-  storage_subnets  = var.storage_subnets
-  protocol_subnets = var.protocol_subnets
+  compute_subnets = var.compute_subnets
 
-  # Security Groups
-  protocol_secondary_security_group = [for subnet in local.protocol_subnets :
+  # Check whether an entry is found in the mapping file for the given management node image
+  image_mapping_entry_found = contains(keys(local.image_region_map), var.management_image_name)
+  new_image_id              = local.image_mapping_entry_found ? local.image_region_map[var.management_image_name][local.region] : "Image not found with the given name"
+
+  # Check whether an entry is found in the mapping file for the given compute node image
+  compute_image_found_in_map = contains(keys(local.image_region_map), var.compute_image_name)
+  # If not found, assume the name is the id already (customer provided image)
+  new_compute_image_id    = local.compute_image_found_in_map ? local.image_region_map[var.compute_image_name][local.region] : var.compute_image_name
+  compute_image_from_data = !local.compute_image_found_in_map && !startswith(local.new_compute_image_id, "crn:")
+
+  # Check whether an entry is found in the mapping file for the given login node image
+  login_image_mapping_entry_found = contains(keys(local.image_region_map), var.login_image_name)
+  new_login_image_id              = local.login_image_mapping_entry_found ? local.image_region_map[var.login_image_name][local.region] : "Image not found with the given name"
+
+  compute_node_max_count = 500
+  rc_max_num             = local.compute_node_max_count
+
+  bastion_subnets        = var.bastion_subnets
+  bastion_ssh_keys       = [for name in var.ssh_keys : data.ibm_is_ssh_key.bastion[name].id]
+  ldap_server            = var.enable_ldap == true && var.ldap_server == "null" ? length(module.ldap_vsi) > 0 ? var.ldap_primary_ip[0] : null : var.ldap_server
+  ldap_instance_image_id = var.enable_ldap == true && var.ldap_server == "null" ? data.ibm_is_image.ldap_vsi_image[0].id : "null"
+
+  # The below logic is needed to point the API endpoints for the dynanic host creation
+  us_east  = "https://api.us-east.codeengine.cloud.ibm.com/v2beta"
+  eu_de    = "https://api.eu-de.codeengine.cloud.ibm.com/v2beta"
+  us_south = "https://api.us-south.codeengine.cloud.ibm.com/v2beta"
+
+  # ip/names of vsis
+  management_vsi_data   = flatten(module.management_vsi[*]["list"])
+  management_private_ip = local.management_vsi_data[0]["ipv4_address"]
+  management_hostname   = local.management_vsi_data[0]["name"]
+
+  management_candidate_vsi_data    = flatten(module.management_candidate_vsi[*]["list"])
+  management_candidate_private_ips = local.management_candidate_vsi_data[*]["ipv4_address"]
+  management_candidate_hostnames   = local.management_candidate_vsi_data[*]["name"]
+
+  login_vsi_data    = flatten(module.login_vsi[*]["list"])
+  login_private_ips = local.login_vsi_data[*]["ipv4_address"]
+  login_hostnames   = local.login_vsi_data[*]["name"]
+
+  ldap_vsi_data = flatten(module.ldap_vsi[*]["list"])
+  #ldap_private_ips  = local.ldap_vsi_data[*]["ipv4_address"]
+  ldap_hostnames = local.ldap_vsi_data[*]["name"]
+
+}
+
+###########################################################################
+# IBM Cloud Dababase for MySQL database local variables
+###########################################################################
+locals {
+  db_name = "pac"
+  db_user = "pacuser"
+}
+
+## Differentiating VPC File Share and NFS share
+locals {
+  nfs_file_share = [
+    for share in var.mount_path :
     {
-      security_group_id = one(module.compute_sg[*].security_group_id)
-      interface_name    = subnet["name"]
+      mount_path = share.mount_path
+      nfs_share  = share.nfs_share
     }
+    if share.nfs_share != null && share.nfs_share != ""
+  ]
+
+  vpc_file_share = [
+    for share in var.mount_path :
+    {
+      mount_path = share.mount_path
+      size       = share.size
+      iops       = share.iops
+    }
+    if share.size != null && share.iops != null
   ]
 }

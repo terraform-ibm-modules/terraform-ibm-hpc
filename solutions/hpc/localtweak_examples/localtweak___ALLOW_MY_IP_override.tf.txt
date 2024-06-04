@@ -1,0 +1,6 @@
+# This localtweak will detect your current internet visible address and add it to the
+# allowed_ips list, so you are sure you will be able to access the cluster.
+
+locals {
+  add_current_ip_to_allowed_cidr = true
+}

@@ -1,15 +1,4 @@
 ##############################################################################
-# Account Variables
-##############################################################################
-
-variable "ibmcloud_api_key" {
-  description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
-  type        = string
-  sensitive   = true
-  default     = null
-}
-
-##############################################################################
 # Resource Groups Variables
 ##############################################################################
 
@@ -33,11 +22,6 @@ variable "prefix" {
   }
 }
 
-variable "zones" {
-  description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
-  type        = list(string)
-}
-
 ##############################################################################
 # VPC Variables
 ##############################################################################
@@ -49,17 +33,13 @@ variable "vpc_id" {
 
 variable "network_cidr" {
   description = "Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning."
-  type        = string
-  default     = "10.0.0.0/8"
+  type        = list(string)
+  default     = null
 }
+
 ##############################################################################
 # Access Variables
 ##############################################################################
-variable "enable_bastion" {
-  type        = bool
-  default     = true
-  description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
-}
 
 variable "bastion_subnets" {
   type = list(object({
@@ -70,18 +50,6 @@ variable "bastion_subnets" {
   }))
   default     = []
   description = "Subnets to launch the bastion host."
-}
-
-variable "enable_bootstrap" {
-  type        = bool
-  default     = false
-  description = "Bootstrap should be only used for better deployment performance"
-}
-
-variable "bootstrap_instance_profile" {
-  type        = string
-  default     = "mx2-4x32"
-  description = "Bootstrap should be only used for better deployment performance"
 }
 
 variable "ssh_keys" {
@@ -112,4 +80,42 @@ variable "existing_kms_instance_guid" {
   type        = string
   default     = null
   description = "GUID of boot volume encryption key"
+}
+
+variable "skip_iam_authorization_policy" {
+  type        = string
+  default     = null
+  description = "Skip IAM Authorization policy"
+}
+
+###########################################################################
+# Existing Bastion Support variables
+###########################################################################
+
+variable "bastion_instance_name" {
+  type        = string
+  default     = null
+  description = "Bastion instance name."
+}
+
+variable "bastion_instance_public_ip" {
+  type        = string
+  default     = null
+  description = "Bastion instance public ip address."
+}
+
+variable "bastion_security_group_id" {
+  type        = string
+  default     = null
+  description = "Bastion security group id."
+}
+
+###########################################################################
+# LDAP Server variables
+###########################################################################
+
+variable "ldap_server" {
+  type        = string
+  default     = "null"
+  description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
 }
