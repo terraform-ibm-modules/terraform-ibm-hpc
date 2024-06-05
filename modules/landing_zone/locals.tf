@@ -23,12 +23,12 @@ locals {
   create_resource_group = var.resource_group == "null" ? true : false
   resource_groups = var.resource_group == "null" ? [
     {
-      name   = "service-rg",
+      name   = "${local.prefix}-service-rg",
       create = local.create_resource_group,
       use_prefix : false
     },
     {
-      name   = "workload-rg",
+      name   = "${local.prefix}-workload-rg",
       create = local.create_resource_group,
       use_prefix : false
     }
@@ -39,7 +39,7 @@ locals {
     }
   ]
   # For the variables looking for resource group names only (transit_gateway, key_management, atracker)
-  resource_group = var.resource_group == "null" ? "service-rg" : var.resource_group
+  resource_group = var.resource_group == "null" ? "${local.prefix}-service-rg" : var.resource_group
   region         = join("-", slice(split("-", var.zones[0]), 0, 2))
   zones          = ["zone-1", "zone-2", "zone-3"]
   active_zones = [
@@ -117,7 +117,7 @@ locals {
         }
       ] : null
       prefix                       = local.name
-      resource_group               = var.resource_group == "null" ? "workload-rg" : var.resource_group
+      resource_group               = var.resource_group == "null" ? "${local.prefix}-workload-rg" : var.resource_group
       clean_default_security_group = true
       clean_default_acl            = true
       flow_logs_bucket_name        = var.enable_vpc_flow_logs ? "vpc-flow-logs-bucket" : null

@@ -17,6 +17,14 @@ spec:
     - name: pipeline-debug
       description: Pipeline debug mode. Value can be 0 or 1. Default to 0
       default: "0"
+    - name: revision
+      description: |
+        the git revision/commit to update the git HEAD to.
+        Default is to mean only use the branch
+      default: ""
+    - name: pr-revision
+      description: the commit/revision in the source branch of the PullRequest that is to be built
+      default: ""
     - name: resource_group
       description: Resource group name from your IBM Cloud account where the VPC resources should be deployed. Note. If the resource group value is set as null, automation creates two different RG with the name (workload-rg and service-rg). For additional information on resource groups, see [Managing resource groups](https://cloud.ibm.com/docs/account?topic=account-rgs).
       default: Default
@@ -33,9 +41,12 @@ spec:
             optional: true
       - name: PIPELINE_DEBUG
         value: $(params.pipeline-debug)
+      - name: PR_REVISION
+        value: $(params.pr-revision)
+      - name: REVISION
+        value: $(params.revision)
   steps:
     - name: ssh-key-creation
-      onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       env:
         - name: resource_group
@@ -54,7 +65,14 @@ spec:
             set -x
           fi
 
-          ibmcloud version
+          CICD_SSH_KEY=cicd
+          if [ -z "${PR_REVISION}" ]; then
+            REVISION=$(echo $REVISION)
+            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
+          else
+            PR_REVISION=$(echo $PR_REVISION)
+            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$PR_REVISION)
+          fi
 
           mkdir /artifacts/.ssh
           ssh_key_pair=$(eval "ssh-keygen -t rsa -N '' -f /artifacts/.ssh/id_rsa <<< y")
@@ -63,7 +81,6 @@ spec:
             local regions=("$1")
             local API_KEY=("$2")
             local for_create_or_delete="$3"
-            CICD_SSH_KEY="cicd-toolchain"
             # Looping all region to create SSH-KEYS
             for region in ${regions[@]};
               do

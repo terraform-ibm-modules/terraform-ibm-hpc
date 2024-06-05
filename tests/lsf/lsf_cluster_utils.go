@@ -19,7 +19,7 @@ import (
 
 const (
 	defaultSleepDuration           = 30 * time.Second
-	timeOutForDynamicNodeDisappear = 12 * time.Minute
+	timeOutForDynamicNodeDisappear = 15 * time.Minute
 	jobCompletionWaitTime          = 50 * time.Second
 	dynamicNodeWaitTime            = 3 * time.Minute
 	appCenterPort                  = 8443
@@ -1182,6 +1182,12 @@ func GetJobCommand(zone, jobType string) string {
 // It logs into IBM Cloud using the API key and VPC region, retrieves the list of file shares
 // with the specified cluster prefix, and verifies encryption settings.
 func VerifyEncryption(t *testing.T, apiKey, region, resourceGroup, clusterPrefix, keyManagement string, logger *utils.AggregatedLogger) error {
+
+	// Set custom resource group if it's resource group is null
+	// In case the resource group is null , set it to a default value "workload-rg"
+	if strings.Contains(resourceGroup, "null") {
+		resourceGroup = "workload-rg"
+	}
 
 	// Login to IBM Cloud using the API key and VPC region
 	if err := utils.LoginIntoIBMCloudUsingCLI(t, apiKey, region, resourceGroup); err != nil {

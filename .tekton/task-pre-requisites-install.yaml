@@ -8,6 +8,9 @@ spec:
     - name: pipeline-debug
       description: Pipeline debug mode. Value can be 0 or 1. Default to 0
       default: "0"
+    - name: repository
+      description: the git repo url
+      default: ""
   workspaces:
     - name: workspace
       mountPath: /artifacts
@@ -15,6 +18,8 @@ spec:
     env:
       - name: PIPELINE_DEBUG
         value: $(params.pipeline-debug)
+      - name: REPOSITORY
+        value: $(params.repository)
   steps:
     - name: pre-requisites-install
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.29
@@ -41,10 +46,12 @@ spec:
           ibmcloud plugin install vpc-infrastructure -f
           ibmcloud plugin install key-protect -f
           echo $'***** Installed IBMCLOUD and Plugins *****\n'
-          echo $'***** Check Repository Private or Public *****\n'
+
           if [[ "$REPOSITORY" == *"github.ibm.com"* ]]; then
+              echo $'***** Check Repository Private or Public *****\n'
               git config --global url.ssh://git@github.ibm.com/.insteadOf https://github.ibm.com/
               export GOPRIVATE=github.ibm.com/*
+              echo $'***** Repository Setup done*****\n'
           fi
 
           #######################################
@@ -111,12 +118,3 @@ spec:
           /tmp/deploy-release.sh -v 2.3.3
           rm -rf /tmp/deploy-release.sh
           echo $'***** Terraform-Provisioner Installed *****\n'
-
-          #######################################
-          # terraform
-          #######################################
-          echo $'***** Installing Terraform *****\n'
-          wget https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip
-          unzip terraform_1.5.7_linux_amd64.zip
-          mv terraform /usr/local/bin/terraform
-          terraform --version

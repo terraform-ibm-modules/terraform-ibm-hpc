@@ -1,13 +1,3 @@
-module "local_exec_script" {
-  source           = "../../modules/null/local_exec_script"
-  script_path      = "./scripts/check_reservation.sh"
-  script_arguments = "--region ${data.ibm_is_region.region.name} --resource-group-id ${local.resource_groups["workload_rg"]} --output /tmp/hpcaas-check-reservation.log"
-  script_environment = {
-    IBM_CLOUD_API_KEY = nonsensitive(var.ibmcloud_api_key)
-    RESERVATION_ID    = nonsensitive(var.reservation_id)
-  }
-}
-
 module "landing_zone" {
   source                 = "../../modules/landing_zone"
   compute_subnets_cidr   = var.vpc_cluster_private_subnets_cidr_blocks
@@ -75,6 +65,14 @@ module "db" {
   vcpu              = local.db_template[3]
 }
 
+module "ce_project" {
+  source            = "./../../modules/ce_project"
+  ibmcloud_api_key  = var.ibmcloud_api_key
+  region            = data.ibm_is_region.region.name
+  resource_group_id = local.resource_groups["workload_rg"]
+  reservation_id    = var.reservation_id
+}
+
 module "landing_zone_vsi" {
   source                                           = "../../modules/landing_zone_vsi"
   resource_group                                   = local.resource_groups["workload_rg"]
@@ -129,8 +127,8 @@ module "landing_zone_vsi" {
   cloud_monitoring_prws_key                        = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_key : ""
   cloud_monitoring_prws_url                        = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_url : ""
   bastion_instance_name                            = var.bastion_instance_name
+  ce_project_guid                                  = module.ce_project.guid
   depends_on = [
-    module.local_exec_script,
     module.validate_ldap_server_connection
   ]
 }

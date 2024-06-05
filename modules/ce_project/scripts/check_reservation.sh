@@ -4,9 +4,6 @@
 # 5725-S00 (C) Copyright IBM Corp. 2024. All Rights Reserved.
 # US Government Users Restricted Rights - Use, duplication or
 # disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
-SCRIPT_FOLDER=$(realpath "$(dirname "$0")")
-PROJECT_FOLDER=$(realpath "$SCRIPT_FOLDER/..")
-
 IAM_ENDPOINT_URL="https://iam.cloud.ibm.com/identity/token"
 RESOURCE_CONTROLLER_ENDPOINT_URL="https://resource-controller.cloud.ibm.com"
 CODE_ENGINE_API_ENDPOINT_URL="https://api.REGION.codeengine.cloud.ibm.com"
@@ -16,7 +13,6 @@ RESOURCE_PLAN_GUID="2e390ff1-fe87-458f-9a23-dfb6719509e1"
 
 TMP_DIR="/tmp"
 HTTP_OUTPUT_FILE="${TMP_DIR}/hpcaas_http_output.log"
-CODE_ENGINE_PROJECT_GUID_FILE="${PROJECT_FOLDER}/assets/hpcaas-ce-project-guid.cfg"
 
 REGION=""
 RESOURCE_GROUP_ID=""
@@ -500,8 +496,7 @@ log "INFO: Verifying if the Reservation (GUID: ${RESERVATION_GUID}) is associate
 CODE_ENGINE_PROJECT_GUID=$(echo "${response_message}" | jq -e -r '.project_id // empty')
 if [ -n "${CODE_ENGINE_PROJECT_GUID}" ]; then
     log "INFO: Reservation (GUID: ${RESERVATION_GUID}) exists and is associated with the Code Engine project (ID: ${CODE_ENGINE_PROJECT_GUID})."
-    log "INFO: Write the Code Engine project (ID: ${CODE_ENGINE_PROJECT_GUID} in the ${CODE_ENGINE_PROJECT_GUID_FILE} file."
-    echo -n "${CODE_ENGINE_PROJECT_GUID}" > "${CODE_ENGINE_PROJECT_GUID_FILE}"
+    log "INFO: CODE_ENGINE_PROJECT_GUID=${CODE_ENGINE_PROJECT_GUID}"
     log "INFO: ${0} successfully completed."
     exit 0
 fi
@@ -541,6 +536,5 @@ if [ "${http_code}" != "200" ]; then
 fi
 
 log "INFO: Code Engine project (GUID: ${CODE_ENGINE_PROJECT_GUID}) has been successfully associated to the Reservation with GUID ${RESERVATION_GUID}."
-log "INFO: Write the Code Engine project (ID: ${CODE_ENGINE_PROJECT_GUID} in the ${CODE_ENGINE_PROJECT_GUID_FILE} file."
-echo -n "${CODE_ENGINE_PROJECT_GUID}" > "${CODE_ENGINE_PROJECT_GUID_FILE}"
+log "INFO: CODE_ENGINE_PROJECT_GUID=${CODE_ENGINE_PROJECT_GUID}"
 log "INFO: ${0} successfully completed."

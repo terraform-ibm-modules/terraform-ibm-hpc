@@ -62,16 +62,8 @@
                             "key": "ibmcloud_api_key"
                         },
                         {
-                            "custom_config": {
-                                "type": "resource_group",
-                                "grouping": "deployment",
-                                "original_grouping": "deployment",
-                                "config_constraints": {
-                                    "identifier": "rg_name"
-                                }
-                            },
-                            "required": true,
-                            "key": "resource_group"
+                            "key": "resource_group",
+                            "required": true
                         },
                         {
                             "key": "reservation_id"
