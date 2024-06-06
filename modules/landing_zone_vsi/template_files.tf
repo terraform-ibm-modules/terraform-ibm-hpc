@@ -70,7 +70,7 @@ data "template_file" "management_values" {
     rc_max_num                    = local.rc_max_num
     rc_rg                         = var.resource_group
     cluster_name                  = var.cluster_id
-    ce_project_guid               = file("${abspath("${path.module}/../../solutions/hpc")}/assets/hpcaas-ce-project-guid.cfg")
+    ce_project_guid               = var.ce_project_guid
     cluster_prefix                = var.prefix
     cluster_private_key_content   = local.enable_management ? module.compute_key[0].private_key_content : ""
     cluster_public_key_content    = local.enable_management ? module.compute_key[0].public_key_content : ""

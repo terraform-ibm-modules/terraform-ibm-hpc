@@ -38,9 +38,9 @@ spec:
     - name: ssh_keys
       default: ""
       description: List of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC bastion and login node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys).
-    - name: zones
+    - name: zone
       default: ""
-      description: IBM Cloud zone names within the selected region where the IBM Cloud HPC cluster should be deployed. Two zone names are required as input value and supported zones for eu-de are eu-de-2, eu-de-3 and for us-east us-east-1, us-east-3. The management nodes and file storage shares will be deployed to the first zone in the list. Compute nodes will be deployed across both first and second zones, where the first zone in the list will be considered as the most preferred zone for compute nodes deployment. [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli).
+      description: The IBM Cloud zone name within the selected region where the IBM Cloud HPC cluster should be deployed and requires a single zone input value. Supported zones are eu-de-2 and eu-de-3 for eu-de, us-east-1 and us-east-3 for us-east, and us-south-1 for us-south. The management nodes, file storage shares, and compute nodes will be deployed in the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli).
     - name: cluster_prefix
       description: Prefix that is used to name the IBM Cloud HPC cluster and IBM Cloud resources that are provisioned to build the IBM Cloud HPC cluster instance. You cannot create more than one instance of the IBM Cloud HPC cluster with the same name. Ensure that the name is unique.
       default: cicd-wes
@@ -65,11 +65,29 @@ spec:
     - name: reservation_id
       description: Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_).
       default: ""
+    - name: us_east_zone
+      default: ""
+      description: The IBM Cloud zone name within the selected region where the IBM Cloud HPC cluster should be deployed and requires a single zone input value. Supported zones are eu-de-2 and eu-de-3 for eu-de, us-east-1 and us-east-3 for us-east, and us-south-1 for us-south. The management nodes, file storage shares, and compute nodes will be deployed in the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli).
+    - name: us_east_cluster_id
+      description: Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same reservation. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment.
+      default: ""
     - name: us_east_reservation_id
       description: Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_).
       default: ""
+    - name: eu_de_zone
+      default: ""
+      description: The IBM Cloud zone name within the selected region where the IBM Cloud HPC cluster should be deployed and requires a single zone input value. Supported zones are eu-de-2 and eu-de-3 for eu-de, us-east-1 and us-east-3 for us-east, and us-south-1 for us-south. The management nodes, file storage shares, and compute nodes will be deployed in the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli).
+    - name: eu_de_cluster_id
+      description: Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same reservation. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment.
+      default: ""
     - name: eu_de_reservation_id
       description: Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_).
+      default: ""
+    - name: us_south_zone
+      default: ""
+      description: The IBM Cloud zone name within the selected region where the IBM Cloud HPC cluster should be deployed and requires a single zone input value. Supported zones are eu-de-2 and eu-de-3 for eu-de, us-east-1 and us-east-3 for us-east, and us-south-1 for us-south. The management nodes, file storage shares, and compute nodes will be deployed in the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli).
+    - name: us_south_cluster_id
+      description: Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same reservation. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment.
       default: ""
     - name: us_south_reservation_id
       description: Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_).
@@ -116,6 +134,8 @@ spec:
       params:
         - name: pipeline-debug
           value: $(params.pipeline-debug)
+        - name: repository
+          value: $(params.repository)
     - name: ssh-key-creation
       runAfter: [git-clone, pre-requisites-install]
       taskRef:
@@ -128,6 +148,8 @@ spec:
           value: $(params.pipeline-debug)
         - name: resource_group
           value: $(params.resource_group)
+        - name: revision
+          value: $(params.revision)
     - name: wes-hpc-da-rhel
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
@@ -142,8 +164,8 @@ spec:
           value: $(params.pipeline-debug)
         - name: ssh_keys
           value: $(params.ssh_keys)
-        - name: zones
-          value: $(params.zones)
+        - name: zone
+          value: $(params.zone)
         - name: cluster_prefix
           value: $(params.cluster_prefix)
         - name: resource_group
@@ -160,12 +182,26 @@ spec:
           value: $(params.cluster_id)
         - name: reservation_id
           value: $(params.reservation_id)
+        - name: us_east_zone
+          value: $(params.us_east_zone)
+        - name: us_east_cluster_id
+          value: $(params.us_east_cluster_id)
         - name: us_east_reservation_id
           value: $(params.us_east_reservation_id)
+        - name: eu_de_zone
+          value: $(params.eu_de_zone)
+        - name: eu_de_cluster_id
+          value: $(params.eu_de_cluster_id)
         - name: eu_de_reservation_id
           value: $(params.eu_de_reservation_id)
+        - name: us_south_zone
+          value: $(params.us_south_zone)
+        - name: us_south_cluster_id
+          value: $(params.us_south_cluster_id)
         - name: us_south_reservation_id
           value: $(params.us_south_reservation_id)
+        - name: revision
+          value: $(params.revision)
     - name: wes-hpc-da-ubuntu
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
@@ -180,8 +216,8 @@ spec:
           value: $(params.pipeline-debug)
         - name: ssh_keys
           value: $(params.ssh_keys)
-        - name: zones
-          value: $(params.zones)
+        - name: zone
+          value: $(params.zone)
         - name: cluster_prefix
           value: $(params.cluster_prefix)
         - name: resource_group
@@ -198,12 +234,26 @@ spec:
           value: $(params.cluster_id)
         - name: reservation_id
           value: $(params.reservation_id)
+        - name: us_east_zone
+          value: $(params.us_east_zone)
+        - name: us_east_cluster_id
+          value: $(params.us_east_cluster_id)
         - name: us_east_reservation_id
           value: $(params.us_east_reservation_id)
+        - name: eu_de_zone
+          value: $(params.eu_de_zone)
+        - name: eu_de_cluster_id
+          value: $(params.eu_de_cluster_id)
         - name: eu_de_reservation_id
           value: $(params.eu_de_reservation_id)
+        - name: us_south_zone
+          value: $(params.us_south_zone)
+        - name: us_south_cluster_id
+          value: $(params.us_south_cluster_id)
         - name: us_south_reservation_id
           value: $(params.us_south_reservation_id)
+        - name: revision
+          value: $(params.revision)
     - name: ssh-key-deletion
       runAfter: [wes-hpc-da-rhel, wes-hpc-da-ubuntu]
       taskRef:
@@ -214,6 +264,8 @@ spec:
       params:
         - name: pipeline-debug
           value: $(params.pipeline-debug)
+        - name: revision
+          value: $(params.revision)
     - name: git-content-inspect
       runAfter: [git-clone, wes-hpc-da-rhel, wes-hpc-da-ubuntu]
       taskRef:
@@ -236,6 +288,62 @@ spec:
           value: $(tasks.git-clone.results.git-commit)
         - name: git-user
           value: $(tasks.git-clone.results.git-user)
+    - name: display-test-run-output-log
+      runAfter: [git-clone, wes-hpc-da-rhel, wes-hpc-da-ubuntu]
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      taskSpec:
+        workspaces:
+          - name: workspace
+            description: The git repo will be cloned onto the volume backing this workspace
+            mountPath: /artifacts
+        steps:
+          - name: test-run-output-log-rhel-ubuntu-suite
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                DIRECTORY="/artifacts/tests"
+                if [ -d "$DIRECTORY" ]; then
+                  echo "*******************************************************"
+                  count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
+                  if [ $count == 0 ]; then
+                    echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
+                    exit 1
+                  else
+                    cat $DIRECTORY/test_output/log*
+                  fi
+                  echo "*******************************************************"
+                else
+                  echo "$DIRECTORY does not exits"
+                  exit 1
+                fi
+          - name: test-run-output-log-rhel-ubuntu-suite-error-check
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                DIRECTORY="/artifacts/tests"
+                if [ -d "$DIRECTORY" ]; then
+                  echo "*******************************************************"
+                  if [ -d "$DIRECTORY" ]; then
+                    # Check any error message in the test run output log
+                    error_check=$(eval "grep -E -w 'FAIL|Error|ERROR' $DIRECTORY/test_output/log*")
+                    if [[ "$error_check" ]]; then
+                      echo "$error_check"
+                      echo "Found Error/FAIL/ERROR in the test run output log. Please check log."
+                    fi
+                  fi
+                  echo "*******************************************************"
+                else
+                  echo "$DIRECTORY does not exits"
+                  exit 1
+                fi
     - name: inspect-wes-hpc-infra-log
       runAfter: [git-clone, wes-hpc-da-rhel, wes-hpc-da-ubuntu]
       workspaces:
@@ -248,14 +356,14 @@ spec:
             mountPath: /artifacts
         steps:
           - name: inspect-infra-error-rhel-suite
+            onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
             command: ["/bin/bash", "-c"]
             args:
               - |
                 #!/bin/bash
-                pwd
-                LOG_FILE="pipeline-RHEL-Suite*"
+                LOG_FILE="pipeline-rhel-suite*"
                 DIRECTORY="/artifacts/tests"
                 if [ -d "$DIRECTORY" ]; then
                   # Check any error message on the plan/apply log
@@ -267,13 +375,8 @@ spec:
                   else
                     count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
                     if [ $count == 0 ]; then
-                    echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
-                    exit 1
-                    else
-                      echo "*******************************************************""
-                      cat $DIRECTORY/test_output/log*
-                      echo "*******************************************************""
-                      echo "No Error Found, infra got SUCCESS"
+                      echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
+                      exit 1
                     fi
                   fi
                 else
@@ -293,8 +396,7 @@ spec:
             args:
               - |
                 #!/bin/bash
-                pwd
-                LOG_FILE="pipeline-UBUNTU-Suite*"
+                LOG_FILE="pipeline-ubuntu-suite*"
                 DIRECTORY="/artifacts/tests"
                 if [ -d "$DIRECTORY" ]; then
                   # Check any error message on the plan/apply log
@@ -306,13 +408,8 @@ spec:
                   else
                     count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
                     if [ $count == 0 ]; then
-                    echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
-                    exit 1
-                    else
-                      echo "*******************************************************""
-                      cat $DIRECTORY/test_output/log*
-                      echo "*******************************************************""
-                      echo "No Error Found, infra got SUCCESS"
+                      echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
+                      exit 1
                     fi
                   fi
                 else
@@ -322,6 +419,6 @@ spec:
 
                 count=`ls -1 $DIRECTORY/*.cicd 2>/dev/null | wc -l`
                 if [ $count == 0 ]; then
-                  echo "Test Suite have not initated, check with packages or binaries installation"
+                  echo "Test Suite have not initated, check with packages or binaries installations"
                   exit 1
                 fi

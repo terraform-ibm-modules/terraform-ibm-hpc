@@ -400,3 +400,12 @@ variable "bastion_instance_name" {
   default     = null
   description = "Bastion instance name."
 }
+
+##############################################################################
+# Code Engine Variables
+##############################################################################
+
+variable "ce_project_guid" {
+  description = "The GUID of the Code Engine Project associated to this cluster Reservation"
+  type        = string
+}

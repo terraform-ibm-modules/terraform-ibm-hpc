@@ -13,7 +13,7 @@ offerings:
       install_type: fullstack # ensure value matches what is in ibm_catalog.json (fullstack or extension)
       destroy_resources_on_failure: false # defaults to false if not specified so resources can be inspected to debug failures during validation
       destroy_workspace_on_failure: false # defaults to false if not specified so schematics workspace can be inspected to debug failures during validation
-      import_only: false  # defaults to false - set to true if you do not want to do any validation, but be aware offering can't be publish if not validated
+      import_only: true  # defaults to false - set to true if you do not want to do any validation, but be aware offering can't be publish if not validated
       validation_rg: validation # the resource group in which to do validation in. Will be created if does not exist. If not specified, default value is 'validation'
       # scc details needed if your offering is claiming any compliance controls
       scc:
