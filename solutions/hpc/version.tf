@@ -3,7 +3,7 @@ terraform {
   required_providers {
     ibm = {
       source  = "IBM-Cloud/ibm"
-      version = "1.65.1"
+      version = "1.66.0"
     }
     null = {
       source  = "hashicorp/null"
@@ -11,7 +11,7 @@ terraform {
     }
     http = {
       source  = "hashicorp/http"
-      version = "3.4.2"
+      version = "3.4.3"
     }
   }
 }
