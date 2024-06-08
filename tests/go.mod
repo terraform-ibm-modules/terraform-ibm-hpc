@@ -5,10 +5,10 @@ go 1.21.3
 require (
 	github.com/IBM/go-sdk-core v1.1.0
 	github.com/IBM/secrets-manager-go-sdk v1.2.0
-	github.com/gruntwork-io/terratest v0.46.14
+	github.com/gruntwork-io/terratest v0.46.15
 	github.com/stretchr/testify v1.9.0
-	github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper v1.34.1
-	golang.org/x/crypto v0.23.0
+	github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper v1.35.1
+	golang.org/x/crypto v0.24.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -23,10 +23,10 @@ require (
 	github.com/IBM-Cloud/bluemix-go v0.0.0-20240423071914-9e96525baef4 // indirect
 	github.com/IBM-Cloud/power-go-client v1.6.0 // indirect
 	github.com/IBM/cloud-databases-go-sdk v0.7.0 // indirect
-	github.com/IBM/go-sdk-core/v5 v5.17.2 // indirect
-	github.com/IBM/platform-services-go-sdk v0.62.11 // indirect
+	github.com/IBM/go-sdk-core/v5 v5.17.3 // indirect
+	github.com/IBM/platform-services-go-sdk v0.63.1 // indirect
 	github.com/IBM/project-go-sdk v0.3.0 // indirect
-	github.com/IBM/vpc-go-sdk v0.50.0 // indirect
+	github.com/IBM/vpc-go-sdk v0.51.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.0.0 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
@@ -75,7 +75,7 @@ require (
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/hcl/v2 v2.20.1 // indirect
-	github.com/hashicorp/terraform-json v0.21.0 // indirect
+	github.com/hashicorp/terraform-json v0.22.1 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jinzhu/copier v0.4.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -110,10 +110,10 @@ require (
 	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/oauth2 v0.20.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/text v0.15.0 // indirect
+	golang.org/x/sys v0.21.0 // indirect
+	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	golang.org/x/tools v0.21.0 // indirect
+	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	google.golang.org/api v0.178.0 // indirect
 	google.golang.org/genproto v0.0.0-20240506185236-b8a5c65736ae // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240506185236-b8a5c65736ae // indirect
