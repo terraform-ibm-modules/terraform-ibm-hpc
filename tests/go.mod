@@ -4,7 +4,7 @@ go 1.21.3
 
 require (
 	github.com/IBM/go-sdk-core v1.1.0
-	github.com/IBM/secrets-manager-go-sdk v1.2.0
+	github.com/IBM/secrets-manager-go-sdk/v2 v2.0.4
 	github.com/gruntwork-io/terratest v0.46.15
 	github.com/stretchr/testify v1.9.0
 	github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper v1.35.1
