@@ -18,7 +18,7 @@ locals {
 
 module "event_notification" {
   source            = "terraform-ibm-modules/event-notifications/ibm"
-  version           = "1.4.3"
+  version           = "1.4.4"
   resource_group_id = var.rg
   name              = "${var.prefix}-scc-event_notification"
   plan              = var.event_notification_plan
