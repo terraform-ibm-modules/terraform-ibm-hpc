@@ -18,7 +18,7 @@ locals {
 
 module "event_notification" {
   source            = "terraform-ibm-modules/event-notifications/ibm"
-  version           = "1.3.4"
+  version           = "1.4.3"
   resource_group_id = var.rg
   name              = "${var.prefix}-scc-event_notification"
   plan              = var.event_notification_plan
@@ -29,7 +29,7 @@ module "event_notification" {
 
 module "create_scc_instance" {
   source                            = "terraform-ibm-modules/scc/ibm"
-  version                           = "1.4.2"
+  version                           = "1.6.0"
   instance_name                     = "${var.prefix}-scc-instance"
   plan                              = var.scc_plan
   region                            = local.scc_region
@@ -47,7 +47,7 @@ module "create_scc_instance" {
 module "create_profile_attachment" {
   count                  = var.scc_profile == null || var.scc_profile == "" ? 0 : 1
   source                 = "terraform-ibm-modules/scc/ibm//modules/attachment"
-  version                = "1.4.2"
+  version                = "1.6.0"
   profile_name           = var.scc_profile
   profile_version        = var.scc_profile_version
   scc_instance_id        = module.create_scc_instance.guid
