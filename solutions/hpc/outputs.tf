@@ -87,3 +87,8 @@ output "ldap_ips" {
   description = "LDAP nodes have these IPs:"
   value       = local.print_extra_outputs ? local.ldap_private_ips : null
 }
+
+output "cloud_monitoring_url" {
+  value       = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_url : null
+  description = "IBM Cloud Monitoring URL"
+}

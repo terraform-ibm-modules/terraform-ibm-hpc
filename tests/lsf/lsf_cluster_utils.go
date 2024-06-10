@@ -368,7 +368,8 @@ func LSFRunJobs(t *testing.T, sClient *ssh.Client, jobCmd string, logger *utils.
 		return fmt.Errorf("failed to run '%s' command: %w", jobCmd, err)
 	}
 
-	// Extract the job ID from the job output
+	logger.Info(t, fmt.Sprintf("Submitted Job command: %s", jobCmd))
+
 	jobTime := utils.SplitAndTrim(jobCmd, "sleep")[1]
 	min, err := utils.StringToInt(jobTime)
 	if err != nil {
@@ -1183,10 +1184,9 @@ func GetJobCommand(zone, jobType string) string {
 // with the specified cluster prefix, and verifies encryption settings.
 func VerifyEncryption(t *testing.T, apiKey, region, resourceGroup, clusterPrefix, keyManagement string, logger *utils.AggregatedLogger) error {
 
-	// Set custom resource group if it's resource group is null
-	// In case the resource group is null , set it to a default value "workload-rg"
+	// In case the resource group is null , Set custom resource group it to a "clusterPrefix-workload-rg"
 	if strings.Contains(resourceGroup, "null") {
-		resourceGroup = "workload-rg"
+		resourceGroup = fmt.Sprintf("%s-workload-rg", clusterPrefix)
 	}
 
 	// Login to IBM Cloud using the API key and VPC region
@@ -1194,15 +1194,19 @@ func VerifyEncryption(t *testing.T, apiKey, region, resourceGroup, clusterPrefix
 		return fmt.Errorf("failed to log in to IBM Cloud: %w", err)
 	}
 
-	// Get the list of file shares
+	// Determine the command to get the list of file shares
 	fileSharesCmd := fmt.Sprintf("ibmcloud is shares | grep %s | awk '{print $2}'", clusterPrefix)
-	cmd := exec.Command("bash", "-c", fileSharesCmd)
-	output, err := cmd.CombinedOutput()
+	if strings.Contains(resourceGroup, "workload") {
+		fileSharesCmd = fmt.Sprintf("ibmcloud is shares | grep %s | awk 'NR>1 {print $2}'", clusterPrefix)
+	}
+
+	// Retrieve the list of file shares
+	fileSharesOutput, err := exec.Command("bash", "-c", fileSharesCmd).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to retrieve file shares: %w", err)
 	}
 
-	fileShareNames := strings.Fields(string(output))
+	fileShareNames := strings.Fields(string(fileSharesOutput))
 	logger.Info(t, fmt.Sprintf("File share list: %s", fileShareNames))
 
 	for _, fileShareName := range fileShareNames {
@@ -1261,7 +1265,8 @@ func LSFRunJobsAsLDAPUser(t *testing.T, sClient *ssh.Client, jobCmd, ldapUser st
 		return fmt.Errorf("failed to run '%s' command: %w", jobCmd, err)
 	}
 
-	// Extract the job ID from the job output
+	logger.Info(t, fmt.Sprintf("Submitted Job command: %s", jobCmd))
+
 	jobTime := utils.SplitAndTrim(jobCmd, "sleep")[1]
 	min, err := utils.StringToInt(jobTime)
 	if err != nil {
