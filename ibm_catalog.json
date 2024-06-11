@@ -51,8 +51,8 @@
                         "authority": "scc-v3",
                         "profiles": [
                             {
-                                "profile_name": "IBM Cloud Framework for Financial Services",
-                                "profile_version": "1.6.0"
+                                "profile_name": "CIS IBM Cloud Foundations Benchmark",
+                                "profile_version": "1.0.0"
                             }
                         ]
                     },
@@ -111,6 +111,55 @@
                             "key": "cluster_prefix"
                         },
                         {
+                            "key": "observability_atracker_on_cos_enable"
+                        },
+                        {
+                            "key": "observability_monitoring_enable"
+                        },
+                        {
+                            "key": "observability_monitoring_on_compute_nodes_enable"
+                        },
+                        {
+                            "key": "observability_monitoring_plan",
+                            "default_value": "graduated-tier",
+                            "options": [
+                                {
+                                    "displayname": "graduated-tier",
+                                    "value": "graduated-tier"
+                                },
+                                {
+                                    "displayname": "lite",
+                                    "value": "lite"
+                                }
+                            ]
+                        },
+                        {
+                            "key": "scc_enable"
+                        },
+                        {
+                            "key": "scc_profile"
+                        },
+                        {
+                            "key": "scc_profile_version"
+                        },
+                        {
+                            "key": "scc_location"
+                        },
+                        {
+                            "key": "scc_event_notification_plan",
+                            "default_value": "lite",
+                            "options": [
+                                {
+                                    "displayname": "lite",
+                                    "value": "lite"
+                                },
+                                {
+                                    "displayname": "standard",
+                                    "value": "standard"
+                                }
+                            ]
+                        },
+                        {
                             "key": "vpc_cidr"
                         },
                         {
@@ -147,7 +196,19 @@
                             "key": "login_image_name"
                         },
                         {
-                            "key": "custom_file_shares"
+                            "key": "custom_file_shares",
+                            "type": "array",
+                            "default_value": "[\n  {\n    \"mount_path\": \"/mnt/vpcstorage/tools\",\n    \"size\": 100,\n    \"iops\": 2000\n  },\n  {\n    \"mount_path\": \"/mnt/vpcstorage/data\",\n    \"size\": 100,\n    \"iops\": 6000\n  },\n  {\n    \"mount_path\": \"/mnt/scale/tools\",\n    \"nfs_share\": \"\"\n  }\n]\n",
+                            "display_name": "JSON",
+                            "required": false,
+                            "custom_config": {
+                                "type": "json_editor",
+                                "grouping": "deployment",
+                                "original_grouping": "deployment",
+                                "config_constraints": {
+                                    "type": "mixed"
+                                }
+                            }
                         },
                         {
                             "key": "storage_security_group_id"
@@ -168,29 +229,6 @@
                             "key": "cos_instance_name"
                         },
                         {
-                            "key": "observability_atracker_on_cos_enable"
-                        },
-                        {
-                            "key": "observability_monitoring_enable"
-                        },
-                        {
-                            "key": "observability_monitoring_on_compute_nodes_enable"
-                        },
-                        {
-                            "key": "observability_monitoring_plan",
-                            "default_value": "graduated-tier",
-                            "options": [
-                                {
-                                    "displayname": "graduated-tier",
-                                    "value": "graduated-tier"
-                                },
-                                {
-                                    "displayname": "lite",
-                                    "value": "lite"
-                                }
-                            ]
-                        },
-                        {
                             "key": "enable_vpc_flow_logs"
                         },
                         {
@@ -204,32 +242,6 @@
                         },
                         {
                             "key": "kms_key_name"
-                        },
-                        {
-                            "key": "scc_enable"
-                        },
-                        {
-                            "key": "scc_profile"
-                        },
-                        {
-                            "key": "scc_profile_version"
-                        },
-                        {
-                            "key": "scc_location"
-                        },
-                        {
-                            "key": "scc_event_notification_plan",
-                            "default_value": "lite",
-                            "options": [
-                                {
-                                    "displayname": "lite",
-                                    "value": "lite"
-                                },
-                                {
-                                    "displayname": "standard",
-                                    "value": "standard"
-                                }
-                            ]
                         },
                         {
                             "key": "hyperthreading_enabled"
@@ -272,6 +284,9 @@
                         },
                         {
                             "key": "skip_iam_authorization_policy"
+                        },
+                        {
+                            "key": "skip_iam_share_authorization_policy"
                         },
                         {
                             "key": "existing_certificate_instance"
@@ -373,7 +388,7 @@
                                 "description": "Yes"
                             },
                             {
-                                "title": "Simplifies risk management and demonstrates regulatory compliance with Financial Services",
+                                "title": "Simplifies risk management and demonstrates regulatory compliance with CIS IBM Cloud Foundations Benchmark Services",
                                 "description": "Yes"
                             },
                             {

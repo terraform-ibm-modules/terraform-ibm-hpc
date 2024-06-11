@@ -232,12 +232,11 @@ locals {
 
 # locals needed for ssh connection
 locals {
-  ssh_forward_host = (var.app_center_high_availability ? "pac.${var.dns_domain_name.compute}" : "localhost")
-  ssh_forwards     = "-L 8443:${local.ssh_forward_host}:8443 -L 6080:${local.ssh_forward_host}:6080"
+  ssh_forward_host = (var.app_center_high_availability ? "pac.${var.dns_domain_name.compute}" : local.management_private_ip)
+  ssh_forwards     = "-L 8443:${local.ssh_forward_host}:8443 -L 6080:${local.ssh_forward_host}:6080 -L 8444:${local.ssh_forward_host}:8444"
   ssh_jump_host    = local.bastion_instance_public_ip != null ? local.bastion_instance_public_ip : var.enable_fip ? module.bootstrap.bastion_fip[0] : module.bootstrap.bastion_primary_ip
   ssh_jump_option  = "-J ubuntu@${local.ssh_jump_host}"
-  ssh_host         = var.app_center_high_availability ? local.login_private_ips[0] : local.management_private_ip
-  ssh_cmd          = "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 ${local.ssh_forwards} ${local.ssh_jump_option} lsfadmin@${local.ssh_host}"
+  ssh_cmd          = "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 ${local.ssh_forwards} ${local.ssh_jump_option} lsfadmin@${join(",", local.login_private_ips)}"
 }
 
 # Existing bastion Variables

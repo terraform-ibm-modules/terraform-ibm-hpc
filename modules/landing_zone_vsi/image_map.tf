@@ -1,9 +1,9 @@
 locals {
   image_region_map = {
-    "hpcaas-lsf10-rhel88-v6" = {
-      "us-east"  = "r014-7c8ff827-42f9-4e52-8ac5-0cabfa83cc08"
-      "eu-de"    = "r010-ef5c9c76-88c9-461a-9ea9-ae3483b12463"
-      "us-south" = "r006-56948288-f03a-452f-a4e8-13c9523e5aac"
+    "hpcaas-lsf10-rhel88-v7" = {
+      "us-east"  = "r014-68a7ad8a-c513-418e-a30c-9a04ce0a144a"
+      "eu-de"    = "r010-b392ff76-fb8c-4b0f-9fef-fba89eb3ee5b"
+      "us-south" = "r006-86f207dd-7029-4705-9222-0f5499387734"
     },
     "hpcaas-lsf10-rhel88-compute-v5" = {
       "us-east"  = "r014-deb34fb1-edbf-464c-9af3-7efa2efcff3f"

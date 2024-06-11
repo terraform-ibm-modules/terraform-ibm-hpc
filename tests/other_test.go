@@ -2,11 +2,14 @@ package tests
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	terra "github.com/gruntwork-io/terratest/modules/terraform"
+	"github.com/stretchr/testify/assert"
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/common_utils"
 	lsf "github.com/terraform-ibm-modules/terraform-ibm-hpc/lsf"
 )
@@ -656,4 +659,104 @@ func RunHpcNewVpcExistCustomDnsNull(t *testing.T, customResolverId string) {
 	defer options.TestTearDown()
 
 	lsf.ValidateClusterConfiguration(t, options, testLogger)
+}
+
+// TestRunWithoutMandatory tests Terraform's behavior when mandatory variables are missing by checking for specific error messages.
+func TestRunWithoutMandatory(t *testing.T) {
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Getting absolute path of solutions/hpc
+	abs, err := filepath.Abs("solutions/hpc")
+
+	if err != nil {
+		require.Error(t, err, "Absolute path is:: %v", abs)
+	}
+
+	terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+	// Define Terraform options
+	terraformOptions := terra.WithDefaultRetryableErrors(t, &terra.Options{
+		TerraformDir: terrPath,
+		Vars:         map[string]interface{}{},
+	})
+
+	// Initialize and plan the Terraform deployment
+	_, err = terra.InitAndPlanE(t, terraformOptions)
+
+	// If there is an error, check if it contains specific mandatory fields
+	if err != nil {
+		result := utils.VerifyDataContains(t, err.Error(), "cluster_id", testLogger) &&
+			utils.VerifyDataContains(t, err.Error(), "reservation_id", testLogger) &&
+			utils.VerifyDataContains(t, err.Error(), "bastion_ssh_keys", testLogger) &&
+			utils.VerifyDataContains(t, err.Error(), "compute_ssh_keys", testLogger) &&
+			utils.VerifyDataContains(t, err.Error(), "remote_allowed_ips", testLogger)
+		// Assert that the result is true if all mandatory fields are missing
+		assert.True(t, result)
+	}
+
+}
+
+func TestRunCIDRsAsNonDefault(t *testing.T) {
+	// Parallelize the test
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Create test options
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	options.TerraformVars["vpc_cidr"] = "10.243.0.0/18"
+	options.TerraformVars["vpc_cluster_private_subnets_cidr_blocks"] = []string{"10.243.0.0/20"}
+	options.TerraformVars["vpc_cluster_login_private_subnets_cidr_blocks"] = []string{"10.243.16.0/28"}
+
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
+}
+
+// TestExistingPACEnvironment tests the validation of an existing PAC environment configuration.
+func TestExistingPACEnvironment(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Setup the test suite environment
+	setupTestSuite(t)
+
+	// Log the initiation of cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Retrieve the environment variable for the JSON file path
+	val, ok := os.LookupEnv("EXISTING_ENV_JSON_FILE_PATH")
+	if !ok {
+		t.Fatal("Environment variable 'EXISTING_ENV_JSON_FILE_PATH' is not set")
+	}
+
+	// Check if the JSON file exists
+	if _, err := os.Stat(val); os.IsNotExist(err) {
+		t.Fatalf("JSON file '%s' does not exist", val)
+	}
+
+	// Parse the JSON configuration file
+	config, err := utils.ParseConfig(val)
+	require.NoError(t, err, "Error parsing JSON configuration: %v", err)
+
+	// Validate the cluster configuration
+	lsf.ValidateClusterConfigurationWithAPPCenterForExistingEnv(t, config.BastionIP, config.LoginNodeIP, config.ClusterID, config.ReservationID, config.ClusterPrefixName, config.ResourceGroup,
+		config.KeyManagement, config.Zones, config.DnsDomainName, config.ManagementNodeIPList, config.HyperthreadingEnabled, testLogger)
 }

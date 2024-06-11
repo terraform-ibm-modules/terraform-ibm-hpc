@@ -25,3 +25,8 @@ output "cloud_monitoring_prws_url" {
   value       = "https://ingest.prws.${var.location}.monitoring.cloud.ibm.com/prometheus/remote/write"
   description = "IBM Cloud Monitoring Prometheus Remote Write ingestion url"
 }
+
+output "cloud_monitoring_url" {
+  value       = var.cloud_monitoring_provision ? "https://cloud.ibm.com/observe/embedded-view/monitoring/${module.observability_instance.cloud_monitoring_guid}" : null
+  description = "IBM Cloud Monitoring URL"
+}

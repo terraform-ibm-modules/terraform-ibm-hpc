@@ -390,6 +390,7 @@ EOF
 
 # 7. Create resource template for ibmcloudhpc templates
 # Define the output JSON file path
+
 ibmcloudhpc_templates="$LSF_RC_IBMCLOUDHPC_CONF/ibmcloudhpc_templates.json"
 
 # Initialize an empty JSON string
@@ -400,6 +401,11 @@ for region in "eu-de" "us-east" "us-south"; do
   if [ "$region" = "$regionName" ]; then
     # Loop through the core counts
     for i in 2 4 8 16 32 48 64 96 128 176; do
+      if [ "$i" -gt 128 ] && [ "$region" != "us-south" ]; then
+        # Skip creating templates with more than 128 cores for non us-south regions
+        continue
+      fi
+
       ncores=$((i / 2))
       if [ "$region" = "eu-de" ] || [ "$region" = "us-east" ]; then
         family="mx2"
@@ -430,6 +436,11 @@ for region in "eu-de" "us-east" "us-south"; do
       # Split the family string into an array and iterate over it
       IFS=',' read -ra families <<< "$family"
       for fam in "${families[@]}"; do
+        # Check if the core count is valid for the family
+        if [ "$fam" = "mx2" ] && [ "$i" -gt 128 ]; then
+          continue
+        fi
+
         templateId="Template-${cluster_prefix}-$((1000+i))-$fam"  # Add family to templateId
         if [ "$fam" = "mx2" ]; then
           maxmem_val="$maxmem_mx2"  # Use mx2 specific maxmem value
