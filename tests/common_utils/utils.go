@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -17,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/IBM/go-sdk-core/core"
+	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/secrets-manager-go-sdk/secretsmanagerv2"
 	"github.com/stretchr/testify/assert"
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
@@ -722,4 +723,45 @@ func GetDnsCustomResolverIds(outputs map[string]interface{}) (string, string) {
 		}
 	}
 	return instanceId, customResolverId
+}
+
+// Configuration struct matches the structure of your JSON data
+type Configuration struct {
+	ClusterID             string   `json:"ClusterID"`
+	ReservationID         string   `json:"ReservationID"`
+	ClusterPrefixName     string   `json:"ClusterPrefixName"`
+	ResourceGroup         string   `json:"ResourceGroup"`
+	KeyManagement         string   `json:"KeyManagement"`
+	DnsDomainName         string   `json:"DnsDomainName"`
+	Zones                 string   `json:"Zones"`
+	HyperthreadingEnabled bool     `json:"HyperthreadingEnabled"`
+	BastionIP             string   `json:"bastionIP"`
+	ManagementNodeIPList  []string `json:"managementNodeIPList"`
+	LoginNodeIP           string   `json:"loginNodeIP"`
+	LdapServerIP          string   `json:"LdapServerIP"`
+	LdapDomain            string   `json:"LdapDomain"`
+	LdapAdminPassword     string   `json:"LdapAdminPassword"`
+	LdapUserName          string   `json:"LdapUserName"`
+	LdapUserPassword      string   `json:"LdapUserPassword"`
+	AppCenterEnabledOrNot string   `json:"APPCenterEnabledOrNot"`
+	SshKeyPath            string   `json:"ssh_key_path"`
+}
+
+// ParseConfig reads a JSON file from the given file path and parses it into a Configuration struct
+func ParseConfig(filePath string) (*Configuration, error) {
+	// Read the entire content of the file
+	byteValue, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("error reading file %s: %w", filePath, err)
+	}
+
+	// Unmarshal the JSON data into the Configuration struct
+	var config Configuration
+	err = json.Unmarshal(byteValue, &config)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing JSON from file %s: %w", filePath, err)
+	}
+
+	// Return the configuration struct and nil error on success
+	return &config, nil
 }
