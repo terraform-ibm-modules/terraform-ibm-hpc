@@ -162,6 +162,11 @@ LSF_RSH="ssh -o 'PasswordAuthentication no' -o 'StrictHostKeyChecking no'"
 EOT
   sed -i "s/LSF_MASTER_LIST=.*/LSF_MASTER_LIST=\"${mgmt_hostnames}\"/g" $LSF_CONF_FILE
 
+  # Updating the worker node count to 2000 when no VPC file share is declared.
+  if [[ $vpc_file_share_count == 0 ]]; then
+    sed -i 's/THRESHOLD\[250\]/THRESHOLD\[2000\]/' $LSF_CONF_FILE
+  fi
+
   if [ "$hyperthreading" == true ]; then
     ego_define_ncpus="threads"
   else
@@ -572,7 +577,7 @@ dns_domain="${dns_domain}"
 ManagementHostNames="${mgmt_hostnames}"
 lsf_public_key="${cluster_public_key_content}"
 hyperthreading=${hyperthreading}
-nfs_server_with_mount_path="${nfs_server_with_mount_path}"
+nfs_server_with_mount_path=""
 custom_file_shares="${custom_file_shares}"
 custom_mount_paths="${custom_mount_paths}"
 login_ip_address="${login_ip}"
@@ -634,8 +639,6 @@ echo "Setting LSF share"
 # Setup file share
 if [ -n "${nfs_server_with_mount_path}" ]; then
   echo "File share ${nfs_server_with_mount_path} found"
-  # Create a data directory for sharing HPC workload data       ### is this used?
-  mkdir -p "${LSF_TOP}/data"
   nfs_client_mount_path="/mnt/lsf"
   rm -rf "${nfs_client_mount_path}"
   mkdir -p "${nfs_client_mount_path}"
@@ -673,6 +676,13 @@ if [ -n "${nfs_server_with_mount_path}" ]; then
   fi
   ln -fs "${nfs_client_mount_path}/gui-conf" "${LSF_SUITE_GUI_CONF}"
   chown -R lsfadmin:root "${LSF_SUITE_GUI_CONF}"
+
+  # Create a data directory for sharing HPC workload data
+  if [ "$on_primary" == "true" ]; then
+    mkdir -p "${nfs_client_mount_path}/data"
+    ln -s "${nfs_client_mount_path}/data" "$LSF_TOP/work/data"
+    chown -R lsfadmin:root "$LSF_TOP/work/data"
+  fi
 
   # VNC Sessions
   if [ "$on_primary" == "true" ]; then

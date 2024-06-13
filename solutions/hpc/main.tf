@@ -95,6 +95,7 @@ module "landing_zone_vsi" {
   kms_encryption_enabled                           = local.kms_encryption_enabled
   boot_volume_encryption_key                       = local.boot_volume_encryption_key
   share_path                                       = local.share_path
+  vpc_file_share_count                             = length(local.vpc_file_share)
   hyperthreading_enabled                           = var.hyperthreading_enabled
   app_center_gui_pwd                               = var.app_center_gui_pwd
   enable_app_center                                = var.enable_app_center

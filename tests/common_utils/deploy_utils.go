@@ -77,11 +77,10 @@ func GetConfigFromYAML(filePath string) (*Config, error) {
 	}
 
 	// Get the public IP
-	ip, err := GetPublicIP()
+	ip, err = GetPublicIP()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get public IP: %v", err)
 	}
-	config.RemoteAllowedIPs = ip
 
 	// Load permanent resources from YAML
 	permanentResources, err := common.LoadMapFromYaml(yamlLocation)

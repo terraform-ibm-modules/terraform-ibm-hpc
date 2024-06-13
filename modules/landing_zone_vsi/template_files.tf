@@ -25,6 +25,8 @@ data "template_file" "login_user_data" {
     cluster_private_key_content = local.enable_management ? module.compute_key[0].private_key_content : ""
     cluster_public_key_content  = local.enable_management ? module.compute_key[0].public_key_content : ""
     mount_path                  = var.share_path
+    custom_mount_paths          = join(" ", concat(local.vpc_file_share[*]["mount_path"], local.nfs_file_share[*]["mount_path"]))
+    custom_file_shares          = join(" ", concat([for file_share in var.file_share : file_share], local.nfs_file_share[*]["nfs_share"]))
     enable_ldap                 = var.enable_ldap
     rc_cidr_block               = local.bastion_subnets[0].cidr
     cluster_prefix              = var.prefix
@@ -78,6 +80,7 @@ data "template_file" "management_values" {
     network_interface             = local.vsi_interfaces[0]
     dns_domain                    = var.dns_domain_names["compute"]
     mount_path                    = var.share_path
+    vpc_file_share_count          = var.vpc_file_share_count
     custom_mount_paths            = join(" ", concat(local.vpc_file_share[*]["mount_path"], local.nfs_file_share[*]["mount_path"]))
     custom_file_shares            = join(" ", concat([for file_share in var.file_share : file_share], local.nfs_file_share[*]["nfs_share"]))
     contract_id                   = var.contract_id

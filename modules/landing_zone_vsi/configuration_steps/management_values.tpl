@@ -36,6 +36,7 @@ hyperthreading="${hyperthreading}"
 network_interface=${network_interface}
 dns_domain="${dns_domain}"
 mount_path="${mount_path}"
+vpc_file_share_count="${vpc_file_share_count}"
 custom_file_shares="${custom_file_shares}"
 custom_mount_paths="${custom_mount_paths}"
 contract_id="${contract_id}"

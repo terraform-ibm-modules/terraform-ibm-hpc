@@ -17,7 +17,7 @@ variable "ibmcloud_api_key" {
 ##############################################################################
 
 variable "resource_group" {
-  description = "Resource group name from your IBM Cloud account where the VPC resources should be deployed. Note. If the resource group value is set as null, automation creates two different RG with the name (workload-rg and service-rg). For additional information on resource groups, see [Managing resource groups](https://cloud.ibm.com/docs/account?topic=account-rgs)."
+  description = "Specify the existing resource group name from your IBM Cloud account where the VPC resources should be deployed. By default, the resource group name is set to 'Default.' Note that in some older accounts, the resource group name may be 'default,' so please validate the resource_group name before deployment. If the resource group value is set to null, the automation will create two different resource groups named 'workload-rg' and 'service-rg.' For more information on resource groups, refer to Managing resource groups."
   type        = string
   default     = "Default"
   validation {
@@ -253,7 +253,7 @@ variable "storage_security_group_id" {
 variable "dns_instance_id" {
   type        = string
   default     = null
-  description = "Provide the id of existing IBM Cloud DNS services domain to skip creating a new DNS service instance name. Note: If dns_instance_id is not equal to null, a new dns zone will be created under the existing dns service instance."
+  description = "Provide the id of existing IBM Cloud DNS services domain to skip creating a new DNS service instance name.Note: If dns_instance_id is not equal to null, a new dns zone will be created under the existing dns service instance."
 }
 
 variable "dns_domain_name" {
@@ -278,7 +278,7 @@ variable "dns_domain_name" {
 variable "dns_custom_resolver_id" {
   type        = string
   default     = null
-  description = "Provide the id of existing IBM Cloud DNS custom resolver to skip creating a new custom resolver. Note: A VPC can be associated only to a single custom resolver, please provide the id of custom resolver if it is already associated to the VPC."
+  description = "Provide the id of existing IBM Cloud DNS custom resolver to skip creating a new custom resolver. If the value is set to null, a new dns custom resolver shall be created and associated to the vpc. Note: A VPC can be associated only to a single custom resolver, please provide the id of custom resolver if it is already associated to the VPC."
 }
 
 ##############################################################################
@@ -344,7 +344,7 @@ variable "observability_monitoring_plan" {
 variable "key_management" {
   type        = string
   default     = "key_protect"
-  description = "Set the value as key_protect to enable customer managed encryption for boot volume and file share. If the key_management is set as null, encryption will be always provider managed."
+  description = "Set the value as key_protect to enable customer managed encryption for boot volume and file share. If the key_management is set as null, IBM Cloud resources will be always be encrypted through provider managed."
   validation {
     condition     = var.key_management == "null" || var.key_management == null || var.key_management == "key_protect"
     error_message = "key_management must be either 'null' or 'key_protect'."
@@ -354,13 +354,13 @@ variable "key_management" {
 variable "kms_instance_name" {
   type        = string
   default     = null
-  description = "Provide the name of the existing Key Protect instance associated with the Key Management Service. Note: To use existing kms_instance_name shall be considered only if key_management value is set as key_protect under key_management variable. The name can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
+  description = "Provide the name of the existing Key Protect instance associated with the Key Management Service. Note: To use existing kms_instance_name set key_management as key_protect. The name can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
 }
 
 variable "kms_key_name" {
   type        = string
   default     = null
-  description = "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. Note: kms_key_name to be considered only if key_management value is set as key_protect under key_management variable.(for example kms_key_name: my-encryption-key)."
+  description = "Provide the existing kms key name that you want to use for the IBM Cloud HPC cluster. Note: kms_key_name to be considered only if key_management value is set as key_protect.(for example kms_key_name: my-encryption-key)."
 }
 
 ##############################################################################
@@ -442,7 +442,7 @@ variable "app_center_gui_pwd" {
 variable "app_center_high_availability" {
   type        = bool
   default     = true
-  description = "Set to false to disable the IBM Spectrum LSF Application Center GUI High Availability (default: true)."
+  description = "Set to false to disable the IBM Spectrum LSF Application Center GUI High Availability (default: true). If the value is set as true, provide a certificate instance crn under existing_certificate_instance value for the VPC load balancer to enable HTTPS connections.[certificate instance requirements](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-before-deploy-application-center)."
 }
 
 variable "enable_fip" {
@@ -507,7 +507,7 @@ variable "ldap_vsi_osimage_name" {
 variable "skip_iam_authorization_policy" {
   type        = string
   default     = false
-  description = "Set it to false if authorization policy is required for VPC block storage volumes to access kms. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for block storage volume](https://cloud.ibm.com/docs/vpc?topic=vpc-block-s2s-auth&interface=ui)."
+  description = "Set to false if authorization policy is required for VPC block storage volumes to access kms. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for block storage volume](https://cloud.ibm.com/docs/vpc?topic=vpc-block-s2s-auth&interface=ui)."
 }
 
 variable "skip_iam_share_authorization_policy" {
