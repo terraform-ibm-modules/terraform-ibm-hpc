@@ -43,8 +43,8 @@
             ],
             "flavors": [
                 {
-                    "label": "Cluster-with-LSF-v10.1.0.14",
-                    "name": "Cluster-with-LSF-v10.1.0.14",
+                    "label": "Cluster with LSF v10.1.0.14",
+                    "name": "Cluster-with-LSF",
                     "install_type": "fullstack",
                     "working_directory": "solutions/hpc",
                     "compliance": {
@@ -72,10 +72,36 @@
                             "key": "cluster_id"
                         },
                         {
-                            "key": "bastion_ssh_keys"
+                            "key": "bastion_ssh_keys",
+                            "type": "array",
+                            "default_value": "",
+                            "display_name": "VPC SSH Key",
+                            "required": true,
+                            "custom_config": {
+                                "type": "vpc_ssh_key",
+                                "grouping": "deployment",
+                                "original_grouping": "deployment",
+                                "config_constraints": {
+                                    "selection": "multi_select",
+                                    "valueType": "name"
+                                }
+                            }
                         },
                         {
-                            "key": "compute_ssh_keys"
+                            "key": "compute_ssh_keys",
+                            "type": "array",
+                            "default_value": "",
+                            "display_name": "VPC SSH Key",
+                            "required": true,
+                            "custom_config": {
+                                "type": "vpc_ssh_key",
+                                "grouping": "deployment",
+                                "original_grouping": "deployment",
+                                "config_constraints": {
+                                    "selection": "multi_select",
+                                    "valueType": "name"
+                                }
+                            }
                         },
                         {
                             "key": "remote_allowed_ips"
@@ -319,12 +345,6 @@
                     "iam_permissions": [
                         {
                             "role_crns": [
-                                "crn:v1:bluemix:public:iam::::serviceRole:Manager"
-                            ],
-                            "service_name": "schematics"
-                        },
-                        {
-                            "role_crns": [
                                 "crn:v1:bluemix:public:iam::::serviceRole:writer"
                             ],
                             "service_name": "cloud-object-storage"
@@ -343,12 +363,6 @@
                         },
                         {
                             "role_crns": [
-                                "crn:v1:bluemix:public:iam::::role:Administrator"
-                            ],
-                            "service_name": "project"
-                        },
-                        {
-                            "role_crns": [
                                 "crn:v1:bluemix:public:iam::::role:Editor"
                             ],
                             "service_name": "is.vpc"
@@ -358,6 +372,19 @@
                                 "crn:v1:bluemix:public:iam::::role:Editor"
                             ],
                             "service_name": "dns-svcs"
+                        },
+                        {
+                            "service_name": "is.flow-log-collector",
+                            "role_crns": [
+                                "crn:v1:bluemix:public:iam::::role:Editor"
+                            ]
+                        },
+                        {
+                            "service_name": "sysdig-monitor",
+                            "role_crns": [
+                                "crn:v1:bluemix:public:iam::::serviceRole:Manager",
+                                "crn:v1:bluemix:public:iam::::role:Administrator"
+                            ]
                         }
                     ],
                     "architecture": {
@@ -377,7 +404,7 @@
                             },
                             {
                                 "title": "Reduces failure events by using multizone regions",
-                                "description": "Yes"
+                                "description": "No"
                             },
                             {
                                 "title": "Collects and stores Internet Protocol (IP) traffic information with Activity Tracker and Flow Logs",
@@ -393,7 +420,7 @@
                             },
                             {
                                 "title": "Uses Floating IP address for access through the public internet",
-                                "description": "No"
+                                "description": "Yes"
                             }
                         ],
                         "diagrams": [

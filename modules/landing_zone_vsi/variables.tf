@@ -236,6 +236,11 @@ variable "file_share" {
   description = "VPC file share mount points considering the ip address and the file share name"
 }
 
+variable "vpc_file_share_count" {
+  type        = number
+  description = "Requested number of VPC file shares."
+}
+
 variable "login_private_ips" {
   description = "Login private IPs"
   type        = string

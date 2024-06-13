@@ -15,7 +15,8 @@ LSF_CONF=$LSF_TOP/conf
 LSF_HOSTS_FILE="/etc/hosts"
 
 nfs_server_with_mount_path=${mount_path}
-
+custom_mount_paths="${custom_mount_paths}"
+custom_file_shares="${custom_file_shares}"
 
 # Setup logs for user data
 echo "START $(date '+%Y-%m-%d %H:%M:%S')" >> $logfile
@@ -107,10 +108,9 @@ EOT
   sh $command && (crontab -l 2>/dev/null; echo "@reboot $command") | crontab -
 fi
 
-# Setup LSF
-echo "Setting LSF share." >> $logfile
-# Setup file share
+# Setup Default LSF Share
 if [ -n "${nfs_server_with_mount_path}" ]; then
+  echo "Setting Default LSF share." >> $logfile
   echo "File share ${nfs_server_with_mount_path} found" >> $logfile
   nfs_client_mount_path="/mnt/lsf"
   rm -rf "${nfs_client_mount_path}"
@@ -133,11 +133,38 @@ if [ -n "${nfs_server_with_mount_path}" ]; then
     ln -fs "${nfs_client_mount_path}/$dir" "${LSF_TOP}"
     chown -R lsfadmin:root "${LSF_TOP}"
   done
+  echo "Setting Default LSF share is completed." >> $logfile
 else
   echo "No mount point value found, exiting!" >> $logfile
   exit 1
 fi
-echo "Setting LSF share is completed." >> $logfile
+
+# Setup Custom File shares
+if [ -n "${custom_file_shares}" ]; then
+  echo "Setting custom file shares." >> $logfile
+  echo "Custom file share ${custom_file_shares} found"  >> $logfile
+  file_share_array=(${custom_file_shares})
+  mount_path_array=(${custom_mount_paths})
+  length=${#file_share_array[@]}
+  for (( i=0; i<length; i++ )); do
+    rm -rf "${mount_path_array[$i]}"
+    mkdir -p "${mount_path_array[$i]}"
+    # Mount LSF TOP
+    mount -t nfs -o sec=sys "${file_share_array[$i]}" "${mount_path_array[$i]}"
+    # Verify mount
+    if mount | grep "${file_share_array[$i]}"; then
+      echo "Mount found"
+    else
+      echo "No mount found"
+      rm -rf "${mount_path_array[$i]}"
+    fi
+    # Update permission to 777 for all users to access
+    chmod 777 "${mount_path_array[$i]}"
+    # Update mount to fstab for automount
+    echo "${file_share_array[$i]} ${mount_path_array[$i]} nfs rw,sec=sys,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,_netdev 0 0 " >> /etc/fstab
+    echo "Setting custom file shares is completed." >> $logfile
+  done
+fi
 
 echo "source ${LSF_CONF}/profile.lsf" >> "${lsfadmin_home_dir}"/.bashrc
 echo "source ${LSF_CONF}/profile.lsf" >> /root/.bashrc
