@@ -3,7 +3,7 @@ module github.com/terraform-ibm-modules/terraform-ibm-hpc
 go 1.21.3
 
 require (
-	github.com/IBM/go-sdk-core v1.1.0
+	github.com/IBM/go-sdk-core/v5 v5.17.3
 	github.com/IBM/secrets-manager-go-sdk/v2 v2.0.4
 	github.com/gruntwork-io/terratest v0.46.15
 	github.com/stretchr/testify v1.9.0
@@ -23,7 +23,6 @@ require (
 	github.com/IBM-Cloud/bluemix-go v0.0.0-20240423071914-9e96525baef4 // indirect
 	github.com/IBM-Cloud/power-go-client v1.6.0 // indirect
 	github.com/IBM/cloud-databases-go-sdk v0.7.0 // indirect
-	github.com/IBM/go-sdk-core/v5 v5.17.3 // indirect
 	github.com/IBM/platform-services-go-sdk v0.63.1 // indirect
 	github.com/IBM/project-go-sdk v0.3.0 // indirect
 	github.com/IBM/vpc-go-sdk v0.51.0 // indirect
@@ -37,7 +36,6 @@ require (
 	github.com/cloudflare/circl v1.3.8 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
@@ -120,7 +118,6 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240506185236-b8a5c65736ae // indirect
 	google.golang.org/grpc v1.63.2 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
-	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 
