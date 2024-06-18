@@ -148,9 +148,13 @@ spec:
             set -x
           fi
 
-          REVISION=$(echo $REVISION)
           CICD_SSH_KEY=cicd
-          CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
+          if [ "${REVISION}" ]; then
+            REVISION=$(echo $REVISION)
+            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
+          else
+            CICD_SSH_KEY=$CICD_SSH_KEY-tekton
+          fi
 
           git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
           echo 'export PATH=$PATH:$HOME/.tfenv/bin' >> ~/.bashrc
@@ -229,9 +233,13 @@ spec:
             set -x
           fi
 
-          REVISION=$(echo $REVISION)
           CICD_SSH_KEY=cicd
-          CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
+          if [ "${REVISION}" ]; then
+            REVISION=$(echo $REVISION)
+            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
+          else
+            CICD_SSH_KEY=$CICD_SSH_KEY-tekton
+          fi
 
           git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
           echo 'export PATH=$PATH:$HOME/.tfenv/bin' >> ~/.bashrc
@@ -307,9 +315,13 @@ spec:
             set -x
           fi
 
-          REVISION=$(echo $REVISION)
           CICD_SSH_KEY=cicd
-          CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
+          if [ "${REVISION}" ]; then
+            REVISION=$(echo $REVISION)
+            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
+          else
+            CICD_SSH_KEY=$CICD_SSH_KEY-tekton
+          fi
 
           git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
           echo 'export PATH=$PATH:$HOME/.tfenv/bin' >> ~/.bashrc

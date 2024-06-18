@@ -17,7 +17,7 @@ variable "ibmcloud_api_key" {
 ##############################################################################
 
 variable "resource_group" {
-  description = "Specify the existing resource group name from your IBM Cloud account where the VPC resources should be deployed. By default, the resource group name is set to 'Default.' Note that in some older accounts, the resource group name may be 'default,' so please validate the resource_group name before deployment. If the resource group value is set to null, the automation will create two different resource groups named 'workload-rg' and 'service-rg.' For more information on resource groups, refer to Managing resource groups."
+  description = "Specify the existing resource group name from your IBM Cloud account where the VPC resources should be deployed. By default, the resource group name is set to 'Default.' Note that in some older accounts, the resource group name may be 'default,' so please validate the resource_group name before deployment. If the resource group value is set to the string \"null\", the automation will create two different resource groups named 'workload-rg' and 'service-rg.' For more information on resource groups, refer to Managing resource groups."
   type        = string
   default     = "Default"
   validation {
@@ -60,7 +60,7 @@ variable "cluster_id" {
   description = "Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same reservations. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment."
   validation {
     condition     = 0 < length(var.cluster_id) && length(var.cluster_id) < 40 && can(regex("^[a-zA-Z0-9_.-]+$", var.cluster_id))
-    error_message = "The ID can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. Other special characters and spaces are not allowed."
+    error_message = "The Cluster ID can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. Other special characters and spaces are not allowed."
   }
 }
 
@@ -505,7 +505,7 @@ variable "ldap_vsi_osimage_name" {
 }
 
 variable "skip_iam_authorization_policy" {
-  type        = string
+  type        = bool
   default     = false
   description = "Set to false if authorization policy is required for VPC block storage volumes to access kms. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for block storage volume](https://cloud.ibm.com/docs/vpc?topic=vpc-block-s2s-auth&interface=ui)."
 }

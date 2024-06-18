@@ -148,9 +148,13 @@ spec:
             set -x
           fi
 
-          REVISION=$(echo $REVISION)
           CICD_SSH_KEY=cicd
-          CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
+          if [ "${REVISION}" ]; then
+            REVISION=$(echo $REVISION)
+            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
+          else
+            CICD_SSH_KEY=$CICD_SSH_KEY-tekton
+          fi
 
           git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
           echo 'export PATH=$PATH:$HOME/.tfenv/bin' >> ~/.bashrc
@@ -169,7 +173,8 @@ spec:
                 1.TestRunBasic
                 2.TestRunInUsEastRegion
                 3.TestRunInUSSouthRegion
-                4.TestRunNoKMSAndHTOff"
+                4.TestRunNoKMSAndHTOff
+                5.TestRunCIDRsAsNonDefault
 
           export TF_VAR_ibmcloud_api_key=$API_KEY
           export SSH_FILE_PATH="/artifacts/.ssh/id_rsa"
@@ -180,7 +185,7 @@ spec:
             cd $DIRECTORY
               LOG_FILE=pipeline-ubuntu-suite-1-$(date +%d%m%Y).cicd
               echo "**************Validating on UBUNTU-Suite-1**************"
-              SSH_KEY=$CICD_SSH_KEY US_EAST_ZONE=$us_east_zone US_EAST_CLUSTER_ID=$us_east_cluster_id US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_ZONE=$us_south_zone US_SOUTH_CLUSTER_ID=$us_south_cluster_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_ZONE=$eu_de_zone EU_DE_CLUSTER_ID=$eu_de_cluster_id EU_DE_RESERVATION_ID=$eu_de_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu LOGIN_NODE_IMAGE_NAME=$login_image_name ZONE=$zone RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic|TestRunInUsEastRegion|TestRunInUSSouthRegion|TestRunNoKMSAndHTOff" | tee -a $LOG_FILE
+              SSH_KEY=$CICD_SSH_KEY US_EAST_ZONE=$us_east_zone US_EAST_CLUSTER_ID=$us_east_cluster_id US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_ZONE=$us_south_zone US_SOUTH_CLUSTER_ID=$us_south_cluster_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_ZONE=$eu_de_zone EU_DE_CLUSTER_ID=$eu_de_cluster_id EU_DE_RESERVATION_ID=$eu_de_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_ubuntu LOGIN_NODE_IMAGE_NAME=$login_image_name ZONE=$zone RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic|TestRunInUsEastRegion|TestRunInUSSouthRegion|TestRunNoKMSAndHTOff|TestRunCIDRsAsNonDefault" | tee -a $LOG_FILE
           else
             pwd
             ls -a
@@ -227,9 +232,13 @@ spec:
             set -x
           fi
 
-          REVISION=$(echo $REVISION)
           CICD_SSH_KEY=cicd
-          CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
+          if [ "${REVISION}" ]; then
+            REVISION=$(echo $REVISION)
+            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
+          else
+            CICD_SSH_KEY=$CICD_SSH_KEY-tekton
+          fi
 
           git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
           echo 'export PATH=$PATH:$HOME/.tfenv/bin' >> ~/.bashrc
@@ -308,9 +317,13 @@ spec:
             set -x
           fi
 
-          REVISION=$(echo $REVISION)
           CICD_SSH_KEY=cicd
-          CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
+          if [ "${REVISION}" ]; then
+            REVISION=$(echo $REVISION)
+            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
+          else
+            CICD_SSH_KEY=$CICD_SSH_KEY-tekton
+          fi
 
           git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
           echo 'export PATH=$PATH:$HOME/.tfenv/bin' >> ~/.bashrc

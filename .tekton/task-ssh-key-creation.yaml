@@ -66,12 +66,14 @@ spec:
           fi
 
           CICD_SSH_KEY=cicd
-          if [ -z "${PR_REVISION}" ]; then
+          if [ -z "${PR_REVISION}" ] && [ "${PR_REVISION}" ]; then
             REVISION=$(echo $REVISION)
             CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
-          else
+          elif [ "${PR_REVISION}" ] && [ -z "${REVISION}" ]; then
             PR_REVISION=$(echo $PR_REVISION)
             CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$PR_REVISION)
+          else
+            CICD_SSH_KEY=$CICD_SSH_KEY-tekton
           fi
 
           mkdir /artifacts/.ssh

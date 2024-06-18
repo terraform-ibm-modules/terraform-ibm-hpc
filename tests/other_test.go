@@ -8,7 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	terra "github.com/gruntwork-io/terratest/modules/terraform"
+	"github.com/gruntwork-io/terratest/modules/terraform"
+
 	"github.com/stretchr/testify/assert"
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/common_utils"
 	lsf "github.com/terraform-ibm-modules/terraform-ibm-hpc/lsf"
@@ -672,21 +673,18 @@ func TestRunWithoutMandatory(t *testing.T) {
 
 	// Getting absolute path of solutions/hpc
 	abs, err := filepath.Abs("solutions/hpc")
-
-	if err != nil {
-		require.Error(t, err, "Absolute path is:: %v", abs)
-	}
+	require.NoError(t, err, "Unable to get absolute path")
 
 	terrPath := strings.ReplaceAll(abs, "tests/", "")
 
 	// Define Terraform options
-	terraformOptions := terra.WithDefaultRetryableErrors(t, &terra.Options{
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: terrPath,
 		Vars:         map[string]interface{}{},
 	})
 
 	// Initialize and plan the Terraform deployment
-	_, err = terra.InitAndPlanE(t, terraformOptions)
+	_, err = terraform.InitAndPlanE(t, terraformOptions)
 
 	// If there is an error, check if it contains specific mandatory fields
 	if err != nil {
@@ -697,6 +695,8 @@ func TestRunWithoutMandatory(t *testing.T) {
 			utils.VerifyDataContains(t, err.Error(), "remote_allowed_ips", testLogger)
 		// Assert that the result is true if all mandatory fields are missing
 		assert.True(t, result)
+	} else {
+		t.Error("Expected error did not occur")
 	}
 
 }
@@ -759,4 +759,309 @@ func TestExistingPACEnvironment(t *testing.T) {
 	// Validate the cluster configuration
 	lsf.ValidateClusterConfigurationWithAPPCenterForExistingEnv(t, config.BastionIP, config.LoginNodeIP, config.ClusterID, config.ReservationID, config.ClusterPrefixName, config.ResourceGroup,
 		config.KeyManagement, config.Zones, config.DnsDomainName, config.ManagementNodeIPList, config.HyperthreadingEnabled, testLogger)
+}
+
+// TestRunInvalidReservationIDAndContractID tests invalid cluster_id and reservation_id values
+func TestRunInvalidReservationIDAndContractID(t *testing.T) {
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	// Log the initiation of cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Define invalid cluster_id and reservation_id values
+	invalidClusterIDs := []string{
+		"too_long_cluster_id_1234567890_abcdefghijklmnopqrstuvwxyz", //pragma: allowlist secret
+		"invalid@cluster!id#",
+		"",
+	}
+
+	invalidReservationIDs := []string{
+		"1invalid_reservation",
+		"invalid_reservation@id",
+		"ContractIBM",
+		"",
+	}
+
+	// Getting absolute path of solutions/hpc
+	abs, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Unable to get absolute path")
+
+	terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+	// Loop over all combinations of invalid cluster_id and reservation_id values
+	for _, clusterID := range invalidClusterIDs {
+		for _, reservationID := range invalidReservationIDs {
+
+			// Define Terraform options
+			terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+				TerraformDir: terrPath,
+				Vars: map[string]interface{}{
+					"cluster_prefix":     hpcClusterPrefix,
+					"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+					"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+					"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+					"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+					"cluster_id":         clusterID,
+					"reservation_id":     reservationID,
+				},
+			})
+
+			// Initialize and plan the Terraform deployment
+			_, err := terraform.InitAndPlanE(t, terraformOptions)
+
+			// If there is an error, check if it contains specific mandatory fields
+			if err != nil {
+				clusterIDError := utils.VerifyDataContains(t, err.Error(), "cluster_id", testLogger)
+				reservationIDError := utils.VerifyDataContains(t, err.Error(), "reservation_id", testLogger)
+				result := clusterIDError && reservationIDError
+				// Assert that the result is true if all mandatory fields are missing
+				assert.True(t, result)
+				if result {
+					testLogger.PASS(t, "Invalid clusterID and ReservationID validation success")
+				} else {
+					testLogger.FAIL(t, "Expected error did not contain required fields: cluster_id or reservation_id")
+				}
+			} else {
+				// Log an error if the expected error did not occur
+				t.Error("Expected error did not occur")
+				testLogger.FAIL(t, "Expected error did not occur on Invalid clusterID and ReservationID validation")
+			}
+		}
+	}
+}
+
+// TestRunInvalidLDAPServerIP validates cluster creation with invalid LDAP server IP.
+func TestRunInvalidLDAPServerIP(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	if strings.ToLower(envVars.EnableLdap) == "true" {
+		// Check if the LDAP credentials are provided
+		if len(envVars.LdapAdminPassword) == 0 || len(envVars.LdapUserName) == 0 || len(envVars.LdapUserPassword) == 0 {
+			require.FailNow(t, "LDAP credentials are missing. Make sure LDAP admin password, LDAP user name, and LDAP user password are provided.")
+		}
+	} else {
+		require.FailNow(t, "LDAP is not enabled. Set the 'enable_ldap' environment variable to 'true' to enable LDAP.")
+	}
+
+	// Get the absolute path of solutions/hpc
+	abs, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Unable to get absolute path")
+
+	terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+	// Define Terraform options
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terrPath,
+		Vars: map[string]interface{}{
+			"cluster_prefix":      hpcClusterPrefix,
+			"bastion_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
+			"compute_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
+			"zones":               utils.SplitAndTrim(envVars.Zone, ","),
+			"remote_allowed_ips":  utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+			"cluster_id":          envVars.ClusterID,
+			"reservation_id":      envVars.ReservationID,
+			"enable_ldap":         true,
+			"ldap_admin_password": envVars.LdapAdminPassword, //pragma: allowlist secret
+			"ldap_server":         "10.10.10.10",
+		},
+	})
+
+	// Apply the Terraform configuration
+	_, err = terraform.InitAndApplyE(t, terraformOptions)
+
+	// Check if an error occurred during apply
+	assert.Error(t, err, "Expected an error during apply")
+
+	if err != nil {
+		// Check if the error message contains specific keywords indicating LDAP server IP issues
+		result := utils.VerifyDataContains(t, err.Error(), "The connection to the existing LDAP server 10.10.10.10 failed", testLogger)
+		if result {
+			testLogger.PASS(t, "Invalid LDAP server IP validation succeeded")
+		} else {
+			testLogger.FAIL(t, "Invalid LDAP server IP validation failed")
+		}
+	} else {
+		// Log an error if the expected error did not occur
+		t.Error("Expected error did not occur")
+		testLogger.FAIL(t, "Expected error did not occur on Invalid LDAP Server IP")
+	}
+
+	// Cleanup resources
+	defer terraform.Destroy(t, terraformOptions)
+}
+
+// TestRunInvalidLDAPUsernamePassword tests invalid LDAP username and password
+func TestRunInvalidLDAPUsernamePassword(t *testing.T) {
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	// Log the initiation of cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Define invalid ldap username and password values
+	invalidLDAPUsername := []string{
+		"usr",
+		"user@1234567890123456789012345678901",
+		"",
+		"user 1234",
+	}
+
+	invalidLDAPPassword := []string{
+		"password",
+		"PasswoRD123",
+		"password123",
+		"Password@",
+		"Password123",
+		"password@12345678901234567890",
+	}
+
+	// Getting absolute path of solutions/hpc
+	abs, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Unable to get absolute path")
+
+	terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+	// Loop over all combinations of invalid ldap username and password values
+	for _, username := range invalidLDAPUsername {
+		for _, password := range invalidLDAPPassword { //pragma: allowlist secret
+
+			// Define Terraform options
+			terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+				TerraformDir: terrPath,
+				Vars: map[string]interface{}{
+					"cluster_prefix":      hpcClusterPrefix,
+					"bastion_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
+					"compute_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
+					"zones":               utils.SplitAndTrim(envVars.Zone, ","),
+					"remote_allowed_ips":  utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+					"cluster_id":          envVars.ClusterID,
+					"reservation_id":      envVars.ReservationID,
+					"enable_ldap":         true,
+					"ldap_user_name":      username,
+					"ldap_user_password":  password, //pragma: allowlist secret
+					"ldap_admin_password": password, //pragma: allowlist secret
+				},
+			})
+
+			// Initialize and plan the Terraform deployment
+			_, err := terraform.InitAndPlanE(t, terraformOptions)
+
+			// If there is an error, check if it contains specific mandatory fields
+			if err != nil {
+				usernameError := utils.VerifyDataContains(t, err.Error(), "ldap_user_name", testLogger)
+				userPasswordError := utils.VerifyDataContains(t, err.Error(), "ldap_usr_pwd", testLogger)
+				adminPasswordError := utils.VerifyDataContains(t, err.Error(), "ldap_adm_pwd", testLogger)
+				result := usernameError && userPasswordError && adminPasswordError
+				// Assert that the result is true if all mandatory fields are missing
+				assert.True(t, result)
+				if result {
+					testLogger.PASS(t, "Invalid LDAP username  LDAP user password ,LDAP admin password validation success")
+				} else {
+					testLogger.FAIL(t, "Expected error did not contain required fields: ldap_user_name, ldap_user_password or ldap_admin_password")
+				}
+			} else {
+				// Log an error if the expected error did not occur
+				t.Error("Expected error did not occur")
+				testLogger.FAIL(t, "Expected error did not contain required fields: ldap_user_name, ldap_user_password or ldap_admin_password")
+			}
+		}
+	}
+}
+
+// TestRunInvalidAPPCenterPassword tests invalid values for app center password
+func TestRunInvalidAPPCenterPassword(t *testing.T) {
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	// Log the initiation of cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	invalidAPPCenterPwd := []string{
+		"pass@1234",
+		"Pass1234",
+		"Pas@12",
+		"",
+	}
+
+	// Loop over all combinations of invalid cluster_id and reservation_id values
+	for _, password := range invalidAPPCenterPwd { //pragma: allowlist secret
+
+		// HPC cluster prefix
+		hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+		// Retrieve cluster information from environment variables
+		envVars := GetEnvVars()
+
+		// Getting absolute path of solutions/hpc
+		abs, err := filepath.Abs("solutions/hpc")
+		require.NoError(t, err, "Unable to get absolute path")
+
+		terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+		// Define Terraform options
+		terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+			TerraformDir: terrPath,
+			Vars: map[string]interface{}{
+				"cluster_prefix":     hpcClusterPrefix,
+				"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+				"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+				"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+				"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+				"cluster_id":         envVars.ClusterID,
+				"reservation_id":     envVars.ReservationID,
+				"enable_app_center":  true,
+				"app_center_gui_pwd": password,
+			},
+		})
+
+		// Initialize and plan the Terraform deployment
+		_, err = terraform.InitAndPlanE(t, terraformOptions)
+
+		// If there is an error, check if it contains specific mandatory fields
+		if err != nil {
+			result := utils.VerifyDataContains(t, err.Error(), "app_center_gui_pwd", testLogger)
+
+			// Assert that the result is true if all mandatory fields are missing
+			assert.True(t, result)
+			if result {
+				testLogger.PASS(t, "Invalid Application Center Password validation succeeded")
+			} else {
+				testLogger.FAIL(t, "Invalid Application Center Password validation failed")
+			}
+		} else {
+			// Log an error if the expected error did not occur
+			t.Error("Expected error did not occur")
+			testLogger.FAIL(t, "Expected error did not occur on Invalid Application Center Password")
+		}
+	}
 }
