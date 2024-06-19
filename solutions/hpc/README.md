@@ -12,7 +12,7 @@ Create an SSH key in your IBM Cloud account. This is your SSH key that you will 
 ### Understand the cluster configuration
 Familiarize yourself with the IBM Cloud HPC deployable architecture: https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-ibm-cloud-hpc
 
-## Deploying the environment	
+## Deploying the environment
 Deploy the IBM Cloud HPC cluster: https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-deploy-architecture
 
 ## Cleaning up deployed environments
@@ -21,6 +21,6 @@ If you no longer need your deployed IBM Cloud HPC cluster, you can clean it up f
 ## Getting support
 
 This offering is provided and supported by [IBM Corporation](https://www.ibm.com/mysupport). To get help with the IBM Cloud HPC offering please contact IBM HPC Cloud support using:
-* URL https://www.ibm.com/mysupport 
-* Call IBM support - country-based numbers listed [here](https://www.ibm.com/planetwide). 
+* URL https://www.ibm.com/mysupport
+* Call IBM support - country-based numbers listed [here](https://www.ibm.com/planetwide).
 IBM Cloud HPC support is provided 24x7x365 for Severity 1 issues and during client business hours (8 AM to 5 PM) for Severity 2, 3 and 4 issues.

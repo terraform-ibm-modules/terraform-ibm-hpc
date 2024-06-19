@@ -16,7 +16,7 @@ output "log_analysis_ingestion_key" {
 }
 
 output "cloud_monitoring_prws_key" {
-  value       = var.cloud_monitoring_provision ? jsondecode(data.http.sysdig_prws_key.response_body).token.key : null
+  value       = var.cloud_monitoring_provision ? jsondecode(data.http.sysdig_prws_key[0].response_body).token.key : null
   description = "IBM Cloud Monitoring Prometheus Remote Write ingestion key"
   sensitive   = true
 }

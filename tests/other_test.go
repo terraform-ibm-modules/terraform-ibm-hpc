@@ -772,7 +772,7 @@ func TestRunInvalidReservationIDAndContractID(t *testing.T) {
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// HPC cluster prefix
-	hpcClusterPrefix := utils.GenerateRandomString()
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
@@ -850,7 +850,7 @@ func TestRunInvalidLDAPServerIP(t *testing.T) {
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// HPC cluster prefix
-	hpcClusterPrefix := utils.GenerateRandomString()
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
 
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
@@ -1063,5 +1063,63 @@ func TestRunInvalidAPPCenterPassword(t *testing.T) {
 			t.Error("Expected error did not occur")
 			testLogger.FAIL(t, "Expected error did not occur on Invalid Application Center Password")
 		}
+	}
+}
+
+// TestRunInvalidDomainName validates cluster creation with invalid domain name.
+func TestRunInvalidDomainName(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Get the absolute path of solutions/hpc
+	abs, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Unable to get absolute path")
+
+	terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+	// Define Terraform options
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terrPath,
+		Vars: map[string]interface{}{
+			"cluster_prefix":     hpcClusterPrefix,
+			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+			"cluster_id":         envVars.ClusterID,
+			"reservation_id":     envVars.ReservationID,
+			"dns_domain_name":    map[string]string{"compute": "sample"},
+		},
+	})
+
+	// Apply the Terraform configuration
+	_, err = terraform.InitAndPlanE(t, terraformOptions)
+
+	// Check if an error occurred during apply
+	assert.Error(t, err, "Expected an error during apply")
+
+	if err != nil {
+		// Check if the error message contains specific keywords indicating domain name issues
+		result := utils.VerifyDataContains(t, err.Error(), "The domain name provided for compute is not a fully qualified domain name", testLogger)
+		if result {
+			testLogger.PASS(t, "Invalid domain name validation succeeded")
+		} else {
+			testLogger.FAIL(t, "Invalid domain name validation failed")
+		}
+	} else {
+		// Log an error if the expected error did not occur
+		t.Error("Expected error did not occur")
+		testLogger.FAIL(t, "Expected error did not occur on Invalid domain name")
 	}
 }
