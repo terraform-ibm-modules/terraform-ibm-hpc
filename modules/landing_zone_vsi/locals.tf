@@ -177,7 +177,7 @@ locals {
       mount_path = share.mount_path
       nfs_share  = share.nfs_share
     }
-    if share.nfs_share != null && share.nfs_share != ""
+    if share.mount_path != "/mnt/lsf" && share.nfs_share != null && share.nfs_share != ""
   ]
 
   vpc_file_share = [
@@ -187,6 +187,6 @@ locals {
       size       = share.size
       iops       = share.iops
     }
-    if share.size != null && share.iops != null
+    if share.mount_path != "/mnt/lsf" && share.size != null && share.iops != null
   ]
 }

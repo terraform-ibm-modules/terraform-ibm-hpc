@@ -8,7 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	terra "github.com/gruntwork-io/terratest/modules/terraform"
+	"github.com/gruntwork-io/terratest/modules/terraform"
+
 	"github.com/stretchr/testify/assert"
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/common_utils"
 	lsf "github.com/terraform-ibm-modules/terraform-ibm-hpc/lsf"
@@ -346,6 +347,7 @@ func TestRunUsingExistingKMS(t *testing.T) {
 	// Retrieve cluster information from environment variables
 	envVars := GetEnvVars()
 
+	// Create service instance and KMS key using IBMCloud CLI
 	err := lsf.CreateServiceInstanceandKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
 	require.NoError(t, err, "Service instance and KMS key creation failed")
 
@@ -362,6 +364,8 @@ func TestRunUsingExistingKMS(t *testing.T) {
 
 	// Skip test teardown for further inspection
 	options.SkipTestTearDown = true
+
+	// Ensure the service instance and KMS key are deleted after the test
 	defer lsf.DeleteServiceInstanceAndAssociatedKeys(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, kmsInstanceName, testLogger)
 	defer options.TestTearDown()
 
@@ -672,21 +676,18 @@ func TestRunWithoutMandatory(t *testing.T) {
 
 	// Getting absolute path of solutions/hpc
 	abs, err := filepath.Abs("solutions/hpc")
-
-	if err != nil {
-		require.Error(t, err, "Absolute path is:: %v", abs)
-	}
+	require.NoError(t, err, "Unable to get absolute path")
 
 	terrPath := strings.ReplaceAll(abs, "tests/", "")
 
 	// Define Terraform options
-	terraformOptions := terra.WithDefaultRetryableErrors(t, &terra.Options{
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: terrPath,
 		Vars:         map[string]interface{}{},
 	})
 
 	// Initialize and plan the Terraform deployment
-	_, err = terra.InitAndPlanE(t, terraformOptions)
+	_, err = terraform.InitAndPlanE(t, terraformOptions)
 
 	// If there is an error, check if it contains specific mandatory fields
 	if err != nil {
@@ -697,6 +698,8 @@ func TestRunWithoutMandatory(t *testing.T) {
 			utils.VerifyDataContains(t, err.Error(), "remote_allowed_ips", testLogger)
 		// Assert that the result is true if all mandatory fields are missing
 		assert.True(t, result)
+	} else {
+		t.Error("Expected error did not occur")
 	}
 
 }
@@ -730,8 +733,8 @@ func TestRunCIDRsAsNonDefault(t *testing.T) {
 	lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
 }
 
-// TestExistingPACEnvironment tests the validation of an existing PAC environment configuration.
-func TestExistingPACEnvironment(t *testing.T) {
+// TestRunExistingPACEnvironment tests the validation of an existing PAC environment configuration.
+func TestRunExistingPACEnvironment(t *testing.T) {
 	// Parallelize the test to run concurrently with others
 	t.Parallel()
 
@@ -759,4 +762,580 @@ func TestExistingPACEnvironment(t *testing.T) {
 	// Validate the cluster configuration
 	lsf.ValidateClusterConfigurationWithAPPCenterForExistingEnv(t, config.BastionIP, config.LoginNodeIP, config.ClusterID, config.ReservationID, config.ClusterPrefixName, config.ResourceGroup,
 		config.KeyManagement, config.Zones, config.DnsDomainName, config.ManagementNodeIPList, config.HyperthreadingEnabled, testLogger)
+}
+
+// TestRunInvalidReservationIDAndContractID tests invalid cluster_id and reservation_id values
+func TestRunInvalidReservationIDAndContractID(t *testing.T) {
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	// Log the initiation of cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Define invalid cluster_id and reservation_id values
+	invalidClusterIDs := []string{
+		"too_long_cluster_id_1234567890_abcdefghijklmnopqrstuvwxyz", //pragma: allowlist secret
+		"invalid@cluster!id#",
+		"",
+	}
+
+	invalidReservationIDs := []string{
+		"1invalid_reservation",
+		"invalid_reservation@id",
+		"ContractIBM",
+		"",
+	}
+
+	// Getting absolute path of solutions/hpc
+	abs, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Unable to get absolute path")
+
+	terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+	// Loop over all combinations of invalid cluster_id and reservation_id values
+	for _, clusterID := range invalidClusterIDs {
+		for _, reservationID := range invalidReservationIDs {
+
+			// Define Terraform options
+			terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+				TerraformDir: terrPath,
+				Vars: map[string]interface{}{
+					"cluster_prefix":     hpcClusterPrefix,
+					"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+					"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+					"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+					"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+					"cluster_id":         clusterID,
+					"reservation_id":     reservationID,
+				},
+			})
+
+			// Initialize and plan the Terraform deployment
+			_, err := terraform.InitAndPlanE(t, terraformOptions)
+
+			// If there is an error, check if it contains specific mandatory fields
+			if err != nil {
+				clusterIDError := utils.VerifyDataContains(t, err.Error(), "cluster_id", testLogger)
+				reservationIDError := utils.VerifyDataContains(t, err.Error(), "reservation_id", testLogger)
+				result := clusterIDError && reservationIDError
+				// Assert that the result is true if all mandatory fields are missing
+				assert.True(t, result)
+				if result {
+					testLogger.PASS(t, "Validation succeeded: Invalid clusterID and ReservationID")
+				} else {
+					testLogger.FAIL(t, "Validation failed: Expected error did not contain required fields: cluster_id or reservation_id")
+				}
+			} else {
+				// Log an error if the expected error did not occur
+				t.Error("Expected error did not occur")
+				testLogger.FAIL(t, "Expected error did not occur on Invalid clusterID and ReservationID validation")
+			}
+		}
+	}
+}
+
+// TestRunInvalidLDAPServerIP validates cluster creation with invalid LDAP server IP.
+func TestRunInvalidLDAPServerIP(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	if strings.ToLower(envVars.EnableLdap) == "true" {
+		// Check if the LDAP credentials are provided
+		if len(envVars.LdapAdminPassword) == 0 || len(envVars.LdapUserName) == 0 || len(envVars.LdapUserPassword) == 0 {
+			require.FailNow(t, "LDAP credentials are missing. Make sure LDAP admin password, LDAP user name, and LDAP user password are provided.")
+		}
+	} else {
+		require.FailNow(t, "LDAP is not enabled. Set the 'enable_ldap' environment variable to 'true' to enable LDAP.")
+	}
+
+	// Get the absolute path of solutions/hpc
+	abs, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Unable to get absolute path")
+
+	terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+	// Define Terraform options
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terrPath,
+		Vars: map[string]interface{}{
+			"cluster_prefix":      hpcClusterPrefix,
+			"bastion_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
+			"compute_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
+			"zones":               utils.SplitAndTrim(envVars.Zone, ","),
+			"remote_allowed_ips":  utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+			"cluster_id":          envVars.ClusterID,
+			"reservation_id":      envVars.ReservationID,
+			"enable_ldap":         true,
+			"ldap_admin_password": envVars.LdapAdminPassword, //pragma: allowlist secret
+			"ldap_server":         "10.10.10.10",
+		},
+	})
+
+	// Apply the Terraform configuration
+	_, err = terraform.InitAndApplyE(t, terraformOptions)
+
+	// Check if an error occurred during apply
+	assert.Error(t, err, "Expected an error during apply")
+
+	if err != nil {
+		// Check if the error message contains specific keywords indicating LDAP server IP issues
+		result := utils.VerifyDataContains(t, err.Error(), "The connection to the existing LDAP server 10.10.10.10 failed", testLogger)
+		if result {
+			testLogger.PASS(t, "Validation succeeded: Invalid LDAP server IP")
+		} else {
+			testLogger.FAIL(t, "Validation failed: Invalid LDAP server IP")
+		}
+	} else {
+		// Log an error if the expected error did not occur
+		t.Error("Expected error did not occur")
+		testLogger.FAIL(t, "Expected error did not occur on Invalid LDAP Server IP")
+	}
+
+	// Cleanup resources
+	defer terraform.Destroy(t, terraformOptions)
+}
+
+// TestRunInvalidLDAPUsernamePassword tests invalid LDAP username and password
+func TestRunInvalidLDAPUsernamePassword(t *testing.T) {
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	// Log the initiation of cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Define invalid ldap username and password values
+	invalidLDAPUsername := []string{
+		"usr",
+		"user@1234567890123456789012345678901",
+		"",
+		"user 1234",
+	}
+
+	invalidLDAPPassword := []string{
+		"password",
+		"PasswoRD123",
+		"password123",
+		"Password@",
+		"Password123",
+		"password@12345678901234567890",
+	}
+
+	// Getting absolute path of solutions/hpc
+	abs, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Unable to get absolute path")
+
+	terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+	// Loop over all combinations of invalid ldap username and password values
+	for _, username := range invalidLDAPUsername {
+		for _, password := range invalidLDAPPassword { //pragma: allowlist secret
+
+			// Define Terraform options
+			terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+				TerraformDir: terrPath,
+				Vars: map[string]interface{}{
+					"cluster_prefix":      hpcClusterPrefix,
+					"bastion_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
+					"compute_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
+					"zones":               utils.SplitAndTrim(envVars.Zone, ","),
+					"remote_allowed_ips":  utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+					"cluster_id":          envVars.ClusterID,
+					"reservation_id":      envVars.ReservationID,
+					"enable_ldap":         true,
+					"ldap_user_name":      username,
+					"ldap_user_password":  password, //pragma: allowlist secret
+					"ldap_admin_password": password, //pragma: allowlist secret
+				},
+			})
+
+			// Initialize and plan the Terraform deployment
+			_, err := terraform.InitAndPlanE(t, terraformOptions)
+
+			// If there is an error, check if it contains specific mandatory fields
+			if err != nil {
+				usernameError := utils.VerifyDataContains(t, err.Error(), "ldap_user_name", testLogger)
+				userPasswordError := utils.VerifyDataContains(t, err.Error(), "ldap_usr_pwd", testLogger)
+				adminPasswordError := utils.VerifyDataContains(t, err.Error(), "ldap_adm_pwd", testLogger)
+				result := usernameError && userPasswordError && adminPasswordError
+				// Assert that the result is true if all mandatory fields are missing
+				assert.True(t, result)
+				if result {
+					testLogger.PASS(t, "Validation succeeded: Invalid LDAP username  LDAP user password ,LDAP admin password")
+				} else {
+					testLogger.FAIL(t, "Validation failed: Expected error did not contain required fields: ldap_user_name, ldap_user_password or ldap_admin_password")
+				}
+			} else {
+				// Log an error if the expected error did not occur
+				t.Error("Expected error did not occur")
+				testLogger.FAIL(t, "Expected error did not contain required fields: ldap_user_name, ldap_user_password or ldap_admin_password")
+			}
+		}
+	}
+}
+
+// TestRunInvalidAPPCenterPassword tests invalid values for app center password
+func TestRunInvalidAPPCenterPassword(t *testing.T) {
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	// Log the initiation of cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	invalidAPPCenterPwd := []string{
+		"pass@1234",
+		"Pass1234",
+		"Pas@12",
+		"",
+	}
+
+	// Loop over all combinations of invalid cluster_id and reservation_id values
+	for _, password := range invalidAPPCenterPwd { //pragma: allowlist secret
+
+		// HPC cluster prefix
+		hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+		// Retrieve cluster information from environment variables
+		envVars := GetEnvVars()
+
+		// Getting absolute path of solutions/hpc
+		abs, err := filepath.Abs("solutions/hpc")
+		require.NoError(t, err, "Unable to get absolute path")
+
+		terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+		// Define Terraform options
+		terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+			TerraformDir: terrPath,
+			Vars: map[string]interface{}{
+				"cluster_prefix":     hpcClusterPrefix,
+				"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+				"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+				"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+				"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+				"cluster_id":         envVars.ClusterID,
+				"reservation_id":     envVars.ReservationID,
+				"enable_app_center":  true,
+				"app_center_gui_pwd": password,
+			},
+		})
+
+		// Initialize and plan the Terraform deployment
+		_, err = terraform.InitAndPlanE(t, terraformOptions)
+
+		// If there is an error, check if it contains specific mandatory fields
+		if err != nil {
+			result := utils.VerifyDataContains(t, err.Error(), "app_center_gui_pwd", testLogger)
+
+			// Assert that the result is true if all mandatory fields are missing
+			assert.True(t, result)
+			if result {
+				testLogger.PASS(t, "Validation succeeded: Invalid Application Center Password")
+			} else {
+				testLogger.FAIL(t, "Validation failed: Invalid Application Center Password")
+			}
+		} else {
+			// Log an error if the expected error did not occur
+			t.Error("Expected error did not occur")
+			testLogger.FAIL(t, "Expected error did not occur on Invalid Application Center Password")
+		}
+	}
+}
+
+// TestRunInvalidDomainName validates cluster creation with invalid domain name.
+func TestRunInvalidDomainName(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Get the absolute path of solutions/hpc
+	abs, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Unable to get absolute path")
+
+	terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+	// Define Terraform options
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terrPath,
+		Vars: map[string]interface{}{
+			"cluster_prefix":     hpcClusterPrefix,
+			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+			"cluster_id":         envVars.ClusterID,
+			"reservation_id":     envVars.ReservationID,
+			"dns_domain_name":    map[string]string{"compute": "sample"},
+		},
+	})
+
+	// Apply the Terraform configuration
+	_, err = terraform.InitAndPlanE(t, terraformOptions)
+
+	// Check if an error occurred during apply
+	assert.Error(t, err, "Expected an error during apply")
+
+	if err != nil {
+		// Check if the error message contains specific keywords indicating domain name issues
+		result := utils.VerifyDataContains(t, err.Error(), "The domain name provided for compute is not a fully qualified domain name", testLogger)
+		if result {
+			testLogger.PASS(t, "Validation succeeded: Invalid domain name")
+		} else {
+			testLogger.FAIL(t, "Validation failed: Invalid domain name")
+		}
+	} else {
+		// Log an error if the expected error did not occur
+		t.Error("Expected error did not occur")
+		testLogger.FAIL(t, "Expected error did not occur on Invalid domain name")
+	}
+}
+
+// TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue tests the creation of KMS instances and KMS key names with invalid values
+func TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Service instance name
+	randomString := utils.GenerateRandomString()
+	kmsInstanceName := "cicd-" + randomString
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Create service instance and KMS key using IBMCloud CLI
+	err := lsf.CreateServiceInstanceandKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
+	require.NoError(t, err, "Failed to create service instance and KMS key")
+
+	// Ensure the service instance and KMS key are deleted after the test
+	defer lsf.DeleteServiceInstanceAndAssociatedKeys(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, kmsInstanceName, testLogger)
+
+	testLogger.Info(t, "Service instance and KMS key created successfully: "+t.Name())
+
+	abs, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Failed to get absolute path")
+
+	terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+	const (
+		invalidKMSKeyName      = "sample-key"
+		invalidKMSInstanceName = "sample-ins"
+		noKeyErrorMsg          = "No keys with name sample-key"
+		noInstanceErrorMsg     = "No resource instance found with name [sample-ins]"
+		noInstanceIDErrorMsg   = "Please make sure you are passing the kms_instance_name if you are passing kms_key_name"
+	)
+
+	// Test with valid instance ID and invalid key name
+	terraformOptionsCase1 := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terrPath,
+		Vars: map[string]interface{}{
+			"cluster_prefix":     hpcClusterPrefix,
+			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+			"cluster_id":         envVars.ClusterID,
+			"reservation_id":     envVars.ReservationID,
+			"kms_instance_name":  kmsInstanceName,
+			"kms_key_name":       invalidKMSKeyName,
+		},
+	})
+
+	_, err = terraform.InitAndPlanE(t, terraformOptionsCase1)
+	if err != nil {
+		result := utils.VerifyDataContains(t, err.Error(), noKeyErrorMsg, testLogger)
+		assert.True(t, result)
+		if result {
+			testLogger.PASS(t, "Validation succeeded: Valid instance ID and invalid key name")
+		} else {
+			testLogger.FAIL(t, "Validation failed: Valid instance ID and invalid key name")
+		}
+	} else {
+		t.Error("Expected error did not occur")
+		testLogger.FAIL(t, "Expected error did not occur with valid instance ID and invalid key name")
+	}
+
+	// Test with invalid instance ID and valid key name
+	terraformOptionsCase2 := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terrPath,
+		Vars: map[string]interface{}{
+			"cluster_prefix":     hpcClusterPrefix,
+			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+			"cluster_id":         envVars.ClusterID,
+			"reservation_id":     envVars.ReservationID,
+			"kms_instance_name":  invalidKMSInstanceName,
+			"kms_key_name":       lsf.KMS_KEY_NAME,
+		},
+	})
+
+	_, err = terraform.InitAndPlanE(t, terraformOptionsCase2)
+	if err != nil {
+		result := utils.VerifyDataContains(t, err.Error(), noInstanceErrorMsg, testLogger)
+		assert.True(t, result)
+		if result {
+			testLogger.PASS(t, "Validation succeeded: Invalid instance ID and valid key name")
+		} else {
+			testLogger.FAIL(t, "Validation failed: Invalid instance ID and valid key name")
+		}
+	} else {
+		t.Error("Expected error did not occur")
+		testLogger.FAIL(t, "Expected error did not occur with invalid instance ID and valid key name")
+	}
+
+	// Test without instance ID and valid key name
+	terraformOptionsCase3 := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terrPath,
+		Vars: map[string]interface{}{
+			"cluster_prefix":     hpcClusterPrefix,
+			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+			"cluster_id":         envVars.ClusterID,
+			"reservation_id":     envVars.ReservationID,
+			"kms_key_name":       lsf.KMS_KEY_NAME,
+		},
+	})
+
+	_, err = terraform.InitAndPlanE(t, terraformOptionsCase3)
+	if err != nil {
+		result := utils.VerifyDataContains(t, err.Error(), noInstanceIDErrorMsg, testLogger)
+		assert.True(t, result)
+		if result {
+			testLogger.PASS(t, "Validation succeeded: Without instance ID and valid key name")
+		} else {
+			testLogger.FAIL(t, "Validation failed: Without instance ID and valid key name")
+		}
+	} else {
+		t.Error("Expected error did not occur")
+		testLogger.FAIL(t, "Expected error did not occur without instance ID and valid key name")
+	}
+}
+
+// Verify that existing subnet_id has an input value, then there should be an entry for 'vpc_name'
+func TestRunExistSubnetIDVpcNameAsNull(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Create test options, set up test environment
+	options, err := setupOptionsVpc(t, hpcClusterPrefix, createVpcTerraformDir, envVars.DefaultResourceGroup)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	// Run the test
+	output, err := options.RunTest()
+	require.NoError(t, err, "Error running consistency test: %v", err)
+	require.NotNil(t, output, "Expected non-nil output, but got nil")
+	outputs := (options.LastTestTerraformOutputs)
+
+	bastionsubnetId, computesubnetIds := utils.GetSubnetIds(outputs)
+
+	// Get the absolute path of solutions/hpc
+	abs, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Unable to get absolute path")
+
+	terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+	// Define Terraform options
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terrPath,
+		Vars: map[string]interface{}{
+			"cluster_prefix":     hpcClusterPrefix,
+			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+			"cluster_id":         envVars.ClusterID,
+			"reservation_id":     envVars.ReservationID,
+			"cluster_subnet_ids": utils.SplitAndTrim(computesubnetIds, ","),
+			"login_subnet_id":    bastionsubnetId,
+		},
+	})
+
+	// Apply the Terraform configuration
+	_, err = terraform.InitAndPlanE(t, terraformOptions)
+
+	// Check if an error occurred during plan
+	assert.Error(t, err, "Expected an error during plan")
+
+	if err != nil {
+		// Check if the error message contains specific keywords indicating vpc name issues
+		result := utils.VerifyDataContains(t, err.Error(), "If the cluster_subnet_ids are provided, the user should also provide the vpc_name", testLogger) &&
+			utils.VerifyDataContains(t, err.Error(), "Provided cluster subnets should be in appropriate zone", testLogger) &&
+			utils.VerifyDataContains(t, err.Error(), "Provided login subnet should be within the vpc entered", testLogger) &&
+			utils.VerifyDataContains(t, err.Error(), "Provided login subnet should be in appropriate zone", testLogger) &&
+			utils.VerifyDataContains(t, err.Error(), "Provided cluster subnets should be within the vpc entered", testLogger) &&
+			utils.VerifyDataContains(t, err.Error(), "Provided existing cluster_subnet_ids should have public gateway attached", testLogger)
+		assert.True(t, result)
+		if result {
+			testLogger.PASS(t, "Validation succeeded: Without VPC name and with valid cluster_subnet_ids and login_subnet_id")
+		} else {
+			testLogger.FAIL(t, "Validation failed: Without VPC name and with valid cluster_subnet_ids and login_subnet_id")
+		}
+	} else {
+		// Log an error if the expected error did not occur
+		t.Error("Expected error did not occur")
+		testLogger.FAIL(t, "Expected error did not occur on Without VPC name and with valid cluster_subnet_ids and login_subnet_id")
+	}
 }
