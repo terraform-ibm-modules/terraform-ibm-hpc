@@ -20,7 +20,7 @@
     "enable_cos_integration"    : "false",
     "cos_instance_name"         : "__NULL__",
     "enable_fip"                : "true",
-    "management_image_name"     : "hpcaas-lsf10-rhel88-v7",
+    "management_image_name"     : "hpcaas-lsf10-rhel88-v8",
     "compute_image_name"        : "hpcaas-lsf10-rhel88-compute-v5",
     "login_image_name"          : "hpcaas-lsf10-rhel88-compute-v5",
     "login_node_instance_type"  : "bx2-2x8",
