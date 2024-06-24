@@ -72,7 +72,27 @@ locals {
   compute_subnet_id         = local.compute_subnets[0].id
   compute_security_group_id = module.landing_zone_vsi.compute_sg_id
   management_instance_count = var.management_node_count
-  default_share = local.management_instance_count > 0 ? [
+
+  valid_lsf_shares = [
+    for share in var.custom_file_shares :
+    {
+      mount_path = "/mnt/lsf"
+      nfs_share  = share.nfs_share
+    }
+    if share.mount_path == "/mnt/lsf" && share.nfs_share != "" && share.nfs_share != null
+  ]
+
+  valid_default_vpc_share = [
+    for share in var.custom_file_shares :
+    {
+      mount_path = "/mnt/lsf"
+      size       = share.size
+      iops       = share.size
+    }
+    if share.mount_path == "/mnt/lsf" && share.size != null && share.iops != null
+  ]
+
+  default_share = local.management_instance_count > 0 && length(local.valid_lsf_shares) == 0 && length(local.valid_default_vpc_share) == 0 ? [
     {
       mount_path = "/mnt/lsf"
       size       = 100
@@ -87,10 +107,10 @@ locals {
       size       = share.size
       iops       = share.iops
     }
-    if share.size != null && share.iops != null
+    if share.size != null && share.iops != null && share.mount_path != "/mnt/lsf"
   ]
 
-  total_shares = concat(local.default_share, local.vpc_file_share)
+  total_shares = concat(length(local.valid_default_vpc_share) == 1 ? local.valid_default_vpc_share : local.default_share, local.vpc_file_share)
 
   # total_shares = 10
   file_shares = [
@@ -197,7 +217,7 @@ locals {
 }
 
 locals {
-  share_path = module.file_storage.mount_path_1
+  share_path = length(local.valid_lsf_shares) > 0 ? join(", ", local.valid_lsf_shares[*].nfs_share) : module.file_storage.mount_path_1
 }
 
 ###########################################################################

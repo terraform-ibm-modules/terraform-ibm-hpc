@@ -92,6 +92,15 @@ spec:
     - name: us_south_reservation_id
       description: Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_).
       default: ""
+    - name: cos_region
+      description: The cos region name.
+      default: ""
+    - name: cos_bucket
+      description: The cos bucket name.
+      default: ""
+    - name: cos_instance_crn
+      description: The cos instance crn.
+      default: ""
   workspaces:
     - name: pipeline-ws
   tasks:
@@ -202,6 +211,12 @@ spec:
           value: $(params.us_south_reservation_id)
         - name: revision
           value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
     - name: wes-hpc-da-ubuntu
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
@@ -254,8 +269,130 @@ spec:
           value: $(params.us_south_reservation_id)
         - name: revision
           value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+    - name: wes-hpc-da-region
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: wes-hpc-da-region
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: ssh_keys
+          value: $(params.ssh_keys)
+        - name: zone
+          value: $(params.zone)
+        - name: cluster_prefix
+          value: $(params.cluster_prefix)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: remote_allowed_ips
+          value: $(params.remote_allowed_ips)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: cluster_id
+          value: $(params.cluster_id)
+        - name: reservation_id
+          value: $(params.reservation_id)
+        - name: us_east_zone
+          value: $(params.us_east_zone)
+        - name: us_east_cluster_id
+          value: $(params.us_east_cluster_id)
+        - name: us_east_reservation_id
+          value: $(params.us_east_reservation_id)
+        - name: eu_de_zone
+          value: $(params.eu_de_zone)
+        - name: eu_de_cluster_id
+          value: $(params.eu_de_cluster_id)
+        - name: eu_de_reservation_id
+          value: $(params.eu_de_reservation_id)
+        - name: us_south_zone
+          value: $(params.us_south_zone)
+        - name: us_south_cluster_id
+          value: $(params.us_south_cluster_id)
+        - name: us_south_reservation_id
+          value: $(params.us_south_reservation_id)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+    - name: wes-hpc-da-negative
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: wes-hpc-da-negative
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: ssh_keys
+          value: $(params.ssh_keys)
+        - name: zone
+          value: $(params.zone)
+        - name: cluster_prefix
+          value: $(params.cluster_prefix)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: remote_allowed_ips
+          value: $(params.remote_allowed_ips)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: cluster_id
+          value: $(params.cluster_id)
+        - name: reservation_id
+          value: $(params.reservation_id)
+        - name: us_east_zone
+          value: $(params.us_east_zone)
+        - name: us_east_cluster_id
+          value: $(params.us_east_cluster_id)
+        - name: us_east_reservation_id
+          value: $(params.us_east_reservation_id)
+        - name: eu_de_zone
+          value: $(params.eu_de_zone)
+        - name: eu_de_cluster_id
+          value: $(params.eu_de_cluster_id)
+        - name: eu_de_reservation_id
+          value: $(params.eu_de_reservation_id)
+        - name: us_south_zone
+          value: $(params.us_south_zone)
+        - name: us_south_cluster_id
+          value: $(params.us_south_cluster_id)
+        - name: us_south_reservation_id
+          value: $(params.us_south_reservation_id)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
     - name: ssh-key-deletion
-      runAfter: [wes-hpc-da-rhel, wes-hpc-da-ubuntu]
+      runAfter: [wes-hpc-da-rhel, wes-hpc-da-ubuntu, wes-hpc-da-negative, wes-hpc-da-region]
       taskRef:
         name: ssh-key-deletion
       workspaces:
@@ -299,51 +436,24 @@ spec:
             description: The git repo will be cloned onto the volume backing this workspace
             mountPath: /artifacts
         steps:
-          - name: test-run-output-log-rhel-ubuntu-suite
+          - name: display-test-output-log-rhel-ubuntu-suite
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
             command: ["/bin/bash", "-c"]
             args:
               - |
                 #!/bin/bash
-                DIRECTORY="/artifacts/tests"
-                if [ -d "$DIRECTORY" ]; then
-                  echo "*******************************************************"
-                  count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
-                  if [ $count == 0 ]; then
-                    echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
-                    exit 1
-                  else
-                    cat $DIRECTORY/test_output/log*
-                  fi
-                  echo "*******************************************************"
-                else
-                  echo "$DIRECTORY does not exits"
-                  exit 1
-                fi
-          - name: test-run-output-log-rhel-ubuntu-suite-error-check
+                source .tekton/scripts/issue_track.sh
+                display_test_output
+          - name: error-check-test-output-log-rhel-ubuntu-suite
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
             command: ["/bin/bash", "-c"]
             args:
               - |
                 #!/bin/bash
-                DIRECTORY="/artifacts/tests"
-                if [ -d "$DIRECTORY" ]; then
-                  echo "*******************************************************"
-                  if [ -d "$DIRECTORY" ]; then
-                    # Check any error message in the test run output log
-                    error_check=$(eval "grep -E -w 'FAIL|Error|ERROR' $DIRECTORY/test_output/log*")
-                    if [[ "$error_check" ]]; then
-                      echo "$error_check"
-                      echo "Found Error/FAIL/ERROR in the test run output log. Please check log."
-                    fi
-                  fi
-                  echo "*******************************************************"
-                else
-                  echo "$DIRECTORY does not exits"
-                  exit 1
-                fi
+                source .tekton/scripts/issue_track.sh
+                check_error_test_output
     - name: inspect-wes-hpc-infra-log
       runAfter: [git-clone, wes-hpc-da-rhel, wes-hpc-da-ubuntu]
       workspaces:
@@ -355,7 +465,7 @@ spec:
             description: The git repo will be cloned onto the volume backing this workspace
             mountPath: /artifacts
         steps:
-          - name: inspect-infra-error-rhel-suite
+          - name: error-check-on-rhel-suite-log
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -364,32 +474,9 @@ spec:
               - |
                 #!/bin/bash
                 LOG_FILE="pipeline-rhel-suite*"
-                DIRECTORY="/artifacts/tests"
-                if [ -d "$DIRECTORY" ]; then
-                  # Check any error message on the plan/apply log
-                  error_check=$(eval "grep -E -w 'FAIL|Error|ERROR' $DIRECTORY/$LOG_FILE")
-                  if [[ "$error_check" ]]; then
-                    echo "$error_check"
-                    echo "Found Error/FAIL/ERROR in plan/apply log. Please check log."
-                    exit 1
-                  else
-                    count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
-                    if [ $count == 0 ]; then
-                      echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
-                      exit 1
-                    fi
-                  fi
-                else
-                  echo "$DIRECTORY does not exits"
-                  exit 1
-                fi
-
-                count=`ls -1 $DIRECTORY/*.cicd 2>/dev/null | wc -l`
-                if [ $count == 0 ]; then
-                  echo "Test Suite have not initated, check with packages or binaries installations"
-                  exit 1
-                fi
-          - name: inspect-infra-error-ubuntu-suite
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE}"
+          - name: error-check-on-ubuntu-suite-log
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
             command: ["/bin/bash", "-c"]
@@ -397,28 +484,25 @@ spec:
               - |
                 #!/bin/bash
                 LOG_FILE="pipeline-ubuntu-suite*"
-                DIRECTORY="/artifacts/tests"
-                if [ -d "$DIRECTORY" ]; then
-                  # Check any error message on the plan/apply log
-                  error_check=$(eval "grep -E -w 'FAIL|Error|ERROR' $DIRECTORY/$LOG_FILE")
-                  if [[ "$error_check" ]]; then
-                    echo "$error_check"
-                    echo "Found Error/FAIL/ERROR in plan/apply log. Please check log."
-                    exit 1
-                  else
-                    count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
-                    if [ $count == 0 ]; then
-                      echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
-                      exit 1
-                    fi
-                  fi
-                else
-                  echo "$DIRECTORY does not exits"
-                  exit 1
-                fi
-
-                count=`ls -1 $DIRECTORY/*.cicd 2>/dev/null | wc -l`
-                if [ $count == 0 ]; then
-                  echo "Test Suite have not initated, check with packages or binaries installations"
-                  exit 1
-                fi
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE}"
+          - name: error-check-on-regions-suite-log
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE="pipeline-regions-suite*"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE}"
+          - name: error-check-on-negative-suite-log
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE="pipeline-negative-suite*"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE}"

@@ -92,6 +92,15 @@ spec:
     - name: us_south_reservation_id
       description: Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_).
       default: ""
+    - name: cos_region
+      description: The cos region name.
+      default: ""
+    - name: cos_bucket
+      description: The cos bucket name.
+      default: ""
+    - name: cos_instance_crn
+      description: The cos instance crn.
+      default: ""
   resourcetemplates:
     - apiVersion: v1
       kind: PersistentVolumeClaim
@@ -172,6 +181,12 @@ spec:
             value: $(params.us_south_cluster_id)
           - name: us_south_reservation_id
             value: $(params.us_south_reservation_id)
+          - name: cos_region
+            value: $(params.cos_region)
+          - name: cos_bucket
+            value: $(params.cos_bucket)
+          - name: cos_instance_crn
+            value: $(params.cos_instance_crn)
         workspaces:
           - name: pipeline-ws
             persistentVolumeClaim:
@@ -227,6 +242,12 @@ spec:
       value: $(params.us_south_cluster_id)
     - name: us_south_reservation_id
       value: $(params.us_south_reservation_id)
+    - name: cos_region
+      value: $(params.cos_region)
+    - name: cos_bucket
+      value: $(params.cos_bucket)
+    - name: cos_instance_crn
+      value: $(params.cos_instance_crn)
 ---
 apiVersion: tekton.dev/v1beta1
 kind: EventListener

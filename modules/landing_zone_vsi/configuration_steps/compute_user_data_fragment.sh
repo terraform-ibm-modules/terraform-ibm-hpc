@@ -54,58 +54,76 @@ elif grep -q "NAME=\"Ubuntu\"" /etc/os-release; then
     fi
 fi
 
-# TODO: Conditional NFS mount
+# Setup VPC FileShare | NFS Mount
 LSF_TOP="/opt/ibm/lsf"
-# Setup file share
+echo "Initiating LSF share mount" >> $logfile
+
+# Function to attempt NFS mount with retries
+mount_nfs_with_retries() {
+  local server_path=$1
+  local client_path=$2
+  local retries=5
+  local success=false
+
+  rm -rf "${client_path}"
+  mkdir -p "${client_path}"
+
+  for (( j=0; j<retries; j++ )); do
+    mount -t nfs -o sec=sys "$server_path" "$client_path" -v >> $logfile
+    if mount | grep -q "${client_path}"; then
+      echo "Mount successful for ${server_path} on ${client_path}" >> $logfile
+      success=true
+      break
+    else
+      echo "Attempt $((j+1)) of $retries failed for ${server_path} on ${client_path}" >> $logfile
+      sleep 2
+    fi
+  done
+
+  if [ "$success" = true ]; then
+    chmod 777 "${client_path}"
+    echo "${server_path} ${client_path} nfs rw,sec=sys,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,_netdev 0 0" >> /etc/fstab
+  else
+    echo "Mount not found for ${server_path} on ${client_path} after $retries attempts." >> $logfile
+    rm -rf "${client_path}"
+  fi
+
+  # Convert success to numeric for return
+  if [ "$success" = true ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# Setup LSF share
 if [ -n "${nfs_server_with_mount_path}" ]; then
   echo "File share ${nfs_server_with_mount_path} found" >> $logfile
   nfs_client_mount_path="/mnt/lsf"
-  rm -rf "${nfs_client_mount_path}"
-  mkdir -p "${nfs_client_mount_path}"
-  # Mount LSF TOP
-  mount -t nfs -o sec=sys "$nfs_server_with_mount_path" "$nfs_client_mount_path" >> $logfile
-  # Verify mount
-  if mount | grep "$nfs_client_mount_path"; then
-    echo "Mount found" >> $logfile
+  if mount_nfs_with_retries "${nfs_server_with_mount_path}" "${nfs_client_mount_path}"; then
+    # Move stuff to shared fs
+    for dir in conf work das_staging_area; do
+      rm -rf "${LSF_TOP}/$dir"
+      ln -fs "${nfs_client_mount_path}/$dir" "${LSF_TOP}/$dir"
+    done
+    chown -R lsfadmin:root "${LSF_TOP}"
   else
-    echo "No mount found, exiting!" >> $logfile
+    echo "Mount not found for ${nfs_server_with_mount_path}, Exiting !!" >> $logfile
     exit 1
   fi
-  # Update mount to fstab for automount
-  echo "$nfs_server_with_mount_path $nfs_client_mount_path nfs rw,sec=sys,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,_netdev 0 0 " >> /etc/fstab
-  for dir in conf work das_staging_area; do
-    rm -rf "${LSF_TOP}/$dir" # this local data can go away
-    ln -fs "${nfs_client_mount_path}/$dir" "${LSF_TOP}" # we link from shared fs
-    chown -R lsfadmin:root "${LSF_TOP}"
-  done
 fi
 echo "Setting LSF share is completed." >> $logfile
 
 # Setup Custom file shares
 echo "Setting custom file shares." >> $logfile
-# Setup file share
 if [ -n "${custom_file_shares}" ]; then
   echo "Custom file share ${custom_file_shares} found" >> $logfile
   file_share_array=(${custom_file_shares})
   mount_path_array=(${custom_mount_paths})
   length=${#file_share_array[@]}
-  for (( i=0; i<length; i++ ))
-  do
-    rm -rf "${mount_path_array[$i]}"
-    mkdir -p "${mount_path_array[$i]}"
-    # Mount LSF TOP
-    mount -t nfs -o sec=sys "${file_share_array[$i]}" "${mount_path_array[$i]}" >> $logfile
-    # Verify mount
-    if mount | grep "${file_share_array[$i]}"; then
-      echo "Mount found" >> $logfile
-    else
-      echo "No mount found" >> $logfile
-      rm -rf "${mount_path_array[$i]}"
-    fi
-    # Update permission to 777 for all users to access
-    chmod 777 "${mount_path_array[$i]}"
-    # Update mount to fstab for automount
-    echo "${file_share_array[$i]} ${mount_path_array[$i]} nfs rw,sec=sys,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,_netdev 0 0 " >> /etc/fstab
+
+  for (( i=0; i<length; i++ )); do
+    mount_nfs_with_retries "${file_share_array[$i]}" "${mount_path_array[$i]}"
   done
 fi
 echo "Setting custom file shares is completed." >> $logfile

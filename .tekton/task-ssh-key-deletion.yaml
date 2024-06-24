@@ -60,42 +60,5 @@ spec:
             set -x
           fi
 
-          CICD_SSH_KEY=cicd
-          if [ -z "${PR_REVISION}" ]; then
-            REVISION=$(echo $REVISION)
-            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
-          else
-            PR_REVISION=$(echo $PR_REVISION)
-            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$PR_REVISION)
-          fi
-
-          ibmcloud_login () {
-            local regions=("$1")
-            local API_KEY=("$2")
-            local for_create_or_delete="$3"
-            echo "$regions"
-            # Looping all region to create SSH-KEYS
-            for region in ${regions[@]};
-              do
-                echo "$region"
-                disable_update_check=$(eval "ibmcloud config --check-version=false")
-                auhtenticate=$(eval "ibmcloud login --apikey $API_KEY -r $region")
-                echo "$auhtenticate"
-                if [[ $auhtenticate = *OK* ]]; then
-                  if echo $for_create_or_delete | grep -q "delete"; then
-                    ssh_key_delete=$(eval "ibmcloud is key-delete $CICD_SSH_KEY -f")
-                    if [[ $ssh_key_delete = *deleted* ]]; then
-                      echo "$CICD_SSH_KEY deleted in $region"
-                    else
-                      echo "ssh-key deletion failed in $region"
-                    fi
-                  fi
-                else
-                  echo "Issue Login with IBMCLOUD $auhtenticate"
-                  exit 1
-                fi
-              done
-                  }
-
-          regions="us-south eu-de us-east"
-          ibmcloud_login "${regions}" "${API_KEY}" "delete"
+          source .tekton/scripts/ssh_create_delete.sh
+          ssh_key_delete
