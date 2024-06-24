@@ -899,6 +899,7 @@ func TestRunInvalidLDAPServerIP(t *testing.T) {
 	if err != nil {
 		// Check if the error message contains specific keywords indicating LDAP server IP issues
 		result := utils.VerifyDataContains(t, err.Error(), "The connection to the existing LDAP server 10.10.10.10 failed", testLogger)
+		assert.True(t, result)
 		if result {
 			testLogger.PASS(t, "Validation succeeded: Invalid LDAP server IP")
 		} else {
@@ -984,6 +985,7 @@ func TestRunInvalidLDAPUsernamePassword(t *testing.T) {
 				userPasswordError := utils.VerifyDataContains(t, err.Error(), "ldap_usr_pwd", testLogger)
 				adminPasswordError := utils.VerifyDataContains(t, err.Error(), "ldap_adm_pwd", testLogger)
 				result := usernameError && userPasswordError && adminPasswordError
+
 				// Assert that the result is true if all mandatory fields are missing
 				assert.True(t, result)
 				if result {
@@ -1115,6 +1117,7 @@ func TestRunInvalidDomainName(t *testing.T) {
 	if err != nil {
 		// Check if the error message contains specific keywords indicating domain name issues
 		result := utils.VerifyDataContains(t, err.Error(), "The domain name provided for compute is not a fully qualified domain name", testLogger)
+		assert.True(t, result)
 		if result {
 			testLogger.PASS(t, "Validation succeeded: Invalid domain name")
 		} else {
@@ -1337,5 +1340,64 @@ func TestRunExistSubnetIDVpcNameAsNull(t *testing.T) {
 		// Log an error if the expected error did not occur
 		t.Error("Expected error did not occur")
 		testLogger.FAIL(t, "Expected error did not occur on Without VPC name and with valid cluster_subnet_ids and login_subnet_id")
+	}
+}
+
+// TestRunInvalidSshKeysAndRemoteAllowedIP validates cluster creation with invalid ssh keys and remote allowed IP.
+func TestRunInvalidSshKeysAndRemoteAllowedIP(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Get the absolute path of solutions/hpc
+	abs, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Unable to get absolute path")
+
+	terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+	// Define Terraform options
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terrPath,
+		Vars: map[string]interface{}{
+			"cluster_prefix":     hpcClusterPrefix,
+			"bastion_ssh_keys":   []string{""},
+			"compute_ssh_keys":   []string{""},
+			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+			"remote_allowed_ips": []string{""},
+			"cluster_id":         envVars.ClusterID,
+			"reservation_id":     envVars.ReservationID,
+		},
+	})
+
+	// Apply the Terraform configuration
+	_, err = terraform.InitAndPlanE(t, terraformOptions)
+
+	// Check if an error occurred during apply
+	assert.Error(t, err, "Expected an error during apply")
+
+	if err != nil {
+		// Check if the error message contains specific keywords indicating domain name issues
+		result := utils.VerifyDataContains(t, err.Error(), "The provided IP address format is not valid", testLogger) &&
+			utils.VerifyDataContains(t, err.Error(), "No SSH Key found with name", testLogger)
+		assert.True(t, result)
+		if result {
+			testLogger.PASS(t, "Validation succeeded: Invalid ssh keys and remote allowed IP")
+		} else {
+			testLogger.FAIL(t, "Validation failed: Invalid ssh keys and remote allowed IP")
+		}
+	} else {
+		// Log an error if the expected error did not occur
+		t.Error("Expected error did not occur")
+		testLogger.FAIL(t, "Expected error did not occur on Invalid ssh keys and remote allowed IP")
 	}
 }

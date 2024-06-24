@@ -911,7 +911,7 @@ func GetOSNameOfNode(t *testing.T, sClient *ssh.Client, hostIP string, logger *u
 	return "", parseErr
 }
 
-// HPCCheckFileMount checks if essential LSF directories (conf, config_done, das_staging_area, gui-conf, gui-logs, log, repository-path and work) exist
+// HPCCheckFileMount checks if essential LSF directories (10.1, conf, config_done, das_staging_area, data, gui-conf, gui-logs, log, repository-path and work) exist
 // on remote machines identified by the provided list of IP addresses. It utilizes SSH to
 // query and validate the directories. Any missing directory triggers an error, and the
 // function logs the success message if all directories are found.
@@ -1022,7 +1022,7 @@ func verifyDirectories(t *testing.T, sClient *ssh.Client, ip string, logger *uti
 	// Split the output into directory names
 	actualDirs := strings.Fields(strings.TrimSpace(string(outputTwo)))
 	// Define expected directories
-	expectedDirs := []string{"conf", "config_done", "das_staging_area", "gui-conf", "gui-logs", "log", "repository-path", "work"}
+	expectedDirs := []string{"10.1", "conf", "config_done", "das_staging_area", "data", "gui-conf", "gui-logs", "log", "repository-path", "work"}
 
 	// Verify if all expected directories exist
 	if !utils.VerifyDataContains(t, actualDirs, expectedDirs, logger) {
@@ -1030,7 +1030,7 @@ func verifyDirectories(t *testing.T, sClient *ssh.Client, ip string, logger *uti
 	}
 
 	// Log directories existence
-	logger.Info(t, fmt.Sprintf("Directories [conf, config_done, das_staging_area, gui-conf, gui-logs, log, repository-path and work] exist on %s", ip))
+	logger.Info(t, fmt.Sprintf("Directories [10.1, conf, config_done, das_staging_area, data, gui-conf, gui-logs, log, repository-path and work] exist on %s", ip))
 	return nil
 }
 
@@ -1321,7 +1321,7 @@ func LSFRunJobsAsLDAPUser(t *testing.T, sClient *ssh.Client, jobCmd, ldapUser st
 	return fmt.Errorf("job execution for ID %s exceeded the specified time", jobID)
 }
 
-// HPCCheckFileMountAsLDAPUser checks if essential LSF directories (conf, config_done, das_staging_area, gui-conf, gui-logs, log, repository-path and work) exist
+// HPCCheckFileMountAsLDAPUser checks if essential LSF directories (10.1, conf, config_done, das_staging_area, data, gui-conf, gui-logs, log, repository-path and work) exist
 // on remote machines It utilizes SSH to
 // query and validate the directories. Any missing directory triggers an error, and the
 // function logs the success message if all directories are found.
@@ -1408,7 +1408,7 @@ func verifyDirectoriesAsLdapUser(t *testing.T, sClient *ssh.Client, hostname str
 	// Split the output into directory names
 	actualDirs := strings.Fields(strings.TrimSpace(string(outputTwo)))
 	// Define expected directories
-	expectedDirs := []string{"conf", "config_done", "das_staging_area", "gui-conf", "gui-logs", "log", "repository-path", "work"}
+	expectedDirs := []string{"10.1", "conf", "config_done", "das_staging_area", "data", "gui-conf", "gui-logs", "log", "repository-path", "work"}
 
 	// Verify if all expected directories exist
 	if !utils.VerifyDataContains(t, actualDirs, expectedDirs, logger) {
@@ -1416,7 +1416,7 @@ func verifyDirectoriesAsLdapUser(t *testing.T, sClient *ssh.Client, hostname str
 	}
 
 	// Log directories existence
-	logger.Info(t, fmt.Sprintf("Directories [conf, config_done, das_staging_area, gui-conf, gui-logs, log, repository-path and work] exist on %s", hostname))
+	logger.Info(t, fmt.Sprintf("Directories [10.1, conf, config_done, das_staging_area, data, gui-conf, gui-logs, log, repository-path and work] exist on %s", hostname))
 	return nil
 }
 
