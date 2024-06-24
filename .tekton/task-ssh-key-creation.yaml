@@ -45,12 +45,11 @@ spec:
         value: $(params.pr-revision)
       - name: REVISION
         value: $(params.revision)
+      - name: resource_group
+        value: $(params.resource_group)
   steps:
     - name: ssh-key-creation
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-      env:
-        - name: resource_group
-          value: $(params.resource_group)
       workingDir: "/artifacts"
       imagePullPolicy: Always
       command: ["/bin/bash", "-c"]
@@ -65,66 +64,5 @@ spec:
             set -x
           fi
 
-          CICD_SSH_KEY=cicd
-          if [ -z "${PR_REVISION}" ]; then
-            REVISION=$(echo $REVISION)
-            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
-          else
-            PR_REVISION=$(echo $PR_REVISION)
-            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$PR_REVISION)
-          fi
-
-          mkdir /artifacts/.ssh
-          ssh_key_pair=$(eval "ssh-keygen -t rsa -N '' -f /artifacts/.ssh/id_rsa <<< y")
-
-          ibmcloud_login () {
-            local regions=("$1")
-            local API_KEY=("$2")
-            local for_create_or_delete="$3"
-            # Looping all region to create SSH-KEYS
-            for region in ${regions[@]};
-              do
-                disable_update_check=$(eval "ibmcloud config --check-version=false")
-                auhtenticate=$(eval "ibmcloud login --apikey $API_KEY -r $region")
-                echo "$auhtenticate"
-                if [[ $auhtenticate = *OK* ]]; then
-                  echo "************SSH-KEY create progress in $region ************"
-                  if echo $for_create_or_delete | grep -q "create"; then
-                    check_key=`ibmcloud is keys | grep "cicd-toolchain" | awk '{print $2}'`
-                    if [[ -z "$check_key" ]]; then
-                      echo "$CICD_SSH_KEY creating in $region"
-                      ssh_key_create=$(eval "ibmcloud is key-create $CICD_SSH_KEY @/artifacts/.ssh/id_rsa.pub  --resource-group-name $resource_group")
-                      if [[ $ssh_key_create = *Created* ]]; then
-                        echo "$CICD_SSH_KEY created in $region"
-                      else
-                        echo "ssh-key creation failed in $region"
-                        exit 1
-                      fi
-                    else
-                      echo "$CICD_SSH_KEY already exists in region $region. So, deleting exist key $CICD_SSH_KEY in region $region"
-                      ssh_key_delete=$(eval "ibmcloud is key-delete $CICD_SSH_KEY -f")
-                      if [[ $ssh_key_delete = *deleted* ]]; then
-                        echo "Exist $CICD_SSH_KEY deleted in $region"
-                        echo "New $CICD_SSH_KEY creating in $region"
-                        ssh_key_create=$(eval "ibmcloud is key-create $CICD_SSH_KEY @/artifacts/.ssh/id_rsa.pub  --resource-group-name $resource_group")
-                        if [[ $ssh_key_create = *Created* ]]; then
-                          echo "New $CICD_SSH_KEY created in $region"
-                        else
-                          echo "ssh-key creation failed in $region"
-                          exit 1
-                        fi
-                      else
-                        echo "ssh-key deletion failed in $region"
-                      fi
-                    fi
-                    echo "************SSH-KEY create progress in $region done ************"
-                  fi
-                else
-                  echo "Issue Login with IBMCLOUD $auhtenticate"
-                  exit 1
-                fi
-              done
-                  }
-
-          regions="us-south eu-de us-east"
-          ibmcloud_login "${regions}" "${API_KEY}" "create"
+          source .tekton/scripts/ssh_create_delete.sh
+          ssh_key_create

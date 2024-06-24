@@ -63,6 +63,15 @@ spec:
     - name: reservation_id
       description: Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_).
       default: ""
+    - name: cos_region
+      description: The cos region name.
+      default: ""
+    - name: cos_bucket
+      description: The cos bucket name.
+      default: ""
+    - name: cos_instance_crn
+      description: The cos instance crn.
+      default: ""
   workspaces:
     - name: pipeline-ws
   tasks:
@@ -193,6 +202,12 @@ spec:
           value: $(params.reservation_id)
         - name: pr-revision
           value: $(params.pr-revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
     - name: wes-hpc-da-ubuntu-pr
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
@@ -227,6 +242,12 @@ spec:
           value: $(params.reservation_id)
         - name: pr-revision
           value: $(params.pr-revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
     - name: ssh-key-deletion
       runAfter: [wes-hpc-da-rhel-pr, wes-hpc-da-ubuntu-pr]
       taskRef:
@@ -239,62 +260,6 @@ spec:
           value: $(params.pipeline-debug)
         - name: pr-revision
           value: $(params.pr-revision)
-    - name: display-test-run-pr-output-log
-      runAfter: [git-clone, set-git-pr-running, wes-hpc-da-rhel-pr, wes-hpc-da-ubuntu-pr]
-      workspaces:
-        - name: workspace
-          workspace: pipeline-ws
-      taskSpec:
-        workspaces:
-          - name: workspace
-            description: The git repo will be cloned onto the volume backing this workspace
-            mountPath: /artifacts
-        steps:
-          - name: test-run-output-pr-log-rhel-ubuntu
-            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-            workingDir: "/artifacts"
-            command: ["/bin/bash", "-c"]
-            args:
-              - |
-                #!/bin/bash
-                DIRECTORY="/artifacts/tests"
-                if [ -d "$DIRECTORY" ]; then
-                  echo "*******************************************************"
-                  count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
-                  if [ $count == 0 ]; then
-                    echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
-                    exit 1
-                  else
-                    cat $DIRECTORY/test_output/log*
-                  fi
-                  echo "*******************************************************"
-                else
-                  echo "$DIRECTORY does not exits"
-                  exit 1
-                fi
-          - name: test-run-output-pr-log-rhel-ubuntu-error-check
-            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-            workingDir: "/artifacts"
-            command: ["/bin/bash", "-c"]
-            args:
-              - |
-                #!/bin/bash
-                DIRECTORY="/artifacts/tests"
-                if [ -d "$DIRECTORY" ]; then
-                  echo "*******************************************************"
-                  if [ -d "$DIRECTORY" ]; then
-                    # Check any error message in the test run output log
-                    error_check=$(eval "grep -E -w 'FAIL|Error|ERROR' $DIRECTORY/test_output/log*")
-                    if [[ "$error_check" ]]; then
-                      echo "$error_check"
-                      echo "Found Error/FAIL/ERROR in the test run output log. Please check log."
-                    fi
-                  fi
-                  echo "*******************************************************"
-                else
-                  echo "$DIRECTORY does not exits"
-                  exit 1
-                fi
     - name: inspect-wes-hpc-infra-log
       runAfter: [git-clone, set-git-pr-running, wes-hpc-da-rhel-pr, wes-hpc-da-ubuntu-pr]
       workspaces:
@@ -306,7 +271,7 @@ spec:
             description: The git repo will be cloned onto the volume backing this workspace
             mountPath: /artifacts
         steps:
-          - name: inspect-infra-error-rhel-pr
+          - name: error-check-on-pr-rhel-log
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -314,65 +279,19 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE="pipeline-testrunbasic-rhel*"
-                DIRECTORY="/artifacts/tests"
-                if [ -d "$DIRECTORY" ]; then
-                  # Check any error message on the plan/apply log
-                  error_check=$(eval "grep -E -w 'FAIL|Error|ERROR' $DIRECTORY/$LOG_FILE")
-                  if [[ "$error_check" ]]; then
-                    echo "$error_check"
-                    echo "Found Error/FAIL/ERROR in plan/apply log. Please check log."
-                    exit 1
-                  else
-                    count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
-                    if [ $count == 0 ]; then
-                      echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
-                      exit 1
-                    fi
-                  fi
-                else
-                  echo "$DIRECTORY does not exits"
-                  exit 1
-                fi
-
-                count=`ls -1 $DIRECTORY/*.cicd 2>/dev/null | wc -l`
-                if [ $count == 0 ]; then
-                  echo "Test Suite have not initated, check with packages or binaries installations"
-                  exit 1
-                fi
-          - name: inspect-infra-error-ubuntu-pr
+                LOG_FILE="pipeline-pr-rhel*"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE}" "PR"
+          - name: error-check-on-pr-ubuntu-log
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
             command: ["/bin/bash", "-c"]
             args:
               - |
                 #!/bin/bash
-                LOG_FILE="pipeline-testrunbasic-ubuntu*"
-                DIRECTORY="/artifacts/tests"
-                if [ -d "$DIRECTORY" ]; then
-                  # Check any error message on the plan/apply log
-                  error_check=$(eval "grep -E -w 'FAIL|Error|ERROR' $DIRECTORY/$LOG_FILE")
-                  if [[ "$error_check" ]]; then
-                    echo "$error_check"
-                    echo "Found Error/FAIL/ERROR in plan/apply log. Please check log."
-                    exit 1
-                  else
-                    count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
-                    if [ $count == 0 ]; then
-                      echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
-                      exit 1
-                    fi
-                  fi
-                else
-                  echo "$DIRECTORY does not exits"
-                  exit 1
-                fi
-
-                count=`ls -1 $DIRECTORY/*.cicd 2>/dev/null | wc -l`
-                if [ $count == 0 ]; then
-                  echo "Test Suite have not initated, check with packages or binaries installations"
-                  exit 1
-                fi
+                LOG_FILE="pipeline-pr-ubuntu*"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE}" "PR"
   finally:
     - name: set-git-commit-status
       taskRef:

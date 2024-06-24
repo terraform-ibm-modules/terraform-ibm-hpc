@@ -162,11 +162,6 @@ LSF_RSH="ssh -o 'PasswordAuthentication no' -o 'StrictHostKeyChecking no'"
 EOT
   sed -i "s/LSF_MASTER_LIST=.*/LSF_MASTER_LIST=\"${mgmt_hostnames}\"/g" $LSF_CONF_FILE
 
-  # Updating the worker node count to 2000 when no VPC file share is declared.
-  if [[ $vpc_file_share_count == 0 ]]; then
-    sed -i 's/THRESHOLD\[250\]/THRESHOLD\[2000\]/' $LSF_CONF_FILE
-  fi
-
   if [ "$hyperthreading" == true ]; then
     ego_define_ncpus="threads"
   else
@@ -577,7 +572,7 @@ dns_domain="${dns_domain}"
 ManagementHostNames="${mgmt_hostnames}"
 lsf_public_key="${cluster_public_key_content}"
 hyperthreading=${hyperthreading}
-nfs_server_with_mount_path=""
+nfs_server_with_mount_path="${nfs_server_with_mount_path}"
 custom_file_shares="${custom_file_shares}"
 custom_mount_paths="${custom_mount_paths}"
 login_ip_address="${login_ip}"
@@ -635,116 +630,137 @@ fi
 ########### LSFSETUP-END ##################################################################
 ###########################################################################################
 
-echo "Setting LSF share"
-# Setup file share
+echo "Initiating LSF share mount"
+
+# Function to attempt NFS mount with retries
+mount_nfs_with_retries() {
+  local server_path=$1
+  local client_path=$2
+  local retries=5
+  local success=false
+
+  rm -rf "${client_path}"
+  mkdir -p "${client_path}"
+
+  for (( j=0; j<retries; j++ )); do
+    mount -t nfs -o sec=sys "$server_path" "$client_path" -v >> $logfile
+    if mount | grep -q "${client_path}"; then
+      echo "Mount successful for ${server_path} on ${client_path}"
+      success=true
+      break
+    else
+      echo "Attempt $((j+1)) of $retries failed for ${server_path} on ${client_path}"
+      sleep 2
+    fi
+  done
+
+  if [ "$success" = true ]; then
+    chmod 777 "${client_path}"
+    echo "${server_path} ${client_path} nfs rw,sec=sys,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,_netdev 0 0" >> /etc/fstab
+  else
+    echo "Mount not found for ${server_path} on ${client_path} after $retries attempts."
+    rm -rf "${client_path}"
+  fi
+
+  # Convert success to numeric for return
+  if [ "$success" = true ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# Setup LSF share
 if [ -n "${nfs_server_with_mount_path}" ]; then
   echo "File share ${nfs_server_with_mount_path} found"
   nfs_client_mount_path="/mnt/lsf"
-  rm -rf "${nfs_client_mount_path}"
-  mkdir -p "${nfs_client_mount_path}"
-  # Mount LSF TOP
-  mount -t nfs -o sec=sys "$nfs_server_with_mount_path" "$nfs_client_mount_path"
-  # Verify mount
-  if mount | grep "$nfs_client_mount_path"; then
-    echo "Mount found"
-  else
-    echo "No mount found, exiting!"
-    exit 1
-  fi
-  # Update mount to fstab for automount
-  echo "$nfs_server_with_mount_path $nfs_client_mount_path nfs rw,sec=sys,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,_netdev 0 0 " >> /etc/fstab
+  if mount_nfs_with_retries "${nfs_server_with_mount_path}" "${nfs_client_mount_path}"; then
+    # Move stuff to shared fs
+    for dir in conf work das_staging_area; do
+      if [ "$on_primary" == "true" ]; then
+        rm -rf "${nfs_client_mount_path}/$dir" # avoid old data already in shared fs
+        mv "${LSF_TOP}/$dir" "${nfs_client_mount_path}" # this local data goes to shared fs
+      else
+        rm -rf "${LSF_TOP}/$dir" # this local data can go away
+      fi
+      ln -fs "${nfs_client_mount_path}/$dir" "${LSF_TOP}" # locally link to shared fs
+      chown -R lsfadmin:root "${LSF_TOP}"
+    done
 
-  # Move stuff to shared fs
-  for dir in conf work das_staging_area; do
+    # Sharing the lsfsuite.conf folder
     if [ "$on_primary" == "true" ]; then
-      rm -rf "${nfs_client_mount_path}/$dir" # avoid old data already in shared fs
-      mv "${LSF_TOP}/$dir" "${nfs_client_mount_path}" # this local data goes to shared fs
+      rm -rf "${nfs_client_mount_path}/gui-conf"
+      mv "${LSF_SUITE_GUI_CONF}" "${nfs_client_mount_path}/gui-conf"
+      chown -R lsfadmin:root "${nfs_client_mount_path}/gui-conf"
     else
-      rm -rf "${LSF_TOP}/$dir" # this local data can go away
+      rm -rf "${LSF_SUITE_GUI_CONF}"
     fi
-    ln -fs "${nfs_client_mount_path}/$dir" "${LSF_TOP}" # locally link to shared fs
-    chown -R lsfadmin:root "${LSF_TOP}"
-  done
+    ln -fs "${nfs_client_mount_path}/gui-conf" "${LSF_SUITE_GUI_CONF}"
+    chown -R lsfadmin:root "${LSF_SUITE_GUI_CONF}"
 
-  # Sharing the lsfsuite..conf folder
-  if [ "$on_primary" == "true" ]; then
-    rm -rf "${nfs_client_mount_path}/gui-conf"
-    mv "${LSF_SUITE_GUI_CONF}" "${nfs_client_mount_path}/gui-conf"
-    chown -R lsfadmin:root "${nfs_client_mount_path}/gui-conf"
-  else
-    rm -rf "${LSF_SUITE_GUI_CONF}"
-  fi
-  ln -fs "${nfs_client_mount_path}/gui-conf" "${LSF_SUITE_GUI_CONF}"
-  chown -R lsfadmin:root "${LSF_SUITE_GUI_CONF}"
+    # Create a data directory for sharing HPC workload data
+    if [ "$on_primary" == "true" ]; then
+      mkdir -p "${nfs_client_mount_path}/data"
+      ln -s "${nfs_client_mount_path}/data" "$LSF_TOP/work/data"
+      chown -R lsfadmin:root "$LSF_TOP/work/data"
+    fi
 
-  # Create a data directory for sharing HPC workload data
-  if [ "$on_primary" == "true" ]; then
-    mkdir -p "${nfs_client_mount_path}/data"
-    ln -s "${nfs_client_mount_path}/data" "$LSF_TOP/work/data"
-    chown -R lsfadmin:root "$LSF_TOP/work/data"
-  fi
+    # Sharing the 10.1 folder
+    if [ "$on_primary" == "true" ]; then
+      rm -rf "${nfs_client_mount_path}/10.1"
+      mv "${LSF_TOP_VERSION}" "${nfs_client_mount_path}"
+      ln -s "${nfs_client_mount_path}/10.1" "${LSF_TOP_VERSION}"
+      chown -R lsfadmin:root "${LSF_TOP_VERSION}"
+    fi
 
-  # VNC Sessions
-  if [ "$on_primary" == "true" ]; then
-    mkdir -p "${nfs_client_mount_path}/repository-path"
-    # With this change, LDAP User can able to submit the job from App Center UI.
-    chmod -R 777 "${nfs_client_mount_path}/repository-path"
-    chown -R lsfadmin:root "${nfs_client_mount_path}/repository-path"
-  fi
+    # VNC Sessions
+    if [ "$on_primary" == "true" ]; then
+      mkdir -p "${nfs_client_mount_path}/repository-path"
+      # With this change, LDAP User can able to submit the job from App Center UI.
+      chmod -R 777 "${nfs_client_mount_path}/repository-path"
+      chown -R lsfadmin:root "${nfs_client_mount_path}/repository-path"
+    fi
 
-  # Create folder in shared file system to store logs
-  mkdir -p "${nfs_client_mount_path}/log/${HOSTNAME}"
-  chown -R lsfadmin:root "${nfs_client_mount_path}/log"
-  if [ "$(ls -A ${LSF_TOP}/log)" ]; then
-    # Move all existing logs to the new folder
-    mv ${LSF_TOP}/log/* "${nfs_client_mount_path}/log/${HOSTNAME}"
-  fi
-  # Remove the original folder and create symlink so the user can still access to default location
-  rm -rf "${LSF_TOP}/log"
-  ln -fs "${nfs_client_mount_path}/log/${HOSTNAME}" "${LSF_TOP}/log"
-  chown -R lsfadmin:root "${LSF_TOP}/log"
+    # Create folder in shared file system to store logs
+    mkdir -p "${nfs_client_mount_path}/log/${HOSTNAME}"
+    chown -R lsfadmin:root "${nfs_client_mount_path}/log"
+    if [ "$(ls -A ${LSF_TOP}/log)" ]; then
+      # Move all existing logs to the new folder
+      mv ${LSF_TOP}/log/* "${nfs_client_mount_path}/log/${HOSTNAME}"
+    fi
+    # Remove the original folder and create symlink so the user can still access to default location
+    rm -rf "${LSF_TOP}/log"
+    ln -fs "${nfs_client_mount_path}/log/${HOSTNAME}" "${LSF_TOP}/log"
+    chown -R lsfadmin:root "${LSF_TOP}/log"
 
-  # Create log folder for pac and set proper owner
-  mkdir -p "${nfs_client_mount_path}/gui-logs"
-  chown -R lsfadmin:root "${nfs_client_mount_path}/gui-logs"
-  # Move PAC logs to shared folder
-  mkdir -p "${nfs_client_mount_path}/gui-logs/${HOSTNAME}"
-  if [ -d "${LSF_SUITE_GUI}/logs/${HOSTNAME}" ] && [ "$(ls -A ${LSF_SUITE_GUI}/logs/"${HOSTNAME}")" ]; then
-    mv "${LSF_SUITE_GUI}/logs/${HOSTNAME}" "${nfs_client_mount_path}/gui-logs/${HOSTNAME}"
+    # Create log folder for pac and set proper owner
+    mkdir -p "${nfs_client_mount_path}/gui-logs"
+    chown -R lsfadmin:root "${nfs_client_mount_path}/gui-logs"
+    # Move PAC logs to shared folder
+    mkdir -p "${nfs_client_mount_path}/gui-logs/${HOSTNAME}"
+    if [ -d "${LSF_SUITE_GUI}/logs/${HOSTNAME}" ] && [ "$(ls -A ${LSF_SUITE_GUI}/logs/${HOSTNAME})" ]; then
+      mv "${LSF_SUITE_GUI}/logs/${HOSTNAME}" "${nfs_client_mount_path}/gui-logs/${HOSTNAME}"
+    fi
+    chown -R lsfadmin:root "${nfs_client_mount_path}/gui-logs/${HOSTNAME}"
+    ln -fs "${nfs_client_mount_path}/gui-logs/${HOSTNAME}" "${LSF_SUITE_GUI}/logs/${HOSTNAME}"
+    chown -R lsfadmin:root "${LSF_SUITE_GUI}/logs/${HOSTNAME}"
   fi
-  chown -R lsfadmin:root "${nfs_client_mount_path}/gui-logs/${HOSTNAME}"
-  ln -fs "${nfs_client_mount_path}/gui-logs/${HOSTNAME}" "${LSF_SUITE_GUI}/logs/${HOSTNAME}"
-  chown -R lsfadmin:root "${LSF_SUITE_GUI}/logs/${HOSTNAME}"
 else
-  echo "No mount point value found, exiting!"
+  echo "Mount not found for ${nfs_server_with_mount_path}, Exiting !!"
   exit 1
 fi
 echo "Setting LSF share is completed."
 
 # Setup Custom file shares
 echo "Setting custom file shares."
-# Setup file share
 if [ -n "${custom_file_shares}" ]; then
   echo "Custom file share ${custom_file_shares} found"
   file_share_array=(${custom_file_shares})
   mount_path_array=(${custom_mount_paths})
   length=${#file_share_array[@]}
+
   for (( i=0; i<length; i++ )); do
-    rm -rf "${mount_path_array[$i]}"
-    mkdir -p "${mount_path_array[$i]}"
-    # Mount LSF TOP
-    mount -t nfs -o sec=sys "${file_share_array[$i]}" "${mount_path_array[$i]}"
-    # Verify mount
-    if mount | grep "${file_share_array[$i]}"; then
-      echo "Mount found"
-    else
-      echo "No mount found"
-      rm -rf "${mount_path_array[$i]}"
-    fi
-    # Update permission to 777 for all users to access
-    chmod 777 "${mount_path_array[$i]}"
-    # Update mount to fstab for automount
-    echo "${file_share_array[$i]} ${mount_path_array[$i]} nfs rw,sec=sys,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,_netdev 0 0 " >> /etc/fstab
+    mount_nfs_with_retries "${file_share_array[$i]}" "${mount_path_array[$i]}"
   done
 fi
 echo "Setting custom file shares is completed."
