@@ -221,14 +221,10 @@ variable "custom_file_shares" {
     nfs_share  = optional(string)
   }))
   default     = [{ mount_path = "/mnt/vpcstorage/tools", size = 100, iops = 2000 }, { mount_path = "/mnt/vpcstorage/data", size = 100, iops = 6000 }, { mount_path = "/mnt/scale/tools", nfs_share = "" }]
-  description = "Mount points and sizes in GB and IOPS range of file shares that can be used to customize shared file storage layout. Provide the details for up to 5 shares. Each file share size in GB supports different range of IOPS. For more information, see [file share IOPS value](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=ui)."
+  description = "Provide details for customizing your shared file storage layout, including mount points, sizes in GB, and IOPS ranges for up to five file shares. Each file share size in GB supports a different IOPS range. If the cluster requires creating more than 256 dynamic nodes, only provide the details of the NFS share and use \"/mnt/lsf\" as the mount path for the internal file share. If not, a default VPC file share will be created, which supports up to 256 nodes. For more information, see [file share IOPS value](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=ui)."
   validation {
     condition     = length([for item in var.custom_file_shares : item if item.nfs_share == null]) <= 5
     error_message = "The VPC storage custom file share count \"custom_file_shares\" must be less than or equal to 5. Unlimited NFS mounts are allowed."
-  }
-  validation {
-    condition     = !anytrue([for mounts in var.custom_file_shares : mounts.mount_path == "/mnt/lsf"])
-    error_message = "The mount path /mnt/lsf is reserved for internal usage and can't be used as file share mount_path."
   }
   validation {
     condition     = length([for mounts in var.custom_file_shares : mounts.mount_path]) == length(toset([for mounts in var.custom_file_shares : mounts.mount_path]))

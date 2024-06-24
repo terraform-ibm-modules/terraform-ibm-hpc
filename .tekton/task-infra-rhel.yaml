@@ -83,6 +83,15 @@ spec:
     - name: us_south_reservation_id
       description: Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_).
       default: ""
+    - name: cos_region
+      description: The cos region name.
+      default: ""
+    - name: cos_bucket
+      description: The cos bucket name.
+      default: ""
+    - name: cos_instance_crn
+      description: The cos instance crn.
+      default: ""
   workspaces:
     - name: workspace
       mountPath: /artifacts
@@ -130,6 +139,12 @@ spec:
         value: $(params.us_south_cluster_id)
       - name: us_south_reservation_id
         value: $(params.us_south_reservation_id)
+      - name: cos_region
+        value: $(params.cos_region)
+      - name: cos_bucket
+        value: $(params.cos_bucket)
+      - name: cos_instance_crn
+        value: $(params.cos_instance_crn)
   steps:
     - name: rhel-suite-1
       onError: continue
@@ -148,74 +163,8 @@ spec:
             set -x
           fi
 
-          CICD_SSH_KEY=cicd
-          if [ "${REVISION}" ]; then
-            REVISION=$(echo $REVISION)
-            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
-          else
-            CICD_SSH_KEY=$CICD_SSH_KEY-tekton
-          fi
-
-          git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
-          echo 'export PATH=$PATH:$HOME/.tfenv/bin' >> ~/.bashrc
-          ln -s ~/.tfenv/bin/* /usr/local/bin
-          tfenv install 1.5.7
-          tfenv use 1.5.7
-          terraform --version
-
-          cd $(pwd)/ &&
-          echo "export PATH=\$PATH:$(pwd)/go/bin:\$HOME/go/bin" >> ~/.bashrc &&
-          echo "export GOROOT=$(pwd)/go" >> ~/.bashrc
-          source ~/.bashrc
-          go version
-
-          echo -e "************** Going to run in RHEL-Suite-1 **************
-          1.TestRunBasic
-          2.TestRunAppCenter
-          3.TestRunInUsEastRegion
-          4.TestRunInEuDeRegion
-          5.TestRunInUSSouthRegion
-          6.TestRunNoKMSAndHTOff"
-
-          export TF_VAR_ibmcloud_api_key=$API_KEY
-          export SSH_FILE_PATH="/artifacts/.ssh/id_rsa"
-
-          # Check artifacts/tests folder exists or not
-          DIRECTORY="/artifacts/tests"
-          if [ -d "$DIRECTORY" ]; then
-            cd $DIRECTORY
-              LOG_FILE=pipeline-rhel-suite-1-$(date +%d%m%Y).cicd
-              echo "**************Validating on RHEL-Suite-1**************"
-              SSH_KEY=$CICD_SSH_KEY US_EAST_ZONE=$us_east_zone US_EAST_CLUSTER_ID=$us_east_cluster_id US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_ZONE=$us_south_zone US_SOUTH_CLUSTER_ID=$us_south_cluster_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_ZONE=$eu_de_zone EU_DE_CLUSTER_ID=$eu_de_cluster_id EU_DE_RESERVATION_ID=$eu_de_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_rhel LOGIN_NODE_IMAGE_NAME=$login_image_name ZONE=$zone RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunBasic|TestRunAppCenter|TestRunInUsEastRegion|TestRunInEuDeRegion|TestRunInUSSouthRegion|TestRunNoKMSAndHTOff" | tee -a $LOG_FILE
-          else
-            pwd
-            ls -a
-            echo "$DIRECTORY does not exists"
-            exit 1
-          fi
-
-          echo "*******************************************************"
-          count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
-          if [ $count == 0 ]; then
-            echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
-            exit 1
-          else
-            cat $DIRECTORY/test_output/log*
-          fi
-          echo "*******************************************************"
-
-          count=`ls -1 $DIRECTORY/*.cicd 2>/dev/null | wc -l`
-          if [ $count == 0 ]; then
-            echo "Test Suite have not initated, check with packages or binaries installation"
-            exit 1
-          fi
-
-          # Check any error message on the plan/apply log
-          error_check=$(eval "grep -E -w 'FAIL|Error|ERROR' $DIRECTORY/$LOG_FILE")
-          if [[ "$error_check" ]]; then
-            echo "Found Error/FAIL/ERROR in plan/apply log. Please check log."
-            exit 1
-          fi
+          source .tekton/scripts/suites.sh
+          rhel_suite_1
     - name: rhel-suite-2
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
@@ -233,71 +182,8 @@ spec:
             set -x
           fi
 
-          CICD_SSH_KEY=cicd
-          if [ "${REVISION}" ]; then
-            REVISION=$(echo $REVISION)
-            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
-          else
-            CICD_SSH_KEY=$CICD_SSH_KEY-tekton
-          fi
-
-          git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
-          echo 'export PATH=$PATH:$HOME/.tfenv/bin' >> ~/.bashrc
-          ln -s ~/.tfenv/bin/* /usr/local/bin
-          tfenv install 1.5.7
-          tfenv use 1.5.7
-          terraform --version
-
-          cd $(pwd)/ &&
-          echo "export PATH=\$PATH:$(pwd)/go/bin:\$HOME/go/bin" >> ~/.bashrc &&
-          echo "export GOROOT=$(pwd)/go" >> ~/.bashrc
-          source ~/.bashrc
-          go version
-
-          echo "************** Going to run in RHEL-Suite-2 **************
-          1.TestRunLDAP
-          2.TestRunLDAPAndPac
-          3.TestRunCustomRGAsNonDefault"
-
-          export TF_VAR_ibmcloud_api_key=$API_KEY
-          export SSH_FILE_PATH="/artifacts/.ssh/id_rsa"
-
-          # Check artifacts/tests folder exists or not
-          DIRECTORY="/artifacts/tests"
-          if [ -d "$DIRECTORY" ]; then
-            cd $DIRECTORY
-              LOG_FILE=pipeline-rhel-suite-2-$(date +%d%m%Y).cicd
-              echo "**************Validating on RHEL-Suite-2**************"
-              SSH_KEY=$CICD_SSH_KEY US_EAST_ZONE=$us_east_zone US_EAST_CLUSTER_ID=$us_east_cluster_id US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_ZONE=$us_south_zone US_SOUTH_CLUSTER_ID=$us_south_cluster_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_ZONE=$eu_de_zone EU_DE_CLUSTER_ID=$eu_de_cluster_id EU_DE_RESERVATION_ID=$eu_de_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_rhel LOGIN_NODE_IMAGE_NAME=$login_image_name ZONE=$zone RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunLDAP|TestRunLDAPAndPac|TestRunCustomRGAsNonDefault" | tee -a $LOG_FILE
-          else
-            pwd
-            ls -a
-            echo "$DIRECTORY does not exists"
-            exit 1
-          fi
-
-          echo "*******************************************************"
-          count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
-          if [ $count == 0 ]; then
-            echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
-            exit 1
-          else
-            cat $DIRECTORY/test_output/log*
-          fi
-          echo "*******************************************************"
-
-          count=`ls -1 $DIRECTORY/*.cicd 2>/dev/null | wc -l`
-          if [ $count == 0 ]; then
-            echo "Test Suite have not initated, check with packages or binaries installation"
-            exit 1
-          fi
-
-          # Check any error message on the plan/apply log
-          error_check=$(eval "grep -E -w 'FAIL|Error|ERROR' $DIRECTORY/$LOG_FILE")
-          if [[ "$error_check" ]]; then
-            echo "Found Error/FAIL/ERROR in plan/apply log. Please check log."
-            exit 1
-          fi
+          source .tekton/scripts/suites.sh
+          rhel_suite_2
     - name: rhel-suite-3
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
@@ -315,68 +201,5 @@ spec:
             set -x
           fi
 
-          CICD_SSH_KEY=cicd
-          if [ "${REVISION}" ]; then
-            REVISION=$(echo $REVISION)
-            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-$REVISION)
-          else
-            CICD_SSH_KEY=$CICD_SSH_KEY-tekton
-          fi
-
-          git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
-          echo 'export PATH=$PATH:$HOME/.tfenv/bin' >> ~/.bashrc
-          ln -s ~/.tfenv/bin/* /usr/local/bin
-          tfenv install 1.5.7
-          tfenv use 1.5.7
-          terraform --version
-
-          cd $(pwd)/ &&
-          echo "export PATH=\$PATH:$(pwd)/go/bin:\$HOME/go/bin" >> ~/.bashrc &&
-          echo "export GOROOT=$(pwd)/go" >> ~/.bashrc
-          source ~/.bashrc
-          go version
-
-          echo "************** Going to run in UBUNTU-Suite-3 **************
-          1.TestRunCreateVpc
-            1.1 RunHpcExistingVpcSubnetId
-            1.2 RunHpcExistingVpcCidr
-
-          export TF_VAR_ibmcloud_api_key=$API_KEY
-          export SSH_FILE_PATH="/artifacts/.ssh/id_rsa"
-
-          # Check artifacts/tests folder exists or not
-          DIRECTORY="/artifacts/tests"
-          if [ -d "$DIRECTORY" ]; then
-            cd $DIRECTORY
-              LOG_FILE=pipeline-rhel-suite-3-$(date +%d%m%Y).cicd
-              echo "**************Validating on RHEL-Suite-3**************"
-              SSH_KEY=$CICD_SSH_KEY US_EAST_ZONE=$us_east_zone US_EAST_CLUSTER_ID=$us_east_cluster_id US_EAST_RESERVATION_ID=$us_east_reservation_id US_SOUTH_ZONE=$us_south_zone US_SOUTH_CLUSTER_ID=$us_south_cluster_id US_SOUTH_RESERVATION_ID=$us_south_reservation_id EU_DE_ZONE=$eu_de_zone EU_DE_CLUSTER_ID=$eu_de_cluster_id EU_DE_RESERVATION_ID=$eu_de_reservation_id EU_DE_RESERVATION_ID=$eu_de_reservation_id COMPUTE_IMAGE_NAME=$compute_image_name_rhel LOGIN_NODE_IMAGE_NAME=$login_image_name ZONE=$zone RESERVATION_ID=$reservation_id CLUSTER_ID=$cluster_id RESOURCE_GROUP=$resource_group go test -v -timeout 9000m -run "TestRunCreateVpc" | tee -a $LOG_FILE
-          else
-            pwd
-            ls -a
-            echo "$DIRECTORY does not exists"
-            exit 1
-          fi
-
-          echo "*******************************************************"
-          count=`ls -1 $DIRECTORY/test_output/log* 2>/dev/null | wc -l`
-          if [ $count == 0 ]; then
-            echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
-            exit 1
-          else
-            cat $DIRECTORY/test_output/log*
-          fi
-          echo "*******************************************************"
-
-          count=`ls -1 $DIRECTORY/*.cicd 2>/dev/null | wc -l`
-          if [ $count == 0 ]; then
-            echo "Test Suite have not initated, check with packages or binaries installation"
-            exit 1
-          fi
-
-          # Check any error message on the plan/apply log
-          error_check=$(eval "grep -E -w 'FAIL|Error|ERROR' $DIRECTORY/$LOG_FILE")
-          if [[ "$error_check" ]]; then
-            echo "Found Error/FAIL/ERROR in plan/apply log. Please check log."
-            exit 1
-          fi
+          source .tekton/scripts/suites.sh
+          rhel_suite_3

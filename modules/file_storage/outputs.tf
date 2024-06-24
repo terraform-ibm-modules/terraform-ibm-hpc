@@ -27,6 +27,11 @@ output "mount_paths_excluding_first" {
   value       = length(ibm_is_share_mount_target.share_target_sg[*].mount_path) > 1 ? slice(ibm_is_share_mount_target.share_target_sg[*].mount_path, 1, length(ibm_is_share_mount_target.share_target_sg[*].mount_path)) : []
 }
 
+output "total_mount_paths" {
+  description = "Total Mount paths"
+  value       = ibm_is_share_mount_target.share_target_sg[*].mount_path
+}
+
 #output "mount_paths_excluding_first" {
 #  description = "Mount paths excluding the first element"
 #  value       = ibm_is_share_mount_target.share_target_vpc[*].mount_path[1:]
