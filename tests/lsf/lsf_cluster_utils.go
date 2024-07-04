@@ -110,7 +110,7 @@ func LSFIPRouteCheck(t *testing.T, sClient *ssh.Client, ipsList []string, logger
 func LSFCheckClusterID(t *testing.T, sClient *ssh.Client, expectedClusterID string, logger *utils.AggregatedLogger) error {
 
 	// Execute the 'lsid' command to get the cluster ID
-	command := "lsid"
+	command := "source /opt/ibm/lsf/conf/profile.lsf; lsid"
 	output, err := utils.RunCommandInSSHSession(sClient, command)
 	if err != nil {
 		return fmt.Errorf("failed to execute 'lsid' command: %w", err)
@@ -133,7 +133,7 @@ func LSFCheckClusterID(t *testing.T, sClient *ssh.Client, expectedClusterID stri
 // Returns an error if the checks fail.
 func LSFCheckMasterName(t *testing.T, sClient *ssh.Client, expectedMasterName string, logger *utils.AggregatedLogger) error {
 	// Execute the 'lsid' command to get the cluster ID
-	command := "lsid"
+	command := "source /opt/ibm/lsf/conf/profile.lsf; lsid"
 	output, err := utils.RunCommandInSSHSession(sClient, command)
 	if err != nil {
 		return fmt.Errorf("failed to execute 'lsid' command: %w", err)
@@ -201,6 +201,8 @@ func LSFRestartDaemons(t *testing.T, sClient *ssh.Client, logger *utils.Aggregat
 		return fmt.Errorf("failed to run 'lsf_daemons restart' command: %w", err)
 	}
 
+	logger.Info(t, string(out))
+
 	time.Sleep(defaultSleepDuration)
 
 	// Check if the restart was successful
@@ -226,11 +228,10 @@ func LSFRestartDaemons(t *testing.T, sClient *ssh.Client, logger *utils.Aggregat
 	return nil
 }
 
-// LSFControlBctrld performs start or stop operation on the bctrld daemon on the specified machine.
-// The function returns an error if any step fails or if an invalid value (other than 'start' or 'stop') is provided.
+// LSFControlBctrld performs start or stop operations on the bctrld daemon on the specified machine.
+// It returns an error if any step fails or if an invalid value (other than 'start' or 'stop') is provided.
 // It executes the 'bctrld' command with the specified operation and waits for the daemon to start or stop.
 func LSFControlBctrld(t *testing.T, sClient *ssh.Client, startOrStop string, logger *utils.AggregatedLogger) error {
-
 	// Make startOrStop case-insensitive
 	startOrStop = strings.ToLower(startOrStop)
 
@@ -239,31 +240,48 @@ func LSFControlBctrld(t *testing.T, sClient *ssh.Client, startOrStop string, log
 		return fmt.Errorf("invalid operation type. Please specify 'start' or 'stop'")
 	}
 
-	// Execute the 'bctrld' command to start or stop the sbd daemon
-	command := fmt.Sprintf("bctrld %s sbd", startOrStop)
-	_, bctrldErr := utils.RunCommandInSSHSession(sClient, command)
-	if bctrldErr != nil {
-		return fmt.Errorf("failed to run '%s' command: %w", command, bctrldErr)
+	var command string
+
+	// Construct the command based on the operation type
+	if startOrStop == "stop" {
+		command = "bctrld stop sbd"
+	} else {
+		command = "sudo su -l root -c 'systemctl restart lsfd'"
+	}
+
+	// Execute the command
+	if _, err := utils.RunCommandInSSHSession(sClient, command); err != nil {
+		return fmt.Errorf("failed to run '%s' command: %w", command, err)
 	}
 
 	// Sleep for a specified duration to allow time for the daemon to start or stop
-	time.Sleep(20 * time.Second)
+	if startOrStop == "stop" {
+		time.Sleep(30 * time.Second)
+	} else {
+		time.Sleep(120 * time.Second)
+	}
 
 	// Check the status of the daemon using the 'bhosts -w' command on the remote SSH server
-	cmd := "bhosts -w"
-	out, err := utils.RunCommandInSSHSession(sClient, cmd)
+	statusCmd := "bhosts -w"
+	out, err := utils.RunCommandInSSHSession(sClient, statusCmd)
 	if err != nil {
-		return fmt.Errorf("failed to run 'bhosts' command on machine IP: %w", err)
+		return fmt.Errorf("failed to run 'bhosts' command: %w", err)
 	}
 
 	// Count the number of unreachable nodes
 	unreachCount := strings.Count(string(out), "unreach")
 
 	// Check the output based on the startOrStop parameter
-	if (startOrStop == "start" && unreachCount != 0) || (startOrStop == "stop" && unreachCount != 1) {
+	expectedUnreachCount := 0
+	if startOrStop == "stop" {
+		expectedUnreachCount = 1
+	}
+
+	if unreachCount != expectedUnreachCount {
 		// If the unreachable node count does not match the expected count, return an error
 		return fmt.Errorf("failed to %s the sbd daemon on the management node", startOrStop)
 	}
+
 	// Log success if no errors occurred
 	logger.Info(t, fmt.Sprintf("Daemon %s successfully", startOrStop))
 	return nil
@@ -391,7 +409,7 @@ func LSFRunJobs(t *testing.T, sClient *ssh.Client, jobCmd string, logger *utils.
 	for time.Since(startTime) < jobMaxTimeout {
 
 		// Run 'bjobs -a' command on the remote SSH server
-		command := "bjobs -a"
+		command := LOGIN_NODE_EXECUTION_PATH + "bjobs -a"
 
 		// Run the 'bjobs' command to get information about all jobs
 		jobStatus, err := utils.RunCommandInSSHSession(sClient, command)
@@ -838,7 +856,7 @@ func LSFCheckSSHKeyForComputeNodes(t *testing.T, sClient *ssh.Client, computeNod
 func CheckLSFVersion(t *testing.T, sClient *ssh.Client, expectedVersion string, logger *utils.AggregatedLogger) error {
 
 	// Execute the 'lsid' command to get the cluster ID
-	command := "lsid"
+	command := LOGIN_NODE_EXECUTION_PATH + "lsid"
 
 	output, err := utils.RunCommandInSSHSession(sClient, command)
 	if err != nil {
@@ -1288,7 +1306,7 @@ func LSFRunJobsAsLDAPUser(t *testing.T, sClient *ssh.Client, jobCmd, ldapUser st
 	for time.Since(startTime) < jobMaxTimeout {
 
 		// Run 'bjobs -a' command on the remote SSH server
-		command := "bjobs -a"
+		command := LOGIN_NODE_EXECUTION_PATH + "bjobs -a"
 
 		// Run the 'bjobs' command to get information about all jobs
 		jobStatus, err := utils.RunCommandInSSHSession(sClient, command)
@@ -1421,27 +1439,80 @@ func verifyDirectoriesAsLdapUser(t *testing.T, sClient *ssh.Client, hostname str
 }
 
 // VerifyLSFCommands verifies the LSF commands on the remote machine.
-func VerifyLSFCommands(t *testing.T, sClient *ssh.Client, userName string, logger *utils.AggregatedLogger) error {
+// It checks the commands' execution based on the node type.
+func VerifyLSFCommands(t *testing.T, sClient *ssh.Client, nodeType string, logger *utils.AggregatedLogger) error {
 	// Define commands to be executed
 	commands := []string{
-		"whoami",
-		"bhosts -w",
+		"lsid",
 		"bjobs -a",
 		"bhosts -w",
+		"bqueues",
 	}
+
+	nodeType = strings.TrimSpace(strings.ToLower(nodeType))
 
 	// Iterate over commands
 	for _, command := range commands {
+		var output string
+		var err error
+
 		// Execute command on SSH session
-		output, err := utils.RunCommandInSSHSession(sClient, command)
+		switch {
+		case strings.Contains(nodeType, "compute"):
+			output, err = utils.RunCommandInSSHSession(sClient, COMPUTE_NODE_EXECUTION_PATH+command)
+		case strings.Contains(nodeType, "login"):
+			output, err = utils.RunCommandInSSHSession(sClient, LOGIN_NODE_EXECUTION_PATH+command)
+		default:
+			output, err = utils.RunCommandInSSHSession(sClient, command)
+		}
+
 		if err != nil {
 			return fmt.Errorf("failed to execute command '%s' via SSH: %v", command, err)
 		}
+
+		if strings.TrimSpace(output) == "" {
+			return fmt.Errorf("output for command '%s' is empty", command)
+		}
+	}
+
+	return nil
+}
+
+// VerifyLSFCommandsAsLDAPUser verifies the LSF commands on the remote machine.
+// It checks the commands' execution as the specified LDAP user.
+func VerifyLSFCommandsAsLDAPUser(t *testing.T, sClient *ssh.Client, userName, nodeType string, logger *utils.AggregatedLogger) error {
+	// Define commands to be executed
+	commands := []string{
+		"whoami",
+		"lsid",
+		"bhosts -w",
+		"lshosts",
+	}
+
+	nodeType = strings.TrimSpace(strings.ToLower(nodeType))
+
+	// Iterate over commands
+	for _, command := range commands {
+		var output string
+		var err error
+
+		// Execute command on SSH session
+		if strings.Contains(nodeType, "compute") {
+			output, err = utils.RunCommandInSSHSession(sClient, COMPUTE_NODE_EXECUTION_PATH+command)
+		} else if strings.Contains(nodeType, "login") {
+			output, err = utils.RunCommandInSSHSession(sClient, LOGIN_NODE_EXECUTION_PATH+command)
+		} else {
+			output, err = utils.RunCommandInSSHSession(sClient, command)
+		}
+
+		if err != nil {
+			return fmt.Errorf("failed to execute command '%s' via SSH: %v", command, err)
+		}
+
 		if command == "whoami" {
 			if !utils.VerifyDataContains(t, strings.TrimSpace(output), userName, logger) {
 				return fmt.Errorf("unexpected user: expected '%s', got '%s'", userName, strings.TrimSpace(output))
 			}
-			// Check if the output is not empty
 		} else if strings.TrimSpace(output) == "" {
 			return fmt.Errorf("output for command '%s' is empty", command)
 		}
@@ -1746,5 +1817,194 @@ func CreateKey(t *testing.T, apiKey, region, resourceGroup, instanceName, keyNam
 	}
 
 	logger.Info(t, fmt.Sprintf("Key '%s' created successfully in service instance '%s'", keyName, serviceInstanceID))
+	return nil
+}
+
+// LSFDNSCheck checks the DNS configuration on a list of nodes to ensure it contains the expected domain.
+// It supports both Ubuntu and RHEL-based systems by executing the appropriate DNS check command.
+// The function logs the results and returns an error if the DNS configuration is not as expected.
+// Returns an error if the DNS configuration is not as expected or if any command execution fails.
+func LSFDNSCheck(t *testing.T, sClient *ssh.Client, ipsList []string, domain string, logger *utils.AggregatedLogger) error {
+	// Commands to check DNS on different OS types
+	rhelDNSCheckCmd := "cat /etc/resolv.conf"
+	ubuntuDNSCheckCmd := "resolvectl status"
+
+	// Check if the node list is empty
+	if len(ipsList) == 0 {
+		return fmt.Errorf("ERROR: ips cannot be empty")
+	}
+
+	// Loop through each IP in the list
+	for _, ip := range ipsList {
+		var dnsCmd string
+
+		// Get the OS name of the compute node
+		osName, osNameErr := GetOSNameOfNode(t, sClient, ip, logger)
+		if osNameErr != nil {
+			return osNameErr
+		}
+
+		// Determine the appropriate command to check DNS based on the OS
+		switch strings.ToLower(osName) {
+		case "ubuntu":
+			dnsCmd = ubuntuDNSCheckCmd
+		default:
+			dnsCmd = rhelDNSCheckCmd
+		}
+
+		// Build the SSH command to check DNS on the node
+		command := fmt.Sprintf("ssh %s %s", ip, dnsCmd)
+
+		// Execute the command and get the output
+		output, err := utils.RunCommandInSSHSession(sClient, command)
+		if err != nil {
+			return fmt.Errorf("failed to execute '%s' command on (%s) node: %v", dnsCmd, ip, err)
+		}
+
+		// Check if the output contains the domain name
+		if strings.Contains(strings.ToLower(osName), "rhel") {
+			if !utils.VerifyDataContains(t, output, domain, logger) && utils.VerifyDataContains(t, output, "Generated by NetworkManager", logger) {
+				return fmt.Errorf("DNS check failed on (%s) node and found:\n%s", ip, output)
+			}
+		} else { // For other OS types, currently only Ubuntu
+			if !utils.VerifyDataContains(t, output, domain, logger) {
+				return fmt.Errorf("DNS check failed on (%s) node and found:\n%s", ip, output)
+			}
+		}
+
+		// Log a success message
+		logger.Info(t, fmt.Sprintf("DNS is correctly set for (%s) node", ip))
+	}
+
+	return nil
+}
+
+// HPCAddNewLDAPUser adds a new LDAP user by modifying an existing user's configuration and running necessary commands.
+// It reads the existing LDAP user configuration, replaces the existing user information with the new LDAP user
+// information, creates a new LDIF file on the LDAP server, and then runs LDAP commands to add the new user. Finally, it
+// verifies the addition of the new LDAP user by searching the LDAP server.
+// Returns an error if the  if any step fails
+func HPCAddNewLDAPUser(t *testing.T, sClient *ssh.Client, ldapAdminPassword, ldapDomain, ldapUser, newLdapUser string, logger *utils.AggregatedLogger) error {
+	// Define the command to read the existing LDAP user configuration
+	getLDAPUserConf := "cat /opt/users.ldif"
+	actual, err := utils.RunCommandInSSHSession(sClient, getLDAPUserConf)
+	if err != nil {
+		return fmt.Errorf("failed to execute command '%s' via SSH: %v", getLDAPUserConf, err)
+	}
+
+	// Replace the existing LDAP user name with the new LDAP user name
+	ldifContent := strings.ReplaceAll(actual, ldapUser, newLdapUser)
+
+	// Create the new LDIF file on the LDAP server
+	_, fileCreationErr := utils.ToCreateFileWithContent(t, sClient, ".", "user2.ldif", ldifContent, logger)
+	if fileCreationErr != nil {
+		return fmt.Errorf("failed to create file on LDAP server: %w", fileCreationErr)
+	}
+
+	// Parse the LDAP domain for reuse
+	domainParts := strings.Split(ldapDomain, ".")
+	if len(domainParts) != 2 {
+		return fmt.Errorf("invalid LDAP domain format: %s", ldapDomain)
+	}
+	dc1, dc2 := domainParts[0], domainParts[1]
+
+	// Define the command to add the new LDAP user using the ldapadd command
+	ldapAddCmd := fmt.Sprintf(
+		"ldapadd -x -D cn=admin,dc=%s,dc=%s -w %s -f user2.ldif",
+		dc1, dc2, ldapAdminPassword,
+	)
+	ldapAddOutput, err := utils.RunCommandInSSHSession(sClient, ldapAddCmd)
+	if err != nil {
+		return fmt.Errorf("failed to execute command '%s' via SSH: %v", ldapAddCmd, err)
+	}
+
+	// Verify the new LDAP user exists in the search results
+	if !utils.VerifyDataContains(t, ldapAddOutput, "uid="+newLdapUser, logger) {
+		return fmt.Errorf("LDAP user %s not found in add command output", newLdapUser)
+	}
+
+	// Define the command to search for the new LDAP user to verify the addition
+	ldapSearchCmd := fmt.Sprintf(
+		"ldapsearch -x -D \"cn=admin,dc=%s,dc=%s\" -w %s -b \"ou=people,dc=%s,dc=%s\" -s sub \"(objectClass=*)\"",
+		dc1, dc2, ldapAdminPassword, dc1, dc2,
+	)
+	ldapSearchOutput, err := utils.RunCommandInSSHSession(sClient, ldapSearchCmd)
+	if err != nil {
+		return fmt.Errorf("failed to execute command '%s' via SSH: %v", ldapSearchCmd, err)
+	}
+
+	// Verify the new LDAP user exists in the search results
+	if !utils.VerifyDataContains(t, ldapSearchOutput, "uid: "+newLdapUser, logger) {
+		return fmt.Errorf("LDAP user %s not found in search results", newLdapUser)
+	}
+
+	logger.Info(t, fmt.Sprintf("New LDAP user %s created successfully", newLdapUser))
+	return nil
+}
+
+// VerifyCosServiceInstance verifies if the Cloud Object Storage (COS) service instance details.
+// and correctly set in the specified resource group and cluster prefix.
+// Returns: An error if the verification fails, otherwise nil
+func VerifyCosServiceInstance(t *testing.T, apiKey, region, resourceGroup, clusterPrefix string, logger *utils.AggregatedLogger) error {
+
+	// If the resource group is "null", set it to a custom resource group with the format "clusterPrefix-workload-rg"
+	if strings.Contains(resourceGroup, "null") {
+		resourceGroup = fmt.Sprintf("%s-workload-rg", clusterPrefix)
+	}
+
+	// Log in to IBM Cloud using the API key and VPC region
+	if err := utils.LoginIntoIBMCloudUsingCLI(t, apiKey, region, resourceGroup); err != nil {
+		return fmt.Errorf("failed to log in to IBM Cloud: %w", err)
+	}
+
+	// Construct the command to check for the COS service instance
+	resourceCosServiceInstanceCmd := fmt.Sprintf("ibmcloud resource service-instances --service-name cloud-object-storage | grep %s-hpc-cos", clusterPrefix)
+	cosServiceInstanceCmd := exec.Command("bash", "-c", resourceCosServiceInstanceCmd)
+	output, err := cosServiceInstanceCmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to execute command to check COS service instance: %w", err)
+	}
+
+	logger.Info(t, "cos details : "+string(output))
+
+	// Check if the COS service instance contains the cluster prefix and is active
+	if !utils.VerifyDataContains(t, string(output), clusterPrefix, logger) {
+		return fmt.Errorf("COS service instance with prefix %s not found", clusterPrefix)
+	}
+
+	if !utils.VerifyDataContains(t, string(output), "active", logger) {
+		return fmt.Errorf("COS service instance with prefix %s is not active", clusterPrefix)
+	}
+
+	logger.Info(t, "COS service instance verified as expected")
+	return nil
+}
+
+// ValidateFlowLogs verifies if the flow logs are being created successfully or not
+// and correctly set in the specified resource group and cluster prefix.
+// Returns: An error if the verification fails, otherwise nil
+func ValidateFlowLogs(t *testing.T, apiKey, region, resourceGroup, clusterPrefix string, logger *utils.AggregatedLogger) error {
+
+	// If the resource group is "null", set it to a custom resource group with the format "clusterPrefix-workload-rg"
+	if strings.Contains(resourceGroup, "null") {
+		resourceGroup = fmt.Sprintf("%s-workload-rg", clusterPrefix)
+	}
+	// Log in to IBM Cloud using the API key and region
+	if err := utils.LoginIntoIBMCloudUsingCLI(t, apiKey, region, resourceGroup); err != nil {
+		return fmt.Errorf("failed to log in to IBM Cloud: %w", err)
+	}
+	flowLogName := fmt.Sprintf("%s-hpc-vpc", clusterPrefix)
+	// Fetching the flow log details
+	retrieveFlowLogs := fmt.Sprintf("ibmcloud is flow-logs %s", flowLogName)
+	cmdRetrieveFlowLogs := exec.Command("bash", "-c", retrieveFlowLogs)
+	flowLogsOutput, err := cmdRetrieveFlowLogs.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve keys: %w", err)
+	}
+	if !utils.VerifyDataContains(t, string(flowLogsOutput), flowLogName, logger) {
+		return fmt.Errorf("flow logs retrieval failed: %s", string(flowLogsOutput))
+	}
+
+	logger.Info(t, fmt.Sprintf("flow Logs '%s' retrieved successfully", flowLogName))
 	return nil
 }

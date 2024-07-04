@@ -6,31 +6,7 @@
 # This file contains the complete information on all the validations performed from the code during the generate plan process
 # Validations are performed to make sure, the appropriate error messages are displayed to user in-order to provide required input parameter
 
-# Module for the private cluster_subnet and login subnet cidr validation.
-module "ipvalidation_cluster_subnet" {
-  count              = length(var.vpc_cluster_private_subnets_cidr_blocks)
-  source             = "../../modules/custom/subnet_cidr_check"
-  subnet_cidr        = var.vpc_cluster_private_subnets_cidr_blocks[count.index]
-  vpc_address_prefix = [local.prefixes_in_given_zone_1][count.index]
-}
-
-module "ipvalidation_login_subnet" {
-  source             = "../../modules/custom/subnet_cidr_check"
-  subnet_cidr        = var.vpc_cluster_login_private_subnets_cidr_blocks[0]
-  vpc_address_prefix = local.prefixes_in_given_zone_login
-}
-
 locals {
-  # Copy address prefixes and CIDR of given zone into a new tuple
-  prefixes_in_given_zone_login = [
-    for prefix in data.ibm_is_vpc_address_prefixes.existing_vpc[*].address_prefixes[0] :
-  prefix.cidr if prefix.zone[0].name == var.zones[0]]
-
-  # To get the address prefix of zone1
-  prefixes_in_given_zone_1 = [
-    for prefix in data.ibm_is_vpc_address_prefixes.existing_vpc[*].address_prefixes[0] :
-  prefix.cidr if var.zones[0] == prefix.zone[0].name]
-
   # validation for the boot volume encryption toggling.
   validate_enable_customer_managed_encryption     = anytrue([alltrue([var.kms_key_name != null, var.kms_instance_name != null]), (var.kms_key_name == null), (var.key_management != "key_protect")])
   validate_enable_customer_managed_encryption_msg = "Please make sure you are passing the kms_instance_name if you are passing kms_key_name."

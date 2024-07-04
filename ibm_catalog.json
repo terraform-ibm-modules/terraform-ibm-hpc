@@ -331,7 +331,15 @@
                             "key": "bastion_security_group_id"
                         },
                         {
-                            "key": "bastion_ssh_private_key"
+                            "key": "bastion_ssh_private_key",
+                            "type": "multiline_secure_value",
+                            "display_name": "Multiline secure value",
+                            "required": false,
+                            "custom_config": {
+                                "grouping": "deployment",
+                                "original_grouping": "deployment",
+                                "type": "multiline_secure_value"
+                            }
                         },
                         {
                             "hidden": true,

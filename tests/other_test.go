@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -348,7 +349,7 @@ func TestRunUsingExistingKMS(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Create service instance and KMS key using IBMCloud CLI
-	err := lsf.CreateServiceInstanceandKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
+	err := lsf.CreateServiceInstanceAndKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
 	require.NoError(t, err, "Service instance and KMS key creation failed")
 
 	testLogger.Info(t, "Service instance and KMS key created successfully "+t.Name())
@@ -361,6 +362,50 @@ func TestRunUsingExistingKMS(t *testing.T) {
 	options.TerraformVars["key_management"] = "key_protect"
 	options.TerraformVars["kms_instance_name"] = kmsInstanceName
 	options.TerraformVars["kms_key_name"] = lsf.KMS_KEY_NAME
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+
+	// Ensure the service instance and KMS key are deleted after the test
+	defer lsf.DeleteServiceInstanceAndAssociatedKeys(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, kmsInstanceName, testLogger)
+	defer options.TestTearDown()
+
+	lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
+}
+
+// TestRunUsingExistingKMSInstanceIDAndWithOutKey validates cluster creation using an existing KMS.
+func TestRunUsingExistingKMSInstanceIDAndWithoutKey(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Service instance name
+	randomString := utils.GenerateRandomString()
+	kmsInstanceName := "cicd-" + randomString
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Create service instance and KMS key using IBMCloud CLI
+	err := lsf.CreateServiceInstanceAndKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
+	require.NoError(t, err, "Service instance and KMS key creation failed")
+
+	testLogger.Info(t, "Service instance and KMS key created successfully "+t.Name())
+
+	// Create test options, set up test environment
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Set Terraform variables
+	options.TerraformVars["key_management"] = "key_protect"
+	options.TerraformVars["kms_instance_name"] = kmsInstanceName
 
 	// Skip test teardown for further inspection
 	options.SkipTestTearDown = true
@@ -450,12 +495,13 @@ func TestRunCreateVpc(t *testing.T) {
 	vpcName := outputs["vpc_name"].(string)
 	bastionsubnetId, computesubnetIds := utils.GetSubnetIds(outputs)
 
-	RunHpcExistingVpcSubnetId(t, vpcName, bastionsubnetId, computesubnetIds)
 	RunHpcExistingVpcCidr(t, vpcName)
+	RunHpcExistingVpcSubnetIdCustomNullDnsNull(t, vpcName, bastionsubnetId, computesubnetIds)
 }
 
 // RunHpcExistingVpcCidr with Cidr blocks
 func RunHpcExistingVpcCidr(t *testing.T, vpcName string) {
+	fmt.Println("********* Started Executing RunHpcExistingVpcCidr ********* ")
 	// Setup test suite
 	setupTestSuite(t)
 
@@ -483,10 +529,12 @@ func RunHpcExistingVpcCidr(t *testing.T, vpcName string) {
 	defer options.TestTearDown()
 
 	lsf.ValidateClusterConfiguration(t, options, testLogger)
+	fmt.Println("********* Ended Executing RunHpcExistingVpcCidr ********* ")
 }
 
-// RunHpcExistingVpcSubnetId with compute and login subnet id's
-func RunHpcExistingVpcSubnetId(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string) {
+// RunHpcExistingVpcSubnetIdCustomNullDnsNull with compute and login subnet id. Both custom_resolver and dns_instace null
+func RunHpcExistingVpcSubnetIdCustomNullDnsNull(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string) {
+	fmt.Println("********* Started Executing RunHpcExistingVpcSubnetIdCustomNullDnsNull ********* ")
 	// Setup test suite
 	setupTestSuite(t)
 
@@ -510,6 +558,7 @@ func RunHpcExistingVpcSubnetId(t *testing.T, vpcName string, bastionsubnetId str
 	defer options.TestTearDown()
 
 	lsf.ValidateClusterConfiguration(t, options, testLogger)
+	fmt.Println("********* Ended Executing RunHpcExistingVpcSubnetIdCustomNullDnsNull ********* ")
 }
 
 // TestRunCreateVpcWithCustomDns brand new VPC with DNS
@@ -548,14 +597,14 @@ func TestRunVpcWithCustomDns(t *testing.T) {
 	instanceId, customResolverId := utils.GetDnsCustomResolverIds(outputs)
 	bastionsubnetId, computesubnetIds := utils.GetSubnetIds(outputs)
 
-	RunHpcExistingVpcCustomDnsExist(t, vpcName, bastionsubnetId, computesubnetIds, instanceId, customResolverId)
-	RunHpcExistingVpcCustomExistDnsNew(t, vpcName, bastionsubnetId, computesubnetIds, customResolverId)
-	RunHpcNewVpcCustomNullExistDns(t, instanceId)
-	RunHpcNewVpcExistCustomDnsNull(t, customResolverId)
+	RunHpcExistingVpcBothCustomDnsExist(t, vpcName, bastionsubnetId, computesubnetIds, instanceId, customResolverId)
+	RunHpcExistingVpcCustomExistDnsNull(t, vpcName, bastionsubnetId, computesubnetIds, customResolverId)
+	RunHpcExistingVpcCustomNullDnsExist(t, instanceId)
 }
 
-// RunHpcExistingVpcCustomDns with existing custom_reslover_id and dns_instance_id
-func RunHpcExistingVpcCustomDnsExist(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string, instanceId string, customResolverId string) {
+// RunHpcExistingVpcCustomDns with existing custom_resolver_id and dns_instance_id
+func RunHpcExistingVpcBothCustomDnsExist(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string, instanceId string, customResolverId string) {
+	fmt.Println("********* Started Executing RunHpcExistingVpcBothCustomDnsExist ********* ")
 	// Setup test suite
 	setupTestSuite(t)
 
@@ -582,10 +631,12 @@ func RunHpcExistingVpcCustomDnsExist(t *testing.T, vpcName string, bastionsubnet
 	defer options.TestTearDown()
 
 	lsf.ValidateClusterConfiguration(t, options, testLogger)
+	fmt.Println("********* Ended Executing RunHpcExistingVpcBothCustomDnsExist ********* ")
 }
 
-// RunHpcExistingVpcCustomExistDnsNew with existing custom_reslover_id and new dns_instance_id
-func RunHpcExistingVpcCustomExistDnsNew(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string, customResolverId string) {
+// RunHpcExistingVpcCustomExistDnsNull with existing custom_resolver_id and new dns_instance_id
+func RunHpcExistingVpcCustomExistDnsNull(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string, customResolverId string) {
+	fmt.Println("********* Started Executing RunHpcExistingVpcCustomExistDnsNull ********* ")
 	// Setup test suite
 	setupTestSuite(t)
 
@@ -611,10 +662,12 @@ func RunHpcExistingVpcCustomExistDnsNew(t *testing.T, vpcName string, bastionsub
 	defer options.TestTearDown()
 
 	lsf.ValidateClusterConfiguration(t, options, testLogger)
+	fmt.Println("********* Ended Executing RunHpcExistingVpcCustomExistDnsNull ********* ")
 }
 
-// RunHpcNewVpcCustomNullExistDns with custom_reslover_id null and existing dns_instance_id
-func RunHpcNewVpcCustomNullExistDns(t *testing.T, instanceId string) {
+// RunHpcExistingVpcCustomNullDnsExist with custom_resolver_id null and existing dns_instance_id
+func RunHpcExistingVpcCustomNullDnsExist(t *testing.T, instanceId string) {
+	fmt.Println("********* Started Executing RunHpcExistingVpcCustomNullDnsExist ********* ")
 	// Setup test suite
 	setupTestSuite(t)
 
@@ -637,32 +690,7 @@ func RunHpcNewVpcCustomNullExistDns(t *testing.T, instanceId string) {
 	defer options.TestTearDown()
 
 	lsf.ValidateClusterConfiguration(t, options, testLogger)
-}
-
-// RunHpcNewVpcExistCustomDnsNull with existing custom_reslover_id and dns_instance_id null
-func RunHpcNewVpcExistCustomDnsNull(t *testing.T, customResolverId string) {
-	// Setup test suite
-	setupTestSuite(t)
-
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// HPC cluster prefix
-	hpcClusterPrefix := utils.GenerateRandomString()
-
-	// Retrieve cluster information from environment variables
-	envVars := GetEnvVars()
-
-	// Create test options
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
-	options.TerraformVars["dns_instance_id"] = customResolverId
-
-	require.NoError(t, err, "Error setting up test options: %v", err)
-
-	// Skip test teardown for further inspection
-	options.SkipTestTearDown = true
-	defer options.TestTearDown()
-
-	lsf.ValidateClusterConfiguration(t, options, testLogger)
+	fmt.Println("********* Ended Executing RunHpcExistingVpcCustomNullDnsExist ********* ")
 }
 
 // TestRunWithoutMandatory tests Terraform's behavior when mandatory variables are missing by checking for specific error messages.
@@ -1108,11 +1136,11 @@ func TestRunInvalidDomainName(t *testing.T) {
 		},
 	})
 
-	// Apply the Terraform configuration
+	// Plan the Terraform configuration
 	_, err = terraform.InitAndPlanE(t, terraformOptions)
 
-	// Check if an error occurred during apply
-	assert.Error(t, err, "Expected an error during apply")
+	// Check if an error occurred during plan
+	assert.Error(t, err, "Expected an error during plan")
 
 	if err != nil {
 		// Check if the error message contains specific keywords indicating domain name issues
@@ -1151,7 +1179,7 @@ func TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Create service instance and KMS key using IBMCloud CLI
-	err := lsf.CreateServiceInstanceandKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
+	err := lsf.CreateServiceInstanceAndKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
 	require.NoError(t, err, "Failed to create service instance and KMS key")
 
 	// Ensure the service instance and KMS key are deleted after the test
@@ -1316,7 +1344,7 @@ func TestRunExistSubnetIDVpcNameAsNull(t *testing.T) {
 		},
 	})
 
-	// Apply the Terraform configuration
+	// Plan the Terraform configuration
 	_, err = terraform.InitAndPlanE(t, terraformOptions)
 
 	// Check if an error occurred during plan
@@ -1379,11 +1407,11 @@ func TestRunInvalidSshKeysAndRemoteAllowedIP(t *testing.T) {
 		},
 	})
 
-	// Apply the Terraform configuration
+	// Plan the Terraform configuration
 	_, err = terraform.InitAndPlanE(t, terraformOptions)
 
-	// Check if an error occurred during apply
-	assert.Error(t, err, "Expected an error during apply")
+	// Check if an error occurred during plan
+	assert.Error(t, err, "Expected an error during plan")
 
 	if err != nil {
 		// Check if the error message contains specific keywords indicating domain name issues
@@ -1400,4 +1428,98 @@ func TestRunInvalidSshKeysAndRemoteAllowedIP(t *testing.T) {
 		t.Error("Expected error did not occur")
 		testLogger.FAIL(t, "Expected error did not occur on Invalid ssh keys and remote allowed IP")
 	}
+}
+
+// TestRunCosAndVpcFlowLogs validates cluster creation with vpc flow logs and cos enabled.
+func TestRunCosAndVpcFlowLogs(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Create test options, set up test environment
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Set Terraform variables
+	options.TerraformVars["enable_cos_integration"] = true
+	options.TerraformVars["enable_vpc_flow_logs"] = true
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	lsf.ValidateBasicClusterConfigurationWithVPCFlowLogsAndCos(t, options, testLogger)
+}
+
+// TestRunInvalidSubnetCIDR validates cluster creation with invalid subnet CIDR ranges.
+func TestRunInvalidSubnetCIDR(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Get the absolute path of solutions/hpc
+	abs, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Unable to get absolute path")
+
+	terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+	// Define Terraform options
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terrPath,
+		Vars: map[string]interface{}{
+			"cluster_prefix":     hpcClusterPrefix,
+			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+			"cluster_id":         envVars.ClusterID,
+			"reservation_id":     envVars.ReservationID,
+			"vpc_cluster_private_subnets_cidr_blocks":       utils.SplitAndTrim("1.1.1.1/20", ","),
+			"vpc_cluster_login_private_subnets_cidr_blocks": utils.SplitAndTrim("2.2.2.2/20", ","),
+		},
+	})
+
+	// Apply the Terraform configuration
+	_, err = terraform.InitAndApplyE(t, terraformOptions)
+
+	// Check if an error occurred during apply
+	assert.Error(t, err, "Expected an error during apply")
+
+	if err != nil {
+		// Check if the error message contains specific keywords indicating Subnet CIDR block issues
+		result := utils.VerifyDataContains(t, err.Error(), "Invalid json payload provided: Key: 'SubnetTemplateOneOf.SubnetTemplate.CIDRBlock' Error:Field validation for 'CIDRBlock' failed on the 'validcidr' tag", testLogger)
+		assert.True(t, result)
+		if result {
+			testLogger.PASS(t, "Validation succeeded: Invalid Subnet CIDR range")
+		} else {
+			testLogger.FAIL(t, "Validation failed: Invalid Subnet CIDR range")
+		}
+	} else {
+		// Log an error if the expected error did not occur
+		t.Error("Expected error did not occur")
+		testLogger.FAIL(t, "Expected error did not occur on Invalid Subnet CIDR range")
+	}
+
+	// Cleanup resources
+	defer terraform.Destroy(t, terraformOptions)
 }

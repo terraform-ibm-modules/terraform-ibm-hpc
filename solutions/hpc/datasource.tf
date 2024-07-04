@@ -39,11 +39,6 @@ data "ibm_is_vpc" "vpc" {
   depends_on = [module.landing_zone.vpc_name, data.ibm_is_vpc.existing_vpc]
 }
 
-data "ibm_is_vpc_address_prefixes" "existing_vpc" {
-  #count = var.vpc_name != "" ? 1 : 0
-  vpc = data.ibm_is_vpc.vpc.id
-}
-
 data "ibm_is_subnet" "existing_subnet" {
   # Lookup for this Subnet resources only if var.cluster_subnet_ids is not empty
   count      = (length(var.cluster_subnet_ids) == 1 && var.vpc_name != null) ? length(var.cluster_subnet_ids) : 0

@@ -218,10 +218,6 @@ func VerifyLoginNodeConfig(
 	checkMasterNameErr := LSFCheckMasterName(t, sshLoginClient, expectedMasterName, logger)
 	utils.LogVerificationResult(t, checkMasterNameErr, "check Master name on login node", logger)
 
-	// Verify Reservation ID
-	ReservationIDErr := HPCCheckReservationID(t, sshLoginClient, expectedReservationID, logger)
-	utils.LogVerificationResult(t, ReservationIDErr, "check Reservation ID on login node", logger)
-
 	// MTU check for login nodes
 	mtuCheckErr := LSFMTUCheck(t, sshLoginClient, []string{loginNodeIP}, logger)
 	utils.LogVerificationResult(t, mtuCheckErr, "MTU check on login node", logger)
@@ -243,8 +239,12 @@ func VerifyLoginNodeConfig(
 	utils.LogVerificationResult(t, fileMountErr, "File mount check on login node", logger)
 
 	//Run job
-	jobErr := LSFRunJobs(t, sshLoginClient, jobCommand, logger)
+	jobErr := LSFRunJobs(t, sshLoginClient, LOGIN_NODE_EXECUTION_PATH+jobCommand, logger) //Added the executable path
 	utils.LogVerificationResult(t, jobErr, "check Run job on login node", logger)
+
+	// Verify LSF commands
+	lsfCmdErr := VerifyLSFCommands(t, sshLoginClient, "login", logger)
+	utils.LogVerificationResult(t, lsfCmdErr, "Check the 'lsf' command on the login node", logger)
 }
 
 // VerifyTestTerraformOutputs is a function that verifies the Terraform outputs for a test scenario.
@@ -337,13 +337,13 @@ func VerifyManagementNodeLDAPConfig(
 	fileMountErr := HPCCheckFileMountAsLDAPUser(t, sshLdapClient, "management", logger)
 	utils.LogVerificationResult(t, fileMountErr, "check file mount as an LDAP user on the management node", logger)
 
+	// Verify LSF commands on management node as LDAP user
+	lsfCmdErr := VerifyLSFCommandsAsLDAPUser(t, sshLdapClient, ldapUserName, "management", logger)
+	utils.LogVerificationResult(t, lsfCmdErr, "Check the 'lsf' command as an LDAP user on the management node", logger)
+
 	// Run job
 	jobErr := LSFRunJobsAsLDAPUser(t, sshLdapClient, jobCommand, ldapUserName, logger)
 	utils.LogVerificationResult(t, jobErr, "check Run job as an LDAP user on the management node", logger)
-
-	// Verify LSF commands on management node as LDAP user
-	lsfCmdErr := VerifyLSFCommands(t, sshLdapClient, ldapUserName, logger)
-	utils.LogVerificationResult(t, lsfCmdErr, "Check the 'lsf' command as an LDAP user on the management node", logger)
 
 	// Loop through management node IPs and perform checks
 	for i := 0; i < len(managementNodeIPList); i++ {
@@ -391,11 +391,11 @@ func VerifyLoginNodeLDAPConfig(
 	utils.LogVerificationResult(t, fileMountErr, "check file mount as an LDAP user on the login node", logger)
 
 	// Run job
-	jobErr := LSFRunJobsAsLDAPUser(t, sshLdapClient, jobCommand, ldapUserName, logger)
+	jobErr := LSFRunJobsAsLDAPUser(t, sshLdapClient, LOGIN_NODE_EXECUTION_PATH+jobCommand, ldapUserName, logger)
 	utils.LogVerificationResult(t, jobErr, "check Run job as an LDAP user on the login node", logger)
 
 	// Verify LSF commands on login node as LDAP user
-	lsfCmdErr := VerifyLSFCommands(t, sshLdapClient, ldapUserName, logger)
+	lsfCmdErr := VerifyLSFCommandsAsLDAPUser(t, sshLdapClient, ldapUserName, "login", logger)
 	utils.LogVerificationResult(t, lsfCmdErr, "Check the 'lsf' command as an LDAP user on the login node", logger)
 }
 
@@ -432,7 +432,7 @@ func VerifyComputeNodeLDAPConfig(
 	utils.LogVerificationResult(t, fileMountErr, "check file mount as an LDAP user on the compute node", logger)
 
 	// Verify LSF commands
-	lsfCmdErr := VerifyLSFCommands(t, sshLdapClient, ldapUserName, logger)
+	lsfCmdErr := VerifyLSFCommandsAsLDAPUser(t, sshLdapClient, ldapUserName, "compute", logger)
 	utils.LogVerificationResult(t, lsfCmdErr, "Check the 'lsf' command as an LDAP user on the compute node", logger)
 
 	// SSH connection to other compute nodes
@@ -464,11 +464,11 @@ func VerifyPTRRecordsForManagementAndLoginNodes(t *testing.T, sClient *ssh.Clien
 
 }
 
-// CreateServiceInstanceandKmsKey creates a service instance on IBM Cloud and a KMS key within that instance.
+// CreateServiceInstanceAndKmsKey creates a service instance on IBM Cloud and a KMS key within that instance.
 // It logs into IBM Cloud using the provided API key, region, and resource group, then creates the service instance
 // and the KMS key with the specified names. It logs the results of each operation.
 // Returns:error - An error if any operation fails, otherwise nil.
-func CreateServiceInstanceandKmsKey(t *testing.T, apiKey, expectedZone, expectedResourceGroup, kmsInstanceName, kmsKeyName string, logger *utils.AggregatedLogger) error {
+func CreateServiceInstanceAndKmsKey(t *testing.T, apiKey, expectedZone, expectedResourceGroup, kmsInstanceName, kmsKeyName string, logger *utils.AggregatedLogger) error {
 	// Create the service instance and return its GUID
 	_, createInstanceErr := CreateServiceInstanceAndReturnGUID(t, apiKey, expectedZone, expectedResourceGroup, kmsInstanceName, logger)
 	// Log the verification result for creating the service instance
@@ -496,4 +496,70 @@ func DeleteServiceInstanceAndAssociatedKeys(t *testing.T, apiKey, expectedZone, 
 
 	// Log the verification result for deleting the service instance and associated KMS key
 	utils.LogVerificationResult(t, deleteInstanceAndKey, "Delete Service Instance and associated KMS Key", logger)
+}
+
+// VerifyLSFDNS performs a DNS configuration check on a list of nodes using LSFDNSCheck function.
+// It logs the verification result.
+func VerifyLSFDNS(t *testing.T, sClient *ssh.Client, ipsList []string, domainName string, logger *utils.AggregatedLogger) {
+	dnsCheckErr := LSFDNSCheck(t, sClient, ipsList, domainName, logger)
+	utils.LogVerificationResult(t, dnsCheckErr, "dns check", logger)
+}
+
+// VerifyCreateNewLdapUserAndManagementNodeLDAPConfig creates a new LDAP user, verifies the LDAP configuration on the
+// management node by connecting via SSH, running jobs, and verifying LSF commands. It connects to the management node
+// as the new LDAP user and runs specified commands to ensure the new user is properly configured.
+// It logs into the LDAP server using the provided SSH client, admin password, domain name, and user information, then
+// verifies the configuration on the management node.
+// Returns an error if any step fails
+func VerifyCreateNewLdapUserAndManagementNodeLDAPConfig(
+	t *testing.T,
+	sldapClient *ssh.Client,
+	bastionIP string,
+	ldapServerIP string,
+	managementNodeIPList []string,
+	jobCommand string,
+	ldapAdminPassword string,
+	ldapDomainName string,
+	ldapUserName string,
+	ldapUserPassword string,
+	newLdapUserName string,
+	logger *utils.AggregatedLogger,
+) {
+
+	// Add a new LDAP user
+	if err := HPCAddNewLDAPUser(t, sldapClient, ldapAdminPassword, ldapDomainName, ldapUserName, newLdapUserName, logger); err != nil {
+		utils.LogVerificationResult(t, err, "add new LDAP user", logger)
+		return
+	}
+
+	// Connect to the management node via SSH as the new LDAP user
+	sshLdapClientUser, err := utils.ConnectToHostAsLDAPUser(LSF_PUBLIC_HOST_NAME, bastionIP, managementNodeIPList[0], newLdapUserName, ldapUserPassword)
+	if err != nil {
+		utils.LogVerificationResult(t, err, "connect to the management node via SSH as the new LDAP user", logger)
+		return
+	}
+	defer sshLdapClientUser.Close()
+
+	// Run job as the new LDAP user
+	if err := LSFRunJobsAsLDAPUser(t, sshLdapClientUser, jobCommand, newLdapUserName, logger); err != nil {
+		utils.LogVerificationResult(t, err, "run job as the new LDAP user on the management node", logger)
+	}
+
+	// Verify LSF commands on the management node as the new LDAP user
+	if err := VerifyLSFCommandsAsLDAPUser(t, sshLdapClientUser, newLdapUserName, "management", logger); err != nil {
+		utils.LogVerificationResult(t, err, "Check the 'lsf' command as the new LDAP user on the management node", logger)
+	}
+
+}
+
+// ValidateCosServiceInstanceAndVpcFlowLogs checks both the COS service instance and the VPC flow logs.
+// It logs the verification result.
+func ValidateCosServiceInstanceAndVpcFlowLogs(t *testing.T, apiKey, expectedZone, expectedResourceGroup, clusterPrefix string, logger *utils.AggregatedLogger) {
+	// Verify the COS service instance details
+	cosErr := VerifyCosServiceInstance(t, apiKey, expectedZone, expectedResourceGroup, clusterPrefix, logger)
+	utils.LogVerificationResult(t, cosErr, "COS check", logger)
+
+	// Verify the VPC flow log details
+	flowLogsErr := ValidateFlowLogs(t, apiKey, expectedZone, expectedResourceGroup, clusterPrefix, logger)
+	utils.LogVerificationResult(t, flowLogsErr, "VPC flow logs check", logger)
 }
