@@ -26,7 +26,7 @@ locals {
   bastion_node_name = format("%s-%s", local.prefix, "bastion")
 
   bastion_machine_type = "cx2-4x8"
-  bastion_image_name   = "ibm-ubuntu-22-04-3-minimal-amd64-1"
+  bastion_image_name   = "ibm-ubuntu-22-04-4-minimal-amd64-3"
 
   bastion_image_id = data.ibm_is_image.bastion.id
 

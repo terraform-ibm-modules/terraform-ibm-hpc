@@ -176,7 +176,7 @@ variable "login_node_instance_type" {
 }
 variable "management_image_name" {
   type        = string
-  default     = "hpcaas-lsf10-rhel88-v8"
+  default     = "hpcaas-lsf10-rhel88-v9"
   description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster management nodes. By default, the solution uses a RHEL88 base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
 
 }
@@ -184,13 +184,13 @@ variable "management_image_name" {
 variable "compute_image_name" {
   type        = string
   default     = "hpcaas-lsf10-rhel88-compute-v5"
-  description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-8 base OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v4). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
+  description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-8 base OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v5). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
 }
 
 variable "login_image_name" {
   type        = string
   default     = "hpcaas-lsf10-rhel88-compute-v5"
-  description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster login node. By default, the solution uses a RHEL 8-8 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v4). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
+  description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster login node. By default, the solution uses a RHEL 8-8 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v5). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
 }
 
 variable "management_node_instance_type" {
@@ -496,7 +496,7 @@ variable "ldap_vsi_profile" {
 
 variable "ldap_vsi_osimage_name" {
   type        = string
-  default     = "ibm-ubuntu-22-04-3-minimal-amd64-1"
+  default     = "ibm-ubuntu-22-04-4-minimal-amd64-3"
   description = "Image name to be used for provisioning the LDAP instances. By default ldap server are created on Ubuntu based OS flavour."
 }
 
@@ -560,24 +560,24 @@ variable "TF_VALIDATION_SCRIPT_FILES" {
 variable "bastion_instance_name" {
   type        = string
   default     = null
-  description = "Bastion instance name. If none given then new bastion will be created."
+  description = "Provide the name of the bastion instance. If none given then new bastion will be created."
 }
 
 variable "bastion_instance_public_ip" {
   type        = string
   default     = null
-  description = "Bastion instance public ip address."
+  description = "Provide the public ip address of the bastion instance to establish the remote connection."
 }
 
 variable "bastion_security_group_id" {
   type        = string
   default     = null
-  description = "Bastion security group id."
+  description = "Provide the security group ID of the bastion server. This security group ID will be added as an allowlist rule on the HPC cluster nodes to establish an SSH connection through the bastion node."
 }
 
 variable "bastion_ssh_private_key" {
   type        = string
   sensitive   = true
   default     = null
-  description = "Bastion SSH private key path, which will be used to login to bastion host."
+  description = "Provide the private SSH key (named id_rsa) used during the creation and configuration of the bastion server to securely authenticate and connect to the bastion server. This allows access to internal network resources from a secure entry point. Note: The corresponding public SSH key (named id_rsa.pub) must already be available in the ~/.ssh/authorized_keys file on the bastion host to establish authentication."
 }

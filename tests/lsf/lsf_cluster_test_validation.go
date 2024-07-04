@@ -62,6 +62,9 @@ func ValidateClusterConfiguration(t *testing.T, options *testhelper.TestOptions,
 	// Verify SSH key
 	VerifySSHKey(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, "management", managementNodeIPList, testLogger)
 
+	//VerifyLSFDNS on management nodes
+	VerifyLSFDNS(t, sshClient, managementNodeIPList, expectedDnsDomainName, testLogger)
+
 	// Perform failover and failback
 	FailoverAndFailback(t, sshClient, JOB_COMMAND_MED, testLogger)
 
@@ -91,6 +94,9 @@ func ValidateClusterConfiguration(t *testing.T, options *testhelper.TestOptions,
 	// Verify SSH key
 	VerifySSHKey(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, "compute", computeNodeIPList, testLogger)
 
+	//VerifyLSFDNS on compute nodes
+	VerifyLSFDNS(t, sshClient, computeNodeIPList, expectedDnsDomainName, testLogger)
+
 	// Connect to the login node via SSH and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH: %v", connectionErr)
@@ -108,6 +114,9 @@ func ValidateClusterConfiguration(t *testing.T, options *testhelper.TestOptions,
 
 	// Verify PTR records
 	VerifyPTRRecordsForManagementAndLoginNodes(t, sshClient, LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList, loginNodeIP, expectedDnsDomainName, testLogger)
+
+	//VerifyLSFDNS on login node
+	VerifyLSFDNS(t, sshClient, []string{loginNodeIP}, expectedDnsDomainName, testLogger)
 
 	// Verify file share encryption
 	VerifyFileShareEncryption(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expectedZone), expectedResourceGroup, expectedMasterName, expectedKeyManagement, testLogger)
@@ -165,6 +174,9 @@ func ValidateClusterConfigurationWithAPPCenter(t *testing.T, options *testhelper
 	// Verify SSH key
 	VerifySSHKey(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, "management", managementNodeIPList, testLogger)
 
+	//VerifyLSFDNS on management nodes
+	VerifyLSFDNS(t, sshClient, managementNodeIPList, expectedDnsDomainName, testLogger)
+
 	// Perform failover and failback
 	FailoverAndFailback(t, sshClient, JOB_COMMAND_MED, testLogger)
 
@@ -194,6 +206,9 @@ func ValidateClusterConfigurationWithAPPCenter(t *testing.T, options *testhelper
 	// Verify SSH key
 	VerifySSHKey(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, "compute", computeNodeIPList, testLogger)
 
+	//VerifyLSFDNS on compute nodes
+	VerifyLSFDNS(t, sshClient, computeNodeIPList, expectedDnsDomainName, testLogger)
+
 	// Connect to the login node via SSH and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH: %v", connectionErr)
@@ -217,6 +232,9 @@ func ValidateClusterConfigurationWithAPPCenter(t *testing.T, options *testhelper
 
 	// Verify PTR records
 	VerifyPTRRecordsForManagementAndLoginNodes(t, sshClient, LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList, loginNodeIP, expectedDnsDomainName, testLogger)
+
+	//VerifyLSFDNS on login node
+	VerifyLSFDNS(t, sshClient, []string{loginNodeIP}, expectedDnsDomainName, testLogger)
 
 	// Verify file share encryption
 	VerifyFileShareEncryption(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expectedZone), expectedResourceGroup, expectedMasterName, expectedKeyManagement, testLogger)
@@ -313,9 +331,9 @@ func ValidateLDAPClusterConfiguration(t *testing.T, options *testhelper.TestOpti
 	expectedResourceGroup := options.TerraformVars["resource_group"].(string)
 	expectedKeyManagement := options.TerraformVars["key_management"].(string)
 	expectedLdapDomain := options.TerraformVars["ldap_basedns"].(string)
-	expectedLdapAdminPassword := options.TerraformVars["ldap_admin_password"].(string)
-	expectedLdapUserName := options.TerraformVars["ldap_user_name"].(string)
-	expectedLdapUserPassword := options.TerraformVars["ldap_user_password"].(string)
+	ldapAdminPassword := options.TerraformVars["ldap_admin_password"].(string)
+	ldapUserName := options.TerraformVars["ldap_user_name"].(string)
+	ldapUserPassword := options.TerraformVars["ldap_user_password"].(string)
 	expectedDnsDomainName, ok := options.TerraformVars["dns_domain_name"].(map[string]string)["compute"]
 	assert.False(t, !ok, "Key 'compute' does not exist in dns_domain_name map or dns_domain_name is not of type map[string]string")
 
@@ -399,19 +417,22 @@ func ValidateLDAPClusterConfiguration(t *testing.T, options *testhelper.TestOpti
 	require.NoError(t, connectionErr, "Failed to connect to the ldap server via SSH: %v", connectionErr)
 
 	// Check ldap server status
-	CheckLDAPServerStatus(t, sshLdapClient, expectedLdapAdminPassword, expectedLdapDomain, expectedLdapUserName, testLogger)
+	CheckLDAPServerStatus(t, sshLdapClient, ldapAdminPassword, expectedLdapDomain, ldapUserName, testLogger)
 
 	// Verify management node ldap config
-	VerifyManagementNodeLDAPConfig(t, sshClient, bastionIP, LdapServerIP, managementNodeIPList, JOB_COMMAND_LOW, expectedLdapDomain, expectedLdapUserName, expectedLdapUserPassword, testLogger)
+	VerifyManagementNodeLDAPConfig(t, sshClient, bastionIP, LdapServerIP, managementNodeIPList, JOB_COMMAND_LOW, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
+
+	// Verify compute node ldap config
+	VerifyComputeNodeLDAPConfig(t, bastionIP, LdapServerIP, computeNodeIPList, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
 
 	// Verify login node ldap config
-	VerifyLoginNodeLDAPConfig(t, sshClient, bastionIP, loginNodeIP, LdapServerIP, JOB_COMMAND_LOW, expectedLdapDomain, expectedLdapUserName, expectedLdapUserPassword, testLogger)
+	VerifyLoginNodeLDAPConfig(t, sshClient, bastionIP, loginNodeIP, LdapServerIP, JOB_COMMAND_LOW, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
+
+	// Verify able to create LDAP User on LDAP Server and can able to perform LSF actions using new user
+	VerifyCreateNewLdapUserAndManagementNodeLDAPConfig(t, sshLdapClient, bastionIP, LdapServerIP, managementNodeIPList, JOB_COMMAND_LOW, ldapAdminPassword, expectedLdapDomain, ldapUserName, ldapUserPassword, "user2", testLogger)
 
 	// Verify PTR records
 	VerifyPTRRecordsForManagementAndLoginNodes(t, sshClient, LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList, loginNodeIP, expectedDnsDomainName, testLogger)
-
-	// Verify compute node ldap config
-	VerifyComputeNodeLDAPConfig(t, bastionIP, LdapServerIP, computeNodeIPList, expectedLdapDomain, expectedLdapUserName, expectedLdapUserPassword, testLogger)
 
 	testLogger.Info(t, t.Name()+" Validation ended")
 }
@@ -436,9 +457,9 @@ func ValidatePACANDLDAPClusterConfiguration(t *testing.T, options *testhelper.Te
 	expectedResourceGroup := options.TerraformVars["resource_group"].(string)
 	expectedKeyManagement := options.TerraformVars["key_management"].(string)
 	expectedLdapDomain := options.TerraformVars["ldap_basedns"].(string)
-	expectedLdapAdminPassword := options.TerraformVars["ldap_admin_password"].(string)
-	expectedLdapUserName := options.TerraformVars["ldap_user_name"].(string)
-	expectedLdapUserPassword := options.TerraformVars["ldap_user_password"].(string)
+	ldapAdminPassword := options.TerraformVars["ldap_admin_password"].(string)
+	ldapUserName := options.TerraformVars["ldap_user_name"].(string)
+	ldapUserPassword := options.TerraformVars["ldap_user_password"].(string)
 	expectedDnsDomainName, ok := options.TerraformVars["dns_domain_name"].(map[string]string)["compute"]
 	assert.False(t, !ok, "Key 'compute' does not exist in dns_domain_name map or dns_domain_name is not of type map[string]string")
 
@@ -528,19 +549,22 @@ func ValidatePACANDLDAPClusterConfiguration(t *testing.T, options *testhelper.Te
 	require.NoError(t, connectionErr, "Failed to connect to the ldap server via SSH: %v", connectionErr)
 
 	// Check ldap server status
-	CheckLDAPServerStatus(t, sshLdapClient, expectedLdapAdminPassword, expectedLdapDomain, expectedLdapUserName, testLogger)
+	CheckLDAPServerStatus(t, sshLdapClient, ldapAdminPassword, expectedLdapDomain, ldapUserName, testLogger)
 
 	// Verify management node ldap config
-	VerifyManagementNodeLDAPConfig(t, sshClient, bastionIP, LdapServerIP, managementNodeIPList, JOB_COMMAND_LOW, expectedLdapDomain, expectedLdapUserName, expectedLdapUserPassword, testLogger)
+	VerifyManagementNodeLDAPConfig(t, sshClient, bastionIP, LdapServerIP, managementNodeIPList, JOB_COMMAND_LOW, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
+
+	// Verify compute node ldap config
+	VerifyComputeNodeLDAPConfig(t, bastionIP, LdapServerIP, computeNodeIPList, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
 
 	// Verify login node ldap config
-	VerifyLoginNodeLDAPConfig(t, sshClient, bastionIP, loginNodeIP, LdapServerIP, JOB_COMMAND_LOW, expectedLdapDomain, expectedLdapUserName, expectedLdapUserPassword, testLogger)
+	VerifyLoginNodeLDAPConfig(t, sshClient, bastionIP, loginNodeIP, LdapServerIP, JOB_COMMAND_LOW, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
+
+	// Verify able to create LDAP User on LDAP Server and can able to perform LSF actions using new user
+	VerifyCreateNewLdapUserAndManagementNodeLDAPConfig(t, sshLdapClient, bastionIP, LdapServerIP, managementNodeIPList, JOB_COMMAND_LOW, ldapAdminPassword, expectedLdapDomain, ldapUserName, ldapUserPassword, "user2", testLogger)
 
 	// Verify PTR records
 	VerifyPTRRecordsForManagementAndLoginNodes(t, sshClient, LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList, loginNodeIP, expectedDnsDomainName, testLogger)
-
-	// Verify compute node ldap config
-	VerifyComputeNodeLDAPConfig(t, bastionIP, LdapServerIP, computeNodeIPList, expectedLdapDomain, expectedLdapUserName, expectedLdapUserPassword, testLogger)
 
 	testLogger.Info(t, t.Name()+" Validation ended")
 }
@@ -639,5 +663,81 @@ func ValidateClusterConfigurationWithAPPCenterForExistingEnv(
 	VerifyFileShareEncryption(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expectedZone), expectedResourceGroup, expectedMasterName, expectedKeyManagement, testLogger)
 
 	// Log the end of validation
+	testLogger.Info(t, t.Name()+" Validation ended")
+}
+
+// ValidateBasicClusterConfigurationWithVPCFlowLogsAndCos validates the basic cluster configuration
+// including VPC flow logs and COS service instance.
+// It performs validation tasks on essential aspects of the cluster setup,
+// such as management node, compute nodes, and login node configurations.
+// Additionally, it ensures proper connectivity and functionality.
+// This function doesn't return any value but logs errors and validation steps during the process.
+func ValidateBasicClusterConfigurationWithVPCFlowLogsAndCos(t *testing.T, options *testhelper.TestOptions, testLogger *utils.AggregatedLogger) {
+	// Retrieve cluster information from Terraform variables from Terraform variables
+	expectedClusterID := options.TerraformVars["cluster_id"].(string)
+	expectedReservationID := options.TerraformVars["reservation_id"].(string)
+	expectedMasterName := options.TerraformVars["cluster_prefix"].(string)
+	expectedResourceGroup := options.TerraformVars["resource_group"].(string)
+	expectedKeyManagement := options.TerraformVars["key_management"].(string)
+	expectedZone := options.TerraformVars["zones"].([]string)[0]
+
+	expectedHyperthreadingEnabled, _ := strconv.ParseBool(options.TerraformVars["hyperthreading_enabled"].(string))
+
+	JOB_COMMAND_LOW := GetJobCommand(expectedZone, "low")
+
+	// Run the test and handle errors
+	output, err := options.RunTest()
+	require.NoError(t, err, "Error running consistency test: %v", err)
+	require.NotNil(t, output, "Expected non-nil output, but got nil")
+
+	// Log successful cluster creation
+	testLogger.Info(t, t.Name()+" Cluster created successfully")
+
+	// Retrieve server IPs and handle errors
+	bastionIP, managementNodeIPList, loginNodeIP, ipRetrievalError := utils.GetServerIPs(t, options, testLogger)
+	require.NoError(t, ipRetrievalError, "Error occurred while getting server IPs: %v", ipRetrievalError)
+
+	testLogger.Info(t, t.Name()+" Validation started ......")
+
+	// Connect to the master node via SSH and handle connection errors
+	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
+	require.Nil(t, connectionErr, "Failed to connect to the master via SSH: %v", connectionErr)
+	defer sshClient.Close()
+
+	testLogger.Info(t, "SSH connection to the master successful")
+	t.Log("Validation in progress. Please wait...")
+
+	// Verify management node configuration
+	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
+
+	defer sshClient.Close()
+	// Wait for dynamic node disappearance
+	defer func() {
+		if err := LSFWaitForDynamicNodeDisappearance(t, sshClient, testLogger); err != nil {
+			t.Errorf("Error in LSFWaitForDynamicNodeDisappearance: %v", err)
+		}
+	}()
+
+	// Get dynamic compute node IPs and handle errors
+	computeNodeIPList, computeIPErr := LSFGETDynamicComputeNodeIPs(t, sshClient, testLogger)
+	require.Nil(t, computeIPErr, "Error getting dynamic compute node IPs: %v", computeIPErr)
+
+	// Verify compute node configuration
+	VerifyComputetNodeConfig(t, sshClient, expectedHyperthreadingEnabled, computeNodeIPList, testLogger)
+
+	// Connect to the login node via SSH and handle connection errors
+	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
+	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH: %v", connectionErr)
+	defer sshLoginNodeClient.Close()
+
+	// Verify login node configuration
+	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
+
+	// Verify file share encryption
+	VerifyFileShareEncryption(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expectedZone), expectedResourceGroup, expectedMasterName, expectedKeyManagement, testLogger)
+
+	// Validate COS service instance and VPC flow logs
+	ValidateCosServiceInstanceAndVpcFlowLogs(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expectedZone), expectedResourceGroup, expectedMasterName, testLogger)
+
 	testLogger.Info(t, t.Name()+" Validation ended")
 }
