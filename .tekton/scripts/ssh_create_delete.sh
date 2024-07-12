@@ -6,7 +6,7 @@ CICD_SSH_KEY=$(echo $CICD_SSH_KEY-"$REVISION")
 elif [ "${PR_REVISION}" ] && [ -z "${REVISION}" ]; then
 CICD_SSH_KEY=$(echo $CICD_SSH_KEY-"$PR_REVISION")
 else
-resource_group=$CICD_SSH_KEY-tekton
+CICD_SSH_KEY=$CICD_SSH_KEY-tekton
 fi
 
 ssh_key_create() {
@@ -35,7 +35,7 @@ for region in "${REGIONS[@]}";
         check_key=$(eval "ibmcloud is keys | grep $CICD_SSH_KEY | awk '{print $2}'")
         if [[ -z "$check_key" ]]; then
             echo "$CICD_SSH_KEY creating in $region"
-            ssh_key_create=$(eval "ibmcloud is key-create $CICD_SSH_KEY @/artifacts/.ssh/id_rsa.pub  --resource-group-name $resource_group")
+            ssh_key_create=$(eval "ibmcloud is key-create $CICD_SSH_KEY @/artifacts/.ssh/id_rsa.pub  --resource-group-name ${resource_group:?}")
             if [[ $ssh_key_create = *Created* ]]; then
             echo "$CICD_SSH_KEY created in $region"
             else

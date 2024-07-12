@@ -21,7 +21,7 @@ const (
 	createVpcTerraformDir = "examples/create_vpc/solutions/hpc" // Brand new VPC
 )
 
-// TestRunBasic validates the cluster configuration and creation of an HPC cluster.
+// TestRunBasic validates the cluster configuration.
 func TestRunBasic(t *testing.T) {
 
 	// Parallelize the test
@@ -788,7 +788,7 @@ func TestRunExistingPACEnvironment(t *testing.T) {
 	require.NoError(t, err, "Error parsing JSON configuration: %v", err)
 
 	// Validate the cluster configuration
-	lsf.ValidateClusterConfigurationWithAPPCenterForExistingEnv(t, config.BastionIP, config.LoginNodeIP, config.ClusterID, config.ReservationID, config.ClusterPrefixName, config.ResourceGroup,
+	lsf.ValidateClusterConfigurationWithAPPCenterForExistingEnv(t, 1, config.BastionIP, config.LoginNodeIP, config.ClusterID, config.ReservationID, config.ClusterPrefixName, config.ResourceGroup,
 		config.KeyManagement, config.Zones, config.DnsDomainName, config.ManagementNodeIPList, config.HyperthreadingEnabled, testLogger)
 }
 
@@ -1522,4 +1522,123 @@ func TestRunInvalidSubnetCIDR(t *testing.T) {
 
 	// Cleanup resources
 	defer terraform.Destroy(t, terraformOptions)
+}
+
+// TestRunMultipleSSHKeys validates the cluster configuration.
+func TestRunMultipleSSHKeys(t *testing.T) {
+
+	// Parallelize the test
+	t.Parallel()
+
+	// Setup test suite
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve cluster information from environment variables
+	envVars := GetEnvVars()
+
+	// Create test options
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	lsf.ValidateClusterConfigurationWithMultipleKeys(t, options, testLogger)
+
+}
+
+// TestRunExistingLDAP validates the creation and configuration of HPC clusters with LDAP integration, including setup, validation, and error handling for both clusters.
+func TestRunExistingLDAP(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Setup the test suite
+	setupTestSuite(t)
+
+	// Initialize logger
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate random prefix for HPC cluster
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve environment variables
+	envVars := GetEnvVars()
+
+	// Ensure LDAP is enabled and credentials are provided
+	if strings.ToLower(envVars.EnableLdap) == "true" {
+		if len(envVars.LdapAdminPassword) == 0 || len(envVars.LdapUserName) == 0 || len(envVars.LdapUserPassword) == 0 {
+			require.FailNow(t, "LDAP credentials are missing. Ensure LDAP admin password, LDAP user name, and LDAP user password are provided.")
+		}
+	} else {
+		require.FailNow(t, "LDAP is not enabled. Set the 'enable_ldap' environment variable to 'true' to enable LDAP.")
+	}
+
+	// Create test options for the first cluster
+	options1, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	require.NoError(t, err, "Error setting up test options for the first cluster: %v", err)
+
+	// Set Terraform variables for the first cluster
+	options1.TerraformVars["enable_ldap"] = strings.ToLower(envVars.EnableLdap)
+	options1.TerraformVars["ldap_basedns"] = envVars.LdapBaseDns
+	options1.TerraformVars["ldap_admin_password"] = envVars.LdapAdminPassword // pragma: allowlist secret
+	options1.TerraformVars["ldap_user_name"] = envVars.LdapUserName
+	options1.TerraformVars["ldap_user_password"] = envVars.LdapUserPassword // pragma: allowlist secret
+	options1.TerraformVars["key_management"] = "null"
+	options1.TerraformVars["management_node_count"] = 1
+
+	// Skip test teardown for further inspection
+	options1.SkipTestTearDown = true
+	defer options1.TestTearDown()
+
+	// Run the test and validate output
+	output, err := options1.RunTest()
+	require.NoError(t, err, "Error running test: %v", err)
+	require.NotNil(t, output, "Expected non-nil output, but got nil")
+
+	// Retrieve custom resolver ID
+	customResolverID, err := utils.GetCustomResolverID(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, hpcClusterPrefix, testLogger)
+	require.NoError(t, err, "Error retrieving custom resolver ID: %v", err)
+
+	// Retrieve LDAP IP and Bastion IP
+	ldapIP, err := utils.GetLdapIP(t, options1, testLogger)
+	require.NoError(t, err, "Error retrieving LDAP IP address: %v", err)
+
+	ldapServerBastionIP, err := utils.GetBastionIP(t, options1, testLogger)
+	require.NoError(t, err, "Error retrieving LDAP server bastion IP address: %v", err)
+
+	// Update security group for LDAP
+	err = utils.RetrieveAndUpdateSecurityGroup(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, hpcClusterPrefix, "10.241.0.0/18", "389", "389", testLogger)
+	require.NoError(t, err, "Error updating security group: %v", err)
+
+	testLogger.Info(t, "Cluster creation process for the second cluster initiated for "+t.Name())
+
+	// Generate random prefix for the second HPC cluster
+	hpcClusterPrefix2 := utils.GenerateRandomString()
+
+	// Create test options for the second cluster
+	options2, err := setupOptions(t, hpcClusterPrefix2, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	require.NoError(t, err, "Error setting up test options for the second cluster: %v", err)
+
+	// Set Terraform variables for the second cluster
+	options2.TerraformVars["vpc_name"] = options1.TerraformVars["cluster_prefix"].(string) + "-hpc-vpc"
+	options2.TerraformVars["vpc_cluster_private_subnets_cidr_blocks"] = []string{CLUSTER_TWO_VPC_CLUSTER_PRIVATE_SUBNETS_CIDR_BLOCKS}
+	options2.TerraformVars["vpc_cluster_login_private_subnets_cidr_blocks"] = []string{CLUSTER_TWO_VPC_CLUSTER_LOGIN_PRIVATE_SUBNETS_CIDR_BLOCKS}
+	options2.TerraformVars["management_node_count"] = 2
+	options2.TerraformVars["dns_domain_name"] = map[string]string{"compute": CLUSTER_TWO_DNS_DOMAIN_NAME}
+	options2.TerraformVars["dns_custom_resolver_id"] = customResolverID
+	options2.TerraformVars["enable_ldap"] = strings.ToLower(envVars.EnableLdap)
+	options2.TerraformVars["ldap_basedns"] = envVars.LdapBaseDns
+	options2.TerraformVars["ldap_server"] = ldapIP
+
+	// Skip test teardown for further inspection
+	options2.SkipTestTearDown = true
+	defer options2.TestTearDown()
+
+	// Validate LDAP configuration for the second cluster
+	lsf.ValidateExistingLDAPClusterConfig(t, ldapServerBastionIP, ldapIP, envVars.LdapBaseDns, envVars.LdapAdminPassword, envVars.LdapUserName, envVars.LdapUserPassword, options2, testLogger)
 }

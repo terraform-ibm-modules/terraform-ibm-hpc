@@ -133,7 +133,7 @@ ubuntu_suite_3() {
 # regions based suite on regions-suite
 regions_suite() {
     suite=regions-suite
-    test_cases="TestRunInUsEastRegion,TestRunInEuDeRegion,TestRunInUSSouthRegion,TestRunCIDRsAsNonDefault,TestRunExistingPACEnvironment"
+    test_cases="TestRunInUsEastRegion,TestRunInEuDeRegion,TestRunInUSSouthRegion,TestRunCIDRsAsNonDefault"
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:?}"

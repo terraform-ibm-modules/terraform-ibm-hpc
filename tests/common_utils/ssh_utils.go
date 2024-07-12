@@ -167,73 +167,6 @@ func ConnectionE(t *testing.T, publicHostName, publicHostIP, privateHostName, pr
 	return output, err
 }
 
-// connectToHostsWithMultipleUsers establishes SSH connections to a host using multiple user credentials.
-// It takes the public and private IP addresses and host names for two different users.
-// Returns two SSH clients for the respective users, along with any errors encountered during the process.
-func ConnectToHostsWithMultipleUsers(publicHostName, publicHostIP, privateHostName, privateHostIP string) (*ssh.Client, *ssh.Client, error, error) {
-	// Get the SSH private key file path for the first user from the environment variable
-	sshKeyFilePathUserOne := os.Getenv("SSHFILEPATH")
-	// Check if the file exists
-	if _, err := os.Stat(sshKeyFilePathUserOne); os.IsNotExist(err) {
-		return nil, nil, fmt.Errorf("SSH private key file '%s' does not exist", sshKeyFilePathUserOne), nil
-	} else if err != nil {
-		return nil, nil, fmt.Errorf("error checking SSH private key file: %v", err), nil
-	}
-	sshKeyUserOne, errUserOne := getSshKeyFile(sshKeyFilePathUserOne)
-	if errUserOne != nil {
-		return nil, nil, fmt.Errorf("failed to get SSH key for user one: %w", errUserOne), nil
-	}
-
-	// Get the SSH private key file path for the second user from the environment variable
-	sshKeyFilePathUserTwo := os.Getenv("SSHFILEPATHTWO")
-	// Check if the file exists
-	if _, err := os.Stat(sshKeyFilePathUserTwo); os.IsNotExist(err) {
-		return nil, nil, nil, fmt.Errorf("SSH private key file '%s' does not exist", sshKeyFilePathUserTwo)
-	} else if err != nil {
-		return nil, nil, nil, fmt.Errorf("error checking SSH private key file: %v", err)
-	}
-	sshKeyUserTwo, errUserTwo := getSshKeyFile(sshKeyFilePathUserTwo)
-	if errUserTwo != nil {
-		return nil, nil, nil, fmt.Errorf("failed to get SSH key for user two: %w", errUserTwo)
-	}
-
-	// Combine errors for better readability
-	var combinedErrUserOne error
-	if errUserOne != nil {
-		combinedErrUserOne = fmt.Errorf("user one SSH key error: %v", errUserOne)
-	}
-	var combinedErrUserTwo error
-	if errUserTwo != nil {
-		combinedErrUserTwo = fmt.Errorf("user two SSH key error: %v", errUserTwo)
-	}
-
-	if combinedErrUserOne != nil && combinedErrUserTwo != nil {
-		return nil, nil, combinedErrUserOne, combinedErrUserTwo
-	}
-
-	// Create SSH configurations for each user and host combination
-	sshConfigUserOnePrivate := getSshConfig(sshKeyUserOne, privateHostName)
-	sshConfigUserOnePublic := getSshConfig(sshKeyUserOne, publicHostName)
-	sshConfigUserTwoPrivate := getSshConfig(sshKeyUserTwo, privateHostName)
-	sshConfigUserTwoPublic := getSshConfig(sshKeyUserTwo, publicHostName)
-
-	// Establish SSH connections for each user to the host
-	clientUserOne, errUserOne := sshClientJumpHost(sshConfigUserOnePrivate, sshConfigUserOnePublic, publicHostIP+":22", privateHostIP+":22")
-	clientUserTwo, errUserTwo := sshClientJumpHost(sshConfigUserTwoPrivate, sshConfigUserTwoPublic, publicHostIP+":22", privateHostIP+":22")
-
-	// Combine errors for better readability
-	var combinedErrClientUserOne error
-	if errUserOne != nil {
-		combinedErrClientUserOne = fmt.Errorf("user one unable to log in to the node: %v", errUserOne)
-	}
-	var combinedErrClientUserTwo error
-	if errUserTwo != nil {
-		combinedErrClientUserTwo = fmt.Errorf("user two unable to log in to the node: %v", errUserTwo)
-	}
-
-	return clientUserOne, clientUserTwo, combinedErrClientUserOne, combinedErrClientUserTwo
-}
-
 func ConnectToHostAsLDAPUser(publicHostName, publicHostIP, privateHostIP, ldapUser, ldapPassword string) (*ssh.Client, error) {
 
 	sshFilePath := os.Getenv("SSH_FILE_PATH")
@@ -266,4 +199,66 @@ func ConnectToHostAsLDAPUser(publicHostName, publicHostIP, privateHostIP, ldapUs
 		return nil, fmt.Errorf("unable to log in to the node: %w", err)
 	}
 	return sClient, nil
+}
+
+// ConnectToHostsWithMultipleUsers establishes SSH connections to a host using multiple user credentials.
+// It takes the public and private IP addresses and host names for two different users.
+// Returns two SSH clients for the respective users, along with any errors encountered during the process.
+func ConnectToHostsWithMultipleUsers(publicHostName, publicHostIP, privateHostName, privateHostIP string) (*ssh.Client, *ssh.Client, error, error) {
+
+	// Get the SSH private key file path for the first user from the environment variable
+	sshFilePath := os.Getenv("SSH_FILE_PATH")
+
+	// Check if the file exists
+	_, err := os.Stat(sshFilePath)
+	if os.IsNotExist(err) {
+		return nil, nil, nil, fmt.Errorf("SSH private key file '%s' does not exist", sshFilePath)
+	} else if err != nil {
+		return nil, nil, nil, fmt.Errorf("error checking SSH private key file: %v", err)
+	}
+
+	// Get the SSH key for the first user
+	key, err := getSshKeyFile(sshFilePath)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to get SSH key: %w", err)
+	}
+
+	// Create SSH configurations for the first user
+	sshConfigUserOnePrivate := getSshConfig(key, publicHostName)
+	sshConfigUserOnePublic := getSshConfig(key, privateHostName)
+
+	// Establish SSH connection for the first user
+	clientUserOne, combinedErrClientUserOne := sshClientJumpHost(sshConfigUserOnePrivate, sshConfigUserOnePublic, publicHostIP+":22", privateHostIP+":22")
+	if combinedErrClientUserOne != nil {
+		return nil, nil, nil, fmt.Errorf("unable to log in to the node: %w", combinedErrClientUserOne)
+	}
+
+	// Get the SSH private key file path for the second user from the environment variable
+	sshFilePathTwo := os.Getenv("SSH_FILE_PATH_TWO")
+
+	// Check if the file exists
+	_, err = os.Stat(sshFilePathTwo)
+	if os.IsNotExist(err) {
+		return nil, nil, nil, fmt.Errorf("SSH private key file '%s' does not exist", sshFilePathTwo)
+	} else if err != nil {
+		return nil, nil, nil, fmt.Errorf("error checking SSH private key file: %v", err)
+	}
+
+	// Get the SSH key for the second user
+	key2, err2 := getSshKeyFile(sshFilePathTwo)
+	if err2 != nil {
+		return nil, nil, nil, fmt.Errorf("failed to get SSH key: %w", err2)
+	}
+
+	// Create SSH configurations for the second user
+	sshConfigUserTwoPrivate := getSshConfig(key2, publicHostName)
+	sshConfigUserTwoPublic := getSshConfig(key2, privateHostName)
+
+	// Establish SSH connection for the second user
+	clientUserTwo, combinedErrClientUserTwo := sshClientJumpHost(sshConfigUserTwoPrivate, sshConfigUserTwoPublic, publicHostIP+":22", privateHostIP+":22")
+	if combinedErrClientUserTwo != nil {
+		return nil, nil, nil, fmt.Errorf("unable to log in to the node: %w", combinedErrClientUserTwo)
+	}
+
+	return clientUserOne, clientUserTwo, combinedErrClientUserOne, combinedErrClientUserTwo
 }

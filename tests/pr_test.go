@@ -22,7 +22,6 @@ const (
 	terraformDir = "solutions/hpc"
 )
 
-// Terraform resource names to ignore during consistency checks
 var ignoreDestroys = []string{
 	"module.landing_zone_vsi.module.hpc.module.check_cluster_status.null_resource.remote_exec[0]",
 	"module.landing_zone_vsi.module.hpc.module.check_node_status.null_resource.remote_exec[1]",
@@ -37,6 +36,9 @@ var ignoreDestroys = []string{
 	"module.landing_zone_vsi.module.hpc.module.landing_zone_vsi.module.wait_management_vsi_booted.null_resource.remote_exec[0]",
 	"module.landing_zone_vsi.module.do_management_vsi_configuration.null_resource.remote_exec_script_cp_files[1]",
 	"module.landing_zone_vsi.module.do_management_vsi_configuration.null_resource.remote_exec_script_new_file[0]",
+	"module.landing_zone_vsi.module.do_management_vsi_configuration.null_resource.remote_exec_script_cp_files[0]",
+	"module.landing_zone_vsi.module.do_management_candidate_vsi_configuration.null_resource.remote_exec_script_new_file[0]",
+	"module.landing_zone_vsi.module.do_management_candidate_vsi_configuration.null_resource.remote_exec_script_run[0]",
 }
 
 // EnvVars stores environment variable values.

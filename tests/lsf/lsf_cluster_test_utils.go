@@ -62,10 +62,10 @@ func VerifyManagementNodeConfig(
 }
 
 // VerifySSHKey verifies SSH keys for both management and compute nodes.
-// It checks the SSH keys for a specified node type (management or compute) on a list of nodes.
-// The function fails if the node list is empty, or if an invalid value (other than 'management' or 'compute') is provided for the node type.
-// The verification results are logged using the provided logger.
-func VerifySSHKey(t *testing.T, sshMgmtClient *ssh.Client, publicHostIP, publicHostName, privateHostName string, nodeType string, nodeList []string, logger *utils.AggregatedLogger) {
+// It checks SSH keys for a specified node type (management or compute) on a list of nodes.
+// Logs errors if the node list is empty or an invalid node type is provided.
+// Verification results are logged using the provided logger.
+func VerifySSHKey(t *testing.T, sshMgmtClient *ssh.Client, publicHostIP, publicHostName, privateHostName string, nodeType string, nodeList []string, numOfKeys int, logger *utils.AggregatedLogger) {
 
 	// Check if the node list is empty
 	if len(nodeList) == 0 {
@@ -74,21 +74,20 @@ func VerifySSHKey(t *testing.T, sshMgmtClient *ssh.Client, publicHostIP, publicH
 		return
 	}
 
-	// Convert nodeType to lowercase for consistency
+	// Normalize nodeType to lowercase
 	nodeType = strings.ToLower(nodeType)
-
 	var sshKeyCheckErr error
 	switch nodeType {
 	case "management":
-		sshKeyCheckErr = LSFCheckSSHKeyForManagementNodes(t, publicHostName, publicHostIP, privateHostName, nodeList, logger)
+		sshKeyCheckErr = LSFCheckSSHKeyForManagementNodes(t, publicHostName, publicHostIP, privateHostName, nodeList, numOfKeys, logger)
 	case "compute":
 		sshKeyCheckErr = LSFCheckSSHKeyForComputeNodes(t, sshMgmtClient, nodeList, logger)
 	default:
-		// Log an error if the node type is unknown
 		errorMsg := fmt.Sprintf("unknown node type for SSH key verification: %s", nodeType)
 		utils.LogVerificationResult(t, fmt.Errorf(errorMsg), fmt.Sprintf("%s node SSH check", nodeType), logger)
 		return
 	}
+
 	// Log the result of the SSH key check
 	utils.LogVerificationResult(t, sshKeyCheckErr, fmt.Sprintf("%s node SSH check", nodeType), logger)
 }
@@ -149,11 +148,11 @@ func RebootInstance(t *testing.T, sshMgmtClient *ssh.Client, publicHostIP, publi
 
 }
 
-// VerifyComputetNodeConfig verifies the configuration of compute nodes by performing various checks
+// VerifyComputeNodeConfig verifies the configuration of compute nodes by performing various checks
 // It checks the cluster ID,such as MTU, IP route, hyperthreading, file mount, and Intel One MPI.
 // The results of the checks are logged using the provided logger.
 // NOTE : Compute Node nothing but worker node
-func VerifyComputetNodeConfig(
+func VerifyComputeNodeConfig(
 	t *testing.T,
 	sshMgmtClient *ssh.Client,
 	expectedHyperthreadingStatus bool,

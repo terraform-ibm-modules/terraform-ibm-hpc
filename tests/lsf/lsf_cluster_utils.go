@@ -686,10 +686,9 @@ func runSSHCommandAndGetPaths(sClient *ssh.Client) ([]string, error) {
 }
 
 // LSFCheckSSHKeyForManagementNode checks the SSH key configurations on a management server.
-// It retrieves a list of authorized_keys paths, compares them with expected paths,
-// and validates the occurrences of SSH keys in each path.
-func LSFCheckSSHKeyForManagementNode(t *testing.T, sClient *ssh.Client, logger *utils.AggregatedLogger) error {
-	// Run a command to get a list of authorized_keys paths
+// Validates the number of SSH keys in each authorized_keys file against expected values.
+func LSFCheckSSHKeyForManagementNode(t *testing.T, sClient *ssh.Client, numOfKeys int, logger *utils.AggregatedLogger) error {
+	// Retrieve authorized_keys paths from the management node
 	pathList, err := runSSHCommandAndGetPaths(sClient)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve authorized_keys paths: %w", err)
@@ -698,14 +697,10 @@ func LSFCheckSSHKeyForManagementNode(t *testing.T, sClient *ssh.Client, logger *
 	// Log the list of authorized_keys paths
 	logger.Info(t, fmt.Sprintf("List of authorized_keys paths: %q", pathList))
 
-	// Create a map with paths as keys and expected values
-	filePathMap := map[string]int{
-		"/home/vpcuser/.ssh/authorized_keys":  1,
-		"/home/lsfadmin/.ssh/authorized_keys": 2,
-		"/root/.ssh/authorized_keys":          2,
-	}
+	// Generate expected number of SSH keys for each file path
+	filePathMap := HPCGenerateFilePathMap(numOfKeys)
 
-	// Iterate through the list of paths and check SSH key occurrences
+	// Verify SSH key occurrences for each path
 	for _, path := range pathList {
 		cmd := fmt.Sprintf("sudo su -l root -c 'cat %s'", path)
 		out, err := utils.RunCommandInSSHSession(sClient, cmd)
@@ -713,48 +708,57 @@ func LSFCheckSSHKeyForManagementNode(t *testing.T, sClient *ssh.Client, logger *
 			return fmt.Errorf("failed to run command on %s: %w", path, err)
 		}
 
-		// Log information about SSH key occurrences
-		value := filePathMap[path]
-		occur := utils.CountStringOccurrences(out, "ssh-rsa ")
-		logger.Info(t, fmt.Sprintf("Value: %d, Occurrences: %d, Path: %s", value, occur, path))
+		// Count occurrences of SSH keys and log information
+		expectedCount := filePathMap[path]
+		actualCount := utils.CountStringOccurrences(out, "ssh-rsa ")
+		logger.Info(t, fmt.Sprintf("Expected: %d, Occurrences: %d, Path: %s", expectedCount, actualCount, path))
 
-		// Check for mismatch in occurrences
-		if value != occur {
-			return fmt.Errorf("mismatch in occurrences for path %s: expected %d, got %d", path, value, occur)
+		// Validate the number of occurrences
+		if expectedCount != actualCount {
+			return fmt.Errorf("mismatch in occurrences for path %s: expected %d, got %d", path, expectedCount, actualCount)
 		}
 	}
 
-	// Log success for SSH key check
+	// Log success
 	logger.Info(t, "SSH key check successful")
 	return nil
 }
 
-// LSFCheckSSHKeyForManagementNodes checks SSH key configurations for each management node in the provided list.
-// It ensures the expected paths and occurrences of SSH keys are consistent.
-func LSFCheckSSHKeyForManagementNodes(t *testing.T, publicHostName, publicHostIP, privateHostName string, managementNodeIPList []string, logger *utils.AggregatedLogger) error {
-	// Check if the node list is empty
+// LSFCheckSSHKeyForManagementNodes verifies SSH key configurations for each management node in the provided list.
+// Ensures that the number of keys in authorized_keys files match the expected values.
+func LSFCheckSSHKeyForManagementNodes(t *testing.T, publicHostName, publicHostIP, privateHostName string, managementNodeIPList []string, numOfKeys int, logger *utils.AggregatedLogger) error {
 	if len(managementNodeIPList) == 0 {
 		return fmt.Errorf("management node IPs cannot be empty")
 	}
 
 	for _, mgmtIP := range managementNodeIPList {
 		// Connect to the management node via SSH
-		mgmtSshClient, connectionErr := utils.ConnectToHost(publicHostName, publicHostIP, privateHostName, mgmtIP)
-		if connectionErr != nil {
-			return fmt.Errorf("failed to connect to the management node %s via SSH: %v", mgmtIP, connectionErr)
+		mgmtSshClient, err := utils.ConnectToHost(publicHostName, publicHostIP, privateHostName, mgmtIP)
+		if err != nil {
+			return fmt.Errorf("failed to connect to the management node %s via SSH: %w", mgmtIP, err)
 		}
 		defer mgmtSshClient.Close()
 
 		logger.Info(t, fmt.Sprintf("SSH connection to the management node %s successful", mgmtIP))
 
-		// SSH key check for management node
-		sshKeyErr := LSFCheckSSHKeyForManagementNode(t, mgmtSshClient, logger)
-		if sshKeyErr != nil {
-			return fmt.Errorf("management node %s SSH key check failed: %v", mgmtIP, sshKeyErr)
+		// Verify SSH keys for the management node
+		if err := LSFCheckSSHKeyForManagementNode(t, mgmtSshClient, numOfKeys, logger); err != nil {
+			return fmt.Errorf("management node %s SSH key check failed: %w", mgmtIP, err)
 		}
 	}
 
 	return nil
+}
+
+// HPCGenerateFilePathMap returns a map of authorized_keys paths to their expected
+// number of SSH key occurrences based on the number of SSH keys provided (`numKeys`).
+// It adjusts the expected values to account for default key counts.
+func HPCGenerateFilePathMap(numKeys int) map[string]int {
+	return map[string]int{
+		"/home/vpcuser/.ssh/authorized_keys":  numKeys,     // Default value plus number of keys
+		"/home/lsfadmin/.ssh/authorized_keys": numKeys + 1, // Default value plus number of keys
+		"/root/.ssh/authorized_keys":          numKeys + 1, // Default value plus number of keys
+	}
 }
 
 // LSFCheckSSHKeyForComputeNode checks the SSH key configurations on a compute server.

@@ -128,6 +128,7 @@ module "landing_zone_vsi" {
   cloud_monitoring_prws_url                        = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_url : ""
   bastion_instance_name                            = var.bastion_instance_name
   ce_project_guid                                  = module.ce_project.guid
+  existing_kms_instance_guid                       = local.existing_kms_instance_guid
   depends_on = [
     module.validate_ldap_server_connection
   ]

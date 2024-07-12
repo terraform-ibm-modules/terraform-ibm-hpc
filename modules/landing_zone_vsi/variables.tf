@@ -409,3 +409,9 @@ variable "ce_project_guid" {
   description = "The GUID of the Code Engine Project associated to this cluster Reservation"
   type        = string
 }
+
+variable "existing_kms_instance_guid" {
+  type        = string
+  default     = null
+  description = "GUID of boot volume encryption key"
+}
