@@ -34,3 +34,4 @@ us_south_zone: us-south-1
 us_south_reservation_id:
 us_south_cluster_id: HPC-LSF-1
 ssh_file_path: /artifacts/.ssh/id_rsa
+ssh_file_path_two: /artifacts/.ssh/id_rsa

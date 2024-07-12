@@ -765,3 +765,199 @@ func ParseConfig(filePath string) (*Configuration, error) {
 	// Return the configuration struct and nil error on success
 	return &config, nil
 }
+
+// GetClusterSecurityID retrieves the security group ID for a cluster based on the provided parameters.
+// It logs in to IBM Cloud, executes a command to find the security group ID associated with the cluster prefix,
+// and returns the security group ID or an error if any step fails.
+func GetClusterSecurityID(t *testing.T, apiKey, region, resourceGroup, clusterPrefix string, logger *AggregatedLogger) (securityGroupID string, err error) {
+	// If the resource group is "null", set a custom resource group based on the cluster prefix.
+	if strings.Contains(resourceGroup, "null") {
+		resourceGroup = fmt.Sprintf("%s-workload-rg", clusterPrefix)
+	}
+
+	// Log in to IBM Cloud using the API key, region, and resource group.
+	if err := LoginIntoIBMCloudUsingCLI(t, apiKey, region, resourceGroup); err != nil {
+		return "", fmt.Errorf("failed to log in to IBM Cloud: %w", err)
+	}
+
+	// Determine the command to get the security group ID based on the cluster prefix.
+	cmd := fmt.Sprintf("ibmcloud is security-groups | grep %s-cluster-sg | awk '{print $1}'", clusterPrefix)
+
+	// Execute the command to retrieve the security group ID.
+	output, err := exec.Command("bash", "-c", cmd).CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve security group ID: %w", err)
+	}
+
+	// Trim and check if the result is empty.
+	securityGroupID = strings.TrimSpace(string(output))
+	if securityGroupID == "" {
+		return "", fmt.Errorf("no security group ID found for cluster prefix %s", clusterPrefix)
+	}
+
+	logger.Info(t, "securityGroupID: "+securityGroupID)
+
+	return securityGroupID, nil
+}
+
+// UpdateSecurityGroupRules updates the security group with specified port and CIDR based on the provided parameters.
+// It logs in to IBM Cloud, determines the appropriate command, and executes it to update the security group.
+// Returns an error if any step fails.
+func UpdateSecurityGroupRules(t *testing.T, apiKey, region, resourceGroup, clusterPrefix, securityGroupId, cidr, minPort, maxPort string, logger *AggregatedLogger) (err error) {
+	// If the resource group is "null", set a custom resource group based on the cluster prefix.
+	if strings.Contains(resourceGroup, "null") {
+		resourceGroup = fmt.Sprintf("%s-workload-rg", clusterPrefix)
+	}
+
+	// Log in to IBM Cloud using the API key, region, and resource group.
+	if err := LoginIntoIBMCloudUsingCLI(t, apiKey, region, resourceGroup); err != nil {
+		return fmt.Errorf("failed to log in to IBM Cloud: %w", err)
+	}
+
+	// Determine the command to add a rule to the security group with the specified port and CIDR.
+	addRuleCmd := fmt.Sprintf("ibmcloud is security-group-rule-add %s inbound tcp --remote %s --port-min %s --port-max %s", securityGroupId, cidr, minPort, maxPort)
+
+	// Execute the command to update the security group.
+	output, err := exec.Command("bash", "-c", addRuleCmd).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to update security group with port and CIDR: %w", err)
+	}
+
+	logger.Info(t, "security group updated output: "+strings.TrimSpace(string(output)))
+
+	// Verify if the output contains the expected CIDR.
+	if !VerifyDataContains(t, strings.TrimSpace(string(output)), cidr, logger) {
+		return fmt.Errorf("failed to update security group CIDR: %s", string(output))
+	}
+
+	// Verify if the output contains the expected minimum port.
+	if !VerifyDataContains(t, strings.TrimSpace(string(output)), minPort, logger) {
+		return fmt.Errorf("failed to update security group port: %s", string(output))
+	}
+
+	return nil
+}
+
+// GetCustomResolverID retrieves the custom resolver ID for a VPC based on the provided cluster prefix.
+// It logs in to IBM Cloud, retrieves the DNS instance ID, and then fetches the custom resolver ID.
+// Returns the custom resolver ID and any error encountered.
+func GetCustomResolverID(t *testing.T, apiKey, region, resourceGroup, clusterPrefix string, logger *AggregatedLogger) (customResolverID string, err error) {
+	// If the resource group is "null", set a custom resource group based on the cluster prefix.
+	if strings.Contains(resourceGroup, "null") {
+		resourceGroup = fmt.Sprintf("%s-workload-rg", clusterPrefix)
+	}
+
+	// Log in to IBM Cloud using the API key, region, and resource group.
+	if err := LoginIntoIBMCloudUsingCLI(t, apiKey, region, resourceGroup); err != nil {
+		return "", fmt.Errorf("failed to log in to IBM Cloud: %w", err)
+	}
+
+	// Command to get the DNS instance ID based on the cluster prefix.
+	dnsInstanceCmd := fmt.Sprintf("ibmcloud dns instances | grep %s | awk '{print $2}'", clusterPrefix)
+	dnsInstanceIDOutput, err := exec.Command("bash", "-c", dnsInstanceCmd).CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve DNS instance ID: %w", err)
+	}
+
+	// Trim whitespace and check if we received a valid DNS instance ID.
+	dnsInstanceID := strings.TrimSpace(string(dnsInstanceIDOutput))
+	if dnsInstanceID == "" {
+		return "", fmt.Errorf("no DNS instance ID found for cluster prefix %s", clusterPrefix)
+	}
+
+	// Command to get custom resolvers for the DNS instance ID.
+	customResolverCmd := fmt.Sprintf("ibmcloud dns custom-resolvers -i %s | awk 'NR>3 {print $1}'", dnsInstanceID)
+	customResolverIDOutput, err := exec.Command("bash", "-c", customResolverCmd).CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve custom resolver ID: %w", err)
+	}
+
+	// Trim whitespace and check if we received a valid custom resolver ID.
+	customResolverID = strings.TrimSpace(string(customResolverIDOutput))
+	if customResolverID == "" {
+		return "", fmt.Errorf("no custom resolver ID found for DNS instance ID %s", dnsInstanceID)
+	}
+	logger.Info(t, "customResolverID: "+customResolverID)
+
+	return customResolverID, nil
+}
+
+// RetrieveAndUpdateSecurityGroup retrieves the security group ID based on the provided cluster prefix,
+// then updates the security group with the specified port and CIDR.
+// It logs in to IBM Cloud, determines the appropriate commands, and executes them.
+// Returns an error if any step fails.
+func RetrieveAndUpdateSecurityGroup(t *testing.T, apiKey, region, resourceGroup, clusterPrefix, cidr, minPort, maxPort string, logger *AggregatedLogger) error {
+	// If the resource group is "null", set a custom resource group based on the cluster prefix.
+	if strings.Contains(resourceGroup, "null") {
+		resourceGroup = fmt.Sprintf("%s-workload-rg", clusterPrefix)
+	}
+
+	// Log in to IBM Cloud using the API key, region, and resource group.
+	if err := LoginIntoIBMCloudUsingCLI(t, apiKey, region, resourceGroup); err != nil {
+		return fmt.Errorf("failed to log in to IBM Cloud: %w", err)
+	}
+
+	// Command to get the security group ID based on the cluster prefix.
+	getSecurityGroupIDCmd := fmt.Sprintf("ibmcloud is security-groups | grep %s-cluster-sg | awk '{print $1}'", clusterPrefix)
+	securityGroupIDBytes, err := exec.Command("bash", "-c", getSecurityGroupIDCmd).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve security group ID: %w", err)
+	}
+
+	securityGroupID := strings.TrimSpace(string(securityGroupIDBytes))
+	if securityGroupID == "" {
+		return fmt.Errorf("no security group ID found for cluster prefix %s", clusterPrefix)
+	}
+
+	logger.Info(t, "securityGroupID: "+securityGroupID)
+
+	// Command to add a rule to the security group with the specified port and CIDR.
+	addRuleCmd := fmt.Sprintf("ibmcloud is security-group-rule-add %s inbound tcp --remote %s --port-min %s --port-max %s", securityGroupID, cidr, minPort, maxPort)
+	outputBytes, err := exec.Command("bash", "-c", addRuleCmd).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to update security group with port and CIDR: %w", err)
+	}
+
+	output := strings.TrimSpace(string(outputBytes))
+	logger.Info(t, "security group updated output: "+output)
+
+	// Combine output verification steps.
+	if !VerifyDataContains(t, output, cidr, logger) || !VerifyDataContains(t, output, minPort, logger) {
+		return fmt.Errorf("failed to update security group with CIDR %s and port %s: %s", cidr, minPort, output)
+	}
+
+	return nil
+}
+
+// GetLdapIP retrieves the IP addresses of various servers, including the LDAP server,
+// from the specified file path in the provided test options, using the provided logger for logging.
+// It returns the LDAP server IP and any error encountered.
+func GetLdapIP(t *testing.T, options *testhelper.TestOptions, logger *AggregatedLogger) (ldapIP string, err error) {
+	// Retrieve the Terraform directory from the options.
+	filePath := options.TerraformOptions.TerraformDir
+
+	// Get the LDAP server IP and handle errors.
+	ldapIP, err = GetLdapServerIP(t, filePath, logger)
+	if err != nil {
+		return "", fmt.Errorf("error getting LDAP server IP: %w", err)
+	}
+
+	// Return the retrieved IP address and any error.
+	return ldapIP, nil
+}
+
+// GetBastionIP retrieves the bastion server IP address based on the provided test options.
+// It returns the bastion IP address and an error if any step fails.
+func GetBastionIP(t *testing.T, options *testhelper.TestOptions, logger *AggregatedLogger) (bastionIP string, err error) {
+	// Retrieve the Terraform directory from the options.
+	filePath := options.TerraformOptions.TerraformDir
+
+	// Get the bastion server IP and handle errors.
+	bastionIP, err = GetBastionServerIP(t, filePath, logger)
+	if err != nil {
+		return "", fmt.Errorf("error getting bastion server IP: %w", err)
+	}
+
+	// Return the bastion IP address.
+	return bastionIP, nil
+}

@@ -55,3 +55,6 @@ terraform.rc
 
 # tweaks used locally
 localtweak__*.tf
+
+# tests folder log file
+*.log

@@ -57,6 +57,7 @@ type Config struct {
 	USSouthClusterID           string `yaml:"us_south_cluster_id"`
 	USSouthReservationID       string `yaml:"us_south_reservation_id"`
 	SSHFilePath                string `yaml:"ssh_file_path"`
+	SSHFilePathTwo             string `yaml:"ssh_file_path_two"`
 }
 
 // GetConfigFromYAML reads configuration from a YAML file and sets environment variables based on the configuration.
@@ -148,6 +149,7 @@ func setEnvFromConfig(config *Config) error {
 		"US_SOUTH_RESERVATION_ID":       config.USSouthReservationID,
 		"US_SOUTH_CLUSTER_ID":           config.USSouthClusterID,
 		"SSH_FILE_PATH":                 config.SSHFilePath,
+		"SSH_FILE_PATH_TWO":             config.SSHFilePathTwo,
 	}
 
 	for key, value := range envVars {

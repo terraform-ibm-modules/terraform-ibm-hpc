@@ -123,7 +123,8 @@ module "login_vsi" {
   vpc_id                        = var.vpc_id
   kms_encryption_enabled        = var.kms_encryption_enabled
   boot_volume_encryption_key    = var.boot_volume_encryption_key
-  skip_iam_authorization_policy = local.skip_iam_authorization_policy
+  skip_iam_authorization_policy = var.bastion_instance_name != null ? false : local.skip_iam_authorization_policy
+  existing_kms_instance_guid    = var.existing_kms_instance_guid
 }
 
 module "ldap_vsi" {
