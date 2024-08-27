@@ -70,7 +70,7 @@ func VerifySSHKey(t *testing.T, sshMgmtClient *ssh.Client, publicHostIP, publicH
 	// Check if the node list is empty
 	if len(nodeList) == 0 {
 		errorMsg := fmt.Sprintf("%s node IPs cannot be empty", nodeType)
-		utils.LogVerificationResult(t, fmt.Errorf(errorMsg), fmt.Sprintf("%s node SSH check", nodeType), logger)
+		utils.LogVerificationResult(t, fmt.Errorf("%s", errorMsg), fmt.Sprintf("%s node SSH check", nodeType), logger)
 		return
 	}
 
@@ -84,7 +84,7 @@ func VerifySSHKey(t *testing.T, sshMgmtClient *ssh.Client, publicHostIP, publicH
 		sshKeyCheckErr = LSFCheckSSHKeyForComputeNodes(t, sshMgmtClient, nodeList, logger)
 	default:
 		errorMsg := fmt.Sprintf("unknown node type for SSH key verification: %s", nodeType)
-		utils.LogVerificationResult(t, fmt.Errorf(errorMsg), fmt.Sprintf("%s node SSH check", nodeType), logger)
+		utils.LogVerificationResult(t, fmt.Errorf("%s", errorMsg), fmt.Sprintf("%s node SSH check", nodeType), logger)
 		return
 	}
 
