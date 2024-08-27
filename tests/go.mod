@@ -7,7 +7,7 @@ require (
 	github.com/IBM/secrets-manager-go-sdk/v2 v2.0.4
 	github.com/gruntwork-io/terratest v0.46.15
 	github.com/stretchr/testify v1.9.0
-	github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper v1.35.1
+	github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper v1.35.4
 	golang.org/x/crypto v0.24.0
 	gopkg.in/yaml.v3 v3.0.1
 )

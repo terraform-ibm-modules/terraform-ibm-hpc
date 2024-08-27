@@ -79,7 +79,7 @@ pr_ubuntu_suite() {
 # commit based suite on rhel-suite-1
 rhel_suite_1() {
     suite=rhel-suite-1
-    test_cases="TestRunBasic,TestRunAppCenter,TestRunNoKMSAndHTOff"
+    test_cases="TestRunBasic,TestRunAppCenter,TestRunNoKMSAndHTOff,TestRunCosAndVpcFlowLogs"
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:?}"
@@ -88,7 +88,7 @@ rhel_suite_1() {
 # commit based suite on rhel-suite-2
 rhel_suite_2() {
     suite=rhel-suite-2
-    test_cases="TestRunLDAP,TestRunLDAPAndPac,TestRunCustomRGAsNonDefault"
+    test_cases="TestRunLDAP,TestRunLDAPAndPac,TestRunCustomRGAsNonDefault,TestRunUsingExistingKMSInstanceIDAndWithoutKey"
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:?}"
@@ -124,7 +124,7 @@ ubuntu_suite_2() {
 # commit based suite on ubuntu-suite-3
 ubuntu_suite_3() {
     suite=ubuntu-suite-3
-    test_cases="TestRunBasic,TestRunNoKMSAndHTOff"
+    test_cases="TestRunBasic,TestRunNoKMSAndHTOff,TestRunExistingLDAP,TestRunExistingPACEnvironment"
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_ubuntu:?}"
@@ -142,7 +142,7 @@ regions_suite() {
 # negative based suite on negative-suite
 negative_suite() {
     suite=negative-suite
-    test_cases="TestRunWithoutMandatory,TestRunInvalidReservationIDAndContractID,TestRunInvalidLDAPServerIP,TestRunInvalidLDAPUsernamePassword,TestRunInvalidAPPCenterPassword,TestRunInvalidDomainName,TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue,TestRunExistSubnetIDVpcNameAsNull"
+    test_cases="TestRunWithoutMandatory,TestRunInvalidReservationIDAndContractID,TestRunInvalidLDAPServerIP,TestRunInvalidLDAPUsernamePassword,TestRunInvalidAPPCenterPassword,TestRunInvalidDomainName,TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue,TestRunExistSubnetIDVpcNameAsNull,TestRunInvalidSshKeysAndRemoteAllowedIP,TestRunInvalidSubnetCIDR"
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:?}"

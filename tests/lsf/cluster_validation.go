@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
-	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/common_utils"
+	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/utilities"
 )
 
 // ValidateClusterConfiguration performs comprehensive validation on the cluster setup.
@@ -34,8 +34,8 @@ func ValidateClusterConfiguration(t *testing.T, options *testhelper.TestOptions,
 	expectedHyperthreadingEnabled, err := strconv.ParseBool(options.TerraformVars["hyperthreading_enabled"].(string))
 	require.NoError(t, err, "Error parsing hyperthreading_enabled: %v", err)
 
-	JOB_COMMAND_LOW := GetJobCommand(expectedZone, "low")
-	JOB_COMMAND_MED := GetJobCommand(expectedZone, "med")
+	jobCommandLow := GetJobCommand(expectedZone, "low")
+	jobCommandMed := GetJobCommand(expectedZone, "med")
 
 	// Run the test consistency check
 	output, err := options.RunTestConsistency()
@@ -54,14 +54,14 @@ func ValidateClusterConfiguration(t *testing.T, options *testhelper.TestOptions,
 
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
-	require.NoError(t, connectionErr, "Failed to connect to the master via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
 	defer sshClient.Close()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
 
 	// Verify management node configuration
-	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
+	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, EXPECTED_LSF_VERSION, testLogger)
 
 	// Verify SSH key on management nodes
 	VerifySSHKey(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, "management", managementNodeIPList, expectedNumOfKeys, testLogger)
@@ -70,17 +70,17 @@ func ValidateClusterConfiguration(t *testing.T, options *testhelper.TestOptions,
 	VerifyLSFDNS(t, sshClient, managementNodeIPList, expectedDnsDomainName, testLogger)
 
 	// Perform failover and failback
-	FailoverAndFailback(t, sshClient, JOB_COMMAND_MED, testLogger)
+	FailoverAndFailback(t, sshClient, jobCommandMed, testLogger)
 
 	// Restart LSF daemon
-	RestartLsfDaemon(t, sshClient, JOB_COMMAND_LOW, testLogger)
+	RestartLsfDaemon(t, sshClient, testLogger)
 
 	// Reboot instance
-	RebootInstance(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0], JOB_COMMAND_MED, testLogger)
+	RebootInstance(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0], testLogger)
 
 	// Reconnect to the management node after reboot
 	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
-	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH")
 	defer sshClient.Close()
 
 	// Wait for dynamic node disappearance and handle potential errors
@@ -90,9 +90,12 @@ func ValidateClusterConfiguration(t *testing.T, options *testhelper.TestOptions,
 		}
 	}()
 
+	// Run job
+	VerifyJobs(t, sshClient, jobCommandLow, testLogger)
+
 	// Get dynamic compute node IPs and handle errors
 	computeNodeIPList, computeIPErr := LSFGETDynamicComputeNodeIPs(t, sshClient, testLogger)
-	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs: %v", computeIPErr)
+	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs")
 
 	// Verify compute node configuration
 	VerifyComputeNodeConfig(t, sshClient, expectedHyperthreadingEnabled, computeNodeIPList, testLogger)
@@ -105,15 +108,15 @@ func ValidateClusterConfiguration(t *testing.T, options *testhelper.TestOptions,
 
 	// Verify SSH connectivity from login node and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
-	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
 	defer sshLoginNodeClient.Close()
 
 	// Verify login node configuration
-	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
+	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
 
 	// Get dynamic compute node IPs and handle errors
 	computeNodeIPList, computeIPErr = LSFGETDynamicComputeNodeIPs(t, sshClient, testLogger)
-	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs: %v", computeIPErr)
+	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs")
 
 	// Verify SSH connectivity from login node
 	VerifySSHConnectivityToNodesFromLogin(t, sshLoginNodeClient, managementNodeIPList, computeNodeIPList, testLogger)
@@ -159,8 +162,9 @@ func ValidateClusterConfigurationWithAPPCenter(t *testing.T, options *testhelper
 	expectedHyperthreadingEnabled, err := strconv.ParseBool(options.TerraformVars["hyperthreading_enabled"].(string))
 	require.NoError(t, err, "Error parsing hyperthreading_enabled: %v", err)
 
-	JOB_COMMAND_LOW := GetJobCommand(expectedZone, "low")
-	JOB_COMMAND_MED := GetJobCommand(expectedZone, "med")
+	// Retrieve job commands for different levels
+	jobCommandLow := GetJobCommand(expectedZone, "low")
+	jobCommandMed := GetJobCommand(expectedZone, "med")
 
 	// Run the test consistency check
 	output, err := options.RunTestConsistency()
@@ -179,14 +183,14 @@ func ValidateClusterConfigurationWithAPPCenter(t *testing.T, options *testhelper
 
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
-	require.NoError(t, connectionErr, "Failed to connect to the master via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
 	defer sshClient.Close()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
 
 	// Verify management node configuration
-	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
+	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, EXPECTED_LSF_VERSION, testLogger)
 
 	// Verify SSH key on management nodes
 	VerifySSHKey(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, "management", managementNodeIPList, expectedNumOfKeys, testLogger)
@@ -195,17 +199,17 @@ func ValidateClusterConfigurationWithAPPCenter(t *testing.T, options *testhelper
 	VerifyLSFDNS(t, sshClient, managementNodeIPList, expectedDnsDomainName, testLogger)
 
 	// Perform failover and failback
-	FailoverAndFailback(t, sshClient, JOB_COMMAND_MED, testLogger)
+	FailoverAndFailback(t, sshClient, jobCommandMed, testLogger)
 
 	// Restart LSF daemon
-	RestartLsfDaemon(t, sshClient, JOB_COMMAND_LOW, testLogger)
+	RestartLsfDaemon(t, sshClient, testLogger)
 
 	// Reboot instance
-	RebootInstance(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0], JOB_COMMAND_MED, testLogger)
+	RebootInstance(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0], testLogger)
 
 	// Reconnect to the management node after reboot
 	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
-	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH")
 	defer sshClient.Close()
 
 	// Wait for dynamic node disappearance and handle potential errors
@@ -215,9 +219,12 @@ func ValidateClusterConfigurationWithAPPCenter(t *testing.T, options *testhelper
 		}
 	}()
 
+	// Run job
+	VerifyJobs(t, sshClient, jobCommandLow, testLogger)
+
 	// Get dynamic compute node IPs and handle errors
 	computeNodeIPList, computeIPErr := LSFGETDynamicComputeNodeIPs(t, sshClient, testLogger)
-	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs: %v", computeIPErr)
+	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs")
 
 	// Verify compute node configuration
 	VerifyComputeNodeConfig(t, sshClient, expectedHyperthreadingEnabled, computeNodeIPList, testLogger)
@@ -230,15 +237,15 @@ func ValidateClusterConfigurationWithAPPCenter(t *testing.T, options *testhelper
 
 	// Verify SSH connectivity from login node and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
-	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
 	defer sshLoginNodeClient.Close()
 
 	// Verify login node configuration
-	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
+	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
 
 	// Get dynamic compute node IPs and handle errors
 	computeNodeIPList, computeIPErr = LSFGETDynamicComputeNodeIPs(t, sshClient, testLogger)
-	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs: %v", computeIPErr)
+	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs")
 
 	// Verify SSH connectivity from login node
 	VerifySSHConnectivityToNodesFromLogin(t, sshLoginNodeClient, managementNodeIPList, computeNodeIPList, testLogger)
@@ -279,7 +286,8 @@ func ValidateBasicClusterConfiguration(t *testing.T, options *testhelper.TestOpt
 	expectedHyperthreadingEnabled, err := strconv.ParseBool(options.TerraformVars["hyperthreading_enabled"].(string))
 	require.NoError(t, err, "Error parsing hyperthreading_enabled: %v", err)
 
-	JOB_COMMAND_LOW := GetJobCommand(expectedZone, "low")
+	// Retrieve job commands for different levels
+	jobCommandLow := GetJobCommand(expectedZone, "low")
 
 	// Run the test consistency check
 	output, err := options.RunTestConsistency()
@@ -298,19 +306,14 @@ func ValidateBasicClusterConfiguration(t *testing.T, options *testhelper.TestOpt
 
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
-	require.NoError(t, connectionErr, "Failed to connect to the master via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
 	defer sshClient.Close()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
 
 	// Verify management node configuration
-	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
-
-	// Reconnect to the management node after reboot
-	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
-	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH: %v", connectionErr)
-	defer sshClient.Close()
+	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, EXPECTED_LSF_VERSION, testLogger)
 
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
@@ -319,20 +322,23 @@ func ValidateBasicClusterConfiguration(t *testing.T, options *testhelper.TestOpt
 		}
 	}()
 
+	// Run job
+	VerifyJobs(t, sshClient, jobCommandLow, testLogger)
+
 	// Get dynamic compute node IPs and handle errors
 	computeNodeIPList, computeIPErr := LSFGETDynamicComputeNodeIPs(t, sshClient, testLogger)
-	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs: %v", computeIPErr)
+	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs")
 
 	// Verify compute node configuration
 	VerifyComputeNodeConfig(t, sshClient, expectedHyperthreadingEnabled, computeNodeIPList, testLogger)
 
 	// Verify SSH connectivity from login node and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
-	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
 	defer sshLoginNodeClient.Close()
 
 	// Verify login node configuration
-	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
+	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
 
 	// Verify file share encryption
 	VerifyFileShareEncryption(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expectedZone), expectedResourceGroup, expectedMasterName, expectedKeyManagement, testLogger)
@@ -365,8 +371,10 @@ func ValidateLDAPClusterConfiguration(t *testing.T, options *testhelper.TestOpti
 
 	expectedHyperthreadingEnabled, err := strconv.ParseBool(options.TerraformVars["hyperthreading_enabled"].(string))
 	require.NoError(t, err, "Error parsing hyperthreading_enabled: %v", err)
-	JOB_COMMAND_LOW := GetJobCommand(expectedZone, "low")
-	JOB_COMMAND_MED := GetJobCommand(expectedZone, "med")
+
+	// Retrieve job commands for different levels
+	jobCommandLow := GetJobCommand(expectedZone, "low")
+	jobCommandMed := GetJobCommand(expectedZone, "med")
 
 	// Run the test consistency check
 	output, err := options.RunTestConsistency()
@@ -385,30 +393,30 @@ func ValidateLDAPClusterConfiguration(t *testing.T, options *testhelper.TestOpti
 
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
-	require.NoError(t, connectionErr, "Failed to connect to the master via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
 	defer sshClient.Close()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
 
 	// Verify management node configuration
-	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
+	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, EXPECTED_LSF_VERSION, testLogger)
 
 	// Verify SSH key on management nodes
 	VerifySSHKey(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, "management", managementNodeIPList, expectedNumOfKeys, testLogger)
 
 	// Perform failover and failback
-	FailoverAndFailback(t, sshClient, JOB_COMMAND_MED, testLogger)
+	FailoverAndFailback(t, sshClient, jobCommandMed, testLogger)
 
 	// Restart LSF daemon
-	RestartLsfDaemon(t, sshClient, JOB_COMMAND_LOW, testLogger)
+	RestartLsfDaemon(t, sshClient, testLogger)
 
 	// Reboot instance
-	RebootInstance(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0], JOB_COMMAND_MED, testLogger)
+	RebootInstance(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0], testLogger)
 
 	// Reconnect to the management node after reboot
 	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
-	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH")
 	defer sshClient.Close()
 
 	// Wait for dynamic node disappearance and handle potential errors
@@ -418,9 +426,12 @@ func ValidateLDAPClusterConfiguration(t *testing.T, options *testhelper.TestOpti
 		}
 	}()
 
+	// Run job
+	VerifyJobs(t, sshClient, jobCommandLow, testLogger)
+
 	// Get dynamic compute node IPs and handle errors
 	computeNodeIPList, computeIPErr := LSFGETDynamicComputeNodeIPs(t, sshClient, testLogger)
-	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs: %v", computeIPErr)
+	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs")
 
 	// Verify compute node configuration
 	VerifyComputeNodeConfig(t, sshClient, expectedHyperthreadingEnabled, computeNodeIPList, testLogger)
@@ -430,11 +441,11 @@ func ValidateLDAPClusterConfiguration(t *testing.T, options *testhelper.TestOpti
 
 	// Verify SSH connectivity from login node and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
-	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
 	defer sshLoginNodeClient.Close()
 
 	// Verify login node configuration
-	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
+	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
 
 	// Verify SSH connectivity from login node
 	VerifySSHConnectivityToNodesFromLogin(t, sshLoginNodeClient, managementNodeIPList, computeNodeIPList, testLogger)
@@ -444,23 +455,23 @@ func ValidateLDAPClusterConfiguration(t *testing.T, options *testhelper.TestOpti
 
 	// Connect to the LDAP server via SSH and handle connection errors
 	sshLdapClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_LDAP_HOST_NAME, ldapServerIP)
-	require.NoError(t, connectionErr, "Failed to connect to the LDAP server via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to connect to the LDAP server via SSH")
 	defer sshLdapClient.Close()
 
 	// Check LDAP server status
 	CheckLDAPServerStatus(t, sshLdapClient, ldapAdminPassword, expectedLdapDomain, ldapUserName, testLogger)
 
 	// Verify management node LDAP config
-	VerifyManagementNodeLDAPConfig(t, sshClient, bastionIP, ldapServerIP, managementNodeIPList, JOB_COMMAND_LOW, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
+	VerifyManagementNodeLDAPConfig(t, sshClient, bastionIP, ldapServerIP, managementNodeIPList, jobCommandLow, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
 
 	// Verify compute node LDAP config
 	VerifyComputeNodeLDAPConfig(t, bastionIP, ldapServerIP, computeNodeIPList, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
 
 	// Verify login node LDAP config
-	VerifyLoginNodeLDAPConfig(t, sshLoginNodeClient, bastionIP, loginNodeIP, ldapServerIP, JOB_COMMAND_LOW, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
+	VerifyLoginNodeLDAPConfig(t, sshLoginNodeClient, bastionIP, loginNodeIP, ldapServerIP, jobCommandLow, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
 
 	// Verify ability to create LDAP user and perform LSF actions using new user
-	VerifyCreateNewLdapUserAndManagementNodeLDAPConfig(t, sshLdapClient, bastionIP, ldapServerIP, managementNodeIPList, JOB_COMMAND_LOW, ldapAdminPassword, expectedLdapDomain, ldapUserName, ldapUserPassword, "user2", testLogger)
+	VerifyCreateNewLdapUserAndManagementNodeLDAPConfig(t, sshLdapClient, bastionIP, ldapServerIP, managementNodeIPList, jobCommandLow, ldapAdminPassword, expectedLdapDomain, ldapUserName, ldapUserPassword, "tester2", testLogger)
 
 	// Verify PTR records
 	VerifyPTRRecordsForManagementAndLoginNodes(t, sshClient, LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList, loginNodeIP, expectedDnsDomainName, testLogger)
@@ -493,8 +504,10 @@ func ValidatePACANDLDAPClusterConfiguration(t *testing.T, options *testhelper.Te
 
 	expectedHyperthreadingEnabled, err := strconv.ParseBool(options.TerraformVars["hyperthreading_enabled"].(string))
 	require.NoError(t, err, "Error parsing hyperthreading_enabled: %v", err)
-	JOB_COMMAND_LOW := GetJobCommand(expectedZone, "low")
-	JOB_COMMAND_MED := GetJobCommand(expectedZone, "med")
+
+	// Retrieve job commands for different levels
+	jobCommandLow := GetJobCommand(expectedZone, "low")
+	jobCommandMed := GetJobCommand(expectedZone, "med")
 
 	// Run the test consistency check
 	output, err := options.RunTestConsistency()
@@ -512,30 +525,30 @@ func ValidatePACANDLDAPClusterConfiguration(t *testing.T, options *testhelper.Te
 
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
-	require.NoError(t, connectionErr, "Failed to connect to the master via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
 	defer sshClient.Close()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
 
 	// Verify management node configuration
-	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
+	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, EXPECTED_LSF_VERSION, testLogger)
 
 	// Verify SSH key on management nodes
 	VerifySSHKey(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, "management", managementNodeIPList, expectedNumOfKeys, testLogger)
 
 	// Perform failover and failback
-	FailoverAndFailback(t, sshClient, JOB_COMMAND_MED, testLogger)
+	FailoverAndFailback(t, sshClient, jobCommandMed, testLogger)
 
 	// Restart LSF daemon
-	RestartLsfDaemon(t, sshClient, JOB_COMMAND_LOW, testLogger)
+	RestartLsfDaemon(t, sshClient, testLogger)
 
 	// Reboot instance
-	RebootInstance(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0], JOB_COMMAND_MED, testLogger)
+	RebootInstance(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0], testLogger)
 
 	// Reconnect to the management node after reboot
 	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
-	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH")
 	defer sshClient.Close()
 
 	// Wait for dynamic node disappearance and handle potential errors
@@ -545,9 +558,12 @@ func ValidatePACANDLDAPClusterConfiguration(t *testing.T, options *testhelper.Te
 		}
 	}()
 
+	// Run job
+	VerifyJobs(t, sshClient, jobCommandLow, testLogger)
+
 	// Get dynamic compute node IPs and handle errors
 	computeNodeIPList, computeIPErr := LSFGETDynamicComputeNodeIPs(t, sshClient, testLogger)
-	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs: %v", computeIPErr)
+	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs")
 
 	// Verify compute node configuration
 	VerifyComputeNodeConfig(t, sshClient, expectedHyperthreadingEnabled, computeNodeIPList, testLogger)
@@ -557,11 +573,11 @@ func ValidatePACANDLDAPClusterConfiguration(t *testing.T, options *testhelper.Te
 
 	// Verify SSH connectivity from login node and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
-	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
 	defer sshLoginNodeClient.Close()
 
 	// Verify login node configuration
-	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
+	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
 
 	// Verify SSH connectivity from login node
 	VerifySSHConnectivityToNodesFromLogin(t, sshLoginNodeClient, managementNodeIPList, computeNodeIPList, testLogger)
@@ -577,123 +593,26 @@ func ValidatePACANDLDAPClusterConfiguration(t *testing.T, options *testhelper.Te
 
 	// Connect to the LDAP server via SSH and handle connection errors
 	sshLdapClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_LDAP_HOST_NAME, ldapServerIP)
-	require.NoError(t, connectionErr, "Failed to connect to the LDAP server via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to connect to the LDAP server via SSH")
 	defer sshLdapClient.Close()
 
 	// Check LDAP server status
 	CheckLDAPServerStatus(t, sshLdapClient, ldapAdminPassword, expectedLdapDomain, ldapUserName, testLogger)
 
 	// Verify management node LDAP config
-	VerifyManagementNodeLDAPConfig(t, sshClient, bastionIP, ldapServerIP, managementNodeIPList, JOB_COMMAND_LOW, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
+	VerifyManagementNodeLDAPConfig(t, sshClient, bastionIP, ldapServerIP, managementNodeIPList, jobCommandLow, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
 
 	// Verify compute node LDAP config
 	VerifyComputeNodeLDAPConfig(t, bastionIP, ldapServerIP, computeNodeIPList, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
 
 	// Verify login node LDAP config
-	VerifyLoginNodeLDAPConfig(t, sshLoginNodeClient, bastionIP, loginNodeIP, ldapServerIP, JOB_COMMAND_LOW, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
+	VerifyLoginNodeLDAPConfig(t, sshLoginNodeClient, bastionIP, loginNodeIP, ldapServerIP, jobCommandLow, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
 
 	// Verify ability to create LDAP user and perform LSF actions using new user
-	VerifyCreateNewLdapUserAndManagementNodeLDAPConfig(t, sshLdapClient, bastionIP, ldapServerIP, managementNodeIPList, JOB_COMMAND_LOW, ldapAdminPassword, expectedLdapDomain, ldapUserName, ldapUserPassword, "user2", testLogger)
+	VerifyCreateNewLdapUserAndManagementNodeLDAPConfig(t, sshLdapClient, bastionIP, ldapServerIP, managementNodeIPList, jobCommandLow, ldapAdminPassword, expectedLdapDomain, ldapUserName, ldapUserPassword, "tester2", testLogger)
 
 	// Verify PTR records
 	VerifyPTRRecordsForManagementAndLoginNodes(t, sshClient, LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList, loginNodeIP, expectedDnsDomainName, testLogger)
-
-	// Log validation end
-	testLogger.Info(t, t.Name()+" Validation ended")
-}
-
-// ValidateClusterConfigurationWithAPPCenterForExistingEnv validates the configuration of an existing cluster with App Center integration.
-// It verifies various aspects including management node configuration, SSH keys, failover and failback, LSF daemon restart, dynamic compute node configuration,
-// login node configuration, SSH connectivity, application center configuration, noVNC configuration, PTR records, and file share encryption.
-//
-// testLogger: *utils.AggregatedLogger - The logger for the test.
-func ValidateClusterConfigurationWithAPPCenterForExistingEnv(
-	t *testing.T,
-	expectedNumOfKeys int,
-	bastionIP, loginNodeIP, expectedClusterID, expectedReservationID, expectedMasterName, expectedResourceGroup,
-	expectedKeyManagement, expectedZone, expectedDnsDomainName string,
-	managementNodeIPList []string,
-	expectedHyperthreadingEnabled bool,
-	testLogger *utils.AggregatedLogger,
-) {
-	// Retrieve job commands for different levels
-	JOB_COMMAND_LOW := GetJobCommand(expectedZone, "low")
-	JOB_COMMAND_MED := GetJobCommand(expectedZone, "med")
-
-	// Log validation start
-	testLogger.Info(t, t.Name()+" Validation started ......")
-
-	// Connect to the master node via SSH
-	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
-	require.NoError(t, connectionErr, "Failed to connect to the master via SSH: %v", connectionErr)
-	defer sshClient.Close()
-
-	testLogger.Info(t, "SSH connection to the master successful")
-	t.Log("Validation in progress. Please wait...")
-
-	// Verify management node configuration
-	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
-
-	// Verify SSH key on management nodes
-	VerifySSHKey(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, "management", managementNodeIPList, expectedNumOfKeys, testLogger)
-
-	// Perform failover and failback
-	FailoverAndFailback(t, sshClient, JOB_COMMAND_MED, testLogger)
-
-	// Restart LSF daemon
-	RestartLsfDaemon(t, sshClient, JOB_COMMAND_LOW, testLogger)
-
-	// Reboot instance
-	RebootInstance(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0], JOB_COMMAND_MED, testLogger)
-
-	// Reconnect to the master node via SSH after reboot
-	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
-	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH: %v", connectionErr)
-	defer sshClient.Close()
-
-	// Wait for dynamic node disappearance and handle potential errors
-	defer func() {
-		if err := LSFWaitForDynamicNodeDisappearance(t, sshClient, testLogger); err != nil {
-			t.Errorf("Error in LSFWaitForDynamicNodeDisappearance: %v", err)
-		}
-	}()
-
-	// Get dynamic compute node IPs
-	computeNodeIPList, computeIPErr := LSFGETDynamicComputeNodeIPs(t, sshClient, testLogger)
-	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs: %v", computeIPErr)
-
-	// Verify compute node configuration
-	VerifyComputeNodeConfig(t, sshClient, expectedHyperthreadingEnabled, computeNodeIPList, testLogger)
-
-	// Verify SSH key for compute nodes
-	VerifySSHKey(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, "compute", computeNodeIPList, expectedNumOfKeys, testLogger)
-
-	// Verify SSH connectivity from login node
-	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
-	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH: %v", connectionErr)
-	defer sshLoginNodeClient.Close()
-
-	// Verify login node configuration
-	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
-
-	// Re-fetch dynamic compute node IPs
-	computeNodeIPList, computeIPErr = LSFGETDynamicComputeNodeIPs(t, sshClient, testLogger)
-	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs: %v", computeIPErr)
-
-	// Verify SSH connectivity from login node
-	VerifySSHConnectivityToNodesFromLogin(t, sshLoginNodeClient, managementNodeIPList, computeNodeIPList, testLogger)
-
-	// Verify application center configuration
-	VerifyAPPCenterConfig(t, sshClient, testLogger)
-
-	// Verify noVNC configuration
-	VerifyNoVNCConfig(t, sshClient, testLogger)
-
-	// Verify PTR records for management and login nodes
-	VerifyPTRRecordsForManagementAndLoginNodes(t, sshClient, LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList, loginNodeIP, expectedDnsDomainName, testLogger)
-
-	// Verify file share encryption
-	VerifyFileShareEncryption(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expectedZone), expectedResourceGroup, expectedMasterName, expectedKeyManagement, testLogger)
 
 	// Log validation end
 	testLogger.Info(t, t.Name()+" Validation ended")
@@ -716,7 +635,8 @@ func ValidateBasicClusterConfigurationWithVPCFlowLogsAndCos(t *testing.T, option
 
 	expectedHyperthreadingEnabled, _ := strconv.ParseBool(options.TerraformVars["hyperthreading_enabled"].(string))
 
-	JOB_COMMAND_LOW := GetJobCommand(expectedZone, "low")
+	// Retrieve job commands for different levels
+	jobCommandLow := GetJobCommand(expectedZone, "low")
 
 	// Run the test and handle errors
 	output, err := options.RunTest()
@@ -735,14 +655,14 @@ func ValidateBasicClusterConfigurationWithVPCFlowLogsAndCos(t *testing.T, option
 
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
-	require.NoError(t, connectionErr, "Failed to connect to the master via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
 	defer sshClient.Close()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
 
 	// Verify management node configuration
-	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
+	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, EXPECTED_LSF_VERSION, testLogger)
 
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
@@ -751,20 +671,23 @@ func ValidateBasicClusterConfigurationWithVPCFlowLogsAndCos(t *testing.T, option
 		}
 	}()
 
+	// Run job
+	VerifyJobs(t, sshClient, jobCommandLow, testLogger)
+
 	// Get dynamic compute node IPs
 	computeNodeIPList, computeIPErr := LSFGETDynamicComputeNodeIPs(t, sshClient, testLogger)
-	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs: %v", computeIPErr)
+	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs")
 
 	// Verify compute node configuration
 	VerifyComputeNodeConfig(t, sshClient, expectedHyperthreadingEnabled, computeNodeIPList, testLogger)
 
 	// Verify SSH connectivity from login node
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
-	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
 	defer sshLoginNodeClient.Close()
 
 	// Verify login node configuration
-	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
+	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
 
 	// Verify file share encryption
 	VerifyFileShareEncryption(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expectedZone), expectedResourceGroup, expectedMasterName, expectedKeyManagement, testLogger)
@@ -794,8 +717,10 @@ func ValidateClusterConfigurationWithMultipleKeys(t *testing.T, options *testhel
 	require.True(t, ok, "Key 'compute' does not exist in dns_domain_name map or dns_domain_name is not of type map[string]string")
 
 	expectedHyperthreadingEnabled, _ := strconv.ParseBool(options.TerraformVars["hyperthreading_enabled"].(string))
-	JOB_COMMAND_LOW := GetJobCommand(expectedZone, "low")
-	JOB_COMMAND_MED := GetJobCommand(expectedZone, "med")
+
+	// Retrieve job commands for different levels
+	jobCommandLow := GetJobCommand(expectedZone, "low")
+	jobCommandMed := GetJobCommand(expectedZone, "med")
 
 	// Run the test consistency check
 	output, err := options.RunTestConsistency()
@@ -814,8 +739,8 @@ func ValidateClusterConfigurationWithMultipleKeys(t *testing.T, options *testhel
 
 	// Connect to the management node via SSH
 	sshClientOne, sshClientTwo, connectionErrOne, connectionErrTwo := utils.ConnectToHostsWithMultipleUsers(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
-	require.NoError(t, connectionErrOne, "Failed to connect to the master via SSH: %v", connectionErrOne)
-	require.NoError(t, connectionErrTwo, "Failed to connect to the master via SSH: %v", connectionErrTwo)
+	require.NoError(t, connectionErrOne, "Failed to connect to the master via SSH")
+	require.NoError(t, connectionErrTwo, "Failed to connect to the master via SSH")
 	defer sshClientOne.Close()
 	defer sshClientTwo.Close()
 
@@ -823,20 +748,20 @@ func ValidateClusterConfigurationWithMultipleKeys(t *testing.T, options *testhel
 	t.Log("Validation in progress. Please wait...")
 
 	// Verify management node configuration
-	VerifyManagementNodeConfig(t, sshClientOne, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
-	VerifyManagementNodeConfig(t, sshClientTwo, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
+	VerifyManagementNodeConfig(t, sshClientOne, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, EXPECTED_LSF_VERSION, testLogger)
+	VerifyManagementNodeConfig(t, sshClientTwo, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, EXPECTED_LSF_VERSION, testLogger)
 
 	// Verify SSH key on management node
 	VerifySSHKey(t, sshClientOne, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, "management", managementNodeIPList, expectedNumOfKeys, testLogger)
 
 	// Perform failover and failback
-	FailoverAndFailback(t, sshClientOne, JOB_COMMAND_MED, testLogger)
+	FailoverAndFailback(t, sshClientOne, jobCommandMed, testLogger)
 
 	// Restart LSF daemon
-	RestartLsfDaemon(t, sshClientOne, JOB_COMMAND_LOW, testLogger)
+	RestartLsfDaemon(t, sshClientOne, testLogger)
 
 	// Reboot instance
-	RebootInstance(t, sshClientOne, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0], JOB_COMMAND_MED, testLogger)
+	RebootInstance(t, sshClientOne, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0], testLogger)
 
 	// Reconnect to the management node after reboot
 	sshClientOne, connectionErrOne = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
@@ -850,9 +775,12 @@ func ValidateClusterConfigurationWithMultipleKeys(t *testing.T, options *testhel
 		}
 	}()
 
+	// Run job
+	VerifyJobs(t, sshClientOne, jobCommandLow, testLogger)
+
 	// Get dynamic compute node IPs and handle errors
 	computeNodeIPList, computeIPErr := LSFGETDynamicComputeNodeIPs(t, sshClientOne, testLogger)
-	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs: %v", computeIPErr)
+	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs")
 
 	// Verify compute node configuration
 	VerifyComputeNodeConfig(t, sshClientOne, expectedHyperthreadingEnabled, computeNodeIPList, testLogger)
@@ -865,15 +793,15 @@ func ValidateClusterConfigurationWithMultipleKeys(t *testing.T, options *testhel
 
 	// Verify SSH connectivity from login node
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
-	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
 	defer sshLoginNodeClient.Close()
 
 	// Verify login node configuration
-	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, JOB_COMMAND_LOW, EXPECTED_LSF_VERSION, testLogger)
+	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
 
 	// Get dynamic compute node IPs again
 	computeNodeIPList, computeIPErr = LSFGETDynamicComputeNodeIPs(t, sshClientOne, testLogger)
-	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs: %v", computeIPErr)
+	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs")
 
 	// Verify SSH connectivity from login node
 	VerifySSHConnectivityToNodesFromLogin(t, sshLoginNodeClient, managementNodeIPList, computeNodeIPList, testLogger)
@@ -907,7 +835,6 @@ func ValidateExistingLDAPClusterConfig(t *testing.T, ldapServerBastionIP, ldapSe
 
 	// Define job commands for different priority levels
 	jobCommandLow := GetJobCommand(expectedZone, "high")
-	jobCommandMed := GetJobCommand(expectedZone, "med")
 
 	// Run the test consistency check
 	output, err := options.RunTestConsistency()
@@ -926,24 +853,24 @@ func ValidateExistingLDAPClusterConfig(t *testing.T, ldapServerBastionIP, ldapSe
 
 	// Connect to the master node via SSH
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPs[0])
-	require.NoError(t, connectionErr, "Failed to connect to the master via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
 	defer sshClient.Close()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
 
 	// Verify management node configuration
-	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPs, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
+	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPs, EXPECTED_LSF_VERSION, testLogger)
 
 	// Restart LSF daemon
-	RestartLsfDaemon(t, sshClient, jobCommandLow, testLogger)
+	RestartLsfDaemon(t, sshClient, testLogger)
 
 	// Reboot instance
-	RebootInstance(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPs[0], jobCommandMed, testLogger)
+	RebootInstance(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPs[0], testLogger)
 
 	// Reconnect to the management node after reboot
 	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPs[0])
-	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH")
 	defer sshClient.Close()
 
 	// Wait for dynamic node disappearance and handle potential errors
@@ -953,16 +880,19 @@ func ValidateExistingLDAPClusterConfig(t *testing.T, ldapServerBastionIP, ldapSe
 		}
 	}()
 
+	// Run job
+	VerifyJobs(t, sshClient, jobCommandLow, testLogger)
+
 	// Get dynamic compute node IPs
 	computeNodeIPs, computeIPErr := LSFGETDynamicComputeNodeIPs(t, sshClient, testLogger)
-	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs: %v", computeIPErr)
+	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs")
 
 	// Verify compute node configuration
 	VerifyComputeNodeConfig(t, sshClient, expectedHyperthreadingEnabled, computeNodeIPs, testLogger)
 
 	// Verify SSH connectivity from login node
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
-	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
 	defer sshLoginNodeClient.Close()
 
 	// Verify login node configuration
@@ -976,7 +906,7 @@ func ValidateExistingLDAPClusterConfig(t *testing.T, ldapServerBastionIP, ldapSe
 
 	// Connect to the LDAP server via SSH
 	sshLdapClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, ldapServerBastionIP, LSF_LDAP_HOST_NAME, ldapServerIP)
-	require.NoError(t, connectionErr, "Failed to connect to the LDAP server via SSH: %v", connectionErr)
+	require.NoError(t, connectionErr, "Failed to connect to the LDAP server via SSH")
 	defer sshLdapClient.Close()
 
 	// Check LDAP server status
@@ -992,7 +922,232 @@ func ValidateExistingLDAPClusterConfig(t *testing.T, ldapServerBastionIP, ldapSe
 	VerifyLoginNodeLDAPConfig(t, sshLoginNodeClient, bastionIP, loginNodeIP, ldapServerIP, jobCommandLow, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
 
 	// Verify LDAP user creation and LSF actions using the new user
-	VerifyCreateNewLdapUserAndManagementNodeLDAPConfig(t, sshLdapClient, bastionIP, ldapServerIP, managementNodeIPs, jobCommandLow, ldapAdminPassword, expectedLdapDomain, ldapUserName, ldapUserPassword, "user2", testLogger)
+	VerifyCreateNewLdapUserAndManagementNodeLDAPConfig(t, sshLdapClient, bastionIP, ldapServerIP, managementNodeIPs, jobCommandLow, ldapAdminPassword, expectedLdapDomain, ldapUserName, ldapUserPassword, "tester2", testLogger)
+
+	// Log validation end
+	testLogger.Info(t, t.Name()+" Validation ended")
+}
+
+// ValidateClusterConfigWithAPPCenterOnExistingEnvironment validates the configuration of an existing cluster with App Center integration.
+// It verifies management node configuration, SSH keys, failover and failback, LSF daemon restart, dynamic compute node configuration,
+// login node configuration, SSH connectivity, application center configuration, noVNC configuration, PTR records, and file share encryption.
+// The function connects to various nodes, performs required actions, and logs results using the provided test logger.
+// Parameters include expected values, IP addresses, and configuration settings to ensure the cluster operates correctly with the specified integrations.
+func ValidateClusterConfigWithAPPCenterOnExistingEnvironment(
+	t *testing.T,
+	computeSshKeysList []string,
+	bastionIP, loginNodeIP, expectedClusterID, expectedReservationID, expectedMasterName, expectedResourceGroup,
+	expectedKeyManagement, expectedZone, expectedDnsDomainName string,
+	managementNodeIPList []string,
+	expectedHyperthreadingEnabled bool,
+	testLogger *utils.AggregatedLogger,
+) {
+
+	expectedNumOfKeys := len(computeSshKeysList)
+
+	// Retrieve job commands for different levels
+	jobCommandLow := GetJobCommand(expectedZone, "low")
+	jobCommandMed := GetJobCommand(expectedZone, "med")
+
+	// Log validation start
+	testLogger.Info(t, t.Name()+" Validation started...")
+
+	// Connect to the master node via SSH
+	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
+	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
+	defer sshClient.Close()
+
+	testLogger.Info(t, "SSH connection to the master successful")
+	t.Log("Validation in progress. Please wait...")
+
+	// Verify management node configuration
+	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, EXPECTED_LSF_VERSION, testLogger)
+
+	// Verify SSH key on management nodes
+	VerifySSHKey(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, "management", managementNodeIPList, expectedNumOfKeys, testLogger)
+
+	// Perform failover and failback
+	FailoverAndFailback(t, sshClient, jobCommandMed, testLogger)
+
+	// Restart LSF daemon
+	RestartLsfDaemon(t, sshClient, testLogger)
+
+	// Reboot instance
+	RebootInstance(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0], testLogger)
+
+	// Reconnect to the master node via SSH after reboot
+	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
+	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH")
+	defer sshClient.Close()
+
+	// Wait for dynamic node disappearance and handle potential errors
+	defer func() {
+		if err := LSFWaitForDynamicNodeDisappearance(t, sshClient, testLogger); err != nil {
+			t.Errorf("Error in LSFWaitForDynamicNodeDisappearance: %v", err)
+		}
+	}()
+
+	// Run job
+	VerifyJobs(t, sshClient, jobCommandLow, testLogger)
+
+	// Get dynamic compute node IPs
+	computeNodeIPList, computeIPErr := LSFGETDynamicComputeNodeIPs(t, sshClient, testLogger)
+	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs")
+
+	// Verify compute node configuration
+	VerifyComputeNodeConfig(t, sshClient, expectedHyperthreadingEnabled, computeNodeIPList, testLogger)
+
+	// Verify SSH key for compute nodes
+	VerifySSHKey(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, "compute", computeNodeIPList, expectedNumOfKeys, testLogger)
+
+	// Verify SSH connectivity from login node
+	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
+	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
+	defer sshLoginNodeClient.Close()
+
+	// Verify login node configuration
+	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
+
+	// Re-fetch dynamic compute node IPs
+	computeNodeIPList, computeIPErr = LSFGETDynamicComputeNodeIPs(t, sshClient, testLogger)
+	require.NoError(t, computeIPErr, "Error getting dynamic compute node IPs")
+
+	// Verify SSH connectivity from login node
+	VerifySSHConnectivityToNodesFromLogin(t, sshLoginNodeClient, managementNodeIPList, computeNodeIPList, testLogger)
+
+	// Verify application center configuration
+	VerifyAPPCenterConfig(t, sshClient, testLogger)
+
+	// Verify noVNC configuration
+	VerifyNoVNCConfig(t, sshClient, testLogger)
+
+	// Verify PTR records for management and login nodes
+	VerifyPTRRecordsForManagementAndLoginNodes(t, sshClient, LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList, loginNodeIP, expectedDnsDomainName, testLogger)
+
+	// Verify file share encryption
+	VerifyFileShareEncryption(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expectedZone), expectedResourceGroup, expectedMasterName, expectedKeyManagement, testLogger)
+
+	// Log validation end
+	testLogger.Info(t, t.Name()+" Validation ended")
+}
+
+// ValidateClusterConfigWithAPPCenterAndLDAPOnExistingEnvironment validates the configuration of an existing cluster with App Center and LDAP integration.
+// It verifies management node configuration, SSH keys, failover and failback, LSF daemon restart, dynamic compute node configuration, login node configuration,
+// SSH connectivity, application center configuration, noVNC configuration, PTR records, file share encryption, and LDAP server configuration and status.
+// The function connects to various nodes, performs required actions, and logs results using the provided test logger.
+// Parameters include expected values, IP addresses, credentials for validation, and configuration settings.
+// This ensures the cluster operates correctly with the specified configurations and integrations, including LDAP.
+func ValidateClusterConfigWithAPPCenterAndLDAPOnExistingEnvironment(
+	t *testing.T,
+	computeSshKeysList []string,
+	bastionIP, loginNodeIP, expectedClusterID, expectedReservationID, expectedMasterName, expectedResourceGroup,
+	expectedKeyManagement, expectedZone, expectedDnsDomainName string,
+	managementNodeIPList []string,
+	expectedHyperthreadingEnabled bool,
+	ldapServerIP, expectedLdapDomain, ldapAdminPassword, ldapUserName, ldapUserPassword string,
+	testLogger *utils.AggregatedLogger,
+) {
+
+	expectedNumOfKeys := len(computeSshKeysList)
+
+	// Retrieve job commands for different levels
+	jobCommandLow := GetJobCommand(expectedZone, "low")
+	jobCommandMed := GetJobCommand(expectedZone, "med")
+
+	// Log validation start
+	testLogger.Info(t, t.Name()+" Validation started...")
+
+	// Connect to the master node via SSH
+	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
+	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
+	defer sshClient.Close()
+
+	testLogger.Info(t, "SSH connection to the master successful")
+	t.Log("Validation in progress. Please wait...")
+
+	// Verify management node configuration
+	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, EXPECTED_LSF_VERSION, testLogger)
+
+	// Verify SSH key on management nodes
+	VerifySSHKey(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, "management", managementNodeIPList, expectedNumOfKeys, testLogger)
+
+	// Perform failover and failback
+	FailoverAndFailback(t, sshClient, jobCommandMed, testLogger)
+
+	// Restart LSF daemon
+	RestartLsfDaemon(t, sshClient, testLogger)
+
+	// Reboot instance
+	RebootInstance(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0], testLogger)
+
+	// Reconnect to the master node via SSH after reboot
+	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
+	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH")
+	defer sshClient.Close()
+
+	// Wait for dynamic node disappearance and handle potential errors
+	defer func() {
+		if err := LSFWaitForDynamicNodeDisappearance(t, sshClient, testLogger); err != nil {
+			t.Errorf("Error in LSFWaitForDynamicNodeDisappearance: %v", err)
+		}
+	}()
+
+	// Run job
+	VerifyJobs(t, sshClient, jobCommandLow, testLogger)
+
+	// Get dynamic compute node IPs
+	computeNodeIPList, err := LSFGETDynamicComputeNodeIPs(t, sshClient, testLogger)
+	require.NoError(t, err, "Error getting dynamic compute node IPs")
+
+	// Verify compute node configuration
+	VerifyComputeNodeConfig(t, sshClient, expectedHyperthreadingEnabled, computeNodeIPList, testLogger)
+
+	// Verify SSH key for compute nodes
+	VerifySSHKey(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, "compute", computeNodeIPList, expectedNumOfKeys, testLogger)
+
+	// Verify SSH connectivity from login node
+	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
+	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
+	defer sshLoginNodeClient.Close()
+
+	// Verify login node configuration
+	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
+
+	// Re-fetch dynamic compute node IPs
+	computeNodeIPList, connectionErr = LSFGETDynamicComputeNodeIPs(t, sshClient, testLogger)
+	require.NoError(t, connectionErr, "Error getting dynamic compute node IPs")
+
+	// Verify SSH connectivity from login node
+	VerifySSHConnectivityToNodesFromLogin(t, sshLoginNodeClient, managementNodeIPList, computeNodeIPList, testLogger)
+
+	// Verify application center configuration
+	VerifyAPPCenterConfig(t, sshClient, testLogger)
+
+	// Verify noVNC configuration
+	VerifyNoVNCConfig(t, sshClient, testLogger)
+
+	// Verify PTR records for management and login nodes
+	VerifyPTRRecordsForManagementAndLoginNodes(t, sshClient, LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList, loginNodeIP, expectedDnsDomainName, testLogger)
+
+	// Verify file share encryption
+	VerifyFileShareEncryption(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expectedZone), expectedResourceGroup, expectedMasterName, expectedKeyManagement, testLogger)
+
+	// Connect to the LDAP server via SSH and handle connection errors
+	sshLdapClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_LDAP_HOST_NAME, ldapServerIP)
+	require.NoError(t, connectionErr, "Failed to connect to the LDAP server via SSH")
+	defer sshLdapClient.Close()
+
+	// Check LDAP server status
+	CheckLDAPServerStatus(t, sshLdapClient, ldapAdminPassword, expectedLdapDomain, ldapUserName, testLogger)
+
+	// Verify management node LDAP config
+	VerifyManagementNodeLDAPConfig(t, sshClient, bastionIP, ldapServerIP, managementNodeIPList, jobCommandLow, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
+
+	// Verify compute node LDAP config
+	VerifyComputeNodeLDAPConfig(t, bastionIP, ldapServerIP, computeNodeIPList, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
+
+	// Verify login node LDAP config
+	VerifyLoginNodeLDAPConfig(t, sshLoginNodeClient, bastionIP, loginNodeIP, ldapServerIP, jobCommandLow, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
 
 	// Log validation end
 	testLogger.Info(t, t.Name()+" Validation ended")

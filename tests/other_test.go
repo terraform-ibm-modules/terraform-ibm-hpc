@@ -12,8 +12,8 @@ import (
 	"github.com/gruntwork-io/terratest/modules/terraform"
 
 	"github.com/stretchr/testify/assert"
-	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/common_utils"
 	lsf "github.com/terraform-ibm-modules/terraform-ibm-hpc/lsf"
+	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/utilities"
 )
 
 // Constants for better organization
@@ -759,37 +759,6 @@ func TestRunCIDRsAsNonDefault(t *testing.T) {
 	defer options.TestTearDown()
 
 	lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
-}
-
-// TestRunExistingPACEnvironment tests the validation of an existing PAC environment configuration.
-func TestRunExistingPACEnvironment(t *testing.T) {
-	// Parallelize the test to run concurrently with others
-	t.Parallel()
-
-	// Setup the test suite environment
-	setupTestSuite(t)
-
-	// Log the initiation of cluster creation process
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Retrieve the environment variable for the JSON file path
-	val, ok := os.LookupEnv("EXISTING_ENV_JSON_FILE_PATH")
-	if !ok {
-		t.Fatal("Environment variable 'EXISTING_ENV_JSON_FILE_PATH' is not set")
-	}
-
-	// Check if the JSON file exists
-	if _, err := os.Stat(val); os.IsNotExist(err) {
-		t.Fatalf("JSON file '%s' does not exist", val)
-	}
-
-	// Parse the JSON configuration file
-	config, err := utils.ParseConfig(val)
-	require.NoError(t, err, "Error parsing JSON configuration: %v", err)
-
-	// Validate the cluster configuration
-	lsf.ValidateClusterConfigurationWithAPPCenterForExistingEnv(t, 1, config.BastionIP, config.LoginNodeIP, config.ClusterID, config.ReservationID, config.ClusterPrefixName, config.ResourceGroup,
-		config.KeyManagement, config.Zones, config.DnsDomainName, config.ManagementNodeIPList, config.HyperthreadingEnabled, testLogger)
 }
 
 // TestRunInvalidReservationIDAndContractID tests invalid cluster_id and reservation_id values
@@ -1583,6 +1552,7 @@ func TestRunExistingLDAP(t *testing.T) {
 	require.NoError(t, err, "Error setting up test options for the first cluster: %v", err)
 
 	// Set Terraform variables for the first cluster
+	options1.TerraformVars["management_node_count"] = 1
 	options1.TerraformVars["enable_ldap"] = strings.ToLower(envVars.EnableLdap)
 	options1.TerraformVars["ldap_basedns"] = envVars.LdapBaseDns
 	options1.TerraformVars["ldap_admin_password"] = envVars.LdapAdminPassword // pragma: allowlist secret
@@ -1641,4 +1611,73 @@ func TestRunExistingLDAP(t *testing.T) {
 
 	// Validate LDAP configuration for the second cluster
 	lsf.ValidateExistingLDAPClusterConfig(t, ldapServerBastionIP, ldapIP, envVars.LdapBaseDns, envVars.LdapAdminPassword, envVars.LdapUserName, envVars.LdapUserPassword, options2, testLogger)
+}
+
+// TestRunExistingPACEnvironment test the validation of an existing PAC environment configuration.
+func TestRunExistingPACEnvironment(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Setup the test suite environment
+	setupTestSuite(t)
+
+	// Log the initiation of cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Retrieve the environment variable for the JSON file path
+	val, ok := os.LookupEnv("EXISTING_ENV_JSON_FILE_PATH")
+	if !ok {
+		t.Fatal("Environment variable 'EXISTING_ENV_JSON_FILE_PATH' is not set")
+	}
+
+	// Check if the JSON file exists
+	if _, err := os.Stat(val); os.IsNotExist(err) {
+		t.Fatalf("JSON file '%s' does not exist", val)
+	}
+
+	// Parse the JSON configuration file
+	config, err := utils.ParseConfig(val)
+	require.NoError(t, err, "Error parsing JSON configuration: %v", err)
+
+	// Validate the cluster configuration
+	lsf.ValidateClusterConfigWithAPPCenterOnExistingEnvironment(
+		t, config.ComputeSshKeysList, config.BastionIP, config.LoginNodeIP, config.ClusterID, config.ReservationID,
+		config.ClusterPrefixName, config.ResourceGroup, config.KeyManagement,
+		config.Zones, config.DnsDomainName, config.ManagementNodeIPList,
+		config.IsHyperthreadingEnabled, testLogger)
+}
+
+// TestRunExistingPACAndLDAPEnvironment test the validation of an existing PAC and LDAP environment configuration.
+func TestRunExistingPACAndLDAPEnvironment(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Setup the test suite environment
+	setupTestSuite(t)
+
+	// Log the initiation of cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Retrieve the environment variable for the JSON file path
+	val, ok := os.LookupEnv("EXISTING_ENV_JSON_FILE_PATH")
+	if !ok {
+		t.Fatal("Environment variable 'EXISTING_ENV_JSON_FILE_PATH' is not set")
+	}
+
+	// Check if the JSON file exists
+	if _, err := os.Stat(val); os.IsNotExist(err) {
+		t.Fatalf("JSON file '%s' does not exist", val)
+	}
+
+	// Parse the JSON configuration file
+	config, err := utils.ParseConfig(val)
+	require.NoError(t, err, "Error parsing JSON configuration: %v", err)
+
+	// Validate the cluster configuration
+	lsf.ValidateClusterConfigWithAPPCenterAndLDAPOnExistingEnvironment(
+		t, config.ComputeSshKeysList, config.BastionIP, config.LoginNodeIP, config.ClusterID, config.ReservationID,
+		config.ClusterPrefixName, config.ResourceGroup, config.KeyManagement, config.Zones, config.DnsDomainName,
+		config.ManagementNodeIPList, config.IsHyperthreadingEnabled, config.LdapServerIP, config.LdapDomain,
+		config.LdapAdminPassword, config.LdapUserName, config.LdapUserPassword, testLogger)
+
 }

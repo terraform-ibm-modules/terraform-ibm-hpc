@@ -102,7 +102,7 @@ go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee test_output.log
 
 To override default values, pass the necessary parameters in the command. Example:
 ```sh
-SSH_KEY=your_ssh_key ZONE=your_zone RESOURCE_GROUP=your_resource_group RESERVATION_ID=your_reservation_id KMS_INSTANCE_ID=kms_instance_id KMS_KEY_NAME=kms_key_name IMAGE_NAME=image_name CLUSTER=your_cluster_id DEFAULT_RESOURCE_GROUP=default_resource_group NON_DEFAULT_RESOURCE_GROUP=non_default_resource_group LOGIN_NODE_INSTANCE_TYPE=login_node_instance_type MANAGEMENT_IMAGE_NAME=management_image_name COMPUTE_IMAGE_NAME=compute_image_name MANAGEMENT_NODE_INSTANCE_TYPE=management_node_instance_type MANAGEMENT_NODE_COUNT=management_node_count ENABLE_VPC_FLOW_LOGS=enable_vpc_flow_logs KEY_MANAGEMENT=key_management KMS_INSTANCE_NAME=kms_instance_name HYPERTHREADING_ENABLED=hyperthreading_enabled US_EAST_ZONE=us_east_zone US_EAST_RESERVATION_ID=us_east_reservation_id US_EAST_CLUSTER_ID=us_east_cluster_id US_SOUTH_ZONE=us_south_zone US_SOUTH_RESERVATION_ID=us_south_reservation_id US_SOUTH_CLUSTER_ID=us_south_cluster_id EU_DE_ZONE=eu_de_zone EU_DE_RESERVATION_ID=eu_de_reservation_id EU_DE_CLUSTER_ID=eu_de_cluster_id SSH_FILE_PATH=ssh_file_path go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee test_output.log
+SSH_KEY=your_ssh_key ZONE=your_zone RESOURCE_GROUP=your_resource_group RESERVATION_ID=your_reservation_id KMS_INSTANCE_ID=kms_instance_id KMS_KEY_NAME=kms_key_name IMAGE_NAME=image_name CLUSTER=your_cluster_id DEFAULT_RESOURCE_GROUP=default_resource_group NON_DEFAULT_RESOURCE_GROUP=non_default_resource_group LOGIN_NODE_INSTANCE_TYPE=login_node_instance_type MANAGEMENT_IMAGE_NAME=management_image_name COMPUTE_IMAGE_NAME=compute_image_name MANAGEMENT_NODE_INSTANCE_TYPE=management_node_instance_type MANAGEMENT_NODE_COUNT=management_node_count ENABLE_VPC_FLOW_LOGS=enable_vpc_flow_logs KEY_MANAGEMENT=key_management KMS_INSTANCE_NAME=kms_instance_name HYPERTHREADING_ENABLED=hyperthreading_enabled SSH_FILE_PATH=ssh_file_path go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee test_output.log
 ```
 Replace placeholders (e.g., `your_ssh_key`, `your_zone`, etc.) with actual values.
 
@@ -148,7 +148,7 @@ FAIL github.com/terraform-ibm-modules/terraform-ibcloud-hpc 663.323s
 ### Viewing Test Output Logs
 
 - **Console Output**: Check the console for immediate test results.
-- **Log Files**: Detailed logs are saved in `test_output.log` and custom logs in the `/tests/test_output` folder. Logs are timestamped for easier tracking (e.g., `log_20XX-MM-DD_HH-MM-SS.log`).
+- **Log Files**: Detailed logs are saved in `test_output.log` and custom logs in the `/tests/logs_output` folder. Logs are timestamped for easier tracking (e.g., `log_20XX-MM-DD_HH-MM-SS.log`).
 
 ## Troubleshooting
 
@@ -166,26 +166,29 @@ For additional help, contact the project maintainers.
 
 ## Project Structure
 
-```plaintext
-/root/HPCAAS/HPCaaS/tests
+```
+/root/HPCAAS/tests
 ├── README.md
-├── common_utils
-│   ├── deploy_utils.go
-│   ├── log_utils.go
-│   ├── ssh_utils.go
-│   └── utils.go
-├── constants.go
-├── go.mod
-├── go.sum
+├── utilities
+│   ├── deployment.go           # Deployment-related utility functions
+│   ├── fileops.go              # File operations utility functions
+│   ├── helpers.go              # General helper functions
+│   ├── logging.go              # Logging utility functions
+│   ├── resources.go            # Resource management utility functions
+│   └── ssh.go                  # SSH utility functions
+├── constants.go                # Project-wide constants
+├── go.mod                       # Go module definition
+├── go.sum                       # Go module checksum
 ├── lsf
-│   ├── lsf_cluster_test_utils.go
-│   ├── lsf_cluster_test_validation.go
-│   ├── lsf_cluster_utils.go
-│   └── lsf_constants.go
-├── other_test.go
-├── pr_test.go
-├── test_config.yml
-└── test_output
+│   ├── cluster_helpers.go      # Helper functions for cluster testing
+│   ├── cluster_utils.go        # General utilities for cluster operations
+│   ├── cluster_validation.go   # Validation logic for cluster tests
+│   └── constants.go            # Constants specific to LSF
+├── other_tests.go              # Additional test cases
+├── pr_tests.go                 # Pull request-related tests
+├── config.yml                  # Configuration file
+└── logs                        # Directory for log files
+
 ```
 
 ## Utilities

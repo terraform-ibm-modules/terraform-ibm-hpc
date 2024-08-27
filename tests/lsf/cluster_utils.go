@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/common_utils"
+	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/utilities"
 	"golang.org/x/crypto/ssh"
 )
 

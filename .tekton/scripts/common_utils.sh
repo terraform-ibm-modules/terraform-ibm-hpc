@@ -33,5 +33,6 @@ go version
 python3 -m pip install --upgrade pip
 python3 -m pip install --pre --upgrade requests==2.20.0
 python3 -m pip install --pre --upgrade ibm-cos-sdk==2.0.1
+ibmcloud plugin install key-protect -f
 
 echo "************************************************"
