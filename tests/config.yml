@@ -4,7 +4,7 @@ zone: us-east-3
 cluster_id: HPC-LSF-2
 reservation_id:
 remote_allowed_ips:
-ssh_key:
+ssh_key: geretain-hpc
 login_node_instance_type: bx2-2x8
 login_image_name: hpcaas-lsf10-rhel88-compute-v6
 management_image_name: hpcaas-lsf10-rhel88-v10
