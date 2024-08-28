@@ -233,13 +233,13 @@ cat /opt/ibm/lsf/conf/hosts >> /etc/hosts
 if [ "$enable_ldap" = "true" ]; then
 
     # Detect the operating system
-    if grep -q "NAME=\"Red Hat Enterprise Linux\"" /etc/os-release; then
+    if grep -q "NAME=\"Red Hat Enterprise Linux\"" /etc/os-release || grep -q "NAME=\"Rocky Linux\"" /etc/os-release; then
 
-        # Detect RHEL version
-        rhel_version=$(grep -oE 'release [0-9]+' /etc/redhat-release | awk '{print $2}')
+        # Detect RHEL or Rocky version
+        version=$(grep -oE 'release [0-9]+' /etc/redhat-release | awk '{print $2}')
 
-        if [ "$rhel_version" == "8" ]; then
-            echo "Detected RHEL 8. Proceeding with LDAP client configuration...." >> $logfile
+        if [ "$version" == "8" ]; then
+            echo "Detected as RHEL or Rocky 8. Proceeding with LDAP client configuration...." >> $logfile
 
             # Allow Password authentication
             sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
@@ -294,7 +294,7 @@ EOF
             echo ". ${LSF_CONF}/profile.lsf" >> /etc/bashrc
             source /etc/bashrc
         else
-            echo "This script is designed for RHEL 8. Detected RHEL version: $rhel_version. Exiting." >> $logfile
+            echo "This script is intended for RHEL 8 or Rocky Linux 8. Detected version: $version. Exiting." >> $logfile
             exit 1
         fi
 

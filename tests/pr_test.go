@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
 
-	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/common_utils"
+	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/utilities"
 )
 
 // Constants for better organization
@@ -248,7 +248,7 @@ func setupOptions(t *testing.T, hpcClusterPrefix, terraformDir, resourceGroup st
 
 func TestMain(m *testing.M) {
 
-	absPath, err := filepath.Abs("test_config.yml")
+	absPath, err := filepath.Abs("config.yml")
 	if err != nil {
 		log.Fatalf("error getting absolute path: %v", err)
 	}
@@ -263,30 +263,40 @@ func TestMain(m *testing.M) {
 
 }
 
-// TestRunDefault create basic cluster of an HPC cluster.
+// TestRunDefault creates a basic HPC cluster and verifies its setup.
 func TestRunDefault(t *testing.T) {
-
-	// Parallelize the test
+	// Run tests in parallel
 	t.Parallel()
 
-	// Setup test suite
+	// Initialize test suite
 	setupTestSuite(t)
 
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+	// Log initiation of cluster creation
+	testLogger.Info(t, "Initiating cluster creation for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a unique prefix for the HPC cluster
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Retrieve environment variables for the test
 	envVars := GetEnvVars()
 
-	// Create test options
+	// Prepare test options with necessary parameters
 	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
-	require.NoError(t, err, "Error setting up test options: %v", err)
+	if err != nil {
+		testLogger.FAIL(t, fmt.Sprintf("Failed to set up test options: %v", err))
+		require.NoError(t, err, "Failed to set up test options: %v", err)
+	}
 
-	// Run the test and handle errors
+	// Run consistency test and handle potential errors
 	output, err := options.RunTestConsistency()
-	require.NoError(t, err, "Error running consistency test: %v", err)
+	if err != nil {
+		testLogger.FAIL(t, fmt.Sprintf("Error running consistency test: %v", err))
+		require.NoError(t, err, "Error running consistency test: %v", err)
+	}
+
+	// Ensure that output is not nil
 	require.NotNil(t, output, "Expected non-nil output, but got nil")
 
+	// Log success if no errors occurred
+	testLogger.PASS(t, "Test passed successfully")
 }

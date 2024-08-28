@@ -96,7 +96,7 @@ func GetConfigFromYAML(filePath string) (*Config, error) {
 		permanentResources["reservation_id_secret_id"].(string),
 	)
 	if err != nil {
-		fmt.Printf("error retrieving reservation id from secrets: %v", err) // pragma: allowlist secret
+		fmt.Printf("Retrieving reservation id from secrets: %v", err) // pragma: allowlist secret
 	} else if reservationIDEastPtr != nil {
 		reservationIDEast = *reservationIDEastPtr
 	}

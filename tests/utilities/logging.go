@@ -22,7 +22,7 @@ type AggregatedLogger struct {
 // NewAggregatedLogger creates a new instance of AggregatedLogger.
 func NewAggregatedLogger(logFileName string) (*AggregatedLogger, error) {
 
-	absPath, err := filepath.Abs("test_output")
+	absPath, err := filepath.Abs("logs")
 	if err != nil {
 		return nil, err
 	}
