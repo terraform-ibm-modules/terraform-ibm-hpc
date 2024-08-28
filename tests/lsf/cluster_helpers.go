@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/common_utils"
+	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/utilities"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -19,7 +19,6 @@ func VerifyManagementNodeConfig(
 	expectedClusterID, expectedMasterName, expectedReservationID string,
 	expectedHyperthreadingStatus bool,
 	managementNodeIPList []string,
-	jobCommand string,
 	lsfVersion string,
 	logger *utils.AggregatedLogger,
 ) {
@@ -56,9 +55,6 @@ func VerifyManagementNodeConfig(
 	fileMountErr := HPCCheckFileMount(t, sshMgmtClient, managementNodeIPList, "management", logger)
 	utils.LogVerificationResult(t, fileMountErr, "File mount check on management node", logger)
 
-	//Run job
-	jobErr := LSFRunJobs(t, sshMgmtClient, jobCommand, logger)
-	utils.LogVerificationResult(t, jobErr, "check Run job on management node", logger)
 }
 
 // VerifySSHKey verifies SSH keys for both management and compute nodes.
@@ -112,21 +108,18 @@ func FailoverAndFailback(t *testing.T, sshMgmtClient *ssh.Client, jobCommand str
 
 // RestartLsfDaemon restarts the LSF (Load Sharing Facility) daemons.
 // It logs verification results using the provided logger.
-func RestartLsfDaemon(t *testing.T, sshMgmtClient *ssh.Client, jobCommand string, logger *utils.AggregatedLogger) {
+func RestartLsfDaemon(t *testing.T, sshMgmtClient *ssh.Client, logger *utils.AggregatedLogger) {
 
 	//Restart Daemons
 	restartDaemonErr := LSFRestartDaemons(t, sshMgmtClient, logger)
 	utils.LogVerificationResult(t, restartDaemonErr, "check lsf_daemons restart", logger)
 
-	//Run job
-	jobErr := LSFRunJobs(t, sshMgmtClient, jobCommand, logger)
-	utils.LogVerificationResult(t, jobErr, "check Run job", logger)
 }
 
 // RebootInstance reboots an instance in a cluster using LSF (Load Sharing Facility).
 // It performs instance reboot, establishes a new SSH connection to the master node,
 // checks the bhosts response, and logs verification results using the provided logger.
-func RebootInstance(t *testing.T, sshMgmtClient *ssh.Client, publicHostIP, publicHostName, privateHostName, managementNodeIP string, jobCommand string, logger *utils.AggregatedLogger) {
+func RebootInstance(t *testing.T, sshMgmtClient *ssh.Client, publicHostIP, publicHostName, privateHostName, managementNodeIP string, logger *utils.AggregatedLogger) {
 
 	//Reboot the management node one
 	rebootErr := LSFRebootInstance(t, sshMgmtClient, logger)
@@ -139,10 +132,6 @@ func RebootInstance(t *testing.T, sshMgmtClient *ssh.Client, publicHostIP, publi
 	//Run bhost command
 	bhostRespErr := LSFCheckBhostsResponse(t, sshClient, logger)
 	utils.LogVerificationResult(t, bhostRespErr, "bhosts response non-empty", logger)
-
-	//Run job
-	jobErr := LSFRunJobs(t, sshClient, jobCommand, logger)
-	utils.LogVerificationResult(t, jobErr, "check Run job", logger)
 
 	defer sshClient.Close()
 
@@ -290,6 +279,8 @@ func VerifyNoVNCConfig(
 
 // VerifyJobs verifies LSF job execution, logging any errors.
 func VerifyJobs(t *testing.T, sshClient *ssh.Client, jobCommand string, logger *utils.AggregatedLogger) {
+
+	//Run job
 	jobErr := LSFRunJobs(t, sshClient, jobCommand, logger)
 	utils.LogVerificationResult(t, jobErr, "check Run job", logger)
 
@@ -340,7 +331,7 @@ func VerifyManagementNodeLDAPConfig(
 	lsfCmdErr := VerifyLSFCommandsAsLDAPUser(t, sshLdapClient, ldapUserName, "management", logger)
 	utils.LogVerificationResult(t, lsfCmdErr, "Check the 'lsf' command as an LDAP user on the management node", logger)
 
-	// Run job
+	// Run job as ldap user
 	jobErr := LSFRunJobsAsLDAPUser(t, sshLdapClient, jobCommand, ldapUserName, logger)
 	utils.LogVerificationResult(t, jobErr, "check Run job as an LDAP user on the management node", logger)
 
@@ -389,7 +380,7 @@ func VerifyLoginNodeLDAPConfig(
 	fileMountErr := HPCCheckFileMountAsLDAPUser(t, sshLdapClient, "login", logger)
 	utils.LogVerificationResult(t, fileMountErr, "check file mount as an LDAP user on the login node", logger)
 
-	// Run job
+	// Run job as ldap user
 	jobErr := LSFRunJobsAsLDAPUser(t, sshLdapClient, LOGIN_NODE_EXECUTION_PATH+jobCommand, ldapUserName, logger)
 	utils.LogVerificationResult(t, jobErr, "check Run job as an LDAP user on the login node", logger)
 

@@ -49,6 +49,7 @@ LSF_TOP_VERSION="$LSF_TOP/10.1"
 LSF_SUITE_TOP="/opt/ibm/lsfsuite"
 LSF_SUITE_GUI="${LSF_SUITE_TOP}/ext/gui"
 LSF_SUITE_GUI_CONF="${LSF_SUITE_GUI}/conf"
+LSF_SUITE_GUI_WORK="${LSF_SUITE_GUI}/work"
 LSF_SUITE_PERF="${LSF_SUITE_TOP}/ext/perf"
 LSF_SUITE_PERF_CONF="${LSF_SUITE_PERF}/conf"
 LSF_SUITE_PERF_BIN="${LSF_SUITE_PERF}/1.2/bin"
@@ -265,7 +266,10 @@ EOT
     "ca-tor": "https://ca-tor.iaas.cloud.ibm.com/v1",
     "jp-osa": "https://jp-osa.iaas.cloud.ibm.com/v1",
     "jp-tok": "https://jp-tok.iaas.cloud.ibm.com/v1",
-    "br-sao": "https://br-sao.iaas.cloud.ibm.com/v1"
+    "br-sao": "https://br-sao.iaas.cloud.ibm.com/v1",
+    "us-south": "https://us-south.iaas.cloud.ibm.com/v1",
+    "eu-de": "https://eu-de.iaas.cloud.ibm.com/v1",
+    "us-east": "https://us-east.iaas.cloud.ibm.com/v1"
   }
 }
 EOT
@@ -674,6 +678,7 @@ mount_nfs_with_retries() {
 if [ -n "${nfs_server_with_mount_path}" ]; then
   echo "File share ${nfs_server_with_mount_path} found"
   nfs_client_mount_path="/mnt/lsf"
+  nfs_client_mount_pac_path="${nfs_client_mount_path}/pac"
   if mount_nfs_with_retries "${nfs_server_with_mount_path}" "${nfs_client_mount_path}"; then
     # Move stuff to shared fs
     for dir in conf work das_staging_area; do
@@ -688,29 +693,28 @@ if [ -n "${nfs_server_with_mount_path}" ]; then
     done
 
     # Sharing the lsfsuite.conf folder
-    if [ "$on_primary" == "true" ]; then
-      rm -rf "${nfs_client_mount_path}/gui-conf"
-      mv "${LSF_SUITE_GUI_CONF}" "${nfs_client_mount_path}/gui-conf"
-      chown -R lsfadmin:root "${nfs_client_mount_path}/gui-conf"
-    else
-      rm -rf "${LSF_SUITE_GUI_CONF}"
+    if [ "$on_primary" == "true" ] && [ "$enable_app_center" == "true" ] && [ "$app_center_high_availability" == "true" ]; then
+        # Create pac folder if it does not exist
+        [ ! -d "${nfs_client_mount_pac_path}" ] && mkdir -p "${nfs_client_mount_pac_path}"
+
+        # Remove the original folder and create symlink for gui-conf
+        [ -d "${nfs_client_mount_pac_path}/gui-conf" ] && rm -rf "${nfs_client_mount_pac_path}/gui-conf"
+        mv "${LSF_SUITE_GUI_CONF}" "${nfs_client_mount_pac_path}/gui-conf"
+        chown -R lsfadmin:root "${nfs_client_mount_pac_path}/gui-conf" && chown -R lsfadmin:lsfadmin "${LSF_SUITE_GUI_CONF}"
+        ln -fs "${nfs_client_mount_pac_path}/gui-conf" "${LSF_SUITE_GUI_CONF}"
+
+        # Remove the original folder and create symlink for gui-work
+        [ -d "${nfs_client_mount_pac_path}/gui-work" ] && rm -rf "${nfs_client_mount_pac_path}/gui-work"
+        mv "${LSF_SUITE_GUI_WORK}" "${nfs_client_mount_pac_path}/gui-work"
+        chown -R lsfadmin:root "${nfs_client_mount_pac_path}/gui-work" && chown -R lsfadmin:lsfadmin "${LSF_SUITE_GUI_WORK}"
+        ln -fs "${nfs_client_mount_pac_path}/gui-work" "${LSF_SUITE_GUI_WORK}"
     fi
-    ln -fs "${nfs_client_mount_path}/gui-conf" "${LSF_SUITE_GUI_CONF}"
-    chown -R lsfadmin:root "${LSF_SUITE_GUI_CONF}"
 
     # Create a data directory for sharing HPC workload data
     if [ "$on_primary" == "true" ]; then
       mkdir -p "${nfs_client_mount_path}/data"
       ln -s "${nfs_client_mount_path}/data" "$LSF_TOP/work/data"
       chown -R lsfadmin:root "$LSF_TOP/work/data"
-    fi
-
-    # Sharing the 10.1 folder
-    if [ "$on_primary" == "true" ]; then
-      rm -rf "${nfs_client_mount_path}/10.1"
-      mv "${LSF_TOP_VERSION}" "${nfs_client_mount_path}"
-      ln -s "${nfs_client_mount_path}/10.1" "${LSF_TOP_VERSION}"
-      chown -R lsfadmin:root "${LSF_TOP_VERSION}"
     fi
 
     # VNC Sessions
