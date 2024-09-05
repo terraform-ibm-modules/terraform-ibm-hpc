@@ -1,0 +1,4 @@
+### Test Output Logs
+
+- **Console Output**: Check the console for detailed test results.
+- **Log Files**: Review `test_output.log` and custom logs in the `/tests/test_output` folder with a timestamp for detailed analysis and troubleshooting. For example, a log file might be named `log_20XX-MM-DD_HH-MM-SS.log`.

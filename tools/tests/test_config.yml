@@ -1,0 +1,37 @@
+default_resource_group: Default
+non_default_resource_group: WES_TEST
+zone: us-east-3
+cluster_id: HPC-LSF-2
+reservation_id:
+remote_allowed_ips:
+ssh_key: geretain-hpc
+login_node_instance_type: bx2-2x8
+login_image_name: hpcaas-lsf10-rhel88-compute-v5
+management_image_name: hpcaas-lsf10-rhel88-v9
+compute_image_name: hpcaas-lsf10-rhel88-compute-v5
+management_node_instance_type: bx2-2x8
+management_node_count: 2
+enable_vpc_flow_logs: false
+key_management: key_protect
+kms_instance_name:
+kms_key_name:
+hyperthreading_enabled: true
+dns_domain_name: wes.com
+enable_app_center: true
+app_center_gui_pwd: Pass@123 # pragma: allowlist secret
+enable_ldap: true
+ldap_basedns: cicd.com
+ldap_admin_password: Pass@123 # pragma: allowlist secret
+ldap_user_name: tester
+ldap_user_password: Pass@123 # pragma: allowlist secret
+us_east_zone: us-east-3
+us_east_reservation_id:
+us_east_cluster_id: HPC-LSF-2
+eu_de_zone: eu-de-3
+eu_de_reservation_id:
+eu_de_cluster_id: HPC-LSF-1
+us_south_zone: us-south-1
+us_south_reservation_id:
+us_south_cluster_id: HPC-LSF-1
+ssh_file_path: /artifacts/.ssh/id_rsa
+ssh_file_path_two: /artifacts/.ssh/id_rsa
