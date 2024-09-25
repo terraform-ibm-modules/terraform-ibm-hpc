@@ -76,7 +76,13 @@ variable "tags" {
   default     = []
 }
 
-variable "enable_archive" {
+variable "log_analysis_enable_archive" {
+  description = "Set true to enable archive"
+  type        = bool
+  default     = "false"
+}
+
+variable "activity_tracker_enable_archive" {
   description = "Set true to enable archive"
   type        = bool
   default     = "false"
