@@ -7,7 +7,7 @@ module "compute_key" {
 module "compute_sg" {
   count                        = local.enable_compute ? 1 : 0
   source                       = "terraform-ibm-modules/security-group/ibm"
-  version                      = "2.6.1"
+  version                      = "2.6.2"
   add_ibm_cloud_internal_rules = true
   resource_group               = var.resource_group
   security_group_name          = format("%s-cluster-sg", local.prefix)
@@ -19,7 +19,7 @@ module "compute_sg" {
 module "compute_sg_with_ldap_connection" {
   count                          = var.ldap_server == "null" ? 0 : 1
   source                         = "terraform-ibm-modules/security-group/ibm"
-  version                        = "2.6.1"
+  version                        = "2.6.2"
   resource_group                 = var.resource_group
   add_ibm_cloud_internal_rules   = true
   use_existing_security_group_id = true
@@ -32,7 +32,7 @@ module "compute_sg_with_ldap_connection" {
 module "ssh_connection_to_login_node_via_cluster_nodes" {
   count                          = var.bastion_instance_name != null ? 1 : 0
   source                         = "terraform-ibm-modules/security-group/ibm"
-  version                        = "2.6.1"
+  version                        = "2.6.2"
   resource_group                 = var.resource_group
   add_ibm_cloud_internal_rules   = true
   use_existing_security_group_id = true
@@ -45,7 +45,7 @@ module "ssh_connection_to_login_node_via_cluster_nodes" {
 module "nfs_storage_sg" {
   count                          = var.storage_security_group_id != null ? 1 : 0
   source                         = "terraform-ibm-modules/security-group/ibm"
-  version                        = "2.6.1"
+  version                        = "2.6.2"
   resource_group                 = var.resource_group
   add_ibm_cloud_internal_rules   = true
   use_existing_security_group_id = true
@@ -55,12 +55,10 @@ module "nfs_storage_sg" {
 }
 
 module "management_vsi" {
-  count = 1
-  # count                       = length(var.management_instances)
-  source         = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version        = "4.0.0"
-  vsi_per_subnet = 1
-  # vsi_per_subnet              = var.management_instances[count.index]["count"]
+  count                         = 1
+  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version                       = "4.2.0"
+  vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
   image_id                      = local.image_mapping_entry_found ? local.new_image_id : data.ibm_is_image.management[0].id
@@ -83,7 +81,7 @@ module "management_vsi" {
 module "management_candidate_vsi" {
   count                         = var.management_node_count - 1
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.0.0"
+  version                       = "4.2.0"
   create_security_group         = false
   security_group                = null
   security_group_ids            = module.compute_sg[*].security_group_id
@@ -106,7 +104,7 @@ module "management_candidate_vsi" {
 module "login_vsi" {
   count                         = 1
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.0.0"
+  version                       = "4.2.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -128,10 +126,9 @@ module "login_vsi" {
 }
 
 module "ldap_vsi" {
-  count = local.ldap_enable
-  # count                       = length(var.management_instances)
+  count                 = local.ldap_enable
   source                = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version               = "4.0.0"
+  version               = "4.2.0"
   vsi_per_subnet        = 1
   create_security_group = false
   security_group        = null

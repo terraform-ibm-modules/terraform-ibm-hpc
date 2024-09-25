@@ -10,7 +10,7 @@ locals {
 module "observability_instance" {
   # Replace "master" with a GIT release version to lock into a specific release
   source  = "terraform-ibm-modules/observability-instances/ibm"
-  version = "2.12.2"
+  version = "2.18.1"
   providers = {
     logdna.at = logdna.at
     logdna.ld = logdna.ld
