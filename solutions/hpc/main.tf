@@ -63,6 +63,7 @@ module "db" {
   memory            = local.db_template[1]
   disks             = local.db_template[2]
   vcpu              = local.db_template[3]
+  host_flavour      = local.db_template[4]
 }
 
 module "ce_project" {
