@@ -10,7 +10,7 @@ locals {
 module "observability_instance" {
   # Replace "master" with a GIT release version to lock into a specific release
   source  = "terraform-ibm-modules/observability-instances/ibm"
-  version = "2.12.2"
+  version = "2.13.1"
   providers = {
     logdna.at = logdna.at
     logdna.ld = logdna.ld
@@ -42,7 +42,8 @@ module "observability_instance" {
   log_analysis_targets               = var.log_analysis_targets
   global_event_routing_settings      = var.global_event_routing_settings
   */
-  enable_archive          = var.enable_archive
-  enable_platform_logs    = var.enable_platform_logs
-  enable_platform_metrics = var.enable_platform_metrics
+  log_analysis_enable_archive     = var.log_analysis_enable_archive
+  activity_tracker_enable_archive = var.activity_tracker_enable_archive
+  enable_platform_logs            = var.enable_platform_logs
+  enable_platform_metrics         = var.enable_platform_metrics
 }
