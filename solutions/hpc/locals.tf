@@ -226,7 +226,7 @@ locals {
 locals {
   mysql_version        = "8.0"
   db_service_endpoints = "private"
-  db_template          = [3, 12288, 122880, 3]
+  db_template          = [3, 12288, 122880, 3, "multitenant"]
 }
 
 ###########################################################################

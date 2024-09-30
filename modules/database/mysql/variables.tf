@@ -49,6 +49,12 @@ variable "vcpu" {
   default     = null
 }
 
+variable "host_flavour" {
+  description = "Allocated host flavor per member."
+  type        = string
+  default     = null
+}
+
 variable "service_endpoints" {
   description = "The service endpoints"
   type        = string
