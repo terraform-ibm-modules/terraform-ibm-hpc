@@ -116,6 +116,7 @@ module "landing_zone_vsi" {
   ldap_user_name                                   = var.ldap_user_name
   ldap_user_password                               = var.ldap_user_password
   ldap_server                                      = var.ldap_server
+  ldap_server_cert                                 = var.ldap_server_cert
   ldap_vsi_osimage_name                            = var.ldap_vsi_osimage_name
   ldap_primary_ip                                  = local.ldap_private_ips
   app_center_high_availability                     = var.app_center_high_availability

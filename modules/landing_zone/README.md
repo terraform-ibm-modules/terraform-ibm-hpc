@@ -2,61 +2,73 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_http"></a> [http](#requirement\_http) | 3.2.1 |
-| <a name="requirement_ibm"></a> [ibm](#requirement\_ibm) | >= 1.53.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.3 |
+| <a name="requirement_ibm"></a> [ibm](#requirement\_ibm) | >= 1.56.2 |
 
 ## Providers
 
-No providers.
+| Name | Version |
+|------|---------|
+| <a name="provider_ibm"></a> [ibm](#provider\_ibm) | >= 1.56.2 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_landing-zone"></a> [landing-zone](#module\_landing-zone) | terraform-ibm-modules/landing-zone/ibm | 4.5.5 |
+| <a name="module_landing_zone"></a> [landing\_zone](#module\_landing\_zone) | terraform-ibm-modules/landing-zone/ibm | 6.0.0 |
 
 ## Resources
 
-No resources.
+| Name | Type |
+|------|------|
+| [ibm_is_subnet.subnet](https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/data-sources/is_subnet) | data source |
+| [ibm_is_vpc.itself](https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/data-sources/is_vpc) | data source |
+| [ibm_kms_key.kms_key](https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/data-sources/kms_key) | data source |
+| [ibm_resource_instance.kms_instance](https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/data-sources/resource_instance) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_allowed_cidr"></a> [allowed\_cidr](#input\_allowed\_cidr) | Network CIDR to access the VPC. This is used to manage network ACL rules for accessing the cluster. | `list(string)` | <pre>[<br>  "10.0.0.0/8"<br>]</pre> | no |
-| <a name="input_bootstrap_ssh_keys"></a> [bootstrap\_ssh\_keys](#input\_bootstrap\_ssh\_keys) | The key pair to use to access the bootstrap host. | `list(string)` | n/a | yes |
-| <a name="input_compute_ssh_keys"></a> [compute\_ssh\_keys](#input\_compute\_ssh\_keys) | The key pair to use to launch the compute host. | `list(string)` | n/a | yes |
-| <a name="input_compute_subnets_cidr"></a> [compute\_subnets\_cidr](#input\_compute\_subnets\_cidr) | Subnet CIDR block to launch the compute cluster host. | `list(string)` | <pre>[<br>  "10.10.10.0/24",<br>  "10.20.10.0/24",<br>  "10.30.10.0/24"<br>]</pre> | no |
+| <a name="input_bastion_subnets_cidr"></a> [bastion\_subnets\_cidr](#input\_bastion\_subnets\_cidr) | Subnet CIDR block to launch the bastion host. | `list(string)` | <pre>[<br>  "10.0.0.0/24"<br>]</pre> | no |
+| <a name="input_compute_subnets_cidr"></a> [compute\_subnets\_cidr](#input\_compute\_subnets\_cidr) | Subnet CIDR block to launch the compute cluster host. | `list(string)` | <pre>[<br>  "10.10.20.0/24",<br>  "10.20.20.0/24",<br>  "10.30.20.0/24"<br>]</pre> | no |
 | <a name="input_cos_instance_name"></a> [cos\_instance\_name](#input\_cos\_instance\_name) | Exiting COS instance name | `string` | `null` | no |
-| <a name="input_enable_atracker"></a> [enable\_atracker](#input\_enable\_atracker) | Enable Activity tracker | `bool` | `true` | no |
-| <a name="input_enable_bootstrap"></a> [enable\_bootstrap](#input\_enable\_bootstrap) | Bootstrap should be only used for better deployment performance | `bool` | `false` | no |
+| <a name="input_enable_atracker"></a> [enable\_atracker](#input\_enable\_atracker) | Enable Activity tracker on COS | `bool` | `true` | no |
 | <a name="input_enable_cos_integration"></a> [enable\_cos\_integration](#input\_enable\_cos\_integration) | Integrate COS with HPC solution | `bool` | `true` | no |
-| <a name="input_enable_login"></a> [enable\_login](#input\_enable\_login) | The solution supports multiple ways to connect to your HPC cluster for example, using login node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false. | `bool` | `true` | no |
+| <a name="input_enable_landing_zone"></a> [enable\_landing\_zone](#input\_enable\_landing\_zone) | Run landing zone module. | `bool` | `true` | no |
 | <a name="input_enable_vpc_flow_logs"></a> [enable\_vpc\_flow\_logs](#input\_enable\_vpc\_flow\_logs) | Enable Activity tracker | `bool` | `true` | no |
-| <a name="input_enable_vpn"></a> [enable\_vpn](#input\_enable\_vpn) | The solution supports multiple ways to connect to your HPC cluster for example, using login node, via VPN or direct connection. If connecting to the HPC cluster via VPN, set this value to true. | `bool` | `false` | no |
-| <a name="input_hpcs_instance_name"></a> [hpcs\_instance\_name](#input\_hpcs\_instance\_name) | Hyper Protect Crypto Service instance | `string` | `null` | no |
-| <a name="input_ibmcloud_api_key"></a> [ibmcloud\_api\_key](#input\_ibmcloud\_api\_key) | IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required. | `string` | `null` | no |
-| <a name="input_key_management"></a> [key\_management](#input\_key\_management) | null/key\_protect/hs\_crypto | `string` | `null` | no |
-| <a name="input_login_ssh_keys"></a> [login\_ssh\_keys](#input\_login\_ssh\_keys) | The key pair to use to access the login host. | `list(string)` | n/a | yes |
-| <a name="input_login_subnets_cidr"></a> [login\_subnets\_cidr](#input\_login\_subnets\_cidr) | Subnet CIDR block to launch the login host. | `list(string)` | <pre>[<br>  "10.0.0.0/24"<br>]</pre> | no |
-| <a name="input_management_instances"></a> [management\_instances](#input\_management\_instances) | Number of instances to be launched for management. | `number` | `3` | no |
-| <a name="input_max_compute_instances"></a> [max\_compute\_instances](#input\_max\_compute\_instances) | MaxNumber of instances to be launched for compute cluster. | `number` | `250` | no |
-| <a name="input_min_compute_instances"></a> [min\_compute\_instances](#input\_min\_compute\_instances) | Min Number of instances to be launched for compute cluster. | `number` | `0` | no |
+| <a name="input_enable_vpn"></a> [enable\_vpn](#input\_enable\_vpn) | The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN, set this value to true. | `bool` | `false` | no |
+| <a name="input_key_management"></a> [key\_management](#input\_key\_management) | null/key\_protect | `string` | `null` | no |
+| <a name="input_kms_instance_name"></a> [kms\_instance\_name](#input\_kms\_instance\_name) | Name of the Key Protect instance associated with the Key Management Service. The ID can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui). | `string` | `null` | no |
+| <a name="input_kms_key_name"></a> [kms\_key\_name](#input\_kms\_key\_name) | Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. (for example kms\_key\_name: my-encryption-key). | `string` | `null` | no |
+| <a name="input_login_subnet_id"></a> [login\_subnet\_id](#input\_login\_subnet\_id) | List of existing subnet ID under the VPC, where the login/Bastion server will be provisioned. | `string` | `null` | no |
 | <a name="input_network_cidr"></a> [network\_cidr](#input\_network\_cidr) | Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning. | `string` | `"10.0.0.0/8"` | no |
-| <a name="input_placement_strategy"></a> [placement\_strategy](#input\_placement\_strategy) | VPC placement groups to create (null / host\_spread / power\_spread) | `string` | `null` | no |
+| <a name="input_no_addr_prefix"></a> [no\_addr\_prefix](#input\_no\_addr\_prefix) | Set it as true, if you don't want to create address prefixes. | `bool` | n/a | yes |
 | <a name="input_prefix"></a> [prefix](#input\_prefix) | A unique identifier for resources. Must begin with a letter and end with a letter or number. This prefix will be prepended to any resources provisioned by this template. Prefixes must be 16 or fewer characters. | `string` | n/a | yes |
-| <a name="input_protocol_instances"></a> [protocol\_instances](#input\_protocol\_instances) | Number of instances to be launched for protocol hosts. | `number` | `2` | no |
-| <a name="input_protocol_subnets_cidr"></a> [protocol\_subnets\_cidr](#input\_protocol\_subnets\_cidr) | Subnet CIDR block to launch the storage cluster host. | `list(string)` | <pre>[<br>  "10.10.30.0/24",<br>  "10.20.30.0/24",<br>  "10.30.30.0/24"<br>]</pre> | no |
 | <a name="input_resource_group"></a> [resource\_group](#input\_resource\_group) | String describing resource groups to create or reference | `string` | `null` | no |
-| <a name="input_storage_instances"></a> [storage\_instances](#input\_storage\_instances) | Number of instances to be launched for storage cluster. | `number` | `3` | no |
-| <a name="input_storage_ssh_keys"></a> [storage\_ssh\_keys](#input\_storage\_ssh\_keys) | The key pair to use to launch the storage cluster host. | `list(string)` | n/a | yes |
-| <a name="input_storage_subnets_cidr"></a> [storage\_subnets\_cidr](#input\_storage\_subnets\_cidr) | Subnet CIDR block to launch the storage cluster host. | `list(string)` | <pre>[<br>  "10.10.20.0/24",<br>  "10.20.20.0/24",<br>  "10.30.20.0/24"<br>]</pre> | no |
+| <a name="input_scc_enable"></a> [scc\_enable](#input\_scc\_enable) | Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created. | `bool` | `false` | no |
+| <a name="input_ssh_keys"></a> [ssh\_keys](#input\_ssh\_keys) | The key pair to use to access the servers. | `list(string)` | n/a | yes |
+| <a name="input_subnet_id"></a> [subnet\_id](#input\_subnet\_id) | List of existing subnet IDs under the VPC, where the cluster will be provisioned. | `list(string)` | `null` | no |
 | <a name="input_vpc"></a> [vpc](#input\_vpc) | Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc) | `string` | `null` | no |
-| <a name="input_vpn_peer_address"></a> [vpn\_peer\_address](#input\_vpn\_peer\_address) | The peer public IP address to which the VPN will be connected. | `string` | `null` | no |
-| <a name="input_vpn_peer_cidr"></a> [vpn\_peer\_cidr](#input\_vpn\_peer\_cidr) | The peer CIDRs (e.g., 192.168.0.0/24) to which the VPN will be connected. | `list(string)` | `null` | no |
-| <a name="input_vpn_preshared_key"></a> [vpn\_preshared\_key](#input\_vpn\_preshared\_key) | The pre-shared key for the VPN. | `string` | `null` | no |
 | <a name="input_zones"></a> [zones](#input\_zones) | Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions. | `list(string)` | n/a | yes |
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_bastion_subnets"></a> [bastion\_subnets](#output\_bastion\_subnets) | Bastion subnets |
+| <a name="output_boot_volume_encryption_key"></a> [boot\_volume\_encryption\_key](#output\_boot\_volume\_encryption\_key) | Boot volume encryption key |
+| <a name="output_compute_subnets"></a> [compute\_subnets](#output\_compute\_subnets) | Compute subnets |
+| <a name="output_cos_buckets_names"></a> [cos\_buckets\_names](#output\_cos\_buckets\_names) | Name of the COS Bucket created for SCC Instance |
+| <a name="output_cos_instance_crns"></a> [cos\_instance\_crns](#output\_cos\_instance\_crns) | CRN of the COS instance created by Landing Zone Module |
+| <a name="output_key_management_guid"></a> [key\_management\_guid](#output\_key\_management\_guid) | GUID for KMS instance |
+| <a name="output_login_subnets"></a> [login\_subnets](#output\_login\_subnets) | Login subnets |
+| <a name="output_protocol_subnets"></a> [protocol\_subnets](#output\_protocol\_subnets) | Protocol subnets |
+| <a name="output_public_gateways"></a> [public\_gateways](#output\_public\_gateways) | Public Gateway IDs |
+| <a name="output_resource_group_id"></a> [resource\_group\_id](#output\_resource\_group\_id) | Resource group ID |
+| <a name="output_storage_subnets"></a> [storage\_subnets](#output\_storage\_subnets) | Storage subnets |
+| <a name="output_subnets"></a> [subnets](#output\_subnets) | subnets |
+| <a name="output_subnets_crn"></a> [subnets\_crn](#output\_subnets\_crn) | Subnets crn |
+| <a name="output_vpc_crn"></a> [vpc\_crn](#output\_vpc\_crn) | VPC CRN |
+| <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | VPC ID |
+| <a name="output_vpc_name"></a> [vpc\_name](#output\_vpc\_name) | VPC name |

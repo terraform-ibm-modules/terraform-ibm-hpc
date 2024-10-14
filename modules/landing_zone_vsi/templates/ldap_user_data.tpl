@@ -17,5 +17,6 @@ cluster_prefix="${cluster_prefix}"
 ldap_user="${ldap_user}"
 ldap_user_password="${ldap_user_password}"
 dns_domain="${dns_domain}"
+mount_path="${mount_path}"
 
 echo "END $(date '+%Y-%m-%d %H:%M:%S')" >> $logfile

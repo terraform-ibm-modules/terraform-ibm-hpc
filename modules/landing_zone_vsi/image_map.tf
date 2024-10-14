@@ -1,19 +1,19 @@
 locals {
   image_region_map = {
-    "hpcaas-lsf10-rhel88-v10" = {
-      "us-east"  = "r014-c425251e-b7b5-479f-b9cf-ef72a0f51b5a"
-      "eu-de"    = "r010-ce6dac2b-57e4-4a2f-a77d-8b0e549b2cae"
-      "us-south" = "r006-c8fefef3-645d-4b5a-bad0-2250c6ddb627"
+    "hpcaas-lsf10-rhel88-v11" = {
+      "us-east"  = "r014-d490d82a-30c3-4268-af41-e8f59dd6ff55"
+      "eu-de"    = "r010-f4354cdc-4c92-44de-8e4d-982e733733ac"
+      "us-south" = "r006-8318fcfd-5db0-4dfd-9b75-455147cc74bc"
     },
-    "hpcaas-lsf10-rhel88-compute-v6" = {
-      "us-east"  = "r014-f4c0dd0f-3bd0-4e2f-bbda-bbbc75a8c33b"
-      "eu-de"    = "r010-0217f13b-e6e5-4500-acd4-c170f111d43f"
-      "us-south" = "r006-15514933-925c-4923-85dd-3165dcaa3180"
+    "hpcaas-lsf10-rhel88-compute-v7" = {
+      "us-east"  = "r014-075020c3-c5a7-4c34-8ace-099b9dc0561f"
+      "eu-de"    = "r010-d7fafe1c-8c42-465f-9619-d9e59c56df69"
+      "us-south" = "r006-366873cd-79ca-48be-8a18-3e3290b09970"
     },
-    "hpcaas-lsf10-ubuntu2204-compute-v6" = {
-      "us-east"  = "r014-ab2e8be8-d75c-4040-a337-7f086f3ce153"
-      "eu-de"    = "r010-027f5d54-9360-4d1f-821b-583329d63855"
-      "us-south" = "r006-628b6dbe-e0d4-4c25-bc0f-f554f5523f2e"
+    "hpcaas-lsf10-ubuntu2204-compute-v7" = {
+      "us-east"  = "r014-e78c5600-7d08-4693-930c-734187fa95ac"
+      "eu-de"    = "r010-2bc3c0c9-50cb-4625-bca8-476f0179eea7"
+      "us-south" = "r006-5b5f3c5e-05fd-42f9-acfa-1398905e428e"
     }
   }
 }

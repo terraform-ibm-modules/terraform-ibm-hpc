@@ -105,6 +105,19 @@ locals {
     "^${local.ldap_server_msg}$",
   (local.validate_ldap_server ? local.ldap_server_msg : ""))
 
+  # Existing LDAP server cert validation
+  validate_ldap_server_cert = (
+    (trimspace(var.ldap_server) != "" && trimspace(var.ldap_server_cert) != "" && trimspace(var.ldap_server_cert) != "null") ||
+    trimspace(var.ldap_server) == "null" ||
+    !var.enable_ldap
+  )
+  ldap_server_cert_msg = "Provide the current LDAP server certificate. This is required if 'ldap_server' is not set to 'null'; otherwise, the LDAP configuration will not succeed."
+  # tflint-ignore: terraform_unused_declarations
+  validate_ldap_server_cert_chk = regex(
+    "^${local.ldap_server_cert_msg}$",
+    local.validate_ldap_server_cert ? local.ldap_server_cert_msg : ""
+  )
+
   # LDAP Admin Password Validation
   validate_ldap_adm_pwd = var.enable_ldap && var.ldap_server == "null" ? (length(var.ldap_admin_password) >= 8 && length(var.ldap_admin_password) <= 20 && can(regex("^(.*[0-9]){2}.*$", var.ldap_admin_password))) && can(regex("^(.*[A-Z]){1}.*$", var.ldap_admin_password)) && can(regex("^(.*[a-z]){1}.*$", var.ldap_admin_password)) && can(regex("^.*[~@_+:].*$", var.ldap_admin_password)) && can(regex("^[^!#$%^&*()=}{\\[\\]|\\\"';?.<,>-]+$", var.ldap_admin_password)) : local.ldap_server_status
   ldap_adm_password_msg = "Password that is used for LDAP admin. The password must contain at least 8 characters and at most 20 characters. For a strong password, at least three alphabetic characters are required, with at least one uppercase and one lowercase letter. Two numbers, and at least one special character. Make sure that the password doesn't include the username."
