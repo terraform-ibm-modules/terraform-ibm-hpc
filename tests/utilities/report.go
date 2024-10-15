@@ -72,7 +72,7 @@ func ParseJSONFile(fileName string) ([]TestResult, error) {
 // Convert elapsed time from string to float64
 func parseElapsed(elapsedStr string) float64 {
 	var elapsed float64
-	fmt.Sscanf(elapsedStr, "%fs", &elapsed)
+	fmt.Scanf(elapsedStr, "%f", &elapsed)
 	return elapsed
 }
 
