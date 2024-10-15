@@ -60,6 +60,7 @@ db_certificate="${db_certificate}"
 # LDAP Server
 enable_ldap="${enable_ldap}"
 ldap_server_ip="${ldap_server_ip}"
+ldap_server_cert="${ldap_server_cert}"
 ldap_server_hostname="${ldap_server_hostname}"
 ldap_basedns="${ldap_basedns}"
 bootdrive_crn="${bootdrive_crn}"

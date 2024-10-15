@@ -259,7 +259,22 @@ func TestMain(m *testing.M) {
 		log.Fatalf("error reading configuration from yaml: %v", err)
 	}
 
-	os.Exit(m.Run())
+	// Run tests and capture output
+	exitCode := m.Run()
+
+	// Report results
+	results, err := utils.ParseJSONFile("test_output.json")
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	err = utils.GenerateHTMLReport(results)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	// Exit with the result of the tests
+	os.Exit(exitCode)
 
 }
 

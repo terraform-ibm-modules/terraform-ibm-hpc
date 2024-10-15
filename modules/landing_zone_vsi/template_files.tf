@@ -12,6 +12,7 @@ data "template_file" "management_user_data" {
     mount_path                  = var.share_path
     enable_ldap                 = var.enable_ldap
     ldap_server_ip              = local.ldap_server
+    ldap_server_cert            = local.ldap_server_cert
     ldap_basedns                = var.enable_ldap == true ? var.ldap_basedns : "null"
     login_ip_address            = var.login_private_ips
   }
@@ -47,6 +48,7 @@ data "template_file" "ldap_user_data" {
     cluster_prefix         = var.prefix
     ldap_user              = var.ldap_user_name
     ldap_user_password     = var.ldap_user_password
+    mount_path             = var.share_path
     dns_domain             = var.dns_domain_names["compute"]
   }
 }
@@ -87,6 +89,7 @@ data "template_file" "management_values" {
     app_center_gui_pwd            = var.app_center_gui_pwd
     enable_ldap                   = var.enable_ldap
     ldap_server_ip                = local.ldap_server
+    ldap_server_cert              = local.ldap_server_cert
     ldap_server_hostname          = length(local.ldap_hostnames) > 0 ? local.ldap_hostnames[0] : "null"
     ldap_basedns                  = var.enable_ldap == true ? var.ldap_basedns : "null"
     bootdrive_crn                 = var.boot_volume_encryption_key == null ? "" : var.boot_volume_encryption_key

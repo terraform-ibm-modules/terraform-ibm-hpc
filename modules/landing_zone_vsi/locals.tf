@@ -135,6 +135,7 @@ locals {
   bastion_subnets        = var.bastion_subnets
   bastion_ssh_keys       = [for name in var.ssh_keys : data.ibm_is_ssh_key.bastion[name].id]
   ldap_server            = var.enable_ldap == true && var.ldap_server == "null" ? length(module.ldap_vsi) > 0 ? var.ldap_primary_ip[0] : null : var.ldap_server
+  ldap_server_cert       = var.enable_ldap == true && var.ldap_server_cert != "null" ? var.ldap_server_cert : "null"
   ldap_instance_image_id = var.enable_ldap == true && var.ldap_server == "null" ? data.ibm_is_image.ldap_vsi_image[0].id : "null"
 
   # The below logic is needed to point the API endpoints for the dynanic host creation

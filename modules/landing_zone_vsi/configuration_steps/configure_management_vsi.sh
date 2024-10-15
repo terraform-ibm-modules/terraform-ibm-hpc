@@ -22,6 +22,7 @@ default_cluster_name="HPCCluster"
 nfs_server_with_mount_path=${mount_path}
 enable_ldap="${enable_ldap}"
 ldap_server_ip="${ldap_server_ip}"
+ldap_server_cert="${ldap_server_cert}"
 base_dn="${ldap_basedns}"
 
 this_hostname="$(hostname)"
@@ -692,6 +693,15 @@ if [ -n "${nfs_server_with_mount_path}" ]; then
       chown -R lsfadmin:root "${LSF_TOP}"
     done
 
+    # Check if LDAP is enabled and the existing LDAP server certificate is provided
+    if [ "$on_primary" == "true" ] && [ "$enable_ldap" == "true" ] && [ "$ldap_server_cert" != "null" ]; then
+        mkdir -p /mnt/lsf/openldap
+        echo "$ldap_server_cert" > /mnt/lsf/openldap/ldap_cacert.pem
+        chmod 755 /mnt/lsf/openldap/ldap_cacert.pem
+        cp -pr /mnt/lsf/openldap/ldap_cacert.pem /etc/openldap/certs/ldap_cacert.pem
+       echo "Configuring with the existing LDAP server. Existing LDAP server certificate found. Proceeding with the setup!"
+    fi
+
     # Sharing the lsfsuite.conf folder
     if [ "$on_primary" == "true" ] && [ "$enable_app_center" == "true" ] && [ "$app_center_high_availability" == "true" ]; then
         # Create pac folder if it does not exist
@@ -955,81 +965,100 @@ EOT
   (crontab -l 2>/dev/null; echo "@reboot  $command") | crontab -
 fi
 
-
-# Setting up the LDAP configuration
+# Check if LDAP configuration is enabled
 if [ "$enable_ldap" = "true" ]; then
 
-    # Detect RHEL version
-    rhel_version=$(grep -oE 'release [0-9]+' /etc/redhat-release | awk '{print $2}')
+    # Extract and store the major version of the operating system (8 or 9)
+    version=$(grep -oE 'release [0-9]+' /etc/redhat-release | awk '{print $2}')
 
-    if [ "$rhel_version" = "8" ]; then
-        echo "Detected RHEL 8. Proceeding with LDAP client configuration...."
+    # Proceed if the detected version is either 8 or 9
+    if [ "$version" == "8" ] || [ "$version" == "9" ]; then
+        echo "Detected as RHEL or Rocky $version. Proceeding with LDAP client configuration..."
 
-        # Allow Password authentication
+        # Enable password authentication for SSH by modifying the configuration file
         sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
         systemctl restart sshd
 
-        # Configure LDAP authentication
-        authconfig --enableldap --enableldapauth \
-                    --ldapserver=ldap://"${ldap_server_ip}" \
-                    --ldapbasedn="dc=${base_dn%%.*},dc=${base_dn#*.}" \
-                    --enablemkhomedir --update
+        # Check if the SSL certificate file exists, then copy it to the correct location
+        # Retry finding SSL certificate with a maximum of 5 attempts and 5 seconds sleep between retries
+        for attempt in {1..5}; do
+            if [ -f "/mnt/lsf/openldap/ldap_cacert.pem" ]; then
+                echo "LDAP SSL cert found under /mnt/lsf/openldap/ldap_cacert.pem path"
+                mkdir -p /etc/openldap/certs
+                cp -pr /mnt/lsf/openldap/ldap_cacert.pem /etc/openldap/certs/ldap_cacert.pem
+                break
+            else
+                echo "SSL cert not found on attempt $attempt. Retrying in 5 seconds..."
+                sleep 5
+            fi
+        done
+        # Exit if the SSL certificate is still not found after 5 attempts
+        [ -f "/mnt/lsf/openldap/ldap_cacert.pem" ] || { echo "SSL cert not found after 5 attempts. Exiting."; exit 1; }
 
-        # Check the exit status of the authconfig command
-        if [ $? -eq 0 ]; then
-            echo "LDAP Authentication enabled successfully."
-        else
-            echo "Failed to enable LDAP and LDAP Authentication."
-            exit 1
-        fi
+        # Create and configure the SSSD configuration file for LDAP integration
+        cat <<EOF > /etc/sssd/sssd.conf
+[sssd]
+config_file_version = 2
+services = nss, pam, autofs
+domains = default
 
-        # Update LDAP Client configurations in nsswitch.conf
-        sed -i -e 's/^passwd:.*$/passwd: files ldap/' -e 's/^shadow:.*$/shadow: files ldap/' -e 's/^group:.*$/group: files ldap/' /etc/nsswitch.conf  # pragma: allowlist secret
+[nss]
+homedir_substring = /home
 
-        # Update PAM configuration files
-        sed -i -e '/^auth/d' /etc/pam.d/password-auth
-        sed -i -e '/^auth/d' /etc/pam.d/system-auth
+[pam]
 
-        auth_line="\nauth        required      pam_env.so\n\
-auth        sufficient    pam_unix.so nullok try_first_pass\n\
-auth        requisite     pam_succeed_if.so uid >= 1000 quiet_success\n\
-auth        sufficient    pam_ldap.so use_first_pass\n\
-auth        required      pam_deny.so"
-
-        echo -e "$auth_line" | tee -a /etc/pam.d/password-auth /etc/pam.d/system-auth
-
-        # Copy 'password-auth' settings to 'sshd'
-        cat /etc/pam.d/password-auth > /etc/pam.d/sshd
-
-        # Configure nslcd
-        cat <<EOF > /etc/nslcd.conf
-uid nslcd
-gid ldap
-uri ldap://${ldap_server_ip}/
-base dc=${base_dn%%.*},dc=${base_dn#*.}
+[domain/default]
+id_provider = ldap
+autofs_provider = ldap
+auth_provider = ldap
+chpass_provider = ldap
+ldap_uri = ldap://${ldap_server_ip}
+ldap_search_base = dc=${base_dn%%.*},dc=${base_dn#*.}
+ldap_id_use_start_tls = True
+ldap_tls_cacertdir = /etc/openldap/certs
+cache_credentials = True
+ldap_tls_reqcert = allow
 EOF
 
-        # Restart nslcd and nscd service
-        systemctl restart nslcd
-        systemctl restart nscd
+        # Secure the SSSD configuration file by setting appropriate permissions
+        chmod 600 /etc/sssd/sssd.conf
+        chown root:root /etc/sssd/sssd.conf
 
-        # Enable nslcd and nscd service
-        systemctl enable nslcd
-        systemctl enable nscd
+        # Create and configure the OpenLDAP configuration file for TLS
+        cat <<EOF > /etc/openldap/ldap.conf
+BASE dc=${base_dn%%.*},dc=${base_dn#*.}
+URI ldap://${ldap_server_ip}
+TLS_CACERT /etc/openldap/certs/ldap_cacert.pem
+TLS_CACERTDIR /etc/openldap/certs
+EOF
 
-        # Validate the LDAP configuration
+        # Rehash certificates in the OpenLDAP directory to ensure proper recognition
+        openssl rehash /etc/openldap/certs
+
+        # Apply the SSSD and home directory creation configuration using authselect
+        authselect select sssd with-mkhomedir --force
+
+        # Enable and start the SSSD and oddjobd services for user authentication and home directory management
+        systemctl enable --now sssd oddjobd
+
+        # Restart both services to apply the configuration
+        systemctl restart sssd oddjobd
+
+        # Validate the LDAP configuration by performing a test search using ldapsearch
         if ldapsearch -x -H ldap://"${ldap_server_ip}"/ -b "dc=${base_dn%%.*},dc=${base_dn#*.}" > /dev/null; then
-            echo "LDAP configuration completed successfully !!"
+            echo "LDAP configuration completed successfully!"
         else
-            echo "LDAP configuration failed !!"
+            echo "LDAP configuration failed! Exiting."
             exit 1
         fi
 
-        # Make LSF commands available for every user.
+        # Ensure LSF commands are available to all users by adding the profile to bashrc
         echo ". ${LSF_CONF}/profile.lsf" >> /etc/bashrc
         source /etc/bashrc
+
     else
-        echo "This script is designed for RHEL 8. Detected RHEL version: $rhel_version. Exiting."
+        # Exit if an unsupported RHEL version is detected
+        echo "This script is designed for RHEL 8 or 9. Detected version: $version. Exiting."
         exit 1
     fi
 fi

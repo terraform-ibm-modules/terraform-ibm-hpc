@@ -115,19 +115,19 @@ variable "compute_ssh_keys" {
 
 variable "management_image_name" {
   type        = string
-  default     = "hpcaas-lsf10-rhel88-v3"
+  default     = "hpcaas-lsf10-rhel88-v11"
   description = "Image name to use for provisioning the management cluster instances."
 }
 
 variable "compute_image_name" {
   type        = string
-  default     = "hpcaas-lsf10-rhel88-compute-v2"
+  default     = "hpcaas-lsf10-rhel88-compute-v7"
   description = "Image name to use for provisioning the compute cluster instances."
 }
 
 variable "login_image_name" {
   type        = string
-  default     = "hpcaas-lsf10-rhel88-compute-v2"
+  default     = "hpcaas-lsf10-rhel88-compute-v7"
   description = "Image name to use for provisioning the login instance."
 }
 
@@ -283,6 +283,13 @@ variable "ldap_server" {
   type        = string
   default     = "null"
   description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
+}
+
+variable "ldap_server_cert" {
+  type        = string
+  sensitive   = true
+  default     = "null"
+  description = "Provide the existing LDAP server certificate. If not provided, the value should be set to 'null'."
 }
 
 variable "ldap_admin_password" {

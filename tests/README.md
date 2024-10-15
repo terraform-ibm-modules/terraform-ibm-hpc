@@ -87,7 +87,7 @@ You can update the `test_config.yml` file to provide input parameters. This file
 
 If you want to override the values in `test_config.yml`, you can pass the input parameters through the command line. Example:
 ```sh
-SSH_KEY=your_ssh_key ZONE=your_zone RESOURCE_GROUP=your_resource_group go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee test_output.log
+SSH_KEY=your_ssh_key ZONE=your_zone RESOURCE_GROUP=your_resource_group go test -v -timeout 900m -parallel 4 -run "TestRunBasic" -json > test_output.json
 ```
 Replace placeholders (e.g., `your_ssh_key`, `your_zone`, etc.) with actual values.
 
@@ -95,14 +95,14 @@ Replace placeholders (e.g., `your_ssh_key`, `your_zone`, etc.) with actual value
 
 Run tests with default parameter values from the `test_config.yml` file:
 ```sh
-go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee test_output.log
+go test -v -timeout 900m -parallel 4 -run "TestRunBasic" -json > test_output.json
 ```
 
 ### Overriding Parameters
 
 To override default values, pass the necessary parameters in the command. Example:
 ```sh
-SSH_KEY=your_ssh_key ZONE=your_zone RESOURCE_GROUP=your_resource_group RESERVATION_ID=your_reservation_id KMS_INSTANCE_ID=kms_instance_id KMS_KEY_NAME=kms_key_name IMAGE_NAME=image_name CLUSTER=your_cluster_id DEFAULT_RESOURCE_GROUP=default_resource_group NON_DEFAULT_RESOURCE_GROUP=non_default_resource_group LOGIN_NODE_INSTANCE_TYPE=login_node_instance_type MANAGEMENT_IMAGE_NAME=management_image_name COMPUTE_IMAGE_NAME=compute_image_name MANAGEMENT_NODE_INSTANCE_TYPE=management_node_instance_type MANAGEMENT_NODE_COUNT=management_node_count ENABLE_VPC_FLOW_LOGS=enable_vpc_flow_logs KEY_MANAGEMENT=key_management KMS_INSTANCE_NAME=kms_instance_name HYPERTHREADING_ENABLED=hyperthreading_enabled SSH_FILE_PATH=ssh_file_path go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee test_output.log
+SSH_KEY=your_ssh_key ZONE=your_zone RESOURCE_GROUP=your_resource_group RESERVATION_ID=your_reservation_id KMS_INSTANCE_ID=kms_instance_id KMS_KEY_NAME=kms_key_name IMAGE_NAME=image_name CLUSTER=your_cluster_id DEFAULT_RESOURCE_GROUP=default_resource_group NON_DEFAULT_RESOURCE_GROUP=non_default_resource_group LOGIN_NODE_INSTANCE_TYPE=login_node_instance_type MANAGEMENT_IMAGE_NAME=management_image_name COMPUTE_IMAGE_NAME=compute_image_name MANAGEMENT_NODE_INSTANCE_TYPE=management_node_instance_type MANAGEMENT_NODE_COUNT=management_node_count ENABLE_VPC_FLOW_LOGS=enable_vpc_flow_logs KEY_MANAGEMENT=key_management KMS_INSTANCE_NAME=kms_instance_name HYPERTHREADING_ENABLED=hyperthreading_enabled SSH_FILE_PATH=ssh_file_path go test -v -timeout 900m -parallel 4 -run "TestRunBasic" -json > test_output.json
 ```
 Replace placeholders (e.g., `your_ssh_key`, `your_zone`, etc.) with actual values.
 
@@ -110,7 +110,7 @@ Replace placeholders (e.g., `your_ssh_key`, `your_zone`, etc.) with actual value
 
 Execute multiple tests simultaneously:
 ```sh
-go test -v -timeout 900m -parallel 10 -run="TestRunDefault|TestRunBasic|TestRunLDAP|TestRunAppCenter" | tee test_output.log
+go test -v -timeout 900m -parallel 10 -run="TestRunDefault|TestRunBasic|TestRunLDAP|TestRunAppCenter" -json > test_output.json
 ```
 
 ### Specific Test Files
