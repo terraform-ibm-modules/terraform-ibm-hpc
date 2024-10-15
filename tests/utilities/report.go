@@ -72,8 +72,12 @@ func ParseJSONFile(fileName string) ([]TestResult, error) {
 // Convert elapsed time from string to float64
 func parseElapsed(elapsedStr string) float64 {
 	var elapsed float64
-	fmt.Scanf(elapsedStr, "%f", &elapsed)
-	return elapsed
+	_, err := fmt.Sscanf(elapsedStr, "%fs", &elapsed)
+		if err != nil {
+			fmt.Println("Error parsing elapsed time:", err)
+			return 0.0
+		}
+		return elapsed
 }
 
 // GenerateHTMLReport generates an HTML report from the test results
