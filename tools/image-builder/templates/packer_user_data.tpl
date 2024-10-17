@@ -25,8 +25,9 @@ rm -f ${target_dir}/compressed_compute.tar.gz
 echo "Packer installation started"
 
 # Download and unzip Packer
-wget https://releases.hashicorp.com/packer/1.11.1/packer_1.11.1_linux_amd64.zip
-unzip packer_1.11.1_linux_amd64.zip
+packer_version=$(curl -s https://checkpoint-api.hashicorp.com/v1/check/packer | jq -r .current_version)
+wget https://releases.hashicorp.com/packer/"$packer_version"/packer_"$packer_version"_linux_amd64.zip
+unzip packer_"$packer_version"_linux_amd64.zip
 
 # Move Packer to /usr/local/bin
 sudo mv packer /usr/local/bin/
@@ -70,8 +71,8 @@ echo "======================Installing terraform====================="
 git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
 echo "export PATH=$PATH:$HOME/.tfenv/bin" >> ~/.bashrc
 ln -s ~/.tfenv/bin/* /usr/local/bin
-tfenv install 1.5.7
-tfenv use 1.5.7
+tfenv install latest
+tfenv use latest
 terraform --version
 
 echo "====================== Triggering mounting of Cos Bucket ====================="
@@ -114,18 +115,6 @@ cd /HPCaaS/terraform-ibm-hpc/tools/tests
 git submodule update --init
 
 sudo yum update -y
-
-# Download the installer script:
-curl --proto '=https' --tlsv1.2 -fsSL https://get.opentofu.org/install-opentofu.sh -o install-opentofu.sh
-
-# Give it execution permissions:
-chmod +x install-opentofu.sh
-
-# Run the installer:
-./install-opentofu.sh --install-method rpm
-
-# Remove the installer:
-rm -f install-opentofu.sh
 
 echo "***** Installing Golang *****"
 

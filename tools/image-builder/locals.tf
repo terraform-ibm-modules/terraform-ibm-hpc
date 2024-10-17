@@ -59,7 +59,7 @@ locals {
   }
   network_acl_inbound_rules = [
     {
-      name        = "test-1"
+      name        = "allow-all-inbound"
       action      = "allow"
       destination = "0.0.0.0/0"
       direction   = "inbound"
@@ -68,7 +68,7 @@ locals {
   ]
   network_acl_outbound_rules = [
     {
-      name        = "test-2"
+      name        = "allow-all-outbound"
       action      = "allow"
       destination = "0.0.0.0/0"
       direction   = "outbound"
