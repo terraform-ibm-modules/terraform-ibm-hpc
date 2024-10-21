@@ -5,11 +5,11 @@ go 1.22.0
 toolchain go1.23.2
 
 require (
-	github.com/IBM/go-sdk-core/v5 v5.17.5
-	github.com/IBM/secrets-manager-go-sdk/v2 v2.0.7
+	github.com/IBM/go-sdk-core/v5 v5.18.0
+	github.com/IBM/secrets-manager-go-sdk/v2 v2.0.8
 	github.com/gruntwork-io/terratest v0.47.2
 	github.com/stretchr/testify v1.9.0
-	github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper v1.39.7
+	github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper v1.41.1
 	golang.org/x/crypto v0.28.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -23,12 +23,12 @@ require (
 	cloud.google.com/go/storage v1.40.0 // indirect
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/IBM-Cloud/bluemix-go v0.0.0-20240719075425-078fcb3a55be // indirect
-	github.com/IBM-Cloud/power-go-client v1.8.1 // indirect
+	github.com/IBM-Cloud/power-go-client v1.8.3 // indirect
 	github.com/IBM/cloud-databases-go-sdk v0.7.0 // indirect
-	github.com/IBM/platform-services-go-sdk v0.69.1 // indirect
+	github.com/IBM/platform-services-go-sdk v0.69.3 // indirect
 	github.com/IBM/project-go-sdk v0.3.6 // indirect
 	github.com/IBM/schematics-go-sdk v0.3.0 // indirect
-	github.com/IBM/vpc-go-sdk v0.59.0 // indirect
+	github.com/IBM/vpc-go-sdk v0.61.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.0.0 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
