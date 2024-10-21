@@ -3,10 +3,10 @@ version: "v1"
 CRA_TARGETS:
   - CRA_TARGET: "solutions/hpc"
     CRA_IGNORE_RULES_FILE: "cra-tf-validate-ignore-rules.json"
-    PROFILE_ID: "1c13d739-e09e-4bf4-8715-dd82e4498041" # SCC profile ID (currently set to CIS IBM Cloud Foundations Benchmark 1.0.0 profile).
+    PROFILE_ID: "48279384-3d29-4089-8259-8ed354774b4a"  # SCC profile ID (currently set to 'CIS IBM Cloud Foundations Benchmark v1.1.0' '1.1.0' profile).
     CRA_ENVIRONMENT_VARIABLES:
-        TF_VAR_cluster_id: "HPC-LSF-1"
-        TF_VAR_reservation_id: "Contract-IBM-WES-DA"
-        TF_VAR_bastion_ssh_keys: "[\"geretain-hpc\"]"
-        TF_VAR_compute_ssh_keys: "[\"geretain-hpc\"]"
-        TF_VAR_remote_allowed_ips: "[\"49.207.216.50\"]"
+      TF_VAR_cluster_id: "HPC-LSF-1"
+      TF_VAR_reservation_id: "Contract-IBM-WES-DA"
+      TF_VAR_bastion_ssh_keys: "[\"geretain-hpc\"]"
+      TF_VAR_compute_ssh_keys: "[\"geretain-hpc\"]"
+      TF_VAR_remote_allowed_ips: "[\"49.207.216.50\"]"
