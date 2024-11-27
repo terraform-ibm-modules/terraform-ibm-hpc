@@ -1,16 +1,55 @@
+data "ibm_resource_group" "itself" {
+  name = var.resource_group
+}
+
+# TODO: Verify distinct profiles
+/*
+data "ibm_is_instance_profile" "management" {
+  name = var.management_profile
+}
+
+data "ibm_is_instance_profile" "compute" {
+  name = var.compute_profile
+}
+
+data "ibm_is_instance_profile" "storage" {
+  name = var.storage_profile
+}
+
+data "ibm_is_instance_profile" "protocol" {
+  name = var.protocol_profile
+}
+*/
+
+data "ibm_is_image" "client" {
+  count = length(var.client_instances)
+  name  = var.client_instances[count.index]["image"]
+}
+
 data "ibm_is_image" "management" {
-  name  = var.management_image_name
-  count = local.image_mapping_entry_found ? 0 : 1
+  count = length(var.management_instances)
+  name  = var.management_instances[count.index]["image"]
 }
 
 data "ibm_is_image" "compute" {
-  name  = var.compute_image_name
-  count = local.compute_image_from_data ? 1 : 0
+  count = length(var.static_compute_instances)
+  name  = var.static_compute_instances[count.index]["image"]
 }
 
-data "ibm_is_image" "login" {
-  name  = var.login_image_name
-  count = local.login_image_mapping_entry_found ? 0 : 1
+data "ibm_is_image" "storage" {
+  count = length(var.storage_instances)
+  name  = var.storage_instances[count.index]["image"]
+}
+
+data "ibm_is_image" "protocol" {
+  count = length(var.protocol_instances)
+  name  = var.protocol_instances[count.index]["image"]
+}
+
+
+data "ibm_is_ssh_key" "client" {
+  for_each = toset(var.client_ssh_keys)
+  name     = each.key
 }
 
 data "ibm_is_ssh_key" "compute" {
@@ -18,20 +57,7 @@ data "ibm_is_ssh_key" "compute" {
   name     = each.key
 }
 
-data "ibm_is_region" "region" {
-  name = local.region
-}
-
-data "ibm_is_instance_profile" "management_node" {
-  name = var.management_node_instance_type
-}
-
-data "ibm_is_ssh_key" "bastion" {
-  for_each = toset(var.ssh_keys)
+data "ibm_is_ssh_key" "storage" {
+  for_each = toset(var.storage_ssh_keys)
   name     = each.key
-}
-
-data "ibm_is_image" "ldap_vsi_image" {
-  name  = var.ldap_vsi_osimage_name
-  count = var.ldap_basedns != null && var.ldap_server == "null" ? 1 : 0
 }

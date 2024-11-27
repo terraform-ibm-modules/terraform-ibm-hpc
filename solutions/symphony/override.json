@@ -1,0 +1,95 @@
+{
+   "prefix":"symphony",
+   "resource_group": "Default",
+   "vpc": null,
+   "network_cidr":"10.0.0.0/8",
+   "placement_strategy":null,
+   "ssh_keys":null,
+   "enable_bastion":true,
+   "enable_deployer":false,
+   "deployer_instance_profile":"mx2-4x32",
+   "bastion_ssh_keys": null,
+   "bastion_subnets_cidr":"10.0.0.0/24",
+   "enable_vpn":false,
+   "vpn_peer_cidr":null,
+   "vpn_peer_address":null,
+   "vpn_preshared_key":null,
+   "client_subnets_cidr":"10.10.10.0/24",
+   "client_ssh_keys": null,
+   "client_instances":[
+      {
+         "profile":"cx2-2x4",
+         "count":2,
+         "image":"ibm-redhat-8-10-minimal-amd64-2"
+      }
+   ],
+   "compute_subnets_cidr":"10.10.20.0/24",
+   "compute_ssh_keys": null,
+   "management_instances":[
+      {
+         "profile":"cx2-2x4",
+         "count":3,
+         "image":"ibm-redhat-8-10-minimal-amd64-2"
+      }
+   ],
+   "static_compute_instances":[
+      {
+         "profile":"cx2-2x4",
+         "count":0,
+         "image":"ibm-redhat-8-10-minimal-amd64-2"
+      }
+   ],
+   "dynamic_compute_instances":[
+      {
+         "profile":"cx2-2x4",
+         "count":5000,
+         "image":"ibm-redhat-8-10-minimal-amd64-2"
+      }
+   ],
+   "compute_gui_username":"admin",
+   "compute_gui_password": "hpc@IBMCloud",
+   "storage_subnets_cidr":"10.10.30.0/24",
+   "storage_ssh_keys": null,
+   "storage_instances":[
+      {
+         "profile":"cx2-2x4",
+         "count":2,
+         "image":"ibm-redhat-8-10-minimal-amd64-2"
+      }
+   ],
+   "protocol_subnets_cidr":"10.10.40.0/24",
+   "protocol_instances":[
+      {
+         "profile":"cx2-2x4",
+         "count":2,
+         "image":"ibm-redhat-8-10-minimal-amd64-2"
+      }
+   ],
+   "storage_gui_username":"admin",
+   "storage_gui_password": "hpc@IBMCloud",
+   "file_shares":[
+      {
+         "mount_path":"/mnt/binaries",
+         "size":100,
+         "iops":1000
+      },
+      {
+         "mount_path":"/mnt/data",
+         "size":100,
+         "iops":1000
+      }
+   ],
+   "dns_instance_id":null,
+   "dns_custom_resolver_id":null,
+   "dns_domain_names":{
+      "compute":"comp.com",
+      "storage":"strg.com",
+      "protocol":"ces.com"
+   },
+   "enable_cos_integration":true,
+   "cos_instance_name":null,
+   "enable_atracker":true,
+   "enable_vpc_flow_logs":true,
+   "key_management":"key_protect",
+   "hpcs_instance_name":null
+}
