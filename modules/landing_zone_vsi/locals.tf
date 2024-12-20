@@ -214,6 +214,16 @@ locals {
       remote    = module.client_sg[0].security_group_id
     }
     */
+    {
+      name      = "allow-in-out"
+      direction = "outbound"
+      remote    = "0.0.0.0/0"
+    },
+    {
+      name      = "allow-all-out"
+      direction = "inbound"
+      remote    = "0.0.0.0/0"
+    }
   ]
   storage_security_group_rules = [
     {
