@@ -135,8 +135,8 @@ locals {
 locals {
   compute_hosts          = local.compute_instances[*]["ipv4_address"]
   storage_hosts          = local.storage_instances[*]["ipv4_address"]
-  compute_inventory_path = "compute.ini"
-  storage_inventory_path = "storage.ini"
+  compute_inventory_path = "../../modules/ansible-roles/compute.ini"
+  storage_inventory_path = "../../modules/ansible-roles/storage.ini"
 }
 
 # locals needed for playbook
@@ -144,7 +144,7 @@ locals {
   bastion_fip              = module.deployer.bastion_fip
   compute_private_key_path = "compute_id_rsa" #checkov:skip=CKV_SECRET_6
   storage_private_key_path = "storage_id_rsa" #checkov:skip=CKV_SECRET_6
-  compute_playbook_path    = "compute_ssh.yaml"
-  storage_playbook_path    = "storage_ssh.yaml"
+  compute_playbook_path    = "../../modules/ansible-roles/compute_ssh.yaml"
+  storage_playbook_path    = "../../modules/ansible-roles/storage_ssh.yaml"
 }
 

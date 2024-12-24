@@ -1,0 +1,22 @@
+- name: Connect to remote hosts via bastion and perform tasks
+  hosts: all
+  become: yes
+  vars:
+    ansible_ssh_common_args: >
+      -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null 
+      -o ControlMaster=auto -o ControlPersist=30m -i /Users/jayesh/.ssh/id_rsa 
+      ubuntu@165.192.133.123 -W %h:%p"
+  tasks:
+    - name: Check passwordless SSH on all scale inventory hosts
+      shell: echo PASSWDLESS_SSH_ENABLED
+      register: result
+      until: result.stdout.find("PASSWDLESS_SSH_ENABLED") != -1
+      retries: 60
+      delay: 10
+
+    - name: Create directory /mnt/lsf on remote hosts
+      file:
+        path: /mnt/lsf
+        state: directory
+        mode: '0755'
+

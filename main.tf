@@ -96,6 +96,7 @@ module "dns" {
   dns_instance_id        = var.dns_instance_id
   dns_custom_resolver_id = var.dns_custom_resolver_id
   dns_domain_names       = values(var.dns_domain_names)
+  depends_on             = [ module.landing_zone_vsi ]
 }
 
 module "compute_dns_records" {
@@ -103,6 +104,7 @@ module "compute_dns_records" {
   dns_instance_id = local.dns_instance_id
   dns_zone_id     = local.compute_dns_zone_id
   dns_records     = local.compute_dns_records
+  depends_on      = [ module.dns ]
 }
 
 module "storage_dns_records" {
@@ -110,6 +112,7 @@ module "storage_dns_records" {
   dns_instance_id = local.dns_instance_id
   dns_zone_id     = local.storage_dns_zone_id
   dns_records     = local.storage_dns_records
+  depends_on      = [ module.dns ]
 }
 
 module "protocol_dns_records" {
@@ -117,18 +120,21 @@ module "protocol_dns_records" {
   dns_instance_id = local.dns_instance_id
   dns_zone_id     = local.protocol_dns_zone_id
   dns_records     = local.protocol_dns_records
+  depends_on      = [ module.dns ]
 }
 
 module "compute_inventory" {
   source         = "./modules/inventory"
   hosts          = local.compute_hosts
   inventory_path = local.compute_inventory_path
+  depends_on     = [ module.compute_dns_records ]
 }
 
 module "storage_inventory" {
   source         = "./modules/inventory"
   hosts          = local.storage_hosts
   inventory_path = local.storage_inventory_path
+  depends_on     = [ module.storage_dns_records, module.protocol_dns_records ]
 }
 
 module "compute_playbook" {
@@ -137,7 +143,7 @@ module "compute_playbook" {
   private_key_path = local.compute_private_key_path
   inventory_path   = local.compute_inventory_path
   playbook_path    = local.compute_playbook_path
-  depends_on       = [module.compute_inventory]
+  depends_on       = [ module.compute_inventory ]
 }
 
 module "storage_playbook" {
@@ -146,6 +152,6 @@ module "storage_playbook" {
   private_key_path = local.storage_private_key_path
   inventory_path   = local.storage_inventory_path
   playbook_path    = local.storage_playbook_path
-  depends_on       = [module.storage_inventory]
+  depends_on       = [ module.storage_inventory ]
 }
 
