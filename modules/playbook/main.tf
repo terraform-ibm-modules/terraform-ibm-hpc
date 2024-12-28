@@ -4,9 +4,9 @@ resource "local_file" "create_playbook" {
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
 - name: Connect to remote hosts via bastion and perform tasks
-  hosts: all
+  hosts: [lsf_nodes]
   any_errors_fatal: true
-  #gather_facts: false
+  gather_facts: false
   become: yes
   vars:
     ansible_ssh_common_args: >
@@ -26,9 +26,9 @@ resource "local_file" "create_playbook" {
       delay: 10
 
 - name: Prerequisite Configuration
-  hosts: all
+  hosts: [lsf_nodes]
   any_errors_fatal: true
-  #gather_facts: false
+  gather_facts: false
   become: yes
   vars:
     ansible_ssh_common_args: >

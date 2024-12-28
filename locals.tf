@@ -148,3 +148,7 @@ locals {
   storage_playbook_path    = "../../modules/ansible-roles/storage_ssh.yaml"
 }
 
+# File Share OutPut
+locals {
+  fileshare_name_mount_path_map = module.file_storage.name_mount_path_map
+}

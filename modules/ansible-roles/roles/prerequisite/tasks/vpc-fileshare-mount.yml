@@ -1,29 +1,24 @@
 ---
-- name: Create base directory for NFS mount
+- name: show dictionary
+  ansible.builtin.debug:
+    msg: "{{item.key}}: {{item.value}}"
+  with_dict: "{{ name_mount_path_map }}"
+
+- name: Create base directories for NFS mount points
   file:
-    path: /mnt/lsf/shared
+    path: "/mnt/{{ item.key }}"
     state: directory
     mode: '0777'
+  with_dict: "{{ name_mount_path_map }}"
 
-- name: Set permissions for shared directory
-  file:
-    path: /mnt/lsf/shared
-    state: directory
-    mode: '0777'
-    recurse: yes
-
-- name: Add NFS entry to /etc/fstab
+- name: Add NFS entries to /etc/fstab
   lineinfile:
     path: /etc/fstab
-    line: "10.10.20.7:/10fb2beb_aceb_4a0d_97de_c02cd425cd80 /mnt/lsf nfs rw,sec=sys,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,_netdev 0 0"
+    line: "{{ item.value }} /mnt/{{ item.key }} nfs rw,sec=sys,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,_netdev 0 0"
     state: present
     create: yes
+  with_dict: "{{ name_mount_path_map }}"
   notify: Mount NFS
-
-- name: Mount all filesystems
-  command: mount -a
-  register: mount_output
-  changed_when: mount_output.rc == 0
 
 - name: Verify mounted filesystems
   command: df -h

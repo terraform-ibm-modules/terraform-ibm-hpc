@@ -22,10 +22,6 @@ echo "StrictHostKeyChecking no" >> ~/.ssh/config
 echo "${management_private_key_content}" > ~/.ssh/id_rsa
 chmod 600 ~/.ssh/id_rsa
 
-yum install OpenIPMI ipmitool -y
-sudo yum install lsof -y
-yum install -y bind-utils
-
 # network setup
 echo "DOMAIN=${management_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${management_interfaces}"
 echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${management_interfaces}"

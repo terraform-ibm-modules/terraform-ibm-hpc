@@ -1,4 +1,4 @@
 output "lsf" {
-  value = module.lsf
-  sensitive = true
+  value = module.lsf.file_storage
+  #sensitive = true
 }
