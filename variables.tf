@@ -686,9 +686,3 @@ variable "TF_LOG" {
   default     = "ERROR"
   description = "The Terraform log level used for output in the Schematics workspace."
 }
-
-# variable "fileshare_name_mount_path_map" {
-#   description = "File share mount path"
-#   type        = list()
-#   default     = null
-# }
