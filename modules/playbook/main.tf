@@ -7,7 +7,7 @@ resource "local_file" "create_playbook" {
   hosts: [lsf_nodes]
   any_errors_fatal: true
   gather_facts: false
-  become: yes
+  # become: yes
   vars:
     ansible_ssh_common_args: >
       -o ProxyJump=ubuntu@${var.bastion_fip}
@@ -15,8 +15,8 @@ resource "local_file" "create_playbook" {
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
       -o StrictHostKeyChecking=no
-    ansible_user: vpcuser
-    ansible_ssh_private_key_file: /Users/jayesh/.ssh/id_rsa
+    ansible_user: root
+    ansible_ssh_private_key_file: ${var.private_key_path}
   tasks:
     - name: Check passwordless SSH on all scale inventory hosts
       shell: echo PASSWDLESS_SSH_ENABLED
@@ -29,7 +29,7 @@ resource "local_file" "create_playbook" {
   hosts: [lsf_nodes]
   any_errors_fatal: true
   gather_facts: false
-  become: yes
+  # become: yes
   vars:
     ansible_ssh_common_args: >
       -o ProxyJump=ubuntu@${var.bastion_fip}
@@ -37,8 +37,8 @@ resource "local_file" "create_playbook" {
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
       -o StrictHostKeyChecking=no
-    ansible_user: vpcuser
-    ansible_ssh_private_key_file: /Users/jayesh/.ssh/id_rsa
+    ansible_user: root
+    ansible_ssh_private_key_file: ${var.private_key_path}
   roles:
      - prerequisite
 
