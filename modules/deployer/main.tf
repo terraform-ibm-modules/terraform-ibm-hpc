@@ -19,7 +19,7 @@ module "bastion_sg" {
 module "bastion_vsi" {
   count                         = var.enable_bastion ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "4.4.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -43,7 +43,7 @@ module "bastion_vsi" {
 module "deployer_vsi" {
   count                         = local.enable_deployer ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "4.4.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null

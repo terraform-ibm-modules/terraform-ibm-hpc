@@ -53,7 +53,7 @@ variable "enable_bastion" {
 
 variable "bastion_image" {
   type        = string
-  default     = "ibm-ubuntu-22-04-3-minimal-amd64-1"
+  default     = "ibm-ubuntu-22-04-4-minimal-amd64-3"
   description = "The image to use to deploy the bastion host."
 }
 

@@ -1,0 +1,21 @@
+# Ensure provisioned VMs are up and Passwordless SSH setup has been established
+
+- name: Check passwordless SSH connection is setup
+  hosts: all
+  any_errors_fatal: true
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: Check passwordless SSH on all scale inventory hosts
+      shell: echo PASSWDLESS_SSH_ENABLED
+      register: result
+      until: result.stdout.find("PASSWDLESS_SSH_ENABLED") != -1
+      retries: 60
+      delay: 10
+  vars:
+    ansible_ssh_common_args: >-
+      -o ControlMaster=auto
+      -o ControlPersist=30m
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+      -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i storage_id_rsa -J ubuntu@150.239.85.21 -W %h:%p root@{{ inventory_hostname }}"

@@ -1,3 +1,3 @@
-output "scale" {
-  value = module.scale
-}
+# output "scale" {
+#   value = module.scale
+# }
