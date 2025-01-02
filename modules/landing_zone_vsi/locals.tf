@@ -215,13 +215,13 @@ locals {
     }
     */
     {
-      name      = "allow-in-out"
-      direction = "outbound"
+      name      = "allow-all-compute-in"
+      direction = "inbound"
       remote    = "0.0.0.0/0"
     },
     {
-      name      = "allow-all-out"
-      direction = "inbound"
+      name      = "allow-all-compute-out"
+      direction = "outbound"
       remote    = "0.0.0.0/0"
     }
   ]
