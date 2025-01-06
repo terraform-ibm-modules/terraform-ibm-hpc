@@ -5,7 +5,7 @@
 
 resource "local_sensitive_file" "itself" {
   content  = <<EOT
-[lsf_nodes]
+[all_nodes]
 ${join("\n", var.hosts)}
 
 [all:vars]

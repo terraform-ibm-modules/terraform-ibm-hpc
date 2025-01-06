@@ -133,8 +133,8 @@ locals {
 
 # locals needed for inventory
 locals {
-  compute_hosts          = local.compute_instances[*]["ipv4_address"]
-  storage_hosts          = local.storage_instances[*]["ipv4_address"]
+  compute_hosts          = try([for name in local.compute_instances[*]["name"] : "${name}.${var.dns_domain_names["compute"]}"], [])  #local.compute_instances[*]["ipv4_address"]
+  storage_hosts          = try([for name in local.storage_instances[*]["name"] : "${name}.${var.dns_domain_names["storage"]}"], [])  #local.storage_instances[*]["ipv4_address"]
   compute_inventory_path = "./../../modules/ansible-roles/compute.ini"
   storage_inventory_path = "./../../modules/ansible-roles/storage.ini"
 }
@@ -148,7 +148,7 @@ locals {
   storage_playbook_path    = "./../../modules/ansible-roles/storage_ssh.yaml"
 }
 
-# File Share OutPut
+# file Share OutPut
 locals {
   fileshare_name_mount_path_map = module.file_storage.name_mount_path_map
 }

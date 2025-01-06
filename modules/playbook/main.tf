@@ -4,10 +4,9 @@ resource "local_file" "create_playbook" {
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
 - name: Connect to remote hosts via bastion and perform tasks
-  hosts: [lsf_nodes]
+  hosts: [all_nodes]
   any_errors_fatal: true
   gather_facts: false
-  # become: yes
   vars:
     ansible_ssh_common_args: >
       -o ProxyJump=ubuntu@${var.bastion_fip}
@@ -26,10 +25,9 @@ resource "local_file" "create_playbook" {
       delay: 10
 
 - name: Prerequisite Configuration
-  hosts: [lsf_nodes]
+  hosts: [all_nodes]
   any_errors_fatal: true
   gather_facts: false
-  # become: yes
   vars:
     ansible_ssh_common_args: >
       -o ProxyJump=ubuntu@${var.bastion_fip}
@@ -41,28 +39,6 @@ resource "local_file" "create_playbook" {
     ansible_ssh_private_key_file: ${var.private_key_path}
   roles:
      - prerequisite
-
-# - name: Check passwordless SSH connection is setup
-#   hosts: all
-#   any_errors_fatal: true
-#   gather_facts: false
-#   connection: local
-#   tasks:
-#     - name: Check passwordless SSH on all scale inventory hosts
-#       shell: echo PASSWDLESS_SSH_ENABLED
-#       register: result
-#       until: result.stdout.find("PASSWDLESS_SSH_ENABLED") != -1
-#       retries: 60
-#       delay: 10
-#   vars:
-#     ansible_ssh_common_args: >-
-#       -o ControlMaster=auto
-#       -o ControlPersist=30m
-#       -o UserKnownHostsFile=/dev/null
-#       -o StrictHostKeyChecking=no
-#       -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${var.private_key_path} -J ubuntu@${var.bastion_fip} -W %h:%p root@{{ inventory_hostname }}"
-
-
 EOT
   filename = var.playbook_path
 }
