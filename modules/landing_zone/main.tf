@@ -1,7 +1,7 @@
 module "landing_zone" {
   count                                  = var.enable_landing_zone ? 1 : 0
   source                                 = "terraform-ibm-modules/landing-zone/ibm"
-  version                                = "6.0.3"
+  version                                = "6.2.1"
   prefix                                 = local.prefix
   region                                 = local.region
   tags                                   = local.tags

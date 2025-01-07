@@ -109,4 +109,19 @@ output "key_management_guid" {
   value       = var.key_management != null ? module.landing_zone[0].key_management_guid : null
 }
 
+output "cos_buckets_data" {
+  description = "COS buckets data"
+  value       = flatten(module.landing_zone[*].cos_bucket_data)
+}
+
+output "cos_instance_crns" {
+  description = "CRN of the COS instance created by Landing Zone Module"
+  value       = flatten(module.landing_zone[*].cos_data[*].crn)
+}
+
+output "cos_buckets_names" {
+  description = "Name of the COS Bucket created for SCC Instance"
+  value       = flatten(module.landing_zone[*].cos_bucket_names)
+}
+
 # TODO: Observability data

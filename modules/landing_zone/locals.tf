@@ -277,7 +277,7 @@ locals {
 
   active_cos = [
     (
-      var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker
+      var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker || var.scc_enable || var.observability_logs_enable
       ) ? {
       name           = var.cos_instance_name == null ? "hpc-cos" : var.cos_instance_name
       resource_group = local.resource_group
@@ -293,21 +293,42 @@ locals {
           storage_class = "standard"
           endpoint_type = "public"
           force_delete  = true
-          kms_key       = var.key_management == "key_protect" ? format("%s-key", var.prefix) : null
+          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-key", var.prefix) : var.kms_key_name) : null
         } : null,
         var.enable_vpc_flow_logs ? {
           name          = "vpc-flow-logs-bucket"
           storage_class = "standard"
           endpoint_type = "public"
           force_delete  = true
-          kms_key       = var.key_management == "key_protect" ? format("%s-slz-key", var.prefix) : null
+          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-slz-key", var.prefix) : var.kms_key_name) : null
         } : null,
         var.enable_atracker ? {
           name          = "atracker-bucket"
           storage_class = "standard"
           endpoint_type = "public"
           force_delete  = true
-          kms_key       = var.key_management == "key_protect" ? format("%s-atracker-key", var.prefix) : null
+          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-atracker-key", var.prefix) : var.kms_key_name) : null
+        } : null,
+        var.observability_logs_enable ? {
+          name          = "logs-data-bucket"
+          storage_class = "standard"
+          endpoint_type = "public"
+          force_delete  = true
+          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-logs-data-key", var.prefix) : var.kms_key_name) : null
+        } : null,
+        var.observability_logs_enable ? {
+          name          = "metrics-data-bucket"
+          storage_class = "standard"
+          endpoint_type = "public"
+          force_delete  = true
+          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-metrics-data-key", var.prefix) : var.kms_key_name) : null
+        } : null,
+        var.scc_enable ? {
+          name          = "scc-bucket"
+          storage_class = "standard"
+          endpoint_type = "public"
+          force_delete  = true
+          kms_key       = null
         } : null
       ]
     } : null
@@ -337,9 +358,8 @@ locals {
     if instance != null
   ]
 
-  # Prerequisite: Existing key protect instance is not supported, always create a key management instance
-  active_keys = [
-    var.key_management != null ? {
+  active_keys = var.key_management == "key_protect" ? (var.kms_key_name == null ? [
+    var.key_management == "key_protect" ? {
       name = format("%s-vsi-key", var.prefix)
     } : null,
     var.enable_cos_integration ? {
@@ -348,15 +368,34 @@ locals {
     var.enable_vpc_flow_logs ? {
       name = format("%s-slz-key", var.prefix)
     } : null,
+    var.observability_logs_enable ? {
+      name = format("%s-metrics-data-key", var.prefix)
+    } : null,
+    var.observability_logs_enable ? {
+      name = format("%s-logs-data-key", var.prefix)
+    } : null,
     var.enable_atracker ? {
       name = format("%s-atracker-key", var.prefix)
     } : null
-  ]
-  key_management = {
-    name           = var.key_management == "hs_crypto" ? var.hpcs_instance_name : format("%s-kms", var.prefix)
+    ] : [
+    {
+      name             = var.kms_key_name
+      existing_key_crn = data.ibm_kms_key.kms_key[0].keys[0].crn
+    }
+  ]) : null
+
+  key_management = var.key_management == "key_protect" ? {
+    name           = var.kms_instance_name != null ? var.kms_instance_name : format("%s-kms", var.prefix) # var.key_management == "hs_crypto" ? var.hpcs_instance_name : format("%s-kms", var.prefix)
     resource_group = local.resource_group
-    use_hs_crypto  = var.key_management == "hs_crypto" ? true : false
+    use_hs_crypto  = false
     keys           = [for each in local.active_keys : each if each != null]
+    use_data       = var.kms_instance_name != null ? true : false
+    } : {
+    name           = null
+    resource_group = null
+    use_hs_crypto  = null
+    keys           = []
+    use_data       = null
   }
 
   total_vsis = sum([
@@ -385,7 +424,7 @@ locals {
     resource_group        = local.resource_group
     receive_global_events = var.enable_atracker
     collector_bucket_name = "atracker-bucket"
-    add_route             = var.enable_atracker
+    add_route             = var.enable_atracker ? true : false
   }
   wait_till = "IngressReady"
   appid = {

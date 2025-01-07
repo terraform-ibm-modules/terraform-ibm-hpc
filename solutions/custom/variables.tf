@@ -458,7 +458,7 @@ variable "ldap_instances" {
 variable "key_management" {
   type        = string
   default     = "key_protect"
-  description = "null/key_protect/hs_crypto"
+  description = "null/key_protect"
 }
 
 variable "hpcs_instance_name" {

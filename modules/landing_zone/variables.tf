@@ -241,13 +241,41 @@ variable "enable_vpc_flow_logs" {
 variable "key_management" {
   type        = string
   default     = null
-  description = "null/key_protect/hs_crypto"
+  description = "null/key_protect"
+}
+
+variable "kms_instance_name" {
+  type        = string
+  default     = null
+  description = "Name of the Key Protect instance associated with the Key Management Service. The ID can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
+}
+
+variable "kms_key_name" {
+  type        = string
+  default     = null
+  description = "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. (for example kms_key_name: my-encryption-key)."
 }
 
 variable "hpcs_instance_name" {
   type        = string
   default     = null
   description = "Hyper Protect Crypto Service instance"
+}
+
+##############################################################################
+# Observability Variables
+##############################################################################
+
+variable "scc_enable" {
+  type        = bool
+  default     = false
+  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+}
+
+variable "observability_logs_enable" {
+  description = "Set false to disable IBM Cloud Logs integration. If enabled, infrastructure and LSF application logs from Management/Compute Nodes will be ingested under COS bucket."
+  type        = bool
+  default     = false
 }
 
 ##############################################################################

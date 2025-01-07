@@ -29,6 +29,6 @@ resource "ibm_is_share_mount_target" "share_target_sg" {
     name            = format("%s-fs-vni", var.file_shares[count.index]["name"])
     security_groups = var.security_group_ids
   }
-  # TODO: update transit_encryption value conditionaly; it fails with 
+  # TODO: update transit_encryption value conditionaly; it fails with
   # transit_encryption = "user_managed"
 }
