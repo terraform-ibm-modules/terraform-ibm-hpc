@@ -84,6 +84,9 @@ locals {
     scc_profile_version                              = var.scc_profile_version
     scc_location                                     = var.scc_location
     scc_event_notification_plan                      = var.scc_event_notification_plan
+    skip_flowlogs_s2s_auth_policy                    = var.skip_flowlogs_s2s_auth_policy
+    skip_iam_authorization_policy                    = var.skip_iam_authorization_policy
+    skip_kms_s2s_auth_policy                         = var.skip_kms_s2s_auth_policy
   }
 }
 
@@ -156,5 +159,8 @@ locals {
     scc_profile_version                              = lookup(local.override[local.override_type], "scc_profile_version", local.config.scc_profile_version)
     scc_location                                     = lookup(local.override[local.override_type], "scc_location", local.config.scc_location)
     scc_event_notification_plan                      = lookup(local.override[local.override_type], "scc_event_notification_plan", local.config.scc_event_notification_plan)
+    skip_flowlogs_s2s_auth_policy                    = lookup(local.override[local.override_type], "skip_flowlogs_s2s_auth_policy", local.config.skip_flowlogs_s2s_auth_policy)
+    skip_iam_authorization_policy                    = lookup(local.override[local.override_type], "skip_iam_authorization_policy", local.config.skip_iam_authorization_policy)
+    skip_kms_s2s_auth_policy                         = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
   }
 }

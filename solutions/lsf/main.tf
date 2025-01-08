@@ -66,4 +66,7 @@ module "lsf" {
   scc_profile_version                              = local.env.scc_profile_version
   scc_location                                     = local.env.scc_location
   scc_event_notification_plan                      = local.env.scc_event_notification_plan
+  skip_flowlogs_s2s_auth_policy                    = local.env.skip_flowlogs_s2s_auth_policy
+  skip_iam_authorization_policy                    = local.env.skip_iam_authorization_policy
+  skip_kms_s2s_auth_policy                         = local.env.skip_kms_s2s_auth_policy
 }

@@ -101,7 +101,7 @@ output "subnets_crn" {
 # TODO: Find a way to get CRN needed for VSI boot drive encryption
 output "boot_volume_encryption_key" {
   description = "Boot volume encryption key"
-  value       = var.key_management != null ? module.landing_zone[*].key_map[format("%s-vsi-key", var.prefix)] : null
+  value       = var.key_management == "key_protect" ? (var.kms_key_name == null ? module.landing_zone[*].key_map[format("%s-vsi-key", var.prefix)] : module.landing_zone[*].key_map[var.kms_key_name]) : null
 }
 
 output "key_management_guid" {

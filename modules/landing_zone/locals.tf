@@ -279,12 +279,14 @@ locals {
     (
       var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker || var.scc_enable || var.observability_logs_enable
       ) ? {
-      name           = var.cos_instance_name == null ? "hpc-cos" : var.cos_instance_name
-      resource_group = local.resource_group
-      plan           = "standard"
-      random_suffix  = true
-      use_data       = var.cos_instance_name == null ? false : true
-      keys           = []
+      name                          = var.cos_instance_name == null ? "hpc-cos" : var.cos_instance_name
+      resource_group                = local.resource_group
+      plan                          = "standard"
+      random_suffix                 = true
+      use_data                      = var.cos_instance_name == null ? false : true
+      keys                          = []
+      skip_flowlogs_s2s_auth_policy = var.skip_flowlogs_s2s_auth_policy
+      skip_kms_s2s_auth_policy      = var.skip_kms_s2s_auth_policy
 
       # Extra bucket for solution specific object storage
       buckets = [
@@ -337,12 +339,14 @@ locals {
   cos = [
     for instance in local.active_cos :
     {
-      name           = instance.name
-      resource_group = instance.resource_group
-      plan           = instance.plan
-      random_suffix  = instance.random_suffix
-      use_data       = instance.use_data
-      keys           = instance.keys
+      name                          = instance.name
+      resource_group                = instance.resource_group
+      plan                          = instance.plan
+      random_suffix                 = instance.random_suffix
+      use_data                      = instance.use_data
+      keys                          = instance.keys
+      skip_flowlogs_s2s_auth_policy = instance.skip_flowlogs_s2s_auth_policy
+      skip_kms_s2s_auth_policy      = instance.skip_kms_s2s_auth_policy
       buckets = [
         for bucket in instance.buckets :
         {
@@ -439,7 +443,7 @@ locals {
     license_type = "none"
   }
   skip_kms_block_storage_s2s_auth_policy = true
-  skip_all_s2s_auth_policies             = false
+  # skip_all_s2s_auth_policies             = false
 }
 
 
@@ -472,6 +476,6 @@ locals {
     f5_vsi                                 = local.f5_vsi
     f5_template_data                       = local.f5_template_data
     skip_kms_block_storage_s2s_auth_policy = local.skip_kms_block_storage_s2s_auth_policy
-    skip_all_s2s_auth_policies             = local.skip_all_s2s_auth_policies
+    # skip_all_s2s_auth_policies             = local.skip_all_s2s_auth_policies
   }
 }

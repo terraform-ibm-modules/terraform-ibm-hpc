@@ -124,3 +124,9 @@ variable "existing_kms_instance_guid" {
   default     = null
   description = "GUID of boot volume encryption key"
 }
+
+variable "skip_iam_authorization_policy" {
+  type        = bool
+  default     = false
+  description = "Set to false if authorization policy is required for VPC block storage volumes to access kms. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for block storage volume](https://cloud.ibm.com/docs/vpc?topic=vpc-block-s2s-auth&interface=ui)."
+}

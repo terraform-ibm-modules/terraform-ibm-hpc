@@ -30,5 +30,5 @@ module "landing_zone" {
   f5_template_data                       = local.env.f5_template_data
   vpc_placement_groups                   = local.env.vpc_placement_groups
   skip_kms_block_storage_s2s_auth_policy = local.env.skip_kms_block_storage_s2s_auth_policy
-  skip_all_s2s_auth_policies             = local.env.skip_all_s2s_auth_policies
+  # skip_all_s2s_auth_policies             = local.env.skip_all_s2s_auth_policies
 }

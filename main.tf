@@ -1,57 +1,60 @@
 module "landing_zone" {
-  source                    = "./modules/landing_zone"
-  allowed_cidr              = var.allowed_cidr
-  compute_subnets_cidr      = var.compute_subnets_cidr
-  clusters                  = var.clusters
-  cos_instance_name         = var.cos_instance_name
-  enable_atracker           = var.observability_atracker_enable && (var.observability_atracker_target_type == "cos") ? true : false
-  enable_cos_integration    = var.enable_cos_integration
-  enable_vpc_flow_logs      = var.enable_vpc_flow_logs
-  enable_vpn                = var.enable_vpn
-  hpcs_instance_name        = var.hpcs_instance_name
-  key_management            = var.key_management
-  kms_instance_name         = var.kms_instance_name
-  kms_key_name              = var.kms_key_name
-  ssh_keys                  = local.bastion_ssh_keys
-  bastion_subnets_cidr      = var.bastion_subnets_cidr
-  management_instances      = var.management_instances
-  compute_instances         = var.static_compute_instances
-  network_cidr              = var.network_cidr
-  placement_strategy        = var.placement_strategy
-  prefix                    = var.prefix
-  protocol_instances        = var.protocol_instances
-  protocol_subnets_cidr     = var.protocol_subnets_cidr
-  resource_group            = var.resource_group
-  storage_instances         = var.storage_instances
-  storage_subnets_cidr      = var.storage_subnets_cidr
-  vpc                       = var.vpc
-  vpn_peer_address          = var.vpn_peer_address
-  vpn_peer_cidr             = var.vpn_peer_cidr
-  vpn_preshared_key         = var.vpn_preshared_key
-  zones                     = var.zones
-  scc_enable                = var.scc_enable
-  observability_logs_enable = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || (var.observability_atracker_enable && var.observability_atracker_target_type == "cloudlogs") ? true : false
+  source                        = "./modules/landing_zone"
+  allowed_cidr                  = var.allowed_cidr
+  compute_subnets_cidr          = var.compute_subnets_cidr
+  clusters                      = var.clusters
+  cos_instance_name             = var.cos_instance_name
+  enable_atracker               = var.observability_atracker_enable && (var.observability_atracker_target_type == "cos") ? true : false
+  enable_cos_integration        = var.enable_cos_integration
+  enable_vpc_flow_logs          = var.enable_vpc_flow_logs
+  enable_vpn                    = var.enable_vpn
+  hpcs_instance_name            = var.hpcs_instance_name
+  key_management                = var.key_management
+  kms_instance_name             = var.kms_instance_name
+  kms_key_name                  = var.kms_key_name
+  ssh_keys                      = local.bastion_ssh_keys
+  bastion_subnets_cidr          = var.bastion_subnets_cidr
+  management_instances          = var.management_instances
+  compute_instances             = var.static_compute_instances
+  network_cidr                  = var.network_cidr
+  placement_strategy            = var.placement_strategy
+  prefix                        = var.prefix
+  protocol_instances            = var.protocol_instances
+  protocol_subnets_cidr         = var.protocol_subnets_cidr
+  resource_group                = var.resource_group
+  storage_instances             = var.storage_instances
+  storage_subnets_cidr          = var.storage_subnets_cidr
+  vpc                           = var.vpc
+  vpn_peer_address              = var.vpn_peer_address
+  vpn_peer_cidr                 = var.vpn_peer_cidr
+  vpn_preshared_key             = var.vpn_preshared_key
+  zones                         = var.zones
+  scc_enable                    = var.scc_enable
+  skip_flowlogs_s2s_auth_policy = var.skip_flowlogs_s2s_auth_policy
+  skip_kms_s2s_auth_policy      = var.skip_kms_s2s_auth_policy
+  observability_logs_enable     = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || (var.observability_atracker_enable && var.observability_atracker_target_type == "cloudlogs") ? true : false
 }
 
 module "deployer" {
-  source                     = "./modules/deployer"
-  resource_group             = var.resource_group
-  prefix                     = var.prefix
-  zones                      = var.zones
-  vpc_id                     = local.vpc_id
-  network_cidr               = var.network_cidr
-  enable_bastion             = var.enable_bastion
-  bastion_subnets            = local.bastion_subnets
-  bastion_image              = var.bastion_image
-  bastion_instance_profile   = var.bastion_instance_profile
-  enable_deployer            = var.enable_deployer
-  deployer_image             = var.deployer_image
-  deployer_instance_profile  = var.deployer_instance_profile
-  ssh_keys                   = local.bastion_ssh_keys
-  allowed_cidr               = var.allowed_cidr
-  kms_encryption_enabled     = local.kms_encryption_enabled
-  boot_volume_encryption_key = local.boot_volume_encryption_key
-  existing_kms_instance_guid = local.existing_kms_instance_guid
+  source                        = "./modules/deployer"
+  resource_group                = var.resource_group
+  prefix                        = var.prefix
+  zones                         = var.zones
+  vpc_id                        = local.vpc_id
+  network_cidr                  = var.network_cidr
+  enable_bastion                = var.enable_bastion
+  bastion_subnets               = local.bastion_subnets
+  bastion_image                 = var.bastion_image
+  bastion_instance_profile      = var.bastion_instance_profile
+  enable_deployer               = var.enable_deployer
+  deployer_image                = var.deployer_image
+  deployer_instance_profile     = var.deployer_instance_profile
+  ssh_keys                      = local.bastion_ssh_keys
+  allowed_cidr                  = var.allowed_cidr
+  kms_encryption_enabled        = local.kms_encryption_enabled
+  boot_volume_encryption_key    = local.boot_volume_encryption_key
+  existing_kms_instance_guid    = local.existing_kms_instance_guid
+  skip_iam_authorization_policy = var.skip_iam_authorization_policy
 }
 
 module "landing_zone_vsi" {
