@@ -18,7 +18,6 @@ module "lsf" {
   dns_instance_id                                  = local.env.dns_instance_id
   dns_domain_names                                 = local.env.dns_domain_names
   dynamic_compute_instances                        = local.env.dynamic_compute_instances
-  enable_atracker                                  = local.env.enable_atracker
   enable_bastion                                   = local.env.enable_bastion
   bastion_image                                    = local.env.bastion_image
   bastion_instance_profile                         = local.env.bastion_instance_profile
@@ -63,7 +62,7 @@ module "lsf" {
   observability_monitoring_plan                    = local.env.observability_monitoring_plan
   scc_enable                                       = local.env.scc_enable
   scc_profile                                      = local.env.scc_profile
-  scc_profile_version                              = local.env.scc_profile_version
+  # scc_profile_version                              = local.env.scc_profile_version
   scc_location                                     = local.env.scc_location
   scc_event_notification_plan                      = local.env.scc_event_notification_plan
   skip_flowlogs_s2s_auth_policy                    = local.env.skip_flowlogs_s2s_auth_policy

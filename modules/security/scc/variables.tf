@@ -37,13 +37,6 @@ variable "scc_provision" {
   description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
 }
 
-# SCC Instance Location
-# variable "scc_location" {
-#   type        = string
-#   default     = "us-south"
-#   description = "SCC Instance region (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
-# }
-
 variable "en_source_name" {
   type        = string
   default     = "compliance"
@@ -71,11 +64,11 @@ variable "scc_profile" {
 }
 
 # SCC Instance Profile Version
-variable "scc_profile_version" {
-  type        = string
-  default     = "1.1.0"
-  description = "Version of Profile to be set on the SCC Instance"
-}
+# variable "scc_profile_version" {
+#   type        = string
+#   default     = "1.1.0"
+#   description = "Version of Profile to be set on the SCC Instance"
+# }
 
 # SCC Scope Environment
 variable "scc_scope_environment" {
@@ -97,13 +90,6 @@ variable "scc_attachment_schedule" {
   default     = "daily"
   description = "Schedule of the SCC Attachment"
 }
-
-# SCC Attachment Status
-# variable "scc_attachment_status" {
-#   type        = string
-#   default     = "enabled"
-#   description = "Status of the SCC Attachment"
-# }
 
 # Event Notification Instance Plan
 variable "event_notification_plan" {

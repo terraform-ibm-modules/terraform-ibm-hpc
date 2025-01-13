@@ -1,7 +1,7 @@
 module "landing_zone" {
   count                                  = var.enable_landing_zone ? 1 : 0
   source                                 = "terraform-ibm-modules/landing-zone/ibm"
-  version                                = "6.2.1"
+  version                                = "6.6.3"
   prefix                                 = local.prefix
   region                                 = local.region
   tags                                   = local.tags
@@ -30,5 +30,4 @@ module "landing_zone" {
   f5_template_data                       = local.env.f5_template_data
   vpc_placement_groups                   = local.env.vpc_placement_groups
   skip_kms_block_storage_s2s_auth_policy = local.env.skip_kms_block_storage_s2s_auth_policy
-  # skip_all_s2s_auth_policies             = local.env.skip_all_s2s_auth_policies
 }

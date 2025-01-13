@@ -431,7 +431,11 @@ variable "dns_domain_names" {
 variable "key_management" {
   type        = string
   default     = null
-  description = "null/key_protect"
+  description = "Set the value as key_protect to enable customer managed encryption for boot volume and file share. If the key_management is set as null, IBM Cloud resources will be always be encrypted through provider managed."
+  validation {
+    condition     = var.key_management == "null" || var.key_management == null || var.key_management == "key_protect"
+    error_message = "key_management must be either 'null' or 'key_protect'."
+  }
 }
 
 variable "kms_instance_name" {
@@ -483,12 +487,6 @@ variable "cos_instance_name" {
   type        = string
   default     = null
   description = "Exiting COS instance name"
-}
-
-variable "enable_atracker" {
-  type        = bool
-  default     = false
-  description = "Enable Activity tracker"
 }
 
 variable "enable_vpc_flow_logs" {
@@ -813,15 +811,15 @@ variable "scc_profile" {
   }
 }
 
-variable "scc_profile_version" {
-  type        = string
-  default     = "1.1.0"
-  description = "Version of the Profile to be set on the SCC Instance (accepting empty, CIS and Financial Services profiles versions)"
-  validation {
-    condition     = can(regex("^(|\\d+\\.\\d+(\\.\\d+)?)$", var.scc_profile_version))
-    error_message = "Provide SCC Profile Version to be used."
-  }
-}
+# variable "scc_profile_version" {
+#   type        = string
+#   default     = "1.1.0"
+#   description = "Version of the Profile to be set on the SCC Instance (accepting empty, CIS and Financial Services profiles versions)"
+#   validation {
+#     condition     = can(regex("^(|\\d+\\.\\d+(\\.\\d+)?)$", var.scc_profile_version))
+#     error_message = "Provide SCC Profile Version to be used."
+#   }
+# }
 
 variable "scc_location" {
   description = "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"

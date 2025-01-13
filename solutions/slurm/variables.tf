@@ -367,7 +367,11 @@ variable "dns_domain_names" {
 variable "key_management" {
   type        = string
   default     = "key_protect"
-  description = "null/key_protect"
+  description = "Set the value as key_protect to enable customer managed encryption for boot volume and file share. If the key_management is set as null, IBM Cloud resources will be always be encrypted through provider managed."
+  validation {
+    condition     = var.key_management == "null" || var.key_management == null || var.key_management == "key_protect"
+    error_message = "key_management must be either 'null' or 'key_protect'."
+  }
 }
 
 variable "hpcs_instance_name" {

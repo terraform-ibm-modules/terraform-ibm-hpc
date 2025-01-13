@@ -186,7 +186,7 @@ module "scc_instance_and_profile" {
   location                = var.scc_location != "" ? var.scc_location : "us-south"
   rg                      = local.resource_group_id
   scc_profile             = var.scc_enable ? var.scc_profile : ""
-  scc_profile_version     = var.scc_profile != "" && var.scc_profile != null ? var.scc_profile_version : ""
+  # scc_profile_version     = var.scc_profile != "" && var.scc_profile != null ? var.scc_profile_version : ""
   event_notification_plan = var.scc_event_notification_plan
   tags                    = ["hpc", var.prefix]
   prefix                  = var.prefix
