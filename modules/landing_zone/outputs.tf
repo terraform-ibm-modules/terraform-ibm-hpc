@@ -101,12 +101,27 @@ output "subnets_crn" {
 # TODO: Find a way to get CRN needed for VSI boot drive encryption
 output "boot_volume_encryption_key" {
   description = "Boot volume encryption key"
-  value       = var.key_management != null ? module.landing_zone[*].key_map[format("%s-vsi-key", var.prefix)] : null
+  value       = var.key_management == "key_protect" ? (var.kms_key_name == null ? module.landing_zone[*].key_map[format("%s-vsi-key", var.prefix)] : module.landing_zone[*].key_map[var.kms_key_name]) : null
 }
 
 output "key_management_guid" {
   description = "GUID for KMS instance"
   value       = var.key_management != null ? module.landing_zone[0].key_management_guid : null
+}
+
+output "cos_buckets_data" {
+  description = "COS buckets data"
+  value       = flatten(module.landing_zone[*].cos_bucket_data)
+}
+
+output "cos_instance_crns" {
+  description = "CRN of the COS instance created by Landing Zone Module"
+  value       = flatten(module.landing_zone[*].cos_data[*].crn)
+}
+
+output "cos_buckets_names" {
+  description = "Name of the COS Bucket created for SCC Instance"
+  value       = flatten(module.landing_zone[*].cos_bucket_names)
 }
 
 # TODO: Observability data
