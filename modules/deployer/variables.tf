@@ -124,3 +124,17 @@ variable "existing_kms_instance_guid" {
   default     = null
   description = "GUID of boot volume encryption key"
 }
+
+variable "ibmcloud_api_key" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
+}
+
+variable "ibm_customer_number" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
+}

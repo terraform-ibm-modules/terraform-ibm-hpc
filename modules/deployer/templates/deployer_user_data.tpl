@@ -14,6 +14,8 @@ then
     USER=ubuntu
 fi
 sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo \'Please login as the user \\\\\"$USER\\\\\" rather than the user \\\\\"root\\\\\".\';echo;sleep 5; exit 142\" /" /root/.ssh/authorized_keys
+chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
+systemctl restart NetworkManager
 
 # input parameters
 echo "${bastion_public_key_content}" >> /home/$USER/.ssh/authorized_keys
@@ -42,4 +44,24 @@ then
     if (which ansible-playbook); then echo "Ansible exists, skipping the installation"; else (apt install ansible); fi
 fi
 
+dnf install -y git unzip wget python3-dnf-plugin-versionlock bind-utils
+dnf update --security -y
+dnf versionlock list
+dnf versionlock add git unzip wget python3-dnf-plugin-versionlock bind-utils
+dnf versionlock list
+# wget https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip
+# unzip terraform_1.5.7_linux_amd64.zip
+# rm -rf terraform_1.5.7_linux_amd64.zip
+# mv terraform /usr/bin
+
 # TODO: run terraform
+if [ ${enable_bastion} = true ]; then
+    if [ ! -d ${remote_ansible_path} ]; then sudo git clone -b ${da_hpc_repo_tag} ${da_hpc_repo_url} ${remote_ansible_path} fi
+    sudo -E terraform -chdir=${remote_ansible_path} init && sudo -E terraform -chdir=${remote_ansible_path} apply -auto-approve \
+        -var 'resource_group=${resource_group}' \
+        -var 'prefix=${prefix}' \
+        -var 'zones=${zones}'
+
+fi
+
+

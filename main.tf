@@ -48,9 +48,14 @@ module "deployer" {
   kms_encryption_enabled     = local.kms_encryption_enabled
   boot_volume_encryption_key = local.boot_volume_encryption_key
   existing_kms_instance_guid = local.existing_kms_instance_guid
+
+  # New Variables
+  ibmcloud_api_key           = var.ibmcloud_api_key
+  ibm_customer_number        = var.ibm_customer_number
 }
 
 module "landing_zone_vsi" {
+  count                      = var.enable_deployer == false ? 1 : 0
   source                     = "./modules/landing_zone_vsi"
   resource_group             = var.resource_group
   prefix                     = var.prefix
@@ -78,6 +83,7 @@ module "landing_zone_vsi" {
 }
 
 module "file_storage" {
+  count              = var.enable_deployer == false ? 1 : 0 
   source             = "./modules/file_storage"
   zone               = var.zones[0] # always the first zone
   resource_group_id  = local.resource_group_id
@@ -88,6 +94,7 @@ module "file_storage" {
 }
 
 module "dns" {
+  count                  = var.enable_deployer == false ? 1 : 0 
   source                 = "./modules/dns"
   prefix                 = var.prefix
   resource_group_id      = local.resource_group_id
@@ -99,6 +106,7 @@ module "dns" {
 }
 
 module "compute_dns_records" {
+  count           = var.enable_deployer == false ? 1 : 0 
   source          = "./modules/dns_record"
   dns_instance_id = local.dns_instance_id
   dns_zone_id     = local.compute_dns_zone_id
@@ -106,6 +114,7 @@ module "compute_dns_records" {
 }
 
 module "storage_dns_records" {
+  count           = var.enable_deployer == false ? 1 : 0 
   source          = "./modules/dns_record"
   dns_instance_id = local.dns_instance_id
   dns_zone_id     = local.storage_dns_zone_id
@@ -113,6 +122,7 @@ module "storage_dns_records" {
 }
 
 module "protocol_dns_records" {
+  count           = var.enable_deployer == false ? 1 : 0 
   source          = "./modules/dns_record"
   dns_instance_id = local.dns_instance_id
   dns_zone_id     = local.protocol_dns_zone_id
@@ -120,12 +130,13 @@ module "protocol_dns_records" {
 }
 
 resource "time_sleep" "wait_60_seconds" {
+  count           = var.enable_deployer == false ? 1 : 0 
   create_duration = "60s"
-  depends_on          = [ module.storage_dns_records, module.protocol_dns_records, module.compute_dns_records ]
+  depends_on      = [ module.storage_dns_records, module.protocol_dns_records, module.compute_dns_records ]
 }
 
-
 module "compute_inventory" {
+  count               = var.enable_deployer == false ? 1 : 0 
   source              = "./modules/inventory"
   hosts               = local.compute_hosts
   inventory_path      = local.compute_inventory_path
@@ -135,6 +146,7 @@ module "compute_inventory" {
 
 module "storage_inventory" {
   source              = "./modules/inventory"
+  count               = var.enable_deployer == false ? 1 : 0
   hosts               = local.storage_hosts
   inventory_path      = local.storage_inventory_path
   name_mount_path_map = local.fileshare_name_mount_path_map
@@ -143,6 +155,7 @@ module "storage_inventory" {
 
 module "compute_playbook" {
   source           = "./modules/playbook"
+  count            = var.enable_deployer == false ? 1 : 0
   bastion_fip      = local.bastion_fip
   private_key_path = local.compute_private_key_path
   inventory_path   = local.compute_inventory_path
@@ -151,6 +164,7 @@ module "compute_playbook" {
 }
 
 module "storage_playbook" {
+  count            = var.enable_deployer == false ? 1 : 0
   source           = "./modules/playbook"
   bastion_fip      = local.bastion_fip
   private_key_path = local.storage_private_key_path

@@ -105,7 +105,7 @@ locals {
         name           = "bastion-subnet"
         acl_name       = "hpc-acl"
         cidr           = var.bastion_subnets_cidr[0]
-        public_gateway = false
+        public_gateway = true
       } : null
     ] : []
   }
