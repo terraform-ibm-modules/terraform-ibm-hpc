@@ -1,53 +1,60 @@
 module "landing_zone" {
-  source                 = "./modules/landing_zone"
-  allowed_cidr           = var.allowed_cidr
-  compute_subnets_cidr   = var.compute_subnets_cidr
-  clusters               = var.clusters
-  cos_instance_name      = var.cos_instance_name
-  enable_atracker        = var.enable_atracker
-  enable_cos_integration = var.enable_cos_integration
-  enable_vpc_flow_logs   = var.enable_vpc_flow_logs
-  enable_vpn             = var.enable_vpn
-  hpcs_instance_name     = var.hpcs_instance_name
-  key_management         = var.key_management
-  ssh_keys               = local.bastion_ssh_keys
-  bastion_subnets_cidr   = var.bastion_subnets_cidr
-  management_instances   = var.management_instances
-  compute_instances      = var.static_compute_instances
-  network_cidr           = var.network_cidr
-  placement_strategy     = var.placement_strategy
-  prefix                 = var.prefix
-  protocol_instances     = var.protocol_instances
-  protocol_subnets_cidr  = var.protocol_subnets_cidr
-  resource_group         = var.resource_group
-  storage_instances      = var.storage_instances
-  storage_subnets_cidr   = var.storage_subnets_cidr
-  vpc                    = var.vpc
-  vpn_peer_address       = var.vpn_peer_address
-  vpn_peer_cidr          = var.vpn_peer_cidr
-  vpn_preshared_key      = var.vpn_preshared_key
-  zones                  = var.zones
+  source                        = "./modules/landing_zone"
+  allowed_cidr                  = var.allowed_cidr
+  compute_subnets_cidr          = var.compute_subnets_cidr
+  clusters                      = var.clusters
+  cos_instance_name             = var.cos_instance_name
+  enable_atracker               = var.observability_atracker_enable && (var.observability_atracker_target_type == "cos") ? true : false
+  enable_cos_integration        = var.enable_cos_integration
+  enable_vpc_flow_logs          = var.enable_vpc_flow_logs
+  enable_vpn                    = var.enable_vpn
+  hpcs_instance_name            = var.hpcs_instance_name
+  key_management                = var.key_management
+  kms_instance_name             = var.kms_instance_name
+  kms_key_name                  = var.kms_key_name
+  ssh_keys                      = local.bastion_ssh_keys
+  bastion_subnets_cidr          = var.bastion_subnets_cidr
+  management_instances          = var.management_instances
+  compute_instances             = var.static_compute_instances
+  network_cidr                  = var.network_cidr
+  placement_strategy            = var.placement_strategy
+  prefix                        = var.prefix
+  protocol_instances            = var.protocol_instances
+  protocol_subnets_cidr         = var.protocol_subnets_cidr
+  resource_group                = var.resource_group
+  storage_instances             = var.storage_instances
+  storage_subnets_cidr          = var.storage_subnets_cidr
+  vpc                           = var.vpc
+  vpn_peer_address              = var.vpn_peer_address
+  vpn_peer_cidr                 = var.vpn_peer_cidr
+  vpn_preshared_key             = var.vpn_preshared_key
+  zones                         = var.zones
+  scc_enable                    = var.scc_enable
+  skip_flowlogs_s2s_auth_policy = var.skip_flowlogs_s2s_auth_policy
+  skip_kms_s2s_auth_policy      = var.skip_kms_s2s_auth_policy
+  observability_logs_enable     = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || (var.observability_atracker_enable && var.observability_atracker_target_type == "cloudlogs") ? true : false
 }
 
 module "deployer" {
-  source                     = "./modules/deployer"
-  resource_group             = var.resource_group
-  prefix                     = var.prefix
-  zones                      = var.zones
-  vpc_id                     = local.vpc_id
-  network_cidr               = var.network_cidr
-  enable_bastion             = var.enable_bastion
-  bastion_subnets            = local.bastion_subnets
-  bastion_image              = var.bastion_image
-  bastion_instance_profile   = var.bastion_instance_profile
-  enable_deployer            = var.enable_deployer
-  deployer_image             = var.deployer_image
-  deployer_instance_profile  = var.deployer_instance_profile
-  ssh_keys                   = local.bastion_ssh_keys
-  allowed_cidr               = var.allowed_cidr
-  kms_encryption_enabled     = local.kms_encryption_enabled
-  boot_volume_encryption_key = local.boot_volume_encryption_key
-  existing_kms_instance_guid = local.existing_kms_instance_guid
+  source                        = "./modules/deployer"
+  resource_group                = var.resource_group
+  prefix                        = var.prefix
+  zones                         = var.zones
+  vpc_id                        = local.vpc_id
+  network_cidr                  = var.network_cidr
+  enable_bastion                = var.enable_bastion
+  bastion_subnets               = local.bastion_subnets
+  bastion_image                 = var.bastion_image
+  bastion_instance_profile      = var.bastion_instance_profile
+  enable_deployer               = var.enable_deployer
+  deployer_image                = var.deployer_image
+  deployer_instance_profile     = var.deployer_instance_profile
+  ssh_keys                      = local.bastion_ssh_keys
+  allowed_cidr                  = var.allowed_cidr
+  kms_encryption_enabled        = local.kms_encryption_enabled
+  boot_volume_encryption_key    = local.boot_volume_encryption_key
+  existing_kms_instance_guid    = local.existing_kms_instance_guid
+  skip_iam_authorization_policy = var.skip_iam_authorization_policy
 }
 
 module "landing_zone_vsi" {
@@ -159,3 +166,40 @@ module "storage_playbook" {
   depends_on       = [ module.storage_inventory ]
 }
 
+###################################################
+# Observability Modules
+###################################################
+
+module "cloud_monitoring_instance_creation" {
+  source                         = "./modules/observability_instance"
+  location                       = local.region
+  rg                             = local.resource_group_id
+  cloud_monitoring_provision     = var.observability_monitoring_enable
+  observability_monitoring_plan  = var.observability_monitoring_plan
+  enable_metrics_routing         = var.observability_enable_metrics_routing
+  enable_platform_logs           = var.observability_enable_platform_logs
+  cluster_prefix                 = var.prefix
+  cloud_monitoring_instance_name = "${var.prefix}-metrics"
+  cloud_logs_provision           = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute ? true : false
+  cloud_logs_instance_name       = "${var.prefix}-cloud-logs"
+  cloud_logs_retention_period    = var.observability_logs_retention_period
+  cloud_logs_as_atracker_target  = var.observability_atracker_enable && (var.observability_atracker_target_type == "cloudlogs") ? true : false
+  cloud_logs_data_bucket         = length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")][0] : null
+  cloud_metrics_data_bucket      = length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")][0] : null
+  tags                           = ["hpc", var.prefix]
+}
+
+# Code for SCC Instance
+module "scc_instance_and_profile" {
+  count                   = var.scc_enable ? 1 : 0
+  source                  = "./modules/security/scc"
+  location                = var.scc_location != "" ? var.scc_location : "us-south"
+  rg                      = local.resource_group_id
+  scc_profile             = var.scc_enable ? var.scc_profile : ""
+  # scc_profile_version     = var.scc_profile != "" && var.scc_profile != null ? var.scc_profile_version : ""
+  event_notification_plan = var.scc_event_notification_plan
+  tags                    = ["hpc", var.prefix]
+  prefix                  = var.prefix
+  cos_bucket              = [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0]
+  cos_instance_crn        = module.landing_zone.cos_instance_crns[0]
+}
