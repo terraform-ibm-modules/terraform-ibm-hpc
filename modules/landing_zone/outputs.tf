@@ -106,7 +106,7 @@ output "boot_volume_encryption_key" {
 
 output "key_management_guid" {
   description = "GUID for KMS instance"
-  value       = var.key_management != null ? module.landing_zone[0].key_management_guid : null
+  value       = var.enable_landing_zone ? var.key_management != null ? module.landing_zone[0].key_management_guid : null : null
 }
 
 # TODO: Observability data

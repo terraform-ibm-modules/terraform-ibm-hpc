@@ -165,6 +165,22 @@ variable "storage_instances" {
   description = "Number of instances to be launched for storage cluster."
 }
 
+variable "management_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  # default = [{
+  #   profile = "cx2-2x4"
+  #   count   = 0
+  #   image   = "ibm-redhat-8-10-minimal-amd64-2"
+  # }]
+  description = "Number of instances to be launched for management."
+}
+
 variable "protocol_instances" {
   type = list(
     object({

@@ -54,6 +54,7 @@ module "deployer" {
   ibmcloud_api_key           = var.ibmcloud_api_key
   ibm_customer_number        = var.ibm_customer_number
   storage_instances          = var.storage_instances
+  management_instances       = var.management_instances
   protocol_instances         = var.protocol_instances
   client_instances           = var.client_instances
   static_compute_instances   = var.static_compute_instances
@@ -64,8 +65,8 @@ module "deployer" {
   compute_subnets            = local.compute_subnets
   client_subnets             = local.client_subnets
   bastion_fip                = local.bastion_fip
-  dns_instance_id            = local.dns_instance_id
-  dns_custom_resolver_id     = local.dns_custom_resolver_id
+  dns_instance_id            = var.dns_instance_id
+  dns_custom_resolver_id     = var.dns_custom_resolver_id
   dns_domain_names           = var.dns_domain_names
   vpc                        = local.vpc
   resource_group_id          = local.resource_group_ids["workload_rg"]

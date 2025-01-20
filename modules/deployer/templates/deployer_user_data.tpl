@@ -68,6 +68,7 @@ if [ ${enable_bastion} = true ]; then
         -var 'compute_ssh_keys=${compute_ssh_keys}' \
         -var 'storage_ssh_keys=${storage_ssh_keys}' \
         -var 'storage_instances=${storage_instances}' \
+        -var 'management_instances=${management_instances}' \
         -var 'protocol_instances=${protocol_instances}' \
         -var 'ibm_customer_number=${ibm_customer_number}' \
         -var 'static_compute_instances=${compute_instances}' \
@@ -75,18 +76,13 @@ if [ ${enable_bastion} = true ]; then
         -var 'enable_cos_integration=${enable_cos_integration}' \
         -var 'enable_atracker=${enable_atracker}' \
         -var 'enable_vpc_flow_logs=${enable_vpc_flow_logs}' \
-        -var 'key_management=${key_management}' \
         -var 'allowed_cidr=${allowed_cidr}' \
         -var 'vpc_id=${vpc_id}' \
         -var 'vpc=${vpc}' \
         -var 'storage_subnets=${storage_subnets}' \
         -var 'protocol_subnets=${protocol_subnets}' \
         -var 'compute_subnets=${compute_subnets}' \
-        -var 'client_subnets=${client_subnets}' \
-        -var 'dns_instance_id=${dns_instance_id}' \
-        -var 'dns_custom_resolver_id=${dns_custom_resolver_id}' \
-        -var 'dns_domain_names=${dns_domain_names}' \
-        -var 'resource_group_id=${resource_group_id}'
+        -var 'client_subnets=${client_subnets}'
 fi
 
 
