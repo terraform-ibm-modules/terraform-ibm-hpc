@@ -1,5 +1,6 @@
 module "landing_zone" {
   source                 = "./modules/landing_zone"
+  enable_landing_zone    = var.enable_landing_zone
   allowed_cidr           = var.allowed_cidr
   compute_subnets_cidr   = var.compute_subnets_cidr
   clusters               = var.clusters
@@ -52,6 +53,26 @@ module "deployer" {
   # New Variables
   ibmcloud_api_key           = var.ibmcloud_api_key
   ibm_customer_number        = var.ibm_customer_number
+  storage_instances          = var.storage_instances
+  protocol_instances         = var.protocol_instances
+  client_instances           = var.client_instances
+  static_compute_instances   = var.static_compute_instances
+  storage_ssh_keys           = local.storage_ssh_keys
+  compute_ssh_keys           = local.compute_ssh_keys
+  storage_subnets            = local.storage_subnets
+  protocol_subnets           = local.protocol_subnets
+  compute_subnets            = local.compute_subnets
+  client_subnets             = local.client_subnets
+  bastion_fip                = local.bastion_fip
+  dns_instance_id            = local.dns_instance_id
+  dns_custom_resolver_id     = local.dns_custom_resolver_id
+  dns_domain_names           = var.dns_domain_names
+  vpc                        = local.vpc
+  resource_group_id          = local.resource_group_ids["workload_rg"]
+  enable_vpc_flow_logs       = var.enable_vpc_flow_logs
+  key_management             = var.key_management
+  enable_atracker            = var.enable_atracker
+  enable_cos_integration     = var.enable_cos_integration
 }
 
 module "landing_zone_vsi" {
@@ -86,7 +107,7 @@ module "file_storage" {
   count              = var.enable_deployer == false ? 1 : 0 
   source             = "./modules/file_storage"
   zone               = var.zones[0] # always the first zone
-  resource_group_id  = local.resource_group_id
+  resource_group_id  = local.resource_group_ids["service_rg"]
   file_shares        = local.file_shares
   encryption_key_crn = local.boot_volume_encryption_key
   security_group_ids = local.compute_security_group_id
@@ -97,7 +118,7 @@ module "dns" {
   count                  = var.enable_deployer == false ? 1 : 0 
   source                 = "./modules/dns"
   prefix                 = var.prefix
-  resource_group_id      = local.resource_group_id
+  resource_group_id      = local.resource_group_ids["service_rg"]
   vpc_crn                = local.vpc_crn
   subnets_crn            = local.subnets_crn
   dns_instance_id        = var.dns_instance_id

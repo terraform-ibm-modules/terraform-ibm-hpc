@@ -686,3 +686,15 @@ variable "TF_LOG" {
   default     = "ERROR"
   description = "The Terraform log level used for output in the Schematics workspace."
 }
+
+variable "enable_landing_zone" {
+  type        = bool
+  default     = true
+  description = "Run landing zone module."
+}
+
+variable "vpc_id" {
+  type        = string
+  default     = null
+  description = "ID of an existing VPC in which the cluster resources will be deployed."
+}

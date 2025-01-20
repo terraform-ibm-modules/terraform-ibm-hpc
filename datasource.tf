@@ -20,3 +20,8 @@ data "ibm_is_subnet" "itself" {
   identifier = local.subnets[count.index]["id"]
 }
 */
+
+data "ibm_resource_group" "resource_group" {
+  count = var.resource_group == null ? 0 : 1
+  name  = var.resource_group
+}
