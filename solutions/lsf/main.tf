@@ -49,4 +49,7 @@ module "lsf" {
   vpn_peer_address          = local.env.vpn_peer_address
   vpn_peer_cidr             = local.env.vpn_peer_cidr
   vpn_preshared_key         = local.env.vpn_preshared_key
+
+  # New Variables
+  ibmcloud_api_key           = local.env.ibmcloud_api_key
 }

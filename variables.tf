@@ -392,7 +392,15 @@ variable "file_shares" {
       iops       = number
     })
   )
-  default     = null
+  default = [{
+    mount_path = "/mnt/binaries"
+    size       = 100
+    iops       = 1000
+    }, {
+    mount_path = "/mnt/data"
+    size       = 100
+    iops       = 1000
+  }]
   description = "Custom file shares to access shared storage"
 }
 

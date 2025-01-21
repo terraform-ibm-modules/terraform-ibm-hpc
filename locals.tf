@@ -53,8 +53,8 @@ locals {
   #boot_volume_encryption_key    = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
 
   # dependency: landing_zone_vsi -> file-share
-  compute_subnet_id         = local.compute_subnets[0].id
-  compute_security_group_id = module.landing_zone_vsi[0].compute_sg_id
+  compute_subnet_id         = var.enable_deployer ? "" : local.compute_subnets[0].id
+  compute_security_group_id =  var.enable_deployer ? [] : module.landing_zone_vsi[0].compute_sg_id
   management_instance_count = sum(var.management_instances[*]["count"])
   default_share = local.management_instance_count > 0 ? [
     {
@@ -99,9 +99,9 @@ locals {
 # locals needed for dns-records
 locals {
   # dependency: dns -> dns-records
-  dns_instance_id   = module.dns[0].dns_instance_id
-  dns_custom_resolver_id =  module.dns[0].dns_custom_resolver_id
-  dns_zone_map_list = module.dns[0].dns_zone_maps
+  dns_instance_id   =  var.enable_deployer ? "" : module.dns[0].dns_instance_id
+  dns_custom_resolver_id =   var.enable_deployer ? "" : module.dns[0].dns_custom_resolver_id
+  dns_zone_map_list =  var.enable_deployer ? [] : module.dns[0].dns_zone_maps
   compute_dns_zone_id = one(flatten([
     for dns_zone in local.dns_zone_map_list : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["compute"]
   ]))
@@ -113,9 +113,9 @@ locals {
   ]))
 
   # dependency: landing_zone_vsi -> dns-records
-  compute_instances  = flatten([module.landing_zone_vsi[0].management_vsi_data, module.landing_zone_vsi[0].compute_vsi_data])
-  storage_instances  = flatten([module.landing_zone_vsi[0].storage_vsi_data, module.landing_zone_vsi[0].protocol_vsi_data])
-  protocol_instances = flatten([module.landing_zone_vsi[0].protocol_vsi_data])
+  compute_instances  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data, module.landing_zone_vsi[0].compute_vsi_data])
+  storage_instances  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_vsi_data, module.landing_zone_vsi[0].protocol_vsi_data])
+  protocol_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].protocol_vsi_data])
 
   compute_dns_records = [
     for instance in local.compute_instances :
@@ -159,5 +159,5 @@ locals {
 
 # file Share OutPut
 locals {
-  fileshare_name_mount_path_map = module.file_storage[0].name_mount_path_map
+  fileshare_name_mount_path_map =  var.enable_deployer ? {} : module.file_storage[0].name_mount_path_map
 }

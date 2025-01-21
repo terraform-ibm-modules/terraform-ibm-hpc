@@ -67,6 +67,9 @@ locals {
     vpn_peer_address          = var.vpn_peer_address
     vpn_peer_cidr             = var.vpn_peer_cidr
     vpn_preshared_key         = var.vpn_preshared_key
+
+    # New Variables
+    ibmcloud_api_key          = var.ibmcloud_api_key
   }
 }
 
@@ -121,5 +124,7 @@ locals {
     vpn_peer_address          = lookup(local.override[local.override_type], "vpn_peer_address", local.config.vpn_peer_address)
     vpn_peer_cidr             = lookup(local.override[local.override_type], "vpn_peer_cidr", local.config.vpn_peer_cidr)
     vpn_preshared_key         = lookup(local.override[local.override_type], "vpn_preshared_key", local.config.vpn_preshared_key)
+    # New Variables
+    ibmcloud_api_key          = lookup(local.override[local.override_type], "ibmcloud_api_key", local.config.ibmcloud_api_key)
   }
 }
