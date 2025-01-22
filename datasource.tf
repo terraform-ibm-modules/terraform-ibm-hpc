@@ -25,3 +25,8 @@ data "ibm_resource_group" "resource_group" {
   count = var.resource_group == null ? 0 : 1
   name  = var.resource_group
 }
+
+data "ibm_is_subnet" "existing_compute_subnets" {
+  count = var.vpc != null && var.compute_subnets != null ? 1 : 0
+  name  = var.compute_subnets[count.index]
+}

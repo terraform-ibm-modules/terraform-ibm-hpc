@@ -16,8 +16,16 @@ output "dns" {
 }
 
 output "file_storage" {
-  value = module.file_storage
+  value = local.subnets_crn
 }
+
+# output "existing_compute_subnets" {
+#   value = local.existing_compute_subnets
+# }
+
+# output "existing_compute_subnets_details" {
+#   value = data.ibm_is_subnet.existing_compute_subnets
+# }
 
 output "ssh_to_deployer" {
   description = "SSH command to connect to the deployer"

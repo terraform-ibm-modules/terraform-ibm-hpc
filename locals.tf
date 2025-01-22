@@ -32,10 +32,30 @@ locals {
   # dependency: landing_zone -> deployer -> landing_zone_vsi
   bastion_security_group_id  = module.deployer.bastion_security_group_id
   bastion_public_key_content = module.deployer.bastion_public_key_content
+  
+  # Existing subnets details
+  existing_compute_subnets = [
+    for subnet in data.ibm_is_subnet.existing_compute_subnets :
+    {
+      cidr = subnet.ipv4_cidr_block
+      id   = subnet.id
+      name = subnet.name
+      zone = subnet.zone
+    }
+  ]
+  # existing_storage_subnets_subnets = [
+  #   for subnet in data.ibm_is_subnet.existing_storage_subnets :
+  #   {
+  #     cidr = subnet.ipv4_cidr_block
+  #     id   = subnet.id
+  #     name = subnet.name
+  #     zone = subnet.zone
+  #   }
+  # ]
 
   # dependency: landing_zone -> landing_zone_vsi
   client_subnets   = module.landing_zone.client_subnets
-  compute_subnets  = module.landing_zone.compute_subnets
+  compute_subnets  = var.vpc != null && var.compute_subnets != null ? local.existing_compute_subnets : module.landing_zone.compute_subnets
   storage_subnets  = module.landing_zone.storage_subnets
   protocol_subnets = module.landing_zone.protocol_subnets
 
@@ -53,8 +73,9 @@ locals {
   #boot_volume_encryption_key    = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
 
   # dependency: landing_zone_vsi -> file-share
-  compute_subnet_id         = var.enable_deployer ? "" : local.compute_subnets[0].id
-  compute_security_group_id =  var.enable_deployer ? [] : module.landing_zone_vsi[0].compute_sg_id
+  existing_compute_subnet_id = [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.id][0]
+  compute_subnet_id         = var.vpc == null && var.compute_subnets == null ? local.compute_subnets[0].id : local.existing_compute_subnet_id
+  compute_security_group_id = var.enable_deployer ? [] : module.landing_zone_vsi[0].compute_sg_id
   management_instance_count = sum(var.management_instances[*]["count"])
   default_share = local.management_instance_count > 0 ? [
     {
@@ -87,10 +108,11 @@ locals {
   # resource_group_id = one(values(one(module.landing_zone.resource_group_id)))
   vpc_crn           = var.vpc == null ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
   # TODO: Fix existing subnet logic
-  #subnets_crn       = var.vpc == null ? module.landing_zone.subnets_crn : ###
+  existing_subnet_crns = [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.crn]
+  subnets_crn        = var.vpc == null && var.compute_subnets == null ? module.landing_zone.subnets_crn : local.existing_subnet_crns
   #subnets           = flatten([local.compute_subnets, local.storage_subnets, local.protocol_subnets])
   #subnets_crns      = data.ibm_is_subnet.itself[*].crn
-  subnets_crn = module.landing_zone.subnets_crn
+  #subnets_crn = module.landing_zone.subnets_crn
   #boot_volume_encryption_key    = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
 
   # dependency: landing_zone_vsi -> file-share
@@ -99,9 +121,9 @@ locals {
 # locals needed for dns-records
 locals {
   # dependency: dns -> dns-records
-  dns_instance_id   =  var.enable_deployer ? "" : module.dns[0].dns_instance_id
-  dns_custom_resolver_id =   var.enable_deployer ? "" : module.dns[0].dns_custom_resolver_id
-  dns_zone_map_list =  var.enable_deployer ? [] : module.dns[0].dns_zone_maps
+  dns_instance_id = var.enable_deployer ? "" : module.dns[0].dns_instance_id
+  dns_custom_resolver_id = var.enable_deployer ? "" : module.dns[0].dns_custom_resolver_id
+  dns_zone_map_list = var.enable_deployer ? [] : module.dns[0].dns_zone_maps
   compute_dns_zone_id = one(flatten([
     for dns_zone in local.dns_zone_map_list : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["compute"]
   ]))
