@@ -56,10 +56,12 @@ mv terraform /usr/bin
 
 # TODO: run terraform
 if [ ${enable_bastion} = true ]; then
-    if [ ! -d ${remote_ansible_path} ]; then sudo git clone -b ${da_hpc_repo_tag} ${da_hpc_repo_url} ${remote_ansible_path} fi
+    if [ ! -d ${remote_ansible_path} ]; then 
+        sudo git clone -b ${da_hpc_repo_tag} ${da_hpc_repo_url} ${remote_ansible_path} 
+    fi
     sudo -E terraform -chdir=${remote_ansible_path} init && sudo -E terraform -chdir=${remote_ansible_path} apply -auto-approve \
-        -var 'resource_group=${resource_group}' \
         -var 'ibmcloud_api_key=${ibmcloud_api_key}' \
+        -var 'resource_group=${resource_group}' \
         -var 'prefix=${prefix}' \
         -var 'zones=${zones}' \
         -var 'enable_landing_zone=false' \
