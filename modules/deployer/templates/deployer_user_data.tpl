@@ -85,5 +85,3 @@ if [ ${enable_bastion} = true ]; then
         -var 'compute_subnets=${compute_subnets}' \
         -var 'client_subnets=${client_subnets}'
 fi
-
-

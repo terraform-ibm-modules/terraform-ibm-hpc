@@ -706,3 +706,9 @@ variable "vpc_id" {
   default     = null
   description = "ID of an existing VPC in which the cluster resources will be deployed."
 }
+
+variable "bastion_fip" {
+  type        = string
+  default     = null
+  description = "bastion fip"
+}
