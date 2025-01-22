@@ -65,6 +65,7 @@ if [ ${enable_bastion} = true ]; then
         -var 'enable_landing_zone=false' \
         -var 'enable_deployer=false' \
         -var 'enable_bastion=false' \
+        -var 'bastion_fip=${bastion_fip}' \
         -var 'compute_ssh_keys=${compute_ssh_keys}' \
         -var 'storage_ssh_keys=${storage_ssh_keys}' \
         -var 'storage_instances=${storage_instances}' \
