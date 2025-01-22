@@ -73,8 +73,7 @@ locals {
   #boot_volume_encryption_key    = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
 
   # dependency: landing_zone_vsi -> file-share
-  existing_compute_subnet_id = [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.id][0]
-  compute_subnet_id         = var.vpc == null && var.compute_subnets == null ? local.compute_subnets[0].id : local.existing_compute_subnet_id
+  compute_subnet_id         = var.vpc == null && var.compute_subnets == null ? local.compute_subnets[0].id : [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.id][0]
   compute_security_group_id = var.enable_deployer ? [] : module.landing_zone_vsi[0].compute_sg_id
   management_instance_count = sum(var.management_instances[*]["count"])
   default_share = local.management_instance_count > 0 ? [
@@ -173,10 +172,10 @@ locals {
 # locals needed for playbook
 locals {
   bastion_fip              = module.deployer.bastion_fip
-  compute_private_key_path = "./../../modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
-  storage_private_key_path = "./../../modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
-  compute_playbook_path    = "./../../modules/ansible-roles/compute_ssh.yaml"
-  storage_playbook_path    = "./../../modules/ansible-roles/storage_ssh.yaml"
+  compute_private_key_path = var.enable_deployer ? "./../../modules/ansible-roles/compute_id_rsa" : "./modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
+  storage_private_key_path = var.enable_deployer ? "./../../modules/ansible-roles/storage_id_rsa" : "./modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
+  compute_playbook_path    = var.enable_deployer ? "./../../modules/ansible-roles/compute_ssh.yaml" : "./modules/ansible-roles/compute_ssh.yaml"
+  storage_playbook_path    = var.enable_deployer ? "./../../modules/ansible-roles/storage_ssh.yaml" : "./modules/ansible-roles/storage_ssh.yaml"
 }
 
 # file Share OutPut

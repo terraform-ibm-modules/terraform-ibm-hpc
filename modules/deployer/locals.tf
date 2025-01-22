@@ -81,8 +81,8 @@ locals {
   da_hpc_repo_url     = "https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git"
   da_hpc_repo_tag     = "jay_dep_lsf" ###### change it to main in future
   
-  storage_subnets  = [for subnet in var.storage_subnets : subnet.id]
-  protocol_subnets = [for subnet in var.protocol_subnets : subnet.id]
-  compute_subnets  = [for subnet in var.compute_subnets : subnet.id]
-  client_subnets   = [for subnet in var.storage_subnets : subnet.id]
+  storage_subnets  = [for subnet in var.storage_subnets : subnet.name]
+  protocol_subnets = [for subnet in var.protocol_subnets : subnet.name]
+  compute_subnets  = [for subnet in var.compute_subnets : subnet.name]
+  client_subnets   = [for subnet in var.storage_subnets : subnet.name]
 }
