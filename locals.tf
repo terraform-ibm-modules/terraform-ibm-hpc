@@ -165,17 +165,17 @@ locals {
 locals {
   compute_hosts          = try([for name in local.compute_instances[*]["name"] : "${name}.${var.dns_domain_names["compute"]}"], [])  #local.compute_instances[*]["ipv4_address"]
   storage_hosts          = try([for name in local.storage_instances[*]["name"] : "${name}.${var.dns_domain_names["storage"]}"], [])  #local.storage_instances[*]["ipv4_address"]
-  compute_inventory_path = "compute.ini" #"./../../modules/ansible-roles/compute.ini"
-  storage_inventory_path = "storage.ini" #"./../../modules/ansible-roles/storage.ini"
+  compute_inventory_path = "${path.root}/modules/ansible-roles/compute.ini" #"./../../modules/ansible-roles/compute.ini"
+  storage_inventory_path = "${path.root}/modules/ansible-roles/storage.ini" #"storage.ini" #"./../../modules/ansible-roles/storage.ini"
 }
 
 # locals needed for playbook
 locals {
   bastion_fip              = module.deployer.bastion_fip
-  compute_private_key_path = "compute_id_rsa" #var.enable_deployer ? "./../../modules/ansible-roles/compute_id_rsa" : "./modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
-  storage_private_key_path = "storage_id_rsa" #var.enable_deployer ? "./../../modules/ansible-roles/storage_id_rsa" : "./modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
-  compute_playbook_path    = "compute_ssh.yaml" #var.enable_deployer ? "./../../modules/ansible-roles/compute_ssh.yaml" : "./modules/ansible-roles/compute_ssh.yaml"
-  storage_playbook_path    = "storage_ssh.yaml" #var.enable_deployer ? "./../../modules/ansible-roles/storage_ssh.yaml" : "./modules/ansible-roles/storage_ssh.yaml"
+  compute_private_key_path = "${path.root}/modules/ansible-roles/compute_id_rsa" #"compute_id_rsa" #var.enable_deployer ? "./../../modules/ansible-roles/compute_id_rsa" : "./modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
+  storage_private_key_path = "${path.root}/modules/ansible-roles/storage_id_rsa" #"storage_id_rsa" #var.enable_deployer ? "./../../modules/ansible-roles/storage_id_rsa" : "./modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
+  compute_playbook_path    = "${path.root}/modules/ansible-roles/compute_ssh.yaml" #"compute_ssh.yaml" #var.enable_deployer ? "./../../modules/ansible-roles/compute_ssh.yaml" : "./modules/ansible-roles/compute_ssh.yaml"
+  storage_playbook_path    = "${path.root}/modules/ansible-roles/storage_ssh.yaml" #"storage_ssh.yaml" #var.enable_deployer ? "./../../modules/ansible-roles/storage_ssh.yaml" : "./modules/ansible-roles/storage_ssh.yaml"
 }
 
 # file Share OutPut

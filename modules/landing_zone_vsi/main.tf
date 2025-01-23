@@ -1,13 +1,13 @@
 module "compute_key" {
   count            = local.enable_compute ? 1 : 0
   source           = "./../key"
-  private_key_path = "./../../modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
+  private_key_path = "${path.root}/modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
 }
 
 module "storage_key" {
   count            = local.enable_storage ? 1 : 0
   source           = "./../key"
-  private_key_path = "./../../modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
+  private_key_path = "${path.root}/modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
 }
 
 module "client_sg" {
