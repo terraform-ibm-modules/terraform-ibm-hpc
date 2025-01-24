@@ -133,13 +133,11 @@ variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
   type        = string
   sensitive   = false
-  # default     = null
 }
 
 variable "ibm_customer_number" {
   type        = string
   sensitive   = true
-  # default     = null
   description = "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
 }
 
@@ -173,11 +171,6 @@ variable "management_instances" {
       image   = string
     })
   )
-  # default = [{
-  #   profile = "cx2-2x4"
-  #   count   = 0
-  #   image   = "ibm-redhat-8-10-minimal-amd64-2"
-  # }]
   description = "Number of instances to be launched for management."
 }
 
@@ -189,11 +182,6 @@ variable "protocol_instances" {
       image   = string
     })
   )
-  # default = [{
-  #   profile = "bx2-2x8"
-  #   count   = 2
-  #   image   = "ibm-redhat-8-10-minimal-amd64-2"
-  # }]
   description = "Number of instances to be launched for protocol hosts."
 }
 
@@ -205,11 +193,6 @@ variable "static_compute_instances" {
       image   = string
     })
   )
-  # default = [{
-  #   profile = "cx2-2x4"
-  #   count   = 0
-  #   image   = "ibm-redhat-8-10-minimal-amd64-2"
-  # }]
   description = "Total Number of instances to be launched for compute cluster."
 }
 
@@ -221,77 +204,61 @@ variable "client_instances" {
       image   = string
     })
   )
-  default = [{
-    profile = "cx2-2x4"
-    count   = 0
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
-  }]
   description = "Number of instances to be launched for client."
 }
 
 variable "enable_cos_integration" {
   type        = bool
-  # default     = false
   description = "Integrate COS with HPC solution"
 }
 
 variable "enable_atracker" {
   type        = bool
-  # default     = false
   description = "Enable Activity tracker"
 }
 
 variable "enable_vpc_flow_logs" {
   type        = bool
-  # default     = false
   description = "Enable Activity tracker"
 }
 
 variable "key_management" {
   type        = string
-  # default     = null
   description = "null/key_protect/hs_crypto"
 }
 
 variable "storage_subnets" {
   # type        = string
-  # default     = null
   description = "Subnets to launch the storage host."
 }
 
 variable "protocol_subnets" {
   # type        = string
-  # default     = null
   description = "Subnets to launch the protocol host."
 }
 
 variable "compute_subnets" {
   # type        = string
-  # default     = null
   description = "Subnets to launch the compute host."
 }
 
 variable "client_subnets" {
   # type        = string
-  # default     = null
   description = "Subnets to launch the client host."
 }
 
 variable "bastion_fip" {
   type        = string
-  # default     = null
   description = "bastion fip"
 }
 
 variable "dns_instance_id" {
   type        = string
-  # default     = null
   description = "IBM Cloud HPC DNS service instance id."
 }
 
 variable "dns_custom_resolver_id" {
   type        = string
-  # default     = null
   description = "IBM Cloud DNS custom resolver id."
 }
 
@@ -301,22 +268,15 @@ variable "dns_domain_names" {
     storage  = string
     protocol = string
   })
-  # default = {
-  #   compute  = "comp.com"
-  #   storage  = "strg.com"
-  #   protocol = "ces.com"
-  # }
   description = "IBM Cloud HPC DNS domain names."
 }
 
 variable "vpc" {
   type        = string
-  # default     = null
   description = "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
 }
 
 variable "resource_group_id" {
   description = "String describing resource groups to create or reference"
   type        = string
-  # default     = null
 }
