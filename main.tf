@@ -102,6 +102,7 @@ module "landing_zone_vsi" {
   dns_domain_names           = var.dns_domain_names
   kms_encryption_enabled     = local.kms_encryption_enabled
   boot_volume_encryption_key = local.boot_volume_encryption_key
+  enable_bastion             = var.enable_bastion
 }
 
 module "file_storage" {
@@ -182,6 +183,7 @@ module "compute_playbook" {
   private_key_path = local.compute_private_key_path
   inventory_path   = local.compute_inventory_path
   playbook_path    = local.compute_playbook_path
+  enable_bastion   = var.enable_bastion
   depends_on       = [ module.compute_inventory ]
 }
 
@@ -192,6 +194,7 @@ module "storage_playbook" {
   private_key_path = local.storage_private_key_path
   inventory_path   = local.storage_inventory_path
   playbook_path    = local.storage_playbook_path
+  enable_bastion   = var.enable_bastion
   depends_on       = [ module.storage_inventory ]
 }
 

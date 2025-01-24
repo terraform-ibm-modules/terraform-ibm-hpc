@@ -1,3 +1,7 @@
+locals {
+  proxyjump = var.enable_bastion ? "-o ProxyJump=ubuntu@${var.bastion_fip}" : ""
+}
+
 resource "local_file" "create_playbook" {
   count    = var.inventory_path != null ? 1 : 0
   content  = <<EOT
@@ -9,7 +13,7 @@ resource "local_file" "create_playbook" {
   gather_facts: false
   vars:
     ansible_ssh_common_args: >
-      -o ProxyJump=ubuntu@${var.bastion_fip}
+      ${local.proxyjump}
       -o ControlMaster=auto
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
@@ -30,7 +34,7 @@ resource "local_file" "create_playbook" {
   gather_facts: false
   vars:
     ansible_ssh_common_args: >
-      -o ProxyJump=ubuntu@${var.bastion_fip}
+      ${local.proxyjump}
       -o ControlMaster=auto
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
