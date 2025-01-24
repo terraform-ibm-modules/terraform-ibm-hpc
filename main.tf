@@ -126,16 +126,26 @@ module "protocol_dns_records" {
   dns_records     = local.protocol_dns_records
 }
 
+resource "time_sleep" "wait_60_seconds" {
+  create_duration = "60s"
+  depends_on          = [ module.storage_dns_records, module.protocol_dns_records, module.compute_dns_records ]
+}
+
+
 module "compute_inventory" {
-  source         = "./modules/inventory"
-  hosts          = local.compute_hosts
-  inventory_path = local.compute_inventory_path
+  source              = "./modules/inventory"
+  hosts               = local.compute_hosts
+  inventory_path      = local.compute_inventory_path
+  name_mount_path_map = local.fileshare_name_mount_path_map
+  depends_on          = [ time_sleep.wait_60_seconds ]
 }
 
 module "storage_inventory" {
-  source         = "./modules/inventory"
-  hosts          = local.storage_hosts
-  inventory_path = local.storage_inventory_path
+  source              = "./modules/inventory"
+  hosts               = local.storage_hosts
+  inventory_path      = local.storage_inventory_path
+  name_mount_path_map = local.fileshare_name_mount_path_map
+  depends_on          = [ time_sleep.wait_60_seconds ]
 }
 
 module "compute_playbook" {
@@ -144,7 +154,7 @@ module "compute_playbook" {
   private_key_path = local.compute_private_key_path
   inventory_path   = local.compute_inventory_path
   playbook_path    = local.compute_playbook_path
-  depends_on       = [module.compute_inventory]
+  depends_on       = [ module.compute_inventory ]
 }
 
 module "storage_playbook" {
@@ -153,7 +163,7 @@ module "storage_playbook" {
   private_key_path = local.storage_private_key_path
   inventory_path   = local.storage_inventory_path
   playbook_path    = local.storage_playbook_path
-  depends_on       = [module.storage_inventory]
+  depends_on       = [ module.storage_inventory ]
 }
 
 ###################################################

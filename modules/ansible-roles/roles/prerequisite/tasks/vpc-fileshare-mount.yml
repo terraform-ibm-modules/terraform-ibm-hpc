@@ -1,0 +1,33 @@
+---
+- name: show dictionary
+  ansible.builtin.debug:
+    msg: "{{item.key}}: {{item.value}}"
+  with_dict: "{{ name_mount_path_map }}"
+
+- name: Create base directories for NFS mount points
+  file:
+    path: "/mnt/{{ item.key }}"
+    state: directory
+    mode: '0777'
+  with_dict: "{{ name_mount_path_map }}"
+
+- name: Add NFS entries to /etc/fstab
+  lineinfile:
+    path: /etc/fstab
+    line: "{{ item.value }} /mnt/{{ item.key }} nfs rw,sec=sys,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,_netdev 0 0"
+    state: present
+    create: yes
+  with_dict: "{{ name_mount_path_map }}"
+  notify: Mount NFS
+
+- name: Verify mounted filesystems
+  command: df -h
+  register: df_output
+  changed_when: false
+  failed_when: df_output.rc != 0
+
+- name: Check directory listing
+  command: ls -ltr /mnt/lsf
+  register: ls_output
+  changed_when: false
+  failed_when: ls_output.rc != 0

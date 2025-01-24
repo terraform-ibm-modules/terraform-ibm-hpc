@@ -15,6 +15,10 @@ output "dns" {
   value = module.dns
 }
 
+output "file_storage" {
+  value = module.file_storage
+}
+
 output "ssh_to_deployer" {
   description = "SSH command to connect to the deployer"
   value       = var.enable_deployer && var.enable_bastion ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J ubuntu@${module.deployer.bastion_fip} vpcuser@${module.deployer.deployer_ip}" : null
