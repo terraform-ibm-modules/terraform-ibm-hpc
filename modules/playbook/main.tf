@@ -41,8 +41,13 @@ resource "local_file" "create_playbook" {
       -o StrictHostKeyChecking=no
     ansible_user: root
     ansible_ssh_private_key_file: ${var.private_key_path}
+  pre_tasks:
+    - name: Load cluster-specific variables
+      include_vars: all.json
   roles:
      - prerequisite
+     - lsf_templates
+     - lsf-ansible-command
 EOT
   filename = var.playbook_path
 }

@@ -158,13 +158,47 @@ resource "time_sleep" "wait_60_seconds" {
   depends_on      = [ module.storage_dns_records, module.protocol_dns_records, module.compute_dns_records ]
 }
 
+module "write_compute_cluster_inventory" {
+  count                 = var.enable_deployer == false ? 1 : 0 
+  source                = "./modules/write_inventory"
+  json_inventory_path   = local.json_inventory_path
+  lsf_masters           = local.management_nodes
+  lsf_servers           = local.compute_nodes
+  lsf_clients           = local.client_nodes
+  gui_hosts             = local.gui_hosts
+  db_hosts              = local.db_hosts
+  my_cluster_name       = var.prefix
+  ha_shared_dir         = local.ha_shared_dir
+  nfs_install_dir       = local.nfs_install_dir
+  Enable_Monitoring     = local.Enable_Monitoring
+  lsf_deployer_hostname = local.lsf_deployer_hostname
+  depends_on            = [ time_sleep.wait_60_seconds ]
+}
+
+module "write_storage_cluster_inventory" {
+  count                 = var.enable_deployer == false ? 1 : 0 
+  source                = "./modules/write_inventory"
+  json_inventory_path   = local.json_inventory_path
+  lsf_masters           = local.management_nodes
+  lsf_servers           = local.compute_nodes
+  lsf_clients           = local.client_nodes
+  gui_hosts             = local.gui_hosts
+  db_hosts              = local.db_hosts
+  my_cluster_name       = var.prefix
+  ha_shared_dir         = local.ha_shared_dir
+  nfs_install_dir       = local.nfs_install_dir
+  Enable_Monitoring     = local.Enable_Monitoring
+  lsf_deployer_hostname = local.lsf_deployer_hostname
+  depends_on            = [ time_sleep.wait_60_seconds ]
+}
+
 module "compute_inventory" {
   count               = var.enable_deployer == false ? 1 : 0 
   source              = "./modules/inventory"
   hosts               = local.compute_hosts
   inventory_path      = local.compute_inventory_path
   name_mount_path_map = local.fileshare_name_mount_path_map
-  depends_on          = [ time_sleep.wait_60_seconds ]
+  depends_on          = [ module.write_compute_cluster_inventory ]
 }
 
 module "storage_inventory" {
@@ -173,7 +207,7 @@ module "storage_inventory" {
   hosts               = local.storage_hosts
   inventory_path      = local.storage_inventory_path
   name_mount_path_map = local.fileshare_name_mount_path_map
-  depends_on          = [ time_sleep.wait_60_seconds ]
+  depends_on          = [ module.write_storage_cluster_inventory ]
 }
 
 module "compute_playbook" {

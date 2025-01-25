@@ -43,21 +43,42 @@ locals {
       zone = subnet.zone
     }
   ]
-  # existing_storage_subnets_subnets = [
-  #   for subnet in data.ibm_is_subnet.existing_storage_subnets :
-  #   {
-  #     cidr = subnet.ipv4_cidr_block
-  #     id   = subnet.id
-  #     name = subnet.name
-  #     zone = subnet.zone
-  #   }
-  # ]
+
+  existing_storage_subnets = [
+    for subnet in data.ibm_is_subnet.existing_storage_subnets :
+    {
+      cidr = subnet.ipv4_cidr_block
+      id   = subnet.id
+      name = subnet.name
+      zone = subnet.zone
+    }
+  ]
+
+  existing_protocol_subnets = [
+    for subnet in data.ibm_is_subnet.existing_protocol_subnets :
+    {
+      cidr = subnet.ipv4_cidr_block
+      id   = subnet.id
+      name = subnet.name
+      zone = subnet.zone
+    }
+  ]
+
+  existing_client_subnets = [
+    for subnet in data.ibm_is_subnet.existing_client_subnets :
+    {
+      cidr = subnet.ipv4_cidr_block
+      id   = subnet.id
+      name = subnet.name
+      zone = subnet.zone
+    }
+  ]
 
   # dependency: landing_zone -> landing_zone_vsi
-  client_subnets   = module.landing_zone.client_subnets
+  client_subnets   = var.vpc != null && var.client_subnets != null ? local.existing_client_subnets : module.landing_zone.client_subnets
   compute_subnets  = var.vpc != null && var.compute_subnets != null ? local.existing_compute_subnets : module.landing_zone.compute_subnets
-  storage_subnets  = module.landing_zone.storage_subnets
-  protocol_subnets = module.landing_zone.protocol_subnets
+  storage_subnets  = var.vpc != null && var.storage_subnets != null ? local.existing_storage_subnets : module.landing_zone.storage_subnets
+  protocol_subnets = var.vpc != null && var.protocol_subnets != null ? local.existing_protocol_subnets : module.landing_zone.protocol_subnets
 
   #boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   #skip_iam_authorization_policy = true
@@ -181,4 +202,18 @@ locals {
 # file Share OutPut
 locals {
   fileshare_name_mount_path_map =  var.enable_deployer ? {} : module.file_storage[0].name_mount_path_map
+}
+
+# details needed for json file
+locals {
+  json_inventory_path   = "./../../modules/ansible-roles/all.json"
+  management_nodes      = (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"]
+  compute_nodes         = (flatten([module.landing_zone_vsi[0].compute_vsi_data]))[*]["name"]
+  client_nodes          = (flatten([module.landing_zone_vsi[0].client_vsi_data]))[*]["name"]
+  gui_hosts             = [local.management_nodes[0]] # Without Pac HA
+  db_hosts              = [local.management_nodes[0]] # Without Pac HA
+  ha_shared_dir         = "/mnt/lsf/shared"
+  nfs_install_dir       = "none"
+  Enable_Monitoring     = false
+  lsf_deployer_hostname = var.enable_deployer == false ? local.management_nodes[0] : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
 }

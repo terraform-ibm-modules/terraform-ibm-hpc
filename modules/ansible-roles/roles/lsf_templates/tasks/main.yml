@@ -1,0 +1,4 @@
+---
+
+# tasks file for template tasks
+- import_tasks: template-tasks.yml
