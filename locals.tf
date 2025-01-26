@@ -206,14 +206,14 @@ locals {
 
 # details needed for json file
 locals {
-  json_inventory_path   = "./../../modules/ansible-roles/all.json"
-  management_nodes      = (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"]
-  compute_nodes         = (flatten([module.landing_zone_vsi[0].compute_vsi_data]))[*]["name"]
-  client_nodes          = (flatten([module.landing_zone_vsi[0].client_vsi_data]))[*]["name"]
-  gui_hosts             = [local.management_nodes[0]] # Without Pac HA
-  db_hosts              = [local.management_nodes[0]] # Without Pac HA
+  json_inventory_path   = var.enable_bastion ?  "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json"
+  management_nodes      = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"]
+  compute_nodes         = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].compute_vsi_data]))[*]["name"]
+  client_nodes          = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].client_vsi_data]))[*]["name"]
+  gui_hosts             = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA
+  db_hosts              = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA
   ha_shared_dir         = "/mnt/lsf/shared"
   nfs_install_dir       = "none"
   Enable_Monitoring     = false
-  lsf_deployer_hostname = var.enable_deployer == false ? local.management_nodes[0] : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
+  lsf_deployer_hostname = var.enable_bastion ? "" : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
 }
