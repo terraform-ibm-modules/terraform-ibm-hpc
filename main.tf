@@ -137,6 +137,10 @@ module "compute_inventory" {
   hosts               = local.compute_hosts
   inventory_path      = local.compute_inventory_path
   name_mount_path_map = local.fileshare_name_mount_path_map
+  logs_enable_for_management = var.observability_logs_enable_for_management
+  logs_enable_for_compute = var.observability_logs_enable_for_compute
+  cloud_logs_ingress_private_endpoint = local.cloud_logs_ingress_private_endpoint
+  VPC_APIKEY_VALUE = var.ibmcloud_api_key
   depends_on          = [ time_sleep.wait_60_seconds ]
 }
 
@@ -145,6 +149,9 @@ module "storage_inventory" {
   hosts               = local.storage_hosts
   inventory_path      = local.storage_inventory_path
   name_mount_path_map = local.fileshare_name_mount_path_map
+  logs_enable_for_management = var.observability_logs_enable_for_management
+  cloud_logs_ingress_private_endpoint = local.cloud_logs_ingress_private_endpoint
+  VPC_APIKEY_VALUE = var.ibmcloud_api_key
   depends_on          = [ time_sleep.wait_60_seconds ]
 }
 

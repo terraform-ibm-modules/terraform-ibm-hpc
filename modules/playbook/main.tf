@@ -39,6 +39,22 @@ resource "local_file" "create_playbook" {
     ansible_ssh_private_key_file: ${var.private_key_path}
   roles:
      - prerequisite
+
+- name: Cloud Logs Configuration
+  hosts: [all_nodes]
+  any_errors_fatal: true
+  gather_facts: true
+  vars:
+    ansible_ssh_common_args: >
+      -o ProxyJump=ubuntu@${var.bastion_fip}
+      -o ControlMaster=auto
+      -o ControlPersist=30m
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+    ansible_user: root
+    ansible_ssh_private_key_file: ${var.private_key_path}
+  roles:
+    - { role: cloudlogs, tags: ["cloud_logs"] }
 EOT
   filename = var.playbook_path
 }

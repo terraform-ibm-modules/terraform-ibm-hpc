@@ -74,7 +74,7 @@ module "management_vsi" {
   vsi_per_subnet                = var.management_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
-  image_id                      = local.management_image_id[count.index]
+  image_id                      = "r014-cdd9cf63-b5c6-4811-b1e8-3ae91a4deba9"
   machine_type                  = var.management_instances[count.index]["profile"]
   prefix                        = count.index == 0 ? local.management_node_name : format("%s-%s", local.management_node_name, count.index)
   resource_group_id             = local.resource_group_id
@@ -99,7 +99,7 @@ module "compute_vsi" {
   vsi_per_subnet                = var.static_compute_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
-  image_id                      = local.compute_image_id[count.index]
+  image_id                      = "r014-188b366f-25bb-4545-9bf9-11004bb4a016"
   machine_type                  = var.static_compute_instances[count.index]["profile"]
   prefix                        = count.index == 0 ? local.compute_node_name : format("%s-%s", local.compute_node_name, count.index)
   resource_group_id             = local.resource_group_id

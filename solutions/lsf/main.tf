@@ -68,4 +68,5 @@ module "lsf" {
   skip_flowlogs_s2s_auth_policy                    = local.env.skip_flowlogs_s2s_auth_policy
   skip_iam_authorization_policy                    = local.env.skip_iam_authorization_policy
   skip_kms_s2s_auth_policy                         = local.env.skip_kms_s2s_auth_policy
+  ibmcloud_api_key                                 = var.ibmcloud_api_key
 }

@@ -151,4 +151,5 @@ locals {
 # file Share OutPut
 locals {
   fileshare_name_mount_path_map = module.file_storage.name_mount_path_map
+  cloud_logs_ingress_private_endpoint = module.cloud_monitoring_instance_creation.cloud_logs_ingress_private_endpoint
 }
