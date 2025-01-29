@@ -3,7 +3,13 @@ output "lsf" {
   #sensitive = true
 }
 
-# output "ssh_to_compute" {
-#   value = module.lsf.ssh_to_compute
-#   #sensitive = true
-# }
+output "deployer" {
+  value = module.lsf.deployer
+  # sensitive = true
+}
+
+
+output "hostname" {
+  value = module.lsf.hostname
+  #sensitive = true
+}

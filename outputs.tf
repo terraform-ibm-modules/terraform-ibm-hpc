@@ -3,8 +3,8 @@ output "landing_zone" {
 }
 
 output "deployer" {
-  value     = module.deployer
-  sensitive = true
+  value     = flatten(module.deployer.deployer_vsi_data[*].list)
+  # sensitive = true
 }
 
 output "landing_zone_vsi" {
@@ -16,7 +16,11 @@ output "dns" {
 }
 
 output "file_storage" {
-  value = local.subnets_crn
+  value = local.compute_deployer_instances
+}
+
+output "hostname" {
+  value = data.external.get_hostname.result.hostname
 }
 
 # output "existing_compute_subnets" {
