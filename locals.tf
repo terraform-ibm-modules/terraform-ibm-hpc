@@ -128,15 +128,19 @@ locals {
   # resource_group_id = one(values(one(module.landing_zone.resource_group_id)))
   vpc_crn           = var.vpc == null ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
   # TODO: Fix existing subnet logic
-  existing_subnet_crns = [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.crn]
-  subnets_crn        = var.vpc == null && var.compute_subnets == null ? module.landing_zone.subnets_crn : concat(local.existing_subnet_crns, module.landing_zone.subnets_crn)
+  # existing_subnet_crns = [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.crn]
+  # subnets_crn        = var.vpc == null && var.compute_subnets == null ? module.landing_zone.subnets_crn : concat(local.existing_subnet_crns, module.landing_zone.subnets_crn)
   #subnets           = flatten([local.compute_subnets, local.storage_subnets, local.protocol_subnets])
   #subnets_crns      = data.ibm_is_subnet.itself[*].crn
-  #subnets_crn = module.landing_zone.subnets_crn
+  subnets_crn = module.landing_zone.subnets_crn
   #boot_volume_encryption_key    = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
 
   # dependency: landing_zone_vsi -> file-share
 }
+
+  data "external" "get_hostname" {
+    program = ["sh", "-c", "echo '{\"name\": \"'$(hostname)'\", \"ipv4_address\": \"'$(hostname -I | awk '{print $1}')'\"}'"]
+  }
 
 # locals needed for dns-records
 locals {
@@ -154,14 +158,21 @@ locals {
     for dns_zone in local.dns_zone_map_list : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["protocol"]
   ]))
 
+
+
   # dependency: landing_zone_vsi -> dns-records
   compute_instances  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data, module.landing_zone_vsi[0].compute_vsi_data])
   storage_instances  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_vsi_data, module.landing_zone_vsi[0].protocol_vsi_data])
   protocol_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].protocol_vsi_data])
-  compute_deployer_instances = concat(local.compute_instances, flatten(module.deployer.deployer_vsi_data[*].list))
+  deployer_instances = [
+    {
+      name         = data.external.get_hostname.result["name"]
+      ipv4_address = data.external.get_hostname.result["ipv4_address"]
+    }
+  ]
 
   compute_dns_records = [
-    for instance in local.compute_deployer_instances :
+    for instance in concat(local.compute_instances, local.deployer_instances):
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
@@ -205,9 +216,9 @@ locals {
   fileshare_name_mount_path_map =  var.enable_deployer ? {} : module.file_storage[0].name_mount_path_map
 }
 
-data "external" "get_hostname" {
-  program = ["sh", "-c", "echo '{\"hostname\": \"'$(hostname)'\"}'"]
-}
+# data "external" "get_hostname" {
+#   program = ["sh", "-c", "echo '{\"hostname\": \"'$(hostname)'\"}'"]
+# }
 
 # details needed for json file
 locals {
@@ -220,5 +231,5 @@ locals {
   ha_shared_dir         = "/mnt/lsf/shared"
   nfs_install_dir       = "none"
   Enable_Monitoring     = false
-  lsf_deployer_hostname = data.external.get_hostname.result.hostname  #var.enable_bastion ? "" : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
+  lsf_deployer_hostname = data.external.get_hostname.result.name  #var.enable_bastion ? "" : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
 }

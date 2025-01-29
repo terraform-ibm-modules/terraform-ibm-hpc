@@ -3,13 +3,13 @@ output "lsf" {
   #sensitive = true
 }
 
-output "deployer" {
-  value = module.lsf.deployer
-  # sensitive = true
-}
+# output "subnet_crnn" {
+#   value = module.lsf.subnet_crnn
+#   # sensitive = true
+# }
 
 
-output "hostname" {
-  value = module.lsf.hostname
+output "subnets_crn" {
+  value = module.lsf.subnets_crn
   #sensitive = true
 }

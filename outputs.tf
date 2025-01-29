@@ -16,12 +16,18 @@ output "dns" {
 }
 
 output "file_storage" {
-  value = local.compute_deployer_instances
+  value = local.deployer_instances
 }
 
-output "hostname" {
-  value = data.external.get_hostname.result.hostname
+output "subnets_crn" {
+  value = local.subnets_crn
 }
+
+# output "subnet_crnn" {
+#   value = local.subnets_crnn
+# }
+
+
 
 # output "existing_compute_subnets" {
 #   value = local.existing_compute_subnets
