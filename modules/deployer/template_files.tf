@@ -37,6 +37,9 @@ data "template_file" "deployer_user_data" {
     bastion_subnets              = local.enable_bastion ? jsonencode(local.existing_bastion_subnets) : ""
     bastion_fip                  = local.enable_bastion ? var.bastion_fip : ""
     vpc                          = local.enable_bastion ? var.vpc : ""
+    compute_dns_domain           = local.enable_bastion ? local.compute_dns_domain : ""
+    compute_interfaces           = local.enable_bastion ? local.compute_interfaces : ""
+    dns_domain_names             = local.enable_bastion ? jsonencode(var.dns_domain_names) : ""
 
   }
 }

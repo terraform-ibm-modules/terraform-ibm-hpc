@@ -52,27 +52,27 @@ EOT
   filename = var.playbook_path
 }
 
-# resource "null_resource" "run_playbook" {
-#   count = var.inventory_path != null ? 1 : 0
-#   provisioner "local-exec" {
-#     interpreter = ["/bin/bash", "-c"]
-#     command     = "/usr/local/bin/ansible-playbook -i ${var.inventory_path} ${var.playbook_path}"
-#   }
-#   triggers = {
-#     build = timestamp()
-#   }
-#   depends_on = [local_file.create_playbook]
-# }
+resource "null_resource" "run_playbook" {
+  count = var.inventory_path != null ? 1 : 0
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "/usr/local/bin/ansible-playbook -i ${var.inventory_path} ${var.playbook_path}"
+  }
+  triggers = {
+    build = timestamp()
+  }
+  depends_on = [local_file.create_playbook]
+}
 
-# resource "ansible_playbook" "playbook" {
-#   playbook   = var.playbook_path
-#   name       = "localhost"
-#   replayable = true
-#   verbosity  = 6
-#   extra_vars = {
-#     ansible_python_interpreter = "auto"
-#     inventory_file = var.inventory_path
-#   }
-#   depends_on = [local_file.create_playbook]
-# }
+resource "ansible_playbook" "playbook" {
+  playbook   = var.playbook_path
+  name       = "localhost"
+  replayable = true
+  verbosity  = 6
+  extra_vars = {
+    ansible_python_interpreter = "auto"
+    inventory_file = var.inventory_path
+  }
+  depends_on = [local_file.create_playbook]
+}
 

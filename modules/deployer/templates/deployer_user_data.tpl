@@ -14,12 +14,15 @@ then
     USER=ubuntu
 fi
 sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo \'Please login as the user \\\\\"$USER\\\\\" rather than the user \\\\\"root\\\\\".\';echo;sleep 5; exit 142\" /" /root/.ssh/authorized_keys
+echo "DOMAIN=${dns_domain_names}" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
+echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
 chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
 systemctl restart NetworkManager
 
 # input parameters
 echo "${bastion_public_key_content}" >> /home/$USER/.ssh/authorized_keys
 echo "StrictHostKeyChecking no" >> /home/$USER/.ssh/config
+echo "StrictHostKeyChecking no" >> ~/.ssh/config
 
 # setup env
 # TODO: Conditional installation (python3, terraform & ansible)
@@ -59,7 +62,7 @@ if [ ${enable_bastion} = true ]; then
     if [ ! -d ${remote_ansible_path} ]; then 
         sudo git clone -b ${da_hpc_repo_tag} ${da_hpc_repo_url} ${remote_ansible_path} 
     fi
-    sudo -E terraform -chdir=${remote_ansible_path} init && sudo -E terraform -chdir=${remote_ansible_path} apply -auto-approve \
+    sudo -E terraform -chdir=${remote_ansible_path} init && sudo -E terraform -chdir=${remote_ansible_path} plan -auto-approve \
         -var 'ibmcloud_api_key=${ibmcloud_api_key}' \
         -var 'resource_group=${resource_group}' \
         -var 'prefix=${prefix}' \
@@ -88,3 +91,43 @@ if [ ${enable_bastion} = true ]; then
         -var 'client_subnets=${client_subnets}' \
         -var 'bastion_subnets=${bastion_subnets}'
 fi
+
+
+TFVARS_PATH="/opt/ibm/terraform-ibm-hpc/terraform.tfvars.json"
+
+# Create the terraform.tfvars.json file with dynamic values
+cat <<EOF > $TFVARS_PATH
+{
+  "ibmcloud_api_key": "${ibmcloud_api_key}",
+  "resource_group": "${resource_group}",
+  "prefix": "${prefix}",
+  "zones": ${zones},
+  "enable_landing_zone": false,
+  "enable_deployer": false,
+  "enable_bastion": false,
+  "bastion_fip": "${bastion_fip}",
+  "compute_ssh_keys": ${compute_ssh_keys},
+  "storage_ssh_keys": ${storage_ssh_keys},
+  "storage_instances": ${storage_instances},
+  "management_instances": ${management_instances},
+  "protocol_instances": ${protocol_instances},
+  "ibm_customer_number": "${ibm_customer_number}",
+  "static_compute_instances": ${compute_instances},
+  "client_instances": ${client_instances},
+  "enable_cos_integration": ${enable_cos_integration},
+  "enable_atracker": ${enable_atracker},
+  "enable_vpc_flow_logs": ${enable_vpc_flow_logs},
+  "allowed_cidr": ${allowed_cidr},
+  "vpc_id": "${vpc_id}",
+  "vpc": "${vpc}",
+  "storage_subnets": ${storage_subnets},
+  "protocol_subnets": ${protocol_subnets},
+  "compute_subnets": ${compute_subnets},
+  "client_subnets": ${client_subnets},
+  "bastion_subnets": ${bastion_subnets},
+  "dns_domain_names": ${dns_domain_names}
+}
+EOF
+
+# Ensure proper permissions
+chmod 600 $TFVARS_PATH

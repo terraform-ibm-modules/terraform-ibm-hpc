@@ -93,4 +93,8 @@ locals {
   existing_client_subnets   = length(local.client_subnet) == 0 ? null : local.client_subnet
   existing_bastion_subnets  = length(local.bastion_subnet) == 0 ? null : local.bastion_subnet
 
+  vsi_interfaces     = ["eth0", "eth1"]
+  compute_interfaces = local.vsi_interfaces[0]
+  compute_dns_domain = var.dns_domain_names["compute"]
+
 }
