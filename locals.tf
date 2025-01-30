@@ -133,14 +133,15 @@ locals {
   #subnets           = flatten([local.compute_subnets, local.storage_subnets, local.protocol_subnets])
   #subnets_crns      = data.ibm_is_subnet.itself[*].crn
   subnets_crn = module.landing_zone.subnets_crn
+
   #boot_volume_encryption_key    = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
 
   # dependency: landing_zone_vsi -> file-share
 }
 
-  data "external" "get_hostname" {
-    program = ["sh", "-c", "echo '{\"name\": \"'$(hostname)'\", \"ipv4_address\": \"'$(hostname -I | awk '{print $1}')'\"}'"]
-  }
+data "external" "get_hostname" {
+  program = ["sh", "-c", "echo '{\"name\": \"'$(hostname)'\", \"ipv4_address\": \"'$(hostname -I | awk '{print $1}')'\"}'"]
+}
 
 # locals needed for dns-records
 locals {
