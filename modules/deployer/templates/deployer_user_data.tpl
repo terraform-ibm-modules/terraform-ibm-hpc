@@ -45,10 +45,10 @@ then
 fi
 
 dnf install -y git unzip wget python3-dnf-plugin-versionlock bind-utils
-dnf update --security -y
-dnf versionlock list
-dnf versionlock add git unzip wget python3-dnf-plugin-versionlock bind-utils
-dnf versionlock list
+# dnf update --security -y
+# dnf versionlock list
+# dnf versionlock add git unzip wget python3-dnf-plugin-versionlock bind-utils
+# dnf versionlock list
 wget https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip
 unzip terraform_1.5.7_linux_amd64.zip
 rm -rf terraform_1.5.7_linux_amd64.zip
@@ -85,5 +85,6 @@ if [ ${enable_bastion} = true ]; then
         -var 'storage_subnets=${storage_subnets}' \
         -var 'protocol_subnets=${protocol_subnets}' \
         -var 'compute_subnets=${compute_subnets}' \
-        -var 'client_subnets=${client_subnets}'
+        -var 'client_subnets=${client_subnets}' \
+        -var 'bastion_subnets=${bastion_subnets}'
 fi

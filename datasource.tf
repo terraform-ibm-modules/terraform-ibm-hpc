@@ -45,3 +45,8 @@ data "ibm_is_subnet" "existing_client_subnets" {
   count = var.vpc != null && var.client_subnets != null ? 1 : 0
   name  = var.client_subnets[count.index]
 }
+
+data "ibm_is_subnet" "existing_bastion_subnets" {
+  count = var.vpc != null && var.bastion_subnets != null ? 1 : 0
+  name  = var.bastion_subnets[count.index]
+}

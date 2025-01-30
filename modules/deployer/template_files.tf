@@ -34,6 +34,7 @@ data "template_file" "deployer_user_data" {
     protocol_subnets             = local.enable_bastion ? jsonencode(local.existing_protocol_subnets) : ""
     compute_subnets              = local.enable_bastion ? jsonencode(local.existing_compute_subnets) : ""
     client_subnets               = local.enable_bastion ? jsonencode(local.existing_client_subnets) : ""
+    bastion_subnets              = local.enable_bastion ? jsonencode(local.existing_bastion_subnets) : ""
     bastion_fip                  = local.enable_bastion ? var.bastion_fip : ""
     vpc                          = local.enable_bastion ? var.vpc : ""
 

@@ -63,7 +63,7 @@ locals {
       zone = subnet.zone
     }
   ]
-
+  
   existing_client_subnets = [
     for subnet in data.ibm_is_subnet.existing_client_subnets :
     {
@@ -73,6 +73,17 @@ locals {
       zone = subnet.zone
     }
   ]
+
+    existing_bastion_subnets = [
+    for subnet in data.ibm_is_subnet.existing_bastion_subnets :
+    {
+      cidr = subnet.ipv4_cidr_block
+      id   = subnet.id
+      name = subnet.name
+      zone = subnet.zone
+    }
+  ]
+
 
   # dependency: landing_zone -> landing_zone_vsi
   client_subnets   = var.vpc != null && var.client_subnets != null ? local.existing_client_subnets : module.landing_zone.client_subnets
@@ -128,11 +139,16 @@ locals {
   # resource_group_id = one(values(one(module.landing_zone.resource_group_id)))
   vpc_crn           = var.vpc == null ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
   # TODO: Fix existing subnet logic
-  # existing_subnet_crns = [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.crn]
+  existing_compute_subnet_crns  = [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.crn]
+  existing_storage_subnet_crns  = [for subnet in data.ibm_is_subnet.existing_storage_subnets : subnet.crn]
+  existing_protocol_subnet_crns = [for subnet in data.ibm_is_subnet.existing_protocol_subnets : subnet.crn]
+  existing_client_subnet_crns   = [for subnet in data.ibm_is_subnet.existing_client_subnets : subnet.crn]
+  existing_bastion_subnet_crns  = [for subnet in data.ibm_is_subnet.existing_bastion_subnets : subnet.crn]
+  subnets_crn = concat(local.existing_compute_subnet_crns, local.existing_storage_subnet_crns, local.existing_protocol_subnet_crns, local.existing_client_subnet_crns, local.existing_bastion_subnet_crns)
   # subnets_crn        = var.vpc == null && var.compute_subnets == null ? module.landing_zone.subnets_crn : concat(local.existing_subnet_crns, module.landing_zone.subnets_crn)
   #subnets           = flatten([local.compute_subnets, local.storage_subnets, local.protocol_subnets])
   #subnets_crns      = data.ibm_is_subnet.itself[*].crn
-  subnets_crn = module.landing_zone.subnets_crn
+  # subnets_crn = module.landing_zone.subnets_crn
 
   #boot_volume_encryption_key    = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
 
