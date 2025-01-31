@@ -22,6 +22,12 @@ output "bastion_public_key_content" {
   value       = one(module.ssh_key[*].public_key_content)
 }
 
+output "bastion_private_key_content" {
+  description = "Bastion private key content"
+  sensitive   = true
+  value       = one(module.ssh_key[*].private_key_content)
+}
+
 output "deployer_ip" {
   description = "Deployer IP"
   value       = one(module.deployer_vsi[*]["list"][0]["ipv4_address"])

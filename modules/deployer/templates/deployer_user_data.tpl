@@ -56,38 +56,3 @@ wget https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.
 unzip terraform_1.5.7_linux_amd64.zip
 rm -rf terraform_1.5.7_linux_amd64.zip
 mv terraform /usr/bin
-
-# TODO: run terraform
-if [ ${enable_bastion} = true ]; then
-    if [ ! -d ${remote_ansible_path} ]; then 
-        sudo git clone -b ${da_hpc_repo_tag} ${da_hpc_repo_url} ${remote_ansible_path} 
-    fi
-    sudo -E terraform -chdir=${remote_ansible_path} init && sudo -E terraform -chdir=${remote_ansible_path} plan -auto-approve \
-        -var 'ibmcloud_api_key=${ibmcloud_api_key}' \
-        -var 'resource_group=${resource_group}' \
-        -var 'prefix=${prefix}' \
-        -var 'zones=${zones}' \
-        -var 'enable_landing_zone=false' \
-        -var 'enable_deployer=false' \
-        -var 'enable_bastion=false' \
-        -var 'bastion_fip=${bastion_fip}' \
-        -var 'compute_ssh_keys=${compute_ssh_keys}' \
-        -var 'storage_ssh_keys=${storage_ssh_keys}' \
-        -var 'storage_instances=${storage_instances}' \
-        -var 'management_instances=${management_instances}' \
-        -var 'protocol_instances=${protocol_instances}' \
-        -var 'ibm_customer_number=${ibm_customer_number}' \
-        -var 'static_compute_instances=${compute_instances}' \
-        -var 'client_instances=${client_instances}' \
-        -var 'enable_cos_integration=${enable_cos_integration}' \
-        -var 'enable_atracker=${enable_atracker}' \
-        -var 'enable_vpc_flow_logs=${enable_vpc_flow_logs}' \
-        -var 'allowed_cidr=${allowed_cidr}' \
-        -var 'vpc_id=${vpc_id}' \
-        -var 'vpc=${vpc}' \
-        -var 'storage_subnets=${storage_subnets}' \
-        -var 'protocol_subnets=${protocol_subnets}' \
-        -var 'compute_subnets=${compute_subnets}' \
-        -var 'client_subnets=${client_subnets}' \
-        -var 'bastion_subnets=${bastion_subnets}'
-fi

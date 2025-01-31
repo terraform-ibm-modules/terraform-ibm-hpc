@@ -32,6 +32,7 @@ locals {
   # dependency: landing_zone -> deployer -> landing_zone_vsi
   bastion_security_group_id  = module.deployer.bastion_security_group_id
   bastion_public_key_content = module.deployer.bastion_public_key_content
+  bastion_private_key_content = module.deployer.bastion_private_key_content
   
   # Existing subnets details
   existing_compute_subnets = [
@@ -90,6 +91,12 @@ locals {
   compute_subnets  = var.vpc != null && var.compute_subnets != null ? local.existing_compute_subnets : module.landing_zone.compute_subnets
   storage_subnets  = var.vpc != null && var.storage_subnets != null ? local.existing_storage_subnets : module.landing_zone.storage_subnets
   protocol_subnets = var.vpc != null && var.protocol_subnets != null ? local.existing_protocol_subnets : module.landing_zone.protocol_subnets
+
+  storage_subnet  = [for subnet in local.storage_subnets : subnet.name]
+  protocol_subnet = [for subnet in local.protocol_subnets : subnet.name]
+  compute_subnet  = [for subnet in local.compute_subnets : subnet.name]
+  client_subnet   = [for subnet in local.client_subnets : subnet.name]
+  bastion_subnet  = [for subnet in local.bastion_subnets : subnet.name]
 
   #boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   #skip_iam_authorization_policy = true
@@ -249,4 +256,31 @@ locals {
   nfs_install_dir       = "none"
   Enable_Monitoring     = false
   lsf_deployer_hostname = data.external.get_hostname.result.name  #var.enable_bastion ? "" : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
+}
+
+locals {
+  schematics_inputs_path    = "/tmp/.schematics/solution_terraform.auto.tfvars.json"
+  remote_inputs_path        = format("%s/terraform.tfvars.json", "/tmp")
+  deployer_path             = "/opt/ibm"
+  remote_terraform_path     = format("%s/terraform-ibm-hpc", local.deployer_path)
+  remote_ansible_path       = format("%s/terraform-ibm-hpc", local.deployer_path)
+  da_hpc_repo_url           = "https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git"
+  da_hpc_repo_tag           = "jay_dep_lsf" ###### change it to main in future
+  zones                     = jsonencode(var.zones)
+  exisint_vpc_id            = local.vpc_id
+  vpc_name                  = local.vpc
+  list_compute_ssh_keys     = jsonencode(local.compute_ssh_keys)
+  list_storage_ssh_keys     = jsonencode(local.storage_ssh_keys)
+  list_storage_instances    = jsonencode(var.storage_instances)
+  list_management_instances = jsonencode(var.management_instances)
+  list_protocol_instances   = jsonencode(var.protocol_instances)
+  list_compute_instances    = jsonencode(var.static_compute_instances)
+  list_client_instances     = jsonencode(var.client_instances)
+  allowed_cidr              = jsonencode(var.allowed_cidr)
+  list_storage_subnets      = jsonencode(length(local.storage_subnet) == 0 ? null : local.storage_subnet)
+  list_protocol_subnets     = jsonencode(length(local.protocol_subnet) == 0 ? null : local.protocol_subnet)
+  list_compute_subnets      = jsonencode(length(local.compute_subnet) == 0 ? null : local.compute_subnet)
+  list_client_subnets       = jsonencode(length(local.client_subnet) == 0 ? null : local.client_subnet)
+  list_bastion_subnets      = jsonencode(length(local.bastion_subnet) == 0 ? null : local.bastion_subnet)
+  dns_domain_names          = jsonencode(var.dns_domain_names)
 }

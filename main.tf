@@ -105,6 +105,82 @@ module "landing_zone_vsi" {
   enable_bastion             = var.enable_bastion
 }
 
+resource "local_sensitive_file" "prepare_tf_input" {
+  content  = <<EOT
+{
+  "ibmcloud_api_key": "${var.ibmcloud_api_key}",
+  "resource_group": "${var.resource_group}",
+  "prefix": "${var.prefix}",
+  "zones": ${local.zones},
+  "enable_landing_zone": false,
+  "enable_deployer": false,
+  "enable_bastion": false,
+  "bastion_fip": "${local.bastion_fip}",
+  "compute_ssh_keys": ${local.list_compute_ssh_keys},
+  "storage_ssh_keys": ${local.list_storage_ssh_keys},
+  "storage_instances": ${local.list_storage_instances},
+  "management_instances": ${local.list_management_instances},
+  "protocol_instances": ${local.list_protocol_instances},
+  "ibm_customer_number": "${var.ibm_customer_number}",
+  "static_compute_instances": ${local.list_compute_instances},
+  "client_instances": ${local.list_client_instances},
+  "enable_cos_integration": ${var.enable_cos_integration},
+  "enable_atracker": ${var.enable_atracker},
+  "enable_vpc_flow_logs": ${var.enable_vpc_flow_logs},
+  "allowed_cidr": ${local.allowed_cidr},
+  "vpc_id": "${local.exisint_vpc_id}",
+  "vpc": "${local.vpc_name}",
+  "storage_subnets": ${local.list_storage_subnets},
+  "protocol_subnets": ${local.list_protocol_subnets},
+  "compute_subnets": ${local.list_compute_subnets},
+  "client_subnets": ${local.list_client_subnets},
+  "bastion_subnets": ${local.list_bastion_subnets},
+  "dns_domain_names": ${local.dns_domain_names}
+}    
+EOT
+  filename = local.schematics_inputs_path
+}
+
+resource "time_sleep" "deployer_wait_120_seconds" {
+  create_duration = "120s"
+  depends_on      = [module.deployer]
+}
+
+resource "null_resource" "tf_resource_provisioner" {
+  connection {
+    type                = "ssh"
+    host                = flatten(module.deployer.deployer_vsi_data[*].list)[0].ipv4_address
+    user                = "vpcuser"
+    private_key         = local.bastion_private_key_content
+    bastion_host        = local.bastion_fip
+    bastion_user        = "ubuntu"
+    bastion_private_key = local.bastion_private_key_content
+    timeout             = "60m"
+  }
+
+  provisioner "file" {
+    source      = local.schematics_inputs_path
+    destination = local.remote_inputs_path
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "if [ ! -d ${local.remote_terraform_path} ]; then sudo git clone -b ${local.da_hpc_repo_tag} ${local.da_hpc_repo_url} ${local.remote_terraform_path}; fi",
+      "sudo cp ${local.remote_inputs_path} ${local.remote_terraform_path}",
+      "export TF_LOG=${var.TF_LOG} && sudo -E terraform -chdir=${local.remote_terraform_path} init && sudo -E terraform -chdir=${local.remote_terraform_path} plan"
+    ]
+  }
+
+  triggers = {
+    always_run = timestamp()
+  }
+
+  depends_on = [
+    time_sleep.deployer_wait_120_seconds,
+    local_sensitive_file.prepare_tf_input
+  ]
+}
+
 module "file_storage" {
   count              = var.enable_deployer == false ? 1 : 0 
   source             = "./modules/file_storage"
