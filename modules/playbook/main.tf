@@ -46,7 +46,7 @@ resource "local_file" "create_playbook" {
       include_vars: all.json
   roles:
      - prerequisite
-    #  - lsf_templates
+     - lsf_templates
     #  - lsf-ansible-command
 EOT
   filename = var.playbook_path
@@ -56,7 +56,7 @@ resource "null_resource" "run_playbook" {
   count = var.inventory_path != null ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "/usr/local/bin/ansible-playbook -i ${var.inventory_path} ${var.playbook_path}"
+    command     = "ansible-playbook -i ${var.inventory_path} ${var.playbook_path}"
   }
   triggers = {
     build = timestamp()
