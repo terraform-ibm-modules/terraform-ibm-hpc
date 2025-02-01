@@ -16,7 +16,7 @@ output "dns" {
 }
 
 output "file_storage" {
-  value = local.deployer_instances
+  value = local.bastion_fip
 }
 
 output "subnets_crn" {

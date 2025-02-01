@@ -267,8 +267,6 @@ locals {
   da_hpc_repo_url           = "https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git"
   da_hpc_repo_tag           = "jay_dep_lsf" ###### change it to main in future
   zones                     = jsonencode(var.zones)
-  exisint_vpc_id            = local.vpc_id
-  vpc_name                  = local.vpc
   list_compute_ssh_keys     = jsonencode(local.compute_ssh_keys)
   list_storage_ssh_keys     = jsonencode(local.storage_ssh_keys)
   list_storage_instances    = jsonencode(var.storage_instances)

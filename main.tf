@@ -106,6 +106,7 @@ module "landing_zone_vsi" {
 }
 
 resource "local_sensitive_file" "prepare_tf_input" {
+  count                      = var.enable_deployer == true ? 1 : 0
   content  = <<EOT
 {
   "ibmcloud_api_key": "${var.ibmcloud_api_key}",
@@ -128,8 +129,8 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "enable_atracker": ${var.enable_atracker},
   "enable_vpc_flow_logs": ${var.enable_vpc_flow_logs},
   "allowed_cidr": ${local.allowed_cidr},
-  "vpc_id": "${local.exisint_vpc_id}",
-  "vpc": "${local.vpc_name}",
+  "vpc_id": "${local.vpc_id}",
+  "vpc": "${local.vpc}",
   "storage_subnets": ${local.list_storage_subnets},
   "protocol_subnets": ${local.list_protocol_subnets},
   "compute_subnets": ${local.list_compute_subnets},
@@ -147,6 +148,7 @@ resource "time_sleep" "deployer_wait_120_seconds" {
 }
 
 resource "null_resource" "tf_resource_provisioner" {
+  #count                 = var.enable_deployer == true ? 1 : 0
   connection {
     type                = "ssh"
     host                = flatten(module.deployer.deployer_vsi_data[*].list)[0].ipv4_address
@@ -167,7 +169,7 @@ resource "null_resource" "tf_resource_provisioner" {
     inline = [
       "if [ ! -d ${local.remote_terraform_path} ]; then sudo git clone -b ${local.da_hpc_repo_tag} ${local.da_hpc_repo_url} ${local.remote_terraform_path}; fi",
       "sudo cp ${local.remote_inputs_path} ${local.remote_terraform_path}",
-      "export TF_LOG=${var.TF_LOG} && sudo -E terraform -chdir=${local.remote_terraform_path} init && sudo -E terraform -chdir=${local.remote_terraform_path} plan"
+      "export TF_LOG=${var.TF_LOG} && sudo -E terraform -chdir=${local.remote_terraform_path} init && sudo -E terraform -chdir=${local.remote_terraform_path} apply -parallelism=${var.TF_PARALLELISM} -auto-approve"
     ]
   }
 
@@ -179,6 +181,38 @@ resource "null_resource" "tf_resource_provisioner" {
     time_sleep.deployer_wait_120_seconds,
     local_sensitive_file.prepare_tf_input
   ]
+}
+
+resource "null_resource" "cluster_destroyer" {
+  #count                 = var.enable_deployer == true ? 1 : 0
+  triggers = {
+    conn_host                  = flatten(module.deployer.deployer_vsi_data[*].list)[0].ipv4_address
+    conn_private_key           = local.bastion_private_key_content
+    conn_bastion_host          = local.bastion_fip
+    conn_bastion_private_key   = local.bastion_private_key_content
+    conn_ibmcloud_api_key      = var.ibmcloud_api_key
+    conn_remote_terraform_path = local.remote_terraform_path
+    conn_terraform_log_level   = var.TF_LOG
+  }
+
+  connection {
+    type                = "ssh"
+    host                = self.triggers.conn_host
+    user                = "vpcuser"
+    private_key         = self.triggers.conn_private_key
+    bastion_host        = self.triggers.conn_bastion_host
+    bastion_user        = "ubuntu"
+    bastion_private_key = self.triggers.conn_bastion_private_key
+    timeout             = "60m"
+  }
+
+  provisioner "remote-exec" {
+    when       = destroy
+    on_failure = fail
+    inline = [
+      "export TF_LOG=${self.triggers.conn_terraform_log_level} && sudo -E terraform -chdir=${self.triggers.conn_remote_terraform_path} destroy -auto-approve"
+    ]
+  }
 }
 
 module "file_storage" {
