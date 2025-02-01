@@ -85,7 +85,6 @@ locals {
     }
   ]
 
-
   # dependency: landing_zone -> landing_zone_vsi
   client_subnets   = var.vpc != null && var.client_subnets != null ? local.existing_client_subnets : module.landing_zone.client_subnets
   compute_subnets  = var.vpc != null && var.compute_subnets != null ? local.existing_compute_subnets : module.landing_zone.compute_subnets
@@ -239,10 +238,6 @@ locals {
 locals {
   fileshare_name_mount_path_map =  var.enable_deployer ? {} : module.file_storage[0].name_mount_path_map
 }
-
-# data "external" "get_hostname" {
-#   program = ["sh", "-c", "echo '{\"hostname\": \"'$(hostname)'\"}'"]
-# }
 
 # details needed for json file
 locals {

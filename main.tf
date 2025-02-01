@@ -106,7 +106,7 @@ module "landing_zone_vsi" {
 }
 
 resource "local_sensitive_file" "prepare_tf_input" {
-  count                      = var.enable_deployer == true ? 1 : 0
+  count    = var.enable_deployer == true ? 1 : 0
   content  = <<EOT
 {
   "ibmcloud_api_key": "${var.ibmcloud_api_key}",
@@ -142,13 +142,8 @@ EOT
   filename = local.schematics_inputs_path
 }
 
-resource "time_sleep" "deployer_wait_120_seconds" {
-  create_duration = "120s"
-  depends_on      = [module.deployer]
-}
-
 resource "null_resource" "tf_resource_provisioner" {
-  count                 = var.enable_deployer == true ? 1 : 0
+  count = var.enable_deployer == true ? 1 : 0
   connection {
     type                = "ssh"
     host                = flatten(module.deployer.deployer_vsi_data[*].list)[0].ipv4_address
@@ -179,13 +174,13 @@ resource "null_resource" "tf_resource_provisioner" {
   }
 
   depends_on = [
-    time_sleep.deployer_wait_120_seconds,
+    module.deployer,
     local_sensitive_file.prepare_tf_input
   ]
 }
 
 resource "null_resource" "cluster_destroyer" {
-  count                 = var.enable_deployer == true ? 1 : 0
+  count    = var.enable_deployer == true ? 1 : 0
   triggers = {
     conn_host                  = flatten(module.deployer.deployer_vsi_data[*].list)[0].ipv4_address
     conn_private_key           = local.bastion_private_key_content

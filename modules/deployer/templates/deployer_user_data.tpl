@@ -17,6 +17,7 @@ sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=
 echo "DOMAIN=${compute_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
 echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
 chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
+120
 systemctl restart NetworkManager
 
 # input parameters
@@ -26,33 +27,33 @@ echo "StrictHostKeyChecking no" >> ~/.ssh/config
 
 # setup env
 # TODO: Conditional installation (python3, terraform & ansible)
-if grep -E -q "CentOS|Red Hat" /etc/os-release
-then
-    # TODO: Terraform Repo access
-    #yum install -y yum-utils
-    #yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
-    #if (which terraform); then echo "Terraform exists, skipping the installation"; else (yum install -y terraform
-    if (which python3); then echo "Python3 exists, skipping the installation"; else (yum install -y python38); fi
-    if (which ansible-playbook); then echo "Ansible exists, skipping the installation"; else (yum install -y ansible); fi
-elif grep -q "Ubuntu" /etc/os-release
-then
-    apt update
-    # TODO: Terraform Repo access
-    #apt-get update && sudo apt-get install -y gnupg software-properties-common
-    #wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
-    #gpg --no-default-keyring --keyring /usr/share/keyrings/hashicorp-archive-keyring.gpg --fingerprint
-    apt install software-properties-common
-    apt-add-repository --yes --update ppa:ansible/ansible
-    if (which python3); then echo "Python3 exists, skipping the installation"; else (apt install python38); fi
-    if (which ansible-playbook); then echo "Ansible exists, skipping the installation"; else (apt install ansible); fi
-fi
+# if grep -E -q "CentOS|Red Hat" /etc/os-release
+# then
+#     # TODO: Terraform Repo access
+#     #yum install -y yum-utils
+#     #yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+#     #if (which terraform); then echo "Terraform exists, skipping the installation"; else (yum install -y terraform
+#     if (which python3); then echo "Python3 exists, skipping the installation"; else (yum install -y python38); fi
+#     if (which ansible-playbook); then echo "Ansible exists, skipping the installation"; else (yum install -y ansible); fi
+# elif grep -q "Ubuntu" /etc/os-release
+# then
+#     apt update
+#     # TODO: Terraform Repo access
+#     #apt-get update && sudo apt-get install -y gnupg software-properties-common
+#     #wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
+#     #gpg --no-default-keyring --keyring /usr/share/keyrings/hashicorp-archive-keyring.gpg --fingerprint
+#     apt install software-properties-common
+#     apt-add-repository --yes --update ppa:ansible/ansible
+#     if (which python3); then echo "Python3 exists, skipping the installation"; else (apt install python38); fi
+#     if (which ansible-playbook); then echo "Ansible exists, skipping the installation"; else (apt install ansible); fi
+# fi
 
-dnf install -y git unzip wget python3-dnf-plugin-versionlock bind-utils
-# dnf update --security -y
-# dnf versionlock list
-# dnf versionlock add git unzip wget python3-dnf-plugin-versionlock bind-utils
-# dnf versionlock list
-wget https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip
-unzip terraform_1.5.7_linux_amd64.zip
-rm -rf terraform_1.5.7_linux_amd64.zip
-mv terraform /usr/bin
+# dnf install -y python39 git unzip wget python3-dnf-plugin-versionlock bind-utils
+# # dnf update --security -y
+# # dnf versionlock list
+# # dnf versionlock add git unzip wget python3-dnf-plugin-versionlock bind-utils
+# # dnf versionlock list
+# wget https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip
+# unzip terraform_1.5.7_linux_amd64.zip
+# rm -rf terraform_1.5.7_linux_amd64.zip
+# mv terraform /usr/bin
