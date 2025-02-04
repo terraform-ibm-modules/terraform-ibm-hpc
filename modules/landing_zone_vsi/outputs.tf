@@ -23,7 +23,32 @@ output "protocol_vsi_data" {
   value       = module.protocol_vsi[*]["list"]
 }
 
+output "afm_vsi_data" {
+  description = "AFM VSI data"
+  value       = module.afm_vsi[*]["list"]
+}
+
 output "compute_sg_id" {
   description = "Compute SG id"
   value       = module.compute_sg[*].security_group_id
+}
+
+output "ldap_vsi_data" {
+  description = "LDAP VSI data"
+  value       = module.ldap_vsi[*]["list"]
+}
+
+output "gklm_vsi_data" {
+  description = "GKLM VSI data"
+  value       = module.gklm_vsi[*]["list"]
+}
+
+output "storage_management_vsi_data" {
+  description = "GKLM VSI data"
+  value       = module.storage_cluster_management_vsi[*]["list"]
+}
+
+output "storage_cluster_tie_breaker_vsi_data" {
+  description = "Storage Cluster Tie Breaker VSI data"
+  value       = module.storage_cluster_tie_breaker_vsi[*]["list"]
 }

@@ -46,6 +46,20 @@ data "ibm_is_image" "protocol" {
   name  = var.protocol_instances[count.index]["image"]
 }
 
+data "ibm_is_image" "afm" {
+  count = length(var.afm_instances)
+  name  = var.afm_instances[count.index]["image"]
+}
+
+data "ibm_is_image" "gklm" {
+  count = length(var.gklm_instances)
+  name  = var.gklm_instances[count.index]["image"]
+}
+
+data "ibm_is_image" "ldap_vsi_image" {
+  count = var.ldap_basedns != null && var.ldap_server == null ? 1 : 0
+  name  = var.ldap_vsi_osimage_name
+}
 
 data "ibm_is_ssh_key" "client" {
   for_each = toset(var.client_ssh_keys)
@@ -61,3 +75,8 @@ data "ibm_is_ssh_key" "storage" {
   for_each = toset(var.storage_ssh_keys)
   name     = each.key
 }
+
+# data "ibm_is_ssh_key" "gklm" {
+#   for_each = toset(var.gklm_instance_key_pair)
+#   name     = each.key
+# }

@@ -63,7 +63,8 @@ locals {
     }
   ] : []
   storage_instance_count = sum(var.storage_instances[*]["count"])
-  total_shares           = local.storage_instance_count > 0 ? [] : concat(local.default_share, var.file_shares)
+  total_shares           = local.storage_instance_count > 0 ? concat(local.default_share, var.file_shares) : []
+  # fileset_size_map = try({ for details in var.filesets : details.mount_path => details.size }, {})
   file_shares = [
     for count in range(length(local.total_shares)) :
     {
@@ -104,9 +105,17 @@ locals {
   ]))
 
   # dependency: landing_zone_vsi -> dns-records
-  compute_instances  = flatten([module.landing_zone_vsi.management_vsi_data, module.landing_zone_vsi.compute_vsi_data])
-  storage_instances  = flatten([module.landing_zone_vsi.storage_vsi_data, module.landing_zone_vsi.protocol_vsi_data])
-  protocol_instances = flatten([module.landing_zone_vsi.protocol_vsi_data])
+  compute_instances                     = flatten([module.landing_zone_vsi.management_vsi_data, module.landing_zone_vsi.compute_vsi_data])
+  storage_instances                     = flatten([module.landing_zone_vsi.storage_vsi_data, module.landing_zone_vsi.protocol_vsi_data])
+  storage_management_instances          = flatten([module.landing_zone_vsi.storage_management_vsi_data])
+  protocol_instances                    = flatten([module.landing_zone_vsi.protocol_vsi_data])
+  afm_instances                         = flatten([module.landing_zone_vsi.afm_vsi_data])
+  gklm_instances                        = flatten([module.landing_zone_vsi.gklm_vsi_data])
+  ldap_instances                        = flatten(module.landing_zone_vsi.ldap_vsi_data)
+  storage_cluster_tie_breaker_instances = flatten(module.landing_zone_vsi.storage_cluster_tie_breaker_vsi_data)
+  total_compute_cluster_instances       = sum(var.static_compute_instances[*]["count"])
+  total_storage_cluster_instances       = sum(var.storage_instances[*]["count"])
+  enable_afm                            = sum(var.afm_instances[*]["count"]) > 0 ? true : false
 
   compute_dns_records = [
     for instance in local.compute_instances :
@@ -133,18 +142,113 @@ locals {
 
 # locals needed for inventory
 locals {
-  compute_hosts          = local.compute_instances[*]["ipv4_address"]
-  storage_hosts          = local.storage_instances[*]["ipv4_address"]
+  scale_version             = "5.2.1.1"
+  compute_hosts_private_ids = flatten(local.compute_instances[*]["ipv4_address"])
+  compute_hosts_ids         = flatten(local.compute_instances[*]["id"])
+  compute_hosts_names       = flatten(local.compute_instances[*]["name"])
+
+  storage_hosts_private_ids = flatten(local.storage_instances[*]["ipv4_address"])
+  storage_hosts_ids         = flatten(local.storage_instances[*]["id"])
+  storage_hosts_names       = flatten(local.storage_instances[*]["name"])
+
+  secondary_compute_hosts_private_ids = flatten(local.compute_instances[*]["secondary_ipv4_address"])
+  secondary_storage_hosts_private_ids = flatten(local.storage_instances[*]["secondary_ipv4_address"])
+
+
+  ldap_private_ips = local.ldap_instances[*]["ipv4_address"]
+  ldap_hostnames   = local.ldap_instances[*]["name"]
+
+
+  afm_hosts_private_ips = flatten(local.afm_instances[*]["ipv4_address"])
+  afm_hosts_ids         = flatten(local.afm_instances[*]["id"])
+  afm_hosts_names       = flatten(local.afm_instances[*]["name"])
+
+  gklm_hosts_private_ips = flatten(local.gklm_instances[*]["ipv4_address"])
+  gklm_hosts_ids         = flatten(local.gklm_instances[*]["id"])
+  gklm_hosts_names       = flatten(local.gklm_instances[*]["name"])
+
+  protocol_hosts_private_ips = flatten(local.protocol_instances[*]["ipv4_address"])
+  protocol_hosts_ids         = flatten(local.protocol_instances[*]["id"])
+  protocol_hosts_names       = flatten(local.protocol_instances[*]["name"])
+
+  storage_management_hosts_private_ips = flatten(local.storage_management_instances[*]["ipv4_address"])
+  storage_management_hosts_ids         = flatten(local.storage_management_instances[*]["id"])
+  storage_management_hosts_names       = flatten(local.storage_management_instances[*]["name"])
+
+  storage_cluster_tie_breaker_instances_hosts_private_ips = flatten(local.storage_cluster_tie_breaker_instances[*]["ipv4_address"])
+  storage_cluster_tie_breaker_instances_hosts_ids         = flatten(local.storage_cluster_tie_breaker_instances[*]["id"])
+  storage_cluster_tie_breaker_instances_hosts_names       = flatten(local.storage_cluster_tie_breaker_instances[*]["name"])
+
+
   compute_inventory_path = "compute.ini"
   storage_inventory_path = "storage.ini"
+}
+
+locals {
+  storage_instance_ids         = var.storage_type != "persistent" ? local.enable_afm == true ? concat(local.storage_hosts_ids, local.afm_hosts_ids) : local.storage_hosts_ids : []
+  storage_instance_names       = var.storage_type != "persistent" ? local.enable_afm == true ? concat(local.storage_hosts_names, local.afm_hosts_names) : local.storage_hosts_names : []
+  storage_instance_private_ips = var.storage_type != "persistent" ? local.enable_afm == true ? concat(local.storage_hosts_private_ids, local.afm_hosts_private_ips) : local.storage_hosts_private_ids : []
+  # storage_instance_private_dns_ip_map = var.storage_type != "persistent" ? one(module.storage_cluster_instances[*].instance_private_dns_ip_map) : {}
+
+  storage_cluster_instance_ids         = local.scale_ces_enabled == false ? local.storage_instance_ids : concat(local.storage_instance_ids, local.protocol_hosts_ids)
+  storage_cluster_instance_names       = local.scale_ces_enabled == false ? local.storage_instance_names : concat(local.storage_instance_names, local.protocol_hosts_names)
+  storage_cluster_instance_private_ips = local.scale_ces_enabled == false ? local.storage_instance_private_ips : concat(local.storage_instance_private_ips, local.protocol_hosts_private_ips)
+  # storage_cluster_instance_private_dns_ip_map = local.scale_ces_enabled == false ? local.storage_instance_private_dns_ip_map : merge(local.storage_instance_private_dns_ip_map, one(module.protocol_cluster_instances[*].instance_private_dns_ip_map))
+
+  tie_breaker_storage_instance_ids         = var.storage_type != "persistent" ? flatten(local.storage_cluster_tie_breaker_instances_hosts_ids) : []
+  tie_breaker_storage_instance_names       = var.storage_type != "persistent" ? flatten(local.storage_cluster_tie_breaker_instances_hosts_names) : []
+  tie_breaker_storage_instance_private_ips = var.storage_type != "persistent" ? flatten(local.storage_cluster_tie_breaker_instances_hosts_private_ips) : []
+  # tie_breaker_storage_instance_private_dns_ip_map = var.storage_type != "persistent" ? one(module.storage_cluster_tie_breaker_instance[*].instance_private_dns_ip_map) : {}
 }
 
 # locals needed for playbook
 locals {
   bastion_fip              = module.deployer.bastion_fip
+  bastion_instance_id      = module.deployer.bastion_vsi_data[*]["fip_list"][0]["floating_ip"]
   compute_private_key_path = "compute_id_rsa" #checkov:skip=CKV_SECRET_6
   storage_private_key_path = "storage_id_rsa" #checkov:skip=CKV_SECRET_6
+  bastion_private_key_path = "bastion_id_rsa" #checkov:skip=CKV_SECRET_6
+  ldap_private_key_path    = "ldap_id_rsa"    #checkov:skip=CKV_SECRET_6
   compute_playbook_path    = "compute_ssh.yaml"
   storage_playbook_path    = "storage_ssh.yaml"
 }
 
+
+# locals {
+#   gpfs_base_rpm_path = fileset(var.spectrumscale_rpms_path, "gpfs.base-*")
+#   scale_org_version  = regex("gpfs.base-(.*).x86_64.rpm", tolist(local.gpfs_base_rpm_path)[0])[0]
+#   scale_version      = replace(local.scale_org_version, "-", ".")
+# }
+
+locals {
+  client_instance_count = sum(var.client_instances[*]["count"])
+  # management_instance_count     = sum(var.management_instances[*]["count"])
+  # storage_instance_count        = sum(var.storage_instances[*]["count"])
+  protocol_instance_count       = sum(var.protocol_instances[*]["count"])
+  static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
+  afm_instance_count            = sum(var.afm_instances[*]["count"])
+}
+
+locals {
+  compute_vsi_profile    = var.static_compute_instances[*]["profile"]
+  storage_vsi_profile    = var.storage_instances[*]["profile"]
+  management_vsi_profile = var.management_instances[*]["profile"]
+  afm_vsi_profile        = var.afm_instances[*]["profile"]
+  protocol_vsi_profile   = var.protocol_instances[*]["profile"]
+  afm_server_type        = strcontains(local.afm_vsi_profile[0], "metal")
+  ces_server_type        = strcontains(local.protocol_vsi_profile[0], "metal")
+}
+
+locals {
+  scale_ces_enabled            = local.protocol_instance_count > 0 ? true : false
+  is_colocate_protocol_subset  = local.scale_ces_enabled && var.colocate_protocol_cluster_instances ? local.protocol_instance_count < local.total_storage_cluster_instances ? true : false : false
+  enable_sec_interface_compute = local.scale_ces_enabled == false && data.ibm_is_instance_profile.compute_profile.bandwidth[0].value >= 64000 ? true : false
+  enable_sec_interface_storage = local.scale_ces_enabled == false && var.storage_type != "persistent" && data.ibm_is_instance_profile.storage_profile.bandwidth[0].value >= 64000 ? true : false
+  enable_mrot_conf             = local.enable_sec_interface_compute && local.enable_sec_interface_storage ? true : false
+}
+
+
+
+output "file_shares" {
+  value = local.file_shares
+}

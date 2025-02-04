@@ -43,6 +43,10 @@ locals {
   storage_instance_count        = sum(var.storage_instances[*]["count"])
   protocol_instance_count       = sum(var.protocol_instances[*]["count"])
   static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
+  afm_instance_count            = sum(var.afm_instances[*]["count"])
+  afm_instance_profile = flatten([for item in var.afm_instances : [
+    for count in range(item["count"]) : var.afm_instances[index(var.afm_instances, item)]["profile"]
+  ]])
 
   enable_client     = local.client_instance_count > 0
   enable_management = local.management_instance_count > 0
@@ -56,11 +60,15 @@ locals {
   # TODO: Fix the logic
   # enable_load_balancer = false
 
-  client_node_name     = format("%s-%s", local.prefix, "client")
-  management_node_name = format("%s-%s", local.prefix, "mgmt")
-  compute_node_name    = format("%s-%s", local.prefix, "comp")
-  storage_node_name    = format("%s-%s", local.prefix, "strg")
-  protocol_node_name   = format("%s-%s", local.prefix, "proto")
+  client_node_name             = format("%s-%s", local.prefix, "client")
+  management_node_name         = format("%s-%s", local.prefix, "mgmt")
+  compute_node_name            = format("%s-%s", local.prefix, "comp")
+  storage_node_name            = format("%s-%s", local.prefix, "strg")
+  storage_management_node_name = format("%s-%s", local.prefix, "strg-mgmt")
+  protocol_node_name           = format("%s-%s", local.prefix, "proto")
+  afm_node_name                = format("%s-%s", local.prefix, "afm")
+  gklm_node_name               = format("%s-%s", local.prefix, "gklm")
+
 
   # Future use
   /*
@@ -87,10 +95,14 @@ locals {
   compute_image_id    = data.ibm_is_image.compute[*].id
   storage_image_id    = data.ibm_is_image.storage[*].id
   protocol_image_id   = data.ibm_is_image.storage[*].id
+  ldap_image_id       = data.ibm_is_image.ldap_vsi_image[*].id
+  afm_image_id        = data.ibm_is_image.afm[*].id
+  gklm_image_id       = data.ibm_is_image.gklm[*].id
 
-  storage_ssh_keys    = [for name in var.storage_ssh_keys : data.ibm_is_ssh_key.storage[name].id]
-  compute_ssh_keys    = [for name in var.compute_ssh_keys : data.ibm_is_ssh_key.compute[name].id]
-  client_ssh_keys     = [for name in var.client_ssh_keys : data.ibm_is_ssh_key.client[name].id]
+  storage_ssh_keys = [for name in var.storage_ssh_keys : data.ibm_is_ssh_key.storage[name].id]
+  compute_ssh_keys = [for name in var.compute_ssh_keys : data.ibm_is_ssh_key.compute[name].id]
+  client_ssh_keys  = [for name in var.client_ssh_keys : data.ibm_is_ssh_key.client[name].id]
+  # gklm_ssh_keys       = [for name in var.gklm_instance_key_pair : data.ibm_is_ssh_key.gklm[name].id]
   management_ssh_keys = local.compute_ssh_keys
   protocol_ssh_keys   = local.storage_ssh_keys
 
@@ -262,4 +274,17 @@ locals {
       interface_name    = subnet["name"]
     }
   ]
+
+
+  ldap_node_name         = format("%s-%s", local.prefix, "ldap")
+  ldap_server            = var.enable_ldap == true && var.ldap_server == null ? length(module.ldap_vsi) > 0 ? var.ldap_primary_ip[0] : null : var.ldap_server
+  ldap_server_cert       = var.enable_ldap == true && var.ldap_server_cert != null ? var.ldap_server_cert : null
+  ldap_instance_image_id = var.enable_ldap == true && var.ldap_server == null ? data.ibm_is_image.ldap_vsi_image[0].id : null
 }
+
+locals {
+  ldap_vsi_data = flatten(module.ldap_vsi[*]["list"])
+  #ldap_private_ips  = local.ldap_vsi_data[*]["ipv4_address"]
+  ldap_hostnames = local.ldap_vsi_data[*]["name"]
+}
+
