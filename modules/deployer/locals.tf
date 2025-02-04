@@ -97,4 +97,8 @@ locals {
   compute_interfaces = local.vsi_interfaces[0]
   compute_dns_domain = var.dns_domain_names["compute"]
 
+  management_instance_count     = sum(var.management_instances[*]["count"])
+  static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
+  enable_compute    = local.management_instance_count > 0 || local.static_compute_instance_count > 0
+
 }

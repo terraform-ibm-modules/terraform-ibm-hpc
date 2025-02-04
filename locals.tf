@@ -33,6 +33,9 @@ locals {
   bastion_security_group_id  = module.deployer.bastion_security_group_id
   bastion_public_key_content = module.deployer.bastion_public_key_content
   bastion_private_key_content = module.deployer.bastion_private_key_content
+
+  compute_public_key_content  = module.deployer.compute_public_key_content
+  compute_private_key_content = module.deployer.compute_private_key_content
   
   # Existing subnets details
   existing_compute_subnets = [

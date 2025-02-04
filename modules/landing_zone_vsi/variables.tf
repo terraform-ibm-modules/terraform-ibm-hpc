@@ -64,7 +64,21 @@ variable "bastion_public_key_content" {
   type        = string
   sensitive   = true
   default     = null
-  description = "Bastion security group id."
+  description = "Bastion security key content."
+}
+
+variable "compute_public_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Compute security key content."
+}
+
+variable "compute_private_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Compute security key content."
 }
 
 ##############################################################################

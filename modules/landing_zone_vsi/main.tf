@@ -1,9 +1,3 @@
-module "compute_key" {
-  count            = local.enable_compute ? 1 : 0
-  source           = "./../key"
-  private_key_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute_id_rsa" : "${path.root}/modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
-}
-
 module "storage_key" {
   count            = local.enable_storage ? 1 : 0
   source           = "./../key"

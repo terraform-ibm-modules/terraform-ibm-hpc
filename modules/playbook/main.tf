@@ -64,15 +64,33 @@ resource "null_resource" "run_playbook" {
   depends_on = [local_file.create_playbook]
 }
 
-resource "ansible_playbook" "playbook" {
-  playbook   = var.playbook_path
-  name       = "localhost"
-  replayable = true
-  verbosity  = 6
-  extra_vars = {
-    ansible_python_interpreter = "auto"
-    inventory_file = var.inventory_path
-  }
-  depends_on = [local_file.create_playbook]
-}
+# resource "ansible_playbook" "playbook" {
+#   playbook   = var.playbook_path
+#   name       = "localhost"
+#   replayable = true
+#   verbosity  = 6
+#   extra_vars = {
+#     ansible_python_interpreter = "auto"
+#     inventory_file = var.inventory_path
+#   }
+#   depends_on = [local_file.create_playbook]
+# }
 
+resource "null_resource" "run_lsf_playbooks" {
+  count = var.inventory_path != null ? 1 : 0
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command = <<EOT
+      ansible-playbook -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml &&
+      ansible-playbook -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml &&
+      ansible-playbook -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml
+    EOT
+  }
+
+  triggers = {
+    build = timestamp()
+  }
+
+  depends_on = [local_file.create_playbook, null_resource.run_playbook]
+}
