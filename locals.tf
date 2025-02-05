@@ -30,8 +30,8 @@ locals {
 # locals needed for landing_zone_vsi
 locals {
   # dependency: landing_zone -> deployer -> landing_zone_vsi
-  bastion_security_group_id  = module.deployer.bastion_security_group_id
-  bastion_public_key_content = module.deployer.bastion_public_key_content
+  bastion_security_group_id   = module.deployer.bastion_security_group_id
+  bastion_public_key_content  = module.deployer.bastion_public_key_content
   bastion_private_key_content = module.deployer.bastion_private_key_content
 
   compute_public_key_content  = module.deployer.compute_public_key_content
