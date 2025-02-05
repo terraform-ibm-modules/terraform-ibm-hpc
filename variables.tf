@@ -712,3 +712,17 @@ variable "bastion_fip" {
   default     = null
   description = "bastion fip"
 }
+
+variable "compute_public_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Compute security key content."
+}
+
+variable "compute_private_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Compute security key content."
+}

@@ -20,12 +20,12 @@ output "file_storage" {
 }
 
 output "subnets_crn" {
-  value = local.subnets_crn
+  value = local.compute_public_key_content
 }
 
-# output "subnet_crnn" {
-#   value = local.subnets_crnn
-# }
+output "subnet_crnn" {
+  value = local.bastion_public_key_content
+}
 
 
 

@@ -85,8 +85,8 @@ module "landing_zone_vsi" {
   vpc_id                     = local.vpc_id
   bastion_security_group_id  = local.bastion_security_group_id
   bastion_public_key_content = local.bastion_public_key_content
-  compute_public_key_content = local.compute_public_key_content
-  compute_private_key_content= local.compute_private_key_content
+  compute_public_key_content = var.compute_public_key_content
+  compute_private_key_content= var.compute_private_key_content
   client_subnets             = local.client_subnets
   client_ssh_keys            = local.client_ssh_keys
   client_instances           = var.client_instances
@@ -138,7 +138,9 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "compute_subnets": ${local.list_compute_subnets},
   "client_subnets": ${local.list_client_subnets},
   "bastion_subnets": ${local.list_bastion_subnets},
-  "dns_domain_names": ${local.dns_domain_names}
+  "dns_domain_names": ${local.dns_domain_names},
+  "compute_public_key_content": ${jsonencode(local.compute_public_key_content)},
+  "compute_private_key_content": ${jsonencode(local.compute_private_key_content)}
 }    
 EOT
   filename = local.schematics_inputs_path

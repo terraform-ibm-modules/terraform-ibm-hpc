@@ -34,8 +34,8 @@ locals {
   bastion_public_key_content  = module.deployer.bastion_public_key_content
   bastion_private_key_content = module.deployer.bastion_private_key_content
 
-  compute_public_key_content  = module.deployer.compute_public_key_content
-  compute_private_key_content = module.deployer.compute_private_key_content
+  compute_public_key_contents  = module.deployer.compute_public_key_content
+  compute_private_key_contents = module.deployer.compute_private_key_content
   
   # Existing subnets details
   existing_compute_subnets = [
@@ -279,4 +279,6 @@ locals {
   list_client_subnets       = jsonencode(length(local.client_subnet) == 0 ? null : local.client_subnet)
   list_bastion_subnets      = jsonencode(length(local.bastion_subnet) == 0 ? null : local.bastion_subnet)
   dns_domain_names          = jsonencode(var.dns_domain_names)
+  compute_public_key_content  = jsonencode(local.compute_public_key_contents)
+  compute_private_key_content = jsonencode(local.compute_private_key_contents)
 }
