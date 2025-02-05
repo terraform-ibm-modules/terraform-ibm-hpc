@@ -139,8 +139,8 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "client_subnets": ${local.list_client_subnets},
   "bastion_subnets": ${local.list_bastion_subnets},
   "dns_domain_names": ${local.dns_domain_names},
-  "compute_public_key_content": ${jsonencode(local.compute_public_key_content)},
-  "compute_private_key_content": ${jsonencode(local.compute_private_key_content)}
+  "compute_public_key_content": ${local.compute_public_key_content},
+  "compute_private_key_content": ${local.compute_private_key_content}
 }    
 EOT
   filename = local.schematics_inputs_path
