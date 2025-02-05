@@ -222,7 +222,7 @@ locals {
 
 # locals needed for inventory
 locals {
-  compute_hosts          = try([for name in local.compute_instances[*]["name"] : "${name}.${var.dns_domain_names["compute"]}"], [])
+  compute_hosts          = concat(["${data.external.get_hostname.result["name"]}.${var.dns_domain_names["compute"]}"], try([for name in local.compute_instances[*]["name"] : "${name}.${var.dns_domain_names["compute"]}"], []))
   storage_hosts          = try([for name in local.storage_instances[*]["name"] : "${name}.${var.dns_domain_names["storage"]}"], [])
   compute_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute.ini" : "${path.root}/modules/ansible-roles/compute.ini"
   storage_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage.ini" : "${path.root}/modules/ansible-roles/storage.ini"
@@ -279,6 +279,6 @@ locals {
   list_client_subnets       = jsonencode(length(local.client_subnet) == 0 ? null : local.client_subnet)
   list_bastion_subnets      = jsonencode(length(local.bastion_subnet) == 0 ? null : local.bastion_subnet)
   dns_domain_names          = jsonencode(var.dns_domain_names)
-  compute_public_key_content  = jsonencode(base64encode(local.compute_public_key_contents))
-  compute_private_key_content = jsonencode(base64encode(local.compute_private_key_contents))
+  compute_public_key_content  = local.compute_public_key_contents != null ? jsonencode(base64encode(local.compute_public_key_contents)) : ""
+  compute_private_key_content = local.compute_private_key_contents != null ? jsonencode(base64encode(local.compute_private_key_contents)) : ""
 }
