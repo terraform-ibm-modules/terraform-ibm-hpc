@@ -20,11 +20,11 @@ output "file_storage" {
 }
 
 output "subnets_crn" {
-  value = local.compute_public_key_content
+  value = local.bastion_fip
 }
 
 output "subnet_crnn" {
-  value = local.bastion_public_key_content
+  value = local.bastion_fip
 }
 
 
