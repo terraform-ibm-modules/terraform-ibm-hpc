@@ -16,9 +16,9 @@
   # delegate_to: localhost
   delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
 
-- name: Create all variable file from template
-  template:
-    src: lsf-all.j2
-    dest: "{{ inventory_path }}/group_vars/all"
-  # delegate_to: localhost
-  delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
+# - name: Create all variable file from template
+#   template:
+#     src: lsf-all.j2
+#     dest: "{{ inventory_path }}/group_vars/all"
+#   # delegate_to: localhost
+#   delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
