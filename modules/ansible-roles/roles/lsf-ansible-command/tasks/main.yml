@@ -3,5 +3,5 @@
 # tasks file for lsf shared directory
 - import_tasks: lsf-shared-dir.yml
 
-# tasks file for lsf commands
-- import_tasks: lsf-ansible-command.yml
+# # tasks file for lsf commands
+# - import_tasks: lsf-ansible-command.yml

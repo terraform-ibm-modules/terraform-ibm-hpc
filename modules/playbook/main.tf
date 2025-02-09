@@ -47,7 +47,7 @@ resource "local_file" "create_playbook" {
   roles:
      - prerequisite
      - lsf_templates
-    #  - lsf-ansible-command
+     - lsf-ansible-command
 EOT
   filename = var.playbook_path
 }
@@ -82,9 +82,9 @@ resource "null_resource" "run_playbook" {
 #   provisioner "local-exec" {
 #     interpreter = ["/bin/bash", "-c"]
 #     command = <<EOT
-#       ansible-playbook -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml &&
-#       ansible-playbook -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml &&
-#       ansible-playbook -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml
+#       sudo ansible-playbook -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml &&
+#       sudo ansible-playbook -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml &&
+#       sudo ansible-playbook -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml
 #     EOT
 #   }
 
