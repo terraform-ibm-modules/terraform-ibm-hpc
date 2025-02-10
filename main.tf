@@ -83,7 +83,7 @@ module "landing_zone_vsi" {
   prefix                     = var.prefix
   zones                      = var.zones
   vpc_id                     = local.vpc_id
-  bastion_security_group_id  = local.bastion_security_group_id
+  bastion_security_group_id  = var.bastion_security_group_id
   bastion_public_key_content = local.bastion_public_key_content
   compute_public_key_content = var.compute_public_key_content
   compute_private_key_content= var.compute_private_key_content
@@ -140,7 +140,9 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "bastion_subnets": ${local.list_bastion_subnets},
   "dns_domain_names": ${local.dns_domain_names},
   "compute_public_key_content": ${local.compute_public_key_content},
-  "compute_private_key_content": ${local.compute_private_key_content}
+  "compute_private_key_content": ${local.compute_private_key_content},
+  "bastion_security_group_id": ${local.bastion_security_group_id}
+
 }    
 EOT
   filename = local.schematics_inputs_path

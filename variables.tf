@@ -713,6 +713,12 @@ variable "bastion_fip" {
   description = "bastion fip"
 }
 
+variable "bastion_security_group_id" {
+  type        = string
+  default     = null
+  description = "bastion security group id"
+}
+
 variable "compute_public_key_content" {
   type        = string
   sensitive   = true

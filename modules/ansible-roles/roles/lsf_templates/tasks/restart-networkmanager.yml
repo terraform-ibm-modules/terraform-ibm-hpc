@@ -7,3 +7,4 @@
     name: NetworkManager
     state: restarted
     enabled: yes
+  delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
