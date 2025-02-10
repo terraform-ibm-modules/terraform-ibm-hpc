@@ -1,0 +1,9 @@
+---
+
+# Restart the NetworkManager on deployer node
+
+- name: Restart NetworkManager
+  ansible.builtin.systemd:
+    name: NetworkManager
+    state: restarted
+    enabled: yes
