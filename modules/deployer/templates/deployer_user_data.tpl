@@ -14,32 +14,41 @@ then
     USER=ubuntu
 fi
 sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo \'Please login as the user \\\\\"$USER\\\\\" rather than the user \\\\\"root\\\\\".\';echo;sleep 5; exit 142\" /" /root/.ssh/authorized_keys
+echo "DOMAIN=${compute_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
+echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
+chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
+120
+systemctl restart NetworkManager
 
 # input parameters
 echo "${bastion_public_key_content}" >> /home/$USER/.ssh/authorized_keys
 echo "StrictHostKeyChecking no" >> /home/$USER/.ssh/config
+echo "StrictHostKeyChecking no" >> ~/.ssh/config
+echo "${compute_public_key_content}" >> ~/.ssh/authorized_keys
+echo "${compute_private_key_content}" > ~/.ssh/id_rsa
+chmod 600 ~/.ssh/id_rsa
 
-# setup env
-# TODO: Conditional installation (python3, terraform & ansible)
-if grep -E -q "CentOS|Red Hat" /etc/os-release
-then
-    # TODO: Terraform Repo access
-    #yum install -y yum-utils
-    #yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
-    #if (which terraform); then echo "Terraform exists, skipping the installation"; else (yum install -y terraform
-    if (which python3); then echo "Python3 exists, skipping the installation"; else (yum install -y python38); fi
-    if (which ansible-playbook); then echo "Ansible exists, skipping the installation"; else (yum install -y ansible); fi
-elif grep -q "Ubuntu" /etc/os-release
-then
-    apt update
-    # TODO: Terraform Repo access
-    #apt-get update && sudo apt-get install -y gnupg software-properties-common
-    #wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
-    #gpg --no-default-keyring --keyring /usr/share/keyrings/hashicorp-archive-keyring.gpg --fingerprint
-    apt install software-properties-common
-    apt-add-repository --yes --update ppa:ansible/ansible
-    if (which python3); then echo "Python3 exists, skipping the installation"; else (apt install python38); fi
-    if (which ansible-playbook); then echo "Ansible exists, skipping the installation"; else (apt install ansible); fi
-fi
+# # setup env
+# # TODO: Conditional installation (python3, terraform & ansible)
+# if grep -E -q "CentOS|Red Hat" /etc/os-release
+# then
+#     # TODO: Terraform Repo access
+#     #yum install -y yum-utils
+#     #yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+#     #if (which terraform); then echo "Terraform exists, skipping the installation"; else (yum install -y terraform
+#     if (which python3); then echo "Python3 exists, skipping the installation"; else (yum install -y python38); fi
+#     if (which ansible-playbook); then echo "Ansible exists, skipping the installation"; else (yum install -y ansible); fi
+# elif grep -q "Ubuntu" /etc/os-release
+# then
+#     apt update
+#     # TODO: Terraform Repo access
+#     #apt-get update && sudo apt-get install -y gnupg software-properties-common
+#     #wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
+#     #gpg --no-default-keyring --keyring /usr/share/keyrings/hashicorp-archive-keyring.gpg --fingerprint
+#     apt install software-properties-common
+#     apt-add-repository --yes --update ppa:ansible/ansible
+#     if (which python3); then echo "Python3 exists, skipping the installation"; else (apt install python38); fi
+#     if (which ansible-playbook); then echo "Ansible exists, skipping the installation"; else (apt install ansible); fi
+# fi
 
 # TODO: run terraform

@@ -392,7 +392,15 @@ variable "file_shares" {
       iops       = number
     })
   )
-  default     = null
+  default = [{
+    mount_path = "/mnt/binaries"
+    size       = 100
+    iops       = 1000
+    }, {
+    mount_path = "/mnt/data"
+    size       = 100
+    iops       = 1000
+  }]
   description = "Custom file shares to access shared storage"
 }
 
@@ -839,4 +847,42 @@ variable "scc_event_notification_plan" {
     condition     = can(regex("^(|lite|standard)$", var.scc_event_notification_plan))
     error_message = "Provide Event Notification instance plan to be used (accepting 'lite' and 'standard', defaulting to 'lite'). This instance is used in conjuction with S.C.C. one."
   }
+}
+
+variable "enable_landing_zone" {
+  type        = bool
+  default     = true
+  description = "Run landing zone module."
+}
+
+variable "vpc_id" {
+  type        = string
+  default     = null
+  description = "ID of an existing VPC in which the cluster resources will be deployed."
+}
+
+variable "bastion_fip" {
+  type        = string
+  default     = null
+  description = "bastion fip"
+}
+
+variable "compute_public_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Compute security key content."
+}
+
+variable "compute_private_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Compute security key content."
+}
+
+variable "enable_atracker" {
+  type        = bool
+  default     = false
+  description = "Enable Activity tracker"
 }

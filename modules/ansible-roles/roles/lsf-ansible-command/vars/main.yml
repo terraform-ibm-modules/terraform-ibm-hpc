@@ -1,0 +1,6 @@
+---
+
+# playbook_path: "/Users/jayesh/scale_version/lsf_installer/playbook/"
+playbook_path: "/opt/ibm/lsf_installer/playbook/"
+
+lsf_dir: "{{ HA_shared_dir | basename }}"

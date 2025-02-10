@@ -17,9 +17,9 @@ sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=
 
 # input parameters
 echo "${bastion_public_key_content}" >> ~/.ssh/authorized_keys
-echo "${compute_public_key_content}" >> ~/.ssh/authorized_keys
+echo "${compute_public_key_content}" | base64 --decode >> ~/.ssh/authorized_keys
 echo "StrictHostKeyChecking no" >> ~/.ssh/config
-echo "${compute_private_key_content}" > ~/.ssh/id_rsa
+echo "${compute_private_key_content}" | base64 --decode > ~/.ssh/id_rsa
 chmod 600 ~/.ssh/id_rsa
 
 # network setup

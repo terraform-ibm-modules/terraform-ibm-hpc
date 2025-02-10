@@ -59,8 +59,8 @@ locals {
         port_max = 22
       }
     }],
-    [for cidr in local.bastion_sg_variable_cidr : {
-      name      = format("allow-variable-outbound-%s", index(local.bastion_sg_variable_cidr, cidr) + 1)
+    [for cidr in concat(local.bastion_sg_variable_cidr, ["0.0.0.0/0"]) : {
+      name      = format("allow-variable-outbound-%s", index(concat(local.bastion_sg_variable_cidr, ["0.0.0.0/0"]), cidr) + 1)
       direction = "outbound"
       remote    = cidr
     }]
@@ -72,4 +72,14 @@ locals {
 
   # Subnets
   bastion_subnets = var.bastion_subnets
+}
+
+locals {
+  vsi_interfaces     = ["eth0", "eth1"]
+  compute_interfaces = local.vsi_interfaces[0]
+  compute_dns_domain = var.dns_domain_names["compute"]
+
+  management_instance_count     = sum(var.management_instances[*]["count"])
+  static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
+  enable_compute    = local.management_instance_count > 0 || local.static_compute_instance_count > 0
 }

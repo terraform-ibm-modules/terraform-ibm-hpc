@@ -1,0 +1,39 @@
+---
+- name: Run LSF Config Test
+  ansible.builtin.shell: >
+    ansible-playbook -f 32 -i lsf-inventory lsf-config-test.yml > config-test.log 2>&1
+  args:
+    chdir: "{{ playbook_path }}"
+  register: lsf_config_test_result
+  changed_when: false
+  failed_when: lsf_config_test_result.rc != 0
+  ignore_errors: no
+  delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
+  async: 3600
+  poll: 5
+
+- name: Run LSF Predeploy Test
+  ansible.builtin.shell: >
+    ansible-playbook -f 32 -i lsf-inventory lsf-predeploy-test.yml >> predeploy.log 2>&1
+  args:
+    chdir: "{{ playbook_path }}"
+  register: lsf_predeploy_test_result
+  changed_when: false
+  failed_when: lsf_predeploy_test_result.rc != 0
+  ignore_errors: no
+  delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
+  async: 3600
+  poll: 5
+
+- name: Run LSF Deploy
+  ansible.builtin.shell: >
+    ansible-playbook -f 32 -i lsf-inventory lsf-deploy.yml >> deploy.log 2>&1
+  args:
+    chdir: "{{ playbook_path }}"
+  register: lsf_deploy_test_result
+  changed_when: false
+  failed_when: lsf_deploy_test_result.rc != 0
+  ignore_errors: no
+  delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
+  async: 3600
+  poll: 5
