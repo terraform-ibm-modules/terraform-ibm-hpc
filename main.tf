@@ -58,6 +58,7 @@ module "deployer" {
   skip_iam_authorization_policy = var.skip_iam_authorization_policy
   static_compute_instances      = var.static_compute_instances
   management_instances          = var.management_instances
+  dns_domain_names              = var.dns_domain_names
 
 }
 
@@ -225,7 +226,7 @@ module "dns" {
 }
 
 module "compute_dns_records" {
-  count                  = var.enable_deployer == false ? 1 : 0
+  count           = var.enable_deployer == false ? 1 : 0
   source          = "./modules/dns_record"
   dns_instance_id = local.dns_instance_id
   dns_zone_id     = local.compute_dns_zone_id
@@ -233,7 +234,7 @@ module "compute_dns_records" {
 }
 
 module "storage_dns_records" {
-  count                  = var.enable_deployer == false ? 1 : 0
+  count           = var.enable_deployer == false ? 1 : 0
   source          = "./modules/dns_record"
   dns_instance_id = local.dns_instance_id
   dns_zone_id     = local.storage_dns_zone_id
@@ -241,7 +242,7 @@ module "storage_dns_records" {
 }
 
 module "protocol_dns_records" {
-  count                  = var.enable_deployer == false ? 1 : 0
+  count           = var.enable_deployer == false ? 1 : 0
   source          = "./modules/dns_record"
   dns_instance_id = local.dns_instance_id
   dns_zone_id     = local.protocol_dns_zone_id
@@ -297,7 +298,7 @@ module "compute_inventory" {
 }
 
 module "storage_inventory" {
-  count                  = var.enable_deployer == false ? 1 : 0
+  count               = var.enable_deployer == false ? 1 : 0
   source              = "./modules/inventory"
   hosts               = local.storage_hosts
   inventory_path      = local.storage_inventory_path
@@ -306,7 +307,7 @@ module "storage_inventory" {
 }
 
 module "compute_playbook" {
-  count                  = var.enable_deployer == false ? 1 : 0
+  count            = var.enable_deployer == false ? 1 : 0
   source           = "./modules/playbook"
   bastion_fip      = local.bastion_fip
   private_key_path = local.compute_private_key_path
@@ -333,6 +334,7 @@ module "storage_playbook" {
 
 module "cloud_monitoring_instance_creation" {
   source                         = "./modules/observability_instance"
+  enable_deployer                = var.enable_deployer
   location                       = local.region
   rg                             = local.resource_group_ids["service_rg"]
   cloud_monitoring_provision     = var.observability_monitoring_enable
@@ -352,7 +354,7 @@ module "cloud_monitoring_instance_creation" {
 
 # Code for SCC Instance
 module "scc_instance_and_profile" {
-  count                   = var.scc_enable ? 1 : 0
+  count                   = var.enable_deployer == true && var.scc_enable ? 1 : 0
   source                  = "./modules/security/scc"
   location                = var.scc_location != "" ? var.scc_location : "us-south"
   rg                      = local.resource_group_ids["service_rg"]

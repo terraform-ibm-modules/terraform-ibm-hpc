@@ -886,3 +886,15 @@ variable "enable_atracker" {
   default     = false
   description = "Enable Activity tracker"
 }
+
+variable "cloud_logs_data_bucket" {
+  type        = list(string)
+  default     = []
+  description = ""
+}
+
+variable "cloud_metrics_data_bucket" {
+  type        = list(string)
+  default     = []
+  description = ""
+}

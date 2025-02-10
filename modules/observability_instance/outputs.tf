@@ -1,5 +1,5 @@
 output "cloud_monitoring_access_key" {
-  value       = var.cloud_monitoring_provision ? module.observability_instance.cloud_monitoring_access_key : null
+  value       = var.enable_deployer && var.cloud_monitoring_provision ? module.observability_instance.cloud_monitoring_access_key : null
   description = "IBM Cloud Monitoring access key for agents to use"
   sensitive   = true
 }
@@ -10,7 +10,7 @@ output "cloud_monitoring_ingestion_url" {
 }
 
 output "cloud_monitoring_prws_key" {
-  value       = var.cloud_monitoring_provision ? jsondecode(data.http.sysdig_prws_key[0].response_body).token.key : null
+  value       = var.enable_deployer && var.cloud_monitoring_provision ? jsondecode(data.http.sysdig_prws_key[0].response_body).token.key : null
   description = "IBM Cloud Monitoring Prometheus Remote Write ingestion key"
   sensitive   = true
 }
@@ -31,7 +31,7 @@ output "cloud_logs_ingress_private_endpoint" {
 }
 
 output "cloud_monitoring_url" {
-  value       = var.cloud_monitoring_provision ? "https://cloud.ibm.com/observe/embedded-view/monitoring/${module.observability_instance.cloud_monitoring_guid}" : null
+  value       = var.enable_deployer && var.cloud_monitoring_provision ? "https://cloud.ibm.com/observe/embedded-view/monitoring/${module.observability_instance.cloud_monitoring_guid}" : null
   description = "IBM Cloud Monitoring URL"
 }
 

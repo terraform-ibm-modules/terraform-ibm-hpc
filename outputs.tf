@@ -29,7 +29,7 @@ output "ssh_to_storage" {
   value       = var.storage_instances[0]["count"] != 0 && var.enable_bastion ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J ubuntu@${module.deployer.bastion_fip} vpcuser@${local.storage_hosts[0]}" : null
 }
 
-output "ssh_to_compute" {
-  description = "SSH command to connect to the compute cluster"
-  value       = (var.management_instances[0]["count"] != 0 || var.static_compute_instances[0]["count"] != 0) && var.enable_bastion ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J ubuntu@${module.deployer.bastion_fip} vpcuser@${local.compute_hosts[0]}" : null
-}
+# output "ssh_to_compute" {
+#   description = "SSH command to connect to the compute cluster"
+#   value       = (var.management_instances[0]["count"] != 0 || var.static_compute_instances[0]["count"] != 0) && var.enable_bastion ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J ubuntu@${module.deployer.bastion_fip} vpcuser@${local.compute_hosts[0]}" : null
+# }

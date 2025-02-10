@@ -152,3 +152,12 @@ variable "static_compute_instances" {
   )
   description = "Total Number of instances to be launched for compute cluster."
 }
+
+variable "dns_domain_names" {
+  type = object({
+    compute  = string
+    storage  = string
+    protocol = string
+  })
+  description = "IBM Cloud HPC DNS domain names."
+}

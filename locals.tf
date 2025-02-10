@@ -21,7 +21,7 @@ locals {
   kms_encryption_enabled     = var.key_management != null ? true : false
   boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   existing_kms_instance_guid = var.key_management != null ? module.landing_zone.key_management_guid : null
-  cos_data                   = module.landing_zone.cos_buckets_data
+  cos_data                   = var.enable_bastion ? [] : module.landing_zone.cos_buckets_data
   # Future use
   # skip_iam_authorization_policy = true
 }
@@ -238,7 +238,7 @@ locals {
 
 # file Share OutPut
 locals {
-  fileshare_name_mount_path_map = module.file_storage.name_mount_path_map
+  fileshare_name_mount_path_map =  var.enable_deployer ? {} : module.file_storage[0].name_mount_path_map
 }
 
 # details needed for json file
@@ -262,7 +262,7 @@ locals {
   remote_terraform_path     = format("%s/terraform-ibm-hpc", local.deployer_path)
   remote_ansible_path       = format("%s/terraform-ibm-hpc", local.deployer_path)
   da_hpc_repo_url           = "https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git"
-  da_hpc_repo_tag           = "jay_dep_lsf" ###### change it to main in future
+  da_hpc_repo_tag           = "jay_lsf_dep_pr" ###### change it to main in future
   zones                     = jsonencode(var.zones)
   list_compute_ssh_keys     = jsonencode(local.compute_ssh_keys)
   list_storage_ssh_keys     = jsonencode(local.storage_ssh_keys)
