@@ -141,7 +141,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "dns_domain_names": ${local.dns_domain_names},
   "compute_public_key_content": ${local.compute_public_key_content},
   "compute_private_key_content": ${local.compute_private_key_content},
-  "bastion_security_group_id": ${local.bastion_security_group_id}
+  "bastion_security_group_id": "${local.bastion_security_group_id}"
 
 }    
 EOT
