@@ -11,3 +11,4 @@ CRA_TARGETS:
       TF_VAR_compute_ssh_keys: "[\"geretain-hpc\"]"
       TF_VAR_remote_allowed_ips: "[\"49.207.216.50\"]"
       TF_VAR_ibm_customer_number: "051700"
+      TF_VAR_solution: "lsf"
