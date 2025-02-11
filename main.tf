@@ -128,7 +128,9 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "dns_domain_names": ${local.dns_domain_names},
   "compute_public_key_content": ${local.compute_public_key_content},
   "compute_private_key_content": ${local.compute_private_key_content},
-  "bastion_security_group_id": "${local.bastion_security_group_id}"
+  "bastion_security_group_id": "${local.bastion_security_group_id}",
+  "deployer_hostname": "${local.deployer_hostname}",
+  "deployer_ip": "${local.deployer_ip}"
 }    
 EOT
   filename = local.schematics_inputs_path
@@ -318,16 +320,16 @@ module "compute_playbook" {
   depends_on       = [ module.compute_inventory ]
 }
 
-module "storage_playbook" {
-  count            = var.enable_deployer == false ? 1 : 0
-  source           = "./modules/playbook"
-  bastion_fip      = local.bastion_fip
-  private_key_path = local.storage_private_key_path
-  inventory_path   = local.storage_inventory_path
-  playbook_path    = local.storage_playbook_path
-  enable_bastion   = var.enable_bastion
-  depends_on       = [ module.storage_inventory ]
-}
+# module "storage_playbook" {
+#   count            = var.enable_deployer == false ? 1 : 0
+#   source           = "./modules/playbook"
+#   bastion_fip      = local.bastion_fip
+#   private_key_path = local.storage_private_key_path
+#   inventory_path   = local.storage_inventory_path
+#   playbook_path    = local.storage_playbook_path
+#   enable_bastion   = var.enable_bastion
+#   depends_on       = [ module.storage_inventory ]
+# }
 
 ###################################################
 # Observability Modules

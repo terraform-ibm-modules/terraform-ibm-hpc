@@ -904,3 +904,15 @@ variable "bastion_security_group_id" {
   default     = null
   description = "bastion security group id"
 }
+
+variable "deployer_hostname" {
+  type        = string
+  default     = null
+  description = "deployer node hostname"
+}
+
+variable "deployer_ip" {
+  type        = string
+  default     = null
+  description = "deployer node ip"
+}

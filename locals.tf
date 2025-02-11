@@ -34,6 +34,9 @@ locals {
   bastion_public_key_content  = module.deployer.bastion_public_key_content
   bastion_private_key_content = module.deployer.bastion_private_key_content
 
+  deployer_hostname = flatten(module.deployer.deployer_vsi_data[*].list)[0].name
+  deployer_ip = flatten(module.deployer.deployer_vsi_data[*].list)[0].ipv4_address
+
   compute_public_key_contents  = module.deployer.compute_public_key_content
   compute_private_key_contents = module.deployer.compute_private_key_content
 
@@ -191,8 +194,8 @@ locals {
   protocol_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].protocol_vsi_data])
   deployer_instances = [
     {
-      name         = data.external.get_hostname.result["name"]
-      ipv4_address = data.external.get_hostname.result["ipv4_address"]
+      name         = var.deployer_hostname #data.external.get_hostname.result["name"]
+      ipv4_address = var.deployer_ip #data.external.get_hostname.result["ipv4_address"]
     }
   ]
 
@@ -252,7 +255,7 @@ locals {
   ha_shared_dir         = "/mnt/lsf/shared"
   nfs_install_dir       = "none"
   Enable_Monitoring     = false
-  lsf_deployer_hostname = data.external.get_hostname.result.name  #var.enable_bastion ? "" : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
+  lsf_deployer_hostname = var.deployer_hostname #data.external.get_hostname.result.name  #var.enable_bastion ? "" : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
 }
 
 locals {
