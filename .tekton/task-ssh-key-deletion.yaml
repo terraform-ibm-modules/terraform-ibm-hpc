@@ -25,6 +25,9 @@ spec:
     - name: pr-revision
       description: the commit/revision in the source branch of the PullRequest that is to be built
       default: ""
+    - name: solution
+      description: Provide the value for the solution that is needed for the support of lsf and HPC.
+      default: ""
   workspaces:
     - name: workspace
       mountPath: /artifacts
@@ -42,6 +45,8 @@ spec:
         value: $(params.pr-revision)
       - name: REVISION
         value: $(params.revision)
+      - name: solution
+        value: $(params.solution)
   steps:
     - name: ssh-key-deletion
       onError: continue
@@ -61,4 +66,4 @@ spec:
           fi
 
           source .tekton/scripts/ssh_create_delete.sh
-          ssh_key_delete
+          ssh_key_delete "${solution}"

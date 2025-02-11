@@ -26,6 +26,10 @@ data "ibm_is_instance_profile" "management_node" {
   name = var.management_node_instance_type
 }
 
+data "ibm_is_instance_profile" "worker_node" {
+  name = var.worker_node_instance_type[0].instance_type
+}
+
 data "ibm_is_ssh_key" "bastion" {
   for_each = toset(var.ssh_keys)
   name     = each.key

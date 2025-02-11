@@ -11,9 +11,12 @@ locals {
   ldap_node_name                = format("%s-%s", local.prefix, "ldap")
   login_node_name               = format("%s-%s", local.prefix, "login")
   management_node_name          = format("%s-%s", local.prefix, "mgmt")
+  worker_node_name              = format("%s-%s", local.prefix, "worker")
   compute_ssh_keys              = [for name in var.compute_ssh_keys : data.ibm_is_ssh_key.compute[name].id]
   management_ssh_keys           = local.compute_ssh_keys
   ldap_enable                   = var.enable_ldap == true && var.ldap_server == "null" ? 1 : 0
+  #  enable_worker_vsi             = var.solution == "lsf" && var.worker_node_min_count >= 0 ? var.worker_node_min_count : 0
+  products = var.solution == "lsf" && var.enable_app_center ? "lsf,lsf-app-center" : "lsf"
 
   # Region and Zone calculations
   region = join("-", slice(split("-", var.zones[0]), 0, 2))
@@ -130,7 +133,12 @@ locals {
   new_login_image_id              = local.login_image_mapping_entry_found ? local.image_region_map[var.login_image_name][local.region] : "Image not found with the given name"
 
   compute_node_max_count = 500
-  rc_max_num             = local.compute_node_max_count
+  rc_max_num             = var.solution == "hpc" ? local.compute_node_max_count : var.worker_node_max_count
+  vcpus                  = tonumber(data.ibm_is_instance_profile.worker_node.vcpu_count[0].value)
+  ncores                 = local.vcpus / 2
+  ncpus                  = var.hyperthreading_enabled ? local.vcpus : local.ncores
+  mem_in_mb              = tonumber(data.ibm_is_instance_profile.worker_node.memory[0].value) * 1024
+  rc_profile             = data.ibm_is_instance_profile.worker_node.name
 
   bastion_subnets        = var.bastion_subnets
   bastion_ssh_keys       = [for name in var.ssh_keys : data.ibm_is_ssh_key.bastion[name].id]
@@ -151,6 +159,9 @@ locals {
   management_candidate_vsi_data    = flatten(module.management_candidate_vsi[*]["list"])
   management_candidate_private_ips = local.management_candidate_vsi_data[*]["ipv4_address"]
   management_candidate_hostnames   = local.management_candidate_vsi_data[*]["name"]
+
+  worker_vsi_data   = flatten(module.worker_vsi[*]["list"])
+  worker_private_ip = local.worker_vsi_data[*]["ipv4_address"]
 
   login_vsi_data    = flatten(module.login_vsi[*]["list"])
   login_private_ips = local.login_vsi_data[*]["ipv4_address"]
@@ -190,4 +201,15 @@ locals {
     }
     if share.mount_path != "/mnt/lsf" && share.size != null && share.iops != null
   ]
+}
+
+locals {
+  flattened_worker_nodes = flatten([
+    for key, value in var.worker_node_instance_type : [
+      for idx in range(value.count) : {
+        instance_type = value.instance_type
+        prefix        = format("%s-%s-%d", local.worker_node_name, key, idx + 1)
+      }
+    ]
+  ])
 }

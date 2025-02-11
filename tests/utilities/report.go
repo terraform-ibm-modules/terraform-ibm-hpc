@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -72,9 +73,9 @@ func ParseJSONFile(fileName string) ([]TestResult, error) {
 // Convert elapsed time from string to float64
 func parseElapsed(elapsedStr string) float64 {
 	var elapsed float64
-	_, err := fmt.Sscanf(elapsedStr, "%fs", &elapsed)
+	_, err := fmt.Sscanf(elapsedStr, "%f", &elapsed)
 	if err != nil {
-		fmt.Println("Error parsing elapsed time:", err)
+		fmt.Printf("Error parsing elapsed time :  %s", err)
 		return 0.0
 	}
 	return elapsed
@@ -192,19 +193,22 @@ func GenerateHTMLReport(results []TestResult) error {
 		return fmt.Errorf("error creating template: %w", err)
 	}
 
-	// Create or overwrite the report file
-	reportFile, err := os.Create("test_summary_report.html")
-	if err != nil {
-		return fmt.Errorf("error creating report file: %w", err)
-	}
-	defer reportFile.Close()
+	reportFileName, ok := os.LookupEnv("LOG_FILE_NAME")
+	if ok {
+		getFileName := strings.Split(reportFileName, ".")[0]
+		// Create or overwrite the report file
+		reportFile, err := os.Create(getFileName + ".html")
+		if err != nil {
+			return fmt.Errorf("error creating report file: %w", err)
+		}
+		defer reportFile.Close()
 
-	// Execute the template with the data
-	err = tmpl.Execute(reportFile, reportData)
-	if err != nil {
-		return fmt.Errorf("error generating report: %w", err)
+		// Execute the template with the data
+		err = tmpl.Execute(reportFile, reportData)
+		if err != nil {
+			return fmt.Errorf("error generating report: %w", err)
+		}
+		fmt.Printf("HTML report generated: %s.html\n", getFileName)
 	}
-
-	fmt.Println("HTML report generated: test_summary_report.html")
 	return nil
 }

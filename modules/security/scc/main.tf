@@ -18,7 +18,7 @@ locals {
 
 module "event_notification" {
   source            = "terraform-ibm-modules/event-notifications/ibm"
-  version           = "1.10.18"
+  version           = "1.10.22"
   resource_group_id = var.rg
   name              = "${var.prefix}-scc-event_notification"
   plan              = var.event_notification_plan
@@ -29,7 +29,7 @@ module "event_notification" {
 
 module "create_scc_instance" {
   source                            = "terraform-ibm-modules/scc/ibm"
-  version                           = "1.8.9"
+  version                           = "1.8.36"
   instance_name                     = "${var.prefix}-scc-instance"
   plan                              = var.scc_plan
   region                            = local.scc_region
@@ -42,14 +42,15 @@ module "create_scc_instance" {
   attach_wp_to_scc_instance         = false
   skip_scc_wp_auth_policy           = true
   wp_instance_crn                   = null
+  en_source_name                    = var.en_source_name
+  en_source_description             = var.en_source_description
 }
 
 module "create_profile_attachment" {
   count                  = var.scc_profile == null || var.scc_profile == "" ? 0 : 1
   source                 = "terraform-ibm-modules/scc/ibm//modules/attachment"
-  version                = "1.8.9"
+  version                = "1.8.36"
   profile_name           = var.scc_profile
-  profile_version        = var.scc_profile_version
   scc_instance_id        = module.create_scc_instance.guid
   attachment_name        = "${var.prefix}-scc-attachment"
   attachment_description = var.scc_attachment_description

@@ -160,14 +160,15 @@ locals {
 
   active_cos = [
     (
-      var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker || var.scc_enable
+      var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker || var.scc_enable || var.observability_logs_enable
       ) ? {
-      name           = var.cos_instance_name == null ? "hpc-cos" : var.cos_instance_name
-      resource_group = local.resource_group
-      plan           = "standard"
-      random_suffix  = true
-      use_data       = var.cos_instance_name == null ? false : true
-      keys           = []
+      name                          = var.cos_instance_name == null ? "hpc-cos" : var.cos_instance_name
+      resource_group                = local.resource_group
+      plan                          = "standard"
+      random_suffix                 = true
+      use_data                      = var.cos_instance_name == null ? false : true
+      keys                          = []
+      skip_flowlogs_s2s_auth_policy = var.skip_flowlogs_s2s_auth_policy
 
       # Extra bucket for solution specific object storage
       buckets = [
@@ -177,6 +178,7 @@ locals {
           endpoint_type = "public"
           force_delete  = true
           kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-key", var.prefix) : var.kms_key_name) : null
+          expire_rule   = null
         } : null,
         var.enable_vpc_flow_logs ? {
           name          = "vpc-flow-logs-bucket"
@@ -184,6 +186,11 @@ locals {
           endpoint_type = "public"
           force_delete  = true
           kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-slz-key", var.prefix) : var.kms_key_name) : null
+          expire_rule = {
+            days    = var.cos_expiration_days
+            enable  = true
+            rule_id = "bucket-expire-rule"
+          }
         } : null,
         var.enable_atracker ? {
           name          = "atracker-bucket"
@@ -191,13 +198,47 @@ locals {
           endpoint_type = "public"
           force_delete  = true
           kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-atracker-key", var.prefix) : var.kms_key_name) : null
+          expire_rule = {
+            days    = var.cos_expiration_days
+            enable  = true
+            rule_id = "bucket-expire-rule"
+          }
+        } : null,
+        var.observability_logs_enable ? {
+          name          = "logs-data-bucket"
+          storage_class = "standard"
+          endpoint_type = "public"
+          force_delete  = true
+          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-logs-data-key", var.prefix) : var.kms_key_name) : null
+          expire_rule = {
+            days    = var.cos_expiration_days
+            enable  = true
+            rule_id = "bucket-expire-rule"
+          }
+        } : null,
+        var.observability_logs_enable ? {
+          name          = "metrics-data-bucket"
+          storage_class = "standard"
+          endpoint_type = "public"
+          force_delete  = true
+          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-metrics-data-key", var.prefix) : var.kms_key_name) : null
+          expire_rule = {
+            days    = var.cos_expiration_days
+            enable  = true
+            rule_id = "bucket-expire-rule"
+          }
         } : null,
         var.scc_enable ? {
           name          = "scc-bucket"
           storage_class = "standard"
           endpoint_type = "public"
           force_delete  = true
-          kms_key       = null
+          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-scc-key", var.prefix) : var.kms_key_name) : null
+          expire_rule = {
+            days    = var.cos_expiration_days
+            enable  = true
+            rule_id = "bucket-expire-rule"
+          }
         } : null
       ]
     } : null
@@ -206,12 +247,13 @@ locals {
   cos = [
     for instance in local.active_cos :
     {
-      name           = instance.name
-      resource_group = instance.resource_group
-      plan           = instance.plan
-      random_suffix  = instance.random_suffix
-      use_data       = instance.use_data
-      keys           = instance.keys
+      name                          = instance.name
+      resource_group                = instance.resource_group
+      plan                          = instance.plan
+      random_suffix                 = instance.random_suffix
+      use_data                      = instance.use_data
+      keys                          = instance.keys
+      skip_flowlogs_s2s_auth_policy = instance.skip_flowlogs_s2s_auth_policy
       buckets = [
         for bucket in instance.buckets :
         {
@@ -220,6 +262,7 @@ locals {
           endpoint_type = bucket.endpoint_type
           force_delete  = bucket.force_delete
           kms_key       = bucket.kms_key
+          expire_rule   = bucket.expire_rule
         }
         if bucket != null
       ]
@@ -237,8 +280,17 @@ locals {
     var.enable_vpc_flow_logs ? {
       name = format("%s-slz-key", var.prefix)
     } : null,
+    var.observability_logs_enable ? {
+      name = format("%s-metrics-data-key", var.prefix)
+    } : null,
+    var.observability_logs_enable ? {
+      name = format("%s-logs-data-key", var.prefix)
+    } : null,
     var.enable_atracker ? {
       name = format("%s-atracker-key", var.prefix)
+    } : null,
+    var.scc_enable ? {
+      name = format("%s-scc-key", var.prefix)
     } : null
     ] : [
     {

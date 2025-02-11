@@ -60,19 +60,41 @@ locals {
   (local.validate_login_subnet_id_zone ? local.validate_login_subnet_id_zone_msg : ""))
 
   # Contract ID validation
-  validate_reservation_id     = length("${var.cluster_id}${var.reservation_id}") > 129 ? false : true
-  validate_reservation_id_msg = "The length of reservation_id and cluster_id combination should not exceed 128 characters."
-  # tflint-ignore: terraform_unused_declarations
-  validate_reservation_id_chk = regex(
-    "^${local.validate_reservation_id_msg}$",
-  (local.validate_reservation_id ? local.validate_reservation_id_msg : ""))
+  #  validate_reservation_id     = length("${var.cluster_id}${var.reservation_id}") > 129 ? false : true
+  #  validate_reservation_id_msg = "The length of reservation_id and cluster_id combination should not exceed 128 characters."
+  #  # tflint-ignore: terraform_unused_declarations
+  #  validate_reservation_id_chk = regex(
+  #    "^${local.validate_reservation_id_msg}$",
+  #  (local.validate_reservation_id ? local.validate_reservation_id_msg : ""))
 
-  validate_reservation_id_api     = local.valid_status_code && local.reservation_id_found
+  validate_reservation_id_api     = var.solution == "hpc" ? local.valid_status_code && local.reservation_id_found : true
   validate_reservation_id_api_msg = "The provided reservation id doesn't have a valid reservation or the reservation id is not on the same account as HPC deployment."
   # tflint-ignore: terraform_unused_declarations
   validate_reservation_id_api_chk = regex(
     "^${local.validate_reservation_id_api_msg}$",
   (local.validate_reservation_id_api ? local.validate_reservation_id_api_msg : ""))
+
+  validate_worker_count     = var.solution == "lsf" ? local.total_worker_node_count <= var.worker_node_max_count : true
+  validate_worker_error_msg = "If the solution is set as lsf, the worker min count cannot be greater than worker max count."
+  # tflint-ignore: terraform_unused_declarations
+  validate_worker_count_chk = regex(
+    "^${local.validate_worker_error_msg}$",
+  (local.validate_worker_count ? local.validate_worker_error_msg : ""))
+
+  validate_lsf_solution           = var.solution == "lsf" ? var.ibm_customer_number != null : true
+  validate_lsf_solution_error_msg = "If the solution is set as LSF, then the ibm customer number cannot be set as null."
+  # tflint-ignore: terraform_unused_declarations
+  validate_lsf_solution_chk = regex(
+    "^${local.validate_lsf_solution_error_msg}$",
+  (local.validate_lsf_solution ? local.validate_lsf_solution_error_msg : ""))
+
+  validate_icn_number       = var.solution == "lsf" ? can(regex("^[0-9A-Za-z]*([0-9A-Za-z]+,[0-9A-Za-z]+)*$", var.ibm_customer_number)) : true
+  validate_icn_number_error = "The IBM customer number input value cannot have special characters."
+  # tflint-ignore: terraform_unused_declarations
+  validate_icn_number_chk = regex(
+    "^${local.validate_icn_number_error}$",
+  (local.validate_icn_number ? local.validate_icn_number_error : ""))
+
 
   # Validate custom fileshare
   # Construct a list of Share size(GB) and IOPS range(IOPS)from values provided in https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=ui#dp2-profile
@@ -193,8 +215,8 @@ locals {
   validate_custom_resolver_id_chk = regex("^${local.validate_custom_resolver_id_msg}$",
   (local.validate_custom_resolver_id ? local.validate_custom_resolver_id_msg : ""))
 
-  validate_reservation_id_new_msg = "Provided cluster_id and reservation id cannot be set as empty if the provided region is eu-de and us-east and us-south."
-  validate_reservation_id_logic   = local.region == "eu-de" || local.region == "us-east" || local.region == "us-south" ? var.reservation_id != "" && var.cluster_id != "" : true
+  validate_reservation_id_new_msg = "Provided reservation id cannot be set as empty if the provided solution is set as hpc.."
+  validate_reservation_id_logic   = var.solution == "hpc" ? var.reservation_id != null : true
   # tflint-ignore: terraform_unused_declarations
   validate_reservation_id_chk_new = regex("^${local.validate_reservation_id_new_msg}$",
   (local.validate_reservation_id_logic ? local.validate_reservation_id_new_msg : ""))

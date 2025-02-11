@@ -6,7 +6,7 @@ metadata:
   name: triggertemplate-git-trigger
 spec:
   params:
-    - name: git-access-token
+    - name: git_access_token
       description: the token to access the git repository for the clone operations
     - name: repository
       description: The git repo
@@ -59,6 +59,9 @@ spec:
     - name: login_image_name
       description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster login node. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v2). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
       default: ""
+    - name: management_image_name
+      description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster management nodes. By default, the solution uses a RHEL88 base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
+      default: ""
     - name: cluster_id
       description: Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same reservation. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment.
       default: ""
@@ -101,6 +104,24 @@ spec:
     - name: cos_instance_crn
       description: The cos instance crn.
       default: ""
+    - name: cos_api_key
+      description: The cos account api key.
+      default: ""
+    - name: hpc_custom_reports_repo
+      description: The HPC custom reports storage repository.
+      default: ""
+    - name: hpc_custom_reports_branch
+      description: The HPC custom reports storage repository branch.
+      default: "main"
+    - name: git_user_name
+      description: The git user name.
+      default: ""
+    - name: git_user_email
+      description: The git user email.
+      default: ""
+    - name: solution
+      description: Provide the value for the solution that is needed for the support of lsf and HPC.
+      default: "hpcaas"
   resourcetemplates:
     - apiVersion: v1
       kind: PersistentVolumeClaim
@@ -121,8 +142,8 @@ spec:
         pipelineRef:
           name: pipeline-git-event-processing
         params:
-          - name: git-access-token
-            value: $(params.git-access-token)
+          - name: git_access_token
+            value: $(params.git_access_token)
           - name: directory-name
             value: $(params.directory-name)
           - name: repository
@@ -159,6 +180,8 @@ spec:
             value: $(params.compute_image_name_ubuntu)
           - name: login_image_name
             value: $(params.login_image_name)
+          - name: management_image_name
+            value: $(params.management_image_name)
           - name: cluster_id
             value: $(params.cluster_id)
           - name: reservation_id
@@ -187,6 +210,18 @@ spec:
             value: $(params.cos_bucket)
           - name: cos_instance_crn
             value: $(params.cos_instance_crn)
+          - name: cos_api_key
+            value: $(params.cos_api_key)
+          - name: solution
+            value: $(params.solution)
+          - name: hpc_custom_reports_repo
+            value: $(params.hpc_custom_reports_repo)
+          - name: hpc_custom_reports_branch
+            value: $(params.hpc_custom_reports_branch)
+          - name: git_user_name
+            value: $(params.git_user_name)
+          - name: git_user_email
+            value: $(params.git_user_email)
         workspaces:
           - name: pipeline-ws
             persistentVolumeClaim:
@@ -220,6 +255,8 @@ spec:
       value: $(params.compute_image_name_ubuntu)
     - name: login_image_name
       value: $(params.login_image_name)
+    - name: management_image_name
+      value: $(params.management_image_name)
     - name: reservation_id
       value: $(params.reservation_id)
     - name: cluster_id
@@ -248,6 +285,18 @@ spec:
       value: $(params.cos_bucket)
     - name: cos_instance_crn
       value: $(params.cos_instance_crn)
+    - name: cos_api_key
+      value: $(params.cos_api_key)
+    - name: hpc_custom_reports_repo
+      value: $(params.hpc_custom_reports_repo)
+    - name: hpc_custom_reports_branch
+      value: $(params.hpc_custom_reports_branch)
+    - name: git_user_name
+      value: $(params.git_user_name)
+    - name: git_user_email
+      value: $(params.git_user_email)
+    - name: solution
+      value: $(params.solution)
 ---
 apiVersion: tekton.dev/v1beta1
 kind: EventListener
@@ -309,6 +358,8 @@ spec:
       value: $(event.ref)
     - name: login_image_name
       value: $(event.ref)
+    - name: management_image_name
+      value: $(event.ref)
     - name: us_east_zone
       value: $(event.ref)
     - name: us_east_cluster_id
@@ -326,6 +377,16 @@ spec:
     - name: us_south_cluster_id
       value: $(event.ref)
     - name: us_south_reservation_id
+      value: $(event.ref)
+    - name: hpc_custom_reports_repo
+      value: $(event.ref)
+    - name: hpc_custom_reports_branch
+      value: $(event.ref)
+    - name: git_user_name
+      value: $(event.ref)
+    - name: git_user_email
+      value: $(event.ref)
+    - name: solution
       value: $(event.ref)
 ---
 apiVersion: tekton.dev/v1beta1

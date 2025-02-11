@@ -8,7 +8,7 @@ data "ibm_is_vpc" "itself" {
 }
 
 locals {
-  vpc_name = var.vpc_name == null ? one(module.landing_zone.vpc_name) : var.vpc_name
+  vpc_name = var.vpc_name == null ? one(module.landing_zone[0].vpc_name) : var.vpc_name
   # region_name = [for zone in var.zones : join("-", slice(split("-", zone), 0, 2))][0]
   api_endpoint_region_map = {
     "us-east"  = "https://api.us-east.codeengine.cloud.ibm.com/v2beta"
@@ -19,11 +19,11 @@ locals {
 
   # Decode the JSON reply got from the Code Engine API
   # https://hpc-api.<REGION>.codeengine.cloud.ibm.com/v3/capacity_reservations
-  reservation_data = jsondecode(data.http.reservation_id_validation.response_body)
   # Verify if in the capacity_reservations list there is one with the name equal to the Contract ID.
   reservation_id_found = try(length([for res in local.reservation_data.capacity_reservations : res if res.name == var.reservation_id]), 0) > 0
   # Verify if the status code is 200
-  valid_status_code = contains(["200"], tostring(data.http.reservation_id_validation.status_code))
+  reservation_data  = var.solution == "hpc" ? jsondecode(data.http.reservation_id_validation[0].response_body) : null
+  valid_status_code = var.solution == "hpc" ? contains(["200"], tostring(data.http.reservation_id_validation[0].status_code)) : false
 
 }
 
@@ -55,6 +55,7 @@ data "ibm_is_subnet" "existing_login_subnet" {
 data "ibm_iam_auth_token" "auth_token" {}
 
 data "http" "reservation_id_validation" {
+  count  = var.solution == "hpc" ? 1 : 0
   url    = "${local.api_endpoint_region_map[local.region]}/capacity_reservations"
   method = "GET"
   request_headers = {

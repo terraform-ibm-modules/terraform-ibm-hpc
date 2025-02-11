@@ -48,6 +48,7 @@ Ensure you have the following tools and utilities installed:
   ibmcloud plugin install cloud-object-storage
   ibmcloud plugin install vpc-infrastructure
   ibmcloud plugin install dns
+  ibmcloud plugin install security-compliance
   ibmcloud plugin install key-protect -r "IBM Cloud"
   ```
 
@@ -75,42 +76,77 @@ Initialize Git Submodules:
   git submodule update --init
   ```
 
-## Running the Tests
 
-### Passing Input Parameters
+# Running the Tests
 
-#### Updating `test_config.yml`
+## Passing Input Parameters
 
-You can update the `test_config.yml` file to provide input parameters. This file contains default values for various parameters used during testing. Modify the values as needed to suit your testing requirements.
+### For Solution LSF
 
-#### Command-Line Overrides
+#### Updating `lsf_config.yml`
 
-If you want to override the values in `test_config.yml`, you can pass the input parameters through the command line. Example:
+You can update the `lsf_config.yml` file to provide input parameters. This file contains default values for various parameters used during testing. Modify the values as needed to suit your testing requirements.
+
+### For Solution HPC
+
+#### Updating `hpc_config.yml`
+
+You can update the `hpc_config.yml` file to provide input parameters. This file contains default values for various parameters used during testing. Modify the values as needed to suit your testing requirements.
+
+## Command-Line Overrides
+
+If you want to override the values in `lsf_config.yml` or `hpc_config.yml`, you can pass the input parameters through the command line. For example:
+
 ```sh
-SSH_KEY=your_ssh_key ZONE=your_zone RESOURCE_GROUP=your_resource_group go test -v -timeout 900m -parallel 4 -run "TestRunBasic" -json > test_output.json
+SSH_KEY=your_ssh_key ZONE=your_zone RESOURCE_GROUP=your_resource_group SOLUTION=your_solution go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee -a $LOG_FILE_NAME
 ```
+
 Replace placeholders (e.g., `your_ssh_key`, `your_zone`, etc.) with actual values.
 
-### Using Default Parameters
+## Running a Specific Test
 
-Run tests with default parameter values from the `test_config.yml` file:
+To run a specific test, use the `-run` flag with the test name pattern. For example:
+
 ```sh
-go test -v -timeout 900m -parallel 4 -run "TestRunBasic" -json > test_output.json
+SOLUTION=your_solution  go test -v -timeout=900m -parallel 10 -run="^TestRunBasic$" | tee -a $LOG_FILE_NAME
 ```
+
+This will run only the `TestRunBasic` test.
+
+## Using Default Parameters
+
+If you prefer to run tests with the default parameter values from the `lsf_config.yml` file, you can simply run:
+
+```sh
+SOLUTION=your_solution  go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee -a $LOG_FILE_NAME
+```
+
 
 ### Overriding Parameters
 
-To override default values, pass the necessary parameters in the command. Example:
+To override default values, pass the required parameters when executing the command. Below are examples for **HPC** and **LSF** solutions:
+
+#### Example for HPC:
 ```sh
-SSH_KEY=your_ssh_key ZONE=your_zone RESOURCE_GROUP=your_resource_group RESERVATION_ID=your_reservation_id KMS_INSTANCE_ID=kms_instance_id KMS_KEY_NAME=kms_key_name IMAGE_NAME=image_name CLUSTER=your_cluster_id DEFAULT_RESOURCE_GROUP=default_resource_group NON_DEFAULT_RESOURCE_GROUP=non_default_resource_group LOGIN_NODE_INSTANCE_TYPE=login_node_instance_type MANAGEMENT_IMAGE_NAME=management_image_name COMPUTE_IMAGE_NAME=compute_image_name MANAGEMENT_NODE_INSTANCE_TYPE=management_node_instance_type MANAGEMENT_NODE_COUNT=management_node_count ENABLE_VPC_FLOW_LOGS=enable_vpc_flow_logs KEY_MANAGEMENT=key_management KMS_INSTANCE_NAME=kms_instance_name HYPERTHREADING_ENABLED=hyperthreading_enabled SSH_FILE_PATH=ssh_file_path go test -v -timeout 900m -parallel 4 -run "TestRunBasic" -json > test_output.json
+SOLUTION=hpc SSH_KEY=your_ssh_key ZONE=your_zone RESOURCE_GROUP=your_resource_group RESERVATION_ID=your_reservation_id KMS_INSTANCE_ID=your_kms_instance_id KMS_KEY_NAME=your_kms_key_name IMAGE_NAME=your_image_name CLUSTER=your_cluster_id DEFAULT_RESOURCE_GROUP=your_default_resource_group NON_DEFAULT_RESOURCE_GROUP=your_non_default_resource_group LOGIN_NODE_INSTANCE_TYPE=your_login_node_instance_type MANAGEMENT_IMAGE_NAME=your_management_image_name COMPUTE_IMAGE_NAME=your_compute_image_name MANAGEMENT_NODE_INSTANCE_TYPE=your_management_node_instance_type MANAGEMENT_NODE_COUNT=your_management_node_count ENABLE_VPC_FLOW_LOGS=true KEY_MANAGEMENT=enabled KMS_INSTANCE_NAME=your_kms_instance_name HYPERTHREADING_ENABLED=true SSH_FILE_PATH=your_ssh_file_path EXISTING_CERTIFICATE_INSTANCE=existing_certificate_instance go test -v -timeout=900m -parallel=4 -run "TestRunBasic"| tee -a $LOG_FILE_NAME
 ```
-Replace placeholders (e.g., `your_ssh_key`, `your_zone`, etc.) with actual values.
+
+#### Example for LSF:
+```sh
+SOLUTION=lsf SSH_KEY=your_ssh_key ZONE=your_zone RESOURCE_GROUP=your_resource_group IBM_CUSTOMER_NUMBER=your_customer_number WORKER_NODE_MAX_COUNT=your_worker_node_max_count WORKER_NODE_INSTANCE_TYPE=your_worker_node_instance_type KMS_INSTANCE_ID=your_kms_instance_id KMS_KEY_NAME=your_kms_key_name IMAGE_NAME=your_image_name CLUSTER=your_cluster_id DEFAULT_RESOURCE_GROUP=your_default_resource_group NON_DEFAULT_RESOURCE_GROUP=your_non_default_resource_group LOGIN_NODE_INSTANCE_TYPE=your_login_node_instance_type MANAGEMENT_IMAGE_NAME=your_management_image_name COMPUTE_IMAGE_NAME=your_compute_image_name MANAGEMENT_NODE_INSTANCE_TYPE=your_management_node_instance_type MANAGEMENT_NODE_COUNT=your_management_node_count ENABLE_VPC_FLOW_LOGS=true KEY_MANAGEMENT=enabled KMS_INSTANCE_NAME=your_kms_instance_name HYPERTHREADING_ENABLED=true SSH_FILE_PATH=your_ssh_file_path EXISTING_CERTIFICATE_INSTANCE=existing_certificate_instance go test -v -timeout=900m -parallel=4 -run "TestRunBasic" | tee -a $LOG_FILE_NAME
+```
+
+### Notes:
+- Replace placeholders (e.g., `your_ssh_key`, `your_zone`, etc.) with the actual values applicable to your setup.
+- Ensure that all required parameters are included for the respective solution type (`HPC` or `LSF`).
+- Parameters like `ENABLE_VPC_FLOW_LOGS` and `HYPERTHREADING_ENABLED` can be set as `true` or `false` based on your requirement.
+- The parameter EXISTING_CERTIFICATE_INSTANCE should be assigned a value only when running the PAC HA test case.
 
 ### Running Multiple Tests
 
 Execute multiple tests simultaneously:
 ```sh
-go test -v -timeout 900m -parallel 10 -run="TestRunDefault|TestRunBasic|TestRunLDAP|TestRunAppCenter" -json > test_output.json
+go test -v -timeout 900m -parallel 10 -run="TestRunDefault|TestRunBasic|TestRunLDAP|TestRunAppCenter" | tee -a $LOG_FILE_NAME
 ```
 
 ### Specific Test Files
@@ -120,11 +156,11 @@ go test -v -timeout 900m -parallel 10 -run="TestRunDefault|TestRunBasic|TestRunL
 
 ## Exporting API Key
 
-Before running tests, export your IBM Cloud API key:
-```sh
-export TF_VAR_ibmcloud_api_key=your_api_key                //pragma: allowlist secret
-```
-Replace `your_api_key` with your actual IBM Cloud API key.  //pragma: allowlist secret
+
+# Before running tests, export your IBM Cloud API key and log file name as environment variables.
+export TF_VAR_ibmcloud_api_key="your_api_key"  # Replace 'your_api_key' with your actual IBM Cloud API key  # pragma: allowlist secret
+export LOG_FILE_NAME="your_log_file_name"      # Replace 'your_log_file_name' with the desired log file name
+
 
 ## Analyzing Test Results
 
@@ -154,13 +190,16 @@ FAIL github.com/terraform-ibm-modules/terraform-ibcloud-hpc 663.323s
 
 ### Common Issues
 
-- **Missing Test Directories**: Ensure the project directory structure is correct.
-- **Invalid API Key**: Verify the `TF_VAR_ibmcloud_api_key` environment variable.
-- **Invalid SSH Key**: Confirm that `SSH_KEY` is set properly.
-- **Invalid Zone**: Check the `ZONE` environment variable.
-- **Remote IP Configuration**: Adjust `REMOTE_ALLOWED_IPS` as needed.
-- **Terraform Initialization**: Make sure Terraform modules and plugins are up-to-date.
-- **Test Output Logs**: Inspect logs for errors and failure messages.
+- **Missing Test Directories**: Ensure the project directory structure is correct and that the required directories for your tests are present.
+- **Invalid API Key**: Verify that the `TF_VAR_ibmcloud_api_key` environment variable is set correctly.Double-check the key format and permissions. # pragma: allowlist secret
+- **Invalid Solution Type**: Ensure that the `SOLUTION` environment variable is correctly defined. If it is misconfigured, tests may not run as expected.
+- **Invalid SSH Key**: Confirm that the `SSH_KEY` environment variable is set properly and points to the correct SSH key file used for authentication.
+- **Invalid Zone**: Check that the `ZONE` environment variable corresponds to a valid IBM Cloud zone where your resources are located.
+- **Remote IP Configuration**: Ensure the `REMOTE_ALLOWED_IPS` environment variable is set to allow connections from the appropriate IP addresses. Update this if necessary.
+- **Terraform Initialization**: Make sure Terraform modules and plugins are up-to-date by running `terraform init`. If any modules fail to load, investigate the error messages and ensure correct configuration.
+- **Test Output Logs**: Inspect the test output logs carefully for errors and failure messages. Logs often provide useful hints on what went wrong during the test execution.
+- **Resource Limitations**: Ensure there are enough resources (e.g., compute power, storage) available in the cloud environment for your tests to run successfully.
+- **Network Configuration**: Double-check that your network configuration (e.g., firewall settings, security groups) allows necessary traffic for the tests.
 
 For additional help, contact the project maintainers.
 

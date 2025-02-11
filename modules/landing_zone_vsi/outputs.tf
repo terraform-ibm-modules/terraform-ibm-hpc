@@ -18,6 +18,11 @@ output "ldap_vsi_data" {
   value       = module.ldap_vsi[*]["list"]
 }
 
+output "worker_vsi_data" {
+  description = "Static worker VSI data"
+  value       = module.worker_vsi[*]["list"]
+}
+
 output "image_map_entry_found" {
   description = "Available if the image name provided is located within the image map"
   value       = "${local.image_mapping_entry_found} --  - ${var.management_image_name}"

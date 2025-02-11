@@ -115,19 +115,19 @@ variable "compute_ssh_keys" {
 
 variable "management_image_name" {
   type        = string
-  default     = "hpcaas-lsf10-rhel88-v11"
+  default     = "hpcaas-lsf10-rhel810-v12"
   description = "Image name to use for provisioning the management cluster instances."
 }
 
 variable "compute_image_name" {
   type        = string
-  default     = "hpcaas-lsf10-rhel88-compute-v7"
+  default     = "hpcaas-lsf10-rhel810-compute-v8"
   description = "Image name to use for provisioning the compute cluster instances."
 }
 
 variable "login_image_name" {
   type        = string
-  default     = "hpcaas-lsf10-rhel88-compute-v7"
+  default     = "hpcaas-lsf10-rhel810-compute-v8"
   description = "Image name to use for provisioning the login instance."
 }
 
@@ -344,14 +344,20 @@ variable "app_center_high_availability" {
 variable "db_instance_info" {
   description = "The IBM Cloud Database for MySQL information required to reference the PAC database."
   type = object({
-    id            = string
-    adminuser     = string
-    adminpassword = string
-    hostname      = string
-    port          = number
-    certificate   = string
+    id          = string
+    admin_user  = string
+    hostname    = string
+    port        = number
+    certificate = string
   })
   default = null
+}
+
+variable "db_admin_password" {
+  type        = string
+  default     = null
+  sensitive   = true
+  description = "The IBM Cloud Database for MySQL password required to reference the PAC database."
 }
 
 variable "storage_security_group_id" {
@@ -421,4 +427,78 @@ variable "existing_kms_instance_guid" {
   type        = string
   default     = null
   description = "GUID of boot volume encryption key"
+}
+
+variable "cloud_logs_ingress_private_endpoint" {
+  description = "String describing resource groups to create or reference"
+  type        = string
+  default     = null
+}
+
+variable "observability_logs_enable_for_management" {
+  description = "Set false to disable IBM Cloud Logs integration. If enabled, infrastructure and LSF application logs from Management Nodes will be ingested."
+  type        = bool
+  default     = false
+}
+
+variable "observability_logs_enable_for_compute" {
+  description = "Set false to disable IBM Cloud Logs integration. If enabled, infrastructure and LSF application logs from Compute Nodes will be ingested."
+  type        = bool
+  default     = false
+}
+
+variable "solution" {
+  type        = string
+  default     = "lsf"
+  description = "Provide the value for the solution that is needed for the support of lsf and HPC"
+}
+
+variable "ibm_customer_number" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
+}
+
+variable "worker_node_max_count" {
+  type        = number
+  default     = 10
+  description = "The maximum number of worker nodes that can be deployed in the Spectrum LSF cluster. In order to use the [Resource Connector](https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=lsf-resource-connnector) feature to dynamically create and delete worker nodes based on workload demand, the value selected for this parameter must be larger than worker_node_min_count. If you plan to deploy only static worker nodes in the LSF cluster, e.g., when using Spectrum Scale storage, the value for this parameter should be equal to worker_node_min_count. Enter a value in the range 1 - 500."
+  validation {
+    condition     = 1 <= var.worker_node_max_count && var.worker_node_max_count <= 500
+    error_message = "Input \"worker_node_max_count must\" be >= 1 and <= 500."
+  }
+}
+##############################################################################
+# Dedicated Host
+##############################################################################
+
+variable "enable_dedicated_host" {
+  type        = bool
+  default     = false
+  description = "Set this option to true to enable dedicated hosts for the VSI created for workload servers, with the default value set to false."
+}
+
+variable "dedicated_host_id" {
+  type        = string
+  description = "Dedicated Host for the worker nodes"
+  default     = null
+}
+
+variable "worker_node_instance_type" {
+  type = list(object({
+    count         = number
+    instance_type = string
+  }))
+  description = "The minimum number of worker nodes refers to the static worker nodes provisioned during cluster creation. The solution supports various instance types, so specify the node count based on the requirements of each instance profile. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
+  default = [
+    {
+      count         = 3
+      instance_type = "bx2-4x16"
+    },
+    {
+      count         = 0
+      instance_type = "cx2-8x16"
+    }
+  ]
 }

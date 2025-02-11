@@ -14,7 +14,7 @@ variable "region" {
   type        = string
 }
 
-variable "adminpassword" {
+variable "admin_password" {
   description = "The administrator password"
   type        = string
 }

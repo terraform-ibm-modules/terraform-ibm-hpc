@@ -1,28 +1,33 @@
 module "landing_zone" {
-  source                 = "../../modules/landing_zone"
-  compute_subnets_cidr   = var.vpc_cluster_private_subnets_cidr_blocks
-  cos_instance_name      = var.cos_instance_name
-  enable_atracker        = var.observability_atracker_on_cos_enable
-  enable_cos_integration = var.enable_cos_integration
-  enable_vpc_flow_logs   = var.enable_vpc_flow_logs
-  enable_vpn             = var.vpn_enabled
-  key_management         = var.key_management
-  kms_instance_name      = var.kms_instance_name
-  kms_key_name           = var.kms_key_name
-  ssh_keys               = var.bastion_ssh_keys
-  bastion_subnets_cidr   = var.vpc_cluster_login_private_subnets_cidr_blocks
-  network_cidr           = var.vpc_cidr
-  prefix                 = var.cluster_prefix
-  resource_group         = var.resource_group
-  vpc                    = var.vpc_name
-  subnet_id              = var.cluster_subnet_ids
-  login_subnet_id        = var.login_subnet_id
-  zones                  = var.zones
-  no_addr_prefix         = local.no_addr_prefix
-  scc_enable             = var.scc_enable
+  count                         = var.solution == "lsf" || var.solution == "hpc" ? 1 : 0
+  source                        = "../../modules/landing_zone"
+  compute_subnets_cidr          = var.vpc_cluster_private_subnets_cidr_blocks
+  cos_instance_name             = var.cos_instance_name
+  enable_atracker               = var.observability_atracker_enable && (var.observability_atracker_target_type == "cos") ? true : false
+  enable_cos_integration        = var.enable_cos_integration
+  cos_expiration_days           = var.cos_expiration_days
+  enable_vpc_flow_logs          = var.enable_vpc_flow_logs
+  enable_vpn                    = var.vpn_enabled
+  key_management                = var.key_management
+  kms_instance_name             = var.kms_instance_name
+  kms_key_name                  = var.kms_key_name
+  ssh_keys                      = var.bastion_ssh_keys
+  bastion_subnets_cidr          = var.vpc_cluster_login_private_subnets_cidr_blocks
+  network_cidr                  = var.vpc_cidr
+  prefix                        = var.cluster_prefix
+  resource_group                = var.resource_group
+  vpc                           = var.vpc_name
+  subnet_id                     = var.cluster_subnet_ids
+  login_subnet_id               = var.login_subnet_id
+  zones                         = var.zones
+  no_addr_prefix                = local.no_addr_prefix
+  scc_enable                    = var.scc_enable
+  skip_flowlogs_s2s_auth_policy = var.skip_flowlogs_s2s_auth_policy
+  observability_logs_enable     = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || (var.observability_atracker_enable && var.observability_atracker_target_type == "cloudlogs") ? true : false
 }
 
 module "bootstrap" {
+  count                         = var.solution == "lsf" || var.solution == "hpc" ? 1 : 0
   source                        = "./../../modules/bootstrap"
   resource_group                = local.resource_groups["workload_rg"]
   prefix                        = var.cluster_prefix
@@ -58,7 +63,7 @@ module "db" {
   region            = data.ibm_is_region.region.name
   mysql_version     = local.mysql_version
   service_endpoints = local.db_service_endpoints
-  adminpassword     = "db-${module.generate_db_adminpassword[0].password}" # with a prefix so we start with a letter
+  admin_password    = "db-${module.generate_db_adminpassword[0].password}" # with a prefix so we start with a letter
   members           = local.db_template[0]
   memory            = local.db_template[1]
   disks             = local.db_template[2]
@@ -72,9 +77,11 @@ module "ce_project" {
   region            = data.ibm_is_region.region.name
   resource_group_id = local.resource_groups["workload_rg"]
   reservation_id    = var.reservation_id
+  solution          = var.solution
 }
 
 module "landing_zone_vsi" {
+  count                                            = var.solution == "lsf" || var.solution == "hpc" ? 1 : 0
   source                                           = "../../modules/landing_zone_vsi"
   resource_group                                   = local.resource_groups["workload_rg"]
   ibmcloud_api_key                                 = var.ibmcloud_api_key
@@ -100,7 +107,7 @@ module "landing_zone_vsi" {
   app_center_gui_pwd                               = var.app_center_gui_pwd
   enable_app_center                                = var.enable_app_center
   contract_id                                      = var.reservation_id
-  cluster_id                                       = local.cluster_id
+  cluster_id                                       = var.cluster_id
   management_node_count                            = var.management_node_count
   management_node_instance_type                    = var.management_node_instance_type
   file_share                                       = length(local.valid_lsf_shares) > 0 ? module.file_storage.total_mount_paths : module.file_storage.mount_paths_excluding_first
@@ -121,6 +128,7 @@ module "landing_zone_vsi" {
   ldap_primary_ip                                  = local.ldap_private_ips
   app_center_high_availability                     = var.app_center_high_availability
   db_instance_info                                 = var.enable_app_center && var.app_center_high_availability ? module.db[0].db_instance_info : null
+  db_admin_password                                = var.enable_app_center && var.app_center_high_availability ? module.db[0].db_admin_password : null
   storage_security_group_id                        = var.storage_security_group_id
   observability_monitoring_enable                  = var.observability_monitoring_enable
   observability_monitoring_on_compute_nodes_enable = var.observability_monitoring_on_compute_nodes_enable
@@ -131,8 +139,18 @@ module "landing_zone_vsi" {
   bastion_instance_name                            = var.bastion_instance_name
   ce_project_guid                                  = module.ce_project.guid
   existing_kms_instance_guid                       = local.existing_kms_instance_guid
+  cloud_logs_ingress_private_endpoint              = local.cloud_logs_ingress_private_endpoint
+  observability_logs_enable_for_management         = var.observability_logs_enable_for_management
+  observability_logs_enable_for_compute            = var.observability_logs_enable_for_compute
+  solution                                         = var.solution
+  worker_node_max_count                            = var.worker_node_max_count
+  ibm_customer_number                              = var.ibm_customer_number
+  worker_node_instance_type                        = var.worker_node_instance_type
+  enable_dedicated_host                            = var.enable_dedicated_host
+  dedicated_host_id                                = var.enable_dedicated_host && local.total_worker_node_count >= 1 ? module.dedicated_host[0].dedicated_host_id[0] : null
   depends_on = [
-    module.validate_ldap_server_connection
+    module.validate_ldap_server_connection,
+    module.dedicated_host
   ]
 }
 
@@ -196,6 +214,15 @@ module "compute_dns_records" {
   dns_domain_names = var.dns_domain_name
 }
 
+module "worker_dns_records" {
+  count            = var.solution == "lsf" ? 1 : 0
+  source           = "./../../modules/dns_record"
+  dns_instance_id  = local.dns_instance_id
+  dns_zone_id      = local.compute_dns_zone_id
+  dns_records      = local.worker_vsi_dns_records
+  dns_domain_names = var.dns_domain_name
+}
+
 module "compute_candidate_dns_records" {
   source           = "./../../modules/dns_record"
   dns_instance_id  = local.dns_instance_id
@@ -238,6 +265,16 @@ module "compute_inventory" {
   server_name    = "[HPCAASCluster]"
   inventory_path = local.compute_inventory_path
 }
+
+module "worker_inventory" {
+  count          = var.solution == "lsf" ? 1 : 0
+  source         = "./../../modules/inventory"
+  hosts          = local.worker_host
+  user           = local.cluster_user
+  server_name    = "[WorkerServer]"
+  inventory_path = local.worker_inventory_path
+}
+
 
 ###################################################
 # Creation of inventory files for the automation usage
@@ -394,11 +431,19 @@ module "validation_script_executor" {
 module "cloud_monitoring_instance_creation" {
   source                         = "../../modules/observability_instance"
   location                       = local.region
-  ibmcloud_api_key               = var.ibmcloud_api_key
   rg                             = local.resource_groups["service_rg"]
   cloud_monitoring_provision     = var.observability_monitoring_enable
   observability_monitoring_plan  = var.observability_monitoring_plan
+  enable_metrics_routing         = var.observability_enable_metrics_routing
+  enable_platform_logs           = var.observability_enable_platform_logs
+  cluster_prefix                 = var.cluster_prefix
   cloud_monitoring_instance_name = "${var.cluster_prefix}-metrics"
+  cloud_logs_provision           = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute ? true : false
+  cloud_logs_instance_name       = "${var.cluster_prefix}-cloud-logs"
+  cloud_logs_retention_period    = var.observability_logs_retention_period
+  cloud_logs_as_atracker_target  = var.observability_atracker_enable && (var.observability_atracker_target_type == "cloudlogs") ? true : false
+  cloud_logs_data_bucket         = length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")][0] : null
+  cloud_metrics_data_bucket      = length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")][0] : null
   tags                           = ["hpc", var.cluster_prefix]
 }
 
@@ -409,14 +454,22 @@ module "scc_instance_and_profile" {
   location                = var.scc_location != "" ? var.scc_location : "us-south"
   rg                      = local.resource_groups["service_rg"]
   scc_profile             = var.scc_enable ? var.scc_profile : ""
-  scc_profile_version     = var.scc_profile != "" && var.scc_profile != null ? var.scc_profile_version : ""
   event_notification_plan = var.scc_event_notification_plan
   tags                    = ["hpc", var.cluster_prefix]
   prefix                  = var.cluster_prefix
-  cos_bucket              = [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0]
-  cos_instance_crn        = module.landing_zone.cos_instance_crns[0]
+  cos_bucket              = [for name in module.landing_zone[0].cos_buckets_names : name if strcontains(name, "scc-bucket")][0]
+  cos_instance_crn        = module.landing_zone[0].cos_instance_crns[0]
 }
 
 module "my_ip" {
   source = "../../modules/my_ip"
+}
+
+module "dedicated_host" {
+  count               = var.enable_dedicated_host && local.total_worker_node_count >= 1 ? 1 : 0
+  source              = "../../modules/dedicated_host"
+  prefix              = var.cluster_prefix
+  zone                = var.zones
+  existing_host_group = false
+  resource_group_id   = local.resource_groups["workload_rg"]
 }
