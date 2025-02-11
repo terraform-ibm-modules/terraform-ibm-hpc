@@ -5,3 +5,6 @@
 
 # tasks file for restarting on the networkmanager on deployer node
 - import_tasks: restart-networkmanager.yml
+
+# update deployer_hostname in group_vars/all
+- import_tasks: lsf-all.yml

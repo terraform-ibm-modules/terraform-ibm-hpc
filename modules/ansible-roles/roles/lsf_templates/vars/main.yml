@@ -1,6 +1,7 @@
 ---
 
-# inventory_path: "/Users/jayesh/scale_version/lsf_installer/playbook/"
+# Static Variables
+
 inventory_path: "/opt/ibm/lsf_installer/playbook/"
 LSF_SUITE_TOP: "/opt/ibm/lsfsuite"
 LSF_TOP_FOLDER: "lsf"

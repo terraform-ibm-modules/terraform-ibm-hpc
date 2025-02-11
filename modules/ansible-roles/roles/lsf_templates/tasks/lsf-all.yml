@@ -1,0 +1,11 @@
+---
+
+# Update deployer_hostname in group_vars/all
+  
+- name: Update deployer_hostname in group_vars/all
+  ansible.builtin.lineinfile:
+    path: "{{ inventory_path }}/group_vars/all"
+    regexp: '^deployer_hostname: .*'
+    line: 'deployer_hostname: {{ lsf_deployer_hostname }}'
+    # backup: yes
+  delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
