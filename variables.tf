@@ -898,3 +898,9 @@ variable "cloud_metrics_data_bucket" {
   default     = []
   description = ""
 }
+
+variable "bastion_security_group_id" {
+  type        = string
+  default     = null
+  description = "bastion security group id"
+}

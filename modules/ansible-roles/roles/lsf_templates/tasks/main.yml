@@ -2,3 +2,6 @@
 
 # tasks file for template tasks
 - import_tasks: template-tasks.yml
+
+# tasks file for restarting on the networkmanager on deployer node
+- import_tasks: restart-networkmanager.yml

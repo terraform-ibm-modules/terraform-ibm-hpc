@@ -50,6 +50,17 @@ module "storage_sg" {
   vpc_id                       = var.vpc_id
 }
 
+resource "ibm_is_security_group_rule" "add_comp_sg_bastion" {
+  group     = var.bastion_security_group_id
+  direction = "inbound"
+  remote    = module.compute_sg[0].security_group_id
+}
+
+resource "ibm_is_security_group_rule" "add_comp_sg_comp" {
+  group     = module.compute_sg[0].security_group_id
+  direction = "inbound"
+  remote    = module.compute_sg[0].security_group_id
+}
 
 module "client_vsi" {
   count                         = length(var.client_instances)
