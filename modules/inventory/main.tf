@@ -18,8 +18,13 @@ ${join("\n", [for host in var.hosts : host if can(regex(".*-comp-.*", host))])}
 name_mount_path_map = {${join(",", [for k, v in var.name_mount_path_map : "\"${k}\": \"${v}\""])}}
 logs_enable_for_management = ${var.logs_enable_for_management}
 logs_enable_for_compute = ${var.logs_enable_for_compute}
+monitoring_enable_for_management = ${var.monitoring_enable_for_management}
+monitoring_enable_for_compute = ${var.monitoring_enable_for_compute}
+cloud_monitoring_access_key = ${var.cloud_monitoring_access_key}
+cloud_monitoring_ingestion_url = ${var.cloud_monitoring_ingestion_url}
+cloud_monitoring_prws_key = ${var.cloud_monitoring_prws_key}
+cloud_monitoring_prws_url = ${var.cloud_monitoring_prws_url}
 cloud_logs_ingress_private_endpoint = ${var.cloud_logs_ingress_private_endpoint}
-VPC_APIKEY_VALUE = ${var.VPC_APIKEY_VALUE}
 EOT
   filename = var.inventory_path
 }

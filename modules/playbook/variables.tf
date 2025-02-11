@@ -21,3 +21,9 @@ variable "playbook_path" {
   type        = string
   default     = "ssh.yaml"
 }
+
+variable "ibmcloud_api_key" {
+  type        = string
+  default     = ""
+  description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
+}

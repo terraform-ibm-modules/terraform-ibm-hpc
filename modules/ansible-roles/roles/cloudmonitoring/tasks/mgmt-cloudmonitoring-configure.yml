@@ -1,0 +1,55 @@
+---
+- name: Check if monitoring is enabled
+  ansible.builtin.debug:
+    msg: "Monitoring is enabled"
+  when: "{{ monitoring_enable_for_management | bool }}"
+
+- name: Ensure Sysdig and Prometheus packages are installed
+  ansible.builtin.yum:
+    name:
+      - sysdig
+      - prometheus
+    state: present
+  when: "{{ monitoring_enable_for_management | bool }}"
+
+- name: Check if cloud monitoring credentials are provided
+  ansible.builtin.fail:
+    msg: "Cloud Monitoring access key or ingestion URL is missing"
+  when: "{{ monitoring_enable_for_management | bool }} and (cloud_monitoring_access_key == '' or cloud_monitoring_ingestion_url == '')"
+
+- name: Write Sysdig configuration file
+  ansible.builtin.template:
+    src: "templates/dragent.yaml.j2"
+    dest: "/opt/draios/etc/dragent.yaml"
+  when: "{{ monitoring_enable_for_management | bool }}"
+
+- name: Write Prometheus configuration file
+  ansible.builtin.copy:
+    content: |
+      global:
+        scrape_interval: 60s
+        evaluation_interval: 15s
+      scrape_configs:
+        - job_name: "lsf_prometheus_exporter"
+          static_configs:
+            - targets: ["localhost:9405"]
+      remote_write:
+        - url: "{{ cloud_monitoring_prws_url }}"
+          authorization:
+            credentials: "{{ cloud_monitoring_prws_key }}"
+    dest: "/opt/prometheus/prometheus.yml"
+  when: "{{ monitoring_enable_for_management | bool }}"
+
+- name: Enable and restart Prometheus service
+  ansible.builtin.systemd:
+    name: prometheus
+    enabled: yes
+    state: restarted
+  when: "{{ monitoring_enable_for_management | bool }}"
+
+- name: Enable and restart Sysdig agent service
+  ansible.builtin.systemd:
+    name: dragent
+    enabled: yes
+    state: restarted
+  when: "{{ monitoring_enable_for_management | bool }}"

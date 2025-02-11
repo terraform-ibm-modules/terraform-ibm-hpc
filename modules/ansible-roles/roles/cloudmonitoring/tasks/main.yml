@@ -1,0 +1,13 @@
+---
+
+# Tasks for Cloud Monitoring Configuration (for management nodes)
+- import_tasks: roles/cloudmonitoring/tasks/mgmt-cloudmonitoring-configure.yml
+  when:
+    - inventory_hostname in groups['management_nodes']
+    - monitoring_enable_for_management | bool
+
+# Tasks for Cloud Monitoring Configuration (for compute nodes)
+- import_tasks: roles/cloudmonitoring/tasks/compute-cloudmonitoring-configure.yml
+  when:
+    - inventory_hostname in groups['compute_nodes']
+    - monitoring_enable_for_compute | bool

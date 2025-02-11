@@ -63,13 +63,23 @@
       @INCLUDE output-logs-router-agent.conf
   when: "{{ logs_enable_for_management | bool }}"
 
+# - name: Fetch API KEY From environmental variable of Ansible controller
+#   shell: "echo $IC_API_KEY" 
+#   register: env_api_key
+#   when: "{{ logs_enable_for_management | bool }}"
+
+- name: Debug the fetched API key
+  ansible.builtin.debug:
+    msg: "Fetched API key: {{ VPC_API_KEY }}"
+  when: "{{ logs_enable_for_management | bool }}"
+
 - name: Run post-config.sh script
   ansible.builtin.command: >
     /opt/ibm/post-config.sh -h {{ cloud_logs_ingress_private_endpoint }}
     -p "3443"
     -t "/logs/v1/singles"
     -a IAMAPIKey
-    -k {{ VPC_APIKEY_VALUE }}
+    -k {{ VPC_API_KEY }}
     --send-directly-to-icl
     -s true
     -i Production
@@ -77,8 +87,7 @@
 
 - name: Test cloud logs configuration
   ansible.builtin.shell: |
-    echo "2024-10-16T14:31:16+0000 INFO Testing IBM Cloud LSF Logs from management: {{ ansible_hostname }}" >> /opt/ibm/lsf/log/test.log
-    logger -u /tmp/in_syslog my_ident my_syslog_test_message_from_management:{{ ansible_hostname }}
+    echo "INFO Testing IBM Cloud LSF Logs from management: {{ ansible_hostname }}" >> /opt/ibm/lsf/log/test.log
   when: "{{ logs_enable_for_management | bool }}"
 
 # - name: Skip cloud logs configuration
