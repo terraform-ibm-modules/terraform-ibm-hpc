@@ -1,5 +1,5 @@
 {
-  "name": "hpcaas-test",
+  "name": "hpc-lsf-test",
   "type": [
     "terraform_v1.9"
   ],
@@ -71,7 +71,7 @@
         },
         {
           "name": "cluster_prefix",
-          "value": "hpcaas",
+          "value": "hpc-lsf",
           "type": "string",
           "secure": false,
           "description": "The prefix is used to name the IBM Cloud LSF cluster and the resources provisioned to build the  cluster instance. Each Spectrum LSF cluster must have a unique name, so ensure the prefix is distinct. It must begin with a lowercase letter and can only include lowercase letters, digits, and hyphens. Hyphens must be followed by a lowercase letter or digit, with no leading, trailing, or consecutive hyphens. The prefix length must be less than 16 characters."
@@ -349,7 +349,7 @@
         },
         {
           "name": "ldap_basedns",
-          "value": "hpcaas.com",
+          "value": "lsf.com",
           "type": "string",
           "secure": false,
           "description": "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."
