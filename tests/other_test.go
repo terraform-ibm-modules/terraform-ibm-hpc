@@ -277,12 +277,11 @@ func TestRunLSFClusterCreationWithZeroWorkerNodes(t *testing.T) {
 				"instance_type": "cx2-2x4",
 			},
 		}
-
 		// Skip automatic teardown for further inspection post-test.
 		options.SkipTestTearDown = true
 		defer options.TestTearDown()
 
-		// Validate the basic cluster configuration.
+		//Validate the basic cluster configuration.
 		lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
 		testLogger.Info(t, "Cluster configuration validation completed successfully.")
 	} else {
@@ -2000,11 +1999,11 @@ func TestRunInvalidLDAPServerCert(t *testing.T) {
 	// Perform Terraform upgrade only once
 	UpgradeTerraformOnce(t, terraformOptions)
 
-	// Apply the Terraform configuration
+	// plan the Terraform configuration
 	_, err = terraform.InitAndPlanE(t, terraformOptions)
 
-	// Check if an error occurred during apply
-	assert.Error(t, err, "Expected an error during apply")
+	// Check if an error occurred during plan
+	assert.Error(t, err, "Expected an error during plan")
 
 	if err != nil {
 
@@ -2693,6 +2692,97 @@ func TestRunInvalidDedicatedHostProfile(t *testing.T) {
 		testLogger.FAIL(t, "Expected validation error did not occur for Invalid Dedicated-Host instance profile.")
 	}
 
+}
+
+// TestRunInvalidDedicatedHostProfile TestRunInvalidMinWorkerNodeCountGreaterThanMax cluster creation with an invalid worker node count.
+func TestRunInvalidMinWorkerNodeCountGreaterThanMax(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Set up the test suite and prepare the testing environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate a random prefix for the cluster to ensure uniqueness
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+
+	// Retrieve necessary environment variables for the test
+	envVars := GetEnvVars()
+
+	// You can add conditional logic here to modify the map, for example:
+	if envVars.Solution == "lsf" {
+
+		// Get the absolute path of solutions/hpc
+		abs, err := filepath.Abs("solutions/hpc")
+		require.NoError(t, err, "Unable to get absolute path")
+
+		terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+		// Initialize the map to hold the variables
+		vars := map[string]interface{}{
+			"cluster_prefix":        hpcClusterPrefix,
+			"bastion_ssh_keys":      utils.SplitAndTrim(envVars.SSHKey, ","),
+			"compute_ssh_keys":      utils.SplitAndTrim(envVars.SSHKey, ","),
+			"zones":                 utils.SplitAndTrim(envVars.Zone, ","),
+			"remote_allowed_ips":    utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+			"cluster_id":            envVars.ClusterID,
+			"worker_node_max_count": 2, //invalid
+			"worker_node_instance_type": []map[string]interface{}{ // Invalid data
+				{
+					"count":         2,
+					"instance_type": "bx2-2x8",
+				},
+				{
+					"count":         1,
+					"instance_type": "cx2-2x4",
+				},
+			},
+			"solution":                        envVars.Solution,
+			"scc_enable":                      false,
+			"observability_monitoring_enable": false,
+			"enable_cos_integration":          false,
+			"enable_vpc_flow_logs":            false,
+			"key_management":                  "null",
+			"ibm_customer_number":             envVars.IBMCustomerNumber,
+		}
+
+		// Define Terraform options
+		terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+			TerraformDir: terrPath,
+			Vars:         vars,
+		})
+
+		// Perform Terraform upgrade only once
+		UpgradeTerraformOnce(t, terraformOptions)
+
+		// Apply the Terraform configuration
+		_, err = terraform.InitAndPlanE(t, terraformOptions)
+
+		// Check if an error occurred during plan
+		assert.Error(t, err, "Expected an error during plan")
+
+		if err != nil {
+
+			// Check if the error message contains specific keywords indicating LDAP server IP issues
+			result := utils.VerifyDataContains(t, err.Error(), "If the solution is set as lsf, the worker min count cannot be greater than worker max count.", testLogger)
+			assert.True(t, result)
+			if result {
+				testLogger.PASS(t, "Validation succeeded for the worker node count")
+			} else {
+				testLogger.FAIL(t, "Validation failed for the worker node count")
+			}
+		} else {
+			// Log an error if the expected error did not occur
+			t.Error("Expected validation error did not occur.")
+			testLogger.FAIL(t, "Expected validation error did not occur for Invalid worker node count")
+		}
+
+		// Cleanup resources
+		defer terraform.Destroy(t, terraformOptions)
+	}
+	testLogger.Info(t, "TestRunInvalidMinWorkerNodeCountGreaterThanMax will execute If the solution is set as lsf")
 }
 
 // ############################## Existing Environment Test Cases ###############################

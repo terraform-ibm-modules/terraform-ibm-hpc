@@ -3431,3 +3431,47 @@ func CheckPlatformLogsPresent(t *testing.T, apiKey, region, resourceGroup string
 	logger.Info(t, fmt.Sprintf("Platform logs found for region '%s'.", region))
 	return true, nil
 }
+
+// ValidateDynamicWorkerProfile checks if the dynamic worker node profile matches the expected value.
+// It logs into IBM Cloud, fetches cluster resources, extracts the worker profile, and validates it.
+// Returns an error if the actual profile differs from the expected profile; otherwise, it returns nil.
+func ValidateDynamicWorkerProfile(t *testing.T, apiKey, region, resourceGroup, clusterPrefix, expectedDynamicWorkerProfile string, logger *utils.AggregatedLogger) error {
+
+	// If the resource group is "null", set a custom resource group based on the cluster prefix
+	if strings.Contains(resourceGroup, "null") {
+		resourceGroup = fmt.Sprintf("%s-workload-rg", clusterPrefix)
+	}
+
+	// Log in to IBM Cloud using the provided API key and region
+	if err := utils.LoginIntoIBMCloudUsingCLI(t, apiKey, region, resourceGroup); err != nil {
+		return fmt.Errorf("failed to log in to IBM Cloud: %w", err)
+	}
+
+	// Fetch cluster resource list using IBM Cloud CLI
+	fetchClusterResourcesCmd := fmt.Sprintf("ibmcloud is instances | grep %s", clusterPrefix)
+	cmd := exec.Command("bash", "-c", fetchClusterResourcesCmd)
+	clusterResourceList, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve cluster resource list: %w", err)
+	}
+
+	// Fetch the dynamic worker node profile
+	dynamicWorkerProfileCmd := fmt.Sprintf("ibmcloud is instances | grep %s | awk '/-compute-/ && !/-worker-|-login-|-mgmt-|-bastion-/ {print $6; exit}'", clusterPrefix)
+	cmd = exec.Command("bash", "-c", dynamicWorkerProfileCmd)
+	dynamicWorkerProfile, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve dynamic worker node profile: %w", err)
+	}
+
+	// Convert output to string and trim spaces
+	actualDynamicWorkerProfile := strings.TrimSpace(string(dynamicWorkerProfile))
+
+	// Verify if the actual worker node profile matches the expected profile
+	if !utils.VerifyDataContains(t, expectedDynamicWorkerProfile, actualDynamicWorkerProfile, logger) {
+		return fmt.Errorf("dynamic worker node profile mismatch: actual: '%s', expected: '%s', output: '%s'", actualDynamicWorkerProfile, expectedDynamicWorkerProfile, clusterResourceList)
+	}
+
+	logger.Info(t, "Dynamic worker node profile matches the first profile from worker node instance type")
+
+	return nil
+}

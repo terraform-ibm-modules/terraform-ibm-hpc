@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/utilities"
 	"golang.org/x/crypto/ssh"
 )
@@ -662,4 +663,15 @@ func VerifyCloudLogs(
 	compErr := LSFFluentBitServiceForComputeNodes(t, sshClient, expectedSolution, staticWorkerNodeIPList, isCloudLogsEnabledForCompute, logger)
 	utils.LogVerificationResult(t, compErr, "Fluent Bit service for compute nodes", logger)
 
+}
+
+// ValidateDynamicNodeProfile validates the dynamic worker node profile by fetching it from Terraform variables
+// and comparing it against the expected profile obtained from IBM Cloud CLI.
+func ValidateDynamicNodeProfile(t *testing.T, apiKey, region, resourceGroup, clusterPrefix string, options *testhelper.TestOptions, logger *utils.AggregatedLogger) {
+
+	expectedDynamicWorkerProfile, expectedWorkerNodeProfileErr := utils.GetFirstWorkerNodeProfile(t, options.TerraformVars, logger)
+	utils.LogVerificationResult(t, expectedWorkerNodeProfileErr, "Fetching worker node profile", logger)
+
+	validateDynamicWorkerProfileErr := ValidateDynamicWorkerProfile(t, apiKey, region, resourceGroup, clusterPrefix, expectedDynamicWorkerProfile, logger)
+	utils.LogVerificationResult(t, validateDynamicWorkerProfileErr, "Validating dynamic worker node profile", logger)
 }

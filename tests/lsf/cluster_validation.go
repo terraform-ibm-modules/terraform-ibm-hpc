@@ -421,6 +421,7 @@ func ValidateClusterConfigurationWithPACHA(t *testing.T, options *testhelper.Tes
 // It performs validation tasks on essential aspects of the cluster setup,
 // including the management node, compute nodes, and login node configurations.
 // Additionally, it ensures proper connectivity and functionality.
+// The dynamic worker node profile should be created based on the first worker instance type object.
 // This function doesn't return any value but logs errors and validation steps during the process.
 func ValidateBasicClusterConfiguration(t *testing.T, options *testhelper.TestOptions, testLogger *utils.AggregatedLogger) {
 	// Retrieve common cluster details from options
@@ -473,6 +474,9 @@ func ValidateBasicClusterConfiguration(t *testing.T, options *testhelper.TestOpt
 
 	// Run job
 	VerifyJobs(t, sshClient, jobCommandLow, testLogger)
+
+	// Verify dynamic node profile
+	ValidateDynamicNodeProfile(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expectedZone), expectedResourceGroup, expectedMasterName, options, testLogger)
 
 	// Get compute node IPs and handle errors
 	computeNodeIPList, err := GetComputeNodeIPs(t, sshClient, testLogger, expectedSolution, staticWorkerNodeIPList)
@@ -1222,7 +1226,7 @@ func ValidateBasicClusterConfigurationWithDedicatedHost(t *testing.T, options *t
 	expectedClusterID, expectedReservationID, expectedMasterName := GetClusterInfo(options)
 	expectedKeyManagement := options.TerraformVars["key_management"].(string)
 	expectedResourceGroup := options.TerraformVars["resource_group"].(string)
-	WorkerNodeMinCount, err := utils.GetWorkerNodeTotalCount(options.TerraformVars)
+	WorkerNodeMinCount, err := utils.GetWorkerNodeTotalCount(t, options.TerraformVars, testLogger)
 	require.NoError(t, err, "Error retrieving worker node total count")
 	expectedZone := options.TerraformVars["zones"].([]string)[0]
 
@@ -1391,6 +1395,103 @@ func ValidateBasicClusterConfigurationWithSCC(t *testing.T, options *testhelper.
 	VerifyLSFDNS(t, sshClient, []string{loginNodeIP}, expectedDnsDomainName, testLogger)
 
 	// Verify file share encryption configuration
+	VerifyFileShareEncryption(t, sshClient, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expectedZone), expectedResourceGroup, expectedMasterName, expectedKeyManagement, managementNodeIPList, testLogger)
+
+	// Log validation end
+	testLogger.Info(t, t.Name()+" Validation ended")
+}
+
+// ValidateBasicClusterConfigurationWithCloudLogs validates essential cluster configurations and logs errors.
+// This function ensures that the management, compute, and login nodes meet the required configurations.
+// It establishes SSH connections to nodes, validates DNS, encryption, and logs observability settings.
+// Errors are handled explicitly, and validation steps are logged for debugging.
+// Key validation and configuration checks ensure that the cluster setup adheres to standards.
+
+func ValidateBasicClusterConfigurationWithCloudLogs(t *testing.T, options *testhelper.TestOptions, testLogger *utils.AggregatedLogger) {
+	// Retrieve common cluster details from options
+	expectedSolution := strings.ToLower(options.TerraformVars["solution"].(string))
+	expectedClusterID, expectedReservationID, expectedMasterName := GetClusterInfo(options)
+
+	expectedResourceGroup := options.TerraformVars["resource_group"].(string)
+	expectedKeyManagement := options.TerraformVars["key_management"].(string)
+	expectedZone := options.TerraformVars["zones"].([]string)[0]
+
+	expectedDnsDomainName, ok := options.TerraformVars["dns_domain_name"].(map[string]string)["compute"]
+	require.True(t, ok, "Key 'compute' does not exist in dns_domain_name map or dns_domain_name is not of type map[string]string")
+
+	expectedHyperthreadingEnabled, err := strconv.ParseBool(options.TerraformVars["hyperthreading_enabled"].(string))
+	require.NoError(t, err, "Error parsing hyperthreading_enabled: %v", err)
+
+	expectedLogsEnabledForManagement, err := strconv.ParseBool(fmt.Sprintf("%v", options.TerraformVars["observability_logs_enable_for_management"]))
+	require.NoError(t, err, "Error parsing observability_logs_enable_for_management")
+
+	expectedLogsEnabledForCompute, err := strconv.ParseBool(fmt.Sprintf("%v", options.TerraformVars["observability_logs_enable_for_compute"]))
+	require.NoError(t, err, "Error parsing observability_logs_enable_for_compute")
+
+	// Set job commands based on solution type
+	jobCommandLow, jobCommandMed := SetJobCommands(expectedSolution, expectedZone)
+
+	// Run the test consistency check
+	clusterCreationErr := ValidateClusterCreation(t, options, testLogger)
+	if clusterCreationErr != nil {
+		require.NoError(t, clusterCreationErr, "Cluster creation validation failed: %v")
+	}
+
+	// Retrieve server IPs (different logic for HPC vs LSF solutions)
+	bastionIP, managementNodeIPList, loginNodeIP, staticWorkerNodeIPList, ipRetrievalError := GetClusterIPs(t, options, expectedSolution, testLogger)
+	require.NoError(t, ipRetrievalError, "Error occurred while getting server IPs: %v", ipRetrievalError)
+
+	// Log validation start
+	testLogger.Info(t, t.Name()+" Validation started ......")
+
+	// Connect to the master node via SSH and handle connection errors
+	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
+	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
+	defer sshClient.Close()
+
+	testLogger.Info(t, "SSH connection to the master successful")
+	t.Log("Validation in progress. Please wait...")
+
+	// Verify management node configuration
+	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, EXPECTED_LSF_VERSION, expectedSolution, testLogger)
+
+	// Wait for dynamic node disappearance and handle potential errors
+	defer func() {
+		if err := WaitForDynamicNodeDisappearance(t, sshClient, testLogger); err != nil {
+			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
+		}
+	}()
+
+	// Run job
+	VerifyJobs(t, sshClient, jobCommandMed, testLogger)
+
+	// Get static and dynamic compute node IPs and handle errors
+	computeNodeIPList, err := GetComputeNodeIPs(t, sshClient, testLogger, expectedSolution, staticWorkerNodeIPList)
+	if err != nil {
+		t.Fatalf("Failed to retrieve dynamic compute node IPs: %v", err)
+	}
+
+	// Verify compute node configuration
+	VerifyComputeNodeConfig(t, sshClient, expectedHyperthreadingEnabled, computeNodeIPList, testLogger)
+
+	// Verify that cloud logs are enabled and correctly configured
+	VerifyCloudLogs(t, sshClient, expectedSolution, options.LastTestTerraformOutputs, managementNodeIPList, staticWorkerNodeIPList, expectedLogsEnabledForManagement, expectedLogsEnabledForCompute, testLogger)
+
+	// Verify SSH connectivity from login node and handle connection errors
+	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
+	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
+	defer sshLoginNodeClient.Close()
+
+	// Verify login node configuration
+	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
+
+	// Verify PTR records
+	VerifyPTRRecordsForManagementAndLoginNodes(t, sshClient, LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList, loginNodeIP, expectedDnsDomainName, testLogger)
+
+	// Verify LSF DNS on login node
+	VerifyLSFDNS(t, sshClient, []string{loginNodeIP}, expectedDnsDomainName, testLogger)
+
+	// Verify file share encryption
 	VerifyFileShareEncryption(t, sshClient, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expectedZone), expectedResourceGroup, expectedMasterName, expectedKeyManagement, managementNodeIPList, testLogger)
 
 	// Log validation end
@@ -1617,103 +1718,6 @@ func ValidateClusterConfigWithAPPCenterAndLDAPOnExistingEnvironment(
 
 	// Verify login node LDAP config
 	VerifyLoginNodeLDAPConfig(t, sshLoginNodeClient, bastionIP, loginNodeIP, ldapServerIP, jobCommandLow, expectedLdapDomain, ldapUserName, ldapUserPassword, testLogger)
-
-	// Log validation end
-	testLogger.Info(t, t.Name()+" Validation ended")
-}
-
-// ValidateBasicClusterConfigurationWithCloudLogs validates essential cluster configurations and logs errors.
-// This function ensures that the management, compute, and login nodes meet the required configurations.
-// It establishes SSH connections to nodes, validates DNS, encryption, and logs observability settings.
-// Errors are handled explicitly, and validation steps are logged for debugging.
-// Key validation and configuration checks ensure that the cluster setup adheres to standards.
-
-func ValidateBasicClusterConfigurationWithCloudLogs(t *testing.T, options *testhelper.TestOptions, testLogger *utils.AggregatedLogger) {
-	// Retrieve common cluster details from options
-	expectedSolution := strings.ToLower(options.TerraformVars["solution"].(string))
-	expectedClusterID, expectedReservationID, expectedMasterName := GetClusterInfo(options)
-
-	expectedResourceGroup := options.TerraformVars["resource_group"].(string)
-	expectedKeyManagement := options.TerraformVars["key_management"].(string)
-	expectedZone := options.TerraformVars["zones"].([]string)[0]
-
-	expectedDnsDomainName, ok := options.TerraformVars["dns_domain_name"].(map[string]string)["compute"]
-	require.True(t, ok, "Key 'compute' does not exist in dns_domain_name map or dns_domain_name is not of type map[string]string")
-
-	expectedHyperthreadingEnabled, err := strconv.ParseBool(options.TerraformVars["hyperthreading_enabled"].(string))
-	require.NoError(t, err, "Error parsing hyperthreading_enabled: %v", err)
-
-	expectedLogsEnabledForManagement, err := strconv.ParseBool(fmt.Sprintf("%v", options.TerraformVars["observability_logs_enable_for_management"]))
-	require.NoError(t, err, "Error parsing observability_logs_enable_for_management")
-
-	expectedLogsEnabledForCompute, err := strconv.ParseBool(fmt.Sprintf("%v", options.TerraformVars["observability_logs_enable_for_compute"]))
-	require.NoError(t, err, "Error parsing observability_logs_enable_for_compute")
-
-	// Set job commands based on solution type
-	jobCommandLow, jobCommandMed := SetJobCommands(expectedSolution, expectedZone)
-
-	// Run the test consistency check
-	clusterCreationErr := ValidateClusterCreation(t, options, testLogger)
-	if clusterCreationErr != nil {
-		require.NoError(t, clusterCreationErr, "Cluster creation validation failed: %v")
-	}
-
-	// Retrieve server IPs (different logic for HPC vs LSF solutions)
-	bastionIP, managementNodeIPList, loginNodeIP, staticWorkerNodeIPList, ipRetrievalError := GetClusterIPs(t, options, expectedSolution, testLogger)
-	require.NoError(t, ipRetrievalError, "Error occurred while getting server IPs: %v", ipRetrievalError)
-
-	// Log validation start
-	testLogger.Info(t, t.Name()+" Validation started ......")
-
-	// Connect to the master node via SSH and handle connection errors
-	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
-	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
-	defer sshClient.Close()
-
-	testLogger.Info(t, "SSH connection to the master successful")
-	t.Log("Validation in progress. Please wait...")
-
-	// Verify management node configuration
-	VerifyManagementNodeConfig(t, sshClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, managementNodeIPList, EXPECTED_LSF_VERSION, expectedSolution, testLogger)
-
-	// Wait for dynamic node disappearance and handle potential errors
-	defer func() {
-		if err := WaitForDynamicNodeDisappearance(t, sshClient, testLogger); err != nil {
-			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
-		}
-	}()
-
-	// Run job
-	VerifyJobs(t, sshClient, jobCommandMed, testLogger)
-
-	// Get static and dynamic compute node IPs and handle errors
-	computeNodeIPList, err := GetComputeNodeIPs(t, sshClient, testLogger, expectedSolution, staticWorkerNodeIPList)
-	if err != nil {
-		t.Fatalf("Failed to retrieve dynamic compute node IPs: %v", err)
-	}
-
-	// Verify compute node configuration
-	VerifyComputeNodeConfig(t, sshClient, expectedHyperthreadingEnabled, computeNodeIPList, testLogger)
-
-	// Verify that cloud logs are enabled and correctly configured
-	VerifyCloudLogs(t, sshClient, expectedSolution, options.LastTestTerraformOutputs, managementNodeIPList, staticWorkerNodeIPList, expectedLogsEnabledForManagement, expectedLogsEnabledForCompute, testLogger)
-
-	// Verify SSH connectivity from login node and handle connection errors
-	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
-	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
-
-	// Verify login node configuration
-	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterID, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
-
-	// Verify PTR records
-	VerifyPTRRecordsForManagementAndLoginNodes(t, sshClient, LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList, loginNodeIP, expectedDnsDomainName, testLogger)
-
-	// Verify LSF DNS on login node
-	VerifyLSFDNS(t, sshClient, []string{loginNodeIP}, expectedDnsDomainName, testLogger)
-
-	// Verify file share encryption
-	VerifyFileShareEncryption(t, sshClient, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expectedZone), expectedResourceGroup, expectedMasterName, expectedKeyManagement, managementNodeIPList, testLogger)
 
 	// Log validation end
 	testLogger.Info(t, t.Name()+" Validation ended")

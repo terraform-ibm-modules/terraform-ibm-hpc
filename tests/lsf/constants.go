@@ -18,9 +18,9 @@ const (
 	HPC_JOB_COMMAND_MED_MEM_SOUTH           = `bsub -J myjob[1-1] -R "select[family=mx3d] rusage[mem=30G]" sleep 90`
 	HPC_JOB_COMMAND_HIGH_MEM_SOUTH          = `bsub -J myjob[1-1] -R "select[family=mx3d] rusage[mem=90G]" sleep 90`
 	HPC_JOB_COMMAND_LOW_MEM_WITH_MORE_SLEEP = `bsub -J myjob[1-1] -R "select[family=mx2] rusage[mem=30G]" sleep 90`
-	LSF_JOB_COMMAND_LOW_MEM                 = `bsub -n 4 sleep 60`
-	LSF_JOB_COMMAND_MED_MEM                 = `bsub -n 6 sleep 90`
-	LSF_JOB_COMMAND_HIGH_MEM                = `bsub -n 8 sleep 120`
+	LSF_JOB_COMMAND_LOW_MEM                 = `bsub -n 6 sleep 60`
+	LSF_JOB_COMMAND_MED_MEM                 = `bsub -n 8 sleep 90`
+	LSF_JOB_COMMAND_HIGH_MEM                = `bsub -n 10 sleep 120`
 )
 
 var (

@@ -366,7 +366,7 @@ lsf_negative_suite_2() {
 lsf_negative_suite_3() {
     suite=lsf-negative-suite-3
     solution=lsf
-    test_cases="TestRunInvalidLDAPUsernamePassword,TestRunInvalidAPPCenterPassword,TestRunLSFWithoutMandatory"
+    test_cases="TestRunInvalidLDAPUsernamePassword,TestRunInvalidAPPCenterPassword,TestRunLSFWithoutMandatory,TestRunInvalidMinWorkerNodeCountGreaterThanMax"
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:?}" "${solution:?}"

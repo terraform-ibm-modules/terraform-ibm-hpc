@@ -487,7 +487,7 @@ func GetIAMToken() (string, error) {
 
 // GetWorkerNodeTotalCount extracts the total "count" from the worker_node_instance_type variable.
 // It uses reflection to handle slices of various underlying types.
-func GetWorkerNodeTotalCount(terraformVars map[string]interface{}) (int, error) {
+func GetWorkerNodeTotalCount(t *testing.T, terraformVars map[string]interface{}, logger *AggregatedLogger) (int, error) {
 	rawVal, exists := terraformVars["worker_node_instance_type"]
 	if !exists {
 		return 0, errors.New("worker_node_instance_type key does not exist")
@@ -518,7 +518,46 @@ func GetWorkerNodeTotalCount(terraformVars map[string]interface{}) (int, error) 
 			return 0, fmt.Errorf("count for worker at index %d is not an int", i)
 		}
 		totalCount += count
+		logger.Info(t, fmt.Sprintf("Expected total worker node count is %d", totalCount))
 	}
 
 	return totalCount, nil
+}
+
+// GetFirstWorkerNodeProfile extracts the "instance_type" from the first worker node in the slice.
+// It validates the structure and returns an error if the data format is incorrect.
+func GetFirstWorkerNodeProfile(t *testing.T, terraformVars map[string]interface{}, logger *AggregatedLogger) (string, error) {
+
+	rawVal, exists := terraformVars["worker_node_instance_type"]
+	if !exists {
+		return "", errors.New("worker_node_instance_type key does not exist")
+	}
+
+	// Use reflection to ensure rawVal is a slice.
+	val := reflect.ValueOf(rawVal)
+	if val.Kind() != reflect.Slice || val.Len() == 0 {
+		return "", errors.New("worker_node_instance_type is not a valid non-empty slice")
+	}
+
+	// Get the first element and ensure it's a map
+	item := val.Index(0).Interface()
+	workerMap, ok := item.(map[string]interface{})
+	if !ok {
+		return "", errors.New("worker at index 0 is not in the expected map format")
+	}
+
+	// Extract the "instance_type" value
+	instanceTypeVal, exists := workerMap["instance_type"]
+	if !exists {
+		return "", errors.New("worker at index 0 does not have an 'instance_type' key")
+	}
+
+	// Ensure "instance_type" is a string
+	instanceType, ok := instanceTypeVal.(string)
+	if !ok {
+		return "", errors.New("instance_type for worker at index 0 is not a string")
+	}
+
+	logger.Info(t, fmt.Sprintf("Expected dynamic worker node instance type is %s", instanceType))
+	return instanceType, nil
 }

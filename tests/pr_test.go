@@ -346,10 +346,17 @@ func setupOptions(t *testing.T, hpcClusterPrefix, terraformDir, resourceGroup st
 }
 
 func TestMain(m *testing.M) {
+
+	var solution string
+
 	// Lookup environment variable
-	solution, ok := os.LookupEnv("SOLUTION")
-	if !ok || solution == "" {
-		log.Fatalf("error: SOLUTION environment variable not set")
+	if envSolution, ok := os.LookupEnv("SOLUTION"); ok {
+		solution = envSolution
+	} else {
+		// Set default value if SOLUTION is not set
+		solution = "lsf"
+		_ = os.Setenv("SOLUTION", solution)
+		log.Printf("SOLUTION environment variable is not set. Setting default value to: LSF")
 	}
 
 	// Convert the product name to lowercase and determine the config file
