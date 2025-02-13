@@ -1,0 +1,37 @@
+---
+
+# Restart the NetworkManager on deployer node
+
+- name: Restart NetworkManager
+  ansible.builtin.systemd:
+    name: NetworkManager
+    state: restarted
+    enabled: yes
+  delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
+
+# Installing required prerequisite packages for the LSF cluster creation.
+
+- name: LSF | Check OS version for package installation
+  ansible.builtin.shell: "grep -oE 'release [0-9]+' /etc/redhat-release | awk '{print $2}'"
+  register: rhel_version
+  changed_when: false
+
+- name: LSF | Install Required Packages
+  ansible.builtin.dnf:
+    name:
+      - lsof
+      - ipmitool
+    state: present
+  when: rhel_version.stdout in ["8", "9"]
+
+# Create the shared lsf directory
+
+- name: Display the last directory
+  debug:
+    msg: "The last directory is: {{ lsf_dir }}"
+
+- name: Create base directories for lsf configuration
+  file:
+    path: "/mnt/lsf/{{ lsf_dir }}"
+    state: directory
+    mode: '0777'

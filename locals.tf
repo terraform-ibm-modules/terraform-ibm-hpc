@@ -194,8 +194,8 @@ locals {
   protocol_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].protocol_vsi_data])
   deployer_instances = [
     {
-      name         = var.deployer_hostname #data.external.get_hostname.result["name"]
-      ipv4_address = var.deployer_ip #data.external.get_hostname.result["ipv4_address"]
+      name         = var.deployer_hostname
+      ipv4_address = var.deployer_ip
     }
   ]
 

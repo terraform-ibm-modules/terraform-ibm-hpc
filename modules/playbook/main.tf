@@ -45,9 +45,8 @@ resource "local_file" "create_playbook" {
     - name: Load cluster-specific variables
       include_vars: all.json
   roles:
-     - prerequisite
-     - lsf_templates
-     - lsf-ansible-command
+     - vpc_fileshare_configure
+     - lsf
 EOT
   filename = var.playbook_path
 }
@@ -64,30 +63,6 @@ resource "null_resource" "run_playbook" {
   }
   depends_on = [local_file.create_playbook]
 }
-
-# resource "ansible_playbook" "playbook" {
-#   playbook   = var.playbook_path
-#   name       = "localhost"
-#   replayable = true
-#   verbosity  = 6
-#   extra_vars = {
-#     ansible_python_interpreter = "auto"
-#     inventory_file = var.inventory_path
-#   }
-#   depends_on = [local_file.create_playbook]
-# }
-
-# resource "ansible_playbook" "playbook" {
-#   playbook   = var.playbook_path
-#   name       = "localhost"
-#   replayable = true
-#   verbosity  = 6
-#   extra_vars = {
-#     ansible_python_interpreter = "auto"
-#     inventory_file = var.inventory_path
-#   }
-#   depends_on = [local_file.create_playbook]
-# }
 
 resource "null_resource" "run_lsf_playbooks" {
   count = var.inventory_path != null ? 1 : 0
