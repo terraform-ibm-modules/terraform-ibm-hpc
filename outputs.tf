@@ -24,7 +24,7 @@ output "subnets_crn" {
 }
 
 output "dns_record" {
-  value = module.compute_dns_records.dns_record
+  value = module.compute_dns_records[*].dns_record
 }
 
 
