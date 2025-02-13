@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/require"
@@ -187,7 +188,7 @@ func setupTestSuite(t *testing.T) {
 		}
 
 		// Ensure log file name is available in environment variables
-		_ = os.Setenv("LOG_FILE_NAME", logFileName)
+		_ = os.Setenv("LOG_FILE_NAME", fmt.Sprintf("%s.json", strings.Split(logFileName, ".")[0]))
 
 		testLogger, loggerErr = utils.NewAggregatedLogger(logFileName)
 		if loggerErr != nil {
@@ -195,10 +196,8 @@ func setupTestSuite(t *testing.T) {
 		}
 
 		testLogger.Info(t, "Logger initialized successfully")
-
 		testSuiteInitialized = true
 	}
-	// Use testLogger if needed
 
 }
 
