@@ -623,7 +623,7 @@ variable "existing_certificate_instance" {
 # tflint-ignore: all
 variable "TF_VERSION" {
   type        = string
-  default     = "1.5"
+  default     = "1.9"
   description = "The version of the Terraform engine that's used in the Schematics workspace."
 }
 

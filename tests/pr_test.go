@@ -176,16 +176,22 @@ var (
 func setupTestSuite(t *testing.T) {
 	if !testSuiteInitialized {
 		fmt.Println("Started executing the test suite...")
-		// timestamp := time.Now().Format("2006-01-02_15-04-05")
+		timestamp := time.Now().Format("2006-01-02_15-04-05")
+
+		var logFileName string
 		if validationLogFilePrefix, ok := os.LookupEnv("LOG_FILE_NAME"); ok {
 			fileName := strings.Split(validationLogFilePrefix, ".json")[0]
-			logFileName := fmt.Sprintf("%s.log", fileName)
-			testLogger, loggerErr = utils.NewAggregatedLogger(logFileName)
-			if loggerErr != nil {
-				t.Fatalf("Error initializing logger: %v", loggerErr)
-			}
-			testSuiteInitialized = true
+			logFileName = fmt.Sprintf("%s.log", fileName)
+		} else {
+			logFileName = fmt.Sprintf("%s.log", timestamp)
 		}
+
+		testLogger, loggerErr = utils.NewAggregatedLogger(logFileName)
+		if loggerErr != nil {
+			t.Fatalf("Error initializing logger: %v", loggerErr)
+		}
+
+		testSuiteInitialized = true
 	}
 }
 
