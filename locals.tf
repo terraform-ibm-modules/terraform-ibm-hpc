@@ -168,6 +168,10 @@ data "external" "get_hostname" {
   program = ["sh", "-c", "echo '{\"name\": \"'$(hostname)'\", \"ipv4_address\": \"'$(hostname -I | awk '{print $1}')'\"}'"]
 }
 
+# data "ibm_dns_zones" "itself" {
+#   instance_id = module.dns[0].dns_instance_id
+# }
+
 # locals needed for dns-records
 locals {
   # dependency: dns -> dns-records

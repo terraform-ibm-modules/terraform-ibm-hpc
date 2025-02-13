@@ -24,7 +24,9 @@ resource "ibm_dns_resource_record" "ptr" {
   zone_id     = var.dns_zone_id
   type        = "PTR"
   name        = var.dns_records[count.index]["rdata"]
-  rdata       = format("%s.%s", var.dns_records[count.index]["name"], "comp.com")
+  rdata       = format("%s.%s", var.dns_records[count.index]["name"], one(local.dns_domain_name))
+  #rdata       = length(local.dns_domain_name) > 0 ? format("%s.%s", var.dns_records[count.index]["name"], one(local.dns_domain_name)) : ""
   ttl         = 300
-  depends_on  = [ibm_dns_resource_record.a]
+  depends_on  = [ibm_dns_resource_record.a, data.ibm_dns_zones.itself]
 }
+

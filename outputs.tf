@@ -16,7 +16,7 @@ output "dns" {
 }
 
 output "file_storage" {
-  value = local.bastion_fip
+  value = module.dns_record.record
 }
 
 output "subnets_crn" {
