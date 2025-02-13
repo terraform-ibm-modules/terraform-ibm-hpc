@@ -20,11 +20,11 @@ output "file_storage" {
 }
 
 output "subnets_crn" {
-  value = local.bastion_fip
+  value = module.compute_dns_records[*].record
 }
 
-output "record" {
-  value = module.compute_dns_records[*].record
+output "dns_record" {
+  value = module.compute_dns_records.dns_record
 }
 
 
