@@ -186,13 +186,20 @@ func setupTestSuite(t *testing.T) {
 			logFileName = fmt.Sprintf("%s.log", timestamp)
 		}
 
+		// Ensure log file name is available in environment variables
+		_ = os.Setenv("LOG_FILE_NAME", logFileName)
+
 		testLogger, loggerErr = utils.NewAggregatedLogger(logFileName)
 		if loggerErr != nil {
 			t.Fatalf("Error initializing logger: %v", loggerErr)
 		}
 
+		testLogger.Info(t, "Logger initialized successfully")
+
 		testSuiteInitialized = true
 	}
+	// Use testLogger if needed
+
 }
 
 var upgradeOnce sync.Once // Ensures upgrade is performed only once
