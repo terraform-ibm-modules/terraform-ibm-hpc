@@ -16,15 +16,15 @@ output "dns" {
 }
 
 output "file_storage" {
-  value = module.dns_record.record
+  value = local.bastion_fip
 }
 
 output "subnets_crn" {
   value = local.bastion_fip
 }
 
-output "subnet_crnn" {
-  value = local.bastion_fip
+output "record" {
+  value = module.compute_dns_records[*].record
 }
 
 
