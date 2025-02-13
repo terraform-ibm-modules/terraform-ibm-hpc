@@ -1,0 +1,141 @@
+deployer_hostname: {{ lsf_deployer_hostname }}
+
+PRODUCT_BRAND_NAME: IBM Spectrum
+PRODUCT_HELP_URL: 'https://www.ibm.com/support/knowledgecenter/SSZUDP_10.2.0/suite_welcome/lsf_suite_hpc_welcome.html'
+LSF_SUITE_EDITION: LSF Suite for HPC
+LSF_SUITE_VERSION: 10.2.0.14
+
+# The NFS installation can install the LSF_Masters on the local disks
+# of the machines, except for work and conf directories which will be
+# on NFS.  Set this to:  true  to install the LSF rpms on the LSF_Masters.
+# This allows independent upgrading of a LSF master candidates.
+# Default: false
+LSF_MASTERS_ON_LOCAL:  false
+
+# The JDBC driver jar file to use to connect to
+# the data base
+JDBC_Driver: /usr/share/java/mysql-connector-java.jar
+
+CLEANUP_FILES: true
+# The max number of backup files per configuration file change
+MAX_CONF_BACKUP_FILES: 2
+# Enable floating clients
+ENABLE_FLOATING_CLIENTS: false
+# Enable static clients
+ENABLE_STATIC_CLIENTS: true
+
+PACKAGES:
+  GUI: 
+    es: [ ]
+    kibana: [ ]
+    gpfsio: [ ]
+    beats: [ filebeat-for-lsf, metricbeat-for-lsf, lsf-beat ]
+    execbeat: [ execbeat-for-lsf ]
+    pm: [ lsf-pm-server ]
+    framework: [ lsf-perf, lsf-gui ]
+    explorer: [ lsf-monitor, lsf-explorer-server ]
+    pac: [ lsf-appcenter ]
+  LSF_Master:
+    base: [ lsf-ego-master, lsf-master, lsf-ls-server, lsf-release, lsf-resource-connector ]
+    dm: [ lsf-data-mgr ]
+  LSF_Server: 
+    base: [ lsf-ego-server, lsf-server, lsf-integrations, lsf-devel, lsf-man-pages ]
+    smpi: []
+    smpi_misc: []
+    pmpi: []
+    nfs: [ lsf-nfs-support ]
+  LSF_Client: 
+    base: [ lsf-conf, lsf-client, lsf-ls-client ]
+    pm: [ lsf-pm-client ]
+    dm: [ lsf-data-mgr ]
+  Ubuntu_support: [ lsf-ubuntu-support ]
+  DB:
+    current: [ MariaDB-server, MariaDB-client ]
+    previous: [ mariadb-server, mariadb ]
+
+# NOTE:  The packages to remove are not the same as what you need to 
+#        install, because they are dependencies of what was installed
+UNPACKAGES:
+  GUI: 
+    explorer: [ lsf-monitor, lsf-explorer-server ]
+    pac: [ lsf-appcenter ]
+    base: [ lsf-perf, lsf-gui, logstash-for-lsf, elasticsearch-for-lsf, lsf-gui ,lsf-pm-server ,lsf-pm-client ]
+    kibana: [ kibana-for-lsf ]
+    elk: [ elasticsearch-for-lsf, logstash-for-lsf, kibana-for-lsf ]
+    beats: [ filebeat-for-lsf, metricbeat-for-lsf, lsf-beat, gpfsio-collector-for-lsf, execbeat-for-lsf ]
+    jre: [ ibm-jre ]
+  LSF_Master: [ lsf-ego-master, lsf-master, lsf-ls-client, lsf-ls-server, lsf-release, lsf-resource-connector ,lsf-data-mgr ]
+  LSF_Server:
+    base: [ lsf-conf, lsf-ego-server, lsf-server, lsf-integrations, lsf-devel, lsf-man-pages ,ibm_smpi_lic_s, ibm_smpi ,lsf-pmpi-hpc, lsf-nfs-support ]
+    smpi_misc: [ ibm_smpi-devel, ibm_smpi_gpusupport, ibm_smpi-libgpump, ibm_smpi-pami_devel, ibm_spindle, ibm_smpi_mpipsupport ]
+  LSF_Client: 
+    base: [ lsf-ls-client, lsf-man-pages ]
+    pm: [ lsf-pm-client ]
+    dm: [ lsf-data-mgr ]
+    conf: [ lsf-conf ]
+  DB: [ MariaDB-server, MariaDB-client, MariaDB-libs, MariaDB-common, MariaDB-shared, mariadb-server, mariadb ]
+  Ubuntu_support: [ lsf-ubuntu-support ]
+
+LSF_REPO_DIR: /var/www/html/lsf_suite_pkgs
+LSF_REPO_DIR_SLES: /srv/www/htdocs/lsf_suite_pkgs
+LSF_INSTALLER_DIR: /opt/ibm/lsf_installer
+LSF_SUITE_TOP: {{ LSF_SUITE_TOP }}
+LSF_TOP: "{{ LSF_SUITE_TOP }}/{{ LSF_TOP_FOLDER }}"
+LSF_CONF_DIR: "{{ LSF_SUITE_TOP }}/{{ LSF_TOP_FOLDER }}/conf"
+LSF_WORK_DIR: "{{ LSF_SUITE_TOP }}/{{ LSF_TOP_FOLDER }}/work"
+LSF_LOG_DIR: /opt/ibm/lsflogs
+
+LSF_SWIDTAG: "{{ LSF_SUITE_TOP }}/properties/version/"
+
+# EXT
+EXT_TOP: {{ EXT_TOP }}
+# Process Manager
+PM_TOP: "{{ EXT_TOP }}/{{ PM_TOP_FOLDER }}"
+PM_CONF_DIR: "{{ EXT_TOP }}/{{ PM_TOP_FOLDER }}/conf"
+PM_WORK_DIR: "{{ EXT_TOP }}/{{ PM_TOP_FOLDER }}/work"
+
+# PERF
+PERF_TOP: "{{ EXT_TOP }}/{{ PERF_TOP_FOLDER }}"
+PERF_CONF_DIR: "{{ EXT_TOP }}/{{ PERF_TOP_FOLDER }}/conf"
+PERF_WORK_DIR: "{{ EXT_TOP }}/{{ PERF_TOP_FOLDER }}/work"
+# GUI
+GUI_TOP: "{{ EXT_TOP }}/{{ GUI_TOP_FOLDER }}"
+GUI_CONF_DIR: "{{ EXT_TOP }}/{{ GUI_TOP_FOLDER }}/conf"
+GUI_WORK_DIR: "{{ EXT_TOP }}/{{ GUI_TOP_FOLDER }}/work"
+# Elasticsearch 
+ELK_TOP: {{ ELK_TOP }}
+ES_TOP: "{{ ELK_TOP }}/elasticsearch"
+# Logstash
+LOGSTASH_TOP: "{{ ELK_TOP }}/logstash"
+# Kibana
+KIBANA_TOP: "{{ ELK_TOP }}/kibana"
+# Filebeat
+FILE_BEAT_TOP: "{{ ELK_TOP }}/filebeat"
+# Metricbeat
+METRIC_BEAT_TOP: "{{ ELK_TOP }}/metricbeat"
+# Lsfbeat
+LSF_BEAT_TOP: "{{ ELK_TOP }}/lsfbeat"
+# GPFSIO
+GPFSIO_TOP: "{{ ELK_TOP }}/gpfsio"
+# execbeat
+EXEC_BEAT_TOP: "{{ ELK_TOP }}/execbeat"
+
+# Explorer
+EXPLORER_TOP: "{{ EXT_TOP }}/{{ EXPLORER_TOP_FOLDER }}"
+EXPLORER_CONF_DIR: "{{ EXT_TOP }}/{{ EXPLORER_TOP_FOLDER }}/server/config"
+
+# MPI
+SMPI_TOP: /opt/ibm/spectrum_mpi
+
+# MariaDB
+mariadb_version: 10.0
+# profile directory path
+etc_profile_d: "/etc/profile.d"
+
+# entitlement files
+lsf_entitlement_file : [ lsf.entitlement ]
+ls_entitlement_file : [  ]
+
+# swidtag files
+lsf_master_swidtag_file : [ ibm.com_IBM_Spectrum_LSF_Suite_for_HPC-10.2.0.swidtag ]
+lsf_server_swidtag_file : ibm.com_IBM_Spectrum_LSF_Suite_Servers_Capacity-10.2.0.swidtag

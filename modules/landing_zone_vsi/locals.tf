@@ -202,11 +202,13 @@ locals {
       remote    = module.client_sg[0].security_group_id
     },
     */
+    /*
     {
       name      = "allow-all-bastion-out"
       direction = "outbound"
       remote    = var.bastion_security_group_id
     },
+    */
     /*
     {
       name      = "allow-all-client-out"

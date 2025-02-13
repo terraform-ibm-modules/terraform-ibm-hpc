@@ -1,0 +1,11 @@
+---
+
+- name: Display the last directory
+  debug:
+    msg: "The last directory is: {{ lsf_dir }}"
+
+- name: Create base directories for lsf configuration
+  file:
+    path: "/mnt/lsf/{{ lsf_dir }}"
+    state: directory
+    mode: '0777'

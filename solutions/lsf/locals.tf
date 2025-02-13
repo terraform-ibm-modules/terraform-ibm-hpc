@@ -86,6 +86,9 @@ locals {
     skip_flowlogs_s2s_auth_policy                    = var.skip_flowlogs_s2s_auth_policy
     skip_iam_authorization_policy                    = var.skip_iam_authorization_policy
     skip_kms_s2s_auth_policy                         = var.skip_kms_s2s_auth_policy
+
+    # New Variables
+    ibmcloud_api_key                                 = var.ibmcloud_api_key
   }
 }
 
@@ -159,5 +162,7 @@ locals {
     skip_flowlogs_s2s_auth_policy                    = lookup(local.override[local.override_type], "skip_flowlogs_s2s_auth_policy", local.config.skip_flowlogs_s2s_auth_policy)
     skip_iam_authorization_policy                    = lookup(local.override[local.override_type], "skip_iam_authorization_policy", local.config.skip_iam_authorization_policy)
     skip_kms_s2s_auth_policy                         = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
+    # New Variables
+    ibmcloud_api_key                                 = lookup(local.override[local.override_type], "ibmcloud_api_key", local.config.ibmcloud_api_key)
   }
 }

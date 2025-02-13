@@ -85,3 +85,9 @@ variable "cloud_metrics_data_bucket" {
   description = "Generate and store metrics from your events so you can visualize, track, and alert on log events in real-time."
   type        = any
 }
+
+variable "enable_deployer" {
+  type        = bool
+  default     = false
+  description = "Deployer should be only used for better deployment performance"
+}
