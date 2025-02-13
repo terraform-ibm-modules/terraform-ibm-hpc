@@ -1333,7 +1333,6 @@ func TestRunObservabilityCloudLogsManagementEnabled(t *testing.T) {
 // TestRunObservabilityCloudLogsManagementAndComputeDisabled validates the creation of a cluster
 // with observability features disabled for both management and compute nodes. This test ensures:
 // Both management and compute logs are disabled.
-// Platform logs are enabled for platform-level observability.
 // Monitoring features are explicitly disabled.
 // The cluster setup passes basic validation checks.
 
@@ -1352,12 +1351,6 @@ func TestRunObservabilityCloudLogsManagementAndComputeDisabled(t *testing.T) {
 
 	// Retrieve environment variables required for configuration
 	envVars := GetEnvVars()
-
-	// Ensure IBM Cloud API key is set before proceeding
-	apiKey := os.Getenv("TF_VAR_ibmcloud_api_key")
-	if apiKey == "" {
-		t.Fatalf("Environment variable TF_VAR_ibmcloud_api_key is not set")
-	}
 
 	// Configure test options with Terraform variables and environment settings
 	options, err := setupOptions(t, clusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys, ignoreUpdates)
@@ -1379,13 +1372,7 @@ func TestRunObservabilityCloudLogsManagementAndComputeDisabled(t *testing.T) {
 	options.TerraformVars["observability_logs_enable_for_management"] = false // Management logs disabled
 	options.TerraformVars["observability_logs_enable_for_compute"] = false    // Compute logs disabled
 	options.TerraformVars["observability_monitoring_enable"] = false          // Monitoring disabled
-
-	// Check if platform logs already exist for the given region and resource group
-	platformLogsExist, err := lsf.CheckPlatformLogsPresent(t, apiKey, utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, testLogger)
-	require.NoErrorf(t, err, "Error checking platform logs for cluster: %v", err)
-
-	// Set platform logs configuration based on their existence in the region
-	options.TerraformVars["observability_enable_platform_logs"] = !platformLogsExist // Enable only if they don't exist
+	options.TerraformVars["observability_enable_platform_logs"] = false       // Platform logs disabled
 
 	// Skip automatic test teardown to allow for manual inspection after the test
 	options.SkipTestTearDown = true
@@ -2694,7 +2681,7 @@ func TestRunInvalidDedicatedHostProfile(t *testing.T) {
 
 }
 
-// TestRunInvalidDedicatedHostProfile TestRunInvalidMinWorkerNodeCountGreaterThanMax cluster creation with an invalid worker node count.
+// TestRunInvalidMinWorkerNodeCountGreaterThanMax cluster creation with an invalid worker node count.
 func TestRunInvalidMinWorkerNodeCountGreaterThanMax(t *testing.T) {
 	// Parallelize the test to run concurrently with others
 	t.Parallel()

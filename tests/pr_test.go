@@ -194,7 +194,6 @@ func setupTestSuite(t *testing.T) {
 		if loggerErr != nil {
 			t.Fatalf("Error initializing logger: %v", loggerErr)
 		}
-
 		testLogger.Info(t, "Logger initialized successfully")
 		testSuiteInitialized = true
 	}
@@ -289,6 +288,12 @@ func setupOptions(t *testing.T, hpcClusterPrefix, terraformDir, resourceGroup st
 	solution, ok := os.LookupEnv("SOLUTION")
 	if !ok || solution == "" {
 		return nil, fmt.Errorf("SOLUTION environment variable not set")
+	}
+
+	// Check if the environment variable TF_VAR_ibm_customer_number is set (not empty).
+	if os.Getenv("TF_VAR_ibm_customer_number") != "" {
+		// If set, assign its value to IBM_CUSTOMER_NUMBER to maintain consistency.
+		os.Setenv("IBM_CUSTOMER_NUMBER", os.Getenv("TF_VAR_ibm_customer_number"))
 	}
 
 	// Convert solution to lowercase for consistency
