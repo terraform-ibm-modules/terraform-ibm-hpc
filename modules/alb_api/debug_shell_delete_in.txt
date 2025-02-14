@@ -1,0 +1,1 @@
+in=<<<{"crn":"crn:v1:bluemix:public:is:us-east:a/ec1b082b25144a52bb1a269c883d5a00::load-balancer:r014-7aa77b1a-4ce8-4e46-b187-8cf986835c5e","hostname":"7aa77b1a-us-east.lb.appdomain.cloud","href":"https://us-east.iaas.cloud.ibm.com/v1/load_balancers/r014-7aa77b1a-4ce8-4e46-b187-8cf986835c5e","id":"r014-7aa77b1a-4ce8-4e46-b187-8cf986835c5e","name":"nprclp-alb-api"}>>>

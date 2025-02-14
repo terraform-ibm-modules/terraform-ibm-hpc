@@ -1,53 +1,49 @@
 ---
 - name: Check if monitoring is enabled
   ansible.builtin.debug:
-    msg: "Monitoring is enabled"
+    msg: "Cloud Monitoring is enabled"
   when: "{{ monitoring_enable_for_management | bool }}"
 
-- name: Ensure Sysdig and Prometheus packages are installed
-  ansible.builtin.yum:
-    name:
-      - sysdig
-      - prometheus
-    state: present
+- name: Configure Sysdig
+  ansible.builtin.lineinfile:
+    path: "{{ sysdig_config_file }}"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    create: yes
+  loop:
+    - { regexp: "==ACCESSKEY==", line: "customerid: {{ cloud_monitoring_access_key }}" }
+    - { regexp: "==COLLECTOR==", line: "collector: {{ cloud_monitoring_ingestion_url }}" }
+    - { regexp: "^tags:", line: "tags: type:management,lsf:true" }
   when: "{{ monitoring_enable_for_management | bool }}"
 
-- name: Check if cloud monitoring credentials are provided
-  ansible.builtin.fail:
-    msg: "Cloud Monitoring access key or ingestion URL is missing"
-  when: "{{ monitoring_enable_for_management | bool }} and (cloud_monitoring_access_key == '' or cloud_monitoring_ingestion_url == '')"
-
-- name: Write Sysdig configuration file
-  ansible.builtin.template:
-    src: "templates/dragent.yaml.j2"
-    dest: "/opt/draios/etc/dragent.yaml"
-  when: "{{ monitoring_enable_for_management | bool }}"
-
-- name: Write Prometheus configuration file
+- name: Configure Prometheus
   ansible.builtin.copy:
     content: |
       global:
-        scrape_interval: 60s
-        evaluation_interval: 15s
+       scrape_interval: 60s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+       evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+       # scrape_timeout is set to the global default (10s).
+
       scrape_configs:
-        - job_name: "lsf_prometheus_exporter"
-          static_configs:
-            - targets: ["localhost:9405"]
+       - job_name: "lsf_prometheus_exporter"
+         static_configs:
+          - targets: ["localhost:9405"]
+
       remote_write:
-        - url: "{{ cloud_monitoring_prws_url }}"
-          authorization:
-            credentials: "{{ cloud_monitoring_prws_key }}"
-    dest: "/opt/prometheus/prometheus.yml"
+       - url: "{{ cloud_monitoring_prws_url }}"
+         authorization:
+          credentials: "{{ cloud_monitoring_prws_key }}"
+    dest: "{{ prometheus_config_file }}"
   when: "{{ monitoring_enable_for_management | bool }}"
 
-- name: Enable and restart Prometheus service
+- name: Enable and restart Prometheus
   ansible.builtin.systemd:
     name: prometheus
     enabled: yes
     state: restarted
   when: "{{ monitoring_enable_for_management | bool }}"
 
-- name: Enable and restart Sysdig agent service
+- name: Enable and restart Sysdig Agent
   ansible.builtin.systemd:
     name: dragent
     enabled: yes

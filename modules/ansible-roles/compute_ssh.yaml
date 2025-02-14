@@ -6,7 +6,7 @@
   gather_facts: false
   vars:
     ansible_ssh_common_args: >
-      -o ProxyJump=ubuntu@52.116.122.197
+      -o ProxyJump=ubuntu@150.239.112.129
       -o ControlMaster=auto
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
@@ -27,7 +27,7 @@
   gather_facts: false
   vars:
     ansible_ssh_common_args: >
-      -o ProxyJump=ubuntu@52.116.122.197
+      -o ProxyJump=ubuntu@150.239.112.129
       -o ControlMaster=auto
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
@@ -43,7 +43,7 @@
   gather_facts: true
   vars:
     ansible_ssh_common_args: >
-      -o ProxyJump=ubuntu@52.116.122.197
+      -o ProxyJump=ubuntu@150.239.112.129
       -o ControlMaster=auto
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
@@ -59,7 +59,7 @@
   gather_facts: true
   vars:
     ansible_ssh_common_args: >
-      -o ProxyJump=ubuntu@52.116.122.197
+      -o ProxyJump=ubuntu@150.239.112.129
       -o ControlMaster=auto
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
