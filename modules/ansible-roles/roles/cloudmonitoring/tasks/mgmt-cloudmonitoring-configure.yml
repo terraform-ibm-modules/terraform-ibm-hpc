@@ -49,3 +49,22 @@
     enabled: yes
     state: restarted
   when: "{{ monitoring_enable_for_management | bool }}"
+
+- name: Ensure lsf_prometheus_exporter starts after shared filesystem mount
+  ansible.builtin.lineinfile:
+    path: "/etc/systemd/system/lsf_prometheus_exporter.service"
+    regexp: "^After=network-online.target"
+    line: "After=network-online.target mnt-lsf.mount"
+  when: "{{ monitoring_enable_for_management | bool }}"
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  when: "{{ monitoring_enable_for_management | bool }}"
+
+- name: Enable and restart LSF Prometheus Exporter
+  ansible.builtin.systemd:
+    name: lsf_prometheus_exporter
+    enabled: yes
+    state: restarted
+  when: "{{ monitoring_enable_for_management | bool }}"
