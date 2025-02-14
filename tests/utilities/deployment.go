@@ -11,9 +11,10 @@ import (
 )
 
 var (
-	ip                 string
-	reservationIDSouth string
-	reservationIDEast  string
+	ip                   string
+	reservationIDSouth   string
+	reservationIDEast    string
+	HPCIbmCustomerNumber string
 )
 
 // Define a struct with fields that match the structure of the YAML data
@@ -109,15 +110,39 @@ func GetConfigFromYAML(filePath string) (*Config, error) {
 	}
 
 	// Retrieve reservation ID from Secret Manager                        // pragma: allowlist secret
+	reservationIDVal, ok := permanentResources["reservation_id_secret_id"].(string)
+	if !ok {
+		fmt.Println("Invalid type or nil value for reservation_id_secret_id")
+	}
+
 	reservationIDEastPtr, err := GetSecretsManagerKey(
 		permanentResources["secretsManagerGuid"].(string),
 		permanentResources["secretsManagerRegion"].(string),
-		permanentResources["reservation_id_secret_id"].(string),
+		reservationIDVal, // Pass safely extracted value
 	)
+
 	if err != nil {
-		fmt.Printf("Retrieving reservation id from secrets: %v", err) // pragma: allowlist secret
+		fmt.Printf("Error retrieving reservation ID from secrets: %v\n", err) // pragma: allowlist secret
 	} else if reservationIDEastPtr != nil {
 		reservationIDEast = *reservationIDEastPtr
+	}
+
+	// Retrieve IBM customer number from Secret Manager                        // pragma: allowlist secret
+	val, ok := permanentResources["hpc_ibm_customer_number_secret_id"].(string)
+	if !ok {
+		fmt.Println("Invalid type or nil value")
+	}
+
+	IBMCustomerNumberPtr, err := GetSecretsManagerKey(
+		permanentResources["secretsManagerGuid"].(string),
+		permanentResources["secretsManagerRegion"].(string),
+		val, // Use `val` here after checking
+	)
+
+	if err != nil {
+		fmt.Printf("Retrieving IBM Customer Number from secrets: %v\n", err) // pragma: allowlist secret
+	} else if IBMCustomerNumberPtr != nil {
+		HPCIbmCustomerNumber = *IBMCustomerNumberPtr
 	}
 
 	// Set environment variables from config
@@ -255,6 +280,8 @@ func setEnvFromConfig(config *Config) error {
 			os.Setenv("EU_DE_RESERVATION_ID", reservationIDEast)
 		case key == "US_SOUTH_RESERVATION_ID" && !ok && value == "":
 			os.Setenv("US_SOUTH_RESERVATION_ID", reservationIDSouth)
+		case key == "IBM_CUSTOMER_NUMBER" && !ok && value == "":
+			os.Setenv("IBM_CUSTOMER_NUMBER", HPCIbmCustomerNumber)
 		}
 	}
 	return nil

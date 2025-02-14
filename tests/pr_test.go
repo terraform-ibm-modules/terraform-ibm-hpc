@@ -290,12 +290,6 @@ func setupOptions(t *testing.T, hpcClusterPrefix, terraformDir, resourceGroup st
 		return nil, fmt.Errorf("SOLUTION environment variable not set")
 	}
 
-	// Check if the environment variable TF_VAR_ibm_customer_number is set (not empty).
-	if os.Getenv("TF_VAR_ibm_customer_number") != "" {
-		// If set, assign its value to IBM_CUSTOMER_NUMBER to maintain consistency.
-		os.Setenv("IBM_CUSTOMER_NUMBER", os.Getenv("TF_VAR_ibm_customer_number"))
-	}
-
 	// Convert solution to lowercase for consistency
 	solution = strings.ToLower(solution)
 
