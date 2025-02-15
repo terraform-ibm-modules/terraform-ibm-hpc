@@ -38,7 +38,7 @@ variable "enable_key_protect" {}
 
 locals {
   scripts_path             = replace(path.module, "compute_configuration", "scripts")
-  ansible_inv_script_path  = var.inventory_format == "ini" ? format("%s/prepare_scale_inv_ini.py", local.scripts_path) : format("%s/prepare_scale_inv_json.py", local.scripts_path)
+  ansible_inv_script_path  = var.inventory_format == "ini" ? format("%s/prepare_scale/main.py", local.scripts_path) : format("%s/prepare_scale_inv_json.py", local.scripts_path)
   wait_for_ssh_script_path = format("%s/wait_for_ssh_availability.py", local.scripts_path)
   scale_tuning_config_path = format("%s/%s", var.clone_path, "computesncparams.profile")
   compute_private_key      = format("%s/compute_key/id_rsa", var.clone_path) #tfsec:ignore:GEN002
