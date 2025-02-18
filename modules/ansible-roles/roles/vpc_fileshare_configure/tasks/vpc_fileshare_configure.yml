@@ -20,6 +20,9 @@
   with_dict: "{{ name_mount_path_map }}"
   notify: Mount NFS
 
+- name: Flush handlers immediately
+  meta: flush_handlers
+
 - name: Verify mounted filesystems
   command: df -h
   register: df_output

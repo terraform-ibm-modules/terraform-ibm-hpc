@@ -2,8 +2,8 @@ data "template_file" "client_user_data" {
   template = file("${path.module}/templates/client_user_data.tpl")
   vars = {
     bastion_public_key_content = var.bastion_public_key_content != null ? var.bastion_public_key_content : ""
-    client_public_key_content  = local.enable_client ? module.compute_key[0].public_key_content : ""
-    client_private_key_content = local.enable_client ? module.compute_key[0].private_key_content : ""
+    client_public_key_content  = local.enable_client ? var.compute_public_key_content != null ? var.compute_public_key_content : "" : ""
+    client_private_key_content = local.enable_client ? var.compute_private_key_content != null ? var.compute_private_key_content : "" : ""
     client_interfaces          = var.storage_type == "scratch" ? local.vsi_interfaces[0] : local.bms_interfaces[0]
     client_dns_domain          = var.dns_domain_names["compute"]
   }
@@ -13,8 +13,8 @@ data "template_file" "management_user_data" {
   template = file("${path.module}/templates/management_user_data.tpl")
   vars = {
     bastion_public_key_content     = var.bastion_public_key_content != null ? var.bastion_public_key_content : ""
-    management_public_key_content  = local.enable_management ? module.compute_key[0].public_key_content : ""
-    management_private_key_content = local.enable_management ? module.compute_key[0].private_key_content : ""
+    management_public_key_content  = local.enable_management ? var.compute_public_key_content != null ? var.compute_public_key_content : "" : ""
+    management_private_key_content = local.enable_management ? var.compute_private_key_content != null ? var.compute_private_key_content : "" : ""
     management_interfaces          = var.storage_type == "scratch" ? local.vsi_interfaces[0] : local.bms_interfaces[0]
     management_dns_domain          = var.dns_domain_names["compute"]
   }
@@ -24,8 +24,8 @@ data "template_file" "compute_user_data" {
   template = file("${path.module}/templates/compute_user_data.tpl")
   vars = {
     bastion_public_key_content  = var.bastion_public_key_content != null ? var.bastion_public_key_content : ""
-    compute_public_key_content  = local.enable_compute ? module.compute_key[0].public_key_content : ""
-    compute_private_key_content = local.enable_compute ? module.compute_key[0].private_key_content : ""
+    compute_public_key_content  = local.enable_compute ? var.compute_public_key_content != null ? var.compute_public_key_content : "" : ""
+    compute_private_key_content = local.enable_compute ? var.compute_private_key_content != null ? var.compute_private_key_content : "" : ""
     compute_interfaces          = var.storage_type == "scratch" ? local.vsi_interfaces[0] : local.bms_interfaces[0]
     compute_dns_domain          = var.dns_domain_names["compute"]
     # TODO: Fix me

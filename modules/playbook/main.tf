@@ -1,15 +1,19 @@
+locals {
+  proxyjump = var.enable_bastion ? "-o ProxyJump=ubuntu@${var.bastion_fip}" : ""
+}
+
 resource "local_file" "create_playbook" {
   count    = var.inventory_path != null ? 1 : 0
   content  = <<EOT
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
-- name: Connect to remote hosts via bastion and perform tasks
+- name: Check passwordless SSH connection is setup
   hosts: [all_nodes]
   any_errors_fatal: true
   gather_facts: false
   vars:
     ansible_ssh_common_args: >
-      -o ProxyJump=ubuntu@${var.bastion_fip}
+      ${local.proxyjump}
       -o ControlMaster=auto
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
@@ -30,15 +34,19 @@ resource "local_file" "create_playbook" {
   gather_facts: false
   vars:
     ansible_ssh_common_args: >
-      -o ProxyJump=ubuntu@${var.bastion_fip}
+      ${local.proxyjump}
       -o ControlMaster=auto
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
       -o StrictHostKeyChecking=no
     ansible_user: root
     ansible_ssh_private_key_file: ${var.private_key_path}
+  pre_tasks:
+    - name: Load cluster-specific variables
+      include_vars: all.json
   roles:
-     - prerequisite
+     - vpc_fileshare_configure
+     - lsf
 EOT
   filename = var.playbook_path
 }
@@ -56,15 +64,21 @@ resource "null_resource" "run_playbook" {
   depends_on = [local_file.create_playbook]
 }
 
-resource "ansible_playbook" "playbook" {
-  playbook   = var.playbook_path
-  name       = "localhost"
-  replayable = true
-  verbosity  = 6
-  extra_vars = {
-    ansible_python_interpreter = "auto"
-    inventory_file = var.inventory_path
-  }
-  depends_on = [local_file.create_playbook]
-}
+resource "null_resource" "run_lsf_playbooks" {
+  count = var.inventory_path != null ? 1 : 0
 
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command = <<EOT
+      sudo ansible-playbook -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml &&
+      sudo ansible-playbook -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml &&
+      sudo ansible-playbook -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml
+    EOT
+  }
+
+  triggers = {
+    build = timestamp()
+  }
+
+  depends_on = [null_resource.run_playbook]
+}
