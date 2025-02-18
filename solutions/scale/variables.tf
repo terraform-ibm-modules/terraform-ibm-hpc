@@ -211,7 +211,7 @@ variable "compute_instances" {
   )
   default = [{
     profile = "cx2-2x4"
-    count   = 3
+    count   = 0
     image   = "ibm-redhat-8-10-minimal-amd64-2"
   }]
   description = "Total Number of instances to be launched for compute cluster."
