@@ -922,3 +922,69 @@ variable "enable_scale" {
   default     = false
   description =  "Type of storage needed for the solution"
 }
+
+#############################################################################
+# LDAP variables
+##############################################################################
+variable "enable_ldap" {
+  type        = bool
+  default     = false
+  description = "Set this option to true to enable LDAP for IBM Cloud HPC, with the default value set to false."
+}
+
+variable "ldap_basedns" {
+  type        = string
+  default     = "ldapscale.com"
+  description = "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."
+}
+
+variable "ldap_server" {
+  type        = string
+  default     = null
+  description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
+}
+
+variable "ldap_server_cert" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Provide the existing LDAP server certificate. This value is required if the 'ldap_server' variable is not set to null. If the certificate is not provided or is invalid, the LDAP configuration may fail."
+}
+
+variable "ldap_admin_password" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "The LDAP administrative password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required. It is important to avoid including the username in the password for enhanced security."
+}
+
+variable "ldap_user_name" {
+  type        = string
+  default     = ""
+  description = "Custom LDAP User for performing cluster operations. Note: Username should be between 4 to 32 characters, (any combination of lowercase and uppercase letters).[This value is ignored for an existing LDAP server]"
+}
+
+variable "ldap_user_password" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "The LDAP user password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required.It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
+}
+
+variable "ldap_instance_key_pair" {
+  type        = list(string)
+  default     = null
+  description = "Name of the SSH key configured in your IBM Cloud account that is used to establish a connection to the LDAP Server. Make sure that the SSH key is present in the same resource group and region where the LDAP Servers are provisioned. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
+}
+
+variable "ldap_vsi_profile" {
+  type        = string
+  default     = "cx2-2x4"
+  description = "Profile to be used for LDAP virtual server instance."
+}
+
+variable "ldap_vsi_osimage_name" {
+  type        = string
+  default     = "ibm-ubuntu-22-04-3-minimal-amd64-1"
+  description = "Image name to be used for provisioning the LDAP instances. Note: Debian based OS are only supported for the LDAP feature."
+}

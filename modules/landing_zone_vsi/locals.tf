@@ -87,6 +87,7 @@ locals {
   compute_image_id    = data.ibm_is_image.compute[*].id
   storage_image_id    = data.ibm_is_image.storage[*].id
   protocol_image_id   = data.ibm_is_image.storage[*].id
+  ldap_image_id       = data.ibm_is_image.ldap_vsi_image[*].id
 
   storage_ssh_keys    = [for name in var.storage_ssh_keys : data.ibm_is_ssh_key.storage[name].id]
   compute_ssh_keys    = [for name in var.compute_ssh_keys : data.ibm_is_ssh_key.compute[name].id]
@@ -279,4 +280,5 @@ locals {
 
 locals {
   storage_management_node_name = format("%s-%s", local.prefix, "strg-mgmt")
+  ldap_node_name         = format("%s-%s", local.prefix, "ldap")
 }

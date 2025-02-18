@@ -214,5 +214,33 @@ module "protocol_vsi" {
   secondary_security_groups   = local.protocol_secondary_security_group
   secondary_subnets           = local.protocol_subnets
   placement_group_id          = var.placement_group_ids
+  # manage_reserved_ips             = true
+  # primary_vni_additional_ip_count = var.protocol_instances[count.index]["count"]
   #placement_group_id = var.placement_group_ids[(var.protocol_instances[count.index]["count"])%(length(var.placement_group_ids))]
+}
+
+module "ldap_vsi" {
+  count                         = var.enable_ldap == true && var.ldap_server == null ? 1 : 0
+  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version                       = "4.2.0"
+  vsi_per_subnet                = 1
+  create_security_group         = false
+  security_group                = null
+  image_id                      = local.ldap_image_id[count.index]
+  machine_type                  = var.ldap_vsi_profile
+  prefix                        = local.ldap_node_name
+  resource_group_id             = local.resource_group_id
+  enable_floating_ip            = false
+  security_group_ids            = module.storage_sg[*].security_group_id
+  ssh_key_ids                   = local.storage_ssh_keys
+  subnets                       = [local.storage_subnets[0]]
+  tags                          = local.tags
+  user_data                     = data.template_file.storage_user_data.rendered
+  vpc_id                        = var.vpc_id
+  block_storage_volumes         = local.enable_block_storage ? local.block_storage_volumes : []
+  kms_encryption_enabled        = var.kms_encryption_enabled
+  skip_iam_authorization_policy = local.skip_iam_authorization_policy
+  boot_volume_encryption_key    = var.boot_volume_encryption_key
+  placement_group_id            = var.placement_group_ids
+  #placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }

@@ -285,3 +285,8 @@ locals {
   compute_public_key_content  = local.compute_public_key_contents != null ? jsonencode(base64encode(local.compute_public_key_contents)) : ""
   compute_private_key_content = local.compute_private_key_contents != null ? jsonencode(base64encode(local.compute_private_key_contents)) : ""
 }
+
+# locals {
+#   ldap_private_ips = local.ldap_instances[*]["ipv4_address"]
+#   ldap_hostnames   = local.ldap_instances[*]["name"]
+# }
