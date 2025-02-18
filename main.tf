@@ -326,18 +326,18 @@ module "compute_playbook" {
   depends_on       = [ module.compute_inventory ]
 }
 
-# module "storage_playbook" {
-#   count            = var.enable_deployer == false ? 1 : 0
-#   source           = "./modules/playbook"
-#   bastion_fip      = local.bastion_fip
-#   private_key_path = local.storage_private_key_path
-#   inventory_path   = local.storage_inventory_path
-#   playbook_path    = local.storage_playbook_path
-#   enable_bastion   = var.enable_bastion
-#   enable_scale     = var.enable_scale
-#   scheduler        = var.scheduler
-#   depends_on       = [ module.storage_inventory ]
-# }
+module "storage_playbook" {
+  count            = var.enable_deployer == false && var.scheduler == null ? 1 : 0
+  source           = "./modules/playbook"
+  bastion_fip      = local.bastion_fip
+  private_key_path = local.storage_private_key_path
+  inventory_path   = local.storage_inventory_path
+  playbook_path    = local.storage_playbook_path
+  enable_bastion   = var.enable_bastion
+  enable_scale     = var.enable_scale
+  scheduler        = var.scheduler
+  depends_on       = [ module.storage_inventory ]
+}
 
 ###################################################
 # Observability Modules

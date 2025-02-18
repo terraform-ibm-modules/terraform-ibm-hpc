@@ -47,9 +47,6 @@ resource "local_file" "create_playbook" {
   roles:
      - { role: vpc_fileshare_configure, when: scheduler == 'LSF' }
      - { role: lsf, when: scheduler == 'LSF' }
-     
-     # - vpc_fileshare_configure 
-     # - lsf
 EOT
   filename = var.playbook_path
 }
@@ -68,7 +65,7 @@ resource "null_resource" "run_playbook" {
 }
 
 resource "null_resource" "run_lsf_playbooks" {
-  count = var.inventory_path != null ? 1 : 0
+  count = var.scheduler == "LSF" ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
