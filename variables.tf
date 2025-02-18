@@ -916,3 +916,9 @@ variable "deployer_ip" {
   default     = null
   description = "deployer node ip"
 }
+
+variable "enable_scale" {
+  type        = string
+  default     = false
+  description =  "Type of storage needed for the solution"
+}

@@ -45,8 +45,11 @@ resource "local_file" "create_playbook" {
     - name: Load cluster-specific variables
       include_vars: all.json
   roles:
-     - vpc_fileshare_configure
-     - lsf
+     - {{ role: vpc_fileshare_configure, when: "scheduler == 'LSF'" }}
+     - {{ role: lsf, when: "scheduler == 'LSF'" }}
+     
+     # - vpc_fileshare_configure 
+     # - lsf
 EOT
   filename = var.playbook_path
 }

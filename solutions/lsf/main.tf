@@ -71,4 +71,5 @@ module "lsf" {
 
   # New Variables
   ibmcloud_api_key                                 = local.env.ibmcloud_api_key
+  enable_scale                                     = local.env.enable_scale
 }

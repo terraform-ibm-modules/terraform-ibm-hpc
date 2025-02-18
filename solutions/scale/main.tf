@@ -46,4 +46,23 @@ module "scale" {
   vpn_peer_address          = local.env.vpn_peer_address
   vpn_peer_cidr             = local.env.vpn_peer_cidr
   vpn_preshared_key         = local.env.vpn_preshared_key
+  observability_atracker_enable                    = local.env.observability_atracker_enable
+  observability_atracker_target_type               = local.env.observability_atracker_target_type
+  observability_monitoring_enable                  = local.env.observability_monitoring_enable
+  observability_logs_enable_for_management         = local.env.observability_logs_enable_for_management
+  observability_logs_enable_for_compute            = local.env.observability_logs_enable_for_compute
+  observability_enable_platform_logs               = local.env.observability_enable_platform_logs
+  observability_enable_metrics_routing             = local.env.observability_enable_metrics_routing
+  observability_logs_retention_period              = local.env.observability_logs_retention_period
+  observability_monitoring_on_compute_nodes_enable = local.env.observability_monitoring_on_compute_nodes_enable
+  observability_monitoring_plan                    = local.env.observability_monitoring_plan
+  scc_enable                                       = local.env.scc_enable
+  scc_profile                                      = local.env.scc_profile
+  # scc_profile_version                              = local.env.scc_profile_version
+  scc_location                                     = local.env.scc_location
+  scc_event_notification_plan                      = local.env.scc_event_notification_plan
+  skip_flowlogs_s2s_auth_policy                    = local.env.skip_flowlogs_s2s_auth_policy
+  skip_iam_authorization_policy                    = local.env.skip_iam_authorization_policy
+  skip_kms_s2s_auth_policy                         = local.env.skip_kms_s2s_auth_policy
+  ibmcloud_api_key                                 = local.env.ibmcloud_api_key
 }

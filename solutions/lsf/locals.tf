@@ -89,6 +89,7 @@ locals {
 
     # New Variables
     ibmcloud_api_key                                 = var.ibmcloud_api_key
+    enable_scale                                     = var.enable_scale
   }
 }
 
@@ -164,5 +165,6 @@ locals {
     skip_kms_s2s_auth_policy                         = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
     # New Variables
     ibmcloud_api_key                                 = lookup(local.override[local.override_type], "ibmcloud_api_key", local.config.ibmcloud_api_key)
+    enable_scale                                     = lookup(local.override[local.override_type], "enable_scale", local.config.enable_scale)
   }
 }

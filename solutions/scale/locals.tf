@@ -64,6 +64,25 @@ locals {
     vpn_peer_address          = var.vpn_peer_address
     vpn_peer_cidr             = var.vpn_peer_cidr
     vpn_preshared_key         = var.vpn_preshared_key
+    observability_atracker_enable                    = var.observability_atracker_enable
+    observability_atracker_target_type               = var.observability_atracker_target_type
+    observability_monitoring_enable                  = var.observability_monitoring_enable
+    observability_logs_enable_for_management         = var.observability_logs_enable_for_management
+    observability_logs_enable_for_compute            = var.observability_logs_enable_for_compute
+    observability_enable_platform_logs               = var.observability_enable_platform_logs
+    observability_enable_metrics_routing             = var.observability_enable_metrics_routing
+    observability_logs_retention_period              = var.observability_logs_retention_period
+    observability_monitoring_on_compute_nodes_enable = var.observability_monitoring_on_compute_nodes_enable
+    observability_monitoring_plan                    = var.observability_monitoring_plan
+    scc_enable                                       = var.scc_enable
+    scc_profile                                      = var.scc_profile
+    # scc_profile_version                              = var.scc_profile_version
+    scc_location                                     = var.scc_location
+    scc_event_notification_plan                      = var.scc_event_notification_plan
+    skip_flowlogs_s2s_auth_policy                    = var.skip_flowlogs_s2s_auth_policy
+    skip_iam_authorization_policy                    = var.skip_iam_authorization_policy
+    skip_kms_s2s_auth_policy                         = var.skip_kms_s2s_auth_policy
+    ibmcloud_api_key                                 = var.ibmcloud_api_key
   }
 }
 
@@ -114,5 +133,24 @@ locals {
     vpn_peer_address          = lookup(local.override[local.override_type], "vpn_peer_address", local.config.vpn_peer_address)
     vpn_peer_cidr             = lookup(local.override[local.override_type], "vpn_peer_cidr", local.config.vpn_peer_cidr)
     vpn_preshared_key         = lookup(local.override[local.override_type], "vpn_preshared_key", local.config.vpn_preshared_key)
+    observability_atracker_enable                    = lookup(local.override[local.override_type], "observability_atracker_enable", local.config.observability_atracker_enable)
+    observability_atracker_target_type               = lookup(local.override[local.override_type], "observability_atracker_target_type", local.config.observability_atracker_target_type)
+    observability_monitoring_enable                  = lookup(local.override[local.override_type], "observability_monitoring_enable", local.config.observability_monitoring_enable)
+    observability_logs_enable_for_management         = lookup(local.override[local.override_type], "observability_logs_enable_for_management", local.config.observability_logs_enable_for_management)
+    observability_logs_enable_for_compute            = lookup(local.override[local.override_type], "observability_logs_enable_for_compute", local.config.observability_logs_enable_for_compute)
+    observability_enable_platform_logs               = lookup(local.override[local.override_type], "observability_enable_platform_logs", local.config.observability_enable_platform_logs)
+    observability_enable_metrics_routing             = lookup(local.override[local.override_type], "observability_enable_metrics_routing", local.config.observability_enable_metrics_routing)
+    observability_logs_retention_period              = lookup(local.override[local.override_type], "observability_logs_retention_period", local.config.observability_logs_retention_period)
+    observability_monitoring_on_compute_nodes_enable = lookup(local.override[local.override_type], "observability_monitoring_on_compute_nodes_enable", local.config.observability_monitoring_on_compute_nodes_enable)
+    observability_monitoring_plan                    = lookup(local.override[local.override_type], "observability_monitoring_plan", local.config.observability_monitoring_plan)
+    scc_enable                                       = lookup(local.override[local.override_type], "scc_enable", local.config.scc_enable)
+    scc_profile                                      = lookup(local.override[local.override_type], "scc_profile", local.config.scc_profile)
+    # scc_profile_version                              = lookup(local.override[local.override_type], "scc_profile_version", local.config.scc_profile_version)
+    scc_location                                     = lookup(local.override[local.override_type], "scc_location", local.config.scc_location)
+    scc_event_notification_plan                      = lookup(local.override[local.override_type], "scc_event_notification_plan", local.config.scc_event_notification_plan)
+    skip_flowlogs_s2s_auth_policy                    = lookup(local.override[local.override_type], "skip_flowlogs_s2s_auth_policy", local.config.skip_flowlogs_s2s_auth_policy)
+    skip_iam_authorization_policy                    = lookup(local.override[local.override_type], "skip_iam_authorization_policy", local.config.skip_iam_authorization_policy)
+    skip_kms_s2s_auth_policy                         = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
+    ibmcloud_api_key                                 = lookup(local.override[local.override_type], "ibmcloud_api_key", local.config.ibmcloud_api_key)
   }
 }

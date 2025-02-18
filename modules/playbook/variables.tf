@@ -27,3 +27,15 @@ variable "enable_bastion" {
   default     = true
   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
 }
+
+variable "enable_scale" {
+  type        = string
+  default     = false
+  description =  "Type of storage needed for the solution"
+}
+
+variable "scheduler" {
+  default     = null
+  type        = string
+  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+}

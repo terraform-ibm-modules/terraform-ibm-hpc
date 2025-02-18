@@ -275,3 +275,8 @@ locals {
     }
   ]
 }
+
+
+locals {
+  storage_management_node_name = format("%s-%s", local.prefix, "strg-mgmt")
+}

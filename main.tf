@@ -320,6 +320,8 @@ module "compute_playbook" {
   inventory_path   = local.compute_inventory_path
   playbook_path    = local.compute_playbook_path
   enable_bastion   = var.enable_bastion
+  enable_scale     = var.enable_scale
+  scheduler        = var.scheduler
   depends_on       = [ module.compute_inventory ]
 }
 
@@ -331,6 +333,8 @@ module "compute_playbook" {
 #   inventory_path   = local.storage_inventory_path
 #   playbook_path    = local.storage_playbook_path
 #   enable_bastion   = var.enable_bastion
+#   enable_scale     = var.enable_scale
+#   scheduler        = var.scheduler
 #   depends_on       = [ module.storage_inventory ]
 # }
 
