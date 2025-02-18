@@ -286,7 +286,7 @@ module "write_storage_cluster_inventory" {
   lsf_clients           = local.client_nodes
   gui_hosts             = local.gui_hosts
   db_hosts              = local.db_hosts
-  my_cluster_name       = var.prefix
+  my_cluster_name       = local.my_cluster_name
   ha_shared_dir         = local.ha_shared_dir
   nfs_install_dir       = local.nfs_install_dir
   Enable_Monitoring     = local.Enable_Monitoring
@@ -300,6 +300,7 @@ module "compute_inventory" {
   hosts               = local.compute_hosts
   inventory_path      = local.compute_inventory_path
   name_mount_path_map = local.fileshare_name_mount_path_map
+  scheduler           = var.scheduler
   depends_on          = [ module.write_compute_cluster_inventory ]
 }
 
@@ -309,6 +310,7 @@ module "storage_inventory" {
   hosts               = local.storage_hosts
   inventory_path      = local.storage_inventory_path
   name_mount_path_map = local.fileshare_name_mount_path_map
+  scheduler           = var.scheduler
   depends_on          = [ module.write_storage_cluster_inventory ]
 }
 
@@ -321,7 +323,6 @@ module "compute_playbook" {
   playbook_path    = local.compute_playbook_path
   enable_bastion   = var.enable_bastion
   enable_scale     = var.enable_scale
-  scheduler        = var.scheduler
   depends_on       = [ module.compute_inventory ]
 }
 

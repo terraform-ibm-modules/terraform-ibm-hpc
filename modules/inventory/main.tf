@@ -8,6 +8,7 @@ resource "local_sensitive_file" "itself" {
 [all_nodes]
 ${join("\n", var.hosts)}
 [all:vars]
+scheduler = ${var.scheduler}
 name_mount_path_map = {${join(",", [for k, v in var.name_mount_path_map : "\"${k}\": \"${v}\""])}}
 EOT
   filename = var.inventory_path

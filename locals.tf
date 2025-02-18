@@ -246,7 +246,7 @@ locals {
 
 # details needed for json file
 locals {
-  json_inventory_path   = var.scheduler == "LSF" ? var.enable_bastion ?  "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json" : ""
+  json_inventory_path   = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json"
   management_nodes      = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"] : []
   compute_nodes         = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].compute_vsi_data]))[*]["name"] : []
   client_nodes          = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].client_vsi_data]))[*]["name"] : []
@@ -256,6 +256,7 @@ locals {
   nfs_install_dir       = var.scheduler == "LSF" ? "none" : "none"
   Enable_Monitoring     = var.scheduler == "LSF" ? false : false
   lsf_deployer_hostname = var.scheduler == "LSF" ? var.deployer_hostname : ""
+  my_cluster_name       = var.scheduler == "LSF" ? var.prefix : ""
 }
 
 locals {

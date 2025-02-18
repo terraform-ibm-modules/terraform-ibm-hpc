@@ -33,9 +33,3 @@ variable "enable_scale" {
   default     = false
   description =  "Type of storage needed for the solution"
 }
-
-variable "scheduler" {
-  default     = null
-  type        = string
-  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
-}
