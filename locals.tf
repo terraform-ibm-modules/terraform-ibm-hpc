@@ -265,7 +265,7 @@ locals {
   remote_terraform_path     = format("%s/terraform-ibm-hpc", local.deployer_path)
   remote_ansible_path       = format("%s/terraform-ibm-hpc", local.deployer_path)
   da_hpc_repo_url           = "https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git"
-  da_hpc_repo_tag           = "jay_lsf_scale_deployer" ###### change it to main in future
+  da_hpc_repo_tag           = "develop" ###### change it to main in future
   zones                     = jsonencode(var.zones)
   list_compute_ssh_keys     = jsonencode(local.compute_ssh_keys)
   list_storage_ssh_keys     = jsonencode(local.storage_ssh_keys)
