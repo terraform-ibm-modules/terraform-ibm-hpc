@@ -249,6 +249,7 @@ locals {
   json_inventory_path   = var.enable_bastion ?  "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json"
   management_nodes      = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"]
   compute_nodes         = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].compute_vsi_data]))[*]["name"]
+  compute_nodes_list    = var.enable_deployer ? [] : (length(local.compute_nodes) >= 10 ? [format("%s-[%d:%d]", regex("^(.*?)-\\d+$", local.compute_nodes[0])[0], 1, length(local.compute_nodes))] : local.compute_nodes)
   client_nodes          = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].client_vsi_data]))[*]["name"]
   gui_hosts             = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA
   db_hosts              = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA

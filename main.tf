@@ -265,7 +265,7 @@ module "write_compute_cluster_inventory" {
   source                = "./modules/write_inventory"
   json_inventory_path   = local.json_inventory_path
   lsf_masters           = local.management_nodes
-  lsf_servers           = local.compute_nodes
+  lsf_servers           = local.compute_nodes_list
   lsf_clients           = local.client_nodes
   gui_hosts             = local.gui_hosts
   db_hosts              = local.db_hosts
@@ -282,7 +282,7 @@ module "write_storage_cluster_inventory" {
   source                = "./modules/write_inventory"
   json_inventory_path   = local.json_inventory_path
   lsf_masters           = local.management_nodes
-  lsf_servers           = local.compute_nodes
+  lsf_servers           = local.compute_nodes_list
   lsf_clients           = local.client_nodes
   gui_hosts             = local.gui_hosts
   db_hosts              = local.db_hosts
