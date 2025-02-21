@@ -274,6 +274,8 @@ module "write_compute_cluster_inventory" {
   nfs_install_dir       = local.nfs_install_dir
   Enable_Monitoring     = local.Enable_Monitoring
   lsf_deployer_hostname = local.lsf_deployer_hostname
+  enable_hyperthreading = var.enable_hyperthreading
+  dns_domain_names      = var.dns_domain_names
   depends_on            = [ time_sleep.wait_60_seconds ]
 }
 

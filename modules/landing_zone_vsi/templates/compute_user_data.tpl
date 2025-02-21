@@ -22,9 +22,7 @@ echo "StrictHostKeyChecking no" >> ~/.ssh/config
 echo "${compute_private_key_content}" | base64 --decode > ~/.ssh/id_rsa
 chmod 600 ~/.ssh/id_rsa
 
-# network setup
-echo "DOMAIN=${compute_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
-echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
+# Setup users to unexpire
 chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
-sleep 120
-systemctl restart NetworkManager
+chage -I -1 -m 0 -M 99999 -E -1 -W 14 lsfadmin
+

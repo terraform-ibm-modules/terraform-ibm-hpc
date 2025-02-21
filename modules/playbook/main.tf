@@ -31,7 +31,7 @@ resource "local_file" "create_playbook" {
 - name: Prerequisite Configuration
   hosts: [all_nodes]
   any_errors_fatal: true
-  gather_facts: false
+  gather_facts: True
   vars:
     ansible_ssh_common_args: >
       ${local.proxyjump}
@@ -47,6 +47,7 @@ resource "local_file" "create_playbook" {
   roles:
      - vpc_fileshare_configure
      - lsf
+     - lsf_network_config
 EOT
   filename = var.playbook_path
 }
@@ -64,21 +65,21 @@ resource "null_resource" "run_playbook" {
   depends_on = [local_file.create_playbook]
 }
 
-resource "null_resource" "run_lsf_playbooks" {
-  count = var.inventory_path != null ? 1 : 0
+# resource "null_resource" "run_lsf_playbooks" {
+#   count = var.inventory_path != null ? 1 : 0
 
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    command = <<EOT
-      sudo ansible-playbook -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml &&
-      sudo ansible-playbook -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml &&
-      sudo ansible-playbook -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml
-    EOT
-  }
+#   provisioner "local-exec" {
+#     interpreter = ["/bin/bash", "-c"]
+#     command = <<EOT
+#       sudo ansible-playbook -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml &&
+#       sudo ansible-playbook -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml &&
+#       sudo ansible-playbook -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml
+#     EOT
+#   }
 
-  triggers = {
-    build = timestamp()
-  }
+#   triggers = {
+#     build = timestamp()
+#   }
 
-  depends_on = [null_resource.run_playbook]
-}
+#   depends_on = [null_resource.run_playbook]
+# }

@@ -1,0 +1,7 @@
+---
+
+# Defining ncpus based on hyper-threading
+- import_tasks: lsf_tunables.yml
+
+# Setup Network configuration
+- import_tasks: mtu.yml

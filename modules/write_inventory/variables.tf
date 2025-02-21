@@ -63,3 +63,23 @@ variable "lsf_deployer_hostname" {
   default     = null
   description = "Deployer host name"
 }
+
+variable "enable_hyperthreading" {
+  type        = bool
+  default     = null
+  description = "Enable Hyperthreading"
+}
+
+variable "dns_domain_names" {
+  type = object({
+    compute  = string
+    storage  = string
+    protocol = string
+  })
+  default = {
+    compute  = "comp.com"
+    storage  = "strg.com"
+    protocol = "ces.com"
+  }
+  description = "IBM Cloud HPC DNS domain names."
+}

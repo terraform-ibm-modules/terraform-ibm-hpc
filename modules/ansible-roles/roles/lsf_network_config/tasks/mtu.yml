@@ -1,0 +1,30 @@
+---
+- name: MTU | Configure MTU and Domain for RHEL
+  block:
+    - name: MTU | Set MTU and Domain in network script
+      ansible.builtin.blockinfile:
+        path: "/etc/sysconfig/network-scripts/ifcfg-{{ network_interface }}"
+        block: |
+          MTU=9000
+          DOMAIN={{ dns_domain_names }}
+        marker: "# {mark} ANSIBLE MANAGED BLOCK"
+
+    - name: MTU | Get default gateway and CIDR range
+      ansible.builtin.shell: |
+        gateway_ip=$(ip route | grep default | awk '{print $3}' | head -n 1)
+        cidr_range=$(ip route show | grep "kernel" | awk '{print $1}' | head -n 1)
+        echo "$cidr_range via $gateway_ip dev {{ network_interface }} metric 0 mtu 9000"
+      register: rhel_route
+      changed_when: false
+
+    - name: MTU | Set MTU at the router level
+      ansible.builtin.lineinfile:
+        path: "/etc/sysconfig/network-scripts/route-{{ network_interface }}"
+        line: "{{ rhel_route.stdout }}"
+        create: yes
+
+    - name: MTU | Restart NetworkManager
+      ansible.builtin.systemd:
+        name: NetworkManager
+        state: restarted
+  when: ansible_facts['os_family'] == "RedHat"
