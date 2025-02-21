@@ -2,12 +2,12 @@
 - name: Hyperthreading | Define ego_define_ncpus based on hyperthreading
   set_fact:
     ego_define_ncpus: "{{ 'threads' if enable_hyperthreading else 'cores' }}"
-  delegate_to: localhost
+  run_once: true
 
 - name: Hyperthreading | Print the value of ego_define_ncpus
   debug:
     msg: "EGO_DEFINE_NCPUS is set to {{ ego_define_ncpus }}"
-  delegate_to: localhost
+  run_once: true
 
 - name: Hyperthreading | Create LSF hyperthreading script for disabling threads if hyperthreading is false
   copy:
