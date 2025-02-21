@@ -255,10 +255,10 @@ module "protocol_dns_records" {
   depends_on      = [ module.dns ]
 }
 
-resource "time_sleep" "wait_60_seconds" {
-  create_duration = "60s"
-  depends_on          = [ module.storage_dns_records, module.protocol_dns_records, module.compute_dns_records ]
-}
+# resource "time_sleep" "wait_60_seconds" {
+#   create_duration = "60s"
+#   depends_on          = [ module.storage_dns_records, module.protocol_dns_records, module.compute_dns_records ]
+# }
 
 module "write_compute_cluster_inventory" {
   count                 = var.enable_deployer == false ? 1 : 0 
@@ -274,7 +274,7 @@ module "write_compute_cluster_inventory" {
   nfs_install_dir       = local.nfs_install_dir
   Enable_Monitoring     = local.Enable_Monitoring
   lsf_deployer_hostname = local.lsf_deployer_hostname
-  depends_on            = [ time_sleep.wait_60_seconds ]
+  # depends_on            = [ time_sleep.wait_60_seconds ]
 }
 
 module "write_storage_cluster_inventory" {
@@ -291,7 +291,7 @@ module "write_storage_cluster_inventory" {
   nfs_install_dir       = local.nfs_install_dir
   Enable_Monitoring     = local.Enable_Monitoring
   lsf_deployer_hostname = local.lsf_deployer_hostname
-  depends_on            = [ time_sleep.wait_60_seconds ]
+  # depends_on            = [ time_sleep.wait_60_seconds ]
 }
 
 module "compute_inventory" {
