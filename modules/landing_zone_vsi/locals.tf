@@ -82,9 +82,13 @@ locals {
   protocol_image_name   = var.storage_image_name
   */
 
-  management_image_id = data.ibm_is_image.management[*].id
+  # Check whether an entry is found in the mapping file for the given management node image
+  image_mapping_entry_found = contains(keys(local.image_region_map), var.management_instances[0]["image"])
+  new_image_id              = local.image_mapping_entry_found ? local.image_region_map[var.management_instances[0]["image"]][local.region] : "Image not found with the given name"
+
+  # management_image_id = data.ibm_is_image.management[*].id
   client_image_id     = data.ibm_is_image.client[*].id
-  compute_image_id    = data.ibm_is_image.compute[*].id
+  # compute_image_id    = data.ibm_is_image.compute[*].id
   storage_image_id    = data.ibm_is_image.storage[*].id
   protocol_image_id   = data.ibm_is_image.storage[*].id
 

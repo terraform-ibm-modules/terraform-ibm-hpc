@@ -1,0 +1,87 @@
+---
+- name: Check if observability logs for management are enabled
+  ansible.builtin.debug:
+    msg: "Configuring cloud logs for management since observability logs for management is enabled"
+  when: "{{ logs_enable_for_management | bool }}"
+
+- name: Copy post-config.sh script
+  ansible.builtin.copy:
+    src: /root/post-config.sh
+    dest: /opt/ibm/post-config.sh
+    mode: '0755'
+    remote_src: true
+  when: "{{ logs_enable_for_management | bool }}"
+
+- name: Create fluent-bit.conf for cloud logs
+  ansible.builtin.copy:
+    dest: /etc/fluent-bit/fluent-bit.conf
+    content: |
+      [SERVICE]
+        Flush                   1
+        Log_Level               info
+        Daemon                  off
+        Parsers_File            parsers.conf
+        Plugins_File            plugins.conf
+        HTTP_Server             On
+        HTTP_Listen             0.0.0.0
+        HTTP_Port               8081
+        Health_Check            On
+        HC_Errors_Count         1
+        HC_Retry_Failure_Count  1
+        HC_Period               30
+        storage.path            /fluent-bit/cache
+        storage.max_chunks_up   192
+        storage.metrics         On
+      [INPUT]
+        Name                syslog
+        Path                /tmp/in_syslog
+        Buffer_Chunk_Size   32000
+        Buffer_Max_Size     64000
+        Receive_Buffer_Size 512000
+      [INPUT]
+        Name              tail
+        Tag               *
+        Path              /opt/ibm/lsf/log/*.log
+        Path_Key          file
+        Exclude_Path      /var/log/at/**
+        DB                /opt/ibm/lsf/log/fluent-bit.DB
+        Buffer_Chunk_Size 32KB
+        Buffer_Max_Size   256KB
+        Skip_Long_Lines   On
+        Refresh_Interval  10
+        storage.type      filesystem
+        storage.pause_on_chunks_overlimit on
+      [FILTER]
+        Name modify
+        Match *
+        Add subsystemName management
+        Add applicationName lsf
+      @INCLUDE output-logs-router-agent.conf
+  when: "{{ logs_enable_for_management | bool }}"
+
+# - name: Fetch API KEY From environmental variable of Ansible controller
+#   shell: "echo $IC_API_KEY" 
+#   register: env_api_key
+#   when: "{{ logs_enable_for_management | bool }}"
+
+- name: Debug the fetched API key
+  ansible.builtin.debug:
+    msg: "Fetched API key: {{ VPC_API_KEY }}"
+  when: "{{ logs_enable_for_management | bool }}"
+
+- name: Run post-config.sh script
+  ansible.builtin.command: >
+    /opt/ibm/post-config.sh -h {{ cloud_logs_ingress_private_endpoint }}
+    -p "3443"
+    -t "/logs/v1/singles"
+    -a IAMAPIKey
+    -k {{ VPC_API_KEY }}
+    --send-directly-to-icl
+    -s true
+    -i Production
+  when: "{{ logs_enable_for_management | bool }}"
+
+- name: Test cloud logs configuration
+  ansible.builtin.shell: |
+    echo "INFO Testing IBM Cloud LSF Logs from management: {{ ansible_hostname }}" >> /opt/ibm/lsf/log/test.log
+  when: "{{ logs_enable_for_management | bool }}"

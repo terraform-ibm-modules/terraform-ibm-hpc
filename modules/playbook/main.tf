@@ -47,6 +47,38 @@ resource "local_file" "create_playbook" {
   roles:
      - vpc_fileshare_configure
      - lsf
+
+- name: Cloud Logs Configuration
+  hosts: [all_nodes]
+  any_errors_fatal: true
+  gather_facts: true
+  vars:
+    ansible_ssh_common_args: >
+      -o ProxyJump=ubuntu@${var.bastion_fip}
+      -o ControlMaster=auto
+      -o ControlPersist=30m
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+    ansible_user: root
+    ansible_ssh_private_key_file: ${var.private_key_path}
+  roles:
+    - { role: cloudlogs, tags: ["cloud_logs"] }  
+  
+- name: Cloud Monitoring Configuration
+  hosts: [all_nodes]
+  any_errors_fatal: true
+  gather_facts: true
+  vars:
+    ansible_ssh_common_args: >
+      -o ProxyJump=ubuntu@${var.bastion_fip}
+      -o ControlMaster=auto
+      -o ControlPersist=30m
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+    ansible_user: root
+    ansible_ssh_private_key_file: ${var.private_key_path}
+  roles:
+    - { role: cloudmonitoring, tags: ["cloud_monitoring"] }      
 EOT
   filename = var.playbook_path
 }
@@ -56,7 +88,7 @@ resource "null_resource" "run_playbook" {
   count = var.inventory_path != null ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -i ${var.inventory_path} ${var.playbook_path}"
+    command     = "ansible-playbook -i ${var.inventory_path} ${var.playbook_path} -e 'VPC_API_KEY=${var.ibmcloud_api_key}'"
   }
   triggers = {
     build = timestamp()

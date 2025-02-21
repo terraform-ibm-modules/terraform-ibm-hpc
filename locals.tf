@@ -242,6 +242,7 @@ locals {
 # file Share OutPut
 locals {
   fileshare_name_mount_path_map =  var.enable_deployer ? {} : module.file_storage[0].name_mount_path_map
+  cloud_logs_ingress_private_endpoint = module.cloud_monitoring_instance_creation.cloud_logs_ingress_private_endpoint
 }
 
 # details needed for json file
@@ -265,7 +266,7 @@ locals {
   remote_terraform_path     = format("%s/terraform-ibm-hpc", local.deployer_path)
   remote_ansible_path       = format("%s/terraform-ibm-hpc", local.deployer_path)
   da_hpc_repo_url           = "https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git"
-  da_hpc_repo_tag           = "develop" ###### change it to main in future
+  da_hpc_repo_tag           = "obs-ansible" ###### change it to main in future
   zones                     = jsonencode(var.zones)
   list_compute_ssh_keys     = jsonencode(local.compute_ssh_keys)
   list_storage_ssh_keys     = jsonencode(local.storage_ssh_keys)
