@@ -1,6 +1,6 @@
 # Update the Network Tunables
 ---
-- name: Networking | Ensure sysctl parameters are set
+- name: LSF_Tunables | Ensure sysctl parameters are set
   ansible.builtin.lineinfile:
     path: "{{ sysctl_conf }}"
     line: "{{ item }}"
@@ -14,7 +14,7 @@
     - "net.ipv4.tcp_fin_timeout=5"
     - "net.core.somaxconn=8000"
 
-- name: Networking | Apply sysctl settings
+- name: LSF_Tunables | Apply sysctl settings
   ansible.builtin.command:
     cmd: sysctl -p "{{ sysctl_conf }}"
   changed_when: false
