@@ -1,0 +1,4 @@
+---
+
+# Setup Network configuration
+- import_tasks: mtu.yml

@@ -1,2 +1,0 @@
-sysctl_conf: "/etc/sysctl.conf"  
-network_interface: "eth0"

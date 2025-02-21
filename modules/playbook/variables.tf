@@ -27,3 +27,9 @@ variable "enable_bastion" {
   default     = true
   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
 }
+
+variable "enable_lsf" {
+  description = "Enable LSF"
+  type        = bool
+  default     = true
+}
