@@ -1,0 +1,76 @@
+---
+- name: Append LSF configuration settings
+  lineinfile:
+    path: "{{ LSF_CONF_FILE }}"
+    line: "{{ item }}"
+    create: yes
+  loop:
+    - "LSB_RC_EXTERNAL_HOST_IDLE_TIME=10"
+    - "LSF_DYNAMIC_HOST_WAIT_TIME=60"
+    - "LSF_DYNAMIC_HOST_TIMEOUT=\"EXPIRY[10m] THRESHOLD[250] INTERVAL[60m]\""
+    - "LSB_RC_EXTERNAL_HOST_FLAG=\"icgen2host\""
+    - "LSB_RC_UPDATE_INTERVAL=15"
+    - "LSB_RC_MAX_NEWDEMAND=50"
+    - "LSF_UDP_TO_TCP_THRESHOLD=9000"
+    - "LSF_CALL_LIM_WITH_TCP=Y"
+    - "LSF_ANNOUNCE_MASTER_TCP_WAITTIME=600"
+    - "LSF_RSH=\"ssh -o 'PasswordAuthentication no' -o 'StrictHostKeyChecking no'\""
+
+- name: Append LSF queue configuration to lsb.queues
+  blockinfile:
+    path: "{{ LSF_LSBATCH_CONF }}/lsb.queues"
+    insertafter: EOF
+    block: |
+      Begin Queue
+      QUEUE_NAME=das_q
+      DATA_TRANSFER=Y
+      RC_HOSTS=all
+      HOSTS=all
+      RES_REQ=type==any
+      End Queue
+    marker: ""
+
+- name: Update LSF configuration files
+  block:
+    - name: Uncomment "icgen2host" in lsf.shared
+      replace:
+        path: "{{ LSF_CONF_FILE_PATH }}/lsf.shared"
+        regexp: '^#\s*(icgen2host)'
+        replace: '   \1'
+
+    - name: Uncomment "schmod_demand" in lsb.modules
+      replace:
+        path: "{{ LSF_LSBATCH_CONF }}/lsb.modules"
+        regexp: '^#\s*(schmod_demand)'
+        replace: '\1'
+
+    - name: Add "RC_HOSTS = all" after QUEUE_NAME in lsb.queues using sed
+      shell: |
+        sed -i '/^Begin Queue$/,/^End Queue$/{/QUEUE_NAME/{N;s/\(QUEUE_NAME\s*=[^\n]*\)\n/\1\nRC_HOSTS     = all\n/}}' "{{ LSF_LSBATCH_CONF }}/lsb.queues"
+
+- name: Append management hostnames to lsb.hosts
+  vars:
+    management_hostnames: "{{ ManagementHostNames.split() }}"
+  lineinfile:
+    path: "{{ LSF_LSBATCH_CONF }}/lsb.hosts"
+    insertafter: "^default    !.*"
+    line: "{{ item }}  0 () () () () () (Y)"
+    state: present
+  loop: "{{ management_hostnames }}"
+
+- name: Append LSF_HOST_ADDR_RANGE to lsf.cluster
+  blockinfile:
+    path: "{{ LSF_CONF_FILE_PATH }}/lsf.cluster.{{ cluster_prefix }}"
+    block: |
+      Begin Parameters
+      LSF_HOST_ADDR_RANGE=10.*.*.*
+      End Parameters
+    marker: ""
+
+- name: Generate and append IP-to-host mapping to LSF hosts file
+  shell: |
+    python3 -c "import ipaddress; \
+    print('\n'.join([str(ip) + ' {{ cluster_prefix }}-' + str(ip).replace('.', '-') \
+    for ip in ipaddress.IPv4Network('{{ rc_cidr_block }}')]))" >> "{{ LSF_HOSTS_FILE }}"
+  args:
+    executable: /bin/bash

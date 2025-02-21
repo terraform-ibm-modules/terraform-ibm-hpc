@@ -1,1 +1,4 @@
 sysctl_conf: "/etc/sysctl.conf"
+hyperthreading_file: "/root/lsf_hyperthreading"
+LSF_CONF_FILE_PATH: "/opt/ibm/lsfsuite/lsf/conf"
+LSF_CONF_FILE: "{{ LSF_CONF_FILE_PATH }}/lsf.conf"

@@ -1,0 +1,24 @@
+{
+    "templates": [
+        {
+            "templateId": "Template-1",
+            "maxNumber": "{{ rc_maxNum }}",
+            "attributes": {
+                "type": ["String", "X86_64"],
+                "ncores": ["Numeric", "{{ rc_ncores }}"],
+                "ncpus": ["Numeric", "{{ rc_ncpus }}"],
+                "mem": ["Numeric", "{{ rc_memInMB }}"],
+                "icgen2host": ["Boolean", "1"]
+            },
+            "imageId": "{{ imageID }}",
+            "subnetId": "{{ subnetID }}",
+            "vpcId": "{{ vpcID }}",
+            "vmType": "{{ rc_profile }}",
+            "securityGroupIds": ["{{ securityGroupID }}"],
+            "resourceGroupId": "{{ rc_rg }}",
+            "sshkey_id": "{{ sshkey_ID }}",
+            "region": "{{ regionName }}",
+            "zone": "{{ zoneName }}"
+        }
+    ]
+}

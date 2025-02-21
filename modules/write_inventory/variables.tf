@@ -66,7 +66,7 @@ variable "lsf_deployer_hostname" {
 
 variable "enable_hyperthreading" {
   type        = bool
-  default     = null
+  default     = true
   description = "Enable Hyperthreading"
 }
 

@@ -110,5 +110,5 @@
     "skip_flowlogs_s2s_auth_policy":false,
     "skip_kms_s2s_auth_policy":false,
     "skip_iam_authorization_policy":false,
-    "enable_hyperthreading": true
+    "enable_hyperthreading":true
  }
