@@ -48,7 +48,7 @@ resource "local_file" "create_playbook" {
      - vpc_fileshare_configure
      - lsf
      - network_config
-     - "{{ 'lsf_server_config' if var.enable_lsf else '' }}"
+     %{ if var.enable_lsf }- lsf_server_config%{ endif }
 EOT
   filename = var.playbook_path
 }
