@@ -255,6 +255,7 @@ locals {
   ha_shared_dir         = "/mnt/lsf/shared"
   nfs_install_dir       = "none"
   Enable_Monitoring     = false
+  enable_hyperthreading = true
   lsf_deployer_hostname = var.deployer_hostname #data.external.get_hostname.result.name  #var.enable_bastion ? "" : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
 }
 
