@@ -15,6 +15,7 @@
     - "LSF_CALL_LIM_WITH_TCP=Y"
     - "LSF_ANNOUNCE_MASTER_TCP_WAITTIME=600"
     - "LSF_RSH=\"ssh -o 'PasswordAuthentication no' -o 'StrictHostKeyChecking no'\""
+  run_once: true
 
 - name: Append LSF queue configuration to lsb.queues
   blockinfile:
@@ -29,6 +30,7 @@
       RES_REQ=type==any
       End Queue
     marker: ""
+  run_once: true
 
 - name: Update LSF configuration files
   block:
@@ -47,6 +49,7 @@
     - name: Add "RC_HOSTS = all" after QUEUE_NAME in lsb.queues using sed
       shell: |
         sed -i '/^Begin Queue$/,/^End Queue$/{/QUEUE_NAME/{N;s/\(QUEUE_NAME\s*=[^\n]*\)\n/\1\nRC_HOSTS     = all\n/}}' "{{ LSF_LSBATCH_CONF }}/lsb.queues"
+  run_once: true
 
 - name: Append management hostnames to lsb.hosts
   vars:
@@ -56,7 +59,8 @@
     insertafter: "^default    !.*"
     line: "{{ item }}  0 () () () () () (Y)"
     state: present
-  loop: "{{ management_hostnames }}"
+  loop: "{{ lsf_masters }}"
+  run_once: true
 
 - name: Append LSF_HOST_ADDR_RANGE to lsf.cluster
   blockinfile:
@@ -66,6 +70,7 @@
       LSF_HOST_ADDR_RANGE=10.*.*.*
       End Parameters
     marker: ""
+  run_once: true
 
 - name: Generate and append IP-to-host mapping to LSF hosts file
   shell: |
@@ -74,3 +79,4 @@
     for ip in ipaddress.IPv4Network('{{ rc_cidr_block }}')]))" >> "{{ LSF_HOSTS_FILE }}"
   args:
     executable: /bin/bash
+  run_once: true
