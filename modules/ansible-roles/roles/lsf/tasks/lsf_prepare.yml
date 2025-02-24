@@ -8,6 +8,7 @@
     state: restarted
     enabled: yes
   delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
+  run_once: true
 
 # Installing required prerequisite packages for the LSF cluster creation.
 
