@@ -50,7 +50,7 @@
 
 - name: Append management hostnames to lsb.hosts
   vars:
-    management_hostnames: "{{ ManagementHostNames.split() }}"
+    management_hostnames: "{{ lsf_masters_list.split() }}"
   lineinfile:
     path: "{{ LSF_LSBATCH_CONF }}/lsb.hosts"
     insertafter: "^default    !.*"
@@ -60,7 +60,7 @@
 
 - name: Append LSF_HOST_ADDR_RANGE to lsf.cluster
   blockinfile:
-    path: "{{ LSF_CONF_FILE_PATH }}/lsf.cluster.{{ cluster_prefix }}"
+    path: "{{ LSF_CONF_FILE_PATH }}/lsf.cluster.{{ my_cluster_name }}"
     block: |
       Begin Parameters
       LSF_HOST_ADDR_RANGE=10.*.*.*
@@ -70,7 +70,7 @@
 - name: Generate and append IP-to-host mapping to LSF hosts file
   shell: |
     python3 -c "import ipaddress; \
-    print('\n'.join([str(ip) + ' {{ cluster_prefix }}-' + str(ip).replace('.', '-') \
+    print('\n'.join([str(ip) + ' {{ my_cluster_name }}-' + str(ip).replace('.', '-') \
     for ip in ipaddress.IPv4Network('{{ rc_cidr_block }}')]))" >> "{{ LSF_HOSTS_FILE }}"
   args:
     executable: /bin/bash

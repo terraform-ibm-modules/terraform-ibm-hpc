@@ -1,15 +1,10 @@
 LSF_CONF_FILE_PATH: "/opt/ibm/lsfsuite/lsf/conf"
 LSF_CONF_FILE: "{{ LSF_CONF_FILE_PATH }}/lsf.conf"
-
-# compute_public_key_content: "{{ compute_public_key_content }}"
-# compute_private_key_content: "{{ compute_private_key_content }}"
 LSF_RC_IC_CONF: "{{ LSF_CONF_FILE_PATH }}/resource_connector/ibmcloudgen2/conf"
-cluster_prefix: "{{ my_cluster_name }}"
-ManagementHostNames: "anand-da12-mgmt-4e4a-002 anand-da12-mgmt-4e4a-001"
-LSF_LSBATCH_CONF: "{{ LSF_CONF_FILE_PATH }}/lsbatch/{{ cluster_prefix }}/configdir"
+LSF_LSBATCH_CONF: "{{ LSF_CONF_FILE_PATH }}/lsbatch/{{ my_cluster_name }}/configdir"
 rc_cidr_block: "10.10.20.0/24"
 LSF_HOSTS_FILE: "{{ LSF_CONF_FILE_PATH }}/hosts"
-LSF_EGO_CONF_FILE: "{{ LSF_CONF_FILE }}/ego/{{ cluster_prefix }}/kernel/ego.conf"
+LSF_EGO_CONF_FILE: "{{ LSF_CONF_FILE }}/ego/{{ my_cluster_name }}/kernel/ego.conf"
 
 VPC_APIKEY_VALUE: "xxxxxxx"
 rc_maxNum: "rc_maxNumxx"
@@ -25,3 +20,6 @@ rc_rg: "rc_rgxx"
 sshkey_ID: "sshkey_IDxx"
 regionName: "regionNamexx"
 zoneName: 'zoneNamexx'
+
+# compute_public_key_content: "{{ compute_public_key_content }}"
+# compute_private_key_content: "{{ compute_private_key_content }}"

@@ -2,5 +2,5 @@
 
 - import_tasks: configure_management_nodes.yml
 
-# - import_tasks: configure_templates.yml
+- import_tasks: configure_templates.yml
 
