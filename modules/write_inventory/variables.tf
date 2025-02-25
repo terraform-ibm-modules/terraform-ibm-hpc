@@ -257,3 +257,21 @@ variable "compute_ssh_keys_ids" {
   type        = list(string)
   default     = null
 }
+
+variable "dns_domain_names" {
+  description = "IBM Cloud HPC DNS domain names."
+  type        = map(string)
+  default     = null
+}
+
+variable "ibmcloud_api_key" {
+  type        = string
+  sensitive   = true
+  default     = null
+}
+
+variable "zones" {
+  description = "List of availability zones"
+  type        = list(string)
+  default     = null
+}
