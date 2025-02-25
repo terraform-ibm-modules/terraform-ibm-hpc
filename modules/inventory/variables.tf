@@ -72,8 +72,8 @@ variable "cloud_monitoring_prws_url" {
   default     = ""
 }
 
-variable "VPC_APIKEY_VALUE" {
-  type        = string
-  default     = null
-  description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
-}
+# variable "VPC_APIKEY_VALUE" {
+#   type        = string
+#   default     = null
+#   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
+# }

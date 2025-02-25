@@ -11,3 +11,8 @@ output "lsf" {
 # output "lsf" {
 #   value = module.lsf
 # }
+
+# output "test" {
+#   description = "test"
+#   value       = module.lsf.test
+# }

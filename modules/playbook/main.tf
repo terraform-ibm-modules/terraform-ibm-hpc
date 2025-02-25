@@ -83,6 +83,17 @@ EOT
   filename = var.playbook_path
 }
 
+resource "null_resource" "export_api" {
+  count = var.inventory_path != null ? 1 : 0
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "export VPC_API_KEY=${var.ibmcloud_api_key}"
+  }
+  triggers = {
+    build = timestamp()
+  }
+  depends_on = [local_file.create_playbook]
+}
 
 resource "null_resource" "run_playbook" {
   count = var.inventory_path != null ? 1 : 0
@@ -93,7 +104,7 @@ resource "null_resource" "run_playbook" {
   triggers = {
     build = timestamp()
   }
-  depends_on = [local_file.create_playbook]
+  depends_on = [null_resource.export_api]
 }
 
 resource "null_resource" "run_lsf_playbooks" {

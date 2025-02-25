@@ -294,24 +294,24 @@ module "write_storage_cluster_inventory" {
   depends_on            = [ time_sleep.wait_60_seconds ]
 }
 
-module "compute_inventory" {
-  count               = var.enable_deployer == false ? 1 : 0
-  source              = "./modules/inventory"
-  hosts               = local.compute_hosts
-  inventory_path      = local.compute_inventory_path
-  name_mount_path_map = local.fileshare_name_mount_path_map
-  logs_enable_for_management = var.observability_logs_enable_for_management
-  monitoring_enable_for_management = var.observability_monitoring_enable
-  monitoring_enable_for_compute = var.observability_monitoring_on_compute_nodes_enable
-  cloud_monitoring_access_key = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_access_key : ""
-  cloud_monitoring_ingestion_url = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_ingestion_url : ""
-  cloud_monitoring_prws_key = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_key : ""
-  cloud_monitoring_prws_url = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_url : ""  
-  logs_enable_for_compute = var.observability_logs_enable_for_compute
-  cloud_logs_ingress_private_endpoint = local.cloud_logs_ingress_private_endpoint
-  VPC_APIKEY_VALUE = var.ibmcloud_api_key  
-  depends_on          = [ module.write_compute_cluster_inventory ]
-}
+# module "compute_inventory" {
+#   count               = var.enable_deployer == false ? 1 : 0
+#   source              = "./modules/inventory"
+#   hosts               = local.compute_hosts
+#   inventory_path      = local.compute_inventory_path
+#   name_mount_path_map = local.fileshare_name_mount_path_map
+#   logs_enable_for_management = var.observability_logs_enable_for_management
+#   monitoring_enable_for_management = var.observability_monitoring_enable
+#   monitoring_enable_for_compute = var.observability_monitoring_on_compute_nodes_enable
+#   cloud_monitoring_access_key = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_access_key : ""
+#   cloud_monitoring_ingestion_url = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_ingestion_url : ""
+#   cloud_monitoring_prws_key = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_key : ""
+#   cloud_monitoring_prws_url = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_url : ""  
+#   logs_enable_for_compute = var.observability_logs_enable_for_compute
+#   cloud_logs_ingress_private_endpoint = local.cloud_logs_ingress_private_endpoint
+#   VPC_APIKEY_VALUE = var.ibmcloud_api_key  
+#   depends_on          = [ module.write_compute_cluster_inventory ]
+# }
 
 module "storage_inventory" {
   count               = var.enable_deployer == false ? 1 : 0
@@ -322,17 +322,17 @@ module "storage_inventory" {
   depends_on          = [ module.write_storage_cluster_inventory ]
 }
 
-module "compute_playbook" {
-  count            = var.enable_deployer == false ? 1 : 0
-  source           = "./modules/playbook"
-  bastion_fip      = local.bastion_fip
-  private_key_path = local.compute_private_key_path
-  inventory_path   = local.compute_inventory_path
-  playbook_path    = local.compute_playbook_path
-  enable_bastion   = var.enable_bastion
-  ibmcloud_api_key = var.ibmcloud_api_key
-  depends_on       = [ module.compute_inventory ]
-}
+# module "compute_playbook" {
+#   count            = var.enable_deployer == false ? 1 : 0
+#   source           = "./modules/playbook"
+#   bastion_fip      = local.bastion_fip
+#   private_key_path = local.compute_private_key_path
+#   inventory_path   = local.compute_inventory_path
+#   playbook_path    = local.compute_playbook_path
+#   enable_bastion   = var.enable_bastion
+#   ibmcloud_api_key = var.ibmcloud_api_key
+#   depends_on       = [ module.compute_inventory ]
+# }
 
 # module "storage_playbook" {
 #   count            = var.enable_deployer == false ? 1 : 0
