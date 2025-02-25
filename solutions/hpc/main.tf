@@ -15,7 +15,7 @@ module "landing_zone" {
   bastion_subnets_cidr          = var.vpc_cluster_login_private_subnets_cidr_blocks
   network_cidr                  = var.vpc_cidr
   prefix                        = var.cluster_prefix
-  resource_group                = var.existing_resource_group
+  resource_group                = var.existing_resource_group_name
   vpc                           = var.vpc_name
   subnet_id                     = var.cluster_subnet_ids
   login_subnet_id               = var.login_subnet_id
