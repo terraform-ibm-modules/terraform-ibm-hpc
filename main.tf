@@ -130,7 +130,9 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "compute_private_key_content": ${local.compute_private_key_content},
   "bastion_security_group_id": "${local.bastion_security_group_id}",
   "deployer_hostname": "${local.deployer_hostname}",
-  "deployer_ip": "${local.deployer_ip}"
+  "deployer_ip": "${local.deployer_ip}",
+  "cloud_logs_data_bucket": ${local.cloud_logs_data_bucket},
+  "cloud_metrics_data_bucket": ${local.cloud_metrics_data_bucket}
 }    
 EOT
   filename = local.schematics_inputs_path
@@ -364,8 +366,8 @@ module "cloud_monitoring_instance_creation" {
   cloud_logs_instance_name       = "${var.prefix}-cloud-logs"
   cloud_logs_retention_period    = var.observability_logs_retention_period
   cloud_logs_as_atracker_target  = var.observability_atracker_enable && (var.observability_atracker_target_type == "cloudlogs") ? true : false
-  cloud_logs_data_bucket         = length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")][0] : null
-  cloud_metrics_data_bucket      = length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")][0] : null
+  cloud_logs_data_bucket         = var.cloud_logs_data_bucket
+  cloud_metrics_data_bucket      = var.cloud_metrics_data_bucket
   tags                           = ["hpc", var.prefix]
 }
 
