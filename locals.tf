@@ -256,7 +256,7 @@ locals {
   nfs_install_dir       = "none"
   Enable_Monitoring     = false
   lsf_deployer_hostname = var.deployer_hostname #data.external.get_hostname.result.name  #var.enable_bastion ? "" : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
-  enable_hyperthreading = jsonencode(var.enable_hyperthreading)
+  enable_hyperthreading = var.enable_hyperthreading
   vcpus                 = tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile.vcpu_count[0].value)
   ncores                = tonumber(local.vcpus / 2)
   ncpus                 = tonumber(local.enable_hyperthreading ? local.vcpus : local.ncores)

@@ -64,108 +64,196 @@ variable "lsf_deployer_hostname" {
   description = "Deployer host name"
 }
 
-variable "enable_hyperthreading" {
-  type        = bool
-  default     = true
-  description = "Enable Hyperthreading"
-}
+# variable "enable_hyperthreading" {
+#   type        = bool
+#   default     = null
+#   description = "Enable Hyperthreading"
+# }
 
-variable "ibmcloud_api_key" {
-  type        = string
-  sensitive   = true
+# variable "ibmcloud_api_key" {
+#   type        = string
+#   sensitive   = true
+#   default     = null
+#   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
+# }
+
+# variable "vcpus" {
+#   type     = number
+#   default  = null
+# }
+
+# variable "ncores" {
+#   type     = number
+#   default  = null
+# }
+
+# variable "ncpus" {
+#   type     = number
+#   default  = null
+# }
+
+# variable "memInMB" {
+#   type     = number
+#   default  = null
+# }
+
+# variable "rc_maxNum" {
+#   type = number
+#   default = null
+# }
+
+# variable "rc_profile" {
+#   type = string
+#   default = null
+# }
+
+# variable "imageID" {
+#   type = string
+#   default = null
+# }
+
+# variable "compute_subnet_id" {
+#   type = string
+#   default = null
+# }
+
+# variable "region" {
+#   type = string
+#   default = null
+# }
+
+# variable "resource_group_id" {
+#   type = string
+#   default = null
+# }
+
+# variable "zones" {
+#   type = string
+#   default = null
+# }
+
+# variable "dns_domain_names" {
+#   type = object({
+#     compute  = string
+#     storage  = string
+#     protocol = string
+#   })
+#   default = {
+#     compute  = "comp.com"
+#     storage  = "strg.com"
+#     protocol = "ces.com"
+#   }
+#   description = "IBM Cloud HPC DNS domain names."
+# }
+
+# variable "compute_ssh_keys_ids" {
+#   type        = list(string)
+#   default     = [""]
+#   description = "List of SSH key IDs for compute instances."
+# }
+
+# variable "dynamic_compute_instances" {
+#   type = list(
+#     object({
+#       profile = string
+#       count   = number
+#       image   = string
+#     })
+#   )
+#   default = [{
+#     profile = "cx2-2x4"
+#     count   = 1024
+#     image   = "ibm-redhat-8-10-minimal-amd64-2"
+#   }]
+#   description = "MaxNumber of instances to be launched for compute cluster."
+# }
+
+# variable "compute_subnets_cidr" {
+#   type        = list(string)
+#   default     = null
+#   description = "List of compute subnet CIDR blocks."
+# }
+
+variable "enable_hyperthreading" {
+  description = "Enable or disable hyperthreading"
+  type        = bool
   default     = null
-  description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
 }
 
 variable "vcpus" {
-  type     = number
-  default  = null
+  description = "Number of vCPUs"
+  type        = number
+  default     = null
 }
 
 variable "ncores" {
-  type     = number
-  default  = null
+  description = "Number of cores"
+  type        = number
+  default     = null
 }
 
 variable "ncpus" {
-  type     = number
-  default  = null
+  description = "Number of CPUs"
+  type        = number
+  default     = null
 }
 
 variable "memInMB" {
-  type     = number
-  default  = null
+  description = "Memory in MB"
+  type        = number
+  default     = null
 }
 
 variable "rc_maxNum" {
-  type = number
-  default = null
+  description = "Maximum number of resource instances"
+  type        = number
+  default     = null
 }
 
 variable "rc_profile" {
-  type = string
-  default = null
+  description = "Resource profile"
+  type        = string
+  default     = null
 }
 
 variable "imageID" {
-  type = string
-  default = null
+  description = "Image ID for the compute instance"
+  type        = string
+  default     = null
 }
 
 variable "compute_subnet_id" {
-  type = string
-  default = null
+  description = "Compute subnet ID"
+  type        = string
+  default     = null
 }
 
 variable "region" {
-  type = string
-  default = null
+  description = "Deployment region"
+  type        = string
+  default     = null
 }
 
 variable "resource_group_id" {
-  type = string
-  default = null
-}
-
-variable "zones" {
-  type = string
-  default = null
-}
-
-variable "dns_domain_names" {
-  type = object({
-    compute  = string
-    storage  = string
-    protocol = string
-  })
-  default = null
-  description = "IBM Cloud HPC DNS domain names."
-}
-
-variable "compute_ssh_keys_ids" {
-  type        = list(string)
-  default     = [""]
-  description = "List of SSH key IDs for compute instances."
-}
-
-variable "dynamic_compute_instances" {
-  type = list(
-    object({
-      profile = string
-      count   = number
-      image   = string
-    })
-  )
-  default = [{
-    profile = "cx2-2x4"
-    count   = 1024
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
-  }]
-  description = "MaxNumber of instances to be launched for compute cluster."
+  description = "Resource group ID"
+  type        = string
+  default     = null
 }
 
 variable "compute_subnets_cidr" {
+  description = "List of compute subnets CIDR"
   type        = list(string)
   default     = null
-  description = "List of compute subnet CIDR blocks."
+}
+
+variable "dynamic_compute_instances" {
+  description = "Dynamic compute instances configuration"
+  type        = list(map(any))
+  default     = null
+}
+
+variable "compute_ssh_keys_ids" {
+  description = "List of compute SSH key IDs"
+  type        = list(string)
+  default     = null
 }
