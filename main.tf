@@ -131,8 +131,8 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "bastion_security_group_id": "${local.bastion_security_group_id}",
   "deployer_hostname": "${local.deployer_hostname}",
   "deployer_ip": "${local.deployer_ip}",
-  "cloud_logs_data_bucket": ${local.cloud_logs_data_bucket},
-  "cloud_metrics_data_bucket": ${local.cloud_metrics_data_bucket}
+  "cloud_logs_data_bucket": "${local.cloud_logs_data_bucket}",
+  "cloud_metrics_data_bucket": "${local.cloud_metrics_data_bucket}"
 }    
 EOT
   filename = local.schematics_inputs_path
