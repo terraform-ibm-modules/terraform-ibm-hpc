@@ -16,12 +16,12 @@ variable "ibmcloud_api_key" {
 # Resource Groups Variables
 ##############################################################################
 
-variable "resource_group" {
+variable "existing_resource_group" {
   description = "Specify the name of the existing resource group in your IBM Cloud account where VPC resources will be deployed. By default, the resource group is set to 'Default.' In some older accounts, it may be 'default,' so please verify the resource group name before proceeding. If the value is set to \"null\", the automation will create two separate resource groups: 'workload-rg' and 'service-rg.' For more details, see Managing resource groups."
   type        = string
   default     = "Default"
   validation {
-    condition     = var.resource_group != null
+    condition     = var.existing_resource_group != null
     error_message = "If you want to provide null for resource_group variable, it should be within double quotes."
   }
 }
@@ -65,12 +65,12 @@ variable "zones" {
   }
 }
 
-variable "cluster_id" {
+variable "cluster_name" {
   type        = string
-  description = "The unique cluster ID used by LSF to configure resources can be up to 39 alphanumeric characters, including underscores (_), hyphens (-), and periods (.). Spaces and other special characters are not allowed. Avoid using the name of any host or user as the cluster ID. Note that the cluster ID cannot be changed after deployment."
+  description = "Provide a unique cluster name that LSF uses to configure and group the cluster. Without this name, LSF cannot form a cluster, and the initial deployments will fail. The cluster name can be up to 39 alphanumeric characters and may include underscores (_), hyphens (-), and periods (.). Spaces and other special characters are not allowed. Avoid using the name of any host or user as the cluster name. Note that the cluster name cannot be changed after deployment."
   validation {
-    condition     = 0 < length(var.cluster_id) && length(var.cluster_id) < 40 && can(regex("^[a-zA-Z0-9_.-]+$", var.cluster_id))
-    error_message = "The Cluster ID can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. Other special characters and spaces are not allowed."
+    condition     = 0 < length(var.cluster_name) && length(var.cluster_name) < 40 && can(regex("^[a-zA-Z0-9_.-]+$", var.cluster_name))
+    error_message = "The Cluster name can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. Other special characters and spaces are not allowed."
   }
 }
 
@@ -171,12 +171,12 @@ variable "remote_allowed_ips" {
 
 variable "bastion_ssh_keys" {
   type        = list(string)
-  description = "Provide the list of SSH key names configured in your IBM Cloud account to establish a connection to the Spectrum LSF bastion and login node. Ensure the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by following the provided instructions.[SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
+  description = "Provide the list of SSH key names configured in your IBM Cloud account to establish a connection to the Spectrum LSF bastion and login node. Make sure the SSH key exists in the same resource group and region where the cluster is being provisioned. To pass multiple SSH keys, use the format [\"key-name-1\", \"key-name-2\"]. If you don’t have an SSH key in your IBM Cloud account, you can create one by following the provided .[SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
 }
 
 variable "compute_ssh_keys" {
   type        = list(string)
-  description = "Provide the list of SSH key names configured in your IBM Cloud account to establish a connection to the Spectrum LSF cluster node. Ensure the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by following the provided instructions.[SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
+  description = "Provide the list of SSH key names configured in your IBM Cloud account to establish a connection to the Spectrum LSF cluster node. Ensure the SSH key is present in the same resource group and region where the cluster is being provisioned. To pass multiple SSH keys, use the format [\"key-name-1\", \"key-name-2\"]. If you do not have an SSH key in your IBM Cloud account, create one by following the provided instructions.[SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
 }
 
 variable "login_node_instance_type" {

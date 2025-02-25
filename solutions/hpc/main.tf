@@ -15,7 +15,7 @@ module "landing_zone" {
   bastion_subnets_cidr          = var.vpc_cluster_login_private_subnets_cidr_blocks
   network_cidr                  = var.vpc_cidr
   prefix                        = var.cluster_prefix
-  resource_group                = var.resource_group
+  resource_group                = var.existing_resource_group
   vpc                           = var.vpc_name
   subnet_id                     = var.cluster_subnet_ids
   login_subnet_id               = var.login_subnet_id
@@ -107,7 +107,7 @@ module "landing_zone_vsi" {
   app_center_gui_pwd                               = var.app_center_gui_pwd
   enable_app_center                                = var.enable_app_center
   contract_id                                      = var.reservation_id
-  cluster_id                                       = var.cluster_id
+  cluster_id                                       = var.cluster_name
   management_node_count                            = var.management_node_count
   management_node_instance_type                    = var.management_node_instance_type
   file_share                                       = length(local.valid_lsf_shares) > 0 ? module.file_storage.total_mount_paths : module.file_storage.mount_paths_excluding_first
