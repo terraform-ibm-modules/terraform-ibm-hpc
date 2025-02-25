@@ -130,7 +130,21 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "compute_private_key_content": ${local.compute_private_key_content},
   "bastion_security_group_id": "${local.bastion_security_group_id}",
   "deployer_hostname": "${local.deployer_hostname}",
-  "deployer_ip": "${local.deployer_ip}"
+  "deployer_ip": "${local.deployer_ip}",
+  "enable_hyperthreading": "${local.enable_hyperthreading}",
+  "vcpus": ${local.vcpus},
+  "ncores": ${local.ncores},
+  "ncpus": ${local.ncpus},
+  "memInMB": ${local.memInMB},
+  "rc_maxNum": ${local.rc_maxNum},
+  "rc_profile": "${local.rc_profile}",
+  "imageID": "${local.imageID}",
+  "compute_subnet_id": "${local.compute_subnet_id}",
+  "region": "${local.region}",
+  "resource_group_id": "${local.resource_group_ids["service_rg"]}",
+  "compute_subnets_cidr": ${jsonencode(local.compute_subnets_cidr)},
+  "dynamic_compute_instances": ${jsonencode(local.dynamic_compute_instances)},
+  "compute_ssh_keys_ids": ${jsonencode(local.compute_ssh_keys_ids)}
 }    
 EOT
   filename = local.schematics_inputs_path
@@ -276,6 +290,21 @@ module "write_compute_cluster_inventory" {
   lsf_deployer_hostname = local.lsf_deployer_hostname
   enable_hyperthreading = local.enable_hyperthreading
   dns_domain_names      = var.dns_domain_names
+  ibmcloud_api_key      = var.ibmcloud_api_key
+  vcpus                 = local.vcpus
+  ncores                = local.ncores
+  ncpus                 = local.ncpus
+  memInMB               = local.memInMB
+  rc_maxNum             = local.rc_maxNum
+  rc_profile            = local.rc_profile
+  imageID               = local.imageID
+  compute_subnet_id     = local.compute_subnet_id
+  region                = local.region
+  resource_group_id     = local.resource_group_ids["service_rg"]
+  zones                 = local.zones
+  compute_subnets_cidr  = local.compute_subnets_cidr
+  dynamic_compute_instances = local.dynamic_compute_instances
+  compute_ssh_keys_ids  = local.compute_ssh_keys_ids
   depends_on            = [ time_sleep.wait_60_seconds ]
 }
 

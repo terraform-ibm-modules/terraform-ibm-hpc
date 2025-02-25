@@ -255,8 +255,19 @@ locals {
   ha_shared_dir         = "/mnt/lsf/shared"
   nfs_install_dir       = "none"
   Enable_Monitoring     = false
-  enable_hyperthreading = true
   lsf_deployer_hostname = var.deployer_hostname #data.external.get_hostname.result.name  #var.enable_bastion ? "" : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
+  enable_hyperthreading = jsonencode(var.enable_hyperthreading)
+  vcpus                 = tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile.vcpu_count[0].value)
+  ncores                = tonumber(local.vcpus / 2)
+  ncpus                 = tonumber(local.enable_hyperthreading ? local.vcpus : local.ncores)
+  memInMB               = tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile.memory[0].value) * 1024
+  rc_maxNum             = tonumber(var.dynamic_compute_instances[0].count)
+  rc_profile            = jsonencode(var.dynamic_compute_instances[0].profile)
+  imageID               = jsonencode(data.ibm_is_image.dynamic_compute.id)
+  compute_subnets_cidr  = var.enable_deployer ? [] : var.compute_subnets_cidr
+  dynamic_compute_instances = var.enable_deployer ? [{}] : var.dynamic_compute_instances
+  compute_ssh_keys_ids = var.enable_deployer ? [] : [for name in local.compute_ssh_keys : data.ibm_is_ssh_key.compute_ssh_keys[name].id]
+
 }
 
 locals {
