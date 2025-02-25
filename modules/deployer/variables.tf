@@ -1,4 +1,14 @@
 ##############################################################################
+# Account Variables
+##############################################################################
+variable "ibmcloud_api_key" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
+}
+
+##############################################################################
 # Resource Groups Variables
 ##############################################################################
 
@@ -30,6 +40,11 @@ variable "zones" {
 ##############################################################################
 # VPC Variables
 ##############################################################################
+variable "vpc" {
+  type        = string
+  default     = null
+  description = "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+}
 
 variable "vpc_id" {
   type        = string
@@ -160,4 +175,166 @@ variable "dns_domain_names" {
     protocol = string
   })
   description = "IBM Cloud HPC DNS domain names."
+}
+
+##############################################################################
+# Compute Variables
+##############################################################################
+variable "client_subnets" {
+  type        = list(string)
+  default     = null
+  description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+}
+
+variable "compute_ssh_keys" {
+  type        = list(string)
+  default     = null
+  description = "The key pair to use to launch the compute host."
+}
+
+variable "client_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  description = "Number of instances to be launched for client."
+}
+
+variable "compute_subnets" {
+  type        = list(string)
+  default     = null
+  description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+}
+
+##############################################################################
+# Storage Variables
+##############################################################################
+variable "storage_subnets" {
+  type        = list(string)
+  default     = null
+  description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+}
+
+variable "storage_ssh_keys" {
+  type        = list(string)
+  default     = null
+  description = "The key pair to use to launch the storage cluster host."
+}
+
+variable "storage_instances" {
+  type = list(
+    object({
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = optional(string)
+    })
+  )
+  description = "Number of instances to be launched for storage cluster."
+}
+
+variable "protocol_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  description = "Number of instances to be launched for protocol hosts."
+}
+
+variable "protocol_subnets" {
+  type        = list(string)
+  default     = null
+  description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+}
+
+##############################################################################
+# Offering Variations
+##############################################################################
+variable "ibm_customer_number" {
+  type        = string
+  sensitive   = true
+  description = "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
+}
+
+##############################################################################
+# Observability Variables
+##############################################################################
+variable "enable_cos_integration" {
+  type        = bool
+  default     = false
+  description = "Integrate COS with HPC solution"
+}
+
+variable "enable_vpc_flow_logs" {
+  type        = bool
+  default     = false
+  description = "Enable Activity tracker"
+}
+
+##############################################################################
+# SCC Variables
+##############################################################################
+variable "enable_atracker" {
+  type        = bool
+  default     = false
+  description = "Enable Activity tracker"
+}
+
+variable "compute_public_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Compute security key content."
+}
+
+variable "compute_private_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Compute security key content."
+}
+
+variable "bastion_security_group_id" {
+  type        = string
+  default     = null
+  description = "bastion security group id"
+}
+
+variable "deployer_hostname" {
+  type        = string
+  default     = null
+  description = "deployer node hostname"
+}
+
+variable "deployer_ip" {
+  type        = string
+  default     = null
+  description = "deployer node ip"
+}
+
+##############################################################################
+# Terraform generic Variables
+##############################################################################
+variable "TF_PARALLELISM" {
+  type        = string
+  default     = "250"
+  description = "Limit the number of concurrent operation."
+}
+
+variable "TF_VERSION" {
+  type        = string
+  default     = "1.9"
+  description = "The version of the Terraform engine that's used in the Schematics workspace."
+}
+
+variable "TF_LOG" {
+  type        = string
+  default     = "ERROR"
+  description = "The Terraform log level used for output in the Schematics workspace."
 }

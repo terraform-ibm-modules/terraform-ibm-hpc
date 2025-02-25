@@ -1,4 +1,4 @@
-output "lsf" {
+output "lsf_1" {
   value = module.lsf.file_storage
   #sensitive = true
 }
@@ -8,6 +8,7 @@ output "lsf" {
 #   #sensitive = true
 # }
 
-# output "lsf" {
-#   value = module.lsf
-# }
+output "lsf" {
+  value = module.lsf
+  sensitive = true
+}

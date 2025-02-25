@@ -14,6 +14,12 @@ data "ibm_is_vpc" "itself" {
   count = var.vpc == null ? 0 : 1
   name  = var.vpc
 }
+
+data "ibm_is_vpc" "existing_vpc" {
+  count = var.vpc != null ? 1 : 0
+  name  = var.vpc
+}
+
 /*
 data "ibm_is_subnet" "itself" {
   count      = length(local.subnets)

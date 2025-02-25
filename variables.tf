@@ -855,11 +855,11 @@ variable "enable_landing_zone" {
   description = "Run landing zone module."
 }
 
-variable "vpc_id" {
-  type        = string
-  default     = null
-  description = "ID of an existing VPC in which the cluster resources will be deployed."
-}
+# variable "vpc_id" {
+#   type        = string
+#   default     = null
+#   description = "ID of an existing VPC in which the cluster resources will be deployed."
+# }
 
 variable "bastion_fip" {
   type        = string
