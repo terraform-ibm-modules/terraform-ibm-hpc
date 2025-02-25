@@ -301,7 +301,7 @@ module "write_compute_cluster_inventory" {
   compute_subnet_id     = local.compute_subnet_id
   region                = local.region
   resource_group_id     = local.resource_group_ids["service_rg"]
-  zones                 = local.zones
+  zones                 = var.zones
   compute_subnets_cidr  = local.compute_subnets_cidr
   dynamic_compute_instances = local.dynamic_compute_instances
   compute_ssh_keys_ids  = local.compute_ssh_keys_ids
