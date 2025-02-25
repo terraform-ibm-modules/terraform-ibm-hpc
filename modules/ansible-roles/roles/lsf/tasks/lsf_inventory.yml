@@ -8,6 +8,7 @@
     dest: "{{ inventory_path }}/lsf-inventory"
   # delegate_to: localhost
   delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
+  run_once: true
 
 - name: Create config file from template
   template:
@@ -15,6 +16,7 @@
     dest: "{{ inventory_path }}/lsf-config.yml"
   # delegate_to: localhost
   delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
+  run_once: true
 
 # Update deployer_hostname in group_vars/all
   
@@ -25,6 +27,7 @@
     line: 'deployer_hostname: {{ lsf_deployer_hostname }}'
     # backup: yes
   delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
+  run_once: true
 
 # - name: Create all variable file from template
 #   template:

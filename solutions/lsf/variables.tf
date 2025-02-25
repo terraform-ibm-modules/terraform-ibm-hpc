@@ -154,7 +154,7 @@ variable "deployer_image" {
 
 variable "deployer_instance_profile" {
   type        = string
-  default     = "mx2-4x32"
+  default     = "bx2-8x32"
   description = "Deployer should be only used for better deployment performance"
 }
 
