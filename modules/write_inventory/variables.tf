@@ -132,19 +132,19 @@ variable "lsf_deployer_hostname" {
 #   default = null
 # }
 
-# variable "dns_domain_names" {
-#   type = object({
-#     compute  = string
-#     storage  = string
-#     protocol = string
-#   })
-#   default = {
-#     compute  = "comp.com"
-#     storage  = "strg.com"
-#     protocol = "ces.com"
-#   }
-#   description = "IBM Cloud HPC DNS domain names."
-# }
+variable "dns_domain_names" {
+  type = object({
+    compute  = string
+    storage  = string
+    protocol = string
+  })
+  default = {
+    compute  = "comp.com"
+    storage  = "strg.com"
+    protocol = "ces.com"
+  }
+  description = "IBM Cloud HPC DNS domain names."
+}
 
 # variable "compute_ssh_keys_ids" {
 #   type        = list(string)
@@ -258,11 +258,11 @@ variable "compute_ssh_keys_ids" {
   default     = null
 }
 
-variable "dns_domain_names" {
-  description = "IBM Cloud HPC DNS domain names."
-  type        = map(string)
-  default     = null
-}
+# variable "dns_domain_names" {
+#   description = "IBM Cloud HPC DNS domain names."
+#   type        = map(string)
+#   default     = null
+# }
 
 variable "ibmcloud_api_key" {
   type        = string
