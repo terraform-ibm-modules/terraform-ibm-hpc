@@ -1,0 +1,80 @@
+---
+- name: Create necessary directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /home/lsfadmin
+    - /mnt/lsf/shared/ssh
+    - /home/lsfadmin/.ssh
+
+- name: Decode and copy compute public and private key contents
+  shell: echo "{{ item.content }}" | base64 --decode > "{{ item.dest }}"
+  loop:
+    - { content: "{{ compute_public_key_content }}", dest: "/mnt/lsf/shared/ssh/id_rsa.pub" }
+    - { content: "{{ compute_private_key_content }}", dest: "/mnt/lsf/shared/ssh/id_rsa" }
+  no_log: true
+
+- name: Set correct file permissions
+  file:
+    path: "{{ item.path }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "/mnt/lsf/shared/ssh/id_rsa.pub", mode: "0644" }
+    - { path: "/mnt/lsf/shared/ssh/id_rsa", mode: "0600" }
+
+- name: Set permissions for /mnt/lsf/shared/ssh
+  file:
+    path: /mnt/lsf/shared/ssh
+    state: directory
+    mode: '0777'
+    recurse: yes
+
+- name: Copy authorized_keys to lsfadmin's .ssh
+  copy:
+    src: /home/vpcuser/.ssh/authorized_keys
+    dest: /home/lsfadmin/.ssh/authorized_keys
+    remote_src: yes
+    owner: lsfadmin
+    group: lsfadmin
+    mode: '0600'
+
+- name: Copy public key content to authorized_keys
+  command: "cat /mnt/lsf/shared/ssh/id_rsa.pub"
+  register: pub_key_content
+  changed_when: false
+
+- name: Append public key to authorized_keys
+  lineinfile:
+    path: /home/lsfadmin/.ssh/authorized_keys
+    line: "{{ pub_key_content.stdout }}"
+    owner: lsfadmin
+    group: lsfadmin
+    mode: '0600'
+
+- name: Copy private key to lsfadmin's .ssh
+  copy:
+    src: /mnt/lsf/shared/ssh/id_rsa
+    dest: /home/lsfadmin/.ssh/id_rsa
+    remote_src: yes
+    owner: lsfadmin
+    group: lsfadmin
+    mode: '0400'
+
+- name: Disable StrictHostKeyChecking
+  lineinfile:
+    path: /home/lsfadmin/.ssh/config
+    line: "StrictHostKeyChecking no"
+    create: yes
+    owner: lsfadmin
+    group: lsfadmin
+    mode: '0644'
+
+- name: Ensure proper permissions on .ssh directory
+  file:
+    path: /home/lsfadmin/.ssh
+    state: directory
+    owner: lsfadmin
+    group: lsfadmin
+    mode: '0700'

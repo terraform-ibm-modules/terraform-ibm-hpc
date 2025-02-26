@@ -192,6 +192,20 @@ variable "compute_subnet_crn" {
   description = "ID of an existing VPC in which the cluster resources will be deployed."
 }
 
+variable "compute_public_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Compute security key content."
+}
+
+variable "compute_private_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Compute security key content."
+}
+
 # variable "enable_hyperthreading" {
 #   type        = bool
 #   default     = null
