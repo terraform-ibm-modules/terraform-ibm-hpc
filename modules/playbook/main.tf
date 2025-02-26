@@ -127,7 +127,6 @@ resource "local_file" "create_playbook_for_management" {
       include_vars: all.json
   roles:
      - lsf_server_config
-     - lsf_mgmt_config
 EOT
   filename = "/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/management_config.yml"
 }

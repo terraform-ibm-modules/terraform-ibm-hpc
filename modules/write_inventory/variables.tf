@@ -180,6 +180,11 @@ variable "compute_security_group_id" {
   default     = null
 }
 
+variable "vpc_id" {
+  type        = string
+  default     = null
+  description = "ID of an existing VPC in which the cluster resources will be deployed."
+}
 # variable "enable_hyperthreading" {
 #   type        = bool
 #   default     = null

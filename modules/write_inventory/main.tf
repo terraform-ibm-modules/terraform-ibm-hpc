@@ -18,6 +18,7 @@ resource "local_sensitive_file" "itself" {
   "enable_hyperthreading": ${jsonencode(var.enable_hyperthreading)},
   "dns_domain_names": ${jsonencode(var.dns_domain_names.compute)},
   "ibmcloud_api_key": ${jsonencode(var.ibmcloud_api_key)},
+  "vpc_id": ${jsonencode(var.vpc_id)}
   "vcpus": ${jsonencode(var.vcpus)},
   "rc_ncores": ${jsonencode(var.ncores)},
   "rc_ncpus": ${jsonencode(var.ncpus)},

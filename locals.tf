@@ -263,10 +263,10 @@ locals {
   memInMB               = var.enable_deployer ? 0 : tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile.memory[0].value) * 1024
   rc_maxNum             = var.enable_deployer ? 0 : tonumber(var.dynamic_compute_instances[0].count)
   rc_profile            = var.enable_deployer ? "" : var.dynamic_compute_instances[0].profile
-  imageID               = var.enable_deployer ? "" : data.ibm_is_image.dynamic_compute.id
-  compute_subnets_cidr  = var.enable_deployer ? [] :var.compute_subnets_cidr
-  dynamic_compute_instances = var.enable_deployer ? [{}] :var.dynamic_compute_instances
-  compute_ssh_keys_ids = var.enable_deployer ? [] : [for name in local.compute_ssh_keys : data.ibm_is_ssh_key.compute_ssh_keys[name].id]
+  imageID               = var.enable_deployer ? ""  : data.ibm_is_image.dynamic_compute.id
+  compute_subnets_cidr  = var.compute_subnets_cidr
+  dynamic_compute_instances = var.dynamic_compute_instances
+  compute_ssh_keys_ids  = [for name in local.compute_ssh_keys : data.ibm_is_ssh_key.compute_ssh_keys[name].id]
 }
 
 locals {

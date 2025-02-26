@@ -76,7 +76,7 @@
   shell: |
     python3 -c "import ipaddress; \
     print('\n'.join([str(ip) + ' {{ my_cluster_name }}-' + str(ip).replace('.', '-') \
-    for ip in ipaddress.IPv4Network('{{ rc_cidr_block }}')]))" >> "{{ LSF_HOSTS_FILE }}"
+    for ip in ipaddress.IPv4Network('{{ compute_subnets_cidr }}')]))" >> "{{ LSF_HOSTS_FILE }}"
   args:
     executable: /bin/bash
   run_once: true

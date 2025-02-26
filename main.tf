@@ -137,8 +137,8 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "ncpus": ${local.ncpus},
   "memInMB": ${local.memInMB},
   "rc_maxNum": ${local.rc_maxNum},
-  "rc_profile": ${local.rc_profile},
-  "imageID": ${local.imageID},
+  "rc_profile": "${local.rc_profile}",
+  "imageID": "${local.imageID}",
   "compute_subnet_id": "${local.compute_subnet_id}",
   "region": "${local.region}",
   "resource_group_id": "${local.resource_group_ids["service_rg"]}",
@@ -291,6 +291,7 @@ module "write_compute_cluster_inventory" {
   enable_hyperthreading = local.enable_hyperthreading
   dns_domain_names      = var.dns_domain_names
   ibmcloud_api_key      = var.ibmcloud_api_key
+  vpc_id                = local.vpc_id
   vcpus                 = local.vcpus
   ncores                = local.ncores
   ncpus                 = local.ncpus
