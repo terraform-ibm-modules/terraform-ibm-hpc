@@ -16,6 +16,7 @@ variable "region" {
 
 variable "admin_password" {
   description = "The administrator password"
+  sensitive   = true
   type        = string
 }
 
