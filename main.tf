@@ -152,7 +152,7 @@ EOT
 }
 
 resource "null_resource" "tf_resource_provisioner" {
-  count = var.enable_deployer == true ? 1 : 0
+  count = var.enable_deployer == true ? 0 : 0
   connection {
     type                = "ssh"
     host                = flatten(module.deployer.deployer_vsi_data[*].list)[0].ipv4_address
@@ -309,8 +309,8 @@ module "write_compute_cluster_inventory" {
   compute_ssh_keys_ids  = local.compute_ssh_keys_ids
   compute_security_group_id = local.compute_security_group_id
   compute_subnet_crn    = local.compute_subnet_crn
-  compute_public_key_content = local.compute_public_key_content
-  compute_private_key_content =  local.compute_private_key_content
+  compute_public_key_content = var.compute_public_key_content
+  compute_private_key_content =  var.compute_private_key_content
   depends_on            = [ time_sleep.wait_60_seconds ]
 }
 
