@@ -120,7 +120,7 @@ locals {
   # If user defined then use existing else create new
   # Calculate network acl rules (can be done inplace in vpcs)
   # TODO: VPN expectation
-  cidrs_network_acl_rules = compact(flatten([local.schematics_reserved_cidrs, var.allowed_cidr, var.network_cidr, "161.26.0.0/16", "166.8.0.0/14", "0.0.0.0/0"]))
+  cidrs_network_acl_rules = compact(flatten([local.schematics_reserved_cidrs, var.allowed_cidr, var.network_cidr, "161.26.0.0/16", "166.8.0.0/14"]))
   network_acl_inbound_rules = [
     for cidr_index in range(length(local.cidrs_network_acl_rules)) : {
       name        = format("allow-inbound-%s", cidr_index + 1)
