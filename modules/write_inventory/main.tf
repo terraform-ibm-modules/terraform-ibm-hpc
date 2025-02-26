@@ -19,19 +19,20 @@ resource "local_sensitive_file" "itself" {
   "dns_domain_names": ${jsonencode(var.dns_domain_names.compute)},
   "ibmcloud_api_key": ${jsonencode(var.ibmcloud_api_key)},
   "vcpus": ${jsonencode(var.vcpus)},
-  "ncores": ${jsonencode(var.ncores)},
-  "ncpus": ${jsonencode(var.ncpus)},
-  "memInMB": ${jsonencode(var.memInMB)},
+  "rc_ncores": ${jsonencode(var.ncores)},
+  "rc_ncpus": ${jsonencode(var.ncpus)},
+  "rc_memInMB": ${jsonencode(var.memInMB)},
   "rc_maxNum": ${jsonencode(var.rc_maxNum)},
   "rc_profile": ${jsonencode(var.rc_profile)},
   "imageID": ${jsonencode(var.imageID)},
   "compute_subnet_id": ${jsonencode(var.compute_subnet_id)},
-  "region": ${jsonencode(var.region)},
+  "regionName": ${jsonencode(var.region)},
   "resource_group_id": ${jsonencode(var.resource_group_id)},
-  "zones": ${jsonencode(var.zones)},
+  "zoneName": ${jsonencode(var.zones)},
   "compute_ssh_keys_ids": ${jsonencode(var.compute_ssh_keys_ids)},
   "dynamic_compute_instances": ${jsonencode(var.dynamic_compute_instances)},
-  "compute_subnets_cidr": ${jsonencode(var.compute_subnets_cidr)}
+  "compute_subnets_cidr": ${jsonencode(var.compute_subnets_cidr)},
+  "compute_security_group_id" : ${jsonencode(compute_security_group_id)}
 }
 EOT
   filename = var.json_inventory_path

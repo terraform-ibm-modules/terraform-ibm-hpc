@@ -305,6 +305,7 @@ module "write_compute_cluster_inventory" {
   compute_subnets_cidr  = local.compute_subnets_cidr
   dynamic_compute_instances = local.dynamic_compute_instances
   compute_ssh_keys_ids  = local.compute_ssh_keys_ids
+  compute_security_group_id = local.compute_security_group_id
   depends_on            = [ time_sleep.wait_60_seconds ]
 }
 

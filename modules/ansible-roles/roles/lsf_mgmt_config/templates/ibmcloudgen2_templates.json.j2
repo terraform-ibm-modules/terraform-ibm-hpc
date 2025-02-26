@@ -11,12 +11,12 @@
                 "icgen2host": ["Boolean", "1"]
             },
             "imageId": "{{ imageID }}",
-            "subnetId": "{{ subnetID }}",
+            "subnetId": "{{ compute_subnet_id }}",
             "vpcId": "{{ vpcID }}",
             "vmType": "{{ rc_profile }}",
-            "securityGroupIds": ["{{ securityGroupID }}"],
-            "resourceGroupId": "{{ rc_rg }}",
-            "sshkey_id": "{{ sshkey_ID }}",
+            "securityGroupIds": ["{{ compute_security_group_id }}"],
+            "resourceGroupId": "{{ resource_group_id }}",
+            "sshkey_id": "{{ compute_ssh_keys_ids }}",
             "region": "{{ regionName }}",
             "zone": "{{ zoneName }}"
         }
