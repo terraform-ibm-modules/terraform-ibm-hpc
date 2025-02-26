@@ -144,7 +144,8 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "resource_group_id": "${local.resource_group_ids["service_rg"]}",
   "compute_subnets_cidr": ${jsonencode(local.compute_subnets_cidr)},
   "dynamic_compute_instances": ${jsonencode(local.dynamic_compute_instances)},
-  "compute_ssh_keys_ids": ${jsonencode(local.compute_ssh_keys_ids)}
+  "compute_ssh_keys_ids": ${jsonencode(local.compute_ssh_keys_ids)},
+  "compute_subnet_crn": ${jsonencode(local.compute_subnet_crn)}
 }    
 EOT
   filename = local.schematics_inputs_path
@@ -307,6 +308,7 @@ module "write_compute_cluster_inventory" {
   dynamic_compute_instances = local.dynamic_compute_instances
   compute_ssh_keys_ids  = local.compute_ssh_keys_ids
   compute_security_group_id = local.compute_security_group_id
+  compute_subnet_crn    = local.compute_subnet_crn
   depends_on            = [ time_sleep.wait_60_seconds ]
 }
 

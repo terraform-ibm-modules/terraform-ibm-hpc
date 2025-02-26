@@ -185,6 +185,13 @@ variable "vpc_id" {
   default     = null
   description = "ID of an existing VPC in which the cluster resources will be deployed."
 }
+
+variable "compute_subnet_crn" {
+  type        = string
+  default     = null
+  description = "ID of an existing VPC in which the cluster resources will be deployed."
+}
+
 # variable "enable_hyperthreading" {
 #   type        = bool
 #   default     = null

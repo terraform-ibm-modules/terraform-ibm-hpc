@@ -64,3 +64,8 @@ data "ibm_is_ssh_key" "compute_ssh_keys" {
   for_each = toset(local.compute_ssh_keys)
   name     = each.key
 }
+
+data "ibm_is_subnet" "compute_subnet_crn" {
+  identifier = local.compute_subnet_id
+}
+# data.ibm_is_subnet.compute_subnet_crn.crn
