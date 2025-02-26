@@ -308,7 +308,7 @@ locals {
             days    = 30
             enable  = true
             rule_id = "bucket-expire-rule"
-          }          
+          }
         } : null,
         var.enable_atracker ? {
           name          = "atracker-bucket"
@@ -320,7 +320,7 @@ locals {
             days    = 30
             enable  = true
             rule_id = "bucket-expire-rule"
-          }          
+          }
         } : null,
         var.observability_logs_enable ? {
           name          = "logs-data-bucket"
@@ -332,7 +332,7 @@ locals {
             days    = 30
             enable  = true
             rule_id = "bucket-expire-rule"
-          }          
+          }
         } : null,
         var.observability_logs_enable ? {
           name          = "metrics-data-bucket"
@@ -344,7 +344,7 @@ locals {
             days    = 30
             enable  = true
             rule_id = "bucket-expire-rule"
-          }          
+          }
         } : null,
         var.scc_enable ? {
           name          = "scc-bucket"
@@ -409,7 +409,7 @@ locals {
       name = format("%s-atracker-key", var.prefix)
     } : null,
     var.scc_enable ? {
-      name = format("%s-scc-key", var.prefix)      
+      name = format("%s-scc-key", var.prefix)
     } : null
     ] : [
     {

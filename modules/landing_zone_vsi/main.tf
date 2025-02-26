@@ -1,13 +1,27 @@
-# module "compute_key" {
-#   count            = local.enable_compute ? 1 : 0
-#   source           = "./../key"
-#   private_key_path = "./../../modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
-# }
+module "compute_key" {
+  count            = local.enable_compute ? 1 : 0
+  source           = "./../key"
+  private_key_path = "./../../modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
+}
 
 resource "local_sensitive_file" "write_meta_private_key" {
   count           = local.enable_compute ? 1 : 0
-  content         = base64decode(var.compute_private_key_content)
+  content         = (local.compute_private_key_content)
   filename        = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute_id_rsa" : "${path.root}/modules/ansible-roles/compute_id_rsa"
+  file_permission = "0600"
+}
+
+resource "local_sensitive_file" "copy_compute_private_key_content" {
+  count           = local.enable_compute ? 1 : 0
+  content         = (local.compute_private_key_content)
+  filename        = "~/.ssh/id_rsa"
+  file_permission = "0600"
+}
+
+resource "local_sensitive_file" "copy_compute_public_key_content" {
+  count           = local.enable_compute ? 1 : 0
+  content         = (local.compute_public_key_content)
+  filename        = "~/.ssh/authorized_keys"
   file_permission = "0600"
 }
 
