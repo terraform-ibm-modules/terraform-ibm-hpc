@@ -152,7 +152,7 @@ EOT
 }
 
 resource "null_resource" "tf_resource_provisioner" {
-  count = var.enable_deployer == true ? 0 : 0
+  count = var.enable_deployer == true ? 1 : 0
   connection {
     type                = "ssh"
     host                = flatten(module.deployer.deployer_vsi_data[*].list)[0].ipv4_address

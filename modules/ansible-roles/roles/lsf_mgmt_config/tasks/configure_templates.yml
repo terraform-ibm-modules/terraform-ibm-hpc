@@ -1,23 +1,23 @@
 ---
-- name: Copy credentials
+- name: Management Config Templates| Copy credentials
   template:
     src: "templates/credentials.j2"
     dest: "{{ LSF_RC_IC_CONF }}/credentials"
     mode: '0644'
 
-- name: Copy ibmcloudgen2_config.json
+- name: Management Config Templates | Copy ibmcloudgen2_config.json
   template:
     src: "templates/ibmcloudgen2_config.json.j2"
     dest: "{{ LSF_RC_IC_CONF }}/ibmcloudgen2_config.json"
     mode: '0644'
 
-- name: Copy ibmcloudgen2_templates.json
+- name: Management Config Templates | Copy ibmcloudgen2_templates.json
   template:
     src: "templates/ibmcloudgen2_templates.json.j2"
     dest: "{{ LSF_RC_IC_CONF }}/ibmcloudgen2_templates.json"
     mode: '0644'
 
-- name: Copy hostProviders.json
+- name: Management Config Templates | Copy hostProviders.json
   template:
     src: "templates/hostProviders.json.j2"
     dest: "{{ LSF_CONF_FILE_PATH }}/resource_connector/hostProviders.json"
