@@ -918,13 +918,13 @@ variable "deployer_ip" {
 }
 
 variable "cloud_logs_data_bucket" {
-  type        = string
+  type        = any
   default     = null
   description = "cloud logs data bucket"
 }
 
 variable "cloud_metrics_data_bucket" {
-  type        = string
+  type        = any
   default     = null
   description = "cloud metrics data bucket"
 }

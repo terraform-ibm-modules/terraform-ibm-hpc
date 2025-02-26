@@ -295,6 +295,6 @@ locals {
     bucket_crn      = local.cloud_metrics_bucket.crn
     bucket_endpoint = local.cloud_metrics_bucket.s3_endpoint_direct
   } : null)
-  scc_cos_bucket = [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0]
-  scc_cos_instance_crn = module.landing_zone.cos_instance_crns[0]
+  scc_cos_bucket = length(module.landing_zone.cos_buckets_names) > 0 ? [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0] : null
+  scc_cos_instance_crn = length(module.landing_zone.cos_instance_crns) > 0 ? module.landing_zone.cos_instance_crns[0] : null
 }
