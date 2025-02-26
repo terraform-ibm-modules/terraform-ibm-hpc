@@ -59,8 +59,8 @@ locals {
         port_max = 22
       }
     }],
-    [for cidr in concat(local.bastion_sg_variable_cidr, ["0.0.0.0/0"]) : {
-      name      = format("allow-variable-outbound-%s", index(concat(local.bastion_sg_variable_cidr, ["0.0.0.0/0"]), cidr) + 1)
+    [for cidr in local.bastion_sg_variable_cidr : {
+      name      = format("allow-variable-outbound-%s", index(local.bastion_sg_variable_cidr, cidr) + 1)
       direction = "outbound"
       remote    = cidr
     }]
