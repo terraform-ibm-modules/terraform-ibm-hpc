@@ -285,6 +285,16 @@ locals {
   dns_domain_names          = jsonencode(var.dns_domain_names)
   compute_public_key_content  = local.compute_public_key_contents != null ? jsonencode(base64encode(local.compute_public_key_contents)) : ""
   compute_private_key_content = local.compute_private_key_contents != null ? jsonencode(base64encode(local.compute_private_key_contents)) : ""
-  cloud_logs_data_bucket    = jsonencode(length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")][0] : null)
-  cloud_metrics_data_bucket = jsonencode(length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")][0] : null)
+  cloud_logs_bucket    = length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")][0] : null
+  cloud_metrics_bucket = length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")][0] : null
+  cloud_logs_data_bucket = jsonencode(local.cloud_logs_bucket != null ? {
+    bucket_crn      = local.cloud_logs_bucket.crn
+    bucket_endpoint = local.cloud_logs_bucket.s3_endpoint_direct
+  } : null)
+  cloud_metrics_data_bucket = jsonencode(local.cloud_metrics_bucket != null ? {
+    bucket_crn      = local.cloud_metrics_bucket.crn
+    bucket_endpoint = local.cloud_metrics_bucket.s3_endpoint_direct
+  } : null)
+  scc_cos_bucket = [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0]
+  scc_cos_instance_crn = module.landing_zone.cos_instance_crns[0]
 }

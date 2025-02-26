@@ -928,3 +928,15 @@ variable "cloud_metrics_data_bucket" {
   default     = null
   description = "cloud metrics data bucket"
 }
+
+variable "scc_cos_bucket" {
+  type        = string
+  default     = null
+  description = "scc cos bucket"
+}
+
+variable "scc_cos_instance_crn" {
+  type        = string
+  default     = null
+  description = "scc cos instance crn"
+}

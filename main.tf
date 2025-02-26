@@ -132,7 +132,9 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "deployer_hostname": "${local.deployer_hostname}",
   "deployer_ip": "${local.deployer_ip}",
   "cloud_logs_data_bucket": "${local.cloud_logs_data_bucket}",
-  "cloud_metrics_data_bucket": "${local.cloud_metrics_data_bucket}"
+  "cloud_metrics_data_bucket": "${local.cloud_metrics_data_bucket}",
+  "scc_cos_bucket": "${local.scc_cos_bucket}",
+  "scc_cos_instance_crn": "${local.scc_cos_instance_crn}"
 }    
 EOT
   filename = local.schematics_inputs_path
@@ -373,7 +375,7 @@ module "cloud_monitoring_instance_creation" {
 
 # Code for SCC Instance
 module "scc_instance_and_profile" {
-  count                   = var.enable_deployer == true && var.scc_enable ? 1 : 0
+  count                   = var.enable_deployer == false && var.scc_enable ? 1 : 0
   source                  = "./modules/security/scc"
   location                = var.scc_location != "" ? var.scc_location : "us-south"
   rg                      = local.resource_group_ids["service_rg"]
@@ -382,6 +384,6 @@ module "scc_instance_and_profile" {
   event_notification_plan = var.scc_event_notification_plan
   tags                    = ["hpc", var.prefix]
   prefix                  = var.prefix
-  cos_bucket              = [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0]
-  cos_instance_crn        = module.landing_zone.cos_instance_crns[0]
+  cos_bucket              = var.scc_cos_bucket
+  cos_instance_crn        = var.scc_cos_instance_crn
 }
