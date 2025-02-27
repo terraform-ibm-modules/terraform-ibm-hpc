@@ -18,11 +18,27 @@ resource "local_sensitive_file" "copy_compute_private_key_content" {
   file_permission = "0600"
 }
 
-resource "local_sensitive_file" "copy_compute_public_key_content" {
-  count           = local.enable_compute ? 1 : 0
-  content         = (local.compute_public_key_content)
-  filename        = "/root/.ssh/authorized_keys"
-  file_permission = "0600"
+# resource "local_sensitive_file" "copy_compute_public_key_content" {
+#   count           = local.enable_compute ? 1 : 0
+#   content         = (local.compute_public_key_content)
+#   filename        = "/root/.ssh/authorized_keys"
+#   file_permission = "0600"
+# }
+
+resource "null_resource" "copy_compute_public_key_content" {
+  count = local.enable_compute ? 1 : 0
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<EOT
+      echo "StrictHostKeyChecking no" >> /root/.ssh/config
+      echo "${local.compute_public_key_content}" >> /root/.ssh/authorized_keys
+    EOT
+  }
+
+  triggers = {
+    build = timestamp()
+  }
 }
 
 module "storage_key" {
