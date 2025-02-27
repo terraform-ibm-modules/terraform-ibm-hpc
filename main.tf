@@ -131,12 +131,17 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "bastion_security_group_id": "${local.bastion_security_group_id}",
   "deployer_hostname": "${local.deployer_hostname}",
   "deployer_ip": "${local.deployer_ip}",
-  "cloud_logs_data_bucket": ${local.cloud_logs_data_bucket},
-  "cloud_metrics_data_bucket": ${local.cloud_metrics_data_bucket},
   "scc_cos_bucket": "${local.scc_cos_bucket}",
   "scc_cos_instance_crn": "${local.scc_cos_instance_crn}",
-  "scc_event_notification_plan": ${var.scc_event_notification_plan}
-}    
+  "scc_event_notification_plan": "${var.scc_event_notification_plan}",
+  "cloud_logs_data_bucket": ${local.cloud_logs_data_bucket},
+  "cloud_metrics_data_bucket": ${local.cloud_metrics_data_bucket},
+  "observability_logs_enable_for_management": ${var.observability_logs_enable_for_management},
+  "observability_logs_enable_for_compute": ${var.observability_logs_enable_for_compute},
+  "observability_monitoring_enable": ${var.observability_monitoring_enable},
+  "observability_atracker_enable": ${var.observability_atracker_enable},
+  "observability_atracker_target_type": "${var.observability_atracker_target_type}"
+}
 EOT
   filename = local.schematics_inputs_path
 }
@@ -299,24 +304,24 @@ module "write_storage_cluster_inventory" {
   depends_on            = [ time_sleep.wait_60_seconds ]
 }
 
-# module "compute_inventory" {
-#   count               = var.enable_deployer == false ? 1 : 0
-#   source              = "./modules/inventory"
-#   hosts               = local.compute_hosts
-#   inventory_path      = local.compute_inventory_path
-#   name_mount_path_map = local.fileshare_name_mount_path_map
-#   logs_enable_for_management = var.observability_logs_enable_for_management
-#   monitoring_enable_for_management = var.observability_monitoring_enable
-#   monitoring_enable_for_compute = var.observability_monitoring_on_compute_nodes_enable
-#   cloud_monitoring_access_key = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_access_key : ""
-#   cloud_monitoring_ingestion_url = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_ingestion_url : ""
-#   cloud_monitoring_prws_key = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_key : ""
-#   cloud_monitoring_prws_url = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_url : ""  
-#   logs_enable_for_compute = var.observability_logs_enable_for_compute
-#   cloud_logs_ingress_private_endpoint = local.cloud_logs_ingress_private_endpoint
-#   VPC_APIKEY_VALUE = var.ibmcloud_api_key  
-#   depends_on          = [ module.write_compute_cluster_inventory ]
-# }
+module "compute_inventory" {
+  count               = var.enable_deployer == false ? 1 : 0
+  source              = "./modules/inventory"
+  hosts               = local.compute_hosts
+  inventory_path      = local.compute_inventory_path
+  name_mount_path_map = local.fileshare_name_mount_path_map
+  logs_enable_for_management = var.observability_logs_enable_for_management
+  monitoring_enable_for_management = var.observability_monitoring_enable
+  monitoring_enable_for_compute = var.observability_monitoring_on_compute_nodes_enable
+  cloud_monitoring_access_key = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_access_key : ""
+  cloud_monitoring_ingestion_url = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_ingestion_url : ""
+  cloud_monitoring_prws_key = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_key : ""
+  cloud_monitoring_prws_url = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_url : ""  
+  logs_enable_for_compute = var.observability_logs_enable_for_compute
+  cloud_logs_ingress_private_endpoint = local.cloud_logs_ingress_private_endpoint
+  # VPC_APIKEY_VALUE = var.ibmcloud_api_key  
+  depends_on          = [ module.write_compute_cluster_inventory ]
+}
 
 module "storage_inventory" {
   count               = var.enable_deployer == false ? 1 : 0

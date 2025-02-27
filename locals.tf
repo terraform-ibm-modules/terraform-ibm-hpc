@@ -242,7 +242,7 @@ locals {
 # file Share OutPut
 locals {
   fileshare_name_mount_path_map =  var.enable_deployer ? {} : module.file_storage[0].name_mount_path_map
-  # cloud_logs_ingress_private_endpoint = module.cloud_monitoring_instance_creation.cloud_logs_ingress_private_endpoint
+  cloud_logs_ingress_private_endpoint = module.cloud_monitoring_instance_creation.cloud_logs_ingress_private_endpoint
 }
 
 # details needed for json file
