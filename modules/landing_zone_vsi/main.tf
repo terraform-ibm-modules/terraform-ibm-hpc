@@ -14,14 +14,14 @@ resource "local_sensitive_file" "write_meta_private_key" {
 resource "local_sensitive_file" "copy_compute_private_key_content" {
   count           = local.enable_compute ? 1 : 0
   content         = (local.compute_private_key_content)
-  filename        = "~/.ssh/id_rsa"
+  filename        = "${path.root}/modules/ansible-roles/id_rsa"
   file_permission = "0600"
 }
 
 resource "local_sensitive_file" "copy_compute_public_key_content" {
   count           = local.enable_compute ? 1 : 0
   content         = (local.compute_public_key_content)
-  filename        = "~/.ssh/authorized_keys"
+  filename        = "${path.root}/modules/ansible-roles/id_new"
   file_permission = "0600"
 }
 
