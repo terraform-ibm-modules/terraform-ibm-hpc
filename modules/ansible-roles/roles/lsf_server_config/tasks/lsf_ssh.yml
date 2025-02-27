@@ -5,28 +5,29 @@
     state: directory
     mode: '0755'
   loop:
-    - /home/lsfadmin
-    - /mnt/lsf/shared/ssh
-    - /home/lsfadmin/.ssh
+    - /mnt/lsf/ssh
+  run_once: true
 
 - name: Passwordless SSH | Decode and copy compute public and private key contents
   shell: echo "{{ item.content }}" | base64 --decode > "{{ item.dest }}"
   loop:
-    - { content: "{{ compute_public_key_content }}", dest: "/mnt/lsf/shared/ssh/id_rsa.pub" }
-    - { content: "{{ compute_private_key_content }}", dest: "/mnt/lsf/shared/ssh/id_rsa" }
+    - { content: "{{ compute_public_key_content }}", dest: "/mnt/lsf/ssh/id_rsa.pub" }
+    - { content: "{{ compute_private_key_content }}", dest: "/mnt/lsf/ssh/id_rsa" }
   no_log: true
-
-- name: Passwordless SSH | Set correct file permissions
+  run_once: true
+  
+- name: Passwordless SSH | Create necessary directories
   file:
-    path: "{{ item.path }}"
-    mode: "{{ item.mode }}"
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
   loop:
-    - { path: "/mnt/lsf/shared/ssh/id_rsa.pub", mode: "0644" }
-    - { path: "/mnt/lsf/shared/ssh/id_rsa", mode: "0600" }
+    - /home/lsfadmin
+    - /home/lsfadmin/.ssh
 
-- name: Passwordless SSH | Set permissions for /mnt/lsf/shared/ssh
+- name: Passwordless SSH | Set permissions for /mnt/lsf/ssh
   file:
-    path: /mnt/lsf/shared/ssh
+    path: /mnt/lsf/ssh
     state: directory
     mode: '0777'
     recurse: yes
@@ -41,7 +42,7 @@
     mode: '0600'
 
 - name: Passwordless SSH | Copy public key content to authorized_keys
-  command: "cat /mnt/lsf/shared/ssh/id_rsa.pub"
+  command: "cat /mnt/lsf/ssh/id_rsa.pub"
   register: pub_key_content
   changed_when: false
 
@@ -55,7 +56,7 @@
 
 - name: Passwordless SSH | Copy private key to lsfadmin's .ssh
   copy:
-    src: /mnt/lsf/shared/ssh/id_rsa
+    src: /mnt/lsf/ssh/id_rsa
     dest: /home/lsfadmin/.ssh/id_rsa
     remote_src: yes
     owner: lsfadmin
