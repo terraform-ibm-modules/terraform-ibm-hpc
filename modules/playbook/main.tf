@@ -107,14 +107,14 @@ resource "local_file" "create_playbook_for_management" {
   roles:
      - lsf_server_config
 EOT
-  filename = "/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/management_config.yml"
+  filename = "/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/server_config.yml"
 }
 
 resource "null_resource" "run_playbook_management" {
   count = var.inventory_path != null && var.enable_lsf ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -i ${var.inventory_path} '/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/management_config.yml'"
+    command     = "ansible-playbook -i ${var.inventory_path} '/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/server_config.yml'"
   }
   triggers = {
     build = timestamp()
@@ -147,14 +147,14 @@ resource "local_file" "create_playbook_for_management_configure" {
   roles:
      - lsf_mgmt_config
 EOT
-  filename = "/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/management_server_config.yml"
+  filename = "/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/mgmt_config.yml"
 }
 
 resource "null_resource" "run_playbook_management_configure" {
   count = var.inventory_path != null && var.enable_lsf ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -i ${var.inventory_path} '/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/management_server_config.yml'"
+    command     = "ansible-playbook -i ${var.inventory_path} '/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/mgmt_config.yml'"
   }
   triggers = {
     build = timestamp()
