@@ -317,7 +317,7 @@ module "write_compute_cluster_inventory" {
 }
 
 module "write_storage_cluster_inventory" {
-  count                 = var.enable_deployer == false ? 1 : 0 
+  count                 = var.enable_deployer == false ? 0 : 0 
   source                = "./modules/write_inventory"
   json_inventory_path   = local.json_inventory_path
   lsf_masters           = local.management_nodes
@@ -343,7 +343,7 @@ module "compute_inventory" {
 }
 
 module "storage_inventory" {
-  count               = var.enable_deployer == false ? 1 : 0
+  count               = var.enable_deployer == false ? 0 : 0
   source              = "./modules/inventory"
   hosts               = local.storage_hosts
   inventory_path      = local.storage_inventory_path
@@ -352,7 +352,7 @@ module "storage_inventory" {
 }
 
 module "compute_playbook" {
-  count            = var.enable_deployer == false ? 1 : 0
+  count            = var.enable_deployer == false ? 0 : 0
   source           = "./modules/playbook"
   bastion_fip      = local.bastion_fip
   private_key_path = local.compute_private_key_path
