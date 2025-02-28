@@ -323,7 +323,7 @@ variable "enable_bastion" {
 variable "add_ibm_cloud_internal_rules" {
   description = "Add IBM cloud Internal rules to the provided security group rules"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "sg_id" {

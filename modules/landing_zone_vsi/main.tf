@@ -25,15 +25,13 @@ module "client_sg" {
   vpc_id              = var.vpc_id
 }
 
-output "name" {
-  value = module.client_sg
-}
-
 module "client_sg_rules" {
+  count                        = local.enable_client ? 1 : 0
   source                       = "../security-group-rules"
   add_ibm_cloud_internal_rules = var.add_ibm_cloud_internal_rules
   security_group_rules         = local.client_security_group_rules
   sg_id                        = flatten(module.client_sg[*].security_group_id)[0]
+  depends_on                   = [module.client_sg]
 }
 
 module "compute_sg" {
@@ -45,10 +43,12 @@ module "compute_sg" {
 }
 
 module "compute_sg_rules" {
+  count                        = local.enable_compute ? 1 : 0
   source                       = "../security-group-rules"
   add_ibm_cloud_internal_rules = var.add_ibm_cloud_internal_rules
   security_group_rules         = local.compute_security_group_rules
   sg_id                        = flatten(module.compute_sg[*].security_group_id)[0]
+  depends_on                   = [module.compute_sg]
 }
 
 module "storage_sg" {
@@ -60,10 +60,12 @@ module "storage_sg" {
 }
 
 module "storage_sg_rules" {
+  count                        = local.enable_storage ? 1 : 0
   source                       = "../security-group-rules"
   add_ibm_cloud_internal_rules = var.add_ibm_cloud_internal_rules
   security_group_rules         = local.storage_security_group_rules
   sg_id                        = flatten(module.storage_sg[*].security_group_id)[0]
+  depends_on                   = [module.storage_sg]
 }
 
 # module "client_sg" {
