@@ -1,0 +1,5 @@
+---
+- name: Restart lsfd service
+  service:
+    name: lsfd
+    state: restarted

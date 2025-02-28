@@ -72,6 +72,16 @@
     marker: ""
   run_once: true
 
+- name: Set permissions for Python directories
+  file:
+    path: "{{ item }}"
+    mode: "0755"
+    recurse: yes
+  loop:
+    - /usr/local/lib/python3.11
+    - /usr/local/lib64/python3.11
+  run_once: true
+  
 - name: Management Config | Generate and append IP-to-host mapping to LSF hosts file
   shell: |
     python3 -c "import ipaddress; \
@@ -80,3 +90,5 @@
   args:
     executable: /bin/bash
   run_once: true
+  notify:
+    - Restart lsfd service

@@ -38,3 +38,4 @@
     create: yes
   loop:
     - "EGO_DEFINE_NCPUS={{ ego_define_ncpus }}"
+  run_once: true

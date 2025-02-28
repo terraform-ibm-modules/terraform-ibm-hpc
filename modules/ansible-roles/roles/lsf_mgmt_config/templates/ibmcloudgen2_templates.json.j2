@@ -14,11 +14,11 @@
             "subnetId": "{{ compute_subnet_crn }}",
             "vpcId": "{{ vpc_id }}",
             "vmType": "{{ rc_profile }}",
-            "securityGroupIds": ["{{ compute_security_group_id }}"],
+            "securityGroupIds": ["{{ compute_security_group_id | first }}"],
             "resourceGroupId": "{{ resource_group_id }}",
-            "sshkey_id": "{{ compute_ssh_keys_ids }}",
+            "sshkey_id": "{{ compute_ssh_keys_ids | join(',') }}",
             "region": "{{ regionName }}",
-            "zone": "{{ zoneName }}"
+            "zone": "{{ zoneName | first }}"
         }
     ]
 }
