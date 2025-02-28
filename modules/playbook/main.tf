@@ -47,7 +47,6 @@ resource "local_file" "create_playbook" {
   roles:
      - vpc_fileshare_configure
      - lsf
-    #  - network_config
 EOT
   filename = var.playbook_path
 }
@@ -105,6 +104,7 @@ resource "local_file" "create_playbook_for_management" {
     - name: Load cluster-specific variables
       include_vars: all.json
   roles:
+     - network_config
      - lsf_server_config
 EOT
   filename = "/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/server_config.yml"
