@@ -31,7 +31,7 @@ resource "local_file" "create_playbook" {
 - name: Prerequisite Configuration
   hosts: [all_nodes]
   any_errors_fatal: true
-  gather_facts: True
+  gather_facts: false
   vars:
     ansible_ssh_common_args: >
       ${local.proxyjump}
