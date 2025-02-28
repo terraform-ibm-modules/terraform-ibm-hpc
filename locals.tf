@@ -35,7 +35,7 @@ locals {
   bastion_private_key_content = module.deployer.bastion_private_key_content
 
   deployer_hostname = var.enable_bastion ? flatten(module.deployer.deployer_vsi_data[*].list)[0].name : ""
-  deployer_ip = module.deployer.deployer_ip
+  deployer_ip       = module.deployer.deployer_ip
 
   compute_public_key_contents  = module.deployer.compute_public_key_content
   compute_private_key_contents = module.deployer.compute_private_key_content
@@ -81,7 +81,7 @@ locals {
     }
   ]
 
-    existing_bastion_subnets = [
+  existing_bastion_subnets = [
     for subnet in data.ibm_is_subnet.existing_bastion_subnets :
     {
       cidr = subnet.ipv4_cidr_block
@@ -149,7 +149,7 @@ locals {
     workload_rg = var.resource_group == null ? module.landing_zone.resource_group_id[0]["workload-rg"] : data.ibm_resource_group.resource_group[0].id
   }
   # resource_group_id = one(values(one(module.landing_zone.resource_group_id)))
-  vpc_crn           = var.vpc == null ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
+  vpc_crn = var.vpc == null ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
   # TODO: Fix existing subnet logic
   #subnets_crn       = var.vpc == null ? module.landing_zone.subnets_crn : ###
   existing_compute_subnet_crns  = [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.crn]
@@ -157,7 +157,7 @@ locals {
   existing_protocol_subnet_crns = [for subnet in data.ibm_is_subnet.existing_protocol_subnets : subnet.crn]
   existing_client_subnet_crns   = [for subnet in data.ibm_is_subnet.existing_client_subnets : subnet.crn]
   existing_bastion_subnet_crns  = [for subnet in data.ibm_is_subnet.existing_bastion_subnets : subnet.crn]
-  subnets_crn = concat(local.existing_compute_subnet_crns, local.existing_storage_subnet_crns, local.existing_protocol_subnet_crns, local.existing_client_subnet_crns, local.existing_bastion_subnet_crns)
+  subnets_crn                   = concat(local.existing_compute_subnet_crns, local.existing_storage_subnet_crns, local.existing_protocol_subnet_crns, local.existing_client_subnet_crns, local.existing_bastion_subnet_crns)
   # subnets_crn        = var.vpc == null && var.compute_subnets == null ? module.landing_zone.subnets_crn : concat(local.existing_subnet_crns, module.landing_zone.subnets_crn)
   #subnets           = flatten([local.compute_subnets, local.storage_subnets, local.protocol_subnets])
   #subnets_crns      = data.ibm_is_subnet.itself[*].crn
@@ -175,9 +175,9 @@ data "external" "get_hostname" {
 # locals needed for dns-records
 locals {
   # dependency: dns -> dns-records
-  dns_instance_id = var.enable_deployer ? "" : module.dns[0].dns_instance_id
+  dns_instance_id        = var.enable_deployer ? "" : module.dns[0].dns_instance_id
   dns_custom_resolver_id = var.enable_deployer ? "" : module.dns[0].dns_custom_resolver_id
-  dns_zone_map_list = var.enable_deployer ? [] : module.dns[0].dns_zone_maps
+  dns_zone_map_list      = var.enable_deployer ? [] : module.dns[0].dns_zone_maps
   compute_dns_zone_id = one(flatten([
     for dns_zone in local.dns_zone_map_list : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["compute"]
   ]))
@@ -200,7 +200,7 @@ locals {
   ]
 
   compute_dns_records = [
-    for instance in concat(local.compute_instances, local.deployer_instances):
+    for instance in concat(local.compute_instances, local.deployer_instances) :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
@@ -235,18 +235,18 @@ locals {
   bastion_fip              = module.deployer.bastion_fip
   compute_private_key_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute_id_rsa" : "${path.root}/modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
   storage_private_key_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage_id_rsa" : "${path.root}/modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
-  compute_playbook_path    = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute_ssh.yaml" : "${path.root}/modules/ansible-roles/compute_ssh.yaml" 
+  compute_playbook_path    = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute_ssh.yaml" : "${path.root}/modules/ansible-roles/compute_ssh.yaml"
   storage_playbook_path    = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage_ssh.yaml" : "${path.root}/modules/ansible-roles/storage_ssh.yaml"
 }
 
 # file Share OutPut
 locals {
-  fileshare_name_mount_path_map =  var.enable_deployer ? {} : module.file_storage[0].name_mount_path_map
+  fileshare_name_mount_path_map = var.enable_deployer ? {} : module.file_storage[0].name_mount_path_map
 }
 
 # details needed for json file
 locals {
-  json_inventory_path   = var.enable_bastion ?  "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json"
+  json_inventory_path   = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json"
   management_nodes      = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"]
   compute_nodes         = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].compute_vsi_data]))[*]["name"]
   compute_nodes_list    = var.enable_deployer ? [] : (length(local.compute_nodes) > 0 ? [format("%s-[001:%s]", join("-", slice(split("-", local.compute_nodes[0]), 0, length(split("-", local.compute_nodes[0])) - 1)), split("-", local.compute_nodes[length(local.compute_nodes) - 1])[length(split("-", local.compute_nodes[length(local.compute_nodes) - 1])) - 1])] : local.compute_nodes) #(length(local.compute_nodes) >= 10 ? [format("%s-00[%d:%d]", regex("^(.*?)-\\d+$", local.compute_nodes[0])[0], 1, length(local.compute_nodes))] : local.compute_nodes)
@@ -260,28 +260,28 @@ locals {
 }
 
 locals {
-  schematics_inputs_path    = "/tmp/.schematics/solution_terraform.auto.tfvars.json"
-  remote_inputs_path        = format("%s/terraform.tfvars.json", "/tmp")
-  deployer_path             = "/opt/ibm"
-  remote_terraform_path     = format("%s/terraform-ibm-hpc", local.deployer_path)
-  remote_ansible_path       = format("%s/terraform-ibm-hpc", local.deployer_path)
-  da_hpc_repo_url           = "https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git"
-  da_hpc_repo_tag           = "develop" ###### change it to main in future
-  zones                     = jsonencode(var.zones)
-  list_compute_ssh_keys     = jsonencode(local.compute_ssh_keys)
-  list_storage_ssh_keys     = jsonencode(local.storage_ssh_keys)
-  list_storage_instances    = jsonencode(var.storage_instances)
-  list_management_instances = jsonencode(var.management_instances)
-  list_protocol_instances   = jsonencode(var.protocol_instances)
-  list_compute_instances    = jsonencode(var.static_compute_instances)
-  list_client_instances     = jsonencode(var.client_instances)
-  allowed_cidr              = jsonencode(var.allowed_cidr)
-  list_storage_subnets      = jsonencode(length(local.storage_subnet) == 0 ? null : local.storage_subnet)
-  list_protocol_subnets     = jsonencode(length(local.protocol_subnet) == 0 ? null : local.protocol_subnet)
-  list_compute_subnets      = jsonencode(length(local.compute_subnet) == 0 ? null : local.compute_subnet)
-  list_client_subnets       = jsonencode(length(local.client_subnet) == 0 ? null : local.client_subnet)
-  list_bastion_subnets      = jsonencode(length(local.bastion_subnet) == 0 ? null : local.bastion_subnet)
-  dns_domain_names          = jsonencode(var.dns_domain_names)
+  schematics_inputs_path      = "/tmp/.schematics/solution_terraform.auto.tfvars.json"
+  remote_inputs_path          = format("%s/terraform.tfvars.json", "/tmp")
+  deployer_path               = "/opt/ibm"
+  remote_terraform_path       = format("%s/terraform-ibm-hpc", local.deployer_path)
+  remote_ansible_path         = format("%s/terraform-ibm-hpc", local.deployer_path)
+  da_hpc_repo_url             = "https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git"
+  da_hpc_repo_tag             = "mani-sg" ###### change it to main in future
+  zones                       = jsonencode(var.zones)
+  list_compute_ssh_keys       = jsonencode(local.compute_ssh_keys)
+  list_storage_ssh_keys       = jsonencode(local.storage_ssh_keys)
+  list_storage_instances      = jsonencode(var.storage_instances)
+  list_management_instances   = jsonencode(var.management_instances)
+  list_protocol_instances     = jsonencode(var.protocol_instances)
+  list_compute_instances      = jsonencode(var.static_compute_instances)
+  list_client_instances       = jsonencode(var.client_instances)
+  allowed_cidr                = jsonencode(var.allowed_cidr)
+  list_storage_subnets        = jsonencode(length(local.storage_subnet) == 0 ? null : local.storage_subnet)
+  list_protocol_subnets       = jsonencode(length(local.protocol_subnet) == 0 ? null : local.protocol_subnet)
+  list_compute_subnets        = jsonencode(length(local.compute_subnet) == 0 ? null : local.compute_subnet)
+  list_client_subnets         = jsonencode(length(local.client_subnet) == 0 ? null : local.client_subnet)
+  list_bastion_subnets        = jsonencode(length(local.bastion_subnet) == 0 ? null : local.bastion_subnet)
+  dns_domain_names            = jsonencode(var.dns_domain_names)
   compute_public_key_content  = local.compute_public_key_contents != null ? jsonencode(base64encode(local.compute_public_key_contents)) : ""
   compute_private_key_content = local.compute_private_key_contents != null ? jsonencode(base64encode(local.compute_private_key_contents)) : ""
 }

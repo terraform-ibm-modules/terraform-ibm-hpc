@@ -318,3 +318,51 @@ variable "enable_bastion" {
   default     = true
   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
 }
+
+variable "add_ibm_cloud_internal_rules" {
+  description = "Add IBM cloud Internal rules to the provided security group rules"
+  type        = bool
+  default     = true
+}
+
+variable "sg_id" {
+  description = "ID of the VPC to create security group. Only required if 'existing_security_group_name' is null"
+  type        = string
+  default     = null
+}
+
+##############################################################################
+# Rule Variables
+##############################################################################
+
+variable "security_group_rules" {
+  description = "A list of security group rules to be added to the default vpc security group"
+  type = list(
+    object({
+      name      = string
+      direction = optional(string, "inbound")
+      remote    = string
+      tcp = optional(
+        object({
+          port_max = optional(number)
+          port_min = optional(number)
+        })
+      )
+      udp = optional(
+        object({
+          port_max = optional(number)
+          port_min = optional(number)
+        })
+      )
+      icmp = optional(
+        object({
+          type = optional(number)
+          code = optional(number)
+        })
+      )
+    })
+  )
+  default = []
+}
+
+##############################################################################
