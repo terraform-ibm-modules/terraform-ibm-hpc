@@ -119,9 +119,8 @@ resource "null_resource" "run_playbook_management" {
   triggers = {
     build = timestamp()
   }
-  depends_on = [local_file.create_playbook]
+  depends_on = [ local_file.create_playbook_for_management, null_resource.run_lsf_playbooks ]
 }
-
 
 resource "local_file" "create_playbook_for_management_configure" {
   count    = var.inventory_path != null && var.enable_lsf ? 1 : 0
@@ -159,5 +158,5 @@ resource "null_resource" "run_playbook_management_configure" {
   triggers = {
     build = timestamp()
   }
-  depends_on = [local_file.create_playbook]
+  depends_on = [ local_file.create_playbook_for_management_configure, null_resource.run_playbook_management ]
 }
