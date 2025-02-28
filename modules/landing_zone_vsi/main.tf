@@ -96,6 +96,15 @@ module "compute_sg_rules" {
   depends_on                   = [module.compute_sg]
 }
 
+module "bastion_add_compute_sg_rules" {
+  count                        = local.enable_compute ? 1 : 0
+  source                       = "../security-group-rules"
+  add_ibm_cloud_internal_rules = true
+  security_group_rules         = local.compute_security_group_rules
+  sg_id                        = var.bastion_security_group_id
+  depends_on                   = [module.compute_sg]
+}
+
 module "storage_sg" {
   count               = local.enable_storage ? 1 : 0
   source              = "git::https://github.com/terraform-ibm-modules/terraform-ibm-security-group.git?ref=split_sg_rules"

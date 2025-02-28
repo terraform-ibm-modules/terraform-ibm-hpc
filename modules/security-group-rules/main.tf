@@ -4,43 +4,43 @@
 
 locals {
   # IaaS and PaaS Rules
-  ibm_cloud_internal_rules = [
-    {
-      name      = "ibmflow-iaas-outbound"
-      direction = "outbound"
-      remote    = "161.26.0.0/16"
-      tcp       = {}
-      udp       = {}
-      icmp      = {}
-    },
-    {
-      name      = "ibmflow-iaas-inbound"
-      direction = "inbound"
-      remote    = "161.26.0.0/16"
-      tcp       = {}
-      udp       = {}
-      icmp      = {}
-    },
-    {
-      name      = "ibmflow-paas-outbound"
-      direction = "outbound"
-      remote    = "166.8.0.0/14"
-      tcp       = {}
-      udp       = {}
-      icmp      = {}
-    },
-    {
-      name      = "ibmflow-paas-inbound"
-      direction = "inbound"
-      remote    = "166.8.0.0/14"
-      tcp       = {}
-      udp       = {}
-      icmp      = {}
-    }
-  ]
+  # ibm_cloud_internal_rules = [
+  #   {
+  #     name      = "ibmflow-iaas-outbound"
+  #     direction = "outbound"
+  #     remote    = "161.26.0.0/16"
+  #     tcp       = {}
+  #     udp       = {}
+  #     icmp      = {}
+  #   },
+  #   {
+  #     name      = "ibmflow-iaas-inbound"
+  #     direction = "inbound"
+  #     remote    = "161.26.0.0/16"
+  #     tcp       = {}
+  #     udp       = {}
+  #     icmp      = {}
+  #   },
+  #   {
+  #     name      = "ibmflow-paas-outbound"
+  #     direction = "outbound"
+  #     remote    = "166.8.0.0/14"
+  #     tcp       = {}
+  #     udp       = {}
+  #     icmp      = {}
+  #   },
+  #   {
+  #     name      = "ibmflow-paas-inbound"
+  #     direction = "inbound"
+  #     remote    = "166.8.0.0/14"
+  #     tcp       = {}
+  #     udp       = {}
+  #     icmp      = {}
+  #   }
+  # ]
 
   # concatenate IBM internal rules and customer security group rules depending on add_ibm_cloud_internal_rules
-  all_rules = concat(var.security_group_rules, var.add_ibm_cloud_internal_rules ? local.ibm_cloud_internal_rules : [])
+  all_rules = concat(var.security_group_rules)
 }
 
 resource "ibm_is_security_group_rule" "security_group_rules" {

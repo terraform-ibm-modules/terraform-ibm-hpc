@@ -166,20 +166,29 @@ locals {
       remote    = var.bastion_security_group_id
     },
     {
+      name      = "allow-all-client-in"
+      direction = "inbound"
+      remote    = local.client_security_group_id
+    },
+    /*
+    {
       name      = "allow-all-compute"
       direction = "inbound"
-      remote    = local.compute_security_group_id
+      remote    = module.compute_sg[0].security_group_id
     },
+    */
     {
       name      = "allow-all-bastion-out"
       direction = "outbound"
       remote    = var.bastion_security_group_id
     },
+    /*
     {
       name      = "allow-all-compute"
       direction = "outbound"
-      remote    = local.compute_security_group_id
+      remote    = module.compute_sg[0].security_group_id
     }
+    */
   ]
   # TODO: Compute & storage can't be added due to SG rule limitation
   /* [ERROR] Error while creating Security Group Rule Exceeded limit of remote rules per security group
@@ -190,6 +199,11 @@ locals {
       name      = "allow-all-bastion-in"
       direction = "inbound"
       remote    = var.bastion_security_group_id
+    },
+    {
+      name      = "allow-all-client-in"
+      direction = "inbound"
+      remote    = local.compute_security_group_id
     },
     /*
     {
@@ -212,11 +226,13 @@ locals {
       remote    = module.client_sg[0].security_group_id
     }
     */
+    /*
     {
       name      = "allow-all-compute-in"
       direction = "inbound"
       remote    = "0.0.0.0/0"
     },
+    */
     {
       name      = "allow-all-compute-out"
       direction = "outbound"
@@ -230,10 +246,17 @@ locals {
       remote    = var.bastion_security_group_id
     },
     {
+      name      = "allow-all-client-in"
+      direction = "inbound"
+      remote    = local.storage_security_group_id
+    },
+    /*
+    {
       name      = "allow-all-compute-in"
       direction = "inbound"
-      remote    = local.compute_security_group_id
+      remote    = module.compute_sg[0].security_group_id
     },
+    */
     {
       name      = "allow-all-bastion-out"
       direction = "outbound"

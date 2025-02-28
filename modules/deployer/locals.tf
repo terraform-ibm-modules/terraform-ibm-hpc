@@ -34,6 +34,8 @@ locals {
 
   bastion_ssh_keys = [for name in var.ssh_keys : data.ibm_is_ssh_key.bastion[name].id]
 
+  bastion_security_group_id = local.enable_bastion ? module.bastion_sg[0].security_group_id : null
+
   # Scale static configs
   scale_cloud_deployer_path   = "/opt/IBM/ibm-spectrumscale-cloud-deploy"
   scale_cloud_infra_repo_url  = "https://github.com/IBM/ibm-spectrum-scale-install-infra"
@@ -81,5 +83,5 @@ locals {
 
   management_instance_count     = sum(var.management_instances[*]["count"])
   static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
-  enable_compute    = local.management_instance_count > 0 || local.static_compute_instance_count > 0
+  enable_compute                = local.management_instance_count > 0 || local.static_compute_instance_count > 0
 }
