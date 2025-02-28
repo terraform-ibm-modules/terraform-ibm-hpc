@@ -311,6 +311,8 @@ module "write_compute_cluster_inventory" {
   compute_subnet_crn    = local.compute_subnet_crn
   compute_public_key_content = var.compute_public_key_content
   compute_private_key_content =  var.compute_private_key_content
+  inventory_path      = local.compute_inventory_path
+  name_mount_path_map = local.fileshare_name_mount_path_map
   depends_on            = [ time_sleep.wait_60_seconds ]
 }
 

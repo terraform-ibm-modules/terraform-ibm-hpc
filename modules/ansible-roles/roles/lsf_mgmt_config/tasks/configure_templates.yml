@@ -26,3 +26,10 @@
     dest: "{{ LSF_CONF_FILE_PATH }}/resource_connector/hostProviders.json"
     mode: '0644'
   run_once: true
+
+- name: Management Config Templates | Copy user_data.sh
+  template:
+    src: "templates/user_data.sh"
+    dest: "{{ LSF_RC_IC_CONF }}/user_data.sh"
+    mode: '0644'
+  run_once: true

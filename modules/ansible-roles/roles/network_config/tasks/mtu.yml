@@ -22,9 +22,4 @@
         path: "/etc/sysconfig/network-scripts/route-{{ network_interface }}"
         line: "{{ rhel_route.stdout }}"
         create: yes
-
-    - name: MTU | Restart NetworkManager
-      ansible.builtin.systemd:
-        name: NetworkManager
-        state: restarted
   when: ansible_facts['os_family'] == "RedHat"
