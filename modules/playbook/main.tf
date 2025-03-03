@@ -84,7 +84,7 @@ resource "null_resource" "run_lsf_playbooks" {
 }
 
 resource "local_file" "create_playbook_for_lsf_config" {
-  # count    = var.inventory_path != null && var.enable_lsf ? 1 : 0
+  count    = var.inventory_path != null ? 1 : 0
   content  = <<EOT
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
@@ -110,8 +110,8 @@ EOT
   filename = "/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/lsf_config.yml"
 }
 
-resource "null_resource" "run_playbook_management_for_config" {
-  # count = var.inventory_path != null && var.enable_lsf ? 1 : 0
+resource "null_resource" "run_playbook_management_for_mgmt" {
+  count = var.inventory_path != null ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook  -f 50 -i ${var.inventory_path} '/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/lsf_config.yml'"
@@ -119,5 +119,44 @@ resource "null_resource" "run_playbook_management_for_config" {
   triggers = {
     build = timestamp()
   }
-  depends_on = [ local_file.create_playbook_for_lsf_config ]
+  depends_on = [ local_file.create_playbook_for_lsf_config, local_file.run_lsf_playbooks ]
 }
+
+# resource "local_file" "create_playbook_for_lsf_mgmt" {
+#   count    = var.inventory_path != null ? 1 : 0
+#   content  = <<EOT
+# # Ensure provisioned VMs are up and Passwordless SSH setup has been established
+
+# - name: Prerequisite Configuration
+#   hosts: [all_nodes]
+#   any_errors_fatal: true
+#   gather_facts: True
+#   vars:
+#     ansible_ssh_common_args: >
+#       ${local.proxyjump}
+#       -o ControlMaster=auto
+#       -o ControlPersist=30m
+#       -o UserKnownHostsFile=/dev/null
+#       -o StrictHostKeyChecking=no
+#     ansible_user: root
+#     ansible_ssh_private_key_file: ${var.private_key_path}
+#   pre_tasks:
+#     - name: Load cluster-specific variables
+#       include_vars: all.json
+#   roles:
+#      - lsf_mgmt
+# EOT
+#   filename = "/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/lsf_mgmt.yml"
+# }
+
+# resource "null_resource" "run_playbook_management_for_config" {
+#   count = var.inventory_path != null ? 1 : 0
+#   provisioner "local-exec" {
+#     interpreter = ["/bin/bash", "-c"]
+#     command     = "ansible-playbook  -f 50 -i ${var.inventory_path} '/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/lsf_mgmt.yml'"
+#   }
+#   triggers = {
+#     build = timestamp()
+#   }
+#   depends_on = [ local_file.create_playbook_for_lsf_mgmt, null_resource.run_playbook_management_for_mgmt ]
+# }
