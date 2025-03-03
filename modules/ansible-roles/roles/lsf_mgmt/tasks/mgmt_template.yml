@@ -1,0 +1,38 @@
+---
+- name: Management Config Templates| Copy credentials
+  template:
+    src: "templates/credentials.j2"
+    dest: "{{ LSF_RC_IC_CONF }}/credentials"
+    mode: '0644'
+  run_once: true
+
+- name: Management Config Templates | Copy ibmcloudgen2_config.json
+  template:
+    src: "templates/ibmcloudgen2_config.json.j2"
+    dest: "{{ LSF_RC_IC_CONF }}/ibmcloudgen2_config.json"
+    mode: '0644'
+  run_once: true
+
+- name: Management Config Templates | Copy ibmcloudgen2_templates.json
+  template:
+    src: "templates/ibmcloudgen2_templates.json.j2"
+    dest: "{{ LSF_RC_IC_CONF }}/ibmcloudgen2_templates.json"
+    mode: '0644'
+  run_once: true
+
+- name: Management Config Templates | Copy hostProviders.json
+  template:
+    src: "templates/hostProviders.json.j2"
+    dest: "{{ LSF_CONF_FILE_PATH }}/resource_connector/hostProviders.json"
+    mode: '0644'
+  run_once: true
+
+- name: Management Config Templates | Copy user_data.sh
+  template:
+    src: "templates/user_data.sh"
+    dest: "{{ LSF_RC_IC_CONF }}/user_data.sh"
+    mode: '0644'
+  run_once: true
+  notify:
+    - Restart lsfd service
+    - Restart NetworkManager

@@ -29,6 +29,13 @@
   delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
   run_once: true
 
+- name: Add search domain to /etc/resolv.conf
+  lineinfile:
+    path: /etc/resolv.conf
+    line: "search {{ dns_domain_names }}"
+    create: yes
+  become: true
+
 # - name: Create all variable file from template
 #   template:
 #     src: lsf-all.j2
