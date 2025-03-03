@@ -138,7 +138,10 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "cloud_metrics_data_bucket": ${local.cloud_metrics_data_bucket},
   "observability_logs_enable_for_management": ${var.observability_logs_enable_for_management},
   "observability_logs_enable_for_compute": ${var.observability_logs_enable_for_compute},
+  "observability_enable_platform_logs": ${var.observability_enable_platform_logs},
   "observability_monitoring_enable": ${var.observability_monitoring_enable},
+  "observability_monitoring_on_compute_nodes_enable": ${var.observability_monitoring_on_compute_nodes_enable},
+  "observability_enable_metrics_routing": ${var.observability_enable_metrics_routing},
   "observability_atracker_enable": ${var.observability_atracker_enable},
   "observability_atracker_target_type": "${var.observability_atracker_target_type}"
 }
@@ -332,17 +335,17 @@ module "storage_inventory" {
   depends_on          = [ module.write_storage_cluster_inventory ]
 }
 
-# module "compute_playbook" {
-#   count            = var.enable_deployer == false ? 1 : 0
-#   source           = "./modules/playbook"
-#   bastion_fip      = local.bastion_fip
-#   private_key_path = local.compute_private_key_path
-#   inventory_path   = local.compute_inventory_path
-#   playbook_path    = local.compute_playbook_path
-#   enable_bastion   = var.enable_bastion
-#   ibmcloud_api_key = var.ibmcloud_api_key
-#   depends_on       = [ module.compute_inventory ]
-# }
+module "compute_playbook" {
+  count            = var.enable_deployer == false ? 1 : 0
+  source           = "./modules/playbook"
+  bastion_fip      = local.bastion_fip
+  private_key_path = local.compute_private_key_path
+  inventory_path   = local.compute_inventory_path
+  playbook_path    = local.compute_playbook_path
+  enable_bastion   = var.enable_bastion
+  ibmcloud_api_key = var.ibmcloud_api_key
+  depends_on       = [ module.compute_inventory ]
+}
 
 # module "storage_playbook" {
 #   count            = var.enable_deployer == false ? 1 : 0

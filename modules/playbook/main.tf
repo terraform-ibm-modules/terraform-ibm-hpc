@@ -54,7 +54,7 @@ resource "local_file" "create_playbook" {
   gather_facts: true
   vars:
     ansible_ssh_common_args: >
-      -o ProxyJump=ubuntu@${var.bastion_fip}
+      ${local.proxyjump}
       -o ControlMaster=auto
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
@@ -70,7 +70,7 @@ resource "local_file" "create_playbook" {
   gather_facts: true
   vars:
     ansible_ssh_common_args: >
-      -o ProxyJump=ubuntu@${var.bastion_fip}
+      ${local.proxyjump}
       -o ControlMaster=auto
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
@@ -78,7 +78,7 @@ resource "local_file" "create_playbook" {
     ansible_user: root
     ansible_ssh_private_key_file: ${var.private_key_path}
   roles:
-    - { role: cloudmonitoring, tags: ["cloud_monitoring"] }      
+    - { role: cloudmonitoring, tags: ["cloud_monitoring"] }     
 EOT
   filename = var.playbook_path
 }
@@ -87,7 +87,13 @@ resource "null_resource" "export_api" {
   count = var.inventory_path != null ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "export VPC_API_KEY=${var.ibmcloud_api_key}"
+    command = <<EOT
+      # Append API key export to shell profile for persistence
+      echo 'export VPC_API_KEY="${var.ibmcloud_api_key}"' >> ~/.bashrc
+      echo 'export VPC_API_KEY="${var.ibmcloud_api_key}"' >> ~/.bash_profile
+      # Export API key for immediate availability in the current session
+      export VPC_API_KEY="${var.ibmcloud_api_key}"      
+    EOT
   }
   triggers = {
     build = timestamp()

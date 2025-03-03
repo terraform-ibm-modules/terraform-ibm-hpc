@@ -2,7 +2,7 @@
 - name: Check if observability logs for management are enabled
   ansible.builtin.debug:
     msg: "Configuring cloud logs for management since observability logs for management is enabled"
-  when: "{{ logs_enable_for_management | bool }}"
+  when: logs_enable_for_management | bool
 
 - name: Copy post-config.sh script
   ansible.builtin.copy:
@@ -10,7 +10,7 @@
     dest: /opt/ibm/post-config.sh
     mode: '0755'
     remote_src: true
-  when: "{{ logs_enable_for_management | bool }}"
+  when: logs_enable_for_management | bool
 
 - name: Create fluent-bit.conf for cloud logs
   ansible.builtin.copy:
@@ -57,17 +57,22 @@
         Add subsystemName management
         Add applicationName lsf
       @INCLUDE output-logs-router-agent.conf
-  when: "{{ logs_enable_for_management | bool }}"
+  when: logs_enable_for_management | bool
 
-# - name: Fetch API KEY From environmental variable of Ansible controller
-#   shell: "echo $IC_API_KEY" 
-#   register: env_api_key
-#   when: "{{ logs_enable_for_management | bool }}"
+- name: Ensure VPC_API_KEY is set
+  ansible.builtin.set_fact:
+    VPC_API_KEY: "{{ lookup('env', 'VPC_API_KEY') }}"
+  when: lookup('env', 'VPC_API_KEY') is defined and lookup('env', 'VPC_API_KEY') | length > 0
 
-- name: Debug the fetched API key
+- name: Fetch API KEY from environmental variable of Ansible controller
+  ansible.builtin.shell: "echo $VPC_API_KEY"
+  register: env_api_key
+  changed_when: false
+
+- name: Debug API Key
   ansible.builtin.debug:
-    msg: "Fetched API key: {{ VPC_API_KEY }}"
-  when: "{{ logs_enable_for_management | bool }}"
+    msg: "API Key is {{ env_api_key.stdout }}"
+  when: logs_enable_for_management | bool    
 
 - name: Run post-config.sh script
   ansible.builtin.command: >
@@ -75,13 +80,13 @@
     -p "3443"
     -t "/logs/v1/singles"
     -a IAMAPIKey
-    -k {{ VPC_API_KEY }}
+    -k {{ env_api_key.stdout }}
     --send-directly-to-icl
     -s true
     -i Production
-  when: "{{ logs_enable_for_management | bool }}"
+  when: logs_enable_for_management | bool and env_api_key.stdout | length > 0
 
 - name: Test cloud logs configuration
   ansible.builtin.shell: |
     echo "INFO Testing IBM Cloud LSF Logs from management: {{ ansible_hostname }}" >> /opt/ibm/lsf/log/test.log
-  when: "{{ logs_enable_for_management | bool }}"
+  when: logs_enable_for_management | bool
