@@ -119,7 +119,7 @@ resource "null_resource" "run_playbook_management_for_mgmt" {
   triggers = {
     build = timestamp()
   }
-  depends_on = [ local_file.create_playbook_for_lsf_config, local_file.run_lsf_playbooks ]
+  depends_on = [ local_file.create_playbook_for_lsf_config, null_resource.run_lsf_playbooks ]
 }
 
 # resource "local_file" "create_playbook_for_lsf_mgmt" {
