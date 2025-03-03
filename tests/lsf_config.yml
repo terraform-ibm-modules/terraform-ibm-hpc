@@ -46,3 +46,4 @@ observability_monitoring_enable: true
 observability_monitoring_on_compute_nodes_enable: true
 ssh_file_path: /artifacts/.ssh/id_rsa
 ssh_file_path_two: /artifacts/.ssh/id_rsa
+
