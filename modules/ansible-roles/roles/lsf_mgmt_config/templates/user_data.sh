@@ -69,7 +69,7 @@ mount_nfs_with_retries() {
 # Setup LSF share
 if [ -n "${nfs_server_with_mount_path}" ]; then
   echo "File share ${nfs_server_with_mount_path} found" >> $logfile
-  nfs_client_mount_path="/mnt/lsf"
+  nfs_client_mount_path="/mnt/lsf/shared"
   if mount_nfs_with_retries "${nfs_server_with_mount_path}" "${nfs_client_mount_path}"; then
     for dir in conf work; do
       rm -rf "${LSF_TOP}/$dir"
@@ -86,8 +86,8 @@ echo "Setting LSF share is completed." >> $logfile
 # Setup SSH
 mkdir -p /home/lsfadmin/.ssh
 cp /home/vpcuser/.ssh/authorized_keys /home/lsfadmin/.ssh/authorized_keys
-cat /mnt/lsf/ssh/id_rsa.pub >> /home/lsfadmin/.ssh/authorized_keys
-cp /mnt/lsf/ssh/id_rsa /home/lsfadmin/.ssh/id_rsa
+cat /mnt/lsf/shared/ssh/id_rsa.pub >> /home/lsfadmin/.ssh/authorized_keys
+cp /mnt/lsf/shared/ssh/id_rsa /home/lsfadmin/.ssh/id_rsa
 echo "StrictHostKeyChecking no" >>  /home/lsfadmin/.ssh/config
 chmod 600  /home/lsfadmin/.ssh/authorized_keys
 chmod 400 /home/lsfadmin/.ssh/id_rsa

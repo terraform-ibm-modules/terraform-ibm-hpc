@@ -5,14 +5,14 @@
     state: directory
     mode: '0755'
   loop:
-    - /mnt/lsf/ssh
+    - /mnt/lsf/shared/ssh
   run_once: true
 
 - name: Passwordless SSH | Decode and copy compute public and private key contents
   shell: echo "{{ item.content }}" | base64 --decode > "{{ item.dest }}"
   loop:
-    - { content: "{{ compute_public_key_content }}", dest: "/mnt/lsf/ssh/id_rsa.pub" }
-    - { content: "{{ compute_private_key_content }}", dest: "/mnt/lsf/ssh/id_rsa" }
+    - { content: "{{ compute_public_key_content }}", dest: "/mnt/lsf/shared/ssh/id_rsa.pub" }
+    - { content: "{{ compute_private_key_content }}", dest: "/mnt/lsf/shared/ssh/id_rsa" }
   no_log: true
   run_once: true
   
@@ -25,9 +25,9 @@
     - /home/lsfadmin
     - /home/lsfadmin/.ssh
 
-- name: Passwordless SSH | Set permissions for /mnt/lsf/ssh
+- name: Passwordless SSH | Set permissions for /mnt/lsf/shared/ssh
   file:
-    path: /mnt/lsf/ssh
+    path: /mnt/lsf/shared/ssh
     state: directory
     mode: '0777'
     recurse: yes
@@ -42,7 +42,7 @@
     mode: '0600'
 
 - name: Passwordless SSH | Copy public key content to authorized_keys
-  command: "cat /mnt/lsf/ssh/id_rsa.pub"
+  command: "cat /mnt/lsf/shared/ssh/id_rsa.pub"
   register: pub_key_content
   changed_when: false
 
@@ -56,7 +56,7 @@
 
 - name: Passwordless SSH | Copy private key to lsfadmin's .ssh
   copy:
-    src: /mnt/lsf/ssh/id_rsa
+    src: /mnt/lsf/shared/ssh/id_rsa
     dest: /home/lsfadmin/.ssh/id_rsa
     remote_src: yes
     owner: lsfadmin
