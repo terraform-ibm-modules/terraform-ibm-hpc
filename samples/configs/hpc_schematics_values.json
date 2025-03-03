@@ -1,7 +1,7 @@
 {
-  "name": "hpc-lsf-test",
+  "name": "hpcaas-test",
   "type": [
-    "terraform_v1.9"
+    "terraform_v1.5"
   ],
   "location": "eu-de",
   "resource_group": "Default",
@@ -71,24 +71,17 @@
         },
         {
           "name": "cluster_prefix",
-          "value": "hpc-lsf",
+          "value": "hpcaas",
           "type": "string",
           "secure": false,
           "description": "The prefix is used to name the IBM Cloud LSF cluster and the resources provisioned to build the  cluster instance. Each Spectrum LSF cluster must have a unique name, so ensure the prefix is distinct. It must begin with a lowercase letter and can only include lowercase letters, digits, and hyphens. Hyphens must be followed by a lowercase letter or digit, with no leading, trailing, or consecutive hyphens. The prefix length must be less than 16 characters."
         },
         {
-          "name": "cluster_id",
+          "name": "cluster_name",
           "value": "Please fill here",
           "type": "string",
           "secure": false,
-          "description": "The unique cluster ID used by LSF to configure resources can be up to 39 alphanumeric characters, including underscores (_), hyphens (-), and periods (.). Spaces and other special characters are not allowed. Avoid using the name of any host or user as the cluster ID. Note that the cluster ID cannot be changed after deployment."
-        },
-        {
-          "name": "reservation_id",
-          "value": "__NULL__",
-          "type": "string",
-          "secure": true,
-          "description": "Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_)."
+          "description": "Provide a unique cluster name that LSF uses to configure and group the cluster. Without this name, LSF cannot form a cluster, and the initial deployments will fail. The cluster name can be up to 39 alphanumeric characters and may include underscores (_), hyphens (-), and periods (.). Spaces and other special characters are not allowed. Avoid using the name of any host or user as the cluster name. Note that the cluster name cannot be changed after deployment."
         },
         {
           "name": "ibm_customer_number",
@@ -102,14 +95,14 @@
           "value": "[\"Please fill here\"]",
           "type": "list(string)",
           "secure": false,
-          "description": "Provide the list of SSH key names configured in your IBM Cloud account to establish a connection to the Spectrum LSF bastion and login node. Ensure the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by following the provided instructions.[SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
+          "description": "Provide the list of SSH key names configured in your IBM Cloud account to establish a connection to the Spectrum LSF bastion and login node. Make sure the SSH key exists in the same resource group and region where the cluster is being provisioned. To pass multiple SSH keys, use the format [\"key-name-1\", \"key-name-2\"]. If you don't have an SSH key in your IBM Cloud account, you can create one by following the provided .[SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
         },
         {
           "name": "compute_ssh_keys",
           "value": "[\"Please fill here\"]",
           "type": "list(string)",
           "secure": false,
-          "description": "Provide the list of SSH key names configured in your IBM Cloud account to establish a connection to the Spectrum LSF cluster node. Ensure the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by following the provided instructions.[SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
+          "description": "Provide the list of SSH key names configured in your IBM Cloud account to establish a connection to the Spectrum LSF cluster node. Ensure the SSH key is present in the same resource group and region where the cluster is being provisioned. To pass multiple SSH keys, use the format [\"key-name-1\", \"key-name-2\"]. If you do not have an SSH key in your IBM Cloud account, create one by following the provided instructions.[SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
         },
         {
           "name": "remote_allowed_ips",
@@ -204,7 +197,7 @@
         },
         {
           "name": "management_image_name",
-          "value": "hpc-lsf10-rhel810-v1",
+          "value": "hpcaas-lsf10-rhel810-v1",
           "type": "string",
           "secure": false,
           "description": "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud Spectrum LSF cluster management nodes. By default, the solution uses a RHEL810 base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the lsf cluster through this offering."
@@ -254,7 +247,7 @@
         },
         {
           "name": "management_node_count",
-          "value": "3",
+          "value": "2",
           "type": "number",
           "secure": false,
           "description": "Number of management nodes. This is the total number of management nodes. Enter a value between 1 and 10."
@@ -264,7 +257,7 @@
           "value": "[{mount_path = \"/mnt/vpcstorage/tools\", size = 100, iops = 2000 }, { mount_path = \"/mnt/vpcstorage/data\", size = 100, iops = 6000 }, { mount_path = \"/mnt/scale/tools\", nfs_share = \"\" }]",
           "type": "list(object({mount_path = string,size = optional(number),iops = optional(number),nfs_share = optional(string)}))",
           "secure": false,
-          "description": "Mount points and sizes in GB and IOPS range of file shares that can be used to customize shared file storage layout. Provide the details for up to 5 shares. Each file share size in GB supports different range of IOPS. For more information, see [file share IOPS value](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=ui)"
+          "description": "Provide details for customizing your shared file storage layout, including mount points, sizes (in GB), and IOPS ranges for up to five file shares if using VPC file storage as the storage option.If using IBM Storage Scale as an NFS mount, update the appropriate mount path and nfs_share values created from the Storage Scale cluster. Note that VPC file storage supports attachment to a maximum of 256 nodes. Exceeding this limit may result in mount point failures due to attachment restrictions.For more information, see [Storage options](https://test.cloud.ibm.com/docs/hpc-ibm-spectrumlsf?topic=hpc-ibm-spectrumlsf-integrating-scale#integrate-scale-and-hpc)."
         },
         { "name": "storage_security_group_id",
           "value": "__NULL__",
@@ -322,12 +315,12 @@
           "description": "Password for IBM Spectrum LSF Application Center GUI. Note: Password should be at least 8 characters, must have one number, one lowercase letter, one uppercase letter, and at least one special character."
         },
         {  "name": "app_center_high_availability",
-          "value": "true",
+          "value": "false",
           "type": "bool",
           "secure": false,
           "description": "Set to false to disable the IBM Spectrum LSF Application Center GUI High Availability (default: true)."
         },
-        {  "name": "existing_certificate_instance",
+        {  "name": "app_center_existing_certificate_instance",
           "value": "",
           "type": "string",
           "secure": false,
@@ -404,7 +397,7 @@
           "description": "Image name to be used for provisioning the LDAP instances."
         },
         {
-          "name": "skip_iam_authorization_policy",
+          "name": "skip_iam_block_storage_authorization_policy",
           "value": "false",
           "type": "bool",
           "secure": false,
@@ -533,7 +526,7 @@
           "value": "false",
           "type": "bool",
           "secure": false,
-          "description": "Set this option to true to enable dedicated hosts for the VSI created for workload servers, with the default value set to false. To learn more about dedicated host, [click here.](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-dedicated-hosts-instances&interface=ui)"
+          "description": "Set this option to true to enable dedicated hosts for the VSI created for workload servers. The default value is false. When a dedicated host is enabled, the solution supports only static worker nodes with a single profile, and multiple profile combinations are not supported. For example, you can select a profile from a single family, such as bx2, cx2, or mx2. If you are provisioning a static cluster with a third-generation profile, ensure that dedicated hosts are supported in the chosen regions, as not all regions support dedicated hosts for third-gen profiles. To learn more about dedicated host, [click here.](https://cloud.ibm.com/docs/vpc?topic=vpc-dh-profiles&interface=ui)."
         },
         {
           "name": "bastion_instance_name",

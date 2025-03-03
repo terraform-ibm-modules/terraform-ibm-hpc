@@ -1,6 +1,6 @@
 locals {
   # Defined values
-  name   = "hpc"
+  name   = "lsf"
   prefix = var.prefix
   tags   = [local.prefix, local.name]
   # schematics_reserved_cidrs = [

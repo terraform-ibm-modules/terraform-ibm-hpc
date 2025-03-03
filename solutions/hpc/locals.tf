@@ -130,8 +130,8 @@ locals {
 locals {
   # dependency: landing_zone -> DNS
   resource_groups = {
-    service_rg  = var.existing_resource_group_name == "null" ? module.landing_zone[0].resource_group_id[0]["${var.cluster_prefix}-service-rg"] : one(values(one(module.landing_zone[0].resource_group_id)))
-    workload_rg = var.existing_resource_group_name == "null" ? module.landing_zone[0].resource_group_id[0]["${var.cluster_prefix}-workload-rg"] : one(values(one(module.landing_zone[0].resource_group_id)))
+    service_rg  = var.existing_resource_group == "null" ? module.landing_zone[0].resource_group_id[0]["${var.cluster_prefix}-service-rg"] : one(values(one(module.landing_zone[0].resource_group_id)))
+    workload_rg = var.existing_resource_group == "null" ? module.landing_zone[0].resource_group_id[0]["${var.cluster_prefix}-workload-rg"] : one(values(one(module.landing_zone[0].resource_group_id)))
   }
   vpc_crn = var.vpc_name == null ? one(module.landing_zone[0].vpc_crn) : one(data.ibm_is_vpc.itself[*].crn)
   # TODO: Fix existing subnet logic
@@ -280,10 +280,10 @@ locals {
 # Existing bastion Variables
 locals {
   # bastion_instance_name      = var.bastion_instance_name != null ? var.bastion_instance_name : null
-  bastion_instance_public_ip = var.bastion_instance_name != null ? var.bastion_instance_public_ip : null
+  bastion_instance_public_ip = var.existing_bastion_instance_name != null ? var.existing_bastion_instance_public_ip : null
   # bastion_security_group_id  = var.bastion_instance_name != null ? var.bastion_security_group_id : module.bootstrap.bastion_security_group_id
-  bastion_ssh_private_key = var.bastion_instance_name != null ? var.bastion_ssh_private_key : null
-  bastion_instance_status = var.bastion_instance_name != null ? false : true
+  bastion_ssh_private_key = var.existing_bastion_instance_name != null ? var.existing_bastion_ssh_private_key : null
+  bastion_instance_status = var.existing_bastion_instance_name != null ? false : true
   existing_subnet_cidrs   = var.vpc_name != null && length(var.cluster_subnet_ids) == 1 ? [data.ibm_is_subnet.existing_subnet[0].ipv4_cidr_block, data.ibm_is_subnet.existing_login_subnet[0].ipv4_cidr_block, local.vpc_cidr] : []
 }
 
@@ -293,4 +293,13 @@ locals {
 
 locals {
   allowed_cidr = concat(var.remote_allowed_ips, local.remote_allowed_ips_extra, local.add_current_ip_to_allowed_cidr ? module.my_ip.my_cidr : [])
+}
+
+locals {
+  profile_str = split("-", var.worker_node_instance_type[0].instance_type)
+  dh_profiles = var.enable_dedicated_host ? [
+    for p in data.ibm_is_dedicated_host_profiles.worker[0].profiles : p if p.class == local.profile_str[0]
+  ] : []
+  dh_profile_index = length(local.dh_profiles) == 0 ? "Profile class ${local.profile_str[0]} for dedicated hosts does not exist in ${local.region}.Check available class with `ibmcloud target -r ${local.region}; ibmcloud is dedicated-host-profiles` and retry with another worker_node_instance_type." : 0
+  dh_profile       = var.enable_dedicated_host ? local.dh_profiles[local.dh_profile_index] : null
 }

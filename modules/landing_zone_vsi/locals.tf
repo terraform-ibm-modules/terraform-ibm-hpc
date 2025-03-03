@@ -1,6 +1,6 @@
 # define variables
 locals {
-  name           = "hpc"
+  name           = "lsf"
   prefix         = var.prefix
   tags           = [local.prefix, local.name]
   vsi_interfaces = ["eth0", "eth1"]

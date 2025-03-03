@@ -201,7 +201,7 @@ locals {
   (local.validate_management_node_count ? local.management_node_count_msg : ""))
 
   # IBM Cloud Application load Balancer CRN validation
-  validate_alb_crn     = (var.enable_app_center && var.app_center_high_availability) && can(regex("^crn:v1:bluemix:public:secrets-manager:[a-zA-Z\\-]+:[a-zA-Z0-9\\-]+\\/[a-zA-Z0-9\\-]+:[a-fA-F0-9\\-]+:secret:[a-fA-F0-9\\-]+$", var.existing_certificate_instance)) || !var.app_center_high_availability || !var.enable_app_center
+  validate_alb_crn     = (var.enable_app_center && var.app_center_high_availability) && can(regex("^crn:v1:bluemix:public:secrets-manager:[a-zA-Z\\-]+:[a-zA-Z0-9\\-]+\\/[a-zA-Z0-9\\-]+:[a-fA-F0-9\\-]+:secret:[a-fA-F0-9\\-]+$", var.app_center_existing_certificate_instance)) || !var.app_center_high_availability || !var.enable_app_center
   alb_crn_template_msg = "When app_center_high_availability is enable/set as true, The Application Center will be configured for high availability and requires a Application Load Balancer Front End listener to use a certificate CRN value stored in the Secret Manager. Provide the valid 'existing_certificate_instance' to configure the Application load balancer."
   # tflint-ignore: terraform_unused_declarations
   validate_alb_crn_chk = regex(
@@ -230,7 +230,7 @@ locals {
   (local.validate_observability_monitoring_enable_compute_nodes ? local.observability_monitoring_enable_compute_nodes_msg : ""))
 
   # Existing Bastion validation
-  validate_existing_bastion     = var.bastion_instance_name != null ? (var.bastion_instance_public_ip != null && var.bastion_security_group_id != null && var.bastion_ssh_private_key != null) : local.bastion_instance_status
+  validate_existing_bastion     = var.existing_bastion_instance_name != null ? (var.existing_bastion_instance_public_ip != null && var.existing_bastion_security_group_id != null && var.existing_bastion_ssh_private_key != null) : local.bastion_instance_status
   validate_existing_bastion_msg = "If bastion_instance_name is not null, then bastion_instance_public_ip, bastion_security_group_id, and bastion_ssh_private_key should not be null."
   # tflint-ignore: terraform_unused_declarations
   validate_existing_bastion_chk = regex(
