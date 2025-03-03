@@ -60,10 +60,10 @@ var ignoreUpdates = []string{
 
 // EnvVars stores environment variable values.
 type EnvVars struct {
-	DefaultResourceGroup                        string
-	NonDefaultResourceGroup                     string
+	DefaultExistingResourceGroupName            string
+	NonDefaultExistingResourceGroupName         string
 	Zone                                        string
-	ClusterID                                   string
+	ClusterName                                 string
 	ReservationID                               string
 	RemoteAllowedIPs                            string
 	SSHKey                                      string
@@ -88,17 +88,17 @@ type EnvVars struct {
 	LdapUserPassword                            string
 	USEastZone                                  string
 	USEastReservationID                         string
-	USEastClusterID                             string
+	USEastClusterName                           string
 	EUDEZone                                    string
 	EUDEReservationID                           string
-	EUDEClusterID                               string
+	EUDEClusterName                             string
 	SSHFilePath                                 string
 	USSouthZone                                 string
 	USSouthReservationID                        string
-	USSouthClusterID                            string
+	USSouthClusterName                          string
 	JPTokZone                                   string
 	JPTokReservationID                          string
-	JPTokClusterID                              string
+	JPTokClusterName                            string
 	WorkerNodeMaxCount                          string
 	WorkerNodeInstanceType                      string
 	IBMCustomerNumber                           string
@@ -113,53 +113,53 @@ type EnvVars struct {
 // GetEnvVars retrieves environment variables.
 func GetEnvVars() EnvVars {
 	return EnvVars{
-		DefaultResourceGroup:          os.Getenv("DEFAULT_RESOURCE_GROUP"),
-		NonDefaultResourceGroup:       os.Getenv("NON_DEFAULT_RESOURCE_GROUP"),
-		Zone:                          os.Getenv("ZONE"),
-		ClusterID:                     os.Getenv("CLUSTER_ID"),
-		ReservationID:                 os.Getenv("RESERVATION_ID"),
-		RemoteAllowedIPs:              os.Getenv("REMOTE_ALLOWED_IPS"),
-		SSHKey:                        os.Getenv("SSH_KEY"),
-		LoginNodeInstanceType:         os.Getenv("LOGIN_NODE_INSTANCE_TYPE"),
-		LoginNodeImageName:            os.Getenv("LOGIN_NODE_IMAGE_NAME"),
-		ManagementImageName:           os.Getenv("MANAGEMENT_IMAGE_NAME"),
-		ComputeImageName:              os.Getenv("COMPUTE_IMAGE_NAME"),
-		ManagementNodeInstanceType:    os.Getenv("MANAGEMENT_NODE_INSTANCE_TYPE"),
-		ManagementNodeCount:           os.Getenv("MANAGEMENT_NODE_COUNT"),
-		KeyManagement:                 os.Getenv("KEY_MANAGEMENT"),
-		KMSInstanceName:               os.Getenv("KMS_INSTANCE_NAME"),
-		KMSKeyName:                    os.Getenv("KMS_KEY_NAME"),
-		HyperthreadingEnabled:         os.Getenv("HYPERTHREADING_ENABLED"),
-		DnsDomainName:                 os.Getenv("DNS_DOMAIN_NAME"),
-		EnableAppCenter:               os.Getenv("ENABLE_APP_CENTER"),
-		AppCenterGuiPassword:          os.Getenv("APP_CENTER_GUI_PASSWORD"),
-		EnableLdap:                    os.Getenv("ENABLE_LDAP"),
-		LdapBaseDns:                   os.Getenv("LDAP_BASEDNS"),
-		LdapServer:                    os.Getenv("LDAP_SERVER"),
-		LdapAdminPassword:             os.Getenv("LDAP_ADMIN_PASSWORD"),
-		LdapUserName:                  os.Getenv("LDAP_USER_NAME"),
-		LdapUserPassword:              os.Getenv("LDAP_USER_PASSWORD"),
-		USEastZone:                    os.Getenv("US_EAST_ZONE"),
-		USEastReservationID:           os.Getenv("US_EAST_RESERVATION_ID"),
-		USEastClusterID:               os.Getenv("US_EAST_CLUSTER_ID"),
-		EUDEZone:                      os.Getenv("EU_DE_ZONE"),
-		EUDEReservationID:             os.Getenv("EU_DE_RESERVATION_ID"),
-		EUDEClusterID:                 os.Getenv("EU_DE_CLUSTER_ID"),
-		USSouthZone:                   os.Getenv("US_SOUTH_ZONE"),
-		USSouthReservationID:          os.Getenv("US_SOUTH_RESERVATION_ID"),
-		USSouthClusterID:              os.Getenv("US_SOUTH_CLUSTER_ID"),
-		JPTokZone:                     os.Getenv("JP_TOK_ZONE"),
-		JPTokReservationID:            os.Getenv("JP_TOK_RESERVATION_ID"),
-		JPTokClusterID:                os.Getenv("JP_TOK_CLUSTER_ID"),
-		SSHFilePath:                   os.Getenv("SSH_FILE_PATH"),
-		WorkerNodeMaxCount:            os.Getenv("WORKER_NODE_MAX_COUNT"),     //LSF specific parameter
-		WorkerNodeInstanceType:        os.Getenv("WORKER_NODE_INSTANCE_TYPE"), //LSF specific parameter
-		IBMCustomerNumber:             os.Getenv("IBM_CUSTOMER_NUMBER"),       //LSF specific parameter
-		Solution:                      os.Getenv("SOLUTION"),
-		sccEnabled:                    os.Getenv("SCC_ENABLED"),
-		sccEventNotificationPlan:      os.Getenv("SCC_EVENT_NOTIFICATION_PLAN"),
-		sccLocation:                   os.Getenv("SCC_LOCATION"),
-		observabilityMonitoringEnable: os.Getenv("OBSERVABILITY_MONITORING_ENABLE"),
+		DefaultExistingResourceGroupName:    os.Getenv("DEFAULT_EXISTING_RESOURCE_GROUP_NAME"),
+		NonDefaultExistingResourceGroupName: os.Getenv("NON_DEFAULT_EXISTING_RESOURCE_GROUP_NAME"),
+		Zone:                                os.Getenv("ZONE"),
+		ClusterName:                         os.Getenv("CLUSTER_NAME"),
+		ReservationID:                       os.Getenv("RESERVATION_ID"),
+		RemoteAllowedIPs:                    os.Getenv("REMOTE_ALLOWED_IPS"),
+		SSHKey:                              os.Getenv("SSH_KEY"),
+		LoginNodeInstanceType:               os.Getenv("LOGIN_NODE_INSTANCE_TYPE"),
+		LoginNodeImageName:                  os.Getenv("LOGIN_NODE_IMAGE_NAME"),
+		ManagementImageName:                 os.Getenv("MANAGEMENT_IMAGE_NAME"),
+		ComputeImageName:                    os.Getenv("COMPUTE_IMAGE_NAME"),
+		ManagementNodeInstanceType:          os.Getenv("MANAGEMENT_NODE_INSTANCE_TYPE"),
+		ManagementNodeCount:                 os.Getenv("MANAGEMENT_NODE_COUNT"),
+		KeyManagement:                       os.Getenv("KEY_MANAGEMENT"),
+		KMSInstanceName:                     os.Getenv("KMS_INSTANCE_NAME"),
+		KMSKeyName:                          os.Getenv("KMS_KEY_NAME"),
+		HyperthreadingEnabled:               os.Getenv("HYPERTHREADING_ENABLED"),
+		DnsDomainName:                       os.Getenv("DNS_DOMAIN_NAME"),
+		EnableAppCenter:                     os.Getenv("ENABLE_APP_CENTER"),
+		AppCenterGuiPassword:                os.Getenv("APP_CENTER_GUI_PASSWORD"),
+		EnableLdap:                          os.Getenv("ENABLE_LDAP"),
+		LdapBaseDns:                         os.Getenv("LDAP_BASEDNS"),
+		LdapServer:                          os.Getenv("LDAP_SERVER"),
+		LdapAdminPassword:                   os.Getenv("LDAP_ADMIN_PASSWORD"),
+		LdapUserName:                        os.Getenv("LDAP_USER_NAME"),
+		LdapUserPassword:                    os.Getenv("LDAP_USER_PASSWORD"),
+		USEastZone:                          os.Getenv("US_EAST_ZONE"),
+		USEastReservationID:                 os.Getenv("US_EAST_RESERVATION_ID"),
+		USEastClusterName:                   os.Getenv("US_EAST_CLUSTER_NAME"),
+		EUDEZone:                            os.Getenv("EU_DE_ZONE"),
+		EUDEReservationID:                   os.Getenv("EU_DE_RESERVATION_ID"),
+		EUDEClusterName:                     os.Getenv("EU_DE_CLUSTER_NAME"),
+		USSouthZone:                         os.Getenv("US_SOUTH_ZONE"),
+		USSouthReservationID:                os.Getenv("US_SOUTH_RESERVATION_ID"),
+		USSouthClusterName:                  os.Getenv("US_SOUTH_CLUSTER_NAME"),
+		JPTokZone:                           os.Getenv("JP_TOK_ZONE"),
+		JPTokReservationID:                  os.Getenv("JP_TOK_RESERVATION_ID"),
+		JPTokClusterName:                    os.Getenv("JP_TOK_CLUSTER_NAME"),
+		SSHFilePath:                         os.Getenv("SSH_FILE_PATH"),
+		WorkerNodeMaxCount:                  os.Getenv("WORKER_NODE_MAX_COUNT"),     //LSF specific parameter
+		WorkerNodeInstanceType:              os.Getenv("WORKER_NODE_INSTANCE_TYPE"), //LSF specific parameter
+		IBMCustomerNumber:                   os.Getenv("IBM_CUSTOMER_NUMBER"),       //LSF specific parameter
+		Solution:                            os.Getenv("SOLUTION"),
+		sccEnabled:                          os.Getenv("SCC_ENABLED"),
+		sccEventNotificationPlan:            os.Getenv("SCC_EVENT_NOTIFICATION_PLAN"),
+		sccLocation:                         os.Getenv("SCC_LOCATION"),
+		observabilityMonitoringEnable:       os.Getenv("OBSERVABILITY_MONITORING_ENABLE"),
 		observabilityMonitoringOnComputeNodesEnable: os.Getenv("OBSERVABILITY_MONITORING_ON_COMPUTE_NODES_ENABLE"),
 	}
 }
@@ -221,9 +221,9 @@ func validateEnvVars(solution string, envVars EnvVars) error {
 
 	// Determine required variables based on the solution type
 	if strings.Contains(solution, "hpc") {
-		requiredVars = []string{"SSHKey", "ClusterID", "Zone", "ReservationID"}
+		requiredVars = []string{"SSHKey", "ClusterName", "Zone", "ReservationID"}
 	} else if strings.Contains(solution, "lsf") {
-		requiredVars = []string{"SSHKey", "ClusterID", "Zone", "IBMCustomerNumber"}
+		requiredVars = []string{"SSHKey", "ClusterName", "Zone", "IBMCustomerNumber"}
 	} else {
 		return fmt.Errorf("invalid solution type: %s", solution)
 	}
@@ -266,18 +266,18 @@ func setupOptionsVpc(t *testing.T, hpcClusterPrefix, terraformDir, resourceGroup
 		TerraformDir:   terraformDir,
 		IgnoreDestroys: testhelper.Exemptions{List: ignoreDestroys},
 		TerraformVars: map[string]interface{}{
-			"cluster_prefix":     prefix,
-			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
-			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
-			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
-			"resource_group":     resourceGroup,
+			"cluster_prefix":               prefix,
+			"bastion_ssh_keys":             utils.SplitAndTrim(envVars.SSHKey, ","),
+			"zones":                        utils.SplitAndTrim(envVars.Zone, ","),
+			"remote_allowed_ips":           utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+			"existing_resource_group_name": resourceGroup,
 		},
 	}
 	return options, nil
 }
 
 // setupOptions creates a test options object with the given parameters.
-func setupOptions(t *testing.T, hpcClusterPrefix, terraformDir, resourceGroup string, ignoreDestroys []string, ignoreUpdates []string) (*testhelper.TestOptions, error) {
+func setupOptions(t *testing.T, hpcClusterPrefix, terraformDir, resourceGroupName string, ignoreDestroys []string, ignoreUpdates []string) (*testhelper.TestOptions, error) {
 
 	// Check if TF_VAR_ibmcloud_api_key is set
 	if os.Getenv("TF_VAR_ibmcloud_api_key") == "" {
@@ -316,9 +316,9 @@ func setupOptions(t *testing.T, hpcClusterPrefix, terraformDir, resourceGroup st
 			"compute_ssh_keys":              utils.SplitAndTrim(envVars.SSHKey, ","),
 			"zones":                         utils.SplitAndTrim(envVars.Zone, ","),
 			"remote_allowed_ips":            utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
-			"cluster_id":                    envVars.ClusterID,
+			"cluster_name":                  envVars.ClusterName,
 			"reservation_id":                envVars.ReservationID,
-			"resource_group":                resourceGroup,
+			"existing_resource_group_name":  resourceGroupName,
 			"login_node_instance_type":      envVars.LoginNodeInstanceType,
 			"login_image_name":              envVars.LoginNodeImageName,
 			"management_image_name":         envVars.ManagementImageName,
@@ -445,7 +445,7 @@ func TestRunDefault(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Prepare test options with necessary parameters
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
 	if err != nil {
 		testLogger.FAIL(t, fmt.Sprintf("Failed to set up test options: %v", err))
 		require.NoError(t, err, "Failed to set up test options: %v", err)

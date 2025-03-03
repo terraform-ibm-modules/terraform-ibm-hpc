@@ -28,10 +28,10 @@ type WorkerNode struct {
 
 // Config represents the structure of the configuration file.
 type Config struct {
-	DefaultResourceGroup                        string       `yaml:"default_resource_group"`
-	NonDefaultResourceGroup                     string       `yaml:"non_default_resource_group"`
+	DefaultExistingResourceGroupName            string       `yaml:"default_existing_resource_group_name"`
+	NonDefaultExistingResourceGroupName         string       `yaml:"non_default_existing_resource_group_namep"`
 	Zone                                        string       `yaml:"zone"`
-	ClusterID                                   string       `yaml:"cluster_id"`
+	ClusterName                                 string       `yaml:"cluster_name"`
 	ReservationID                               string       `yaml:"reservation_id"`
 	RemoteAllowedIPs                            string       `yaml:"remote_allowed_ips"`
 	SSHKey                                      string       `yaml:"ssh_key"`
@@ -56,16 +56,16 @@ type Config struct {
 	LdapUserName                                string       `yaml:"ldap_user_name"`
 	LdapUserPassword                            string       `yaml:"ldap_user_password"` // pragma: allowlist secret
 	USEastZone                                  string       `yaml:"us_east_zone"`
-	USEastClusterID                             string       `yaml:"us_east_cluster_id"`
+	USEastClusterName                           string       `yaml:"us_east_cluster_name"`
 	USEastReservationID                         string       `yaml:"us_east_reservation_id"`
 	JPTokZone                                   string       `yaml:"jp_tok_zone"`
-	JPTokClusterID                              string       `yaml:"jp_tok_cluster_id"`
+	JPTokClusterName                            string       `yaml:"jp_tok_cluster_name"`
 	JPTokReservationID                          string       `yaml:"jp_tok_reservation_id"`
 	EUDEZone                                    string       `yaml:"eu_de_zone"`
-	EUDEClusterID                               string       `yaml:"eu_de_cluster_id"`
+	EUDEClusterName                             string       `yaml:"eu_de_cluster_name"`
 	EUDEReservationID                           string       `yaml:"eu_de_reservation_id"`
 	USSouthZone                                 string       `yaml:"us_south_zone"`
-	USSouthClusterID                            string       `yaml:"us_south_cluster_id"`
+	USSouthClusterName                          string       `yaml:"us_south_cluster_name"`
 	USSouthReservationID                        string       `yaml:"us_south_reservation_id"`
 	SSHFilePath                                 string       `yaml:"ssh_file_path"`
 	SSHFilePathTwo                              string       `yaml:"ssh_file_path_two"`
@@ -155,10 +155,10 @@ func GetConfigFromYAML(filePath string) (*Config, error) {
 // setEnvFromConfig sets environment variables based on the provided configuration.
 func setEnvFromConfig(config *Config) error {
 	envVars := map[string]interface{}{
-		"DEFAULT_RESOURCE_GROUP":          config.DefaultResourceGroup,
-		"NON_DEFAULT_RESOURCE_GROUP":      config.NonDefaultResourceGroup,
+		"DEFAULT_EXISTING_RESOURCE_GROUP_NAME":     config.DefaultExistingResourceGroupName,
+		"NON_DEFAULT_EXISTING_RESOURCE_GROUP_NAME": config.NonDefaultExistingResourceGroupName,
 		"ZONE":                            config.Zone,
-		"CLUSTER_ID":                      config.ClusterID,
+		"CLUSTER_NAME":                    config.ClusterName,
 		"RESERVATION_ID":                  config.ReservationID,
 		"REMOTE_ALLOWED_IPS":              config.RemoteAllowedIPs,
 		"SSH_KEY":                         config.SSHKey,
@@ -184,16 +184,16 @@ func setEnvFromConfig(config *Config) error {
 		"LDAP_USER_PASSWORD":              config.LdapUserPassword, //pragma: allowlist secret
 		"US_EAST_ZONE":                    config.USEastZone,
 		"US_EAST_RESERVATION_ID":          config.USEastReservationID,
-		"US_EAST_CLUSTER_ID":              config.USEastClusterID,
+		"US_EAST_CLUSTER_NAME":            config.USEastClusterName,
 		"EU_DE_ZONE":                      config.EUDEZone,
 		"EU_DE_RESERVATION_ID":            config.EUDEReservationID,
-		"EU_DE_CLUSTER_ID":                config.EUDEClusterID,
+		"EU_DE_CLUSTER_NAME":              config.EUDEClusterName,
 		"US_SOUTH_ZONE":                   config.USSouthZone,
 		"US_SOUTH_RESERVATION_ID":         config.USSouthReservationID,
-		"US_SOUTH_CLUSTER_ID":             config.USSouthClusterID,
+		"US_SOUTH_CLUSTER_NAME":           config.USSouthClusterName,
 		"JP_TOK_ZONE":                     config.JPTokZone,
 		"JP_TOK_RESERVATION_ID":           config.JPTokReservationID,
-		"JP_TOK_CLUSTER_ID":               config.JPTokClusterID,
+		"JP_TOK_CLUSTER_NAME":             config.JPTokClusterName,
 		"SSH_FILE_PATH":                   config.SSHFilePath,
 		"SSH_FILE_PATH_TWO":               config.SSHFilePathTwo,
 		"SOLUTION":                        config.Solution,

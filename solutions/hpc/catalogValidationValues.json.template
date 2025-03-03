@@ -1,8 +1,8 @@
 {
   "ibmcloud_api_key": $VALIDATION_APIKEY,
-  "resource_group": $RG_NAME,
+  "existing_resource_group_name": $RG_NAME,
   "reservation_id": $HPC_RESERVATION_ID,
-  "cluster_id": "HPC-LSF-1",
+  "cluster_name": "HPC-LSF-1",
   "bastion_ssh_keys": "[\"geretain-hpc\"]",
   "compute_ssh_keys": "[\"geretain-hpc\"]",
   "remote_allowed_ips": "[\"129.41.58.5\"]",

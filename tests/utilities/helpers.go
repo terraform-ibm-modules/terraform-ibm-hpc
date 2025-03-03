@@ -295,7 +295,7 @@ func GetValueForKey(inputMap map[string]string, key string) string {
 
 // Configuration struct matches the structure of your JSON data
 type Configuration struct {
-	ClusterID               string   `json:"clusterID"`
+	ClusterName             string   `json:"clusterName"`
 	ReservationID           string   `json:"reservationID"`
 	ClusterPrefixName       string   `json:"clusterPrefixName"`
 	ResourceGroup           string   `json:"resourceGroup"`
