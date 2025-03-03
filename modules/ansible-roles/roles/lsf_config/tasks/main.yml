@@ -1,0 +1,12 @@
+---
+
+# Setup Network configuration
+- import_tasks: mtu.yml
+
+- import_tasks: lsf_tunables.yml
+
+- import_tasks: hyperthreading.yml
+
+- import_tasks: password_less_setup.yml
+
+- import_tasks: host_file_entry.yml
