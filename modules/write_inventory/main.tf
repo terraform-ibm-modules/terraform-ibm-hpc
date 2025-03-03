@@ -36,8 +36,7 @@ resource "local_sensitive_file" "itself" {
   "compute_security_group_id": ${jsonencode(var.compute_security_group_id)},
   "compute_subnet_crn": ${jsonencode(var.compute_subnet_crn)},
   "compute_public_key_content": ${jsonencode(var.compute_public_key_content)},
-  "compute_private_key_content": ${jsonencode(var.compute_private_key_content)},
-  "inventory_path": ${jsonencode(var.inventory_path)}
+  "compute_private_key_content": ${jsonencode(var.compute_private_key_content)}
 }
 EOT
   filename = var.json_inventory_path

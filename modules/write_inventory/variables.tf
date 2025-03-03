@@ -205,9 +205,3 @@ variable "compute_private_key_content" {
   default     = null
   description = "Compute security key content."
 }
-
-variable "inventory_path" {
-  description = "Inventory file path"
-  type        = string
-  default     = "inventory.ini"
-}
