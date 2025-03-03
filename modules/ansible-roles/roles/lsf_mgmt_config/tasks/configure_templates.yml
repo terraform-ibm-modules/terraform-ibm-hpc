@@ -33,3 +33,6 @@
     dest: "{{ LSF_RC_IC_CONF }}/user_data.sh"
     mode: '0644'
   run_once: true
+  notify:
+    - Restart lsfd service
+    - Restart NetworkManager

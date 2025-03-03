@@ -106,6 +106,9 @@ env >> $logfile
 echo "source ${LSF_CONF}/profile.lsf" >> ~/.bashrc
 source ~/.bashrc
 
+# DNS Setup
+echo "search ${dns_domain}" >> /etc/resolv.conf 
+
 # Defining ncpus based on hyper-threading
 if [ "$hyperthreading" == "True" ]; then
   ego_define_ncpus="threads"

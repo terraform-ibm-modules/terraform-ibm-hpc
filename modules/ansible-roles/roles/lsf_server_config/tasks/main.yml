@@ -6,3 +6,5 @@
 - import_tasks: lsf_hyperthreading.yml
 
 - import_tasks: lsf_ssh.yml
+
+- import_tasks: dynamic_ip_creation.yml
