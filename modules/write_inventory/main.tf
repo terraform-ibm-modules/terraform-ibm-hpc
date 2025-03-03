@@ -37,7 +37,6 @@ resource "local_sensitive_file" "itself" {
   "compute_subnet_crn": ${jsonencode(var.compute_subnet_crn)},
   "compute_public_key_content": ${jsonencode(var.compute_public_key_content)},
   "compute_private_key_content": ${jsonencode(var.compute_private_key_content)},
-  "name_mount_path_map": ${jsonencode(var.name_mount_path_map)},
   "inventory_path": ${jsonencode(var.inventory_path)}
 }
 EOT
