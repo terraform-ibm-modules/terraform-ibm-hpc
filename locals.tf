@@ -257,6 +257,18 @@ locals {
   nfs_install_dir       = "none"
   Enable_Monitoring     = false
   lsf_deployer_hostname = var.deployer_hostname #data.external.get_hostname.result.name  #var.enable_bastion ? "" : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
+  enable_hyperthreading = var.enable_hyperthreading
+  vcpus                 = var.enable_deployer ? 0 : tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile.vcpu_count[0].value)
+  ncores                = var.enable_deployer ? 0 : tonumber(local.vcpus / 2)
+  ncpus                 = var.enable_deployer ? 0 : tonumber(local.enable_hyperthreading ? local.vcpus : local.ncores)
+  memInMB               = var.enable_deployer ? 0 : tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile.memory[0].value) * 1024
+  rc_maxNum             = var.enable_deployer ? 0 : tonumber(var.dynamic_compute_instances[0].count)
+  rc_profile            = var.enable_deployer ? "" : var.dynamic_compute_instances[0].profile
+  imageID               = var.enable_deployer ? ""  : data.ibm_is_image.dynamic_compute.id
+  compute_subnets_cidr  = var.compute_subnets_cidr
+  dynamic_compute_instances = var.dynamic_compute_instances
+  compute_subnet_crn    = data.ibm_is_subnet.compute_subnet_crn.crn
+  compute_ssh_keys_ids  = [for name in local.compute_ssh_keys : data.ibm_is_ssh_key.compute_ssh_keys[name].id]
 }
 
 locals {
@@ -266,7 +278,7 @@ locals {
   remote_terraform_path     = format("%s/terraform-ibm-hpc", local.deployer_path)
   remote_ansible_path       = format("%s/terraform-ibm-hpc", local.deployer_path)
   da_hpc_repo_url           = "https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git"
-  da_hpc_repo_tag           = "develop" ###### change it to main in future
+  da_hpc_repo_tag           = "anand-dev-da" ###### change it to main in future
   zones                     = jsonencode(var.zones)
   list_compute_ssh_keys     = jsonencode(local.compute_ssh_keys)
   list_storage_ssh_keys     = jsonencode(local.storage_ssh_keys)

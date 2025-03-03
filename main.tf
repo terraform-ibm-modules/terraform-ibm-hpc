@@ -130,7 +130,22 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "compute_private_key_content": ${local.compute_private_key_content},
   "bastion_security_group_id": "${local.bastion_security_group_id}",
   "deployer_hostname": "${local.deployer_hostname}",
-  "deployer_ip": "${local.deployer_ip}"
+  "deployer_ip": "${local.deployer_ip}",
+  "enable_hyperthreading": ${local.enable_hyperthreading},
+  "vcpus": ${local.vcpus},
+  "ncores": ${local.ncores},
+  "ncpus": ${local.ncpus},
+  "memInMB": ${local.memInMB},
+  "rc_maxNum": ${local.rc_maxNum},
+  "rc_profile": "${local.rc_profile}",
+  "imageID": "${local.imageID}",
+  "compute_subnet_id": "${local.compute_subnet_id}",
+  "region": "${local.region}",
+  "resource_group_id": "${local.resource_group_ids["service_rg"]}",
+  "compute_subnets_cidr": ${jsonencode(local.compute_subnets_cidr)},
+  "dynamic_compute_instances": ${jsonencode(local.dynamic_compute_instances)},
+  "compute_ssh_keys_ids": ${jsonencode(local.compute_ssh_keys_ids)},
+  "compute_subnet_crn": ${jsonencode(local.compute_subnet_crn)}
 }    
 EOT
   filename = local.schematics_inputs_path
@@ -274,6 +289,29 @@ module "write_compute_cluster_inventory" {
   nfs_install_dir       = local.nfs_install_dir
   Enable_Monitoring     = local.Enable_Monitoring
   lsf_deployer_hostname = local.lsf_deployer_hostname
+  enable_hyperthreading = local.enable_hyperthreading
+  dns_domain_names      = var.dns_domain_names
+  ibmcloud_api_key      = var.ibmcloud_api_key
+  vpc_id                = local.vpc_id
+  vcpus                 = local.vcpus
+  ncores                = local.ncores
+  ncpus                 = local.ncpus
+  memInMB               = local.memInMB
+  rc_maxNum             = local.rc_maxNum
+  rc_profile            = local.rc_profile
+  imageID               = local.imageID
+  compute_subnet_id     = local.compute_subnet_id
+  region                = local.region
+  resource_group_id     = local.resource_group_ids["service_rg"]
+  zones                 = var.zones
+  compute_subnets_cidr  = local.compute_subnets_cidr
+  dynamic_compute_instances = local.dynamic_compute_instances
+  compute_ssh_keys_ids  = local.compute_ssh_keys_ids
+  compute_security_group_id = local.compute_security_group_id
+  compute_subnet_crn    = local.compute_subnet_crn
+  compute_public_key_content = var.compute_public_key_content
+  compute_private_key_content =  var.compute_private_key_content
+  inventory_path        = local.compute_inventory_path
   depends_on            = [ time_sleep.wait_60_seconds ]
 }
 
