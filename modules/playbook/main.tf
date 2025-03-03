@@ -64,24 +64,24 @@ resource "null_resource" "run_playbook" {
   depends_on = [local_file.create_playbook]
 }
 
-# resource "null_resource" "run_lsf_playbooks" {
-#   count = var.inventory_path != null ? 1 : 0
+resource "null_resource" "run_lsf_playbooks" {
+  count = var.inventory_path != null ? 1 : 0
 
-#   provisioner "local-exec" {
-#     interpreter = ["/bin/bash", "-c"]
-#     command = <<EOT
-#       sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml &&
-#       sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml &&
-#       sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml
-#     EOT
-#   }
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command = <<EOT
+      sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml &&
+      sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml &&
+      sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml
+    EOT
+  }
 
-#   triggers = {
-#     build = timestamp()
-#   }
+  triggers = {
+    build = timestamp()
+  }
 
-#   depends_on = [null_resource.run_playbook]
-# }
+  depends_on = [null_resource.run_playbook]
+}
 
 resource "local_file" "create_playbook_for_lsf_config" {
   # count    = var.inventory_path != null && var.enable_lsf ? 1 : 0
