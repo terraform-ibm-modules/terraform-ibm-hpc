@@ -266,11 +266,11 @@ func setupOptionsVpc(t *testing.T, hpcClusterPrefix, terraformDir, existingResou
 		TerraformDir:   terraformDir,
 		IgnoreDestroys: testhelper.Exemptions{List: ignoreDestroys},
 		TerraformVars: map[string]interface{}{
-			"cluster_prefix":               prefix,
-			"bastion_ssh_keys":             utils.SplitAndTrim(envVars.SSHKey, ","),
-			"zones":                        utils.SplitAndTrim(envVars.Zone, ","),
-			"remote_allowed_ips":           utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
-			"existing_resource_group_name": existingResourceGroup,
+			"cluster_prefix":          prefix,
+			"bastion_ssh_keys":        utils.SplitAndTrim(envVars.SSHKey, ","),
+			"zones":                   utils.SplitAndTrim(envVars.Zone, ","),
+			"remote_allowed_ips":      utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+			"existing_resource_group": existingResourceGroup,
 		},
 	}
 	return options, nil
