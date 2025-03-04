@@ -201,11 +201,8 @@ variable "cluster_id" {
 variable "reservation_id" {
   type        = string
   sensitive   = true
+  default     = ""
   description = "Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_)."
-  validation {
-    condition     = can(regex("^[a-zA-Z][a-zA-Z0-9-_]*$", var.reservation_id))
-    error_message = "Reservation ID must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_)."
-  }
 }
 
 # tflint-ignore: terraform_unused_declarations
@@ -213,4 +210,17 @@ variable "private_catalog_id" {
   type        = string
   default     = ""
   description = "Provide the private catalog ID if you wish to publish and share the created image to the CE account."
+}
+
+variable "solution" {
+  type        = string
+  default     = "lsf"
+  description = "Provide the value for the solution that is needed for the support of lsf and HPC"
+}
+
+variable "ibm_customer_number" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
 }
