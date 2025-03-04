@@ -1,7 +1,9 @@
 ---
 
-- import_tasks: hyperthreading
+- import_tasks: hyperthreading.yml
 
 - import_tasks: configure_management_nodes.yml
+
+- import_tasks: hosts_file_update.yml
 
 - import_tasks: configure_dynamic_nodes_templates.yml

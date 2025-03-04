@@ -130,7 +130,22 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "compute_private_key_content": ${local.compute_private_key_content},
   "bastion_security_group_id": "${local.bastion_security_group_id}",
   "deployer_hostname": "${local.deployer_hostname}",
-  "deployer_ip": "${local.deployer_ip}"
+  "deployer_ip": "${local.deployer_ip}",
+  "enable_hyperthreading": ${var.enable_hyperthreading},
+  "vcpus": ${local.vcpus},
+  "ncores": ${local.ncores},
+  "ncpus": ${local.ncpus},
+  "memInMB": ${local.memInMB},
+  "rc_maxNum": ${local.rc_maxNum},
+  "rc_profile": "${local.rc_profile}",
+  "imageID": "${local.imageID}",
+  "compute_subnet_id": "${local.compute_subnet_id}",
+  "region": "${local.region}",
+  "resource_group_id": "${local.resource_group_ids["service_rg"]}",
+  "compute_subnets_cidr": ${jsonencode(local.compute_subnets_cidr)},
+  "dynamic_compute_instances": ${jsonencode(local.dynamic_compute_instances)},
+  "compute_ssh_keys_ids": ${jsonencode(local.compute_ssh_keys_ids)},
+  "compute_subnet_crn": ${jsonencode(local.compute_subnet_crn)}
 }    
 EOT
   filename = local.schematics_inputs_path

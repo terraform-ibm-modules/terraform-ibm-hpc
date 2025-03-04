@@ -1,0 +1,39 @@
+---
+- name: Management Config | Generate and append IP-to-host mapping to LSF hosts file
+  shell: |
+    python3 -c "import ipaddress; \
+    print('\\n'.join([str(ip) + ' {{ my_cluster_name }}-' + str(ip).replace('.', '-') \
+    for ip in ipaddress.IPv4Network('{{ compute_subnets_cidr | first }}')]))" >> '{{ LSF_HOSTS_FILE }}'
+  args:
+    executable: /bin/bash
+  run_once: true
+
+- name: Get IP addresses using nslookup
+  shell: "nslookup {{ inventory_hostname }} | awk '/Address: / { print $2 }' | tail -n 1"
+  register: dns_ip
+  changed_when: false
+
+- name: Store IPs for each host
+  set_fact:
+    host_ip: "{{ dns_ip.stdout }}"
+
+- name: Aggregate all IPs from all hosts
+  set_fact:
+    all_ips: "{{ groups['all'] | map('extract', hostvars, 'host_ip') | list }}"
+  run_once: true
+
+- name: Check if each IP exists in LSF hosts file
+  shell: "grep -w '{{ item }}' {{ LSF_HOSTS_FILE }} || true"
+  register: ip_check
+  loop: "{{ all_ips }}"
+  changed_when: false
+  run_once: true
+
+- name: Remove matched IPs from LSF hosts file if they exist
+  lineinfile:
+    path: "{{ LSF_HOSTS_FILE }}"
+    state: absent
+    regexp: "^{{ item.item }}\\s"
+  loop: "{{ ip_check.results }}"
+  when: item.stdout | length > 0
+  run_once: true
