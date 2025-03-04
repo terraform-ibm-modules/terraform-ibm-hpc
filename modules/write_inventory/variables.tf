@@ -63,3 +63,24 @@ variable "lsf_deployer_hostname" {
   default     = null
   description = "Deployer host name"
 }
+
+# New Variables
+variable "dns_domain_names" {
+  type        = string
+  default     = null
+  description = "IBM Cloud HPC DNS domain names."
+}
+
+variable "compute_public_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Compute security key content."
+}
+
+variable "compute_private_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Compute security key content."
+}

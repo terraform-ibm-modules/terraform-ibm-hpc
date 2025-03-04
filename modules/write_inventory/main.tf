@@ -14,7 +14,10 @@ resource "local_sensitive_file" "itself" {
   "HA_shared_dir": ${jsonencode(var.ha_shared_dir)},
   "NFS_install_dir": ${jsonencode(var.nfs_install_dir)},
   "Enable_Monitoring": ${jsonencode(var.Enable_Monitoring)},
-  "lsf_deployer_hostname": ${jsonencode(var.lsf_deployer_hostname)}
+  "lsf_deployer_hostname": ${jsonencode(var.lsf_deployer_hostname)},
+  "dns_domain_names": ${jsonencode(var.dns_domain_names)},
+  "compute_public_key_content": ${jsonencode(var.compute_public_key_content)},
+  "compute_private_key_content": ${jsonencode(var.compute_private_key_content)}
 }
 EOT
   filename = var.json_inventory_path
