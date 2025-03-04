@@ -39,7 +39,7 @@ func TestRunBasic(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	options.SkipTestTearDown = true
@@ -64,7 +64,7 @@ func TestRunCustomRGAsNull(t *testing.T) {
 	hpcClusterPrefix := utils.GenerateRandomString()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, LSF_CUSTOM_EXISTING_RESOURCE_GROUP_NAME_VALUE_AS_NULL, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, LSF_CUSTOM_EXISTING_RESOURCE_GROUP_VALUE_AS_NULL, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	options.SkipTestTearDown = true
@@ -92,7 +92,7 @@ func TestRunCustomRGAsNonDefault(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.NonDefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.NonDefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	options.SkipTestTearDown = true
@@ -120,7 +120,7 @@ func TestRunAppCenter(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 	options.TerraformVars["enable_app_center"] = strings.ToLower(envVars.EnableAppCenter)
 	options.TerraformVars["app_center_gui_pwd"] = envVars.AppCenterGuiPassword //pragma: allowlist secret
@@ -155,7 +155,7 @@ func TestRunSCCEnabled(t *testing.T) {
 	}
 
 	// Configure test options
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.NonDefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.NonDefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Enable SCC and set the event notification plan
@@ -195,7 +195,7 @@ func TestRunPacHa(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Configure test options
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Set Terraform variables
@@ -231,7 +231,7 @@ func TestRunNoKMSAndHTOff(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 	options.TerraformVars["enable_cos_integration"] = false
 	options.TerraformVars["enable_vpc_flow_logs"] = false
@@ -263,7 +263,7 @@ func TestRunLSFClusterCreationWithZeroWorkerNodes(t *testing.T) {
 	// Validate and apply LSF-specific configurations if the solution is LSF.
 	if envVars.Solution == "lsf" {
 		// Set up Terraform options.
-		options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+		options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 		require.NoError(t, err, "Failed to set up Terraform options: %v", err)
 
 		// Configure the lower profile and the minimum worker node count for the cluster.
@@ -323,7 +323,7 @@ func TestRunInUsEastRegion(t *testing.T) {
 	}
 
 	// Set up Terraform options.
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Failed to set up Terraform options.")
 
 	// Assign solution-specific Terraform variables.
@@ -388,7 +388,7 @@ func TestRunInEuDeRegion(t *testing.T) {
 	}
 
 	// Set up Terraform options.
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Failed to set up Terraform options.")
 
 	// Assign solution-specific Terraform variables.
@@ -454,7 +454,7 @@ func TestRunInUSSouthRegion(t *testing.T) {
 	}
 
 	// Set up Terraform options.
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Failed to set up Terraform options.")
 
 	// Assign solution-specific Terraform variables.
@@ -519,7 +519,7 @@ func TestRunInJPTokyoRegion(t *testing.T) {
 	}
 
 	// Set up Terraform options.
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Failed to set up Terraform options.")
 
 	// Assign solution-specific Terraform variables.
@@ -570,7 +570,7 @@ func TestRunLDAP(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	if strings.ToLower(envVars.EnableLdap) == "true" {
@@ -618,13 +618,13 @@ func TestRunUsingExistingKMS(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Create service instance and KMS key using IBMCloud CLI
-	err := lsf.CreateServiceInstanceAndKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroupName, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
+	err := lsf.CreateServiceInstanceAndKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroup, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
 	require.NoError(t, err, "Service instance and KMS key creation failed")
 
 	testLogger.Info(t, "Service instance and KMS key created successfully "+t.Name())
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Set Terraform variables
@@ -636,7 +636,7 @@ func TestRunUsingExistingKMS(t *testing.T) {
 	options.SkipTestTearDown = true
 
 	// Ensure the service instance and KMS key are deleted after the test
-	defer lsf.DeleteServiceInstanceAndAssociatedKeys(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroupName, kmsInstanceName, testLogger)
+	defer lsf.DeleteServiceInstanceAndAssociatedKeys(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroup, kmsInstanceName, testLogger)
 	defer options.TestTearDown()
 
 	lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
@@ -664,13 +664,13 @@ func TestRunUsingExistingKMSInstanceIDAndWithoutKey(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Create service instance and KMS key using IBMCloud CLI
-	err := lsf.CreateServiceInstanceAndKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroupName, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
+	err := lsf.CreateServiceInstanceAndKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroup, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
 	require.NoError(t, err, "Service instance and KMS key creation failed")
 
 	testLogger.Info(t, "Service instance and KMS key created successfully "+t.Name())
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Set Terraform variables
@@ -681,7 +681,7 @@ func TestRunUsingExistingKMSInstanceIDAndWithoutKey(t *testing.T) {
 	options.SkipTestTearDown = true
 
 	// Ensure the service instance and KMS key are deleted after the test
-	defer lsf.DeleteServiceInstanceAndAssociatedKeys(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroupName, kmsInstanceName, testLogger)
+	defer lsf.DeleteServiceInstanceAndAssociatedKeys(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroup, kmsInstanceName, testLogger)
 	defer options.TestTearDown()
 
 	lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
@@ -705,7 +705,7 @@ func TestRunLDAPAndPac(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	if strings.ToLower(envVars.EnableLdap) == "true" {
@@ -750,7 +750,7 @@ func TestRunCreateVpc(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
-	options, err := setupOptionsVpc(t, hpcClusterPrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroupName)
+	options, err := setupOptionsVpc(t, hpcClusterPrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroup)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Skip test teardown for further inspection
@@ -790,7 +790,7 @@ func RunHpcExistingVpcCidr(t *testing.T, vpcName string) {
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	options.TerraformVars["vpc_name"] = vpcName
 	options.TerraformVars["vpc_cluster_private_subnets_cidr_blocks"] = utils.SplitAndTrim(vpcClusterPrivateSubnetsCidrBlocks, ",")
 	options.TerraformVars["vpc_cluster_login_private_subnets_cidr_blocks"] = utils.SplitAndTrim(vpcClusterLoginPrivateSubnetsCidrBlocks, ",")
@@ -820,7 +820,7 @@ func RunHpcExistingVpcSubnetIdCustomNullDnsNull(t *testing.T, vpcName string, ba
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	options.TerraformVars["vpc_name"] = vpcName
 	options.TerraformVars["login_subnet_id"] = bastionsubnetId
 	options.TerraformVars["cluster_subnet_ids"] = utils.SplitAndTrim(computesubnetIds, ",")
@@ -852,7 +852,7 @@ func TestRunVpcWithCustomDns(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
-	options, err := setupOptionsVpc(t, hpcClusterPrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroupName)
+	options, err := setupOptionsVpc(t, hpcClusterPrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroup)
 	options.TerraformVars["enable_hub"] = true
 
 	require.NoError(t, err, "Error setting up test options: %v", err)
@@ -892,7 +892,7 @@ func RunHpcExistingVpcBothCustomDnsExist(t *testing.T, vpcName string, bastionsu
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	options.TerraformVars["vpc_name"] = vpcName
 	options.TerraformVars["login_subnet_id"] = bastionsubnetId
 	options.TerraformVars["cluster_subnet_ids"] = utils.SplitAndTrim(computesubnetIds, ",")
@@ -925,7 +925,7 @@ func RunHpcExistingVpcCustomExistDnsNull(t *testing.T, vpcName string, bastionsu
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	options.TerraformVars["vpc_name"] = vpcName
 	options.TerraformVars["login_subnet_id"] = bastionsubnetId
 	options.TerraformVars["cluster_subnet_ids"] = utils.SplitAndTrim(computesubnetIds, ",")
@@ -957,7 +957,7 @@ func RunHpcExistingVpcCustomNullDnsExist(t *testing.T, instanceId string) {
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	options.TerraformVars["dns_instance_id"] = instanceId
 
 	require.NoError(t, err, "Error setting up test options: %v", err)
@@ -987,7 +987,7 @@ func TestRunCIDRsAsNonDefault(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	options.TerraformVars["vpc_cidr"] = "10.243.0.0/18"
@@ -1018,7 +1018,7 @@ func TestRunCosAndVpcFlowLogs(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Set Terraform variables
@@ -1051,7 +1051,7 @@ func TestRunMultipleSSHKeys(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	options.SkipTestTearDown = true
@@ -1088,7 +1088,7 @@ func TestRunExistingLDAP(t *testing.T) {
 	}
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group for the first cluster
-	options1, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options1, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options for the first cluster: %v", err)
 
 	// Set Terraform variables for the first cluster
@@ -1113,7 +1113,7 @@ func TestRunExistingLDAP(t *testing.T) {
 	require.NotNil(t, output, "Expected non-nil output, but got nil")
 
 	// Retrieve custom resolver ID
-	customResolverID, err := utils.GetCustomResolverID(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroupName, hpcClusterPrefix, testLogger)
+	customResolverID, err := utils.GetCustomResolverID(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroup, hpcClusterPrefix, testLogger)
 	require.NoError(t, err, "Error retrieving custom resolver ID: %v", err)
 
 	// Retrieve LDAP IP and Bastion IP
@@ -1124,7 +1124,7 @@ func TestRunExistingLDAP(t *testing.T) {
 	require.NoError(t, err, "Error retrieving LDAP server bastion IP address: %v", err)
 
 	// Update security group for LDAP
-	err = utils.RetrieveAndUpdateSecurityGroup(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroupName, hpcClusterPrefix, "10.241.0.0/18", "389", "389", testLogger)
+	err = utils.RetrieveAndUpdateSecurityGroup(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroup, hpcClusterPrefix, "10.241.0.0/18", "389", "389", testLogger)
 	require.NoError(t, err, "Error updating security group: %v", err)
 
 	testLogger.Info(t, "Cluster creation process for the second cluster initiated for "+t.Name())
@@ -1139,7 +1139,7 @@ func TestRunExistingLDAP(t *testing.T) {
 	testLogger.Info(t, ldapServerCert)
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group for the second cluster
-	options2, err := setupOptions(t, hpcClusterPrefix2, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options2, err := setupOptions(t, hpcClusterPrefix2, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options for the second cluster: %v", err)
 
 	// Set Terraform variables for the second cluster
@@ -1186,7 +1186,7 @@ func TestRunLSFLogs(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Prevent automatic test teardown to allow for further inspection, if needed.
@@ -1215,7 +1215,7 @@ func TestRunDedicatedHost(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 	options.TerraformVars["enable_dedicated_host"] = true
 	options.TerraformVars["worker_node_instance_type"] = []map[string]interface{}{
@@ -1257,7 +1257,7 @@ func TestRunObservabilityCloudLogsManagementAndComputeEnabled(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Set up test options with relevant parameters, including resource group and environment variables
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Configure the observability settings for management and compute logs, with platform logs and monitoring disabled
@@ -1300,7 +1300,7 @@ func TestRunObservabilityCloudLogsManagementEnabled(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Configure test options with Terraform variables and environment settings
-	options, err := setupOptions(t, clusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, clusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Failed to set up test options: %v", err)
 
 	// Configure observability settings:
@@ -1309,7 +1309,7 @@ func TestRunObservabilityCloudLogsManagementEnabled(t *testing.T) {
 	options.TerraformVars["observability_monitoring_enable"] = false
 
 	// Check if platform logs already exist for the given region and resource group
-	platformLogsExist, err := lsf.CheckPlatformLogsPresent(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroupName, testLogger)
+	platformLogsExist, err := lsf.CheckPlatformLogsPresent(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroup, testLogger)
 	require.NoError(t, err, "Error checking platform logs for cluster: %v", err)
 
 	// Set platform logs configuration based on their existence in the region
@@ -1353,7 +1353,7 @@ func TestRunObservabilityCloudLogsManagementAndComputeDisabled(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Configure test options with Terraform variables and environment settings
-	options, err := setupOptions(t, clusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, clusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoErrorf(t, err, "Failed to set up test options: %v", err)
 
 	// Ensure options is initialized before teardown
@@ -2295,11 +2295,11 @@ func TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Create service instance and KMS key using IBMCloud CLI
-	err := lsf.CreateServiceInstanceAndKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroupName, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
+	err := lsf.CreateServiceInstanceAndKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroup, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
 	require.NoError(t, err, "Failed to create service instance and KMS key")
 
 	// Ensure the service instance and KMS key are deleted after the test
-	defer lsf.DeleteServiceInstanceAndAssociatedKeys(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroupName, kmsInstanceName, testLogger)
+	defer lsf.DeleteServiceInstanceAndAssociatedKeys(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroup, kmsInstanceName, testLogger)
 
 	testLogger.Info(t, "Service instance and KMS key created successfully: "+t.Name())
 
@@ -2467,7 +2467,7 @@ func TestRunExistSubnetIDVpcNameAsNull(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
-	options, err := setupOptionsVpc(t, hpcClusterPrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroupName)
+	options, err := setupOptionsVpc(t, hpcClusterPrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroup)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Skip test teardown for further inspection
@@ -2565,7 +2565,7 @@ func TestRunInvalidDedicatedHostConfigurationWithZeroWorkerNodes(t *testing.T) {
 	envVars := GetEnvVars()
 
 	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroupName, ignoreDestroys, ignoreUpdates)
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 	options.TerraformVars["enable_dedicated_host"] = true
 	options.TerraformVars["worker_node_instance_type"] = []map[string]interface{}{
