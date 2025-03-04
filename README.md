@@ -66,9 +66,9 @@ OK
 $ ibmcloud schematics logs --id us-east.workspace.hpcc-cluster.7cbc3f6b
 ...
  2025/02/18 15:00:57 Terraform apply | Apply complete! Resources: 123 added, 0 changed, 0 destroyed.
- 2025/02/18 15:00:57 Terraform apply | 
+ 2025/02/18 15:00:57 Terraform apply |
  2025/02/18 15:00:57 Terraform apply | Outputs:
- 2025/02/18 15:00:57 Terraform apply | 
+ 2025/02/18 15:00:57 Terraform apply |
  2025/02/18 15:00:57 Terraform apply | image_entry_found = "true --  - hpc-lsf10-rhel810-v1"
  2025/02/18 15:00:57 Terraform apply | region_name = "us-east"
  2025/02/18 15:00:57 Terraform apply | remote_allowed_cidr = [

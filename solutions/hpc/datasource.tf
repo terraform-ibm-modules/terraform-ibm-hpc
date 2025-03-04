@@ -80,3 +80,7 @@ resource "ibm_is_subnet_public_gateway_attachment" "zone_1_attachment" {
   subnet         = local.compute_subnets[0].id
   public_gateway = length(local.zone_1_pgw_ids) > 0 ? local.zone_1_pgw_ids[0] : ""
 }
+
+data "ibm_is_dedicated_host_profiles" "worker" {
+  count = var.enable_dedicated_host ? 1 : 0
+}
