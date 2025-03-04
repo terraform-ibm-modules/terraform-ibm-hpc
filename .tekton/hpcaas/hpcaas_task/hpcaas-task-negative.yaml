@@ -1,0 +1,207 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: wes-hpc-da-negative
+spec:
+  params:
+    - name: ibmcloud-api
+      description: the ibmcloud api
+      default: https://cloud.ibm.com
+    - name: continuous-delivery-context-secret
+      description: name of the secret containing the continuous delivery pipeline context secrets
+      default: secure-properties
+    - name: ibmcloud-apikey-secret-key
+      description: field in the secret that contains the api key used to login to ibmcloud
+      default: ibmcloud_api_key
+    - name: pipeline-debug
+      description: Pipeline debug mode. Value can be 0 or 1. Default to 0
+      default: "0"
+    - name: revision
+      description: |
+        the git revision/commit to update the git HEAD to.
+        Default is to mean only use the branch
+      default: ""
+    - name: directory-name
+      default: "."
+    - name: repository
+      description: the git repo url
+    - name: git_access_token
+      description: the token to access the git repository for the clone operations
+      default: ""
+    - name: ssh_keys
+      default: ""
+      description: List of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC bastion and login node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys).
+    - name: zone
+      default: ""
+      description: The IBM Cloud zone name within the selected region where the IBM Cloud HPC cluster should be deployed and requires a single zone input value. Supported zones are eu-de-2 and eu-de-3 for eu-de, us-east-1 and us-east-3 for us-east, and us-south-1 for us-south. The management nodes, file storage shares, and compute nodes will be deployed in the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli).
+    - name: cluster_prefix
+      description: Prefix that is used to name the IBM Cloud HPC cluster and IBM Cloud resources that are provisioned to build the IBM Cloud HPC cluster instance. You cannot create more than one instance of the IBM Cloud HPC cluster with the same name. Ensure that the name is unique.
+      default: cicd-wes
+    - name: resource_group
+      description: Resource group name from your IBM Cloud account where the VPC resources should be deployed. Note. If the resource group value is set as null, automation creates two different RG with the name (workload-rg and service-rg). For additional information on resource groups, see [Managing resource groups](https://cloud.ibm.com/docs/account?topic=account-rgs).
+      default: Default
+    - name: remote_allowed_ips
+      default: ""
+      description: Comma-separated list of IP addresses that can access the IBM Cloud HPC cluster instance through an SSH interface. For security purposes, provide the public IP addresses assigned to the devices that are authorized to establish SSH connections (for example, [\"169.45.117.34\"]). To fetch the IP address of the device, use [https://ipv4.icanhazip.com/](https://ipv4.icanhazip.com/).
+    - name: compute_image_name_rhel
+      description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v1). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
+      default: ""
+    - name: compute_image_name_ubuntu
+      description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v1). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
+      default: ""
+    - name: login_image_name
+      description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster login node. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v2). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
+      default: ""
+    - name: cluster_id
+      description: Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same reservation. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment.
+      default: ""
+    - name: reservation_id
+      description: Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_).
+      default: ""
+    - name: us_east_zone
+      default: ""
+      description: The IBM Cloud zone name within the selected region where the IBM Cloud HPC cluster should be deployed and requires a single zone input value. Supported zones are eu-de-2 and eu-de-3 for eu-de, us-east-1 and us-east-3 for us-east, and us-south-1 for us-south. The management nodes, file storage shares, and compute nodes will be deployed in the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli).
+    - name: us_east_cluster_id
+      description: Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same reservation. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment.
+      default: ""
+    - name: us_east_reservation_id
+      description: Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_).
+      default: ""
+    - name: eu_de_zone
+      default: ""
+      description: The IBM Cloud zone name within the selected region where the IBM Cloud HPC cluster should be deployed and requires a single zone input value. Supported zones are eu-de-2 and eu-de-3 for eu-de, us-east-1 and us-east-3 for us-east, and us-south-1 for us-south. The management nodes, file storage shares, and compute nodes will be deployed in the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli).
+    - name: eu_de_cluster_id
+      description: Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same reservation. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment.
+      default: ""
+    - name: eu_de_reservation_id
+      description: Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_).
+      default: ""
+    - name: us_south_zone
+      default: ""
+      description: The IBM Cloud zone name within the selected region where the IBM Cloud HPC cluster should be deployed and requires a single zone input value. Supported zones are eu-de-2 and eu-de-3 for eu-de, us-east-1 and us-east-3 for us-east, and us-south-1 for us-south. The management nodes, file storage shares, and compute nodes will be deployed in the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli).
+    - name: us_south_cluster_id
+      description: Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same reservation. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment.
+      default: ""
+    - name: us_south_reservation_id
+      description: Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_).
+      default: ""
+    - name: cos_region
+      description: The cos region name.
+      default: ""
+    - name: cos_bucket
+      description: The cos bucket name.
+      default: ""
+    - name: cos_instance_crn
+      description: The cos instance crn.
+      default: ""
+    - name: cos_api_key
+      description: The cos account api key.
+      default: ""
+    - name: hpc_custom_reports_repo
+      description: The HPC custom reports storage repository.
+      default: ""
+    - name: hpc_custom_reports_branch
+      description: The HPC custom reports storage repository branch.
+      default: "main"
+    - name: git_user_name
+      description: The git user name.
+      default: ""
+    - name: git_user_email
+      description: The git user email.
+      default: ""
+    - name: management_image_name
+      description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster management nodes. By default, the solution uses a RHEL88 base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
+      default: ""
+    - name: solution
+      description: Provide the value for the solution that is needed for the support of lsf and HPC.
+      default: "hpcaas"
+  workspaces:
+    - name: workspace
+      mountPath: /artifacts
+  stepTemplate:
+    env:
+      - name: API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: $(params.continuous-delivery-context-secret)
+            key: $(params.ibmcloud-apikey-secret-key)
+            optional: true
+      - name: PIPELINE_DEBUG
+        value: $(params.pipeline-debug)
+      - name: REVISION
+        value: $(params.revision)
+      - name: ssh_keys
+        value: $(params.ssh_keys)
+      - name: zone
+        value: $(params.zone)
+      - name: resource_group
+        value: $(params.resource_group)
+      - name: compute_image_name_rhel
+        value: $(params.compute_image_name_rhel)
+      - name: login_image_name
+        value: $(params.login_image_name)
+      - name: cluster_id
+        value: $(params.cluster_id)
+      - name: reservation_id
+        value: $(params.reservation_id)
+      - name: us_east_zone
+        value: $(params.us_east_zone)
+      - name: us_east_cluster_id
+        value: $(params.us_east_cluster_id)
+      - name: us_east_reservation_id
+        value: $(params.us_east_reservation_id)
+      - name: eu_de_zone
+        value: $(params.eu_de_zone)
+      - name: eu_de_cluster_id
+        value: $(params.eu_de_cluster_id)
+      - name: eu_de_reservation_id
+        value: $(params.eu_de_reservation_id)
+      - name: us_south_zone
+        value: $(params.us_south_zone)
+      - name: us_south_cluster_id
+        value: $(params.us_south_cluster_id)
+      - name: us_south_reservation_id
+        value: $(params.us_south_reservation_id)
+      - name: cos_region
+        value: $(params.cos_region)
+      - name: cos_bucket
+        value: $(params.cos_bucket)
+      - name: cos_instance_crn
+        value: $(params.cos_instance_crn)
+      - name: cos_api_key
+        value: $(params.cos_api_key)
+      - name: hpc_custom_reports_repo
+        value: $(params.hpc_custom_reports_repo)
+      - name: hpc_custom_reports_branch
+        value: $(params.hpc_custom_reports_branch)
+      - name: git_user_name
+        value: $(params.git_user_name)
+      - name: git_user_email
+        value: $(params.git_user_email)
+      - name: git_access_token
+        value: $(params.git_access_token)
+      - name: solution
+        value: $(params.solution)
+      - name: management_image_name
+        value: $(params.management_image_name)
+  steps:
+    - name: negative-scenario
+      onError: continue
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          source .tekton/scripts/suites.sh
+          hpcaas_negative_suite

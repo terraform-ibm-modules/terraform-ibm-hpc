@@ -16,7 +16,7 @@ module "db" {
   region             = var.region
   service_endpoints  = var.service_endpoints
   mysql_version      = var.mysql_version
-  admin_pass         = var.adminpassword
+  admin_pass         = var.admin_password
   members            = var.members
   member_memory_mb   = var.memory
   member_disk_mb     = var.disks

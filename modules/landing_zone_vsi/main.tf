@@ -57,7 +57,7 @@ module "nfs_storage_sg" {
 module "management_vsi" {
   count                         = 1
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "4.5.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -75,13 +75,12 @@ module "management_vsi" {
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
-
 }
 
 module "management_candidate_vsi" {
   count                         = var.management_node_count - 1
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "4.5.0"
   create_security_group         = false
   security_group                = null
   security_group_ids            = module.compute_sg[*].security_group_id
@@ -99,12 +98,39 @@ module "management_candidate_vsi" {
   machine_type                  = data.ibm_is_instance_profile.management_node.name
   vsi_per_subnet                = 1
   tags                          = local.tags
+  depends_on                    = [module.lsf_entitlement]
+}
+
+module "worker_vsi" {
+  count                         = length(local.flattened_worker_nodes)
+  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version                       = "4.5.0"
+  vsi_per_subnet                = 1
+  create_security_group         = false
+  security_group                = null
+  image_id                      = local.compute_image_found_in_map ? local.new_compute_image_id : data.ibm_is_image.compute[0].id
+  machine_type                  = local.flattened_worker_nodes[count.index].instance_type
+  prefix                        = format("%s-%s", local.worker_node_name, count.index)
+  resource_group_id             = var.resource_group
+  enable_floating_ip            = false
+  security_group_ids            = module.compute_sg[*].security_group_id
+  ssh_key_ids                   = local.management_ssh_keys
+  subnets                       = [local.compute_subnets[0]]
+  tags                          = local.tags
+  user_data                     = "${data.template_file.worker_user_data.rendered} ${file("${path.module}/templates/static_worker_vsi.sh")}"
+  vpc_id                        = var.vpc_id
+  kms_encryption_enabled        = var.kms_encryption_enabled
+  skip_iam_authorization_policy = local.skip_iam_authorization_policy
+  boot_volume_encryption_key    = var.boot_volume_encryption_key
+  enable_dedicated_host         = var.enable_dedicated_host
+  dedicated_host_id             = var.dedicated_host_id
+  depends_on                    = [module.management_vsi, module.lsf_entitlement, module.do_management_vsi_configuration]
 }
 
 module "login_vsi" {
-  count                         = 1
+  #  count                         = 1
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "4.5.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -126,16 +152,15 @@ module "login_vsi" {
 }
 
 module "ldap_vsi" {
-  count                 = local.ldap_enable
-  source                = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version               = "4.2.0"
-  vsi_per_subnet        = 1
-  create_security_group = false
-  security_group        = null
-  image_id              = local.ldap_instance_image_id
-  machine_type          = var.ldap_vsi_profile
-  prefix                = local.ldap_node_name
-  # prefix                      = count.index == 0 ? local.management_node_name : format("%s-%s", local.management_node_name, count.index)
+  count                         = local.ldap_enable
+  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version                       = "4.5.0"
+  vsi_per_subnet                = 1
+  create_security_group         = false
+  security_group                = null
+  image_id                      = local.ldap_instance_image_id
+  machine_type                  = var.ldap_vsi_profile
+  prefix                        = local.ldap_node_name
   resource_group_id             = var.resource_group
   enable_floating_ip            = false
   security_group_ids            = module.compute_sg[*].security_group_id
@@ -149,6 +174,7 @@ module "ldap_vsi" {
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   #placement_group_id           = var.placement_group_ids[(var.management_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
+
 
 module "generate_db_password" {
   count            = var.enable_app_center && var.app_center_high_availability ? 1 : 0
@@ -193,6 +219,39 @@ module "wait_management_candidate_vsi_booted" {
   ]
 }
 
+module "wait_worker_vsi_booted" {
+  count               = var.solution == "lsf" ? 1 : 0
+  source              = "./../../modules/null/remote_exec"
+  cluster_host        = concat(local.worker_private_ip)
+  cluster_user        = var.cluster_user #"root"
+  cluster_private_key = var.compute_private_key_content
+  login_host          = var.bastion_fip
+  login_user          = "ubuntu"
+  login_private_key   = var.bastion_private_key_content
+  command             = ["cloud-init status --wait;hostname;date;df;id"]
+  timeout             = "15m" # let's be patient, the VSI may need time to boot completely
+  depends_on = [
+    module.management_candidate_vsi,
+    module.wait_management_vsi_booted
+  ]
+}
+
+module "lsf_entitlement" {
+  count               = var.solution == "lsf" ? 1 : 0
+  source              = "./../../modules/null/remote_exec"
+  cluster_host        = concat([local.management_private_ip])
+  cluster_user        = var.cluster_user #"root"            #"root"
+  cluster_private_key = var.compute_private_key_content
+  login_host          = var.bastion_fip
+  login_user          = "ubuntu"
+  login_private_key   = var.bastion_private_key_content
+  command             = ["sudo python3.8 /opt/IBM/cloud_entitlement/entitlement_check.py --products ${local.products} --icns ${var.ibm_customer_number != null ? var.ibm_customer_number : ""}"]
+  depends_on = [
+    module.management_vsi,
+    module.wait_management_vsi_booted # this implies vsi have been configured too
+  ]
+}
+
 module "do_management_vsi_configuration" {
   source              = "./../../modules/null/remote_exec_script"
   cluster_host        = concat([local.management_private_ip])
@@ -209,7 +268,8 @@ module "do_management_vsi_configuration" {
   sudo_user           = "root"
   with_bash           = true
   depends_on = [
-    module.wait_management_vsi_booted
+    module.wait_management_vsi_booted,
+    module.lsf_entitlement
   ]
   trigger_string = join(",", module.management_vsi[0].ids)
 }

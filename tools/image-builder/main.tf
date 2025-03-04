@@ -1,6 +1,6 @@
 module "landing_zone" {
   source                                 = "terraform-ibm-modules/landing-zone/ibm"
-  version                                = "5.27.0"
+  version                                = "6.6.3"
   prefix                                 = local.prefix
   region                                 = local.region
   tags                                   = local.tags
@@ -75,7 +75,7 @@ data "local_file" "encoded_compute_content" {
 
 module "packer_vsi" {
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.0.1"
+  version                       = "4.5.0"
   vsi_per_subnet                = 1
   image_id                      = local.packer_image_id
   machine_type                  = local.packer_machine_type

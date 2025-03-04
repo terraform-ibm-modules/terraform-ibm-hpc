@@ -21,6 +21,7 @@ import (
 	"github.com/IBM/secrets-manager-go-sdk/v2/secretsmanagerv2"
 	"github.com/stretchr/testify/assert"
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
+	"golang.org/x/crypto/ssh"
 )
 
 const (
@@ -28,19 +29,16 @@ const (
 	TimeLayout = "Jan02"
 )
 
-// VerifyDataContains is a generic function that checks if a value is present in data (string or string array)
-// VerifyDataContains performs a verification operation on the provided data
-// to determine if it contains the specified value. It supports string and
-// string array types, logging results with the provided AggregatedLogger.
-// Returns true if the value is found, false otherwise.
+// VerifyDataContains is a generic function that checks if a value is present in data (string, []string, or int).
+// It performs a verification operation on the provided data to determine if it contains the specified value.
+// Logs the result using the provided AggregatedLogger. Returns true if the value is found, false otherwise.
 func VerifyDataContains(t *testing.T, data interface{}, val interface{}, logger *AggregatedLogger) bool {
-	//The data.(type) syntax is used to check the actual type of the data variable.
 	switch d := data.(type) {
 	case string:
-		//check if the val variable is of type string.
+		// Check if val is a string
 		substr, ok := val.(string)
 		if !ok {
-			logger.Info(t, "Invalid type for val parameter")
+			logger.Info(t, "Invalid type for val parameter: expected string")
 			return false
 		}
 		if substr != "" && strings.Contains(d, substr) {
@@ -71,12 +69,26 @@ func VerifyDataContains(t *testing.T, data interface{}, val interface{}, logger 
 			return false
 
 		default:
-			logger.Info(t, "Invalid type for val parameter")
+			logger.Info(t, "Invalid type for val parameter: expected string or []string")
 			return false
 		}
 
+	case int:
+		// Check if val is an int
+		v, ok := val.(int)
+		if !ok {
+			logger.Info(t, "Invalid type for val parameter: expected int")
+			return false
+		}
+		if d == v {
+			logger.Info(t, fmt.Sprintf("The integers match: %d == %d\n", d, v))
+			return true
+		}
+		logger.Info(t, fmt.Sprintf("The integers do not match: %d != %d\n", d, v))
+		return false
+
 	default:
-		logger.Info(t, "Unsupported type for data parameter")
+		logger.Info(t, fmt.Sprintf("Unsupported type for data parameter: %T", data))
 		return false
 	}
 }
@@ -283,7 +295,7 @@ func GetValueForKey(inputMap map[string]string, key string) string {
 
 // Configuration struct matches the structure of your JSON data
 type Configuration struct {
-	ClusterID               string   `json:"clusterID"`
+	ClusterName             string   `json:"clusterName"`
 	ReservationID           string   `json:"reservationID"`
 	ClusterPrefixName       string   `json:"clusterPrefixName"`
 	ResourceGroup           string   `json:"resourceGroup"`
@@ -331,7 +343,7 @@ func GetLdapIP(t *testing.T, options *testhelper.TestOptions, logger *Aggregated
 	filePath := options.TerraformOptions.TerraformDir
 
 	// Get the LDAP server IP and handle errors.
-	ldapIP, err = GetLdapServerIP(t, filePath, logger)
+	ldapIP, err = GetLdapServerIPFromIni(t, filePath, logger)
 	if err != nil {
 		return "", fmt.Errorf("error getting LDAP server IP: %w", err)
 	}
@@ -347,7 +359,7 @@ func GetBastionIP(t *testing.T, options *testhelper.TestOptions, logger *Aggrega
 	filePath := options.TerraformOptions.TerraformDir
 
 	// Get the bastion server IP and handle errors.
-	bastionIP, err = GetBastionServerIP(t, filePath, logger)
+	bastionIP, err = GetBastionServerIPFromIni(t, filePath, logger)
 	if err != nil {
 		return "", fmt.Errorf("error getting bastion server IP: %w", err)
 	}
@@ -422,4 +434,130 @@ func RemoveKeys(m map[string]interface{}, keysToRemove []string) {
 	for _, key := range keysToRemove {
 		delete(m, key)
 	}
+}
+
+// IsStringInSlice checks if a string exists in a slice of strings.
+func IsStringInSlice(slice []string, item string) bool {
+	for _, str := range slice {
+		if str == item {
+			return true
+		}
+	}
+	return false
+}
+
+// Helper function to retrieve the master node name
+func GetMasterNodeName(t *testing.T, sClient *ssh.Client, logger *AggregatedLogger) (string, error) {
+	output, err := RunCommandInSSHSession(sClient, `lsid | grep master | cut -d" " -f5`)
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve the master node name: %w", err)
+	}
+	masterName := strings.TrimSpace(output)
+	logger.Info(t, fmt.Sprintf("Master node: %s", masterName))
+	return masterName, nil
+}
+
+// Helper function to retrieve management node names
+func GetManagementNodeNames(t *testing.T, sClient *ssh.Client, logger *AggregatedLogger) ([]string, error) {
+	output, err := RunCommandInSSHSession(sClient, `bhosts -w -noheader | cut -d" " -f1 | grep mgmt | tr '\n' ' ' | sed 's/ *$//'`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve management node names: %w", err)
+	}
+	managementNodes := strings.Fields(output)
+	logger.Info(t, fmt.Sprintf("Management nodes: %s", managementNodes))
+	return managementNodes, nil
+}
+
+// GetIAMToken retrieves the IAM token using IBM Cloud CLI
+func GetIAMToken() (string, error) {
+	cmd := exec.Command("bash", "-c", "ibmcloud iam oauth-tokens --output json | jq -r '.iam_token'")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("failed to get IAM token: %w", err)
+	}
+
+	// Trim and check if the token is empty
+	token := strings.TrimSpace(string(output))
+	if token == "" {
+		return "", fmt.Errorf("empty IAM token received")
+	}
+
+	return token, nil
+}
+
+// GetWorkerNodeTotalCount extracts the total "count" from the worker_node_instance_type variable.
+// It uses reflection to handle slices of various underlying types.
+func GetWorkerNodeTotalCount(t *testing.T, terraformVars map[string]interface{}, logger *AggregatedLogger) (int, error) {
+	rawVal, exists := terraformVars["worker_node_instance_type"]
+	if !exists {
+		return 0, errors.New("worker_node_instance_type key does not exist")
+	}
+
+	// Use reflection to check that rawVal is a slice.
+	val := reflect.ValueOf(rawVal)
+	if val.Kind() != reflect.Slice {
+		return 0, errors.New("worker_node_instance_type is not a slice")
+	}
+
+	var totalCount int
+	for i := 0; i < val.Len(); i++ {
+		// Get the i-th element and assert that it's a map.
+		item := val.Index(i).Interface()
+		workerMap, ok := item.(map[string]interface{})
+		if !ok {
+			return 0, fmt.Errorf("worker at index %d is not in the expected map format", i)
+		}
+		// Extract the "count" value.
+		countVal, exists := workerMap["count"]
+		if !exists {
+			return 0, fmt.Errorf("worker at index %d does not have a 'count' key", i)
+		}
+		// Use type assertion for an int.
+		count, ok := countVal.(int)
+		if !ok {
+			return 0, fmt.Errorf("count for worker at index %d is not an int", i)
+		}
+		totalCount += count
+		logger.Info(t, fmt.Sprintf("Expected total worker node count is %d", totalCount))
+	}
+
+	return totalCount, nil
+}
+
+// GetFirstWorkerNodeProfile extracts the "instance_type" from the first worker node in the slice.
+// It validates the structure and returns an error if the data format is incorrect.
+func GetFirstWorkerNodeProfile(t *testing.T, terraformVars map[string]interface{}, logger *AggregatedLogger) (string, error) {
+
+	rawVal, exists := terraformVars["worker_node_instance_type"]
+	if !exists {
+		return "", errors.New("worker_node_instance_type key does not exist")
+	}
+
+	// Use reflection to ensure rawVal is a slice.
+	val := reflect.ValueOf(rawVal)
+	if val.Kind() != reflect.Slice || val.Len() == 0 {
+		return "", errors.New("worker_node_instance_type is not a valid non-empty slice")
+	}
+
+	// Get the first element and ensure it's a map
+	item := val.Index(0).Interface()
+	workerMap, ok := item.(map[string]interface{})
+	if !ok {
+		return "", errors.New("worker at index 0 is not in the expected map format")
+	}
+
+	// Extract the "instance_type" value
+	instanceTypeVal, exists := workerMap["instance_type"]
+	if !exists {
+		return "", errors.New("worker at index 0 does not have an 'instance_type' key")
+	}
+
+	// Ensure "instance_type" is a string
+	instanceType, ok := instanceTypeVal.(string)
+	if !ok {
+		return "", errors.New("instance_type for worker at index 0 is not a string")
+	}
+
+	logger.Info(t, fmt.Sprintf("Expected dynamic worker node instance type is %s", instanceType))
+	return instanceType, nil
 }

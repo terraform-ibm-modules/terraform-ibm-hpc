@@ -66,6 +66,7 @@ mkdir /HPCaaS
 cd /HPCaaS
 git clone https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git
 cd /HPCaaS/terraform-ibm-hpc/solutions/hpc
+echo "======================Cloning HPC public repo completed====================="
 
 echo "======================Installing terraform====================="
 git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
@@ -129,12 +130,19 @@ fi
 echo "========== Executing Go function to validate the image through HPC deployment ========="
 export TF_VAR_ibmcloud_api_key=${ibm_api_key}
 
-if [ "${private_catalog_id}" ]; then
-    PREFIX=${prefix} CLUSTER_ID=${cluster_id} RESERVATION_ID=${reservation_id} SSH_FILE_PATH="/HPCaaS/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY CATALOG_VALIDATE_SSH_KEY=${catalog_validate_ssh_key} ZONES=${zones} RESOURCE_GROUP=${resource_group} COMPUTE_IMAGE_NAME=${image_name} PRIVATE_CATALOG_ID=${private_catalog_id} VPC_ID=${vpc_id} SUBNET_ID=${vpc_subnet_id} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunHpcDeploymentForCustomImageBuilder" | tee hpc_log_$(date +%d-%m-%Y-%H-%M-%S).log
+if [ "${solution}" != "lsf" ]; then
+    if [ "${private_catalog_id}" ]; then
+        SOLUTION=${solution} PREFIX=${prefix} CLUSTER_ID=${cluster_id} RESERVATION_ID=${reservation_id} SSH_FILE_PATH="/HPCaaS/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY CATALOG_VALIDATE_SSH_KEY=${catalog_validate_ssh_key} ZONES=${zones} RESOURCE_GROUP=${resource_group} COMPUTE_IMAGE_NAME=${image_name} PRIVATE_CATALOG_ID=${private_catalog_id} VPC_ID=${vpc_id} SUBNET_ID=${vpc_subnet_id} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunHpcDeploymentForCustomImageBuilder" | tee hpc_log_$(date +%d-%m-%Y-%H-%M-%S).log
+    else
+        SOLUTION=${solution} PREFIX=${prefix} CLUSTER_ID=${cluster_id} RESERVATION_ID=${reservation_id} SSH_FILE_PATH="/HPCaaS/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY ZONES=${zones} RESOURCE_GROUP=${resource_group} COMPUTE_IMAGE_NAME=${image_name} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunHpcDeploymentForCustomImageBuilder" | tee hpc_log_$(date +%d-%m-%Y-%H-%M-%S).log
+    fi
 else
-    PREFIX=${prefix} CLUSTER_ID=${cluster_id} RESERVATION_ID=${reservation_id} SSH_FILE_PATH="/HPCaaS/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY ZONES=${zones} RESOURCE_GROUP=${resource_group} COMPUTE_IMAGE_NAME=${image_name} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunHpcDeploymentForCustomImageBuilder" | tee hpc_log_$(date +%d-%m-%Y-%H-%M-%S).log
+    if [ "${private_catalog_id}" ]; then
+        SOLUTION=${solution} IBM_CUSTOMER_NUMBER=${ibm_customer_number} PREFIX=${prefix} CLUSTER_ID=${cluster_id} SSH_FILE_PATH="/HPCaaS/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY CATALOG_VALIDATE_SSH_KEY=${catalog_validate_ssh_key} ZONES=${zones} RESOURCE_GROUP=${resource_group} COMPUTE_IMAGE_NAME=${image_name} PRIVATE_CATALOG_ID=${private_catalog_id} VPC_ID=${vpc_id} SUBNET_ID=${vpc_subnet_id} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunHpcDeploymentForCustomImageBuilder" | tee hpc_log_$(date +%d-%m-%Y-%H-%M-%S).log
+    else
+        SOLUTION=${solution} IBM_CUSTOMER_NUMBER=${ibm_customer_number} PREFIX=${prefix} CLUSTER_ID=${cluster_id} SSH_FILE_PATH="/HPCaaS/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY ZONES=${zones} RESOURCE_GROUP=${resource_group} COMPUTE_IMAGE_NAME=${image_name} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunHpcDeploymentForCustomImageBuilder" | tee hpc_log_$(date +%d-%m-%Y-%H-%M-%S).log
+    fi
 fi
-
 echo "========== Deleting the SSH key ========="
 
 ibmcloud is key-delete $CICD_SSH_KEY -f

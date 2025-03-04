@@ -23,6 +23,11 @@ output "public_gateways" {
   value       = module.landing_zone[*].vpc_data[0].public_gateways
 }
 
+output "vpc_cidr" {
+  description = "To fetch the vpc cidr"
+  value       = module.landing_zone[*].vpc_data[0].cidr_blocks[0]
+}
+
 output "subnets" {
   description = "subnets"
   value = [for subnet in flatten(module.landing_zone[*].subnet_data) : {
@@ -42,7 +47,7 @@ output "bastion_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-hpc-bastion-subnet")
+    } if strcontains(subnet["name"], "-lsf-bastion-subnet")
   ]
 }
 
@@ -53,7 +58,7 @@ output "login_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-hpc-login-subnet")
+    } if strcontains(subnet["name"], "-lsf-login-subnet")
   ]
 }
 
@@ -66,7 +71,7 @@ output "compute_subnets" {
     cidr = subnet["cidr"]
     crn  = subnet["crn"]
     #ipv4_cidr_block = subnet["ipv4_cidr_block "]
-    } if strcontains(subnet["name"], "-hpc-compute-subnet-zone-")
+    } if strcontains(subnet["name"], "-lsf-compute-subnet-zone-")
   ]
 }
 
@@ -77,7 +82,7 @@ output "storage_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-hpc-storage-subnet-zone-")
+    } if strcontains(subnet["name"], "-lsf-storage-subnet-zone-")
   ]
 }
 
@@ -88,7 +93,7 @@ output "protocol_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-hpc-protocol-subnet-zone-")
+    } if strcontains(subnet["name"], "-lsf-protocol-subnet-zone-")
   ]
 }
 
@@ -116,6 +121,11 @@ output "cos_instance_crns" {
 output "cos_buckets_names" {
   description = "Name of the COS Bucket created for SCC Instance"
   value       = flatten(module.landing_zone[*].cos_bucket_names)
+}
+
+output "cos_buckets_data" {
+  description = "COS buckets data"
+  value       = flatten(module.landing_zone[*].cos_bucket_data)
 }
 
 # TODO: Observability data

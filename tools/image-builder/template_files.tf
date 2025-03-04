@@ -19,5 +19,7 @@ data "template_file" "packer_user_data" {
     zones                    = join(",", var.zones)
     resource_group           = var.resource_group
     private_catalog_id       = var.private_catalog_id
+    solution                 = var.solution
+    ibm_customer_number      = var.ibm_customer_number
   }
 }

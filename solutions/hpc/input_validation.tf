@@ -60,19 +60,41 @@ locals {
   (local.validate_login_subnet_id_zone ? local.validate_login_subnet_id_zone_msg : ""))
 
   # Contract ID validation
-  validate_reservation_id     = length("${var.cluster_id}${var.reservation_id}") > 129 ? false : true
-  validate_reservation_id_msg = "The length of reservation_id and cluster_id combination should not exceed 128 characters."
-  # tflint-ignore: terraform_unused_declarations
-  validate_reservation_id_chk = regex(
-    "^${local.validate_reservation_id_msg}$",
-  (local.validate_reservation_id ? local.validate_reservation_id_msg : ""))
+  #  validate_reservation_id     = length("${var.cluster_id}${var.reservation_id}") > 129 ? false : true
+  #  validate_reservation_id_msg = "The length of reservation_id and cluster_id combination should not exceed 128 characters."
+  #  # tflint-ignore: terraform_unused_declarations
+  #  validate_reservation_id_chk = regex(
+  #    "^${local.validate_reservation_id_msg}$",
+  #  (local.validate_reservation_id ? local.validate_reservation_id_msg : ""))
 
-  validate_reservation_id_api     = local.valid_status_code && local.reservation_id_found
+  validate_reservation_id_api     = var.solution == "hpc" ? local.valid_status_code && local.reservation_id_found : true
   validate_reservation_id_api_msg = "The provided reservation id doesn't have a valid reservation or the reservation id is not on the same account as HPC deployment."
   # tflint-ignore: terraform_unused_declarations
   validate_reservation_id_api_chk = regex(
     "^${local.validate_reservation_id_api_msg}$",
   (local.validate_reservation_id_api ? local.validate_reservation_id_api_msg : ""))
+
+  validate_worker_count     = var.solution == "lsf" ? local.total_worker_node_count <= var.worker_node_max_count : true
+  validate_worker_error_msg = "If the solution is set as lsf, the worker min count cannot be greater than worker max count."
+  # tflint-ignore: terraform_unused_declarations
+  validate_worker_count_chk = regex(
+    "^${local.validate_worker_error_msg}$",
+  (local.validate_worker_count ? local.validate_worker_error_msg : ""))
+
+  validate_lsf_solution           = var.solution == "lsf" ? var.ibm_customer_number != null : true
+  validate_lsf_solution_error_msg = "If the solution is set as LSF, then the ibm customer number cannot be set as null."
+  # tflint-ignore: terraform_unused_declarations
+  validate_lsf_solution_chk = regex(
+    "^${local.validate_lsf_solution_error_msg}$",
+  (local.validate_lsf_solution ? local.validate_lsf_solution_error_msg : ""))
+
+  validate_icn_number       = var.solution == "lsf" ? can(regex("^[0-9A-Za-z]*([0-9A-Za-z]+,[0-9A-Za-z]+)*$", var.ibm_customer_number)) : true
+  validate_icn_number_error = "The IBM customer number input value cannot have special characters."
+  # tflint-ignore: terraform_unused_declarations
+  validate_icn_number_chk = regex(
+    "^${local.validate_icn_number_error}$",
+  (local.validate_icn_number ? local.validate_icn_number_error : ""))
+
 
   # Validate custom fileshare
   # Construct a list of Share size(GB) and IOPS range(IOPS)from values provided in https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=ui#dp2-profile
@@ -179,7 +201,7 @@ locals {
   (local.validate_management_node_count ? local.management_node_count_msg : ""))
 
   # IBM Cloud Application load Balancer CRN validation
-  validate_alb_crn     = (var.enable_app_center && var.app_center_high_availability) && can(regex("^crn:v1:bluemix:public:secrets-manager:[a-zA-Z\\-]+:[a-zA-Z0-9\\-]+\\/[a-zA-Z0-9\\-]+:[a-fA-F0-9\\-]+:secret:[a-fA-F0-9\\-]+$", var.existing_certificate_instance)) || !var.app_center_high_availability || !var.enable_app_center
+  validate_alb_crn     = (var.enable_app_center && var.app_center_high_availability) && can(regex("^crn:v1:bluemix:public:secrets-manager:[a-zA-Z\\-]+:[a-zA-Z0-9\\-]+\\/[a-zA-Z0-9\\-]+:[a-fA-F0-9\\-]+:secret:[a-fA-F0-9\\-]+$", var.app_center_existing_certificate_instance)) || !var.app_center_high_availability || !var.enable_app_center
   alb_crn_template_msg = "When app_center_high_availability is enable/set as true, The Application Center will be configured for high availability and requires a Application Load Balancer Front End listener to use a certificate CRN value stored in the Secret Manager. Provide the valid 'existing_certificate_instance' to configure the Application load balancer."
   # tflint-ignore: terraform_unused_declarations
   validate_alb_crn_chk = regex(
@@ -193,8 +215,8 @@ locals {
   validate_custom_resolver_id_chk = regex("^${local.validate_custom_resolver_id_msg}$",
   (local.validate_custom_resolver_id ? local.validate_custom_resolver_id_msg : ""))
 
-  validate_reservation_id_new_msg = "Provided cluster_id and reservation id cannot be set as empty if the provided region is eu-de and us-east and us-south."
-  validate_reservation_id_logic   = local.region == "eu-de" || local.region == "us-east" || local.region == "us-south" ? var.reservation_id != "" && var.cluster_id != "" : true
+  validate_reservation_id_new_msg = "Provided reservation id cannot be set as empty if the provided solution is set as hpc.."
+  validate_reservation_id_logic   = var.solution == "hpc" ? var.reservation_id != null : true
   # tflint-ignore: terraform_unused_declarations
   validate_reservation_id_chk_new = regex("^${local.validate_reservation_id_new_msg}$",
   (local.validate_reservation_id_logic ? local.validate_reservation_id_new_msg : ""))
@@ -208,7 +230,7 @@ locals {
   (local.validate_observability_monitoring_enable_compute_nodes ? local.observability_monitoring_enable_compute_nodes_msg : ""))
 
   # Existing Bastion validation
-  validate_existing_bastion     = var.bastion_instance_name != null ? (var.bastion_instance_public_ip != null && var.bastion_security_group_id != null && var.bastion_ssh_private_key != null) : local.bastion_instance_status
+  validate_existing_bastion     = var.existing_bastion_instance_name != null ? (var.existing_bastion_instance_public_ip != null && var.existing_bastion_security_group_id != null && var.existing_bastion_ssh_private_key != null) : local.bastion_instance_status
   validate_existing_bastion_msg = "If bastion_instance_name is not null, then bastion_instance_public_ip, bastion_security_group_id, and bastion_ssh_private_key should not be null."
   # tflint-ignore: terraform_unused_declarations
   validate_existing_bastion_chk = regex(

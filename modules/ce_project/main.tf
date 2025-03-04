@@ -7,6 +7,7 @@ provider "shell" {
 }
 
 resource "shell_script" "ce_project" {
+  count = var.solution == "hpc" ? 1 : 0
   lifecycle_commands {
     create = "scripts/create-update-ce-project.sh"
     update = "scripts/create-update-ce-project.sh"
@@ -28,11 +29,12 @@ resource "shell_script" "ce_project" {
 }
 
 resource "null_resource" "print_ce_project_logs" {
+  count = var.solution == "hpc" ? 1 : 0
   provisioner "local-exec" {
     command     = "echo \"$LOG_OUTPUT\" | sed 's/\\(\\[[0-9]\\{8\\} [0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\]\\)/\\n\\1/g'"
     working_dir = path.module
     environment = {
-      LOG_OUTPUT = shell_script.ce_project.output["logs"]
+      LOG_OUTPUT = shell_script.ce_project[0].output["logs"]
     }
   }
 }

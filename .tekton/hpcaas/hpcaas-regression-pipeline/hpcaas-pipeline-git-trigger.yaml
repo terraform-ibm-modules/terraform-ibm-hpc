@@ -24,7 +24,7 @@ spec:
     - name: pr-revision
       description: the commit id/sha for the PullRequest
       default: ""
-    - name: git-access-token
+    - name: git_access_token
       description: the token to access the git repository for the clone operations
       default: ""
     - name: properties-file
@@ -58,6 +58,9 @@ spec:
       default: ""
     - name: login_image_name
       description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster login node. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v2). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
+      default: ""
+    - name: management_image_name
+      description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster management nodes. By default, the solution uses a RHEL88 base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
       default: ""
     - name: cluster_id
       description: Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same reservation. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment.
@@ -101,6 +104,24 @@ spec:
     - name: cos_instance_crn
       description: The cos instance crn.
       default: ""
+    - name: cos_api_key
+      description: The cos account api key.
+      default: ""
+    - name: hpc_custom_reports_repo
+      description: The HPC custom reports storage repository.
+      default: ""
+    - name: hpc_custom_reports_branch
+      description: The HPC custom reports storage repository branch.
+      default: "main"
+    - name: git_user_name
+      description: The git user name.
+      default: ""
+    - name: git_user_email
+      description: The git user email.
+      default: ""
+    - name: solution
+      description: Provide the value for the solution that is needed for the support of lsf and HPC.
+      default: "hpcaas"
   workspaces:
     - name: pipeline-ws
   tasks:
@@ -120,8 +141,8 @@ spec:
           value: $(params.pr-branch)
         - name: pr-revision
           value: $(params.pr-revision)
-        - name: git-access-token
-          value: $(params.git-access-token)
+        - name: git_access_token
+          value: $(params.git_access_token)
         - name: directory-name
           value: "$(params.directory-name)"
         - name: properties-file
@@ -159,6 +180,8 @@ spec:
           value: $(params.resource_group)
         - name: revision
           value: $(params.revision)
+        - name: solution
+          value: $(params.solution)
     - name: wes-hpc-da-rhel
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
@@ -169,6 +192,8 @@ spec:
       params:
         - name: repository
           value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
         - name: pipeline-debug
           value: $(params.pipeline-debug)
         - name: ssh_keys
@@ -187,6 +212,8 @@ spec:
           value: $(params.compute_image_name_ubuntu)
         - name: login_image_name
           value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
         - name: cluster_id
           value: $(params.cluster_id)
         - name: reservation_id
@@ -217,6 +244,18 @@ spec:
           value: $(params.cos_bucket)
         - name: cos_instance_crn
           value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
     - name: wes-hpc-da-ubuntu
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
@@ -227,6 +266,8 @@ spec:
       params:
         - name: repository
           value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
         - name: pipeline-debug
           value: $(params.pipeline-debug)
         - name: ssh_keys
@@ -245,6 +286,8 @@ spec:
           value: $(params.compute_image_name_ubuntu)
         - name: login_image_name
           value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
         - name: cluster_id
           value: $(params.cluster_id)
         - name: reservation_id
@@ -275,6 +318,18 @@ spec:
           value: $(params.cos_bucket)
         - name: cos_instance_crn
           value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
     - name: wes-hpc-da-region
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
@@ -285,6 +340,8 @@ spec:
       params:
         - name: repository
           value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
         - name: pipeline-debug
           value: $(params.pipeline-debug)
         - name: ssh_keys
@@ -303,6 +360,8 @@ spec:
           value: $(params.compute_image_name_ubuntu)
         - name: login_image_name
           value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
         - name: cluster_id
           value: $(params.cluster_id)
         - name: reservation_id
@@ -333,6 +392,18 @@ spec:
           value: $(params.cos_bucket)
         - name: cos_instance_crn
           value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
     - name: wes-hpc-da-negative
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
@@ -343,6 +414,8 @@ spec:
       params:
         - name: repository
           value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
         - name: pipeline-debug
           value: $(params.pipeline-debug)
         - name: ssh_keys
@@ -361,6 +434,8 @@ spec:
           value: $(params.compute_image_name_ubuntu)
         - name: login_image_name
           value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
         - name: cluster_id
           value: $(params.cluster_id)
         - name: reservation_id
@@ -391,8 +466,26 @@ spec:
           value: $(params.cos_bucket)
         - name: cos_instance_crn
           value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
     - name: ssh-key-deletion
-      runAfter: [wes-hpc-da-rhel, wes-hpc-da-ubuntu, wes-hpc-da-negative, wes-hpc-da-region]
+      runAfter:
+        [
+          wes-hpc-da-rhel,
+          wes-hpc-da-ubuntu,
+          wes-hpc-da-negative,
+          wes-hpc-da-region,
+        ]
       taskRef:
         name: ssh-key-deletion
       workspaces:
@@ -403,6 +496,8 @@ spec:
           value: $(params.pipeline-debug)
         - name: revision
           value: $(params.revision)
+        - name: solution
+          value: $(params.solution)
     - name: git-content-inspect
       runAfter: [git-clone, wes-hpc-da-rhel, wes-hpc-da-ubuntu]
       taskRef:
@@ -425,7 +520,7 @@ spec:
           value: $(tasks.git-clone.results.git-commit)
         - name: git-user
           value: $(tasks.git-clone.results.git-user)
-    - name: display-test-run-output-log
+    - name: display-validation-and-error-log
       runAfter: [git-clone, wes-hpc-da-rhel, wes-hpc-da-ubuntu]
       workspaces:
         - name: workspace
@@ -436,25 +531,47 @@ spec:
             description: The git repo will be cloned onto the volume backing this workspace
             mountPath: /artifacts
         steps:
-          - name: display-test-output-log-rhel-ubuntu-suite
+          - name: validation-hpcaas-rhel-suite
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
             command: ["/bin/bash", "-c"]
             args:
               - |
                 #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="hpcaas-rhel-suite.log"
                 source .tekton/scripts/issue_track.sh
-                display_test_output
-          - name: error-check-test-output-log-rhel-ubuntu-suite
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-hpcaas-ubuntu-suite
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
             command: ["/bin/bash", "-c"]
             args:
               - |
                 #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="hpcaas-ubuntu-suite.log"
                 source .tekton/scripts/issue_track.sh
-                check_error_test_output
-    - name: inspect-wes-hpc-infra-log
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-hpcaas-regions-suite
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="hpcaas-regions-suite.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-hpcaas-negative-suite
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="hpcaas-negative-suite.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+    - name: error-check-on-hpcaas-infra-log
       runAfter: [git-clone, wes-hpc-da-rhel, wes-hpc-da-ubuntu]
       workspaces:
         - name: workspace
@@ -465,7 +582,7 @@ spec:
             description: The git repo will be cloned onto the volume backing this workspace
             mountPath: /artifacts
         steps:
-          - name: error-check-on-rhel-suite-log
+          - name: error-rhel-suite
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -473,36 +590,36 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE="pipeline-rhel-suite*"
+                LOG_FILE_NAME="hpcaas-rhel-suite.json"
                 source .tekton/scripts/issue_track.sh
-                issue_track "${LOG_FILE}"
-          - name: error-check-on-ubuntu-suite-log
+                issue_track "${LOG_FILE_NAME}"
+          - name: error-ubuntu-suite
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
             command: ["/bin/bash", "-c"]
             args:
               - |
                 #!/bin/bash
-                LOG_FILE="pipeline-ubuntu-suite*"
+                LOG_FILE_NAME="hpcaas-ubuntu-suite.json"
                 source .tekton/scripts/issue_track.sh
-                issue_track "${LOG_FILE}"
-          - name: error-check-on-regions-suite-log
+                issue_track "${LOG_FILE_NAME}"
+          - name: error-regions-suite
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
             command: ["/bin/bash", "-c"]
             args:
               - |
                 #!/bin/bash
-                LOG_FILE="pipeline-regions-suite*"
+                LOG_FILE_NAME="hpcaas-regions-suite.json"
                 source .tekton/scripts/issue_track.sh
-                issue_track "${LOG_FILE}"
-          - name: error-check-on-negative-suite-log
+                issue_track "${LOG_FILE_NAME}"
+          - name: error-negative-suite
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
             command: ["/bin/bash", "-c"]
             args:
               - |
                 #!/bin/bash
-                LOG_FILE="pipeline-negative-suite*"
+                LOG_FILE_NAME="hpcaas-negative-suite.json"
                 source .tekton/scripts/issue_track.sh
-                issue_track "${LOG_FILE}"
+                issue_track "${LOG_FILE_NAME}"

@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: wes-hpc-da-ubuntu
+  name: wes-hpc-da-rhel
 spec:
   params:
     - name: ibmcloud-api
@@ -26,6 +26,9 @@ spec:
       default: "."
     - name: repository
       description: the git repo url
+    - name: git_access_token
+      description: the token to access the git repository for the clone operations
+      default: ""
     - name: ssh_keys
       default: ""
       description: List of names of the SSH keys that is configured in your IBM Cloud account, used to establish a connection to the IBM Cloud HPC bastion and login node. Ensure that the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by according to [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys).
@@ -92,6 +95,27 @@ spec:
     - name: cos_instance_crn
       description: The cos instance crn.
       default: ""
+    - name: cos_api_key
+      description: The cos account api key.
+      default: ""
+    - name: hpc_custom_reports_repo
+      description: The HPC custom reports storage repository.
+      default: ""
+    - name: hpc_custom_reports_branch
+      description: The HPC custom reports storage repository branch.
+      default: "main"
+    - name: git_user_name
+      description: The git user name.
+      default: ""
+    - name: git_user_email
+      description: The git user email.
+      default: ""
+    - name: management_image_name
+      description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster management nodes. By default, the solution uses a RHEL88 base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
+      default: ""
+    - name: solution
+      description: Provide the value for the solution that is needed for the support of lsf and HPC.
+      default: "hpcaas"
   workspaces:
     - name: workspace
       mountPath: /artifacts
@@ -113,8 +137,8 @@ spec:
         value: $(params.zone)
       - name: resource_group
         value: $(params.resource_group)
-      - name: compute_image_name_ubuntu
-        value: $(params.compute_image_name_ubuntu)
+      - name: compute_image_name_rhel
+        value: $(params.compute_image_name_rhel)
       - name: login_image_name
         value: $(params.login_image_name)
       - name: cluster_id
@@ -145,8 +169,24 @@ spec:
         value: $(params.cos_bucket)
       - name: cos_instance_crn
         value: $(params.cos_instance_crn)
+      - name: cos_api_key
+        value: $(params.cos_api_key)
+      - name: hpc_custom_reports_repo
+        value: $(params.hpc_custom_reports_repo)
+      - name: hpc_custom_reports_branch
+        value: $(params.hpc_custom_reports_branch)
+      - name: git_user_name
+        value: $(params.git_user_name)
+      - name: git_user_email
+        value: $(params.git_user_email)
+      - name: git_access_token
+        value: $(params.git_access_token)
+      - name: solution
+        value: $(params.solution)
+      - name: management_image_name
+        value: $(params.management_image_name)
   steps:
-    - name: ubuntu-suite-1
+    - name: rhel-suite-1
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -164,8 +204,8 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          ubuntu_suite_1
-    - name: ubuntu-suite-2
+          hpcaas_rhel_suite_1
+    - name: rhel-suite-2
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -183,8 +223,8 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          ubuntu_suite_2
-    - name: ubuntu-suite-3
+          hpcaas_rhel_suite_2
+    - name: rhel-suite-3
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -202,4 +242,4 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          ubuntu_suite_3
+          hpcaas_rhel_suite_3

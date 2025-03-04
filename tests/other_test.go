@@ -27,19 +27,19 @@ func TestRunBasic(t *testing.T) {
 	// Parallelize the test
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
-	// Create test options
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	options.SkipTestTearDown = true
@@ -54,16 +54,17 @@ func TestRunCustomRGAsNull(t *testing.T) {
 	// Parallelize the test
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Create test options
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, LSF_CUSTOM_RESOURCE_GROUP_VALUE_AS_NULL, ignoreDestroys)
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, LSF_CUSTOM_EXISTING_RESOURCE_GROUP_VALUE_AS_NULL, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	options.SkipTestTearDown = true
@@ -78,19 +79,20 @@ func TestRunCustomRGAsNonDefault(t *testing.T) {
 	// Parallelize the test
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
-	// Create test options
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.NonDefaultResourceGroup, ignoreDestroys)
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.NonDefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	options.SkipTestTearDown = true
@@ -105,19 +107,20 @@ func TestRunAppCenter(t *testing.T) {
 	// Parallelize the test
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateRandomString()
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
-	// Create test options
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 	options.TerraformVars["enable_app_center"] = strings.ToLower(envVars.EnableAppCenter)
 	options.TerraformVars["app_center_gui_pwd"] = envVars.AppCenterGuiPassword //pragma: allowlist secret
@@ -129,24 +132,106 @@ func TestRunAppCenter(t *testing.T) {
 
 }
 
+// TestRunSCC validates cluster creation with the SCC.
+func TestRunSCCEnabled(t *testing.T) {
+	// Run the test in parallel
+	t.Parallel()
+
+	// Set up the test suite
+	setupTestSuite(t)
+
+	// Generate a random prefix for the HPC cluster
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Retrieve environment variables for cluster configuration
+	envVars := GetEnvVars()
+
+	if strings.ToLower(envVars.sccEnabled) == "false" {
+		testLogger.Warn(t, fmt.Sprintf("%s will skip execution as the SCC enabled value in the %s_config.yml file is set to true", t.Name(), envVars.sccEnabled))
+		return
+	}
+
+	// Configure test options
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.NonDefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Enable SCC and set the event notification plan
+	options.TerraformVars["scc_enable"] = envVars.sccEnabled
+	options.TerraformVars["scc_event_notification_plan"] = envVars.sccEventNotificationPlan
+	options.TerraformVars["scc_location"] = envVars.sccLocation
+
+	// Skip test teardown; defer teardown to the end of the test
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	// Validate the basic cluster configuration with SCC
+	lsf.ValidateBasicClusterConfigurationWithSCC(t, options, testLogger)
+}
+
+// TestRunPacHa validates the creation and configuration of an cluster with the Application Center
+// in high-availability mode, ensuring that all required environment variables and configurations are set.
+func TestRunPacHa(t *testing.T) {
+	// Parallelize the test
+	t.Parallel()
+
+	// Setup the test suite
+	setupTestSuite(t)
+
+	// Generate a unique HPC cluster prefix
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve the environment variable for EXISTING_CERTIFICATE_INSTANCE
+	existingCertInstance, ok := os.LookupEnv("EXISTING_CERTIFICATE_INSTANCE")
+	if !ok {
+		t.Fatal("When 'app_center_high_availability' is set to true, the environment variable 'EXISTING_CERTIFICATE_INSTANCE' must be exported: export EXISTING_CERTIFICATE_INSTANCE=value")
+	}
+
+	testLogger.Info(t, "Cluster creation process initiated for test: "+t.Name())
+
+	// Retrieve environment variables
+	envVars := GetEnvVars()
+
+	// Configure test options
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Set Terraform variables
+	options.TerraformVars["management_node_count"] = 3
+	options.TerraformVars["enable_app_center"] = strings.ToLower(envVars.EnableAppCenter)
+	options.TerraformVars["app_center_gui_pwd"] = envVars.AppCenterGuiPassword // pragma: allowlist secret
+	options.TerraformVars["app_center_high_availability"] = true               // pragma: allowlist secret
+	options.TerraformVars["existing_certificate_instance"] = existingCertInstance
+
+	// Skip teardown if specified
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	// Validate cluster configuration with PACHA
+	lsf.ValidateClusterConfigurationWithPACHA(t, options, testLogger)
+}
+
 // TestRunNoKMSAndHTOff validates cluster creation with KMS set to null and hyperthreading disabled.
 func TestRunNoKMSAndHTOff(t *testing.T) {
 	// Parallelize the test
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
-	// Create test options
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 	options.TerraformVars["enable_cos_integration"] = false
 	options.TerraformVars["enable_vpc_flow_logs"] = false
@@ -159,130 +244,312 @@ func TestRunNoKMSAndHTOff(t *testing.T) {
 	lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
 }
 
-// TestRunInUsEastRegion validates cluster creation in the US East region.
+// TestRunLSFClusterCreationWithZeroWorkerNodes validates the cluster creation process
+// for the LSF solution when the minimum worker node count is set to zero for both static profile counts.
+func TestRunLSFClusterCreationWithZeroWorkerNodes(t *testing.T) {
+	// Allow the test to run concurrently with others.
+	t.Parallel()
+
+	// Set up the test suite environment.
+	setupTestSuite(t)
+	testLogger.Info(t, "Initiating cluster creation process for "+t.Name())
+
+	// Generate a unique prefix for the HPC cluster.
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve environment variables for the test.
+	envVars := GetEnvVars()
+
+	// Validate and apply LSF-specific configurations if the solution is LSF.
+	if envVars.Solution == "lsf" {
+		// Set up Terraform options.
+		options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+		require.NoError(t, err, "Failed to set up Terraform options: %v", err)
+
+		// Configure the lower profile and the minimum worker node count for the cluster.
+		options.TerraformVars["worker_node_instance_type"] = []map[string]interface{}{
+			{
+				"count":         0,
+				"instance_type": "bx2-2x8",
+			},
+			{
+				"count":         0,
+				"instance_type": "cx2-2x4",
+			},
+		}
+		// Skip automatic teardown for further inspection post-test.
+		options.SkipTestTearDown = true
+		defer options.TestTearDown()
+
+		//Validate the basic cluster configuration.
+		lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
+		testLogger.Info(t, "Cluster configuration validation completed successfully.")
+	} else {
+		testLogger.Warn(t, "Test skipped as the solution is not 'lsf'.")
+		t.Skip("This test is applicable only for the 'lsf' solution.")
+	}
+}
+
+// TestRunInUsEastRegion validates the cluster creation process in the US East region using the b* profile.
 func TestRunInUsEastRegion(t *testing.T) {
-	// Parallelize the test to run concurrently with others
+	// Allow the test to run concurrently with others.
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite environment.
 	setupTestSuite(t)
+	testLogger.Info(t, "Starting cluster creation process for test: "+t.Name())
 
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// HPC cluster prefix
+	// Generate a unique prefix for the HPC cluster.
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Retrieve and validate environment variables.
 	envVars := GetEnvVars()
-
-	// Extract US East zone, cluster ID, and reservation ID
 	usEastZone := utils.SplitAndTrim(envVars.USEastZone, ",")
-	usEastClusterID := envVars.USEastClusterID
-	usEastReservationID := envVars.USEastReservationID
+	require.NotEmpty(t, usEastZone, "Environment variable USEastZone must be provided and contain valid values.")
+	testLogger.Info(t, fmt.Sprintf("Validated US East zone configuration: %v", usEastZone))
 
-	// Ensure Reservation , cluster ID and zone are provided
-	if len(usEastClusterID) == 0 || len(usEastZone) == 0 || len(usEastReservationID) == 0 {
-		require.FailNow(t, "Reservation ID ,cluster ID and zone must be provided.")
+	// Declare variables for solution-specific configurations.
+	var usEastClusterName, usEastReservationID string
+
+	// Apply configurations based on the solution type.
+	if envVars.Solution == "HPC" {
+		usEastClusterName = envVars.USEastClusterName
+		usEastReservationID = envVars.USEastReservationID
+
+		// Validate HPC-specific configurations.
+		require.NotEmpty(t, usEastClusterName, "Environment variable USEastClusterName is required for the HPC solution.")
+		require.NotEmpty(t, usEastReservationID, "Environment variable USEastReservationID is required for the HPC solution.")
+		testLogger.Info(t, fmt.Sprintf("HPC-specific configuration validated for US East: Cluster ID - %s, Reservation ID - %s", usEastClusterName, usEastReservationID))
 	}
 
-	// Create test options, set up test environment
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
-	require.NoError(t, err, "Error setting up test options: %v", err)
+	// Set up Terraform options.
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Failed to set up Terraform options.")
 
-	// Set Terraform variables
-	options.TerraformVars["zones"] = usEastZone
-	options.TerraformVars["reservation_id"] = usEastReservationID
-	options.TerraformVars["cluster_id"] = usEastClusterID
+	// Assign solution-specific Terraform variables.
+	if envVars.Solution == "HPC" {
+		options.TerraformVars["zones"] = usEastZone
+		options.TerraformVars["reservation_id"] = usEastReservationID
+		options.TerraformVars["cluster_name"] = usEastClusterName
+		testLogger.Info(t, "Terraform variables configured for HPC solution.")
+	} else if envVars.Solution == "lsf" {
+		options.TerraformVars["zones"] = usEastZone
+		options.TerraformVars["worker_node_instance_type"] = []map[string]interface{}{
+			{
+				"count":         2,
+				"instance_type": "bx2-2x8",
+			},
+			{
+				"count":         0,
+				"instance_type": "cx2-2x4",
+			},
+		}
+		testLogger.Info(t, "Terraform variables configured for LSF solution.")
+	}
 
-	// Skip test teardown for further inspection
+	// Skip automatic teardown for further inspection post-test.
 	options.SkipTestTearDown = true
 	defer options.TestTearDown()
 
+	// Validate the basic cluster configuration.
 	lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
+	testLogger.Info(t, "Cluster configuration validation completed successfully.")
 }
 
-// TestRunInEuDeRegion validates cluster creation in the Frankfurt region.
+// TestRunInEuDeRegion validates the cluster creation process in the Frankfurt region using the c* profile.
 func TestRunInEuDeRegion(t *testing.T) {
-	// Parallelize the test to run concurrently with others
+	// Allow the test to run concurrently with others.
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite environment.
 	setupTestSuite(t)
+	testLogger.Info(t, "Initiating cluster creation process for test: "+t.Name())
 
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// HPC cluster prefix
+	// Generate a unique prefix for the HPC cluster.
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Retrieve and validate environment variables.
 	envVars := GetEnvVars()
-
-	// Extract EU DE zone, cluster ID, and reservation ID
 	euDeZone := utils.SplitAndTrim(envVars.EUDEZone, ",")
-	euDeClusterID := envVars.EUDEClusterID
-	euDeReservationID := envVars.EUDEReservationID
+	require.NotEmpty(t, euDeZone, "Frankfurt zone configuration must be provided.")
+	testLogger.Info(t, fmt.Sprintf("Frankfurt zone configuration validated: %s", euDeZone))
 
-	// Ensure Reservation ID ,cluster ID and zone are provided
-	if len(euDeClusterID) == 0 || len(euDeZone) == 0 || len(euDeReservationID) == 0 {
-		require.FailNow(t, "Reservation ID, cluster ID and zone must be provided.")
+	// Declare variables for solution-specific configurations.
+	var euDeClusterName, euDeReservationID string
+
+	// Configure based on the solution type.
+	if envVars.Solution == "HPC" {
+		euDeClusterName = envVars.EUDEClusterName
+		euDeReservationID = envVars.EUDEReservationID
+
+		require.NotEmpty(t, euDeClusterName, "Cluster ID for Frankfurt region must be provided in environment variables.")
+		require.NotEmpty(t, euDeReservationID, "Reservation ID for Frankfurt region must be provided in environment variables.")
+		testLogger.Info(t, fmt.Sprintf("HPC-specific configuration validated for Frankfurt: Cluster ID - %s, Reservation ID - %s", euDeClusterName, euDeReservationID))
 	}
 
-	// Create test options, set up test environment
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
-	require.NoError(t, err, "Error setting up test options: %v", err)
+	// Set up Terraform options.
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Failed to set up Terraform options.")
 
-	// Set Terraform variables
-	options.TerraformVars["zones"] = euDeZone
-	options.TerraformVars["reservation_id"] = euDeReservationID
-	options.TerraformVars["cluster_id"] = euDeClusterID
+	// Assign solution-specific Terraform variables.
+	if envVars.Solution == "HPC" {
+		options.TerraformVars["zones"] = euDeZone
+		options.TerraformVars["reservation_id"] = euDeReservationID
+		options.TerraformVars["cluster_name"] = euDeClusterName
+		testLogger.Info(t, "Terraform variables configured for HPC in Frankfurt.")
+	} else if envVars.Solution == "lsf" {
+		options.TerraformVars["zones"] = euDeZone
+		options.TerraformVars["worker_node_instance_type"] = []map[string]interface{}{
+			{
+				"count":         2,
+				"instance_type": "cx2-2x4",
+			},
+			{
+				"count":         0,
+				"instance_type": "bx2-2x8",
+			},
+		}
 
-	// Skip test teardown for further inspection
+		testLogger.Info(t, "Terraform variables configured for LSF in Frankfurt.")
+	}
+
+	// Skip automatic teardown for further inspection post-test.
 	options.SkipTestTearDown = true
 	defer options.TestTearDown()
 
+	// Validate the basic cluster configuration.
 	lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
+	testLogger.Info(t, "Cluster configuration validation completed successfully.")
 }
 
-// TestRunInUSSouthRegion validates cluster creation in the US South region.
+// TestRunInUSSouthRegion validates the cluster creation process in the US South region using the m* profile.
 func TestRunInUSSouthRegion(t *testing.T) {
-	// Parallelize the test to run concurrently with others
+	// Allow the test to run concurrently with others.
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite environment.
 	setupTestSuite(t)
+	testLogger.Info(t, "Initiating cluster creation process for test: "+t.Name())
 
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// HPC cluster prefix
+	// Generate a unique prefix for the HPC cluster.
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Retrieve and validate environment variables.
 	envVars := GetEnvVars()
-
-	// Extract US South zone, cluster ID, and reservation ID
 	usSouthZone := utils.SplitAndTrim(envVars.USSouthZone, ",")
-	usSouthClusterID := envVars.USSouthClusterID
-	usSouthReservationID := envVars.USSouthReservationID
+	require.NotEmpty(t, usSouthZone, "US South zone configuration must be provided.")
+	testLogger.Info(t, fmt.Sprintf("US South zone configuration validated: %s", usSouthZone))
 
-	// Ensure cluster ID ,Reservation ID and zone are provided
-	if len(usSouthClusterID) == 0 || len(usSouthZone) == 0 || len(usSouthReservationID) == 0 {
-		require.FailNow(t, "Reservation ID ,cluster ID and zone must be provided.")
+	// Declare variables for solution-specific configurations.
+	var usSouthClusterName, usSouthReservationID string
+
+	// Configure based on the solution type.
+	if envVars.Solution == "HPC" {
+		usSouthClusterName = envVars.USSouthClusterName
+		usSouthReservationID = envVars.USSouthReservationID
+
+		require.NotEmpty(t, usSouthClusterName, "Cluster ID for US South region must be provided in environment variables.")
+		require.NotEmpty(t, usSouthReservationID, "Reservation ID for US South region must be provided in environment variables.")
+		testLogger.Info(t, fmt.Sprintf("HPC-specific configuration validated for US South: Cluster ID - %s, Reservation ID - %s", usSouthClusterName, usSouthReservationID))
 	}
 
-	// Create test options, set up test environment
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
-	require.NoError(t, err, "Error setting up test options: %v", err)
+	// Set up Terraform options.
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Failed to set up Terraform options.")
 
-	// Set Terraform variables
-	options.TerraformVars["zones"] = usSouthZone
-	options.TerraformVars["reservation_id"] = usSouthReservationID
-	options.TerraformVars["cluster_id"] = usSouthClusterID
+	// Assign solution-specific Terraform variables.
+	if envVars.Solution == "HPC" {
+		options.TerraformVars["zones"] = usSouthZone
+		options.TerraformVars["reservation_id"] = usSouthReservationID
+		options.TerraformVars["cluster_name"] = usSouthClusterName
+		testLogger.Info(t, "Terraform variables configured for HPC in US South.")
+	} else if envVars.Solution == "lsf" {
+		options.TerraformVars["zones"] = usSouthZone
+		options.TerraformVars["worker_node_instance_type"] = []map[string]interface{}{
+			{
+				"count":         2,
+				"instance_type": "mx2-2x16",
+			},
+			{
+				"count":         0,
+				"instance_type": "cx2-2x4",
+			},
+		}
+		testLogger.Info(t, "Terraform variables configured for LSF in US South.")
+	}
 
-	// Skip test teardown for further inspection
+	// Skip automatic teardown for further inspection post-test.
 	options.SkipTestTearDown = true
 	defer options.TestTearDown()
 
+	// Validate the basic cluster configuration.
 	lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
+	testLogger.Info(t, "Cluster configuration validation completed successfully.")
+}
+
+// TestRunInJPTokyoRegion validates the cluster creation process in the jp tokyo region using the m* profile.
+func TestRunInJPTokyoRegion(t *testing.T) {
+	// Allow the test to run concurrently with others.
+	t.Parallel()
+
+	// Set up the test suite environment.
+	setupTestSuite(t)
+	testLogger.Info(t, "Initiating cluster creation process for test: "+t.Name())
+
+	// Generate a unique prefix for the HPC cluster.
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve and validate environment variables.
+	envVars := GetEnvVars()
+	jpTokyoZone := utils.SplitAndTrim(envVars.JPTokZone, ",")
+	require.NotEmpty(t, jpTokyoZone, "JP Tokyo zone configuration must be provided.")
+	testLogger.Info(t, fmt.Sprintf("JP Tokyo zone configuration validated: %s", jpTokyoZone))
+
+	// Declare variables for solution-specific configurations.
+	var jpTokyoClusterName, jpTokyoReservationID string
+
+	// Configure based on the solution type.
+	if envVars.Solution == "HPC" {
+		jpTokyoClusterName = envVars.JPTokClusterName
+		jpTokyoReservationID = envVars.JPTokReservationID
+
+		require.NotEmpty(t, jpTokyoClusterName, "Cluster ID for JP Tokyo region must be provided in environment variables.")
+		require.NotEmpty(t, jpTokyoReservationID, "Reservation ID for JP Tokyo  region must be provided in environment variables.")
+		testLogger.Info(t, fmt.Sprintf("HPC-specific configuration validated for JP Tokyo : Cluster ID - %s, Reservation ID - %s", jpTokyoClusterName, jpTokyoReservationID))
+	}
+
+	// Set up Terraform options.
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Failed to set up Terraform options.")
+
+	// Assign solution-specific Terraform variables.
+	if envVars.Solution == "HPC" {
+		options.TerraformVars["zones"] = jpTokyoZone
+		options.TerraformVars["cluster_name"] = jpTokyoClusterName
+		options.TerraformVars["reservation_id"] = jpTokyoReservationID
+		testLogger.Info(t, "Terraform variables configured for HPC in JP Tokyo.")
+	} else if envVars.Solution == "lsf" {
+		options.TerraformVars["zones"] = jpTokyoZone
+		options.TerraformVars["worker_node_instance_type"] = []map[string]interface{}{
+			{
+				"count":         1,
+				"instance_type": "mx3d-128x1280",
+			},
+			{
+				"count":         0,
+				"instance_type": "cx3d-24x60",
+			},
+		}
+		testLogger.Info(t, "Terraform variables configured for LSF in JP Tokyo.")
+	}
+
+	// Skip automatic teardown for further inspection post-test.
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	// Validate the basic cluster configuration.
+	lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
+	testLogger.Info(t, "Cluster configuration validation completed successfully.")
 }
 
 // TestRunLDAP validates cluster creation with LDAP enabled.
@@ -290,19 +557,20 @@ func TestRunLDAP(t *testing.T) {
 	// Parallelize the test to run concurrently with others
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
-	// Create test options, set up test environment
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	if strings.ToLower(envVars.EnableLdap) == "true" {
@@ -333,29 +601,30 @@ func TestRunUsingExistingKMS(t *testing.T) {
 	// Parallelize the test to run concurrently with others
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// Service instance name
 	randomString := utils.GenerateRandomString()
 	kmsInstanceName := "cicd-" + randomString
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
 	// Create service instance and KMS key using IBMCloud CLI
-	err := lsf.CreateServiceInstanceAndKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
+	err := lsf.CreateServiceInstanceAndKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroup, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
 	require.NoError(t, err, "Service instance and KMS key creation failed")
 
 	testLogger.Info(t, "Service instance and KMS key created successfully "+t.Name())
 
-	// Create test options, set up test environment
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Set Terraform variables
@@ -367,7 +636,7 @@ func TestRunUsingExistingKMS(t *testing.T) {
 	options.SkipTestTearDown = true
 
 	// Ensure the service instance and KMS key are deleted after the test
-	defer lsf.DeleteServiceInstanceAndAssociatedKeys(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, kmsInstanceName, testLogger)
+	defer lsf.DeleteServiceInstanceAndAssociatedKeys(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroup, kmsInstanceName, testLogger)
 	defer options.TestTearDown()
 
 	lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
@@ -378,29 +647,30 @@ func TestRunUsingExistingKMSInstanceIDAndWithoutKey(t *testing.T) {
 	// Parallelize the test to run concurrently with others
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// Service instance name
 	randomString := utils.GenerateRandomString()
 	kmsInstanceName := "cicd-" + randomString
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
 	// Create service instance and KMS key using IBMCloud CLI
-	err := lsf.CreateServiceInstanceAndKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
+	err := lsf.CreateServiceInstanceAndKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroup, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
 	require.NoError(t, err, "Service instance and KMS key creation failed")
 
 	testLogger.Info(t, "Service instance and KMS key created successfully "+t.Name())
 
-	// Create test options, set up test environment
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Set Terraform variables
@@ -411,7 +681,7 @@ func TestRunUsingExistingKMSInstanceIDAndWithoutKey(t *testing.T) {
 	options.SkipTestTearDown = true
 
 	// Ensure the service instance and KMS key are deleted after the test
-	defer lsf.DeleteServiceInstanceAndAssociatedKeys(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, kmsInstanceName, testLogger)
+	defer lsf.DeleteServiceInstanceAndAssociatedKeys(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroup, kmsInstanceName, testLogger)
 	defer options.TestTearDown()
 
 	lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
@@ -422,19 +692,20 @@ func TestRunLDAPAndPac(t *testing.T) {
 	// Parallelize the test to run concurrently with others
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
-	// Create test options, set up test environment
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	if strings.ToLower(envVars.EnableLdap) == "true" {
@@ -467,7 +738,7 @@ func TestRunCreateVpc(t *testing.T) {
 	// Parallelize the test to run concurrently with others
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
 	testLogger.Info(t, "Brand new VPC creation initiated for "+t.Name())
@@ -475,11 +746,11 @@ func TestRunCreateVpc(t *testing.T) {
 	// Define the HPC cluster prefix
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
-	// Create test options, set up test environment
-	options, err := setupOptionsVpc(t, hpcClusterPrefix, createVpcTerraformDir, envVars.DefaultResourceGroup)
+	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
+	options, err := setupOptionsVpc(t, hpcClusterPrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroup)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Skip test teardown for further inspection
@@ -502,23 +773,24 @@ func TestRunCreateVpc(t *testing.T) {
 // RunHpcExistingVpcCidr with Cidr blocks
 func RunHpcExistingVpcCidr(t *testing.T, vpcName string) {
 	fmt.Println("********* Started Executing RunHpcExistingVpcCidr ********* ")
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateRandomString()
 
 	// Static values for CIDR other than default CIDR
 	vpcClusterPrivateSubnetsCidrBlocks := "10.241.48.0/21"
 	vpcClusterLoginPrivateSubnetsCidrBlocks := "10.241.60.0/22"
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
-	// Create test options
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	options.TerraformVars["vpc_name"] = vpcName
 	options.TerraformVars["vpc_cluster_private_subnets_cidr_blocks"] = utils.SplitAndTrim(vpcClusterPrivateSubnetsCidrBlocks, ",")
 	options.TerraformVars["vpc_cluster_login_private_subnets_cidr_blocks"] = utils.SplitAndTrim(vpcClusterLoginPrivateSubnetsCidrBlocks, ",")
@@ -535,19 +807,20 @@ func RunHpcExistingVpcCidr(t *testing.T, vpcName string) {
 // RunHpcExistingVpcSubnetIdCustomNullDnsNull with compute and login subnet id. Both custom_resolver and dns_instace null
 func RunHpcExistingVpcSubnetIdCustomNullDnsNull(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string) {
 	fmt.Println("********* Started Executing RunHpcExistingVpcSubnetIdCustomNullDnsNull ********* ")
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
-	// Create test options
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	options.TerraformVars["vpc_name"] = vpcName
 	options.TerraformVars["login_subnet_id"] = bastionsubnetId
 	options.TerraformVars["cluster_subnet_ids"] = utils.SplitAndTrim(computesubnetIds, ",")
@@ -566,19 +839,20 @@ func TestRunVpcWithCustomDns(t *testing.T) {
 	// Parallelize the test to run concurrently with others
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// Define the HPC cluster prefix
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
-	// Create test options, set up test environment
-	options, err := setupOptionsVpc(t, hpcClusterPrefix, createVpcTerraformDir, envVars.DefaultResourceGroup)
+	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
+	options, err := setupOptionsVpc(t, hpcClusterPrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroup)
 	options.TerraformVars["enable_hub"] = true
 
 	require.NoError(t, err, "Error setting up test options: %v", err)
@@ -605,19 +879,20 @@ func TestRunVpcWithCustomDns(t *testing.T) {
 // RunHpcExistingVpcCustomDns with existing custom_resolver_id and dns_instance_id
 func RunHpcExistingVpcBothCustomDnsExist(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string, instanceId string, customResolverId string) {
 	fmt.Println("********* Started Executing RunHpcExistingVpcBothCustomDnsExist ********* ")
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
-	// Create test options
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	options.TerraformVars["vpc_name"] = vpcName
 	options.TerraformVars["login_subnet_id"] = bastionsubnetId
 	options.TerraformVars["cluster_subnet_ids"] = utils.SplitAndTrim(computesubnetIds, ",")
@@ -637,19 +912,20 @@ func RunHpcExistingVpcBothCustomDnsExist(t *testing.T, vpcName string, bastionsu
 // RunHpcExistingVpcCustomExistDnsNull with existing custom_resolver_id and new dns_instance_id
 func RunHpcExistingVpcCustomExistDnsNull(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string, customResolverId string) {
 	fmt.Println("********* Started Executing RunHpcExistingVpcCustomExistDnsNull ********* ")
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
-	// Create test options
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	options.TerraformVars["vpc_name"] = vpcName
 	options.TerraformVars["login_subnet_id"] = bastionsubnetId
 	options.TerraformVars["cluster_subnet_ids"] = utils.SplitAndTrim(computesubnetIds, ",")
@@ -668,19 +944,20 @@ func RunHpcExistingVpcCustomExistDnsNull(t *testing.T, vpcName string, bastionsu
 // RunHpcExistingVpcCustomNullDnsExist with custom_resolver_id null and existing dns_instance_id
 func RunHpcExistingVpcCustomNullDnsExist(t *testing.T, instanceId string) {
 	fmt.Println("********* Started Executing RunHpcExistingVpcCustomNullDnsExist ********* ")
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
-	// Create test options
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	options.TerraformVars["dns_instance_id"] = instanceId
 
 	require.NoError(t, err, "Error setting up test options: %v", err)
@@ -693,62 +970,24 @@ func RunHpcExistingVpcCustomNullDnsExist(t *testing.T, instanceId string) {
 	fmt.Println("********* Ended Executing RunHpcExistingVpcCustomNullDnsExist ********* ")
 }
 
-// TestRunWithoutMandatory tests Terraform's behavior when mandatory variables are missing by checking for specific error messages.
-func TestRunWithoutMandatory(t *testing.T) {
-	t.Parallel()
-
-	// Setup test suite
-	setupTestSuite(t)
-
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Getting absolute path of solutions/hpc
-	abs, err := filepath.Abs("solutions/hpc")
-	require.NoError(t, err, "Unable to get absolute path")
-
-	terrPath := strings.ReplaceAll(abs, "tests/", "")
-
-	// Define Terraform options
-	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir: terrPath,
-		Vars:         map[string]interface{}{},
-	})
-
-	// Initialize and plan the Terraform deployment
-	_, err = terraform.InitAndPlanE(t, terraformOptions)
-
-	// If there is an error, check if it contains specific mandatory fields
-	if err != nil {
-		result := utils.VerifyDataContains(t, err.Error(), "cluster_id", testLogger) &&
-			utils.VerifyDataContains(t, err.Error(), "reservation_id", testLogger) &&
-			utils.VerifyDataContains(t, err.Error(), "bastion_ssh_keys", testLogger) &&
-			utils.VerifyDataContains(t, err.Error(), "compute_ssh_keys", testLogger) &&
-			utils.VerifyDataContains(t, err.Error(), "remote_allowed_ips", testLogger)
-		// Assert that the result is true if all mandatory fields are missing
-		assert.True(t, result)
-	} else {
-		t.Error("Expected error did not occur")
-	}
-
-}
-
 func TestRunCIDRsAsNonDefault(t *testing.T) {
 	// Parallelize the test
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
-	// Create test options
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	options.TerraformVars["vpc_cidr"] = "10.243.0.0/18"
@@ -761,25 +1000,771 @@ func TestRunCIDRsAsNonDefault(t *testing.T) {
 	lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
 }
 
-// TestRunInvalidReservationIDAndContractID tests invalid cluster_id and reservation_id values
-func TestRunInvalidReservationIDAndContractID(t *testing.T) {
+// TestRunCosAndVpcFlowLogs validates cluster creation with vpc flow logs and cos enabled.
+func TestRunCosAndVpcFlowLogs(t *testing.T) {
+	// Parallelize the test to run concurrently with others
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate a random prefix for the cluster to ensure uniqueness
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve necessary environment variables for the test
+	envVars := GetEnvVars()
+
+	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Set Terraform variables
+	options.TerraformVars["enable_cos_integration"] = true
+	options.TerraformVars["enable_vpc_flow_logs"] = true
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	lsf.ValidateBasicClusterConfigurationWithVPCFlowLogsAndCos(t, options, testLogger)
+}
+
+// TestRunMultipleSSHKeys validates the cluster configuration.
+func TestRunMultipleSSHKeys(t *testing.T) {
+
+	// Parallelize the test
+	t.Parallel()
+
+	// Set up the test suite and prepare the testing environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate a random prefix for the cluster to ensure uniqueness
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve necessary environment variables for the test
+	envVars := GetEnvVars()
+
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	lsf.ValidateClusterConfigurationWithMultipleKeys(t, options, testLogger)
+
+}
+
+// TestRunExistingLDAP validates the creation and configuration of HPC clusters with LDAP integration, including setup, validation, and error handling for both clusters.
+func TestRunExistingLDAP(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Setup the test suite
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate random prefix for HPC cluster
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve environment variables
+	envVars := GetEnvVars()
+
+	// Ensure LDAP is enabled and credentials are provided
+	if strings.ToLower(envVars.EnableLdap) == "true" {
+		if len(envVars.LdapAdminPassword) == 0 || len(envVars.LdapUserName) == 0 || len(envVars.LdapUserPassword) == 0 {
+			require.FailNow(t, "LDAP credentials are missing. Ensure LDAP admin password, LDAP user name, and LDAP user password are provided.")
+		}
+	} else {
+		require.FailNow(t, "LDAP is not enabled. Set the 'enable_ldap' environment variable to 'true' to enable LDAP.")
+	}
+
+	// Set up the test options with the relevant parameters, including environment variables and resource group for the first cluster
+	options1, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Error setting up test options for the first cluster: %v", err)
+
+	// Set Terraform variables for the first cluster
+	options1.TerraformVars["management_node_count"] = 1
+	options1.TerraformVars["enable_ldap"] = strings.ToLower(envVars.EnableLdap)
+	options1.TerraformVars["ldap_basedns"] = envVars.LdapBaseDns
+	options1.TerraformVars["ldap_admin_password"] = envVars.LdapAdminPassword // pragma: allowlist secret
+	options1.TerraformVars["ldap_user_name"] = envVars.LdapUserName
+	options1.TerraformVars["ldap_user_password"] = envVars.LdapUserPassword // pragma: allowlist secret
+	options1.TerraformVars["key_management"] = "null"
+	options1.TerraformVars["management_node_count"] = 1
+	options1.TerraformVars["enable_cos_integration"] = false
+	options1.TerraformVars["enable_vpc_flow_logs"] = false
+
+	// Skip test teardown for further inspection
+	options1.SkipTestTearDown = true
+	defer options1.TestTearDown()
+
+	// Run the test and validate output
+	output, err := options1.RunTest()
+	require.NoError(t, err, "Error running test: %v", err)
+	require.NotNil(t, output, "Expected non-nil output, but got nil")
+
+	// Retrieve custom resolver ID
+	customResolverID, err := utils.GetCustomResolverID(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroup, hpcClusterPrefix, testLogger)
+	require.NoError(t, err, "Error retrieving custom resolver ID: %v", err)
+
+	// Retrieve LDAP IP and Bastion IP
+	ldapIP, err := utils.GetLdapIP(t, options1, testLogger)
+	require.NoError(t, err, "Error retrieving LDAP IP address: %v", err)
+
+	ldapServerBastionIP, err := utils.GetBastionIP(t, options1, testLogger)
+	require.NoError(t, err, "Error retrieving LDAP server bastion IP address: %v", err)
+
+	// Update security group for LDAP
+	err = utils.RetrieveAndUpdateSecurityGroup(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroup, hpcClusterPrefix, "10.241.0.0/18", "389", "389", testLogger)
+	require.NoError(t, err, "Error updating security group: %v", err)
+
+	testLogger.Info(t, "Cluster creation process for the second cluster initiated for "+t.Name())
+
+	// Generate random prefix for the second HPC cluster
+	hpcClusterPrefix2 := utils.GenerateRandomString()
+
+	// Retrieve LDAP server certificate via SSH and assert no connection errors.
+	ldapServerCert, serverCertErr := lsf.GetLDAPServerCert(lsf.LSF_PUBLIC_HOST_NAME, ldapServerBastionIP, lsf.LSF_LDAP_HOST_NAME, ldapIP)
+	require.NoError(t, serverCertErr, "Failed to retrieve LDAP server certificate via SSH")
+
+	testLogger.Info(t, ldapServerCert)
+
+	// Set up the test options with the relevant parameters, including environment variables and resource group for the second cluster
+	options2, err := setupOptions(t, hpcClusterPrefix2, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Error setting up test options for the second cluster: %v", err)
+
+	// Set Terraform variables for the second cluster
+	options2.TerraformVars["vpc_name"] = options1.TerraformVars["cluster_prefix"].(string) + "-hpc-vpc"
+	options2.TerraformVars["vpc_cluster_private_subnets_cidr_blocks"] = []string{CLUSTER_TWO_VPC_CLUSTER_PRIVATE_SUBNETS_CIDR_BLOCKS}
+	options2.TerraformVars["vpc_cluster_login_private_subnets_cidr_blocks"] = []string{CLUSTER_TWO_VPC_CLUSTER_LOGIN_PRIVATE_SUBNETS_CIDR_BLOCKS}
+	options2.TerraformVars["management_node_count"] = 2
+	options2.TerraformVars["dns_domain_name"] = map[string]string{"compute": CLUSTER_TWO_DNS_DOMAIN_NAME}
+	options2.TerraformVars["dns_custom_resolver_id"] = customResolverID
+	options2.TerraformVars["enable_ldap"] = strings.ToLower(envVars.EnableLdap)
+	options2.TerraformVars["ldap_basedns"] = envVars.LdapBaseDns
+	options2.TerraformVars["ldap_server"] = ldapIP
+	options2.TerraformVars["ldap_server_cert"] = strings.TrimSpace(ldapServerCert)
+
+	// Skip test teardown for further inspection
+	options2.SkipTestTearDown = true
+	defer options2.TestTearDown()
+
+	// Validate LDAP configuration for the second cluster
+	lsf.ValidateExistingLDAPClusterConfig(t, ldapServerBastionIP, ldapIP, envVars.LdapBaseDns, envVars.LdapAdminPassword, envVars.LdapUserName, envVars.LdapUserPassword, options2, testLogger)
+}
+
+// TestRunLSFLogs validates the cluster creation process, focusing on the following:
+// Ensures cloud logs are correctly validated.
+// Verifies that LSF management logs are stored in the designated directory within the shared folder.
+// Checks for the presence of symbolic links to the logs.
+// Confirms the cluster setup passes basic configuration and validation checks.
+// Prerequisites:
+// - The cluster should have at least two management nodes.
+func TestRunLSFLogs(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Set up the test suite and prepare the testing environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate a random prefix for the cluster to ensure uniqueness
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve necessary environment variables for the test
+	envVars := GetEnvVars()
+
+	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Prevent automatic test teardown to allow for further inspection, if needed.
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	// Validate the basic cluster configuration and LSF management logs.
+	lsf.ValidateBasicClusterConfigurationLSFLogs(t, options, testLogger)
+}
+
+// TestRunDedicatedHost validates cluster creation
+func TestRunDedicatedHost(t *testing.T) {
+	// Parallelize the test
+	t.Parallel()
+
+	// Set up the test suite and prepare the testing environment
+	setupTestSuite(t)
+
+	// Generate a random prefix for the cluster to ensure uniqueness
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Retrieve necessary environment variables for the test
+	envVars := GetEnvVars()
+
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+	options.TerraformVars["enable_dedicated_host"] = true
+	options.TerraformVars["worker_node_instance_type"] = []map[string]interface{}{
+		{
+			"count":         1,
+			"instance_type": "bx2-2x8",
+		},
+		{
+			"count":         1,
+			"instance_type": "cx2-2x4",
+		},
+	}
+
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	lsf.ValidateBasicClusterConfigurationWithDedicatedHost(t, options, true, testLogger)
+
+}
+
+// TestRunObservabilityCloudLogsManagementAndComputeEnabled validates the creation of a cluster
+// with observability features enabled for both management and compute nodes. The test ensures that the
+// cluster setup passes basic validation checks, confirming that the observability features for both management
+// and compute are properly configured and functional, while platform logs and monitoring are disabled.
+func TestRunObservabilityCloudLogsManagementAndComputeEnabled(t *testing.T) {
+	// Run the test in parallel with other tests to optimize test execution
+	t.Parallel()
+
+	// Set up the test suite and environment configuration
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate a random prefix for the cluster to ensure uniqueness
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve necessary environment variables to configure the test
+	envVars := GetEnvVars()
+
+	// Set up test options with relevant parameters, including resource group and environment variables
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Configure the observability settings for management and compute logs, with platform logs and monitoring disabled
+	options.TerraformVars["observability_logs_enable_for_management"] = true
+	options.TerraformVars["observability_logs_enable_for_compute"] = true
+	options.TerraformVars["observability_enable_platform_logs"] = false
+	options.TerraformVars["observability_monitoring_enable"] = false
+
+	// Prevent automatic test teardown for inspection after the test runs
+	options.SkipTestTearDown = true
+
+	// Ensure test teardown is executed at the end of the test
+	defer options.TestTearDown()
+
+	// Validate that the basic cluster configuration is correct with cloud logs enabled for management and compute nodes
+	lsf.ValidateBasicClusterConfigurationWithCloudLogs(t, options, testLogger)
+}
+
+// TestRunObservabilityCloudLogsManagementEnabled validates the creation of a cluster
+// with observability features enabled only for management nodes. This test ensures:
+// Management node logs are properly configured while compute node logs are disabled.
+// Platform logs are enabled for platform-level observability.
+// Monitoring features are explicitly disabled.
+// The cluster setup passes basic validation checks.
+
+func TestRunObservabilityCloudLogsManagementEnabled(t *testing.T) {
+	// Run the test in parallel for efficiency
+	t.Parallel()
+
+	// Set up the test suite and initialize the environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, fmt.Sprintf("Cluster creation process initiated for test: %s", t.Name()))
+
+	// Generate a unique cluster prefix for the test
+	clusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve environment variables required for configuration
+	envVars := GetEnvVars()
+
+	// Configure test options with Terraform variables and environment settings
+	options, err := setupOptions(t, clusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Failed to set up test options: %v", err)
+
+	// Configure observability settings:
+	options.TerraformVars["observability_logs_enable_for_management"] = true
+	options.TerraformVars["observability_logs_enable_for_compute"] = false
+	options.TerraformVars["observability_monitoring_enable"] = false
+
+	// Check if platform logs already exist for the given region and resource group
+	platformLogsExist, err := lsf.CheckPlatformLogsPresent(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroup, testLogger)
+	require.NoError(t, err, "Error checking platform logs for cluster: %v", err)
+
+	// Set platform logs configuration based on their existence in the region
+	if platformLogsExist {
+		options.TerraformVars["observability_enable_platform_logs"] = false // Reuse existing platform logs
+	} else {
+		options.TerraformVars["observability_enable_platform_logs"] = true // Enable platform logs
+	}
+
+	testLogger.Info(t, fmt.Sprintf("%v", platformLogsExist))
+	// Skip automatic test teardown to allow for manual inspection after the test
+	options.SkipTestTearDown = true
+
+	// Ensure teardown is executed at the end of the test
+	defer options.TestTearDown()
+
+	// Validate the basic cluster configuration with the specified observability settings
+	lsf.ValidateBasicClusterConfigurationWithCloudLogs(t, options, testLogger)
+}
+
+// TestRunObservabilityCloudLogsManagementAndComputeDisabled validates the creation of a cluster
+// with observability features disabled for both management and compute nodes. This test ensures:
+// Both management and compute logs are disabled.
+// Monitoring features are explicitly disabled.
+// The cluster setup passes basic validation checks.
+
+func TestRunObservabilityCloudLogsManagementAndComputeDisabled(t *testing.T) {
+	// Run the test in parallel for efficiency
+	t.Parallel()
+
+	// Set up the test suite and initialize the environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, fmt.Sprintf("Cluster creation process initiated for test: %s", t.Name()))
+
+	// Generate a unique cluster prefix for the test
+	clusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve environment variables required for configuration
+	envVars := GetEnvVars()
+
+	// Configure test options with Terraform variables and environment settings
+	options, err := setupOptions(t, clusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoErrorf(t, err, "Failed to set up test options: %v", err)
+
+	// Ensure options is initialized before teardown
+	if options == nil {
+		t.Fatalf("Test options initialization failed, cannot proceed.")
+	}
+
+	// Defer teardown to ensure cleanup, with a nil check for safety
+	defer func() {
+		if options != nil {
+			options.TestTearDown()
+		}
+	}()
+
+	// Configure observability settings:
+	options.TerraformVars["observability_logs_enable_for_management"] = false // Management logs disabled
+	options.TerraformVars["observability_logs_enable_for_compute"] = false    // Compute logs disabled
+	options.TerraformVars["observability_monitoring_enable"] = false          // Monitoring disabled
+	options.TerraformVars["observability_enable_platform_logs"] = false       // Platform logs disabled
+
+	// Skip automatic test teardown to allow for manual inspection after the test
+	options.SkipTestTearDown = true
+
+	// Validate the basic cluster configuration with the specified observability settings
+	lsf.ValidateBasicClusterConfigurationWithCloudLogs(t, options, testLogger)
+}
+
+// ############################## Negative Test cases ##########################################
+
+// TestRunHPCWithoutMandatory tests Terraform's behavior when mandatory variables are missing by checking for specific error messages.
+func TestRunHPCWithoutMandatory(t *testing.T) {
+	t.Parallel()
+
+	// Set up the test suite and prepare the testing environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Getting absolute path of solutions/hpc
+	abs, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Unable to get absolute path")
+
+	terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+	// Define Terraform options
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terrPath,
+		Vars: map[string]interface{}{
+			"solution": "hpc",
+		},
+	})
+
+	// Perform Terraform upgrade only once
+	UpgradeTerraformOnce(t, terraformOptions)
+
+	// Plan the Terraform deployment
+	_, err = terraform.PlanE(t, terraformOptions)
+
+	// If there is an error, check if it contains specific mandatory fields
+	if err != nil {
+		result :=
+			utils.VerifyDataContains(t, err.Error(), "bastion_ssh_keys", testLogger) &&
+				utils.VerifyDataContains(t, err.Error(), "compute_ssh_keys", testLogger) &&
+				utils.VerifyDataContains(t, err.Error(), "remote_allowed_ips", testLogger)
+		// Assert that the result is true if all mandatory fields are missing
+		assert.True(t, result)
+	} else {
+		t.Error("Expected error did not occur")
+		testLogger.FAIL(t, "Expected error did not occur on HPC without mandatory")
+	}
+
+}
+
+// TestRunLSFWithoutMandatory tests Terraform's behavior when mandatory variables are missing by checking for specific error messages.
+func TestRunLSFWithoutMandatory(t *testing.T) {
+	t.Parallel()
+
+	// Set up the test suite and prepare the testing environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Getting absolute path of solutions/hpc
+	abs, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Unable to get absolute path")
+
+	terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+	// Define Terraform options
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terrPath,
+		Vars: map[string]interface{}{
+			"solution": "lsf",
+		},
+	})
+
+	// Perform Terraform upgrade only once
+	UpgradeTerraformOnce(t, terraformOptions)
+
+	// Plan the Terraform deployment
+	_, err = terraform.PlanE(t, terraformOptions)
+
+	// If there is an error, check if it contains specific mandatory fields
+	if err != nil {
+		result := utils.VerifyDataContains(t, err.Error(), "bastion_ssh_keys", testLogger) &&
+			utils.VerifyDataContains(t, err.Error(), "compute_ssh_keys", testLogger) &&
+			utils.VerifyDataContains(t, err.Error(), "remote_allowed_ips", testLogger)
+		// Assert that the result is true if all mandatory fields are missing
+		assert.True(t, result)
+	} else {
+		t.Error("Expected error did not occur")
+		testLogger.FAIL(t, "Expected error did not occur on LSF without mandatory")
+	}
+
+}
+
+// TestRunLSFInvalidIBMCustomerNumber verifies Terraform's behavior when mandatory variables are missing.
+// Specifically, it checks for appropriate error messages when "ibm_customer_number" is not set correctly.
+func TestRunLSFInvalidIBMCustomerNumber(t *testing.T) {
+	// Parallelize the test for concurrent execution
+	t.Parallel()
+
+	// Set up the test suite environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Retrieve required environment variables
+	envVars := GetEnvVars()
+
+	// Determine the absolute path to the Terraform directory
+	absPath, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Unable to get the absolute path for the solutions directory")
+
+	// Adjust the Terraform directory path to remove "tests/" if present
+	terraformDir := strings.ReplaceAll(absPath, "tests/", "")
+
+	// Define Terraform options with relevant variables
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terraformDir,
+		Vars: map[string]interface{}{
+			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+			"solution":           "lsf",
+			"cluster_name":       envVars.ClusterName,
+		},
+	})
+
+	// Perform Terraform upgrade only once
+	UpgradeTerraformOnce(t, terraformOptions)
+
+	// Plan the Terraform deployment
+	_, err = terraform.PlanE(t, terraformOptions)
+
+	// Ensure an error is returned during the planning stage
+	assert.Error(t, err, "Expected an error during plan")
+
+	// Validate the error message if an error occurred
+	if err != nil {
+		// Verify the error message contains expected substrings
+		isErrorValid := utils.VerifyDataContains(t, err.Error(), "If the solution is set as LSF, then the ibm customer number cannot be set as null.", testLogger) &&
+			utils.VerifyDataContains(t, err.Error(), "The IBM customer number input value cannot have special characters.", testLogger)
+
+		// Assert that all required validations passed
+		assert.True(t, isErrorValid, "Error validation failed")
+	} else {
+		// Log failure if the expected error did not occur
+		t.Error("Expected error did not occur")
+		testLogger.FAIL(t, "Expected error did not occur for IBM Customer Number")
+	}
+}
+
+// TestRunHPCInvalidReservationID verifies Terraform's behavior when mandatory variables are missing.
+// Specifically, it checks for appropriate error messages when "reservation_id" is not set correctly.
+func TestRunHPCInvalidReservationID(t *testing.T) {
+	// Parallelize the test for concurrent execution
+	t.Parallel()
+
+	// Set up the test suite environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Retrieve required environment variables
+	envVars := GetEnvVars()
+
+	// Determine the absolute path to the Terraform directory
+	absPath, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Unable to get the absolute path for the solutions directory")
+
+	// Adjust the Terraform directory path to remove "tests/" if present
+	terraformDir := strings.ReplaceAll(absPath, "tests/", "")
+
+	// Define Terraform options with relevant variables
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terraformDir,
+		Vars: map[string]interface{}{
+			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+			"solution":           "hpc",
+			"cluster_name":       envVars.ClusterName,
+		},
+	})
+
+	// Perform Terraform upgrade only once
+	UpgradeTerraformOnce(t, terraformOptions)
+
+	// Plan the Terraform deployment
+	_, err = terraform.PlanE(t, terraformOptions)
+
+	// Ensure an error is returned during the planning stage
+	assert.Error(t, err, "Expected an error during plan")
+
+	// Validate the error message if an error occurred
+	if err != nil {
+		// Verify the error message contains expected substrings
+		isErrorValid := utils.VerifyDataContains(t, err.Error(), "validate_reservation_id_new_msg", testLogger) &&
+			utils.VerifyDataContains(t, err.Error(), "The provided reservation id doesn't have a valid reservation or the reservation id is not on the same account as HPC deployment.", testLogger)
+
+		// Assert that all required validations passed
+		assert.True(t, isErrorValid, "Error validation failed")
+	} else {
+		// Log failure if the expected error did not occur
+		t.Error("Expected error did not occur")
+		testLogger.FAIL(t, "Expected error did not occur for IBM Customer Number")
+	}
+}
+
+// TestRunInvalidSubnetCIDR validates cluster creation with invalid subnet CIDR ranges.
+func TestRunInvalidSubnetCIDR(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Set up the test suite and prepare the testing environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate a random prefix for the cluster to ensure uniqueness
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+
+	// Retrieve necessary environment variables for the test
+	envVars := GetEnvVars()
+
+	// Get the absolute path of solutions/hpc
+	abs, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Unable to get absolute path")
+
+	terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+	// Initialize the map to hold the variables
+	vars := map[string]interface{}{
+		"cluster_prefix":     hpcClusterPrefix,
+		"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+		"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+		"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+		"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+		"solution":           envVars.Solution,
+		"cluster_name":       envVars.ClusterName,
+		"vpc_cluster_private_subnets_cidr_blocks":       utils.SplitAndTrim("1.1.1.1/20", ","),
+		"vpc_cluster_login_private_subnets_cidr_blocks": utils.SplitAndTrim("2.2.2.2/20", ","),
+		"scc_enable": false,
+	}
+
+	// You can add conditional logic here to modify the map, for example:
+	if envVars.Solution == "HPC" {
+		// specific to HPC
+		vars["reservation_id"] = envVars.ReservationID
+	} else {
+		// // specific to LSF
+		vars["ibm_customer_number"] = envVars.IBMCustomerNumber
+	}
+
+	// Define Terraform options
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terrPath,
+		Vars:         vars,
+	},
+	)
+
+	// Perform Terraform upgrade only once
+	UpgradeTerraformOnce(t, terraformOptions)
+
+	// Apply the Terraform configuration
+	_, err = terraform.InitAndApplyE(t, terraformOptions)
+
+	// Check if an error occurred during apply
+	assert.Error(t, err, "Expected an error during apply")
+
+	if err != nil {
+		// Check if the error message contains specific keywords indicating Subnet CIDR block issues
+		result := utils.VerifyDataContains(t, err.Error(), "Invalid json payload provided: Key: 'SubnetTemplateOneOf.SubnetTemplate.CIDRBlock' Error:Field validation for 'CIDRBlock' failed on the 'validcidr' tag", testLogger)
+		assert.True(t, result)
+		if result {
+			testLogger.PASS(t, "Validation succeeded: Invalid Subnet CIDR range")
+		} else {
+			testLogger.FAIL(t, "Validation failed: Invalid Subnet CIDR range")
+		}
+	} else {
+		// Log an error if the expected error did not occur
+		t.Error("Expected error did not occur")
+		testLogger.FAIL(t, "Expected error did not occur on Invalid Subnet CIDR range")
+	}
+
+	// Cleanup resources
+	defer terraform.Destroy(t, terraformOptions)
+}
+
+// TestRunInvalidSshKeysAndRemoteAllowedIP validates cluster creation with invalid ssh keys and remote allowed IP.
+func TestRunInvalidSshKeysAndRemoteAllowedIP(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Set up the test suite and prepare the testing environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate a random prefix for the cluster to ensure uniqueness
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+
+	// Retrieve necessary environment variables for the test
+	envVars := GetEnvVars()
+
+	// Get the absolute path of solutions/hpc
+	abs, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Unable to get absolute path")
+
+	terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+	// Initialize the map to hold the variables
+	vars := map[string]interface{}{
+		"cluster_prefix":     hpcClusterPrefix,
+		"bastion_ssh_keys":   []string{""},
+		"compute_ssh_keys":   []string{""},
+		"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+		"remote_allowed_ips": []string{""},
+		"cluster_name":       envVars.ClusterName,
+		"solution":           envVars.Solution,
+	}
+
+	// You can add conditional logic here to modify the map, for example:
+	if envVars.Solution == "HPC" {
+		// specific to HPC
+		vars["reservation_id"] = envVars.ReservationID
+	} else {
+		// // specific to LSF
+		vars["ibm_customer_number"] = envVars.IBMCustomerNumber
+	}
+
+	// Define Terraform options
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terrPath,
+		Vars:         vars,
+	})
+
+	// Perform Terraform upgrade only once
+	UpgradeTerraformOnce(t, terraformOptions)
+
+	// Plan the Terraform deployment
+	_, err = terraform.PlanE(t, terraformOptions)
+
+	// Check if an error occurred during plan
+	assert.Error(t, err, "Expected an error during plan")
+
+	if err != nil {
+		// Check if the error message contains specific keywords indicating domain name issues
+		result := utils.VerifyDataContains(t, err.Error(), "The provided IP address format is not valid", testLogger) &&
+			utils.VerifyDataContains(t, err.Error(), "No SSH Key found with name", testLogger)
+		assert.True(t, result)
+		if result {
+			testLogger.PASS(t, "Validation succeeded: Invalid ssh keys and remote allowed IP")
+		} else {
+			testLogger.FAIL(t, "Validation failed: Invalid ssh keys and remote allowed IP")
+		}
+	} else {
+		// Log an error if the expected error did not occur
+		t.Error("Expected error did not occur")
+		testLogger.FAIL(t, "Expected error did not occur on Invalid ssh keys and remote allowed IP")
+	}
+}
+
+// TestRunHPCInvalidReservationIDAndContractID tests invalid cluster_name and reservation_id values
+func TestRunHPCInvalidReservationIDAndContractID(t *testing.T) {
+	t.Parallel()
+
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
 	// Log the initiation of cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
-	// Define invalid cluster_id and reservation_id values
-	invalidClusterIDs := []string{
-		"too_long_cluster_id_1234567890_abcdefghijklmnopqrstuvwxyz", //pragma: allowlist secret
+	// Define invalid cluster_name and reservation_id values
+	invalidClusterNames := []string{
+		"too_long_cluster_name_1234567890_abcdefghijklmnopqrstuvwxyz", //pragma: allowlist secret
 		"invalid@cluster!id#",
 		"",
 	}
@@ -797,8 +1782,8 @@ func TestRunInvalidReservationIDAndContractID(t *testing.T) {
 
 	terrPath := strings.ReplaceAll(abs, "tests/", "")
 
-	// Loop over all combinations of invalid cluster_id and reservation_id values
-	for _, clusterID := range invalidClusterIDs {
+	// Loop over all combinations of invalid cluster_name and reservation_id values
+	for _, clusterID := range invalidClusterNames {
 		for _, reservationID := range invalidReservationIDs {
 
 			// Define Terraform options
@@ -810,17 +1795,21 @@ func TestRunInvalidReservationIDAndContractID(t *testing.T) {
 					"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
 					"zones":              utils.SplitAndTrim(envVars.Zone, ","),
 					"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
-					"cluster_id":         clusterID,
+					"cluster_name":       clusterID,
 					"reservation_id":     reservationID,
+					"solution":           "hpc",
 				},
 			})
 
-			// Initialize and plan the Terraform deployment
-			_, err := terraform.InitAndPlanE(t, terraformOptions)
+			// Perform Terraform upgrade only once
+			UpgradeTerraformOnce(t, terraformOptions)
+
+			// Plan the Terraform deployment
+			_, err = terraform.PlanE(t, terraformOptions)
 
 			// If there is an error, check if it contains specific mandatory fields
 			if err != nil {
-				clusterIDError := utils.VerifyDataContains(t, err.Error(), "cluster_id", testLogger)
+				clusterIDError := utils.VerifyDataContains(t, err.Error(), "cluster_name", testLogger)
 				reservationIDError := utils.VerifyDataContains(t, err.Error(), "reservation_id", testLogger)
 				result := clusterIDError && reservationIDError
 				// Assert that the result is true if all mandatory fields are missing
@@ -828,7 +1817,7 @@ func TestRunInvalidReservationIDAndContractID(t *testing.T) {
 				if result {
 					testLogger.PASS(t, "Validation succeeded: Invalid clusterID and ReservationID")
 				} else {
-					testLogger.FAIL(t, "Validation failed: Expected error did not contain required fields: cluster_id or reservation_id")
+					testLogger.FAIL(t, "Validation failed: Expected error did not contain required fields: cluster_name or reservation_id")
 				}
 			} else {
 				// Log an error if the expected error did not occur
@@ -844,15 +1833,16 @@ func TestRunInvalidLDAPServerIP(t *testing.T) {
 	// Parallelize the test to run concurrently with others
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
 	if strings.ToLower(envVars.EnableLdap) == "true" {
@@ -870,32 +1860,50 @@ func TestRunInvalidLDAPServerIP(t *testing.T) {
 
 	terrPath := strings.ReplaceAll(abs, "tests/", "")
 
+	// Initialize the map to hold the variables
+	vars := map[string]interface{}{
+		"cluster_prefix":      hpcClusterPrefix,
+		"bastion_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
+		"compute_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
+		"zones":               utils.SplitAndTrim(envVars.Zone, ","),
+		"remote_allowed_ips":  utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+		"cluster_name":        envVars.ClusterName,
+		"enable_ldap":         true,
+		"ldap_admin_password": envVars.LdapAdminPassword, //pragma: allowlist secret
+		"ldap_server":         "10.10.10.10",
+		"ldap_server_cert":    "SampleTest",
+		"solution":            envVars.Solution,
+		"scc_enable":          false,
+	}
+
+	// You can add conditional logic here to modify the map, for example:
+	if envVars.Solution == "HPC" {
+		// specific to HPC
+		vars["reservation_id"] = envVars.ReservationID
+	} else {
+		// // specific to LSF
+		vars["ibm_customer_number"] = envVars.IBMCustomerNumber
+	}
+
 	// Define Terraform options
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: terrPath,
-		Vars: map[string]interface{}{
-			"cluster_prefix":      hpcClusterPrefix,
-			"bastion_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
-			"compute_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
-			"zones":               utils.SplitAndTrim(envVars.Zone, ","),
-			"remote_allowed_ips":  utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
-			"cluster_id":          envVars.ClusterID,
-			"reservation_id":      envVars.ReservationID,
-			"enable_ldap":         true,
-			"ldap_admin_password": envVars.LdapAdminPassword, //pragma: allowlist secret
-			"ldap_server":         "10.10.10.10",
-		},
+		Vars:         vars,
 	})
 
+	// Perform Terraform upgrade only once
+	UpgradeTerraformOnce(t, terraformOptions)
+
 	// Apply the Terraform configuration
-	_, err = terraform.InitAndApplyE(t, terraformOptions)
+	output, err := terraform.InitAndApplyE(t, terraformOptions)
 
 	// Check if an error occurred during apply
 	assert.Error(t, err, "Expected an error during apply")
 
 	if err != nil {
+
 		// Check if the error message contains specific keywords indicating LDAP server IP issues
-		result := utils.VerifyDataContains(t, err.Error(), "The connection to the existing LDAP server 10.10.10.10 failed", testLogger)
+		result := utils.VerifyDataContains(t, output, "The connection to the existing LDAP server 10.10.10.10 failed", testLogger)
 		assert.True(t, result)
 		if result {
 			testLogger.PASS(t, "Validation succeeded: Invalid LDAP server IP")
@@ -912,20 +1920,112 @@ func TestRunInvalidLDAPServerIP(t *testing.T) {
 	defer terraform.Destroy(t, terraformOptions)
 }
 
+// TestRunInvalidLDAPServerCert validates cluster creation with invalid LDAP server Cert.
+func TestRunInvalidLDAPServerCert(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Set up the test suite and prepare the testing environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate a random prefix for the cluster to ensure uniqueness
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+
+	// Retrieve necessary environment variables for the test
+	envVars := GetEnvVars()
+
+	if strings.ToLower(envVars.EnableLdap) == "true" {
+		// Check if the LDAP credentials are provided
+		if len(envVars.LdapAdminPassword) == 0 || len(envVars.LdapUserName) == 0 || len(envVars.LdapUserPassword) == 0 {
+			require.FailNow(t, "LDAP credentials are missing. Make sure LDAP admin password, LDAP user name, and LDAP user password are provided.")
+		}
+	} else {
+		require.FailNow(t, "LDAP is not enabled. Set the 'enable_ldap' environment variable to 'true' to enable LDAP.")
+	}
+
+	// Get the absolute path of solutions/hpc
+	abs, err := filepath.Abs("solutions/hpc")
+	require.NoError(t, err, "Unable to get absolute path")
+
+	terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+	// Initialize the map to hold the variables
+	vars := map[string]interface{}{
+		"cluster_prefix":      hpcClusterPrefix,
+		"bastion_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
+		"compute_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
+		"zones":               utils.SplitAndTrim(envVars.Zone, ","),
+		"remote_allowed_ips":  utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+		"cluster_name":        envVars.ClusterName,
+		"enable_ldap":         true,
+		"ldap_admin_password": envVars.LdapAdminPassword, //pragma: allowlist secret
+		"ldap_server":         "10.10.10.10",
+		"ldap_server_cert":    "",
+		"solution":            envVars.Solution,
+		"scc_enable":          false,
+	}
+
+	// You can add conditional logic here to modify the map, for example:
+	if envVars.Solution == "HPC" {
+		// specific to HPC
+		vars["reservation_id"] = envVars.ReservationID
+	} else {
+		// // specific to LSF
+		vars["ibm_customer_number"] = envVars.IBMCustomerNumber
+	}
+
+	// Define Terraform options
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terrPath,
+		Vars:         vars,
+	})
+
+	// Perform Terraform upgrade only once
+	UpgradeTerraformOnce(t, terraformOptions)
+
+	// plan the Terraform configuration
+	_, err = terraform.InitAndPlanE(t, terraformOptions)
+
+	// Check if an error occurred during plan
+	assert.Error(t, err, "Expected an error during plan")
+
+	if err != nil {
+
+		// Check if the error message contains specific keywords indicating LDAP server IP issues
+		result := utils.VerifyDataContains(t, err.Error(), "Provide the current LDAP server certificate. This is required if 'ldap_server' is not set to 'null'; otherwise, the LDAP configuration will not succeed.", testLogger)
+		assert.True(t, result)
+		if result {
+			testLogger.PASS(t, "Validation succeeded: Invalid LDAP server Cert")
+		} else {
+			testLogger.FAIL(t, "Validation failed: Invalid LDAP server Cert")
+		}
+	} else {
+		// Log an error if the expected error did not occur
+		t.Error("Expected error did not occur")
+		testLogger.FAIL(t, "Expected error did not occur on Invalid LDAP Server Cert")
+	}
+
+	// Cleanup resources
+	defer terraform.Destroy(t, terraformOptions)
+}
+
 // TestRunInvalidLDAPUsernamePassword tests invalid LDAP username and password
 func TestRunInvalidLDAPUsernamePassword(t *testing.T) {
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
 	// Log the initiation of cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
 	// Define invalid ldap username and password values
@@ -955,26 +2055,41 @@ func TestRunInvalidLDAPUsernamePassword(t *testing.T) {
 	for _, username := range invalidLDAPUsername {
 		for _, password := range invalidLDAPPassword { //pragma: allowlist secret
 
+			// Initialize the map to hold the variables
+			vars := map[string]interface{}{
+				"cluster_prefix":      hpcClusterPrefix,
+				"bastion_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
+				"compute_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
+				"zones":               utils.SplitAndTrim(envVars.Zone, ","),
+				"remote_allowed_ips":  utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+				"cluster_name":        envVars.ClusterName,
+				"enable_ldap":         true,
+				"ldap_user_name":      username,
+				"ldap_user_password":  password, //pragma: allowlist secret
+				"ldap_admin_password": password, //pragma: allowlist secret
+				"solution":            envVars.Solution,
+			}
+
+			// You can add conditional logic here to modify the map, for example:
+			if envVars.Solution == "HPC" {
+				// specific to HPC
+				vars["reservation_id"] = envVars.ReservationID
+			} else {
+				// // specific to LSF
+				vars["ibm_customer_number"] = envVars.IBMCustomerNumber
+			}
+
 			// Define Terraform options
 			terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 				TerraformDir: terrPath,
-				Vars: map[string]interface{}{
-					"cluster_prefix":      hpcClusterPrefix,
-					"bastion_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
-					"compute_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
-					"zones":               utils.SplitAndTrim(envVars.Zone, ","),
-					"remote_allowed_ips":  utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
-					"cluster_id":          envVars.ClusterID,
-					"reservation_id":      envVars.ReservationID,
-					"enable_ldap":         true,
-					"ldap_user_name":      username,
-					"ldap_user_password":  password, //pragma: allowlist secret
-					"ldap_admin_password": password, //pragma: allowlist secret
-				},
+				Vars:         vars,
 			})
 
-			// Initialize and plan the Terraform deployment
-			_, err := terraform.InitAndPlanE(t, terraformOptions)
+			// Perform Terraform upgrade only once
+			UpgradeTerraformOnce(t, terraformOptions)
+
+			// Plan the Terraform deployment
+			_, err = terraform.PlanE(t, terraformOptions)
 
 			// If there is an error, check if it contains specific mandatory fields
 			if err != nil {
@@ -1003,10 +2118,10 @@ func TestRunInvalidLDAPUsernamePassword(t *testing.T) {
 func TestRunInvalidAPPCenterPassword(t *testing.T) {
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
-	// Log the initiation of cluster creation process
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	invalidAPPCenterPwd := []string{
@@ -1016,12 +2131,12 @@ func TestRunInvalidAPPCenterPassword(t *testing.T) {
 		"",
 	}
 
-	// Loop over all combinations of invalid cluster_id and reservation_id values
+	// Loop over all combinations of invalid cluster_name and reservation_id values
 	for _, password := range invalidAPPCenterPwd { //pragma: allowlist secret
 
-		// HPC cluster prefix
+		// Generate a random prefix for the cluster to ensure uniqueness
 		hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-		// Retrieve cluster information from environment variables
+		// Retrieve necessary environment variables for the test
 		envVars := GetEnvVars()
 
 		// Getting absolute path of solutions/hpc
@@ -1030,24 +2145,39 @@ func TestRunInvalidAPPCenterPassword(t *testing.T) {
 
 		terrPath := strings.ReplaceAll(abs, "tests/", "")
 
+		// Initialize the map to hold the variables
+		vars := map[string]interface{}{
+			"cluster_prefix":     hpcClusterPrefix,
+			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+			"cluster_name":       envVars.ClusterName,
+			"enable_app_center":  true,
+			"app_center_gui_pwd": password,
+			"solution":           envVars.Solution,
+		}
+
+		// You can add conditional logic here to modify the map, for example:
+		if envVars.Solution == "HPC" {
+			// specific to HPC
+			vars["reservation_id"] = envVars.ReservationID
+		} else {
+			// // specific to LSF
+			vars["ibm_customer_number"] = envVars.IBMCustomerNumber
+		}
+
 		// Define Terraform options
 		terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 			TerraformDir: terrPath,
-			Vars: map[string]interface{}{
-				"cluster_prefix":     hpcClusterPrefix,
-				"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
-				"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
-				"zones":              utils.SplitAndTrim(envVars.Zone, ","),
-				"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
-				"cluster_id":         envVars.ClusterID,
-				"reservation_id":     envVars.ReservationID,
-				"enable_app_center":  true,
-				"app_center_gui_pwd": password,
-			},
+			Vars:         vars,
 		})
 
-		// Initialize and plan the Terraform deployment
-		_, err = terraform.InitAndPlanE(t, terraformOptions)
+		// Perform Terraform upgrade only once
+		UpgradeTerraformOnce(t, terraformOptions)
+
+		// Plan the Terraform deployment
+		_, err = terraform.PlanE(t, terraformOptions)
 
 		// If there is an error, check if it contains specific mandatory fields
 		if err != nil {
@@ -1073,15 +2203,16 @@ func TestRunInvalidDomainName(t *testing.T) {
 	// Parallelize the test to run concurrently with others
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
 	// Get the absolute path of solutions/hpc
@@ -1090,23 +2221,38 @@ func TestRunInvalidDomainName(t *testing.T) {
 
 	terrPath := strings.ReplaceAll(abs, "tests/", "")
 
+	// Initialize the map to hold the variables
+	vars := map[string]interface{}{
+		"cluster_prefix":     hpcClusterPrefix,
+		"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+		"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+		"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+		"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+		"cluster_name":       envVars.ClusterName,
+		"dns_domain_name":    map[string]string{"compute": "sample"},
+		"solution":           envVars.Solution,
+	}
+
+	// You can add conditional logic here to modify the map, for example:
+	if envVars.Solution == "HPC" {
+		// specific to HPC
+		vars["reservation_id"] = envVars.ReservationID
+	} else {
+		// // specific to LSF
+		vars["ibm_customer_number"] = envVars.IBMCustomerNumber
+	}
+
 	// Define Terraform options
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: terrPath,
-		Vars: map[string]interface{}{
-			"cluster_prefix":     hpcClusterPrefix,
-			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
-			"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
-			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
-			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
-			"cluster_id":         envVars.ClusterID,
-			"reservation_id":     envVars.ReservationID,
-			"dns_domain_name":    map[string]string{"compute": "sample"},
-		},
+		Vars:         vars,
 	})
 
-	// Plan the Terraform configuration
-	_, err = terraform.InitAndPlanE(t, terraformOptions)
+	// Perform Terraform upgrade only once
+	UpgradeTerraformOnce(t, terraformOptions)
+
+	// Plan the Terraform deployment
+	_, err = terraform.PlanE(t, terraformOptions)
 
 	// Check if an error occurred during plan
 	assert.Error(t, err, "Expected an error during plan")
@@ -1132,27 +2278,28 @@ func TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue(t *testing.T) {
 	// Parallelize the test to run concurrently with others
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// Service instance name
 	randomString := utils.GenerateRandomString()
 	kmsInstanceName := "cicd-" + randomString
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
 	// Create service instance and KMS key using IBMCloud CLI
-	err := lsf.CreateServiceInstanceAndKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
+	err := lsf.CreateServiceInstanceAndKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroup, kmsInstanceName, lsf.KMS_KEY_NAME, testLogger)
 	require.NoError(t, err, "Failed to create service instance and KMS key")
 
 	// Ensure the service instance and KMS key are deleted after the test
-	defer lsf.DeleteServiceInstanceAndAssociatedKeys(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, kmsInstanceName, testLogger)
+	defer lsf.DeleteServiceInstanceAndAssociatedKeys(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultExistingResourceGroup, kmsInstanceName, testLogger)
 
 	testLogger.Info(t, "Service instance and KMS key created successfully: "+t.Name())
 
@@ -1169,23 +2316,40 @@ func TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue(t *testing.T) {
 		noInstanceIDErrorMsg   = "Please make sure you are passing the kms_instance_name if you are passing kms_key_name"
 	)
 
+	// Initialize the map to hold the variables
+	vars1 := map[string]interface{}{
+		"cluster_prefix":     hpcClusterPrefix,
+		"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+		"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+		"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+		"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+		"cluster_name":       envVars.ClusterName,
+		"kms_instance_name":  kmsInstanceName,
+		"kms_key_name":       invalidKMSKeyName,
+		"solution":           envVars.Solution,
+	}
+
+	// You can add conditional logic here to modify the map, for example:
+	if envVars.Solution == "HPC" {
+		// specific to HPC
+		vars1["reservation_id"] = envVars.ReservationID
+	} else {
+		// // specific to LSF
+		vars1["ibm_customer_number"] = envVars.IBMCustomerNumber
+	}
+
 	// Test with valid instance ID and invalid key name
 	terraformOptionsCase1 := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: terrPath,
-		Vars: map[string]interface{}{
-			"cluster_prefix":     hpcClusterPrefix,
-			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
-			"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
-			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
-			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
-			"cluster_id":         envVars.ClusterID,
-			"reservation_id":     envVars.ReservationID,
-			"kms_instance_name":  kmsInstanceName,
-			"kms_key_name":       invalidKMSKeyName,
-		},
+		Vars:         vars1,
 	})
 
-	_, err = terraform.InitAndPlanE(t, terraformOptionsCase1)
+	// Perform Terraform upgrade only once
+	UpgradeTerraformOnce(t, terraformOptionsCase1)
+
+	// Plan the Terraform deployment
+	_, err = terraform.PlanE(t, terraformOptionsCase1)
+
 	if err != nil {
 		result := utils.VerifyDataContains(t, err.Error(), noKeyErrorMsg, testLogger)
 		assert.True(t, result)
@@ -1199,23 +2363,36 @@ func TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue(t *testing.T) {
 		testLogger.FAIL(t, "Expected error did not occur with valid instance ID and invalid key name")
 	}
 
+	// Initialize the map to hold the variables
+	vars2 := map[string]interface{}{
+		"cluster_prefix":     hpcClusterPrefix,
+		"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+		"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+		"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+		"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+		"cluster_name":       envVars.ClusterName,
+		"kms_instance_name":  invalidKMSInstanceName,
+		"kms_key_name":       lsf.KMS_KEY_NAME,
+		"solution":           envVars.Solution,
+	}
+
+	// You can add conditional logic here to modify the map, for example:
+	if envVars.Solution == "HPC" {
+		// specific to HPC
+		vars2["reservation_id"] = envVars.ReservationID
+	} else {
+		// // specific to LSF
+		vars2["ibm_customer_number"] = envVars.IBMCustomerNumber
+	}
+
 	// Test with invalid instance ID and valid key name
 	terraformOptionsCase2 := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: terrPath,
-		Vars: map[string]interface{}{
-			"cluster_prefix":     hpcClusterPrefix,
-			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
-			"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
-			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
-			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
-			"cluster_id":         envVars.ClusterID,
-			"reservation_id":     envVars.ReservationID,
-			"kms_instance_name":  invalidKMSInstanceName,
-			"kms_key_name":       lsf.KMS_KEY_NAME,
-		},
+		Vars:         vars2,
 	})
 
-	_, err = terraform.InitAndPlanE(t, terraformOptionsCase2)
+	// Plan the Terraform deployment
+	_, err = terraform.PlanE(t, terraformOptionsCase2)
 	if err != nil {
 		result := utils.VerifyDataContains(t, err.Error(), noInstanceErrorMsg, testLogger)
 		assert.True(t, result)
@@ -1229,22 +2406,35 @@ func TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue(t *testing.T) {
 		testLogger.FAIL(t, "Expected error did not occur with invalid instance ID and valid key name")
 	}
 
+	// Initialize the map to hold the variables
+	vars3 := map[string]interface{}{
+		"cluster_prefix":     hpcClusterPrefix,
+		"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+		"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+		"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+		"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+		"cluster_name":       envVars.ClusterName,
+		"kms_key_name":       lsf.KMS_KEY_NAME,
+		"solution":           envVars.Solution,
+	}
+
+	// You can add conditional logic here to modify the map, for example:
+	if envVars.Solution == "HPC" {
+		// specific to HPC
+		vars3["reservation_id"] = envVars.ReservationID
+	} else {
+		// // specific to LSF
+		vars3["ibm_customer_number"] = envVars.IBMCustomerNumber
+	}
+
 	// Test without instance ID and valid key name
 	terraformOptionsCase3 := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: terrPath,
-		Vars: map[string]interface{}{
-			"cluster_prefix":     hpcClusterPrefix,
-			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
-			"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
-			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
-			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
-			"cluster_id":         envVars.ClusterID,
-			"reservation_id":     envVars.ReservationID,
-			"kms_key_name":       lsf.KMS_KEY_NAME,
-		},
+		Vars:         vars3,
 	})
 
-	_, err = terraform.InitAndPlanE(t, terraformOptionsCase3)
+	// Plan the Terraform deployment
+	_, err = terraform.PlanE(t, terraformOptionsCase3)
 	if err != nil {
 		result := utils.VerifyDataContains(t, err.Error(), noInstanceIDErrorMsg, testLogger)
 		assert.True(t, result)
@@ -1264,19 +2454,20 @@ func TestRunExistSubnetIDVpcNameAsNull(t *testing.T) {
 	// Parallelize the test to run concurrently with others
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
-	// Create test options, set up test environment
-	options, err := setupOptionsVpc(t, hpcClusterPrefix, createVpcTerraformDir, envVars.DefaultResourceGroup)
+	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
+	options, err := setupOptionsVpc(t, hpcClusterPrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroup)
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Skip test teardown for further inspection
@@ -1297,24 +2488,39 @@ func TestRunExistSubnetIDVpcNameAsNull(t *testing.T) {
 
 	terrPath := strings.ReplaceAll(abs, "tests/", "")
 
+	// Initialize the map to hold the variables
+	vars := map[string]interface{}{
+		"cluster_prefix":     hpcClusterPrefix,
+		"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+		"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
+		"zones":              utils.SplitAndTrim(envVars.Zone, ","),
+		"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+		"cluster_name":       envVars.ClusterName,
+		"cluster_subnet_ids": utils.SplitAndTrim(computesubnetIds, ","),
+		"login_subnet_id":    bastionsubnetId,
+		"solution":           envVars.Solution,
+	}
+
+	// You can add conditional logic here to modify the map, for example:
+	if envVars.Solution == "HPC" {
+		// specific to HPC
+		vars["reservation_id"] = envVars.ReservationID
+	} else {
+		// // specific to LSF
+		vars["ibm_customer_number"] = envVars.IBMCustomerNumber
+	}
+
 	// Define Terraform options
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: terrPath,
-		Vars: map[string]interface{}{
-			"cluster_prefix":     hpcClusterPrefix,
-			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
-			"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
-			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
-			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
-			"cluster_id":         envVars.ClusterID,
-			"reservation_id":     envVars.ReservationID,
-			"cluster_subnet_ids": utils.SplitAndTrim(computesubnetIds, ","),
-			"login_subnet_id":    bastionsubnetId,
-		},
+		Vars:         vars,
 	})
 
-	// Plan the Terraform configuration
-	_, err = terraform.InitAndPlanE(t, terraformOptions)
+	// Perform Terraform upgrade only once
+	UpgradeTerraformOnce(t, terraformOptions)
+
+	// Plan the Terraform deployment
+	_, err = terraform.PlanE(t, terraformOptions)
 
 	// Check if an error occurred during plan
 	assert.Error(t, err, "Expected an error during plan")
@@ -1340,110 +2546,61 @@ func TestRunExistSubnetIDVpcNameAsNull(t *testing.T) {
 	}
 }
 
-// TestRunInvalidSshKeysAndRemoteAllowedIP validates cluster creation with invalid ssh keys and remote allowed IP.
-func TestRunInvalidSshKeysAndRemoteAllowedIP(t *testing.T) {
-	// Parallelize the test to run concurrently with others
+// TestRunInvalidDedicatedHostConfigurationWithZeroWorkerNodes validates the behavior of cluster creation
+// when a dedicated host is enabled but the worker node count is set to zero.
+func TestRunInvalidDedicatedHostConfigurationWithZeroWorkerNodes(t *testing.T) {
+	// Parallelize the test
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// HPC cluster prefix
-	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-
-	// Retrieve cluster information from environment variables
-	envVars := GetEnvVars()
-
-	// Get the absolute path of solutions/hpc
-	abs, err := filepath.Abs("solutions/hpc")
-	require.NoError(t, err, "Unable to get absolute path")
-
-	terrPath := strings.ReplaceAll(abs, "tests/", "")
-
-	// Define Terraform options
-	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir: terrPath,
-		Vars: map[string]interface{}{
-			"cluster_prefix":     hpcClusterPrefix,
-			"bastion_ssh_keys":   []string{""},
-			"compute_ssh_keys":   []string{""},
-			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
-			"remote_allowed_ips": []string{""},
-			"cluster_id":         envVars.ClusterID,
-			"reservation_id":     envVars.ReservationID,
-		},
-	})
-
-	// Plan the Terraform configuration
-	_, err = terraform.InitAndPlanE(t, terraformOptions)
-
-	// Check if an error occurred during plan
-	assert.Error(t, err, "Expected an error during plan")
-
-	if err != nil {
-		// Check if the error message contains specific keywords indicating domain name issues
-		result := utils.VerifyDataContains(t, err.Error(), "The provided IP address format is not valid", testLogger) &&
-			utils.VerifyDataContains(t, err.Error(), "No SSH Key found with name", testLogger)
-		assert.True(t, result)
-		if result {
-			testLogger.PASS(t, "Validation succeeded: Invalid ssh keys and remote allowed IP")
-		} else {
-			testLogger.FAIL(t, "Validation failed: Invalid ssh keys and remote allowed IP")
-		}
-	} else {
-		// Log an error if the expected error did not occur
-		t.Error("Expected error did not occur")
-		testLogger.FAIL(t, "Expected error did not occur on Invalid ssh keys and remote allowed IP")
-	}
-}
-
-// TestRunCosAndVpcFlowLogs validates cluster creation with vpc flow logs and cos enabled.
-func TestRunCosAndVpcFlowLogs(t *testing.T) {
-	// Parallelize the test to run concurrently with others
-	t.Parallel()
-
-	// Setup test suite
-	setupTestSuite(t)
-
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve cluster information from environment variables
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
-	// Create test options, set up test environment
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
 	require.NoError(t, err, "Error setting up test options: %v", err)
+	options.TerraformVars["enable_dedicated_host"] = true
+	options.TerraformVars["worker_node_instance_type"] = []map[string]interface{}{
+		{
+			"count":         0,
+			"instance_type": "bx2-2x8",
+		},
+		{
+			"count":         0,
+			"instance_type": "cx2-2x4",
+		},
+	}
 
-	// Set Terraform variables
-	options.TerraformVars["enable_cos_integration"] = true
-	options.TerraformVars["enable_vpc_flow_logs"] = true
-
-	// Skip test teardown for further inspection
 	options.SkipTestTearDown = true
 	defer options.TestTearDown()
 
-	lsf.ValidateBasicClusterConfigurationWithVPCFlowLogsAndCos(t, options, testLogger)
+	lsf.ValidateBasicClusterConfigurationWithDedicatedHost(t, options, false, testLogger)
+
 }
 
-// TestRunInvalidSubnetCIDR validates cluster creation with invalid subnet CIDR ranges.
-func TestRunInvalidSubnetCIDR(t *testing.T) {
+// TestRunInvalidDedicatedHostProfile validates cluster creation with an invalid instance profile.
+func TestRunInvalidDedicatedHostProfile(t *testing.T) {
 	// Parallelize the test to run concurrently with others
 	t.Parallel()
 
-	// Setup test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// HPC cluster prefix
+	// Generate a random prefix for the cluster to ensure uniqueness
 	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
 
-	// Retrieve cluster information from environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
 	// Get the absolute path of solutions/hpc
@@ -1452,167 +2609,170 @@ func TestRunInvalidSubnetCIDR(t *testing.T) {
 
 	terrPath := strings.ReplaceAll(abs, "tests/", "")
 
+	// Initialize the map to hold the variables
+	vars := map[string]interface{}{
+		"cluster_prefix":        hpcClusterPrefix,
+		"bastion_ssh_keys":      utils.SplitAndTrim(envVars.SSHKey, ","),
+		"compute_ssh_keys":      utils.SplitAndTrim(envVars.SSHKey, ","),
+		"zones":                 utils.SplitAndTrim(envVars.Zone, ","),
+		"remote_allowed_ips":    utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+		"cluster_name":          envVars.ClusterName,
+		"solution":              envVars.Solution,
+		"scc_enable":            false,
+		"enable_dedicated_host": true,
+		"worker_node_instance_type": []map[string]interface{}{ // Invalid data
+			{
+				"count":         0,
+				"instance_type": "cx2-2x4",
+			},
+			{
+				"count":         0,
+				"instance_type": "cx2-8x16",
+			},
+		},
+		"observability_monitoring_enable": false,
+		"enable_cos_integration":          false,
+		"enable_vpc_flow_logs":            false,
+		"key_management":                  "null",
+	}
+
+	// You can add conditional logic here to modify the map, for example:
+	if envVars.Solution == "HPC" {
+		// specific to HPC
+		vars["reservation_id"] = envVars.ReservationID
+	} else {
+		// // specific to LSF
+		vars["ibm_customer_number"] = envVars.IBMCustomerNumber
+	}
+
 	// Define Terraform options
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: terrPath,
-		Vars: map[string]interface{}{
-			"cluster_prefix":     hpcClusterPrefix,
-			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
-			"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
-			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
-			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
-			"cluster_id":         envVars.ClusterID,
-			"reservation_id":     envVars.ReservationID,
-			"vpc_cluster_private_subnets_cidr_blocks":       utils.SplitAndTrim("1.1.1.1/20", ","),
-			"vpc_cluster_login_private_subnets_cidr_blocks": utils.SplitAndTrim("2.2.2.2/20", ","),
-		},
+		Vars:         vars,
 	})
 
+	// Cleanup resources
+	defer terraform.Destroy(t, terraformOptions)
+
+	// Perform Terraform upgrade only once
+	UpgradeTerraformOnce(t, terraformOptions)
+
 	// Apply the Terraform configuration
-	_, err = terraform.InitAndApplyE(t, terraformOptions)
+	output, err := terraform.InitAndApplyE(t, terraformOptions)
 
 	// Check if an error occurred during apply
 	assert.Error(t, err, "Expected an error during apply")
 
 	if err != nil {
-		// Check if the error message contains specific keywords indicating Subnet CIDR block issues
-		result := utils.VerifyDataContains(t, err.Error(), "Invalid json payload provided: Key: 'SubnetTemplateOneOf.SubnetTemplate.CIDRBlock' Error:Field validation for 'CIDRBlock' failed on the 'validcidr' tag", testLogger)
+
+		// Check if the error message contains specific keywords indicating LDAP server IP issues
+		result := utils.VerifyDataContains(t, output, "instance profile not found in host's supported instance profile list", testLogger)
 		assert.True(t, result)
 		if result {
-			testLogger.PASS(t, "Validation succeeded: Invalid Subnet CIDR range")
+			testLogger.PASS(t, "Validation succeeded for Invalid Dedicated-Host instance profile.")
 		} else {
-			testLogger.FAIL(t, "Validation failed: Invalid Subnet CIDR range")
+			testLogger.FAIL(t, "Validation failed for Invalid Dedicated-Host instance profile.")
 		}
 	} else {
 		// Log an error if the expected error did not occur
-		t.Error("Expected error did not occur")
-		testLogger.FAIL(t, "Expected error did not occur on Invalid Subnet CIDR range")
+		t.Error("Expected validation error did not occur.")
+		testLogger.FAIL(t, "Expected validation error did not occur for Invalid Dedicated-Host instance profile.")
 	}
 
-	// Cleanup resources
-	defer terraform.Destroy(t, terraformOptions)
 }
 
-// TestRunMultipleSSHKeys validates the cluster configuration.
-func TestRunMultipleSSHKeys(t *testing.T) {
-
-	// Parallelize the test
-	t.Parallel()
-
-	// Setup test suite
-	setupTestSuite(t)
-
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// HPC cluster prefix
-	hpcClusterPrefix := utils.GenerateRandomString()
-
-	// Retrieve cluster information from environment variables
-	envVars := GetEnvVars()
-
-	// Create test options
-	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
-	require.NoError(t, err, "Error setting up test options: %v", err)
-
-	options.SkipTestTearDown = true
-	defer options.TestTearDown()
-
-	lsf.ValidateClusterConfigurationWithMultipleKeys(t, options, testLogger)
-
-}
-
-// TestRunExistingLDAP validates the creation and configuration of HPC clusters with LDAP integration, including setup, validation, and error handling for both clusters.
-func TestRunExistingLDAP(t *testing.T) {
+// TestRunInvalidMinWorkerNodeCountGreaterThanMax cluster creation with an invalid worker node count.
+func TestRunInvalidMinWorkerNodeCountGreaterThanMax(t *testing.T) {
 	// Parallelize the test to run concurrently with others
 	t.Parallel()
 
-	// Setup the test suite
+	// Set up the test suite and prepare the testing environment
 	setupTestSuite(t)
 
-	// Initialize logger
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// Generate random prefix for HPC cluster
-	hpcClusterPrefix := utils.GenerateRandomString()
+	// Generate a random prefix for the cluster to ensure uniqueness
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
 
-	// Retrieve environment variables
+	// Retrieve necessary environment variables for the test
 	envVars := GetEnvVars()
 
-	// Ensure LDAP is enabled and credentials are provided
-	if strings.ToLower(envVars.EnableLdap) == "true" {
-		if len(envVars.LdapAdminPassword) == 0 || len(envVars.LdapUserName) == 0 || len(envVars.LdapUserPassword) == 0 {
-			require.FailNow(t, "LDAP credentials are missing. Ensure LDAP admin password, LDAP user name, and LDAP user password are provided.")
+	// You can add conditional logic here to modify the map, for example:
+	if envVars.Solution == "lsf" {
+
+		// Get the absolute path of solutions/hpc
+		abs, err := filepath.Abs("solutions/hpc")
+		require.NoError(t, err, "Unable to get absolute path")
+
+		terrPath := strings.ReplaceAll(abs, "tests/", "")
+
+		// Initialize the map to hold the variables
+		vars := map[string]interface{}{
+			"cluster_prefix":        hpcClusterPrefix,
+			"bastion_ssh_keys":      utils.SplitAndTrim(envVars.SSHKey, ","),
+			"compute_ssh_keys":      utils.SplitAndTrim(envVars.SSHKey, ","),
+			"zones":                 utils.SplitAndTrim(envVars.Zone, ","),
+			"remote_allowed_ips":    utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+			"cluster_name":          envVars.ClusterName,
+			"worker_node_max_count": 2, //invalid
+			"worker_node_instance_type": []map[string]interface{}{ // Invalid data
+				{
+					"count":         2,
+					"instance_type": "bx2-2x8",
+				},
+				{
+					"count":         1,
+					"instance_type": "cx2-2x4",
+				},
+			},
+			"solution":                        envVars.Solution,
+			"scc_enable":                      false,
+			"observability_monitoring_enable": false,
+			"enable_cos_integration":          false,
+			"enable_vpc_flow_logs":            false,
+			"key_management":                  "null",
+			"ibm_customer_number":             envVars.IBMCustomerNumber,
 		}
-	} else {
-		require.FailNow(t, "LDAP is not enabled. Set the 'enable_ldap' environment variable to 'true' to enable LDAP.")
+
+		// Define Terraform options
+		terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+			TerraformDir: terrPath,
+			Vars:         vars,
+		})
+
+		// Perform Terraform upgrade only once
+		UpgradeTerraformOnce(t, terraformOptions)
+
+		// Apply the Terraform configuration
+		_, err = terraform.InitAndPlanE(t, terraformOptions)
+
+		// Check if an error occurred during plan
+		assert.Error(t, err, "Expected an error during plan")
+
+		if err != nil {
+
+			// Check if the error message contains specific keywords indicating LDAP server IP issues
+			result := utils.VerifyDataContains(t, err.Error(), "If the solution is set as lsf, the worker min count cannot be greater than worker max count.", testLogger)
+			assert.True(t, result)
+			if result {
+				testLogger.PASS(t, "Validation succeeded for the worker node count")
+			} else {
+				testLogger.FAIL(t, "Validation failed for the worker node count")
+			}
+		} else {
+			// Log an error if the expected error did not occur
+			t.Error("Expected validation error did not occur.")
+			testLogger.FAIL(t, "Expected validation error did not occur for Invalid worker node count")
+		}
+
+		// Cleanup resources
+		defer terraform.Destroy(t, terraformOptions)
 	}
-
-	// Create test options for the first cluster
-	options1, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
-	require.NoError(t, err, "Error setting up test options for the first cluster: %v", err)
-
-	// Set Terraform variables for the first cluster
-	options1.TerraformVars["management_node_count"] = 1
-	options1.TerraformVars["enable_ldap"] = strings.ToLower(envVars.EnableLdap)
-	options1.TerraformVars["ldap_basedns"] = envVars.LdapBaseDns
-	options1.TerraformVars["ldap_admin_password"] = envVars.LdapAdminPassword // pragma: allowlist secret
-	options1.TerraformVars["ldap_user_name"] = envVars.LdapUserName
-	options1.TerraformVars["ldap_user_password"] = envVars.LdapUserPassword // pragma: allowlist secret
-	options1.TerraformVars["key_management"] = "null"
-	options1.TerraformVars["management_node_count"] = 1
-
-	// Skip test teardown for further inspection
-	options1.SkipTestTearDown = true
-	defer options1.TestTearDown()
-
-	// Run the test and validate output
-	output, err := options1.RunTest()
-	require.NoError(t, err, "Error running test: %v", err)
-	require.NotNil(t, output, "Expected non-nil output, but got nil")
-
-	// Retrieve custom resolver ID
-	customResolverID, err := utils.GetCustomResolverID(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, hpcClusterPrefix, testLogger)
-	require.NoError(t, err, "Error retrieving custom resolver ID: %v", err)
-
-	// Retrieve LDAP IP and Bastion IP
-	ldapIP, err := utils.GetLdapIP(t, options1, testLogger)
-	require.NoError(t, err, "Error retrieving LDAP IP address: %v", err)
-
-	ldapServerBastionIP, err := utils.GetBastionIP(t, options1, testLogger)
-	require.NoError(t, err, "Error retrieving LDAP server bastion IP address: %v", err)
-
-	// Update security group for LDAP
-	err = utils.RetrieveAndUpdateSecurityGroup(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zone), envVars.DefaultResourceGroup, hpcClusterPrefix, "10.241.0.0/18", "389", "389", testLogger)
-	require.NoError(t, err, "Error updating security group: %v", err)
-
-	testLogger.Info(t, "Cluster creation process for the second cluster initiated for "+t.Name())
-
-	// Generate random prefix for the second HPC cluster
-	hpcClusterPrefix2 := utils.GenerateRandomString()
-
-	// Create test options for the second cluster
-	options2, err := setupOptions(t, hpcClusterPrefix2, terraformDir, envVars.DefaultResourceGroup, ignoreDestroys)
-	require.NoError(t, err, "Error setting up test options for the second cluster: %v", err)
-
-	// Set Terraform variables for the second cluster
-	options2.TerraformVars["vpc_name"] = options1.TerraformVars["cluster_prefix"].(string) + "-hpc-vpc"
-	options2.TerraformVars["vpc_cluster_private_subnets_cidr_blocks"] = []string{CLUSTER_TWO_VPC_CLUSTER_PRIVATE_SUBNETS_CIDR_BLOCKS}
-	options2.TerraformVars["vpc_cluster_login_private_subnets_cidr_blocks"] = []string{CLUSTER_TWO_VPC_CLUSTER_LOGIN_PRIVATE_SUBNETS_CIDR_BLOCKS}
-	options2.TerraformVars["management_node_count"] = 2
-	options2.TerraformVars["dns_domain_name"] = map[string]string{"compute": CLUSTER_TWO_DNS_DOMAIN_NAME}
-	options2.TerraformVars["dns_custom_resolver_id"] = customResolverID
-	options2.TerraformVars["enable_ldap"] = strings.ToLower(envVars.EnableLdap)
-	options2.TerraformVars["ldap_basedns"] = envVars.LdapBaseDns
-	options2.TerraformVars["ldap_server"] = ldapIP
-
-	// Skip test teardown for further inspection
-	options2.SkipTestTearDown = true
-	defer options2.TestTearDown()
-
-	// Validate LDAP configuration for the second cluster
-	lsf.ValidateExistingLDAPClusterConfig(t, ldapServerBastionIP, ldapIP, envVars.LdapBaseDns, envVars.LdapAdminPassword, envVars.LdapUserName, envVars.LdapUserPassword, options2, testLogger)
+	testLogger.Info(t, "TestRunInvalidMinWorkerNodeCountGreaterThanMax will execute If the solution is set as lsf")
 }
 
+// ############################## Existing Environment Test Cases ###############################
 // TestRunExistingPACEnvironment test the validation of an existing PAC environment configuration.
 func TestRunExistingPACEnvironment(t *testing.T) {
 	// Parallelize the test to run concurrently with others
@@ -1641,7 +2801,7 @@ func TestRunExistingPACEnvironment(t *testing.T) {
 
 	// Validate the cluster configuration
 	lsf.ValidateClusterConfigWithAPPCenterOnExistingEnvironment(
-		t, config.ComputeSshKeysList, config.BastionIP, config.LoginNodeIP, config.ClusterID, config.ReservationID,
+		t, config.ComputeSshKeysList, config.BastionIP, config.LoginNodeIP, config.ClusterName, config.ReservationID,
 		config.ClusterPrefixName, config.ResourceGroup, config.KeyManagement,
 		config.Zones, config.DnsDomainName, config.ManagementNodeIPList,
 		config.IsHyperthreadingEnabled, testLogger)
@@ -1655,7 +2815,7 @@ func TestRunExistingPACAndLDAPEnvironment(t *testing.T) {
 	// Setup the test suite environment
 	setupTestSuite(t)
 
-	// Log the initiation of cluster creation process
+	// Log the initiation of the cluster creation process
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	// Retrieve the environment variable for the JSON file path
@@ -1675,7 +2835,7 @@ func TestRunExistingPACAndLDAPEnvironment(t *testing.T) {
 
 	// Validate the cluster configuration
 	lsf.ValidateClusterConfigWithAPPCenterAndLDAPOnExistingEnvironment(
-		t, config.ComputeSshKeysList, config.BastionIP, config.LoginNodeIP, config.ClusterID, config.ReservationID,
+		t, config.ComputeSshKeysList, config.BastionIP, config.LoginNodeIP, config.ClusterName, config.ReservationID,
 		config.ClusterPrefixName, config.ResourceGroup, config.KeyManagement, config.Zones, config.DnsDomainName,
 		config.ManagementNodeIPList, config.IsHyperthreadingEnabled, config.LdapServerIP, config.LdapDomain,
 		config.LdapAdminPassword, config.LdapUserName, config.LdapUserPassword, testLogger)

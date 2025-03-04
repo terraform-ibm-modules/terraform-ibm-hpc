@@ -53,6 +53,34 @@ data "template_file" "ldap_user_data" {
   }
 }
 
+data "template_file" "worker_user_data" {
+  template = file("${path.module}/templates/static_worker_user_data.tpl")
+  vars = {
+    network_interface                                = local.vsi_interfaces[0]
+    dns_domain                                       = var.dns_domain_names["compute"]
+    cluster_private_key_content                      = local.enable_management ? module.compute_key[0].private_key_content : ""
+    cluster_public_key_content                       = local.enable_management ? module.compute_key[0].public_key_content : ""
+    mount_path                                       = var.share_path
+    custom_mount_paths                               = join(" ", concat(local.vpc_file_share[*]["mount_path"], local.nfs_file_share[*]["mount_path"]))
+    custom_file_shares                               = join(" ", concat([for file_share in var.file_share : file_share], local.nfs_file_share[*]["nfs_share"]))
+    enable_ldap                                      = var.enable_ldap
+    rc_cidr_block                                    = local.compute_subnets[0].cidr
+    cluster_prefix                                   = var.prefix
+    hyperthreading                                   = var.hyperthreading_enabled
+    ldap_server_ip                                   = local.ldap_server
+    ldap_basedns                                     = var.enable_ldap == true ? var.ldap_basedns : "null"
+    cluster_name                                     = var.cluster_id
+    management_hostname                              = local.management_hostname
+    observability_monitoring_enable                  = var.observability_monitoring_enable
+    observability_monitoring_on_compute_nodes_enable = var.observability_monitoring_on_compute_nodes_enable
+    cloud_monitoring_access_key                      = var.cloud_monitoring_access_key
+    cloud_monitoring_ingestion_url                   = var.cloud_monitoring_ingestion_url
+    cloud_logs_ingress_private_endpoint              = var.cloud_logs_ingress_private_endpoint
+    observability_logs_enable_for_compute            = var.observability_logs_enable_for_compute
+    VPC_APIKEY_VALUE                                 = var.ibmcloud_api_key
+  }
+}
+
 data "template_file" "management_values" {
   template = file("${path.module}/configuration_steps/management_values.tpl")
   vars = {
@@ -84,7 +112,7 @@ data "template_file" "management_values" {
     mount_path                    = var.share_path
     custom_mount_paths            = join(" ", concat(local.vpc_file_share[*]["mount_path"], local.nfs_file_share[*]["mount_path"]))
     custom_file_shares            = join(" ", concat([for file_share in var.file_share : file_share], local.nfs_file_share[*]["nfs_share"]))
-    contract_id                   = var.contract_id
+    contract_id                   = var.solution == "hpc" ? var.contract_id : ""
     enable_app_center             = var.enable_app_center
     app_center_gui_pwd            = var.app_center_gui_pwd
     enable_ldap                   = var.enable_ldap
@@ -101,8 +129,8 @@ data "template_file" "management_values" {
     login_hostname                = local.login_hostnames[0]
     # PAC High Availability
     app_center_high_availability = var.app_center_high_availability
-    db_adminuser                 = var.enable_app_center && var.app_center_high_availability ? var.db_instance_info.adminuser : ""
-    db_adminpassword             = var.enable_app_center && var.app_center_high_availability ? var.db_instance_info.adminpassword : ""
+    db_adminuser                 = var.enable_app_center && var.app_center_high_availability ? var.db_instance_info.admin_user : ""
+    db_adminpassword             = var.enable_app_center && var.app_center_high_availability ? var.db_admin_password : ""
     db_hostname                  = var.enable_app_center && var.app_center_high_availability ? var.db_instance_info.hostname : ""
     db_port                      = var.enable_app_center && var.app_center_high_availability ? var.db_instance_info.port : ""
     db_certificate               = var.enable_app_center && var.app_center_high_availability ? var.db_instance_info.certificate : ""
@@ -116,5 +144,13 @@ data "template_file" "management_values" {
     cloud_monitoring_ingestion_url                   = var.cloud_monitoring_ingestion_url
     cloud_monitoring_prws_key                        = var.cloud_monitoring_prws_key
     cloud_monitoring_prws_url                        = var.cloud_monitoring_prws_url
+    cloud_logs_ingress_private_endpoint              = var.cloud_logs_ingress_private_endpoint
+    observability_logs_enable_for_management         = var.observability_logs_enable_for_management
+    observability_logs_enable_for_compute            = var.observability_logs_enable_for_compute
+    solution                                         = var.solution
+    rc_ncores                                        = local.ncores
+    rc_ncpus                                         = local.ncpus
+    rc_mem_in_mb                                     = local.mem_in_mb
+    rc_profile                                       = local.rc_profile
   }
 }

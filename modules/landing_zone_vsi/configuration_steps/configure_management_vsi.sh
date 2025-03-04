@@ -149,11 +149,17 @@ if [ "$on_primary" == "true" ]; then
     for file in $(find $LSF_TOP -name "*$default_cluster_name*"); do mv "$file" $(echo "$file"| sed -r "s/$default_cluster_name/$cluster_name/g"); done
   fi
 
+if [ "$solution" = "lsf" ]; then
+  LSB_RC_EXTERNAL_HOST_FLAG="icgen2host"
+elif [ "$solution" = "hpc" ]; then
+  LSB_RC_EXTERNAL_HOST_FLAG="icgen2host cloudhpchost"
+fi
+
   # 1. setting up lsf configuration
   cat <<EOT >> $LSF_CONF_FILE
 LSB_RC_EXTERNAL_HOST_IDLE_TIME=10
 LSF_DYNAMIC_HOST_TIMEOUT="EXPIRY[10m] THRESHOLD[250] INTERVAL[60m]"
-LSB_RC_EXTERNAL_HOST_FLAG="icgen2host cloudhpchost"
+LSB_RC_EXTERNAL_HOST_FLAG="$LSB_RC_EXTERNAL_HOST_FLAG"
 LSB_RC_UPDATE_INTERVAL=15
 LSB_RC_MAX_NEWDEMAND=50
 LSF_UDP_TO_TCP_THRESHOLD=9000
@@ -226,7 +232,7 @@ EOT
   echo "Setting up LSF resource connector"
 
   # 1. Create hostProviders.json
-  if [ "$regionName" = "eu-de" ] || [ "$regionName" = "us-east" ] || [ "$regionName" = "us-south" ] ; then
+  if [ "$solution" = "hpc" ] ; then
     cat <<EOT > "$LSF_RC_CONF"/hostProviders.json
 {
     "providers":[
@@ -317,81 +323,139 @@ RESOURCE_RECORDS_APIKEY=$VPC_APIKEY_VALUE
 # END ANSIBLE MANAGED BLOCK
 EOT
 
-  # 6. Create ibmcloudgen2_templates.json
-  ibmcloudgen2_templates="$LSF_RC_IC_CONF/ibmcloudgen2_templates.json"
-  # Incrementally build a json string
-  json_string=""
-
-  tab="$(cat <<EOF
-2   mx2-2x16
-4   mx2-4x32
-8   mx2-8x64
-16  mx2-16x128
-32  mx2-32x256
-48  mx2-48x384
-64  mx2-64x512
-96  mx2-96x768
-128 mx2-128x1024
-EOF
-)"
-
-  # Loop over table entries
-  while read i vmType; do
-    # Construct JSON object
-    for j in 1; do
-      # Set template ID based on j
-      if [ "$j" -eq 1 ]; then
-        templateId="Template-$cluster_prefix-$((j*1000+i))"
-        subnetId="${subnetID}"
-        zone="${zoneName}"
-      fi
-
-      # Construct JSON object
-      vpcus=$i
-      ncores=$((i / 2))
-      if $hyperthreading; then
-          ncpus=$vpcus
-      else
-          ncpus=$ncores
-      fi
-      maxmem=$((ncores * 16 * 1024))
-      mem=$((maxmem * 9 / 10))
-      if [ "${imageID:0:4}" == "crn:" ]; then
-        imagetype="imageCrn"
-      else
-        imagetype="imageId"
-      fi
-      json_string+=$(cat <<EOF
+cat <<EOT > "$LSF_RC_IC_CONF"/ibmcloudgen2_templates.json
 {
- "templateId": "$templateId",
- "maxNumber": "$rc_max_num",
- "attributes": {
-  "type": ["String", "X86_64"],
-  "ncores": ["Numeric", "$ncores"],
-  "ncpus": ["Numeric", "$ncpus"],
-  "mem": ["Numeric", "$mem"],
-  "icgen2host": ["Boolean", "1"]
- },
- "$imagetype": "$imageID",
- "subnetId": "$subnetId",
- "vpcId": "$vpcID",
- "vmType": "$vmType",
- "securityGroupIds": ["$securityGroupID"],
- "region": "$regionName",
- "resourceGroupId": "$rc_rg",
- "sshkey_id": "$sshkey_ID",
- "zone": "$zone"
-},
-EOF
-      )
-    done
-  done <<<"$tab"
-  json_string="${json_string%,}" # remove last comma
-  # Combine the JSON objects into a JSON array
-  json_data="{\"templates\": [${json_string}]}"
-  # Write the JSON data to the output file
-  echo "$json_data" > "$ibmcloudgen2_templates"
-  echo "JSON templates are created and updated on ibmcloudgen2_templates.json"
+    "templates": [
+        {
+            "templateId": "Template-1",
+            "maxNumber": "$rc_max_num",
+            "attributes": {
+                "type": ["String", "X86_64"],
+                "ncores": ["Numeric", "${rc_ncores}"],
+                "ncpus": ["Numeric", "${rc_ncpus}"],
+                "mem": ["Numeric", "${rc_memInMB}"],
+                "icgen2host": ["Boolean", "1"]
+            },
+            "crn": "${bootdrive_crn}",
+            "imageId": "$imageID",
+            "subnetId": "$subnetId",
+            "vpcId": "$vpcID",
+            "vmType": "${rc_profile}",
+            "securityGroupIds": ["${securityGroupID}"],
+            "resourceGroupId": "$rc_rg",
+            "sshkey_id": "$sshkey_ID",
+            "region": "$regionName",
+            "zone": "$zone"
+        }
+    ]
+}
+EOT
+
+
+#cat <<EOT > "$LSF_RC_IC_CONF"/ibmcloudgen2_templates.json
+#{
+#  templates = [
+#    for worker in var.worker_node_instance_type : {
+#      templateId    = "Template-${var.cluster_prefix}-${worker.instance_type}"
+#      maxNumber     = var.rc_max_num
+#      attributes    = {
+#        type       = ["String", "X86_64"],
+#        ncores     = ["Numeric", worker.count / 2],
+#        ncpus      = ["Numeric", var.hyperthreading ? worker.count : worker.count / 2],
+#        mem        = ["Numeric", floor((var.hyperthreading ? worker.count : worker.count / 2) * 16 * 1024 * 0.9)],
+#        icgen2host = ["Boolean", true]
+#      },
+#      "crn": "${bootdrive_crn}",
+#      "imageId": "$imageID",
+#      "subnetId": "$subnetId",
+#      "vpcId": "$vpcID"
+#      "vmType": "${rc_profile}"
+#      "securityGroupIds": ["${securityGroupID}"],
+#      "resourceGroupId": "$rc_rg",
+#      "sshkey_id": "$sshkey_ID",
+#      "region": "$regionName",
+#      "zone": "$zone",
+#      "vmType": worker.instance_type
+#    }
+#  ]
+#}
+#
+#EOT
+#  # 6. Create ibmcloudgen2_templates.json
+#  ibmcloudgen2_templates="$LSF_RC_IC_CONF/ibmcloudgen2_templates.json"
+#  # Incrementally build a json string
+#  json_string=""
+#
+#  tab="$(cat <<EOF
+#2   mx2-2x16
+#4   mx2-4x32
+#8   mx2-8x64
+#16  mx2-16x128
+#32  mx2-32x256
+#48  mx2-48x384
+#64  mx2-64x512
+#96  mx2-96x768
+#128 mx2-128x1024
+#EOF
+#)"
+#
+#  # Loop over table entries
+#  while read i vmType; do
+#    # Construct JSON object
+#    for j in 1; do
+#      # Set template ID based on j
+#      if [ "$j" -eq 1 ]; then
+#        templateId="Template-$cluster_prefix-$((j*1000+i))"
+#        subnetId="${subnetID}"
+#        zone="${zoneName}"
+#      fi
+#
+#      # Construct JSON object
+#      vpcus=$i
+#      ncores=$((i / 2))
+#      if $hyperthreading; then
+#          ncpus=$vpcus
+#      else
+#          ncpus=$ncores
+#      fi
+#      maxmem=$((ncores * 16 * 1024))
+#      mem=$((maxmem * 9 / 10))
+#      if [ "${imageID:0:4}" == "crn:" ]; then
+#        imagetype="imageCrn"
+#      else
+#        imagetype="imageId"
+#      fi
+#      json_string+=$(cat <<EOF
+#{
+# "templateId": "$templateId",
+# "maxNumber": "$rc_max_num",
+# "attributes": {
+#  "type": ["String", "X86_64"],
+#  "ncores": ["Numeric", "$ncores"],
+#  "ncpus": ["Numeric", "$ncpus"],
+#  "mem": ["Numeric", "$mem"],
+#  "icgen2host": ["Boolean", "1"]
+# },
+# "$imagetype": "$imageID",
+# "subnetId": "$subnetId",
+# "vpcId": "$vpcID",
+# "vmType": "$vmType",
+# "securityGroupIds": ["$securityGroupID"],
+# "region": "$regionName",
+# "resourceGroupId": "$rc_rg",
+# "sshkey_id": "$sshkey_ID",
+# "zone": "$zone"
+#},
+#EOF
+#      )
+#    done
+#  done <<<"$tab"
+#  json_string="${json_string%,}" # remove last comma
+#  # Combine the JSON objects into a JSON array
+#  json_data="{\"templates\": [${json_string}]}"
+#  # Write the JSON data to the output file
+#  echo "$json_data" > "$ibmcloudgen2_templates"
+#  echo "JSON templates are created and updated on ibmcloudgen2_templates.json"
 
 # 7. Create resource template for ibmcloudhpc templates
 # Define the output JSON file path
@@ -589,6 +653,9 @@ observability_monitoring_enable="${observability_monitoring_enable}"
 observability_monitoring_on_compute_nodes_enable="${observability_monitoring_on_compute_nodes_enable}"
 cloud_monitoring_access_key="${cloud_monitoring_access_key}"
 cloud_monitoring_ingestion_url="${cloud_monitoring_ingestion_url}"
+observability_logs_enable_for_compute="${observability_logs_enable_for_compute}"
+cloud_logs_ingress_private_endpoint="${cloud_logs_ingress_private_endpoint}"
+VPC_APIKEY_VALUE="${VPC_APIKEY_VALUE}"
 
 # The following line is used to inject extra variables by using a string replacement.
 %EXPORT_USER_DATA%
@@ -841,14 +908,36 @@ if [ "$on_primary" == "true" ]; then
   sed -i '/^End Parameters/i SCHED_METRIC_ENABLE=Y' $LSF_CONF/lsbatch/"$cluster_name"/configdir/lsb.params
 fi
 
+echo 'Ready to start daemons'
+
+# only start after the primary node gives a green-light
+if [ "$on_primary" == "true" ]; then
+  touch /mnt/lsf/config_done
+fi
+while true; do
+  [ -f /mnt/lsf/config_done ] && break
+  echo "waiting, not starting yet"
+  sleep 3
+  ls -l /mnt/lsf /mnt/lsf/config_done 1>/dev/null 2>&1 # creating some NFS activity
+done
+echo "got green light for starting"
+
+$LSF_TOP_VERSION/install/hostsetup --top="$LSF_TOP" --boot="y" --start="y"
+systemctl status lsfd
+
+### warning: this dangerously unsets LSF_TOP and LSF_VERSION
+source ~/.bashrc
+
+# Set `do_app_center` based on conditions
 do_app_center=false
-if [ "$enable_app_center" = true ] ; then
-  if [ "$on_primary" == "true" ] || [ "${app_center_high_availability}" = true ] ; then
+if [ "$enable_app_center" = true ]; then
+  if [ "$on_primary" == "true" ] || [ "${app_center_high_availability}" = true ]; then
     do_app_center=true
   fi
 fi
-# Setting up the Application Center
-if [ "$do_app_center" = true ] ; then
+
+# Main Application Center configuration block for HPC solution
+if [ "$do_app_center" = true ] && [ "$solution" = "hpc" ]; then
   if rpm -q lsf-appcenter; then
     echo "Application center packages are found..."
     echo "${app_center_gui_pwd}" | passwd --stdin lsfadmin
@@ -881,39 +970,98 @@ if [ "$do_app_center" = true ] ; then
     echo "source $LSF_SUITE_TOP/ext/profile.platform" >> "${lsfadmin_home_dir}"/.bashrc
     rm -rf $LSF_SUITE_GUI/3.0/bin/novnc.pem
   fi
-else
-  echo 'Application Center installation skipped...'
+elif [ "$do_app_center" = true ] && [ "$solution" = "lsf" ]; then
+  # Alternative configuration block for LSF BYOL scenario
+  echo "Configuring the App Center for LSF BYOL"
+  if (( $(ls -ltr /opt/IBM/lsf_app_center_cloud_packages/ | grep "pac" | wc -l) > 0 )); then
+    echo "Application Center package found!"
+    LSF_ENVDIR="/opt/ibm/lsf/conf"
+    echo $LSF_ENVDIR
+    echo ${app_center_gui_pwd} | sudo passwd --stdin lsfadmin
+    sed -i '$i\\ALLOW_EVENT_TYPE=JOB_NEW JOB_STATUS JOB_FINISH2 JOB_START JOB_EXECUTE JOB_EXT_MSG JOB_SIGNAL JOB_REQUEUE JOB_MODIFY2 JOB_SWITCH METRIC_LOG' $LSF_CONF/lsbatch/"$cluster_name"/configdir/lsb.params
+    sed -i 's/NEWJOB_REFRESH=y/NEWJOB_REFRESH=Y/g' $LSF_CONF/lsbatch/"$cluster_name"/configdir/lsb.params
+    sed -i 's/LSF_DISABLE_LSRUN=Y/LSF_DISABLE_LSRUN=N/g' $LSF_CONF/lsf.conf
+    echo "LSF_ADDON_HOSTS=\"${mgmt_hostnames}\"" >> $LSF_CONF/lsf.conf
+
+    # Additional configurations for BYOL
+    sudo systemctl status mariadb -l
+
+    if [ "${app_center_high_availability}" = true ]; then
+      if [ "$on_primary" == "true" ]; then
+        sudo mkdir -p /mnt/lsf/lsf_packages
+        chmod 755 /mnt/lsf/lsf_packages
+        cp /opt/IBM/lsf_app_center_cloud_packages/pac10.2.0.14_standard_linux-x64.tar.Z /mnt/lsf/lsf_packages
+      fi
+        # If we're on a secondary node, copy the package from /mnt/lsf/lsf_packages
+      if [ "$on_primary" != "true" ]; then
+        cp /mnt/lsf/lsf_packages/pac10.2.0.14_standard_linux-x64.tar.Z /opt/IBM/lsf_app_center_cloud_packages
+      fi
+    fi
+
+    cd /opt/IBM/lsf_app_center_cloud_packages
+    tar -xvf pac10.2.0.14_standard_linux-x64.tar.Z
+    cd pac10.2.0.14_standard_linux-x64
+    sed -i '1i export SHARED_CONFIGURATION_DIR="/mnt/lsf/pac"' pacinstall.sh
+    sed -i 's/#\ \.\ $LSF_ENVDIR\/profile\.lsf/. \/opt\/ibm\/lsf\/conf\/profile\.lsf/g' pacinstall.sh
+    sed -i 's/# export PAC_ADMINS=\"user1 user2\"/export PAC_ADMINS=\"lsfadmin\"/g' pacinstall.sh
+
+    mkdir -p $LSF_CONF/work/"$cluster_name"/logdir/stream
+    touch $LSF_CONF/work/"$cluster_name"/logdir/stream/lsb.stream
+
+    ./pacinstall.sh -s -y >> $logfile
+    echo "Sleeping for 10 seconds..."
+    sleep 10
+
+    until rpm -qa | grep lsf-appcenter; do
+      sleep 10  # Check every 10 seconds
+    done
+    echo "lsf-appcenter RPM is available, proceeding with configurations..."
+
+    if [ "${app_center_high_availability}" = true ]; then
+      create_certificate
+      configure_icd_datasource
+    fi
+
+    if [ "$on_primary" == "true" ]; then
+      # Update the Job directory, needed for VNC Sessions
+      sed -i 's|<Path>/home</Path>|<Path>/mnt/lsf/repository-path</Path>|' "$LSF_SUITE_GUI_CONF/Repository.xml"
+      if [ "${app_center_high_availability}" = true ]; then
+        echo "LSF_ADDON_HOSTS=\"${mgmt_hostnames}\"" >> $LSF_CONF/lsf.conf
+        create_appcenter_database
+        sed -i "s/NoVNCProxyHost=.*/NoVNCProxyHost=pac.${dns_domain}/g" "$LSF_SUITE_GUI_CONF/pmc.conf"
+        sed -i "s|<restHost>.*</restHost>|<restHost>${mgmt_hostname_primary}</restHost>|" $LSF_SUITE_GUI_CONF/pnc-config.xml
+        sed -i "s|<wsHost>.*</wsHost>|<wsHost>pac.${dns_domain}</wsHost>|" $LSF_SUITE_GUI_CONF/pnc-config.xml
+      else
+        #echo "LSF_ADDON_HOSTS=$HOSTNAME" >> $LSF_CONF/lsf.conf
+        sed -i 's/NoVNCProxyHost=.*/NoVNCProxyHost=localhost/g' "$LSF_SUITE_GUI_CONF/pmc.conf"
+        sed -i "s|<restHost>.*</restHost>|<restHost>${mgmt_hostname_primary}</restHost>|" $LSF_SUITE_GUI_CONF/pnc-config.xml
+        sed -i "s|<wsHost>.*</wsHost>|<wsHost>localhost</wsHost>|" $LSF_SUITE_GUI_CONF/pnc-config.xml
+      fi
+    fi
+
+    echo "source $LSF_SUITE_TOP/ext/profile.platform" >> ~/.bashrc
+    echo "source $LSF_SUITE_TOP/ext/profile.platform" >> "${lsfadmin_home_dir}"/.bashrc
+    rm -rf $LSF_SUITE_GUI/3.0/bin/novnc.pem
+    source ~/.bashrc
+
+    perfadmin start all; sleep 5; perfadmin list
+    sleep 10
+    pmcadmin start; pmcadmin list
+
+    appcenter_status=$(pmcadmin list | grep "WEBGUI" | awk '{print $2}')
+    if [ "$appcenter_status" = "STARTED" ]; then
+      echo "Application Center installation completed..."
+    else
+      echo "Application Center installation failed..."
+    fi
+  fi
 fi
 
-# Startup lsf daemons
 
-echo 'Ready to start daemons'
 
-# only start after the primary node gives a green-light
-if [ "$on_primary" == "true" ]; then
-  touch /mnt/lsf/config_done
-fi
-while true; do
-  [ -f /mnt/lsf/config_done ] && break
-  echo "waiting, not starting yet"
-  sleep 3
-  ls -l /mnt/lsf /mnt/lsf/config_done 1>/dev/null 2>&1 # creating some NFS activity
-done
-echo "got green light for starting"
-
-### useless and this dangerously unsets LSF_TOP and LSF_VERSION
-#if [ "$on_primary" == "true" ]; then
-#  . $LSF_TOP/conf/profile.lsf
-#fi
-
-$LSF_TOP_VERSION/install/hostsetup --top="$LSF_TOP" --boot="y" --start="y"
-systemctl status lsfd
-
-### warning: this dangerously unsets LSF_TOP and LSF_VERSION
-source ~/.bashrc
-
-if [ "$do_app_center" = true ] ; then
+if [ "$do_app_center" = true ] && [ "${solution}" = "hpc" ]; then
   # Start all the PerfMonitor and WEBUI processes.
+  source ~/.bashrc
   nohup >/tmp/perfout setsid perfadmin start all; perfadmin list
   sleep 5
   nohup >/tmp/pmcout setsid pmcadmin start; pmcadmin list
@@ -1120,6 +1268,70 @@ EOTF
   fi
 else
   echo "Metrics agent configuration skipped since monitoring provisioning is not enabled"
+fi
+
+# Setting up the IBM Cloud Logs
+if [ "$observability_logs_enable_for_management" = true ]; then
+
+  echo "Configuring cloud logs for management since observability logs for management is enabled"
+  sudo cp /root/post-config.sh /opt/ibm
+  cd /opt/ibm
+
+  cat <<EOL > /etc/fluent-bit/fluent-bit.conf
+[SERVICE]
+  Flush                   1
+  Log_Level               info
+  Daemon                  off
+  Parsers_File            parsers.conf
+  Plugins_File            plugins.conf
+  HTTP_Server             On
+  HTTP_Listen             0.0.0.0
+  HTTP_Port               9090
+  Health_Check            On
+  HC_Errors_Count         1
+  HC_Retry_Failure_Count  1
+  HC_Period               30
+  storage.path            /fluent-bit/cache
+  storage.max_chunks_up   192
+  storage.metrics         On
+
+[INPUT]
+  Name                syslog
+  Path                /tmp/in_syslog
+  Buffer_Chunk_Size   32000
+  Buffer_Max_Size     64000
+  Receive_Buffer_Size 512000
+
+[INPUT]
+  Name              tail
+  Tag               *
+  Path              /opt/ibm/lsf/log/*.log
+  Path_Key          file
+  Exclude_Path      /var/log/at/**
+  DB                /opt/ibm/lsf/log/fluent-bit.DB
+  Buffer_Chunk_Size 32KB
+  Buffer_Max_Size   256KB
+  Skip_Long_Lines   On
+  Refresh_Interval  10
+  storage.type      filesystem
+  storage.pause_on_chunks_overlimit on
+
+[FILTER]
+  Name modify
+  Match *
+  Add subsystemName management
+  Add applicationName lsf
+
+@INCLUDE output-logs-router-agent.conf
+EOL
+
+  sudo chmod +x post-config.sh
+  sudo ./post-config.sh -h $cloud_logs_ingress_private_endpoint -p "3443" -t "/logs/v1/singles" -a IAMAPIKey -k $VPC_APIKEY_VALUE --send-directly-to-icl -s true -i Production
+  sudo echo "2024-10-16T14:31:16+0000 INFO Testing IBM Cloud LSF Logs from management: $this_hostname" >> /opt/ibm/lsf/log/test.log
+  sudo logger -u /tmp/in_syslog my_ident my_syslog_test_message_from_management:$this_hostname
+
+else
+  echo "Cloud Logs configuration skipped since observability logs for management is not enabled"
 fi
 
 echo "END $(date '+%Y-%m-%d %H:%M:%S')"

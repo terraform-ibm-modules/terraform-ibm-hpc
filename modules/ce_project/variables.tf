@@ -22,3 +22,9 @@ variable "resource_group_id" {
   type        = string
   default     = null
 }
+
+variable "solution" {
+  type        = string
+  default     = "hpc"
+  description = "This is required to define a specific solution for the creation of reservation id's"
+}

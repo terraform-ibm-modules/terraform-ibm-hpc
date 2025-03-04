@@ -46,6 +46,15 @@ else
   echo "Provided OS distribution not match, provide either RHEL or Ubuntu" >> $logfile
 fi
 
+echo "${cluster_public_key_content}" >> "${lsfadmin_ssh_dir}/authorized_keys"
+echo "${cluster_private_key_content}" >> "${lsfadmin_ssh_dir}/id_rsa"
+echo "StrictHostKeyChecking no" >> "${lsfadmin_ssh_dir}/config"
+chmod 600 "${lsfadmin_ssh_dir}/authorized_keys"
+chmod 600 "${lsfadmin_ssh_dir}/id_rsa"
+chmod 700 ${lsfadmin_ssh_dir}
+chown -R lsfadmin:lsfadmin ${lsfadmin_ssh_dir}
+echo "SSH key setup for lsfadmin user is completed" >> $logfile
+
 # Setup Network configuration
 # Change the MTU setting as this is required for setting mtu as 9000 for communication to happen between clusters
 if grep -q "NAME=\"Red Hat Enterprise Linux\"" /etc/os-release; then
@@ -75,16 +84,6 @@ elif grep -q "NAME=\"Ubuntu\"" /etc/os-release; then
         echo "MTU entry already exists in Netplan. Skipping."
     fi
 fi
-
-echo "${cluster_public_key_content}" >> "${lsfadmin_ssh_dir}/authorized_keys"
-echo "${cluster_private_key_content}" >> "${lsfadmin_ssh_dir}/id_rsa"
-echo "StrictHostKeyChecking no" >> "${lsfadmin_ssh_dir}/config"
-chmod 600 "${lsfadmin_ssh_dir}/authorized_keys"
-chmod 600 "${lsfadmin_ssh_dir}/id_rsa"
-chmod 700 ${lsfadmin_ssh_dir}
-chown -R lsfadmin:lsfadmin ${lsfadmin_ssh_dir}
-echo "SSH key setup for lsfadmin user is completed" >> $logfile
-
 
 # Setup root user
 root_ssh_dir="/root/.ssh"
@@ -194,13 +193,6 @@ sleep 30
 echo "Contents of /etc/resolv.conf before changes:"
 cat /etc/resolv.conf
 
-# Restart the NetworkManager service
-sudo systemctl restart NetworkManager
-
-# Toggle networking off and on using nmcli
-sudo nmcli networking off
-sudo nmcli networking on
-
 # Display the updated contents of /etc/resolv.conf
 echo "Contents of /etc/resolv.conf after changes:" >> $logfile
 cat /etc/resolv.conf
@@ -236,8 +228,8 @@ if [ "$enable_ldap" = "true" ]; then
             systemctl restart sshd
 
             # Check if the SSL certificate file exists, then copy it to the correct location
-            # Retry finding SSL certificate with a maximum of 5 attempts and 5 seconds sleep between retries
-            for attempt in {1..5}; do
+            # Retry finding SSL certificate with a maximum of 100 attempts and 5 seconds sleep between retries
+            for attempt in {1..100}; do
                 if [ -f "/mnt/lsf/openldap/ldap_cacert.pem" ]; then
                     echo "LDAP SSL cert found under /mnt/lsf/openldap/ldap_cacert.pem path" >> $logfile
                     mkdir -p /etc/openldap/certs
@@ -248,8 +240,8 @@ if [ "$enable_ldap" = "true" ]; then
                     sleep 5
                 fi
             done
-            # Exit if the SSL certificate is still not found after 5 attempts
-            [ -f "/mnt/lsf/openldap/ldap_cacert.pem" ] || { echo "SSL cert not found after 5 attempts. Exiting." >> $logfile; exit 1; }
+            # Exit if the SSL certificate is still not found after 100 attempts
+            [ -f "/mnt/lsf/openldap/ldap_cacert.pem" ] || { echo "SSL cert not found after 100 attempts. Exiting." >> $logfile; exit 1; }
 
             # Create and configure the SSSD configuration file for LDAP integration
             cat <<EOF > /etc/sssd/sssd.conf
@@ -333,8 +325,8 @@ EOF
         sudo sed -i '$ i\session required pam_mkhomedir.so skel=/etc/skel umask=0022\' /etc/pam.d/common-session
 
         # Check if the SSL certificate file exists, then copy it to the correct location
-        # Retry finding SSL certificate with a maximum of 5 attempts and 5 seconds sleep between retries
-        for attempt in {1..5}; do
+        # Retry finding SSL certificate with a maximum of 100 attempts and 5 seconds sleep between retries
+        for attempt in {1..100}; do
             if [ -f "/mnt/lsf/openldap/ldap_cacert.pem" ]; then
                 echo "LDAP SSL cert found under /mnt/lsf/openldap/ldap_cacert.pem path" >> $logfile
                 mkdir -p /etc/ldap/certs
@@ -345,8 +337,8 @@ EOF
                 sleep 5
             fi
         done
-        # Exit if the SSL certificate is still not found after 5 attempts
-        [ -f "/mnt/lsf/openldap/ldap_cacert.pem" ] || { echo "SSL cert not found after 5 attempts. Exiting." >> $logfile; exit 1; }
+        # Exit if the SSL certificate is still not found after 100 attempts
+        [ -f "/mnt/lsf/openldap/ldap_cacert.pem" ] || { echo "SSL cert not found after 100 attempts. Exiting." >> $logfile; exit 1; }
 
         # Create and configure the SSSD configuration file for LDAP integration on Ubuntu
         cat <<EOF > /etc/sssd/sssd.conf

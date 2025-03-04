@@ -1,7 +1,8 @@
+solution: hpc
 default_resource_group: Default
 non_default_resource_group: WES_TEST
 zone: us-east-3
-cluster_id: HPC-LSF-2
+cluster_id: HPC-LSF-1
 reservation_id:
 remote_allowed_ips:
 ssh_key: geretain-hpc
@@ -16,7 +17,7 @@ key_management: key_protect
 kms_instance_name:
 kms_key_name:
 hyperthreading_enabled: true
-dns_domain_name : wes.com
+dns_domain_name: wes.com
 enable_app_center: true
 app_center_gui_pwd: Pass@123 # pragma: allowlist secret
 enable_ldap: true
@@ -32,6 +33,9 @@ eu_de_reservation_id:
 eu_de_cluster_id: HPC-LSF-1
 us_south_zone: us-south-1
 us_south_reservation_id:
+jp_tok_zone: jp-tok-1
+jp_tok_cluster_id: HPC-LSF-2
+jp_tok_reservation_id:
 us_south_cluster_id: HPC-LSF-1
 ssh_file_path: /artifacts/.ssh/id_rsa
 ssh_file_path_two: /artifacts/.ssh/id_rsa
