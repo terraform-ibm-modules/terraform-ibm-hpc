@@ -275,7 +275,7 @@ module "write_compute_cluster_inventory" {
   Enable_Monitoring     = local.Enable_Monitoring
   lsf_deployer_hostname = local.lsf_deployer_hostname
   # New Input
-  dns_domain_names      = local.dns_domain_names
+  dns_domain_names      = local.com_dns_domain_name
   compute_public_key_content = local.compute_public_key_content
   compute_private_key_content =  local.compute_private_key_content
   depends_on            = [ time_sleep.wait_60_seconds ]
