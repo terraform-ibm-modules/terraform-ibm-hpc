@@ -278,6 +278,26 @@ module "write_compute_cluster_inventory" {
   dns_domain_names      = var.dns_domain_names["compute"]
   compute_public_key_content = var.compute_public_key_content
   compute_private_key_content =  var.compute_private_key_content
+  # Other Code
+  enable_hyperthreading = var.enable_hyperthreading
+  ibmcloud_api_key      = var.ibmcloud_api_key
+  vpc_id                = local.vpc_id
+  vcpus                 = local.vcpus
+  ncores                = local.ncores
+  ncpus                 = local.ncpus
+  memInMB               = local.memInMB
+  rc_maxNum             = local.rc_maxNum
+  rc_profile            = local.rc_profile
+  imageID               = local.imageID
+  compute_subnet_id     = local.compute_subnet_id
+  region                = local.region
+  resource_group_id     = local.resource_group_ids["service_rg"]
+  zones                 = var.zones
+  compute_subnets_cidr  = local.compute_subnets_cidr
+  dynamic_compute_instances = local.dynamic_compute_instances
+  compute_security_group_id = local.compute_security_group_id
+  compute_ssh_keys_ids  = local.compute_ssh_keys_ids
+  compute_subnet_crn    = local.compute_subnet_crn
   depends_on            = [ time_sleep.wait_60_seconds ]
 }
 

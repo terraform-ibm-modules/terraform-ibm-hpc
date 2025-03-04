@@ -1,0 +1,41 @@
+---
+- name: Hyperthreading | Define ego_define_ncpus based on hyperthreading
+  set_fact:
+    ego_define_ncpus: "{{ 'threads' if enable_hyperthreading else 'cores' }}"
+  run_once: true
+
+- name: Hyperthreading | Print the value of ego_define_ncpus
+  debug:
+    msg: "EGO_DEFINE_NCPUS is set to {{ ego_define_ncpus }}"
+  run_once: true
+
+- name: Hyperthreading | Create LSF hyperthreading script for disabling threads if hyperthreading is false
+  copy:
+    dest: "{{ hyperthreading_file }}"
+    content: |
+      #!/bin/sh
+      for vcpu in $(cat /sys/devices/system/cpu/cpu*/topology/thread_siblings_list | cut -s -d- -f2 | cut -d- -f2 | uniq); do
+          echo "0" > "/sys/devices/system/cpu/cpu"$vcpu"/online"
+      done
+    mode: '0755'
+  when: not enable_hyperthreading
+
+- name: Hyperthreading | Run the hyperthreading script and add to cron if hyperthreading is false
+  shell: "{{ hyperthreading_file }}"
+  when: not enable_hyperthreading
+
+- name: Hyperthreading | Add script to cron for reboot if hyperthreading is false
+  cron:
+    name: "Disable Hyperthreading"
+    special_time: reboot
+    job: "{{ hyperthreading_file }}"
+  when: not enable_hyperthreading
+
+- name: Hyperthreading | Set the EGO_DEFINE_NCPUS in LSF config file
+  lineinfile:
+    path: "{{ LSF_CONF_FILE }}"
+    line: "{{ item }}"
+    create: yes
+  loop:
+    - "EGO_DEFINE_NCPUS={{ ego_define_ncpus }}"
+  run_once: true

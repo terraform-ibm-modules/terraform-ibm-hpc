@@ -1,0 +1,7 @@
+---
+
+- import_tasks: hyperthreading
+
+- import_tasks: configure_management_nodes.yml
+
+- import_tasks: configure_dynamic_nodes_templates.yml

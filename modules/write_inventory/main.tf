@@ -17,7 +17,26 @@ resource "local_sensitive_file" "itself" {
   "lsf_deployer_hostname": ${jsonencode(var.lsf_deployer_hostname)},
   "dns_domain_names": ${jsonencode(var.dns_domain_names)},
   "compute_public_key_content": ${jsonencode(var.compute_public_key_content)},
-  "compute_private_key_content": ${jsonencode(var.compute_private_key_content)}
+  "compute_private_key_content": ${jsonencode(var.compute_private_key_content)},
+  "enable_hyperthreading": ${jsonencode(var.enable_hyperthreading)},
+  "ibmcloud_api_key": ${jsonencode(var.ibmcloud_api_key)},
+  "vpc_id": ${jsonencode(var.vpc_id)},
+  "vcpus": ${jsonencode(var.vcpus)},
+  "rc_ncores": ${jsonencode(var.ncores)},
+  "rc_ncpus": ${jsonencode(var.ncpus)},
+  "rc_memInMB": ${jsonencode(var.memInMB)},
+  "rc_maxNum": ${jsonencode(var.rc_maxNum)},
+  "rc_profile": ${jsonencode(var.rc_profile)},
+  "imageID": ${jsonencode(var.imageID)},
+  "compute_subnet_id": ${jsonencode(var.compute_subnet_id)},
+  "regionName": ${jsonencode(var.region)},
+  "resource_group_id": ${jsonencode(var.resource_group_id)},
+  "zoneName": ${jsonencode(var.zones)},
+  "compute_ssh_keys_ids": ${jsonencode(var.compute_ssh_keys_ids)},
+  "dynamic_compute_instances": ${jsonencode(var.dynamic_compute_instances)},
+  "compute_subnets_cidr": ${jsonencode(var.compute_subnets_cidr)},
+  "compute_security_group_id": ${jsonencode(var.compute_security_group_id)},
+  "compute_subnet_crn": ${jsonencode(var.compute_subnet_crn)}
 }
 EOT
   filename = var.json_inventory_path
