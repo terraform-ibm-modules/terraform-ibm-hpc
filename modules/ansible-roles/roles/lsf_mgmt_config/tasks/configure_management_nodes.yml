@@ -17,11 +17,18 @@
     - "LSF_RSH=\"ssh -o 'PasswordAuthentication no' -o 'StrictHostKeyChecking no'\""
   run_once: true
 
+- name: Management Config | Check if queue configuration already exists
+  shell: "grep -q '# ANSIBLE MANAGED: QUEUE_NAME added' '{{ LSF_LSBATCH_CONF }}/lsb.queues'"
+  register: queue_check
+  changed_when: false
+  failed_when: false
+
 - name: Management Config | Append LSF queue configuration to lsb.queues
   blockinfile:
     path: "{{ LSF_LSBATCH_CONF }}/lsb.queues"
     insertafter: EOF
     block: |
+      # ANSIBLE MANAGED: QUEUE_NAME added
       Begin Queue
       QUEUE_NAME=das_q
       DATA_TRANSFER=Y
@@ -30,11 +37,12 @@
       RES_REQ=type==any
       End Queue
     marker: ""
+  when: queue_check.rc != 0
   run_once: true
 
 - name: Management Config | Update LSF configuration files
   block:
-    - name: Uncomment "icgen2host" in lsf.shared
+    - name: Management Config | Uncomment "icgen2host" in lsf.shared
       replace:
         path: "{{ LSF_CONF_FILE_PATH }}/lsf.shared"
         regexp: '^#\s*(icgen2host)'
@@ -45,10 +53,17 @@
         path: "{{ LSF_LSBATCH_CONF }}/lsb.modules"
         regexp: '^#\s*(schmod_demand)'
         replace: '\1'
+    
+    - name: Check if RC_HOSTS modification was already done
+      stat:
+        path: "/tmp/rc_hosts_added"
+      register: rc_hosts_marker
 
     - name: Management Config | Add "RC_HOSTS = all" after QUEUE_NAME in lsb.queues using sed
       shell: |
         sed -i '/^Begin Queue$/,/^End Queue$/{/QUEUE_NAME/{N;s/\(QUEUE_NAME\s*=[^\n]*\)\n/\1\nRC_HOSTS     = all\n/}}' "{{ LSF_LSBATCH_CONF }}/lsb.queues"
+        touch /tmp/rc_hosts_added
+      when: not rc_hosts_marker.stat.exists
   run_once: true
 
 - name: Management Config | Append management hostnames to lsb.hosts
@@ -62,14 +77,22 @@
   loop: "{{ lsf_masters }}"
   run_once: true
 
+- name: Management Config | Check if LSF_HOST_ADDR_RANGE is already set
+  shell: "grep -q '# ANSIBLE MANAGED: LSF_HOST_ADDR_RANGE added' '{{ LSF_CONF_FILE_PATH }}/lsf.cluster.{{ my_cluster_name }}'"
+  register: lsf_host_addr_range_marker_check
+  changed_when: false
+  failed_when: false
+
 - name: Management Config | Append LSF_HOST_ADDR_RANGE to lsf.cluster
   blockinfile:
     path: "{{ LSF_CONF_FILE_PATH }}/lsf.cluster.{{ my_cluster_name }}"
     block: |
+      # ANSIBLE MANAGED: LSF_HOST_ADDR_RANGE added
       Begin Parameters
       LSF_HOST_ADDR_RANGE=10.*.*.*
       End Parameters
     marker: ""
+  when: lsf_host_addr_range_marker_check.rc != 0
   run_once: true
 
 - name: Set permissions for Python directories
