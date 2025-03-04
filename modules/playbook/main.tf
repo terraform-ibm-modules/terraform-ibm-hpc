@@ -66,7 +66,7 @@ resource "null_resource" "run_playbook" {
 }
 
 resource "null_resource" "run_lsf_playbooks" {
-  count = var.inventory_path != null ? 1 : 0
+  count = var.inventory_path != null ? 0 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
