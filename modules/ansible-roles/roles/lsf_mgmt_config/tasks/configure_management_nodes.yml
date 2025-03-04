@@ -103,4 +103,4 @@
   loop:
     - /usr/local/lib/python3.11
     - /usr/local/lib64/python3.11
-  run_once: true
+  ignore_errors: yes

@@ -18,7 +18,6 @@
   run_once: true
   when: ip_mapping_check.rc != 0
 
-
 - name: Get IP addresses using nslookup
   shell: "nslookup {{ inventory_hostname }} | awk '/Address: / { print $2 }' | tail -n 1"
   register: dns_ip
@@ -48,3 +47,10 @@
   loop: "{{ ip_check.results }}"
   when: item.stdout | length > 0
   run_once: true
+
+- name: Copy the Hosts file to /etc/hosts
+  copy:
+    src: "{{ LSF_HOSTS_FILE }}"
+    dest: /etc/hosts
+    remote_src: yes
+  ignore_errors: yes
