@@ -2,7 +2,12 @@
 - name: Check if monitoring is enabled
   ansible.builtin.debug:
     msg: "Cloud Monitoring is enabled"
-  when: "{{ monitoring_enable_for_management | bool }}"
+  when: monitoring_enable_for_management | bool
+
+- name: Install Sysdig Agent
+  ansible.builtin.shell: |
+    curl -sL https://ibm.biz/install-sysdig-agent | sudo bash -s -- --access_key {{ cloud_monitoring_access_key }} --collector {{ cloud_monitoring_ingestion_url }} --collector_port 6443 --secure true --check_certificate false --additional_conf 'sysdig_capture_enabled: false\nremotefs: true\nfeature:\n mode: monitor_light'
+  when: monitoring_enable_for_management | bool
 
 - name: Configure Sysdig
   ansible.builtin.lineinfile:
@@ -14,15 +19,30 @@
     - { regexp: "==ACCESSKEY==", line: "customerid: {{ cloud_monitoring_access_key }}" }
     - { regexp: "==COLLECTOR==", line: "collector: {{ cloud_monitoring_ingestion_url }}" }
     - { regexp: "^tags:", line: "tags: type:management,lsf:true" }
-  when: "{{ monitoring_enable_for_management | bool }}"
+  when: monitoring_enable_for_management | bool
+
+- name: Create Prometheus user
+  ansible.builtin.user:
+    name: prometheus
+    shell: /sbin/nologin
+    comment: "Prometheus user account"
+  when: monitoring_enable_for_management | bool
+
+- name: Download and extract Prometheus
+  ansible.builtin.shell: |
+    wget https://github.com/prometheus/prometheus/releases/download/v{{ PROMETHEUS_VERSION }}/prometheus-{{ PROMETHEUS_VERSION }}.linux-amd64.tar.gz
+    tar xzvf prometheus-{{ PROMETHEUS_VERSION }}.linux-amd64.tar.gz
+    mkdir -p /opt/prometheus/
+    cp -av prometheus-{{ PROMETHEUS_VERSION }}.linux-amd64/* /opt/prometheus/
+    chown -R prometheus:prometheus /opt/prometheus/
+  when: monitoring_enable_for_management | bool
 
 - name: Configure Prometheus
   ansible.builtin.copy:
     content: |
       global:
-       scrape_interval: 60s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
-       evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
-       # scrape_timeout is set to the global default (10s).
+       scrape_interval: 60s
+       evaluation_interval: 15s
       scrape_configs:
        - job_name: "lsf_prometheus_exporter"
          static_configs:
@@ -32,37 +52,48 @@
          authorization:
           credentials: "{{ cloud_monitoring_prws_key }}"
     dest: "{{ prometheus_config_file }}"
-  when: "{{ monitoring_enable_for_management | bool }}"
+  when: monitoring_enable_for_management | bool
+
+- name: Install LSF Prometheus Exporter
+  ansible.builtin.shell: |
+    mkdir -p /opt/ibm/lsf_prometheus_exporter
+    cp -av /tmp/lsf_prometheus_exporter /opt/ibm/
+    cp /opt/ibm/lsf_prometheus_exporter/examples/linux_service/start_lsf_prometheus_exporter.sh /opt/ibm/lsf_prometheus_exporter
+    cp /opt/ibm/lsf_prometheus_exporter/examples/linux_service/lsf_prometheus_exporter.service /etc/systemd/system/
+    chown -R lsfadmin:root /opt/ibm/lsf_prometheus_exporter
+    chmod +x /opt/ibm/lsf_prometheus_exporter/start_lsf_prometheus_exporter.sh
+    su - lsfadmin -c "pip3 install -r /opt/ibm/lsf_prometheus_exporter/requirements.txt --user"
+  when: monitoring_enable_for_management | bool
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  when: monitoring_enable_for_management | bool
 
 - name: Enable and restart Prometheus
   ansible.builtin.systemd:
     name: prometheus
     enabled: yes
     state: restarted
-  when: "{{ monitoring_enable_for_management | bool }}"
+  when: monitoring_enable_for_management | bool
 
 - name: Enable and restart Sysdig Agent
   ansible.builtin.systemd:
     name: dragent
     enabled: yes
     state: restarted
-  when: "{{ monitoring_enable_for_management | bool }}"
+  when: monitoring_enable_for_management | bool
 
 - name: Ensure lsf_prometheus_exporter starts after shared filesystem mount
   ansible.builtin.lineinfile:
     path: "/etc/systemd/system/lsf_prometheus_exporter.service"
     regexp: "^After=network-online.target"
     line: "After=network-online.target mnt-lsf.mount"
-  when: "{{ monitoring_enable_for_management | bool }}"
-
-- name: Reload systemd daemon
-  ansible.builtin.systemd:
-    daemon_reload: yes
-  when: "{{ monitoring_enable_for_management | bool }}"
+  when: monitoring_enable_for_management | bool
 
 - name: Enable and restart LSF Prometheus Exporter
   ansible.builtin.systemd:
     name: lsf_prometheus_exporter
     enabled: yes
     state: restarted
-  when: "{{ monitoring_enable_for_management | bool }}"
+  when: monitoring_enable_for_management | bool

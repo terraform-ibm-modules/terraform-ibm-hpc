@@ -1,4 +1,55 @@
 ---
+# Installation Section
+- name: Print start message
+  ansible.builtin.debug:
+    msg: "Cloud logs agent installation started"
+
+- name: Download Cloud Logs Agent RPM package checksum
+  ansible.builtin.get_url:
+    url: "https://logs-router-agent-install-packages.s3.us.cloud-object-storage.appdomain.cloud/logs-router-agent-rhel8-1.3.1.rpm.sha256"
+    dest: "/tmp/logs-router-agent-rhel8-1.3.1.rpm.sha256"
+
+- name: Download Cloud Logs Agent RPM package
+  ansible.builtin.get_url:
+    url: "https://logs-router-agent-install-packages.s3.us.cloud-object-storage.appdomain.cloud/logs-router-agent-rhel8-1.3.1.rpm"
+    dest: "/tmp/logs-router-agent-rhel8-1.3.1.rpm"
+
+- name: Verify package integrity
+  ansible.builtin.command: sha256sum -c /tmp/logs-router-agent-rhel8-1.3.1.rpm.sha256
+  args:
+    chdir: /tmp
+  register: checksum_result
+  changed_when: false
+
+- name: Debug checksum result
+  ansible.builtin.debug:
+    msg: "{{ checksum_result.stdout_lines }}"
+
+- name: Install Cloud Logs Agent
+  ansible.builtin.yum:
+    name: /tmp/logs-router-agent-rhel8-1.3.1.rpm
+    state: present
+
+- name: Verify installation
+  ansible.builtin.shell: rpm -qa | grep logs-router-agent
+  register: agent_installed
+  changed_when: false
+
+- name: Debug installed package
+  ansible.builtin.debug:
+    msg: "{{ agent_installed.stdout }}"
+
+- name: Download post-config.sh script
+  ansible.builtin.get_url:
+    url: "https://logs-router-agent-config.s3.us.cloud-object-storage.appdomain.cloud/post-config.sh"
+    dest: "/root/post-config.sh"
+    mode: "0755"
+
+- name: Print installation completion message
+  ansible.builtin.debug:
+    msg: "Cloud logs agent installed successfully"
+
+# Observability Logs Setup
 - name: Check if observability logs for management are enabled
   ansible.builtin.debug:
     msg: "Configuring cloud logs for management since observability logs for management is enabled"
@@ -24,7 +75,7 @@
         Plugins_File            plugins.conf
         HTTP_Server             On
         HTTP_Listen             0.0.0.0
-        HTTP_Port               8081
+        HTTP_Port               9090
         Health_Check            On
         HC_Errors_Count         1
         HC_Retry_Failure_Count  1
@@ -59,20 +110,11 @@
       @INCLUDE output-logs-router-agent.conf
   when: logs_enable_for_management | bool
 
-- name: Ensure VPC_API_KEY is set
-  ansible.builtin.set_fact:
-    VPC_API_KEY: "{{ lookup('env', 'VPC_API_KEY') }}"
-  when: lookup('env', 'VPC_API_KEY') is defined and lookup('env', 'VPC_API_KEY') | length > 0
-
 - name: Fetch API KEY from environmental variable of Ansible controller
-  ansible.builtin.shell: "echo $VPC_API_KEY"
+  shell: "echo $VPC_API_KEY"
   register: env_api_key
-  changed_when: false
-
-- name: Debug API Key
-  ansible.builtin.debug:
-    msg: "API Key is {{ env_api_key.stdout }}"
-  when: logs_enable_for_management | bool    
+  environment:
+    VPC_API_KEY: "{{ lookup('env', 'VPC_API_KEY') }}" 
 
 - name: Run post-config.sh script
   ansible.builtin.command: >
@@ -84,9 +126,10 @@
     --send-directly-to-icl
     -s true
     -i Production
-  when: logs_enable_for_management | bool and env_api_key.stdout | length > 0
+  when: logs_enable_for_management | bool
 
 - name: Test cloud logs configuration
   ansible.builtin.shell: |
     echo "INFO Testing IBM Cloud LSF Logs from management: {{ ansible_hostname }}" >> /opt/ibm/lsf/log/test.log
+    logger -u /tmp/in_syslog my_ident my_syslog_test_message_from_management:{{ ansible_hostname }}
   when: logs_enable_for_management | bool
