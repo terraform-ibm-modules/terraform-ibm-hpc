@@ -36,7 +36,7 @@ https://cloud.ibm.com/devops/getting-started?env_id=ibm:yp:eu-de
 3. cluster_prefix
 4. zone
 5. resource_group
-6. cluster_id
+6. cluster_name
 7. reservation_id
 
 For additional assistance, contact the project maintainers.

@@ -2,7 +2,7 @@ solution: hpc
 default_resource_group: Default
 non_default_resource_group: WES_TEST
 zone: us-east-3
-cluster_id: HPC-LSF-1
+cluster_name: HPC-LSF-1
 reservation_id:
 remote_allowed_ips:
 ssh_key: geretain-hpc
@@ -27,15 +27,15 @@ ldap_user_name: tester
 ldap_user_password: Pass@123 # pragma: allowlist secret
 us_east_zone: us-east-3
 us_east_reservation_id:
-us_east_cluster_id: HPC-LSF-2
+us_east_cluster_name: HPC-LSF-2
 eu_de_zone: eu-de-3
 eu_de_reservation_id:
-eu_de_cluster_id: HPC-LSF-1
+eu_de_cluster_name: HPC-LSF-1
 us_south_zone: us-south-1
 us_south_reservation_id:
 jp_tok_zone: jp-tok-1
-jp_tok_cluster_id: HPC-LSF-2
+jp_tok_cluster_name: HPC-LSF-2
 jp_tok_reservation_id:
-us_south_cluster_id: HPC-LSF-1
+us_south_cluster_name: HPC-LSF-1
 ssh_file_path: /artifacts/.ssh/id_rsa
 ssh_file_path_two: /artifacts/.ssh/id_rsa

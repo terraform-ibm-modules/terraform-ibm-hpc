@@ -17,7 +17,7 @@ import (
 func VerifyManagementNodeConfig(
 	t *testing.T,
 	sshMgmtClient *ssh.Client,
-	expectedClusterID, expectedMasterName, expectedReservationID string,
+	expectedClusterName, expectedMasterName, expectedReservationID string,
 	expectedHyperthreadingStatus bool,
 	managementNodeIPList []string,
 	lsfVersion string,
@@ -25,8 +25,8 @@ func VerifyManagementNodeConfig(
 	logger *utils.AggregatedLogger,
 ) {
 	// Verify Cluster ID
-	checkClusterIDErr := LSFCheckClusterID(t, sshMgmtClient, expectedClusterID, logger)
-	utils.LogVerificationResult(t, checkClusterIDErr, "Check Cluster ID on management node", logger)
+	checkClusterNameErr := LSFCheckClusterName(t, sshMgmtClient, expectedClusterName, logger)
+	utils.LogVerificationResult(t, checkClusterNameErr, "Check Cluster ID on management node", logger)
 
 	// Verify Master Name
 	checkMasterNameErr := LSFCheckMasterName(t, sshMgmtClient, expectedMasterName, logger)
@@ -192,7 +192,7 @@ func VerifyAPPCenterConfig(
 func VerifyLoginNodeConfig(
 	t *testing.T,
 	sshLoginClient *ssh.Client,
-	expectedClusterID, expectedMasterName, expectedReservationID string,
+	expectedClusterName, expectedMasterName, expectedReservationID string,
 	expectedHyperthreadingStatus bool,
 	loginNodeIP string,
 	jobCommand string,
@@ -201,8 +201,8 @@ func VerifyLoginNodeConfig(
 ) {
 
 	// Verify cluster ID
-	checkClusterIDErr := LSFCheckClusterID(t, sshLoginClient, expectedClusterID, logger)
-	utils.LogVerificationResult(t, checkClusterIDErr, "check Cluster ID on login node", logger)
+	checkClusterNameErr := LSFCheckClusterName(t, sshLoginClient, expectedClusterName, logger)
+	utils.LogVerificationResult(t, checkClusterNameErr, "check Cluster ID on login node", logger)
 
 	// Verify master name
 	checkMasterNameErr := LSFCheckMasterName(t, sshLoginClient, expectedMasterName, logger)
@@ -669,9 +669,70 @@ func VerifyCloudLogs(
 // and comparing it against the expected profile obtained from IBM Cloud CLI.
 func ValidateDynamicNodeProfile(t *testing.T, apiKey, region, resourceGroup, clusterPrefix string, options *testhelper.TestOptions, logger *utils.AggregatedLogger) {
 
-	expectedDynamicWorkerProfile, expectedWorkerNodeProfileErr := utils.GetFirstWorkerNodeProfile(t, options.TerraformVars, logger)
+	expectedDynamicWorkerProfile, expectedWorkerNodeProfileErr := utils.GetFirstWorkerNodeInstanceType(t, options.TerraformVars, logger)
 	utils.LogVerificationResult(t, expectedWorkerNodeProfileErr, "Fetching worker node profile", logger)
 
 	validateDynamicWorkerProfileErr := ValidateDynamicWorkerProfile(t, apiKey, region, resourceGroup, clusterPrefix, expectedDynamicWorkerProfile, logger)
 	utils.LogVerificationResult(t, validateDynamicWorkerProfileErr, "Validating dynamic worker node profile", logger)
+
+}
+
+// VerifyCloudMonitoring checks the cloud monitoring configuration and status.
+// It validates cloud log URLs from Terraform outputs and monitoring services
+// for management and compute nodes. The function logs verification results
+// and handles errors gracefully. It takes test context, SSH client, cluster
+// details, monitoring flags, and a logger as parameters. No values are
+// returned; only validation outcomes are logged.
+func VerifyCloudMonitoring(
+	t *testing.T,
+	sshClient *ssh.Client,
+	expectedSolution string,
+	LastTestTerraformOutputs map[string]interface{},
+	managementNodeIPList []string, staticWorkerNodeIPList []string,
+	isCloudMonitoringEnabledForManagement, isCloudMonitoringEnabledForCompute bool,
+	logger *utils.AggregatedLogger) {
+
+	// Verify cloud logs URL from Terraform outputs
+	err := VerifycloudMonitoringURLFromTerraformOutput(t, LastTestTerraformOutputs, isCloudMonitoringEnabledForManagement, isCloudMonitoringEnabledForCompute, logger)
+	utils.LogVerificationResult(t, err, "cloud logs URL from Terraform outputs", logger)
+
+	// Verify Prometheus Dragent service for management nodes
+	mgmtErr := LSFPrometheusAndDragentServiceForManagementNodes(t, sshClient, managementNodeIPList, isCloudMonitoringEnabledForManagement, logger)
+	utils.LogVerificationResult(t, mgmtErr, "Prometheus and Dragent service for management nodes", logger)
+
+	// Verify Prometheus Dragent service for compute nodes
+	compErr := LSFPrometheusAndDragentServiceForComputeNodes(t, sshClient, expectedSolution, staticWorkerNodeIPList, isCloudMonitoringEnabledForCompute, logger)
+	utils.LogVerificationResult(t, compErr, "Prometheus and Dragent service for compute nodes", logger)
+
+}
+
+// ValidateAtracker verifies the Atracker Route Target configuration in IBM Cloud.
+// If Observability Atracker is enabled, it retrieves the target ID, ensures it meets the expected criteria,
+// and validates it against the specified target type. If Observability Atracker is disabled,
+// the function ensures no target ID is set. Any retrieval or validation failures are logged,
+// and the function exits early in case of errors to prevent further issues.
+func ValidateAtracker(t *testing.T, apiKey, region, resourceGroup, clusterPrefix, targetType string, ObservabilityAtrackerEnable bool, logger *utils.AggregatedLogger) {
+
+	if ObservabilityAtrackerEnable {
+		// Fetch the Atracker Route Target ID
+		targetID, atrackerRouteTargetIDErr := GetAtrackerRouteTargetID(t, apiKey, region, resourceGroup, clusterPrefix, ObservabilityAtrackerEnable, logger)
+		if atrackerRouteTargetIDErr != nil {
+			utils.LogVerificationResult(t, atrackerRouteTargetIDErr, "ValidateAtracker: Failed to retrieve Atracker Route Target ID", logger)
+			return // Exit early to prevent further errors
+		}
+
+		// Ensure Target ID is set and has a valid length when Observability Atracker is enabled
+		trimmedTargetID := strings.TrimSpace(targetID)
+		if len(trimmedTargetID) <= 36 {
+			utils.LogVerificationResult(t, fmt.Errorf("target ID is either missing or too short (must be more than 36 characters)"),
+				"ValidateAtracker: Target ID invalid", logger)
+			return
+		}
+
+		// Validate the Atracker Route Target
+		atrackerRouteTargetErr := ValidateAtrackerRouteTarget(t, apiKey, region, resourceGroup, clusterPrefix, targetID, targetType, logger)
+		if atrackerRouteTargetErr != nil {
+			utils.LogVerificationResult(t, atrackerRouteTargetErr, "ValidateAtracker: Validation failed for Atracker Route Target", logger)
+		}
+	}
 }

@@ -85,6 +85,10 @@ spec:
             name: $(params.continuous-delivery-context-secret)
             key: $(params.ibmcloud-apikey-secret-key)
             optional: true
+      - name: BUILD_NUMBER
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.annotations['devops.cloud.ibm.com/build-number']
       - name: PIPELINE_DEBUG
         value: $(params.pipeline-debug)
       - name: REVISION

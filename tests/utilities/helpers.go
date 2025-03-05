@@ -220,8 +220,8 @@ func LoginIntoIBMCloudUsingCLI(t *testing.T, apiKey, region, resourceGroup strin
 func GenerateTimestampedClusterPrefix(prefix string) string {
 	//Place current time in the string.
 	t := time.Now()
+	//return strings.ToLower("cicd" + "-" + t.Format(TimeLayout) + "-" + prefix)
 	return strings.ToLower("cicd" + "-" + t.Format(TimeLayout) + "-" + prefix)
-
 }
 
 // GetPublicIP returns the public IP address using ifconfig.io API
@@ -295,7 +295,7 @@ func GetValueForKey(inputMap map[string]string, key string) string {
 
 // Configuration struct matches the structure of your JSON data
 type Configuration struct {
-	ClusterName             string   `json:"clusterName"`
+	ClusterName             string   `json:"ClusterName"`
 	ReservationID           string   `json:"reservationID"`
 	ClusterPrefixName       string   `json:"clusterPrefixName"`
 	ResourceGroup           string   `json:"resourceGroup"`
@@ -485,79 +485,82 @@ func GetIAMToken() (string, error) {
 	return token, nil
 }
 
-// GetWorkerNodeTotalCount extracts the total "count" from the worker_node_instance_type variable.
-// It uses reflection to handle slices of various underlying types.
-func GetWorkerNodeTotalCount(t *testing.T, terraformVars map[string]interface{}, logger *AggregatedLogger) (int, error) {
+// ConvertToInt safely converts an interface{} to an int.
+func ConvertToInt(value interface{}) (int, error) {
+	switch v := value.(type) {
+	case int:
+		return v, nil
+	case float64:
+		return int(v), nil // JSON numbers are often float64.
+	case string:
+		intVal, err := strconv.Atoi(v)
+		if err != nil {
+			return 0, fmt.Errorf("could not convert string '%s' to int: %v", v, err)
+		}
+		return intVal, nil
+	default:
+		return 0, fmt.Errorf("unsupported type: %T", v)
+	}
+}
+
+// GetTotalWorkerNodeCount extracts and sums up all "count" values.
+func GetTotalWorkerNodeCount(t *testing.T, terraformVars map[string]interface{}, logger *AggregatedLogger) (int, error) {
 	rawVal, exists := terraformVars["worker_node_instance_type"]
 	if !exists {
 		return 0, errors.New("worker_node_instance_type key does not exist")
 	}
 
-	// Use reflection to check that rawVal is a slice.
-	val := reflect.ValueOf(rawVal)
-	if val.Kind() != reflect.Slice {
-		return 0, errors.New("worker_node_instance_type is not a slice")
+	// Ensure rawVal is of type []map[string]interface{}
+	workers, ok := rawVal.([]map[string]interface{})
+	if !ok {
+		return 0, fmt.Errorf("worker_node_instance_type is not a slice, but %T", rawVal)
 	}
 
 	var totalCount int
-	for i := 0; i < val.Len(); i++ {
-		// Get the i-th element and assert that it's a map.
-		item := val.Index(i).Interface()
-		workerMap, ok := item.(map[string]interface{})
-		if !ok {
-			return 0, fmt.Errorf("worker at index %d is not in the expected map format", i)
-		}
-		// Extract the "count" value.
-		countVal, exists := workerMap["count"]
+	for i, worker := range workers {
+		countVal, exists := worker["count"]
 		if !exists {
-			return 0, fmt.Errorf("worker at index %d does not have a 'count' key", i)
+			return 0, fmt.Errorf("worker at index %d is missing 'count' key", i)
 		}
-		// Use type assertion for an int.
-		count, ok := countVal.(int)
-		if !ok {
-			return 0, fmt.Errorf("count for worker at index %d is not an int", i)
+
+		count, err := ConvertToInt(countVal)
+		if err != nil {
+			return 0, fmt.Errorf("worker at index %d has invalid 'count' value: %v", i, err)
 		}
 		totalCount += count
-		logger.Info(t, fmt.Sprintf("Expected total worker node count is %d", totalCount))
 	}
 
+	logger.Info(t, fmt.Sprintf("Total Worker Node Count: %d", totalCount))
 	return totalCount, nil
 }
 
-// GetFirstWorkerNodeProfile extracts the "instance_type" from the first worker node in the slice.
-// It validates the structure and returns an error if the data format is incorrect.
-func GetFirstWorkerNodeProfile(t *testing.T, terraformVars map[string]interface{}, logger *AggregatedLogger) (string, error) {
-
+// GetFirstWorkerNodeInstanceType retrieves the "instance_type" of the first worker node.
+func GetFirstWorkerNodeInstanceType(t *testing.T, terraformVars map[string]interface{}, logger *AggregatedLogger) (string, error) {
 	rawVal, exists := terraformVars["worker_node_instance_type"]
 	if !exists {
 		return "", errors.New("worker_node_instance_type key does not exist")
 	}
 
-	// Use reflection to ensure rawVal is a slice.
-	val := reflect.ValueOf(rawVal)
-	if val.Kind() != reflect.Slice || val.Len() == 0 {
-		return "", errors.New("worker_node_instance_type is not a valid non-empty slice")
-	}
-
-	// Get the first element and ensure it's a map
-	item := val.Index(0).Interface()
-	workerMap, ok := item.(map[string]interface{})
+	// Ensure rawVal is of type []map[string]interface{}
+	workers, ok := rawVal.([]map[string]interface{})
 	if !ok {
-		return "", errors.New("worker at index 0 is not in the expected map format")
+		return "", fmt.Errorf("worker_node_instance_type is not a slice, but %T", rawVal)
 	}
 
-	// Extract the "instance_type" value
-	instanceTypeVal, exists := workerMap["instance_type"]
+	if len(workers) == 0 {
+		return "", errors.New("worker_node_instance_type is empty")
+	}
+
+	instanceType, exists := workers[0]["instance_type"]
 	if !exists {
-		return "", errors.New("worker at index 0 does not have an 'instance_type' key")
+		return "", errors.New("first worker node is missing 'instance_type' key")
 	}
 
-	// Ensure "instance_type" is a string
-	instanceType, ok := instanceTypeVal.(string)
+	instanceTypeStr, ok := instanceType.(string)
 	if !ok {
-		return "", errors.New("instance_type for worker at index 0 is not a string")
+		return "", errors.New("instance_type is not a string")
 	}
 
-	logger.Info(t, fmt.Sprintf("Expected dynamic worker node instance type is %s", instanceType))
-	return instanceType, nil
+	logger.Info(t, fmt.Sprintf("First Worker Node Instance Type: %s", instanceTypeStr))
+	return instanceTypeStr, nil
 }

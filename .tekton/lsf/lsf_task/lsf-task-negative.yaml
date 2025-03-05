@@ -85,6 +85,10 @@ spec:
             name: $(params.continuous-delivery-context-secret)
             key: $(params.ibmcloud-apikey-secret-key)
             optional: true
+      - name: BUILD_NUMBER
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.annotations['devops.cloud.ibm.com/build-number']
       - name: PIPELINE_DEBUG
         value: $(params.pipeline-debug)
       - name: REVISION
@@ -182,7 +186,7 @@ spec:
           source .tekton/scripts/suites.sh
           echo "${hpc_custom_reports_repo}"
           lsf_negative_suite_3
-    - name: rhel-suite-7
+    - name: negative-suite-4
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -200,4 +204,44 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          lsf_rhel_suite_7
+          echo "${hpc_custom_reports_repo}"
+          lsf_negative_suite_4
+    - name: negative-suite-5
+      onError: continue
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          source .tekton/scripts/suites.sh
+          echo "${hpc_custom_reports_repo}"
+          lsf_negative_suite_5
+    - name: rhel-suite-11
+      onError: continue
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          source .tekton/scripts/suites.sh
+          lsf_rhel_suite_11

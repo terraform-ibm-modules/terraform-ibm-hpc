@@ -83,6 +83,9 @@ spec:
     - name: ibm_customer_number
       description: Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)..
       default: ""
+    - name: pac_ha_exist_certificate
+      description: PAC HA Existing Certificate
+      default: ""
   resourcetemplates:
     - apiVersion: v1
       kind: PersistentVolumeClaim
@@ -149,6 +152,8 @@ spec:
             value: $(params.git_user_name)
           - name: git_user_email
             value: $(params.git_user_email)
+          - name: pac_ha_exist_certificate
+            value: $(params.pac_ha_exist_certificate)
         workspaces:
           - name: pipeline-ws
             persistentVolumeClaim:
@@ -196,6 +201,8 @@ spec:
       value: $(params.solution)
     - name: ibm_customer_number
       value: $(params.ibm_customer_number)
+    - name: pac_ha_exist_certificate
+      value: $(params.pac_ha_exist_certificate)
 ---
 apiVersion: tekton.dev/v1beta1
 kind: EventListener
@@ -260,6 +267,8 @@ spec:
     - name: solution
       value: $(event.ref)
     - name: ibm_customer_number
+      value: $(event.ref)
+    - name: pac_ha_exist_certificate
       value: $(event.ref)
 ---
 apiVersion: tekton.dev/v1beta1

@@ -185,6 +185,7 @@ func GenerateHTMLReport(results []TestResult) error {
     </script>
 </body>
 </html>
+
 	`
 
 	// Parse and execute the HTML template

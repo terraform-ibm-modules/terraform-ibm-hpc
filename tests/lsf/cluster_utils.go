@@ -106,11 +106,11 @@ func LSFIPRouteCheck(t *testing.T, sClient *ssh.Client, ipsList []string, logger
 	return nil
 }
 
-// LSFCheckClusterID checks if the provided cluster ID matches the expected value.
+// LSFCheckClusterName checks if the provided cluster ID matches the expected value.
 // It uses the provided SSH client to execute the 'lsid' command and verifies
 // if the expected cluster ID is present in the command output.
 // Returns an error if the checks fail.
-func LSFCheckClusterID(t *testing.T, sClient *ssh.Client, expectedClusterID string, logger *utils.AggregatedLogger) error {
+func LSFCheckClusterName(t *testing.T, sClient *ssh.Client, expectedClusterName string, logger *utils.AggregatedLogger) error {
 
 	// Execute the 'lsid' command to get the cluster ID
 	command := "source /opt/ibm/lsf/conf/profile.lsf; lsid"
@@ -120,13 +120,13 @@ func LSFCheckClusterID(t *testing.T, sClient *ssh.Client, expectedClusterID stri
 	}
 
 	// Verify if the expected cluster ID is present in the output
-	if !utils.VerifyDataContains(t, output, "My cluster name is "+expectedClusterID, logger) {
+	if !utils.VerifyDataContains(t, output, "My cluster name is "+expectedClusterName, logger) {
 		// Extract actual cluster version from the output for better error reporting
 		actualValue := strings.TrimSpace(strings.Split(strings.Split(output, "My cluster name is")[1], "My master name is")[0])
-		return fmt.Errorf("expected cluster ID %s , but found %s", expectedClusterID, actualValue)
+		return fmt.Errorf("expected cluster ID %s , but found %s", expectedClusterName, actualValue)
 	}
 	// Log success if no errors occurred
-	logger.Info(t, fmt.Sprintf("Cluster ID is set as expected : %s", expectedClusterID))
+	logger.Info(t, fmt.Sprintf("Cluster ID is set as expected : %s", expectedClusterName))
 	return nil
 }
 
@@ -1337,7 +1337,7 @@ func VerifyEncryption(t *testing.T, apiKey, region, resourceGroup, clusterPrefix
 
 // ValidateRequiredEnvironmentVariables checks if the required environment variables are set and valid
 func ValidateRequiredEnvironmentVariables(envVars map[string]string) error {
-	requiredVars := []string{"SSH_FILE_PATH", "SSH_KEY", "CLUSTER_ID", "ZONE", "RESERVATION_ID"}
+	requiredVars := []string{"SSH_FILE_PATH", "SSH_KEY", "CLUSTER_NAME", "ZONE", "RESERVATION_ID"}
 	for _, fieldName := range requiredVars {
 		fieldValue, ok := envVars[fieldName]
 		if !ok || fieldValue == "" {
@@ -2161,11 +2161,11 @@ func GetLDAPServerCert(publicHostName, bastionIP, ldapHostName, ldapServerIP str
 // It extracts the cluster ID, reservation ID, and cluster prefix from the provided test options.
 // Returns the cluster ID, reservation ID, and cluster prefix as strings.
 func GetClusterInfo(options *testhelper.TestOptions) (string, string, string) {
-	var clusterID, reservationID, clusterPrefix string
+	var ClusterName, reservationID, clusterPrefix string
 
 	// Retrieve values safely with type assertion
-	if id, ok := options.TerraformVars["cluster_id"].(string); ok {
-		clusterID = id
+	if id, ok := options.TerraformVars["cluster_name"].(string); ok {
+		ClusterName = id
 	}
 	if reservation, ok := options.TerraformVars["reservation_id"].(string); ok {
 		reservationID = reservation
@@ -2174,7 +2174,7 @@ func GetClusterInfo(options *testhelper.TestOptions) (string, string, string) {
 		clusterPrefix = prefix
 	}
 
-	return clusterID, reservationID, clusterPrefix
+	return ClusterName, reservationID, clusterPrefix
 }
 
 // SetJobCommands generates job commands customized for the specified solution type and zone.
@@ -3432,6 +3432,199 @@ func CheckPlatformLogsPresent(t *testing.T, apiKey, region, resourceGroup string
 	return true, nil
 }
 
+// VerifyCloudMonitoringURLFromTerraformOutput validates the cloud log URL in Terraform outputs.
+// It checks required fields in the Terraform output map and ensures the cloud logs URL
+// is present when cloud logging is enabled for either management or compute nodes.
+// If validation fails, it returns an error; otherwise, it logs success.
+
+func VerifycloudMonitoringURLFromTerraformOutput(t *testing.T, LastTestTerraformOutputs map[string]interface{}, isCloudMonitoringEnabledForManagement, isCloudMonitoringEnabledForCompute bool, logger *utils.AggregatedLogger) error {
+
+	logger.Info(t, fmt.Sprintf("Terraform Outputs: %+v", LastTestTerraformOutputs))
+
+	// Required fields for validation
+	requiredFields := []string{
+		"ssh_to_management_node_1",
+		"ssh_to_login_node",
+		"region_name",
+		"vpc_name",
+	}
+
+	// Validate required fields
+	for _, field := range requiredFields {
+		value, ok := LastTestTerraformOutputs[field].(string)
+		if !ok || len(strings.TrimSpace(value)) == 0 {
+			return fmt.Errorf("field '%s' is missing or empty in Terraform outputs", field)
+		}
+		logger.Info(t, fmt.Sprintf("%s = %s", field, value))
+	}
+
+	// Validate cloud_monitoring_url if logging is enabled
+	if isCloudMonitoringEnabledForManagement || isCloudMonitoringEnabledForCompute {
+		cloudLogsURL, ok := LastTestTerraformOutputs["cloud_monitoring_url"].(string)
+		if !ok || len(strings.TrimSpace(cloudLogsURL)) == 0 {
+			return errors.New("missing or empty 'cloud_monitoring_url' in Terraform outputs")
+		}
+		logger.Info(t, fmt.Sprintf("cloud_monitoring_url = %s", cloudLogsURL))
+		statusCode, err := utils.CheckAPIStatus(cloudLogsURL)
+		if err != nil {
+			return fmt.Errorf("error checking cloud_monitoring_url API: %v", err)
+		}
+
+		logger.Info(t, fmt.Sprintf("API Status: %s - %d", cloudLogsURL, statusCode))
+
+		if statusCode < 200 || statusCode >= 500 {
+			logger.Warn(t, fmt.Sprintf("API returned non-success status: %d", statusCode))
+			return fmt.Errorf("API returned non-success status: %d", statusCode)
+		} else {
+			logger.PASS(t, fmt.Sprintf("API returned success status: %d", statusCode))
+		}
+		logger.Info(t, fmt.Sprintf("API Status: %s - %d\n", cloudLogsURL, statusCode))
+	}
+
+	logger.Info(t, "cloud_monitoring_url Terraform output validation completed successfully")
+	return nil
+}
+
+// LSFPrometheusAndDragentServiceForManagementNodes validates the Prometheus and Dragent services for management nodes.
+// If cloud monitoring is enabled, it connects via SSH to each management node and verifies service statuses.
+// The function logs results and returns an error if any node fails validation.
+
+func LSFPrometheusAndDragentServiceForManagementNodes(t *testing.T, sshClient *ssh.Client, managementNodeIPs []string, isCloudMonitoringEnabledForManagement bool, logger *utils.AggregatedLogger) error {
+
+	// Ensure management node IPs are provided if cloud logs are enabled
+	if isCloudMonitoringEnabledForManagement {
+		if len(managementNodeIPs) == 0 {
+			return errors.New("management node IPs cannot be empty")
+		}
+
+		for _, managementIP := range managementNodeIPs {
+
+			err := VerifyLSFPrometheusServiceForNode(t, sshClient, managementIP, logger)
+			if err != nil {
+				return fmt.Errorf("failed Prometheus service verification for management node %s: %w", managementIP, err)
+			}
+
+			err = VerifyLSFdragentServiceForNode(t, sshClient, managementIP, logger)
+			if err != nil {
+				return fmt.Errorf("failed dragent service verification for management node %s: %w", managementIP, err)
+			}
+		}
+	} else {
+		logger.Warn(t, "Cloud monitoring are not enabled for the management node. As a result, the Prometheus and Fluent dragent service will not be validated.")
+	}
+
+	return nil
+}
+
+// LSFPrometheusAndDragentServiceForComputeNodes validates the Prometheus and Dragent services for compute nodes.
+// If cloud monitoring is enabled, it retrieves compute node IPs and verifies service statuses via SSH.
+// The function logs results and returns an error if any node fails validation.
+
+func LSFPrometheusAndDragentServiceForComputeNodes(
+	t *testing.T,
+	sshClient *ssh.Client,
+	expectedSolution string,
+	staticWorkerNodeIPs []string,
+	isCloudMonitoringEnabledForCompute bool,
+	logger *utils.AggregatedLogger) error {
+
+	// Ensure worker node IPs are provided if cloud logs are enabled
+	if isCloudMonitoringEnabledForCompute {
+		if len(staticWorkerNodeIPs) == 0 {
+			return errors.New("worker node IPs cannot be empty")
+		}
+
+		// Retrieve compute node IPs from the worker nodes
+		computeNodeIPs, err := GetComputeNodeIPs(t, sshClient, logger, expectedSolution, staticWorkerNodeIPs)
+		if err != nil || len(computeNodeIPs) == 0 {
+			return fmt.Errorf("failed to retrieve compute node IPs: %w", err)
+		}
+
+		// Iterate over each compute node and verify Prometheus service
+		for _, computeIP := range computeNodeIPs {
+			err := VerifyLSFPrometheusServiceForNode(t, sshClient, computeIP, logger)
+			if err != nil {
+				return fmt.Errorf("failed Prometheus service verification for compute node %s: %w", computeIP, err)
+			}
+
+			err = VerifyLSFdragentServiceForNode(t, sshClient, computeIP, logger)
+			if err != nil {
+				return fmt.Errorf("failed dragent service verification for compute node %s: %w", computeIP, err)
+			}
+
+		}
+	} else {
+		logger.Warn(t, "Cloud monitoring are not enabled for the compute node. As a result, the Prometheus and Fluent dragent service will not be validated.")
+	}
+	return nil
+}
+
+// VerifyLSFPrometheusServiceForNode checks the status of the Prometheus service on a given node.
+// It ensures the service is running and returns an error if its state does not match "active (running)."
+func VerifyLSFPrometheusServiceForNode(
+	t *testing.T,
+	sshClient *ssh.Client,
+	nodeIP string,
+	logger *utils.AggregatedLogger) error {
+
+	// Command to check the status of Prometheus service on the node
+	command := fmt.Sprintf("ssh %s systemctl status prometheus", nodeIP)
+	output, err := utils.RunCommandInSSHSession(sshClient, command)
+	if err != nil {
+		// Return an error if the command fails to execute
+		return fmt.Errorf("failed to execute command '%s' on node %s: %w", command, nodeIP, err)
+	}
+
+	// Expected Fluent Bit service state should be "active (running)"
+	expectedState := "Active: active (running)"
+
+	// Verify if the service is in the expected running state
+	if !utils.VerifyDataContains(t, output, expectedState, logger) {
+		// If the service state does not match the expected state, return an error with output
+		return fmt.Errorf(
+			"unexpected Prometheus service state for node %s: expected '%s', got:\n%s",
+			nodeIP, expectedState, output,
+		)
+	}
+
+	// Log success if Fluent Bit service is running as expected
+	logger.Info(t, fmt.Sprintf("Prometheus service validation passed for node %s", nodeIP))
+	return nil
+}
+
+// VerifyLSFDragentServiceForNode checks the status of the Dragent service on a given node.
+// It ensures the service is running and returns an error if its state does not match "active (running)."
+func VerifyLSFdragentServiceForNode(
+	t *testing.T,
+	sshClient *ssh.Client,
+	nodeIP string,
+	logger *utils.AggregatedLogger) error {
+
+	// Command to check the status of Prometheus service on the node
+	command := fmt.Sprintf("ssh %s systemctl status dragent", nodeIP)
+	output, err := utils.RunCommandInSSHSession(sshClient, command)
+	if err != nil {
+		// Return an error if the command fails to execute
+		return fmt.Errorf("failed to execute command '%s' on node %s: %w", command, nodeIP, err)
+	}
+
+	// Expected Fluent Bit service state should be "active (running)"
+	expectedState := "Active: active (running)"
+
+	// Verify if the service is in the expected running state
+	if !utils.VerifyDataContains(t, output, expectedState, logger) {
+		// If the service state does not match the expected state, return an error with output
+		return fmt.Errorf(
+			"unexpected dragent service state for node %s: expected '%s', got:\n%s",
+			nodeIP, expectedState, output,
+		)
+	}
+
+	// Log success if Fluent Bit service is running as expected
+	logger.Info(t, fmt.Sprintf("dragent service validation passed for node %s", nodeIP))
+	return nil
+}
+
 // ValidateDynamicWorkerProfile checks if the dynamic worker node profile matches the expected value.
 // It logs into IBM Cloud, fetches cluster resources, extracts the worker profile, and validates it.
 // Returns an error if the actual profile differs from the expected profile; otherwise, it returns nil.
@@ -3471,7 +3664,135 @@ func ValidateDynamicWorkerProfile(t *testing.T, apiKey, region, resourceGroup, c
 		return fmt.Errorf("dynamic worker node profile mismatch: actual: '%s', expected: '%s', output: '%s'", actualDynamicWorkerProfile, expectedDynamicWorkerProfile, clusterResourceList)
 	}
 
-	logger.Info(t, "Dynamic worker node profile matches the first profile from worker node instance type")
+	return nil
+}
+
+// GetAtrackerRouteTargetID retrieves the Atracker route target ID from IBM Cloud.
+// It logs into IBM Cloud, fetches route details, and extracts the target ID if Observability Atracker is enabled.
+// If Observability Atracker is disabled, it ensures no Atracker route exists.
+// Returns the target ID if found or an error if retrieval or validation fails.
+func GetAtrackerRouteTargetID(t *testing.T, apiKey, region, resourceGroup, clusterPrefix string, ObservabilityAtrackerEnable bool, logger *utils.AggregatedLogger) (string, error) {
+
+	type Rule struct {
+		TargetIDs []string `json:"target_ids"`
+	}
+	type RouteResponse struct {
+		ID    string `json:"id"`
+		Name  string `json:"name"`
+		CRN   string `json:"crn"`
+		Rules []Rule `json:"rules"`
+	}
+
+	if strings.Contains(resourceGroup, "null") {
+		resourceGroup = fmt.Sprintf("%s-workload-rg", clusterPrefix)
+	}
+
+	if err := utils.LoginIntoIBMCloudUsingCLI(t, apiKey, region, resourceGroup); err != nil {
+		return "", fmt.Errorf("failed to log in to IBM Cloud: %w", err)
+	}
+
+	cmd := exec.Command("ibmcloud", "atracker", "route", "get", "--route", fmt.Sprintf("%s-atracker-route", clusterPrefix), "--output", "JSON")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve atracker route: %s, error: %w", string(output), err)
+	}
+
+	var response RouteResponse
+	if err := json.Unmarshal(output, &response); err != nil {
+		return "", fmt.Errorf("error unmarshaling JSON: %w. Raw output: %s", err, string(output))
+	}
+
+	jsonResp, _ := json.MarshalIndent(response, "", "  ")
+	logger.Info(t, fmt.Sprintf("Atracker Route Response: %s", string(jsonResp)))
+
+	expectedRouteName := fmt.Sprintf("%s-atracker-route", clusterPrefix)
+	if !utils.VerifyDataContains(t, strings.TrimSpace(response.Name), expectedRouteName, logger) {
+		return "", fmt.Errorf("unexpected atracker route name: got %s, want %s", response.Name, expectedRouteName)
+	}
+
+	if len(response.Rules) == 0 || len(response.Rules[0].TargetIDs) == 0 {
+		return "", errors.New("no target IDs found in rules")
+	}
+
+	logger.Info(t, fmt.Sprintf("Target ID: %s", response.Rules[0].TargetIDs[0]))
+	return response.Rules[0].TargetIDs[0], nil
+}
+
+// ValidateAtrackerRouteTarget verifies the properties of an Atracker route target in IBM Cloud.
+// It logs into IBM Cloud, fetches the target details, and ensures that the target ID, name,
+// type, write status, and CRN meet expected values. If any validation fails, it returns an error.
+func ValidateAtrackerRouteTarget(t *testing.T, apiKey, region, resourceGroup, clusterPrefix, targetID, targetType string, logger *utils.AggregatedLogger) error {
+	// Define response structures
+	type WriteStatus struct {
+		Status string `json:"status"`
+	}
+	type TargetResponse struct {
+		ID          string      `json:"id"`
+		Name        string      `json:"name"`
+		CRN         string      `json:"crn"`
+		TargetType  string      `json:"target_type"`
+		WriteStatus WriteStatus `json:"write_status"`
+	}
+
+	// Handle null resourceGroup
+	if strings.Contains(resourceGroup, "null") {
+		resourceGroup = fmt.Sprintf("%s-workload-rg", clusterPrefix)
+	}
+
+	// Login to IBM Cloud
+	if err := utils.LoginIntoIBMCloudUsingCLI(t, apiKey, region, resourceGroup); err != nil {
+		return fmt.Errorf("failed to log in to IBM Cloud: %w", err)
+	}
+
+	// Execute command to get Atracker target details
+	cmd := exec.Command("bash", "-c", fmt.Sprintf("ibmcloud atracker target validate --target %s --output JSON", targetID))
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve atracker target: %s, error: %w", string(output), err)
+	}
+
+	// Parse JSON response
+	var response TargetResponse
+	if err := json.Unmarshal(output, &response); err != nil {
+		return fmt.Errorf("error unmarshaling JSON: %s, error: %w", string(output), err)
+	}
+
+	// Log the parsed response
+	logger.Info(t, fmt.Sprintf("Atracker Target Response: %+v", response))
+
+	// Expected target name based on targetType
+	expectedTargetName := fmt.Sprintf("%s-atracker", clusterPrefix)
+	if targetType == "cloudlogs" {
+		expectedTargetName = fmt.Sprintf("%s-atracker-target", clusterPrefix)
+	}
+
+	// Validate target name
+	if !utils.VerifyDataContains(t, strings.TrimSpace(response.Name), expectedTargetName, logger) {
+		return fmt.Errorf("unexpected atracker target name: got %s, want %s", response.Name, expectedTargetName)
+	}
+
+	// Validate write status
+	if !utils.VerifyDataContains(t, strings.TrimSpace(response.WriteStatus.Status), "success", logger) {
+		return fmt.Errorf("unexpected write status: got %s, want success", response.WriteStatus.Status)
+	}
+
+	// Normalize targetType before validation
+	expectedTargetType := targetType
+	if targetType == "cloudlogs" {
+		expectedTargetType = "cloud_logs"
+	} else if targetType == "cos" {
+		expectedTargetType = "cloud_object_storage"
+	}
+
+	// Validate target type
+	if !utils.VerifyDataContains(t, strings.TrimSpace(response.TargetType), expectedTargetType, logger) {
+		return fmt.Errorf("unexpected target type: got %s, want %s", response.TargetType, expectedTargetType)
+	}
+
+	// Validate CRN presence
+	if response.CRN == "" {
+		return errors.New("CRN value should not be empty")
+	}
 
 	return nil
 }
