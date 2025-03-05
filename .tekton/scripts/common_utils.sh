@@ -62,4 +62,5 @@ ibmcloud plugin install vpc-infrastructure -f
 ibmcloud plugin install dns -f
 ibmcloud plugin install security-compliance -f
 ibmcloud plugin install key-protect -r "IBM Cloud" -f
+ibmcloud plugin install atracker -f
 echo "************************************************"

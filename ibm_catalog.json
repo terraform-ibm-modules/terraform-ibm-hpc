@@ -159,18 +159,6 @@
                                     "value": ["eu-gb-3"]
                                 },
                                 {
-                                    "displayname": "Frankfurt 1",
-                                    "value": ["eu-de-1"]
-                                },
-                                {
-                                    "displayname": "Frankfurt 2",
-                                    "value": ["eu-de-2"]
-                                },
-                                {
-                                    "displayname": "Frankfurt 3",
-                                    "value": ["eu-de-3"]
-                                },
-                                {
                                     "displayname": "Sydney 1",
                                     "value": ["au-syd-1"]
                                 },

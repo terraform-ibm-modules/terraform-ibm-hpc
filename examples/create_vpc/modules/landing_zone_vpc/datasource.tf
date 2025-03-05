@@ -1,3 +1,3 @@
 data "ibm_resource_group" "itself" {
-  name = var.resource_group
+  name = var.existing_resource_group
 }
