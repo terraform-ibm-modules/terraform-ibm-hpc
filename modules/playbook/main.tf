@@ -1,5 +1,6 @@
 locals {
   proxyjump = var.enable_bastion ? "-o ProxyJump=ubuntu@${var.bastion_fip}" : ""
+  mgmt_playbook_filename = format("%s/lsf_mgmt_config.yml", var.playbooks_root_path)
 }
 
 resource "local_file" "create_playbook" {
@@ -129,7 +130,7 @@ resource "local_file" "create_playbook_for_mgmt_config" {
   roles:
      - lsf_mgmt_config
 EOT
-  filename = format("%s/lsf_mgmt_config.yml", var.playbooks_root_path)
+  filename = local.mgmt_playbook_filename
 }
 
 
@@ -137,7 +138,7 @@ resource "null_resource" "run_playbook_for_mgmt_config" {
   count = var.inventory_path != null ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -i ${var.inventory_path} '${filename}'"
+    command     = "ansible-playbook -i ${var.inventory_path} '${local.mgmt_playbook_filename}'"
   }
   triggers = {
     build = timestamp()
