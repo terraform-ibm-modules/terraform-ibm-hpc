@@ -129,7 +129,7 @@ resource "local_file" "create_playbook_for_mgmt_config" {
   roles:
      - lsf_mgmt_config
 EOT
-  filename = "/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/lsf_mgmt_config.yml"
+  filename = format("%s/lsf_mgmt_config.yml", var.playbooks_root_path)
 }
 
 
@@ -137,7 +137,7 @@ resource "null_resource" "run_playbook_for_mgmt_config" {
   count = var.inventory_path != null ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -i ${var.inventory_path} '/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/lsf_mgmt_config.yml'"
+    command     = "ansible-playbook -i ${var.inventory_path} '${filename}'"
   }
   triggers = {
     build = timestamp()

@@ -21,6 +21,20 @@ hostnamectl set-hostname $hostname
 systemctl stop firewalld
 systemctl disable firewalld
 
+# Setup vpcuser to login
+if grep -E -q "CentOS|Red Hat" /etc/os-release
+then
+    USER=vpcuser
+elif grep -q "Ubuntu" /etc/os-release
+then
+    USER=ubuntu
+fi
+sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo \'Please login as the user \\\\\"$USER\\\\\" rather than the user \\\\\"root\\\\\".\';echo;sleep 5; exit 142\" /" /root/.ssh/authorized_keys
+
+# Make lsfadmin and vpcuser set to newer expire
+chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
+chage -I -1 -m 0 -M 99999 -E -1 -W 14 lsfadmin
+
 # Setup Network configuration
 if grep -q "NAME=\"Red Hat Enterprise Linux" /etc/os-release; then
     echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${network_interface}"
@@ -69,11 +83,11 @@ mount_nfs_with_retries() {
 # Setup LSF share
 if [ -n "${nfs_server_with_mount_path}" ]; then
   echo "File share ${nfs_server_with_mount_path} found" >> $logfile
-  nfs_client_mount_path="/mnt/lsf/shared"
+  nfs_client_mount_path="/mnt/lsf"
   if mount_nfs_with_retries "${nfs_server_with_mount_path}" "${nfs_client_mount_path}"; then
     for dir in conf work; do
       rm -rf "${LSF_TOP}/$dir"
-      ln -fs "${nfs_client_mount_path}/lsf/$dir" "${LSF_TOP}/$dir"
+      ln -fs "${nfs_client_mount_path}/shared/lsf/$dir" "${LSF_TOP}/$dir"
     done
     chown -R lsfadmin:root "${LSF_TOP}"
   else
@@ -83,16 +97,31 @@ if [ -n "${nfs_server_with_mount_path}" ]; then
 fi
 echo "Setting LSF share is completed." >> $logfile
 
+# Setup Custom file shares
+echo "Setting custom file shares." >> $logfile
+if [ -n "${custom_file_shares}" ]; then
+  echo "Custom file share ${custom_file_shares} found" >> $logfile
+  file_share_array=(${custom_file_shares})
+  mount_path_array=(${custom_mount_paths})
+  length=${#file_share_array[@]}
+
+  for (( i=0; i<length; i++ )); do
+    mount_nfs_with_retries "${file_share_array[$i]}" "${mount_path_array[$i]}"
+  done
+fi
+echo "Setting custom file shares is completed." >> $logfile
+
 # Setup SSH
-mkdir -p /home/lsfadmin/.ssh
-cp /home/vpcuser/.ssh/authorized_keys /home/lsfadmin/.ssh/authorized_keys
-cat /mnt/lsf/shared/ssh/id_rsa.pub >> /home/lsfadmin/.ssh/authorized_keys
-cp /mnt/lsf/shared/ssh/id_rsa /home/lsfadmin/.ssh/id_rsa
-echo "StrictHostKeyChecking no" >>  /home/lsfadmin/.ssh/config
-chmod 600  /home/lsfadmin/.ssh/authorized_keys
-chmod 400 /home/lsfadmin/.ssh/id_rsa
-chmod 700  /home/lsfadmin/.ssh
-chown -R lsfadmin:lsfadmin /home/lsfadmin/.ssh
+SSH_DIR="/home/lsfadmin/.ssh"
+mkdir -p "$SSH_DIR"
+cp /home/vpcuser/.ssh/authorized_keys "$SSH_DIR/authorized_keys"
+cat /mnt/lsf/shared/ssh/id_rsa.pub >> "$SSH_DIR/authorized_keys"
+cp /mnt/lsf/shared/ssh/id_rsa "$SSH_DIR/id_rsa"
+echo "StrictHostKeyChecking no" >> "$SSH_DIR/config"
+chmod 600 "$SSH_DIR/authorized_keys"
+chmod 400 "$SSH_DIR/id_rsa"
+chmod 700 "$SSH_DIR"
+chown -R lsfadmin:lsfadmin "$SSH_DIR"
 
 # Setup LSF environment variables
 LSF_TOP="/opt/ibm/lsf_worker"
