@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: wes-lsf-da-region
+  name: wes-lsf-da-rhel-4
 spec:
   params:
     - name: ibmcloud-api
@@ -74,6 +74,9 @@ spec:
     - name: ibm_customer_number
       description: Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)..
       default: ""
+    - name: pac_ha_exist_certificate
+      description: PAC HA Existing Certificate
+      default: ""
   workspaces:
     - name: workspace
       mountPath: /artifacts
@@ -125,8 +128,10 @@ spec:
         value: $(params.ibm_customer_number)
       - name: management_image_name
         value: $(params.management_image_name)
+      - name: pac_ha_exist_certificate
+        value: $(params.pac_ha_exist_certificate)
   steps:
-    - name: regions-scenario
+    - name: rhel-suite-7
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -144,8 +149,8 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          lsf_regions_suite
-    - name: rhel-suite-10
+          lsf_rhel_suite_7
+    - name: rhel-suite-8
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -163,4 +168,23 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          lsf_rhel_suite_10
+          lsf_rhel_suite_8
+    - name: rhel-suite-9
+      onError: continue
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          source .tekton/scripts/suites.sh
+          lsf_rhel_suite_9

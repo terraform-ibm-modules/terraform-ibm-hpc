@@ -33,17 +33,14 @@ variable "zone" {
 variable "family" {
   description = "Family defines the purpose of the dedicated host, The dedicated host family can be defined from balanced,compute or memory. Refer [Understanding DH Profile family](https://cloud.ibm.com/docs/vpc?topic=vpc-dh-profiles&interface=ui) for more details"
   type        = string
-  default     = "balanced"
 }
 
 variable "class" {
   description = "Profile class of the dedicated host, this has to be defined based on the VSI usage. Refer [Understanding DH Class](https://cloud.ibm.com/docs/vpc?topic=vpc-dh-profiles&interface=ui) for more details"
   type        = string
-  default     = "bx2"
 }
 
 variable "profile" {
   description = "Profile for the dedicated hosts(size and resources). Refer [Understanding DH Profile](https://cloud.ibm.com/docs/vpc?topic=vpc-dh-profiles&interface=ui) for more details"
   type        = string
-  default     = "bx2-host-152x608"
 }

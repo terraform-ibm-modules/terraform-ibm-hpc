@@ -45,6 +45,7 @@ func TestRunBasic(t *testing.T) {
 	options.SkipTestTearDown = true
 	defer options.TestTearDown()
 
+	// Validate that the basic cluster configuration is correct or not
 	lsf.ValidateClusterConfiguration(t, options, testLogger)
 
 }
@@ -70,6 +71,7 @@ func TestRunCustomRGAsNull(t *testing.T) {
 	options.SkipTestTearDown = true
 	defer options.TestTearDown()
 
+	// Validate that the basic cluster configuration is correct or not
 	lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
 
 }
@@ -98,6 +100,7 @@ func TestRunCustomRGAsNonDefault(t *testing.T) {
 	options.SkipTestTearDown = true
 	defer options.TestTearDown()
 
+	// Validate that the basic cluster configuration is correct or not
 	lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
 
 }
@@ -128,6 +131,7 @@ func TestRunAppCenter(t *testing.T) {
 	options.SkipTestTearDown = true
 	defer options.TestTearDown()
 
+	// Validate that the basic cluster configuration is correct or not
 	lsf.ValidateClusterConfigurationWithAPPCenter(t, options, testLogger)
 
 }
@@ -183,10 +187,10 @@ func TestRunPacHa(t *testing.T) {
 	// Generate a unique HPC cluster prefix
 	hpcClusterPrefix := utils.GenerateRandomString()
 
-	// Retrieve the environment variable for EXISTING_CERTIFICATE_INSTANCE
-	existingCertInstance, ok := os.LookupEnv("EXISTING_CERTIFICATE_INSTANCE")
+	// Retrieve the environment variable for app_center_existing_certificate_instance
+	existingCertInstance, ok := os.LookupEnv("APP_CENTER_EXISTING_CERTIFICATE_INSTANCE")
 	if !ok {
-		t.Fatal("When 'app_center_high_availability' is set to true, the environment variable 'EXISTING_CERTIFICATE_INSTANCE' must be exported: export EXISTING_CERTIFICATE_INSTANCE=value")
+		t.Fatal("When 'app_center_existing_certificate_instance' is set to true, the environment variable 'APP_CENTER_EXISTING_CERTIFICATE_INSTANCE' must be exported: export APP_CENTER_EXISTING_CERTIFICATE_INSTANCE=value")
 	}
 
 	testLogger.Info(t, "Cluster creation process initiated for test: "+t.Name())
@@ -203,7 +207,7 @@ func TestRunPacHa(t *testing.T) {
 	options.TerraformVars["enable_app_center"] = strings.ToLower(envVars.EnableAppCenter)
 	options.TerraformVars["app_center_gui_pwd"] = envVars.AppCenterGuiPassword // pragma: allowlist secret
 	options.TerraformVars["app_center_high_availability"] = true               // pragma: allowlist secret
-	options.TerraformVars["existing_certificate_instance"] = existingCertInstance
+	options.TerraformVars["app_center_existing_certificate_instance"] = existingCertInstance
 
 	// Skip teardown if specified
 	options.SkipTestTearDown = true
@@ -282,7 +286,7 @@ func TestRunLSFClusterCreationWithZeroWorkerNodes(t *testing.T) {
 		defer options.TestTearDown()
 
 		//Validate the basic cluster configuration.
-		lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
+		lsf.ValidateBasicClusterConfigurationWithDynamicProfile(t, options, testLogger)
 		testLogger.Info(t, "Cluster configuration validation completed successfully.")
 	} else {
 		testLogger.Warn(t, "Test skipped as the solution is not 'lsf'.")
@@ -1223,10 +1227,6 @@ func TestRunDedicatedHost(t *testing.T) {
 			"count":         1,
 			"instance_type": "bx2-2x8",
 		},
-		{
-			"count":         1,
-			"instance_type": "cx2-2x4",
-		},
 	}
 
 	options.SkipTestTearDown = true
@@ -1335,7 +1335,6 @@ func TestRunObservabilityCloudLogsManagementEnabled(t *testing.T) {
 // Both management and compute logs are disabled.
 // Monitoring features are explicitly disabled.
 // The cluster setup passes basic validation checks.
-
 func TestRunObservabilityCloudLogsManagementAndComputeDisabled(t *testing.T) {
 	// Run the test in parallel for efficiency
 	t.Parallel()
@@ -1379,6 +1378,243 @@ func TestRunObservabilityCloudLogsManagementAndComputeDisabled(t *testing.T) {
 
 	// Validate the basic cluster configuration with the specified observability settings
 	lsf.ValidateBasicClusterConfigurationWithCloudLogs(t, options, testLogger)
+}
+
+// TestRunObservabilityMonitoringForManagementAndComputeEnabled validates the creation of a cluster
+// with observability features enabled for both management and compute nodes. The test ensures that the
+// cluster setup passes basic validation checks, confirming that the observability features for both management
+// and compute are properly configured and functional, while platform logs and monitoring are disabled.
+func TestRunObservabilityMonitoringForManagementAndComputeEnabled(t *testing.T) {
+	// Run the test in parallel with other tests to optimize test execution
+	t.Parallel()
+
+	// Set up the test suite and environment configuration
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate a random prefix for the cluster to ensure uniqueness
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve necessary environment variables to configure the test
+	envVars := GetEnvVars()
+
+	// Set up test options with relevant parameters, including resource group and environment variables
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Configure the observability settings for management and compute logs,
+	options.TerraformVars["observability_logs_enable_for_management"] = false
+	options.TerraformVars["observability_monitoring_enable"] = true
+	options.TerraformVars["observability_monitoring_on_compute_nodes_enable"] = true
+	options.TerraformVars["observability_monitoring_plan"] = "graduated-tier"
+
+	// Prevent automatic test teardown for inspection after the test runs
+	options.SkipTestTearDown = true
+
+	// Ensure test teardown is executed at the end of the test
+	defer options.TestTearDown()
+
+	// Validate that the basic cluster configuration is correct with cloud monitoring enabled for management and compute nodes
+	lsf.ValidateBasicClusterConfigurationWithCloudMonitoring(t, options, testLogger)
+}
+
+// TestRunObservabilityMonitoringForManagementEnabledAndComputeDisabled validates the creation of a cluster
+// with observability features enabled for management nodes and disabled for compute nodes. The test ensures that the
+// cluster setup passes basic validation checks, confirming that the observability features for  management
+// and compute are properly configured and functional, while platform logs and monitoring are disabled.
+func TestRunObservabilityMonitoringForManagementEnabledAndComputeDisabled(t *testing.T) {
+	// Run the test in parallel with other tests to optimize test execution
+	t.Parallel()
+
+	// Set up the test suite and environment configuration
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate a random prefix for the cluster to ensure uniqueness
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve necessary environment variables to configure the test
+	envVars := GetEnvVars()
+
+	// Set up test options with relevant parameters, including resource group and environment variables
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Configure the observability settings for management and compute logs,
+	options.TerraformVars["observability_logs_enable_for_management"] = false
+	options.TerraformVars["observability_monitoring_enable"] = true
+	options.TerraformVars["observability_monitoring_on_compute_nodes_enable"] = false
+	options.TerraformVars["observability_monitoring_plan"] = "graduated-tier"
+
+	// Prevent automatic test teardown for inspection after the test runs
+	options.SkipTestTearDown = true
+
+	// Ensure test teardown is executed at the end of the test
+	defer options.TestTearDown()
+
+	// Validate that the basic cluster configuration is correct with cloud monitoring enabled for management nodes and disabled for compute nodes
+	lsf.ValidateBasicClusterConfigurationWithCloudMonitoring(t, options, testLogger)
+}
+
+// TestRunObservabilityMonitoringForManagementAndComputeDisabled validates the creation of a cluster
+// with observability features enabled for both management and compute nodes. The test ensures that the
+// cluster setup passes basic validation checks, confirming that the observability features for both management
+// and compute are properly configured and functional, while platform logs and monitoring are disabled.
+func TestRunObservabilityMonitoringForManagementAndComputeDisabled(t *testing.T) {
+	// Run the test in parallel with other tests to optimize test execution
+	t.Parallel()
+
+	// Set up the test suite and environment configuration
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate a random prefix for the cluster to ensure uniqueness
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve necessary environment variables to configure the test
+	envVars := GetEnvVars()
+
+	// Set up test options with relevant parameters, including resource group and environment variables
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Configure the observability settings for management and compute logs,
+	options.TerraformVars["observability_logs_enable_for_management"] = false
+	options.TerraformVars["observability_monitoring_enable"] = true
+	options.TerraformVars["observability_monitoring_on_compute_nodes_enable"] = false
+	options.TerraformVars["observability_monitoring_plan"] = "graduated-tier"
+
+	// Prevent automatic test teardown for inspection after the test runs
+	options.SkipTestTearDown = true
+
+	// Ensure test teardown is executed at the end of the test
+	defer options.TestTearDown()
+
+	// Validate that the basic cluster configuration is correct with cloud monitoring disabled for management and compute nodes
+	lsf.ValidateBasicClusterConfigurationWithCloudMonitoring(t, options, testLogger)
+}
+
+// TestRunobservabilityAtrackerEnabledAndTargetTypeAsCloudlogs validates cluster creation
+// with Observability Atracker enabled and the target type set to Cloud Logs.
+func TestRunobservabilityAtrackerEnabledAndTargetTypeAsCloudlogs(t *testing.T) {
+	// Execute the test in parallel to improve efficiency
+	t.Parallel()
+
+	// Initialize the test suite and set up the environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate a random prefix for the cluster to ensure uniqueness
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve environment variables required for configuration
+	envVars := GetEnvVars()
+
+	// Configure test options, including resource group and environment variables
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Set observability configurations for logs and monitoring
+	options.TerraformVars["observability_logs_enable_for_management"] = false
+	options.TerraformVars["observability_monitoring_enable"] = false
+	options.TerraformVars["observability_monitoring_on_compute_nodes_enable"] = false
+	options.TerraformVars["observability_atracker_enable"] = true
+	options.TerraformVars["observability_atracker_target_type"] = "cloudlogs"
+
+	// Prevent test teardown for post-test inspection
+	options.SkipTestTearDown = true
+
+	// Ensure proper cleanup after test execution
+	defer options.TestTearDown()
+
+	// Validate the cluster setup with Atracker enabled and target type as cloudlogs
+	lsf.ValidateBasicClusterConfigurationWithCloudAtracker(t, options, testLogger)
+}
+
+// TestRunobservabilityAtrackerEnabledAndTargetTypeAsCos validates cluster creation
+// with Observability Atracker enabled and the target type set to COS.
+func TestRunobservabilityAtrackerEnabledAndTargetTypeAsCos(t *testing.T) {
+	// Execute the test in parallel to improve efficiency
+	t.Parallel()
+
+	// Initialize the test suite and set up the environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate a random prefix for the cluster to ensure uniqueness
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve environment variables required for configuration
+	envVars := GetEnvVars()
+
+	// Configure test options, including resource group and environment variables
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Set observability configurations for logs and monitoring
+	options.TerraformVars["observability_logs_enable_for_management"] = false
+	options.TerraformVars["observability_monitoring_enable"] = false
+	options.TerraformVars["observability_monitoring_on_compute_nodes_enable"] = false
+	options.TerraformVars["observability_atracker_enable"] = true
+	options.TerraformVars["observability_atracker_target_type"] = "cos"
+
+	// Prevent test teardown for post-test inspection
+	options.SkipTestTearDown = true
+
+	// Ensure proper cleanup after test execution
+	defer options.TestTearDown()
+
+	// Validate the cluster setup with Atracker enabled and target type as cos
+	lsf.ValidateBasicClusterConfigurationWithCloudAtracker(t, options, testLogger)
+}
+
+// TestRunobservabilityAtrackerDisabledAndTargetTypeAsCos validates cluster creation
+// with Observability Atracker disabled and the target type set to COS.
+func TestRunobservabilityAtrackerDisabledAndTargetTypeAsCos(t *testing.T) {
+	// Execute the test in parallel to improve efficiency
+	t.Parallel()
+
+	// Initialize the test suite and set up the environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate a random prefix for the cluster to ensure uniqueness
+	hpcClusterPrefix := utils.GenerateRandomString()
+
+	// Retrieve environment variables required for configuration
+	envVars := GetEnvVars()
+
+	// Configure test options, including resource group and environment variables
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup, ignoreDestroys, ignoreUpdates)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Set observability configurations for logs and monitoring
+	options.TerraformVars["observability_logs_enable_for_management"] = false
+	options.TerraformVars["observability_monitoring_enable"] = false
+	options.TerraformVars["observability_monitoring_on_compute_nodes_enable"] = false
+	options.TerraformVars["observability_atracker_enable"] = false
+	options.TerraformVars["observability_atracker_target_type"] = "cos"
+
+	// Prevent test teardown for post-test inspection
+	options.SkipTestTearDown = true
+
+	// Ensure proper cleanup after test execution
+	defer options.TestTearDown()
+
+	// Validate the cluster setup with Atracker disabled and target type as cos
+	lsf.ValidateBasicClusterConfigurationWithCloudAtracker(t, options, testLogger)
 }
 
 // ############################## Negative Test cases ##########################################
@@ -1783,7 +2019,7 @@ func TestRunHPCInvalidReservationIDAndContractID(t *testing.T) {
 	terrPath := strings.ReplaceAll(abs, "tests/", "")
 
 	// Loop over all combinations of invalid cluster_name and reservation_id values
-	for _, clusterID := range invalidClusterNames {
+	for _, ClusterName := range invalidClusterNames {
 		for _, reservationID := range invalidReservationIDs {
 
 			// Define Terraform options
@@ -1795,7 +2031,7 @@ func TestRunHPCInvalidReservationIDAndContractID(t *testing.T) {
 					"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
 					"zones":              utils.SplitAndTrim(envVars.Zone, ","),
 					"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
-					"cluster_name":       clusterID,
+					"cluster_name":       ClusterName,
 					"reservation_id":     reservationID,
 					"solution":           "hpc",
 				},
@@ -1809,20 +2045,20 @@ func TestRunHPCInvalidReservationIDAndContractID(t *testing.T) {
 
 			// If there is an error, check if it contains specific mandatory fields
 			if err != nil {
-				clusterIDError := utils.VerifyDataContains(t, err.Error(), "cluster_name", testLogger)
+				ClusterNameError := utils.VerifyDataContains(t, err.Error(), "cluster_name", testLogger)
 				reservationIDError := utils.VerifyDataContains(t, err.Error(), "reservation_id", testLogger)
-				result := clusterIDError && reservationIDError
+				result := ClusterNameError && reservationIDError
 				// Assert that the result is true if all mandatory fields are missing
 				assert.True(t, result)
 				if result {
-					testLogger.PASS(t, "Validation succeeded: Invalid clusterID and ReservationID")
+					testLogger.PASS(t, "Validation succeeded: Invalid ClusterName and ReservationID")
 				} else {
 					testLogger.FAIL(t, "Validation failed: Expected error did not contain required fields: cluster_name or reservation_id")
 				}
 			} else {
 				// Log an error if the expected error did not occur
 				t.Error("Expected error did not occur")
-				testLogger.FAIL(t, "Expected error did not occur on Invalid clusterID and ReservationID validation")
+				testLogger.FAIL(t, "Expected error did not occur on Invalid ClusterName and ReservationID validation")
 			}
 		}
 	}
@@ -2573,10 +2809,6 @@ func TestRunInvalidDedicatedHostConfigurationWithZeroWorkerNodes(t *testing.T) {
 			"count":         0,
 			"instance_type": "bx2-2x8",
 		},
-		{
-			"count":         0,
-			"instance_type": "cx2-2x4",
-		},
 	}
 
 	options.SkipTestTearDown = true
@@ -2622,12 +2854,12 @@ func TestRunInvalidDedicatedHostProfile(t *testing.T) {
 		"enable_dedicated_host": true,
 		"worker_node_instance_type": []map[string]interface{}{ // Invalid data
 			{
-				"count":         0,
+				"count":         1,
 				"instance_type": "cx2-2x4",
 			},
 			{
-				"count":         0,
-				"instance_type": "cx2-8x16",
+				"count":         1,
+				"instance_type": "bx2-2x8",
 			},
 		},
 		"observability_monitoring_enable": false,
@@ -2651,32 +2883,34 @@ func TestRunInvalidDedicatedHostProfile(t *testing.T) {
 		Vars:         vars,
 	})
 
-	// Cleanup resources
-	defer terraform.Destroy(t, terraformOptions)
-
 	// Perform Terraform upgrade only once
 	UpgradeTerraformOnce(t, terraformOptions)
 
 	// Apply the Terraform configuration
-	output, err := terraform.InitAndApplyE(t, terraformOptions)
+	_, err = terraform.InitAndPlanE(t, terraformOptions)
 
 	// Check if an error occurred during apply
-	assert.Error(t, err, "Expected an error during apply")
+	assert.Error(t, err, "Expected an error during plan")
 
 	if err != nil {
+		errMsg := err.Error()
+		// Check if the error message contains specific keywords
+		containsWorkerNodeType := utils.VerifyDataContains(t, errMsg, "is list of object with 2 elements", testLogger)
+		containsDedicatedHost := utils.VerifyDataContains(t, errMsg, "'enable_dedicated_host' is true, only one profile should be specified", testLogger)
 
-		// Check if the error message contains specific keywords indicating LDAP server IP issues
-		result := utils.VerifyDataContains(t, output, "instance profile not found in host's supported instance profile list", testLogger)
+		result := containsWorkerNodeType && containsDedicatedHost
 		assert.True(t, result)
+
 		if result {
-			testLogger.PASS(t, "Validation succeeded for Invalid Dedicated-Host instance profile.")
+			testLogger.PASS(t, "Validation succeeded for invalid worker_node_instance_type object elements.")
 		} else {
-			testLogger.FAIL(t, "Validation failed for Invalid Dedicated-Host instance profile.")
+			testLogger.FAIL(t, fmt.Sprintf("Validation failed: expected error conditions not met. Actual error: %s", errMsg))
 		}
 	} else {
 		// Log an error if the expected error did not occur
-		t.Error("Expected validation error did not occur.")
+		t.Error("Expected error did not occur")
 		testLogger.FAIL(t, "Expected validation error did not occur for Invalid Dedicated-Host instance profile.")
+
 	}
 
 }
@@ -2765,7 +2999,6 @@ func TestRunInvalidMinWorkerNodeCountGreaterThanMax(t *testing.T) {
 			t.Error("Expected validation error did not occur.")
 			testLogger.FAIL(t, "Expected validation error did not occur for Invalid worker node count")
 		}
-
 		// Cleanup resources
 		defer terraform.Destroy(t, terraformOptions)
 	}

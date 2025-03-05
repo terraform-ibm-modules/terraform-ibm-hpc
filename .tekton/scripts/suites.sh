@@ -24,13 +24,13 @@ common_suite() {
                 # get ssh-key created based on pr-id
                 get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}"
                 SSH_KEY=${CICD_SSH_KEY:?} COMPUTE_IMAGE_NAME=${compute_image_name:?} LOGIN_NODE_IMAGE_NAME=${login_image_name:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
-                    ZONE=${zone:?} RESERVATION_ID=${reservation_id:?} CLUSTER_ID=${cluster_id:?} RESOURCE_GROUP=${resource_group:?} \
+                    ZONE=${zone:?} RESERVATION_ID=${reservation_id:?} CLUSTER_NAME=${cluster_name:?} DEFAULT_EXISTING_RESOURCE_GROUP=${resource_group:?} \
                     go test -v -timeout 9000m -run "${test_cases}" | tee -a "$LOG_FILE"
                 # Upload log/test_output files to cos bucket
                 cos_upload "PR" "${CHECK_SOLUTION}" "${DIRECTORY}"
 
                 # push custom reports to custom-reports repository
-                push_reports "${LOG_FILE}" "${DIRECTORY}" "PR" "${suite}" "${CHECK_SOLUTION}"
+                push_reports "${LOG_FILE}" "${DIRECTORY}" "PR" "${suite}" "${CHECK_SOLUTION}" "${BUILD_NUMBER}"
 
                 # Checking any error/issue from log file for pr
                 issue_track "${LOG_FILE}" "PR"
@@ -40,13 +40,13 @@ common_suite() {
                 # get ssh-key created based on pr-id
                 get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}"
                 SSH_KEY=${CICD_SSH_KEY:?} COMPUTE_IMAGE_NAME=${compute_image_name:?} LOGIN_NODE_IMAGE_NAME=${login_image_name:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
-                    ZONE=${zone:?} SOLUTION=${solution:?} IBM_CUSTOMER_NUMBER=${ibm_customer_number:?} RESOURCE_GROUP=${resource_group:?} \
+                    ZONE=${zone:?} SOLUTION=${solution:?} IBM_CUSTOMER_NUMBER=${ibm_customer_number:?} DEFAULT_EXISTING_RESOURCE_GROUP=${resource_group:?} \
                     go test -v -timeout 9000m -run "${test_cases}" | tee -a "$LOG_FILE"
                 # Upload log/test_output files to cos bucket
                 cos_upload "PR" "${CHECK_SOLUTION}" "${DIRECTORY}"
 
                 # push custom reports to custom-reports repository
-                push_reports "${LOG_FILE}" "${DIRECTORY}" "PR" "${suite}" "${CHECK_SOLUTION}"
+                push_reports "${LOG_FILE}" "${DIRECTORY}" "PR" "${suite}" "${CHECK_SOLUTION}" "${BUILD_NUMBER}"
 
                 # Checking any error/issue from log file for pr
                 issue_track "${LOG_FILE}" "PR"
@@ -62,13 +62,13 @@ common_suite() {
                     EU_DE_ZONE=${eu_de_zone:?} EU_DE_CLUSTER_ID=${eu_de_cluster_id:?} EU_DE_RESERVATION_ID=${eu_de_reservation_id:?} \
                     EU_DE_RESERVATION_ID=${eu_de_reservation_id:?} COMPUTE_IMAGE_NAME=${compute_image_name:?} \
                     LOGIN_NODE_IMAGE_NAME=${login_image_name:?} ZONE=${zone:?} RESERVATION_ID=${reservation_id:?} \
-                    CLUSTER_ID=${cluster_id:?} RESOURCE_GROUP=${resource_group:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
+                    CLUSTER_NAME=${cluster_name:?} DEFAULT_EXISTING_RESOURCE_GROUP=${resource_group:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
                     go test -v -timeout 9000m -run "${test_cases}" | tee -a "$LOG_FILE"
                 # Upload log/test_output files to cos bucket
                 cos_upload "REGRESSION" "${CHECK_SOLUTION}" "${DIRECTORY}" "${VALIDATION_LOG_FILE_NAME}"
 
                 # push custom reports to custom-reports repository
-                push_reports "${LOG_FILE}" "${DIRECTORY}" "REGRESSION" "${suite}" "${CHECK_SOLUTION}"
+                push_reports "${LOG_FILE}" "${DIRECTORY}" "REGRESSION" "${suite}" "${CHECK_SOLUTION}" "${BUILD_NUMBER}"
 
                 # Checking any error/issue from log file for commit/push
                 issue_track "${LOG_FILE}"
@@ -78,13 +78,13 @@ common_suite() {
                 # get ssh-key created based on commit-id
                 get_commit_ssh_key "${REVISION}" "${CHECK_SOLUTION}"
                 SSH_KEY=${CICD_SSH_KEY:?} COMPUTE_IMAGE_NAME=${compute_image_name:?} LOGIN_NODE_IMAGE_NAME=${login_image_name:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
-                    ZONE=${zone:?} SOLUTION=${solution:?} IBM_CUSTOMER_NUMBER=${ibm_customer_number:?} RESOURCE_GROUP=${resource_group:?} \
+                    ZONE=${zone:?} SOLUTION=${solution:?} IBM_CUSTOMER_NUMBER=${ibm_customer_number:?} DEFAULT_EXISTING_RESOURCE_GROUP=${resource_group:?} \
                     go test -v -timeout 9000m -run "${test_cases}" | tee -a "$LOG_FILE"
                 # Upload log/test_output files to cos bucket
                 cos_upload "REGRESSION" "${CHECK_SOLUTION}" "${DIRECTORY}" "${VALIDATION_LOG_FILE_NAME}"
 
                 # push custom reports to custom-reports repository
-                push_reports "${LOG_FILE}" "${DIRECTORY}" "REGRESSION" "${suite}" "${CHECK_SOLUTION}"
+                push_reports "${LOG_FILE}" "${DIRECTORY}" "REGRESSION" "${suite}" "${CHECK_SOLUTION}" "${BUILD_NUMBER}"
 
                 # Checking any error/issue from log file for commit/push
                 issue_track "${LOG_FILE}"
@@ -193,7 +193,7 @@ hpcaas_regions_suite() {
 hpcaas_negative_suite() {
     suite=hpcaas-negative-suite
     solution=hpcaas
-    test_cases="TestRunHPCWithoutMandatory,TestRunHPCInvalidReservationID,TestRunInvalidLDAPServerIP,TestRunInvalidLDAPUsernamePassword,TestRunInvalidAPPCenterPassword,TestRunInvalidDomainName,TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue,TestRunExistSubnetIDVpcNameAsNull,TestRunInvalidSshKeysAndRemoteAllowedIP,TestRunHPCInvalidReservationIDAndContractID"
+    test_cases="TestRunHPCWithoutMandatory,TestRunHPCInvalidReservationID,TestRunInvalidLDAPServerIP,,TestRunInvalidAPPCenterPassword,TestRunInvalidDomainName,TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue,TestRunExistSubnetIDVpcNameAsNull,TestRunInvalidSshKeysAndRemoteAllowedIP,TestRunHPCInvalidReservationIDAndContractID"
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:?}" "${solution:?}"
@@ -286,7 +286,7 @@ lsf_rhel_suite_6() {
 lsf_rhel_suite_7() {
     suite=lsf-rhel-suite-7
     solution=lsf
-    test_cases="TestRunCIDRsAsNonDefault,TestRunObservability"
+    test_cases="TestRunCIDRsAsNonDefault"
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:?}" "${solution:?}"
@@ -297,6 +297,37 @@ lsf_rhel_suite_8() {
     suite=lsf-rhel-suite-8
     solution=lsf
     test_cases="TestRunUsingExistingKMSInstanceIDAndWithoutKey,TestRunCustomRGAsNonDefault"
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:?}" "${solution:?}"
+}
+
+# commit based suite on lsf-rhel-suite-9
+lsf_rhel_suite_9() {
+    suite=lsf-rhel-suite-9
+    solution=lsf
+    export APP_CENTER_EXISTING_CERTIFICATE_INSTANCE=${pac_ha_exist_certificate:?}
+    test_cases="TestRunPacHa,TestRunLSFLogs"
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:?}" "${solution:?}"
+}
+
+# commit based suite on lsf-rhel-suite-10
+lsf_rhel_suite_10() {
+    suite=lsf-rhel-suite-10
+    solution=lsf
+    test_cases="TestRunObservabilityCloudLogsManagementAndComputeEnabled,TestRunObservabilityCloudLogsManagementEnabled,TestRunObservabilityCloudLogsManagementAndComputeDisabled"
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:?}" "${solution:?}"
+}
+
+# commit based suite on lsf-rhel-suite-11
+lsf_rhel_suite_11() {
+    suite=lsf-rhel-suite-11
+    solution=lsf
+    test_cases="TestRunObservabilityMonitoringForManagementEnabledAndComputeDisabled,TestRunObservabilityMonitoringForManagementAndComputeEnabled,TestRunObservabilityMonitoringForManagementAndComputeDisabled"
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:?}" "${solution:?}"
@@ -342,7 +373,7 @@ lsf_regions_suite() {
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:?}" "${solution:?}"
 }
 
-# negative based suite on negative-suite
+# negative based suite on negative-suite-1
 lsf_negative_suite_1() {
     suite=lsf-negative-suite-1
     solution=lsf
@@ -352,21 +383,41 @@ lsf_negative_suite_1() {
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:?}" "${solution:?}"
 }
 
-# negative based suite on negative-suite
+# negative based suite on negative-suite-2
 lsf_negative_suite_2() {
     suite=lsf-negative-suite-2
     solution=lsf
-    test_cases="TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue,TestRunExistSubnetIDVpcNameAsNull,TestRunInvalidSshKeysAndRemoteAllowedIP,TestRunInvalidDedicatedHostConfigurationWithZeroWorkerNodes"
+    test_cases="TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue,TestRunExistSubnetIDVpcNameAsNull,TestRunInvalidSshKeysAndRemoteAllowedIP"
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:?}" "${solution:?}"
 }
 
-# negative based suite on negative-suite
+# negative based suite on negative-suite-3
 lsf_negative_suite_3() {
     suite=lsf-negative-suite-3
     solution=lsf
-    test_cases="TestRunInvalidLDAPUsernamePassword,TestRunInvalidAPPCenterPassword,TestRunLSFWithoutMandatory,TestRunInvalidMinWorkerNodeCountGreaterThanMax"
+    test_cases="TestRunInvalidSubnetCIDR,TestRunInvalidAPPCenterPassword,TestRunLSFWithoutMandatory"
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:?}" "${solution:?}"
+}
+
+# negative based suite on negative-suite-4
+lsf_negative_suite_4() {
+    suite=lsf-negative-suite-4
+    solution=lsf
+    test_cases="TestRunInvalidDedicatedHostConfigurationWithZeroWorkerNodes,TestRunInvalidMinWorkerNodeCountGreaterThanMax"
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:?}" "${solution:?}"
+}
+
+# negative based suite on negative-suite-5
+lsf_negative_suite_5() {
+    suite=lsf-negative-suite-5
+    solution=lsf
+    test_cases="TestRunInvalidLDAPUsernamePassword,TestRunInvalidLDAPServerCert"
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:?}" "${solution:?}"

@@ -53,7 +53,7 @@ spec:
     - name: login_image_name
       description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster login node. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v2). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
       default: ""
-    - name: cluster_id
+    - name: cluster_name
       description: Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same reservation. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment.
       default: ""
     - name: reservation_id
@@ -127,6 +127,10 @@ spec:
             name: $(params.continuous-delivery-context-secret)
             key: $(params.ibmcloud-apikey-secret-key)
             optional: true
+      - name: BUILD_NUMBER
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.annotations['devops.cloud.ibm.com/build-number']
       - name: PIPELINE_DEBUG
         value: $(params.pipeline-debug)
       - name: REVISION
@@ -141,8 +145,8 @@ spec:
         value: $(params.compute_image_name_rhel)
       - name: login_image_name
         value: $(params.login_image_name)
-      - name: cluster_id
-        value: $(params.cluster_id)
+      - name: cluster_name
+        value: $(params.cluster_name)
       - name: reservation_id
         value: $(params.reservation_id)
       - name: us_east_zone
