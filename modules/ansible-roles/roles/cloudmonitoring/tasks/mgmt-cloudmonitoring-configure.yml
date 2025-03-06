@@ -65,17 +65,17 @@
 #     su - lsfadmin -c "pip3 install -r /opt/ibm/lsf_prometheus_exporter/requirements.txt --user"
 #   when: monitoring_enable_for_management | bool
 
-# - name: Reload systemd daemon
-#   ansible.builtin.systemd:
-#     daemon_reload: yes
-#   when: monitoring_enable_for_management | bool
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  when: monitoring_enable_for_management | bool
 
-# - name: Enable and restart Prometheus
-#   ansible.builtin.systemd:
-#     name: prometheus
-#     enabled: yes
-#     state: restarted
-#   when: monitoring_enable_for_management | bool
+- name: Enable and restart Prometheus
+  ansible.builtin.systemd:
+    name: prometheus
+    enabled: yes
+    state: restarted
+  when: monitoring_enable_for_management | bool
 
 - name: Enable and restart Sysdig Agent
   ansible.builtin.systemd:
