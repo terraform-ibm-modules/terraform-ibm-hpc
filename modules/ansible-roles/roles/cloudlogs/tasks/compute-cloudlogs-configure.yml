@@ -93,10 +93,10 @@
       [INPUT]
         Name              tail
         Tag               *
-        Path              /opt/ibm/lsf_worker/log/*.log
+        Path              /opt/ibm/lsflogs/*.log.*
         Path_Key          file
         Exclude_Path      /var/log/at/**
-        DB                /opt/ibm/lsf_worker/log/fluent-bit.DB
+        DB                /opt/ibm/lsflogs/fluent-bit.DB
         Buffer_Chunk_Size 32KB
         Buffer_Max_Size   256KB
         Skip_Long_Lines   On
@@ -131,6 +131,6 @@
 
 - name: Test cloud logs configuration
   ansible.builtin.shell: |
-    echo "INFO Testing IBM Cloud LSF Logs from compute: {{ ansible_hostname }}" >> /opt/ibm/lsf_worker/log/test.log
+    echo "INFO Testing IBM Cloud LSF Logs from compute: {{ ansible_hostname }}" >> /opt/ibm/lsflogs/test.log
     logger -u /tmp/in_syslog my_ident my_syslog_test_message_from_compute:{{ ansible_hostname }}
   when: logs_enable_for_compute | bool
