@@ -26,15 +26,15 @@ data "ibm_is_image" "client" {
   name  = var.client_instances[count.index]["image"]
 }
 
-# data "ibm_is_image" "management" {
-#   count = length(var.management_instances)
-#   name  = var.management_instances[count.index]["image"]
-# }
+data "ibm_is_image" "management" {
+  count = length(var.management_instances)
+  name  = var.management_instances[count.index]["image"]
+}
 
-# data "ibm_is_image" "compute" {
-#   count = length(var.static_compute_instances)
-#   name  = var.static_compute_instances[count.index]["image"]
-# }
+data "ibm_is_image" "compute" {
+  count = length(var.static_compute_instances)
+  name  = var.static_compute_instances[count.index]["image"]
+}
 
 data "ibm_is_image" "storage" {
   count = length(var.storage_instances)

@@ -212,7 +212,7 @@ variable "management_instances" {
   default = [{
     profile = "bx2d-16x64"
     count   = 2
-    image   = "hpc-lsf10-rhel810-v1"
+    image   = "ibm-redhat-8-10-minimal-amd64-2"
   }]
   description = "Number of instances to be launched for management."
 }
@@ -228,7 +228,7 @@ variable "static_compute_instances" {
   default = [{
     profile = "cx2-2x4"
     count   = 1
-    image   = "hpcaas-lsf10-rhel810-compute-v8"
+    image   = "ibm-redhat-8-10-minimal-amd64-2"
   }]
   description = "Min Number of instances to be launched for compute cluster."
 }
@@ -244,7 +244,7 @@ variable "dynamic_compute_instances" {
   default = [{
     profile = "cx2-2x4"
     count   = 1024
-    image   = "hpcaas-lsf10-rhel810-compute-v8"
+    image   = "ibm-redhat-8-10-minimal-amd64-2"
   }]
   description = "MaxNumber of instances to be launched for compute cluster."
 }
