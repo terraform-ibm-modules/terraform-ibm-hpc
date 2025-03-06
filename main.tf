@@ -130,7 +130,7 @@ module "resource_provisioner" {
   bastion_public_key_content  = local.bastion_public_key_content
   bastion_private_key_content = local.bastion_private_key_content
   deployer_ip                 = local.deployer_ip
-  depends_on                  = [module.prepare_tf_input]
+  depends_on                  = [module.deployer, module.prepare_tf_input]
 }
 
 module "file_storage" {
