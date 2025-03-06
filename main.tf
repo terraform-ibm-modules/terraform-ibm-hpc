@@ -93,8 +93,8 @@ module "landing_zone_vsi" {
   enable_bastion             = var.enable_bastion
 }
 
-module "null_resources" {
-  source                   = "./modules/null_resources"
+module "resource_provisioner" {
+  source                   = "./modules/resource_provisioner"
   ibmcloud_api_key         = var.ibmcloud_api_key
   resource_group           = var.resource_group
   prefix                   = var.prefix

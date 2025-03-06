@@ -40,15 +40,6 @@ variable "resource_group" {
 }
 
 ##############################################################################
-# Access Variables
-##############################################################################
-variable "bastion_subnets" {
-  type        = list(string)
-  default     = null
-  description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
-}
-
-##############################################################################
 # Compute Variables
 ##############################################################################
 variable "client_subnets" {
@@ -101,6 +92,16 @@ variable "static_compute_instances" {
   )
   description = "Min Number of instances to be launched for compute cluster."
 }
+
+##############################################################################
+# Access Variables
+##############################################################################
+variable "bastion_subnets" {
+  type        = list(string)
+  default     = null
+  description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+}
+
 ##############################################################################
 # Storage Variables
 ##############################################################################
@@ -146,92 +147,6 @@ variable "protocol_subnets" {
 }
 
 ##############################################################################
-# Offering Variations
-##############################################################################
-variable "ibm_customer_number" {
-  type        = string
-  sensitive   = true
-  description = "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
-}
-
-##############################################################################
-# Observability Variables
-##############################################################################
-variable "enable_cos_integration" {
-  type        = bool
-  default     = false
-  description = "Integrate COS with HPC solution"
-}
-
-variable "enable_vpc_flow_logs" {
-  type        = bool
-  default     = false
-  description = "Enable Activity tracker"
-}
-
-##############################################################################
-# SCC Variables
-##############################################################################
-variable "enable_atracker" {
-  type        = bool
-  default     = false
-  description = "Enable Activity tracker"
-}
-
-variable "compute_public_key_content" {
-  type        = string
-  sensitive   = true
-  default     = null
-  description = "Compute security key content."
-}
-
-variable "compute_private_key_content" {
-  type        = string
-  sensitive   = true
-  default     = null
-  description = "Compute security key content."
-}
-
-variable "bastion_security_group_id" {
-  type        = string
-  default     = null
-  description = "bastion security group id"
-}
-
-variable "deployer_hostname" {
-  type        = string
-  default     = null
-  description = "deployer node hostname"
-}
-
-variable "deployer_ip" {
-  type        = string
-  default     = null
-  description = "deployer node ip"
-}
-
-##############################################################################
-# Terraform generic Variables
-##############################################################################
-variable "TF_PARALLELISM" {
-  type        = string
-  default     = "250"
-  description = "Limit the number of concurrent operation."
-}
-
-variable "TF_VERSION" {
-  type        = string
-  default     = "1.9"
-  description = "The version of the Terraform engine that's used in the Schematics workspace."
-}
-
-variable "TF_LOG" {
-  type        = string
-  default     = "ERROR"
-  description = "The Terraform log level used for output in the Schematics workspace."
-}
-
-##############################################################################
 # VPC Variables
 ##############################################################################
 variable "vpc" {
@@ -266,7 +181,6 @@ variable "enable_deployer" {
   description = "Deployer should be only used for better deployment performance"
 }
 
-
 ##############################################################################
 # Bastion Variables
 ##############################################################################
@@ -276,16 +190,67 @@ variable "bastion_fip" {
   description = "bastion fip"
 }
 
-variable "bastion_public_key_content" {
+##############################################################################
+# Offering Variations
+##############################################################################
+variable "ibm_customer_number" {
   type        = string
   sensitive   = true
-  default     = null
-  description = "Bastion public key content."
+  description = "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
 }
 
-variable "bastion_private_key_content" {
+##############################################################################
+# Observability Variables
+##############################################################################
+variable "enable_cos_integration" {
+  type        = bool
+  default     = false
+  description = "Integrate COS with HPC solution"
+}
+
+variable "enable_vpc_flow_logs" {
+  type        = bool
+  default     = false
+  description = "Enable Activity tracker"
+}
+
+##############################################################################
+# SCC Variables
+##############################################################################
+variable "enable_atracker" {
+  type        = bool
+  default     = false
+  description = "Enable Activity tracker"
+}
+
+variable "bastion_security_group_id" {
+  type        = string
+  default     = null
+  description = "bastion security group id"
+}
+
+variable "deployer_hostname" {
+  type        = string
+  default     = null
+  description = "deployer node hostname"
+}
+
+variable "deployer_ip" {
+  type        = string
+  default     = null
+  description = "deployer node ip"
+}
+
+variable "compute_public_key_content" {
   type        = string
   sensitive   = true
   default     = null
-  description = "Bastion private key content."
+  description = "Compute security key content."
+}
+
+variable "compute_private_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Compute security key content."
 }
