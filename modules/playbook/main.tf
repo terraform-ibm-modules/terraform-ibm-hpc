@@ -83,7 +83,7 @@ resource "null_resource" "run_lsf_playbooks" {
 }
 
 resource "null_resource" "export_api" {
-  count = var.inventory_path != null ? 1 : 0
+  count = var.inventory_path != null && var.observability_provision ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command = <<EOT
