@@ -71,7 +71,8 @@ locals {
   resource_group_id = data.ibm_resource_group.itself.id
 
   # Subnets
-  bastion_subnets = var.bastion_subnets
+  bastion_subnets           = var.bastion_subnets
+  bastion_security_group_id = local.enable_bastion ? module.bastion_sg[0].security_group_id : null
 }
 
 locals {
@@ -81,5 +82,5 @@ locals {
 
   management_instance_count     = sum(var.management_instances[*]["count"])
   static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
-  enable_compute    = local.management_instance_count > 0 || local.static_compute_instance_count > 0
+  enable_compute                = local.management_instance_count > 0 || local.static_compute_instance_count > 0
 }

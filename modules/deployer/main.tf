@@ -10,17 +10,33 @@ module "ssh_key" {
   private_key_path = "bastion_id_rsa" #checkov:skip=CKV_SECRET_6
 }
 
+# module "bastion_sg" {
+#   count                        = local.enable_bastion ? 1 : 0
+#   source                       = "terraform-ibm-modules/security-group/ibm"
+#   version                      = "2.6.2"
+#   add_ibm_cloud_internal_rules = true
+#   resource_group               = local.resource_group_id
+#   security_group_name          = format("%s-bastion-sg", local.prefix)
+#   security_group_rules         = local.bastion_security_group_rules
+#   vpc_id                       = var.vpc_id
+# }
+
 module "bastion_sg" {
-  count                        = local.enable_bastion ? 1 : 0
-  source                       = "terraform-ibm-modules/security-group/ibm"
-  version                      = "2.6.2"
-  add_ibm_cloud_internal_rules = true
-  resource_group               = local.resource_group_id
-  security_group_name          = format("%s-bastion-sg", local.prefix)
-  security_group_rules         = local.bastion_security_group_rules
-  vpc_id                       = var.vpc_id
+  count               = local.enable_bastion ? 1 : 0
+  source              = "git::https://github.com/terraform-ibm-modules/terraform-ibm-security-group.git?ref=split_sg_rules"
+  security_group_name = format("%s-bastion-sg", local.prefix)
+  resource_group      = local.resource_group_id
+  vpc_id              = var.vpc_id
 }
 
+module "bastion_sg_rules" {
+  count                        = local.enable_bastion ? 1 : 0
+  source                       = "../security-group-rules"
+  add_ibm_cloud_internal_rules = true
+  security_group_rules         = local.bastion_security_group_rules
+  sg_id                        = local.bastion_security_group_id
+  depends_on                   = [module.bastion_sg]
+}
 
 module "bastion_vsi" {
   count                         = var.enable_bastion ? 1 : 0
