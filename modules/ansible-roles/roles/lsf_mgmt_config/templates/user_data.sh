@@ -97,20 +97,6 @@ if [ -n "${nfs_server_with_mount_path}" ]; then
 fi
 echo "Setting LSF share is completed." >> $logfile
 
-# Setup Custom file shares
-echo "Setting custom file shares." >> $logfile
-if [ -n "${custom_file_shares}" ]; then
-  echo "Custom file share ${custom_file_shares} found" >> $logfile
-  file_share_array=(${custom_file_shares})
-  mount_path_array=(${custom_mount_paths})
-  length=${#file_share_array[@]}
-
-  for (( i=0; i<length; i++ )); do
-    mount_nfs_with_retries "${file_share_array[$i]}" "${mount_path_array[$i]}"
-  done
-fi
-echo "Setting custom file shares is completed." >> $logfile
-
 # Setup SSH
 SSH_DIR="/home/lsfadmin/.ssh"
 mkdir -p "$SSH_DIR"
