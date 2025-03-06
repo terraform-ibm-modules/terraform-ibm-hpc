@@ -57,7 +57,7 @@ resource "null_resource" "cluster_destroyer" {
     when       = destroy
     on_failure = fail
     inline = [
-      "if [ -d ${local.remote_terraform_path} ]; then export TF_LOG=${self.triggers.conn_terraform_log_level} && sudo -E terraform -chdir=${self.triggers.conn_remote_terraform_path} destroy -auto-approve fi"
+      "export TF_LOG=${self.triggers.conn_terraform_log_level} && sudo -E terraform -chdir=${self.triggers.conn_remote_terraform_path} destroy -auto-approve"
     ]
   }
 }
