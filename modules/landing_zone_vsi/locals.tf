@@ -279,3 +279,96 @@ locals {
     }
   ]
 }
+
+
+locals {
+  # Security group id
+  client_security_group  = local.enable_client ? module.client_sg[0].security_group_id_for_ref : null
+  compute_security_group = local.enable_compute ? module.compute_sg[0].security_group_id_for_ref : null
+  storage_security_group = local.enable_storage ? module.storage_sg[0].security_group_id_for_ref : null
+
+  client_security_group_rules = local.enable_client ? (local.enable_compute ?
+    [
+      { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = module.bastion_security_group.security_group_id_for_ref },
+      { name = "client-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
+      { name = "client-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group }
+    ] :
+    [
+      { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = module.bastion_security_group.security_group_id_for_ref },
+      { name = "client-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group }
+    ]
+    ) : (local.enable_compute ?
+    [
+      { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = module.bastion_security_group.security_group_id_for_ref },
+      { name = "client-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group }
+    ]
+    :
+    [
+      { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = module.bastion_security_group.security_group_id_for_ref }
+    ]
+  )
+
+  compute_security_group_rules = local.enable_client ? (local.enable_compute ? (local.enable_storage ?
+    [
+      { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = module.bastion_security_group.security_group_id_for_ref },
+      { name = "compute-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
+      { name = "compute-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+      { name = "compute-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
+    ] :
+    [
+      { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = module.bastion_security_group.security_group_id_for_ref },
+      { name = "compute-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
+      { name = "compute-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+    ]
+    ) : (local.enable_storage ?
+    [
+      { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = module.bastion_security_group.security_group_id_for_ref },
+      { name = "compute-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
+      { name = "compute-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
+    ] :
+    [
+      { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = module.bastion_security_group.security_group_id_for_ref },
+      { name = "compute-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
+    ]
+    )
+    ) : (local.enable_compute ? (local.enable_storage ?
+      [
+        { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = module.bastion_security_group.security_group_id_for_ref },
+        { name = "compute-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+        { name = "compute-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
+      ] :
+      [
+        { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = module.bastion_security_group.security_group_id_for_ref },
+        { name = "compute-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+      ]
+      ) : (local.enable_storage ?
+      [
+        { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = module.bastion_security_group.security_group_id_for_ref },
+        { name = "compute-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
+      ] :
+      [
+        { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = module.bastion_security_group.security_group_id_for_ref }
+      ]
+    )
+  )
+
+  storage_security_group_rules = local.enable_compute ? (local.enable_storage ?
+    [
+      { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = module.bastion_security_group.security_group_id_for_ref },
+      { name = "storage-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+      { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group }
+    ] :
+    [
+      { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = module.bastion_security_group.security_group_id_for_ref },
+      { name = "storage-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+    ]
+    ) : (local.enable_storage ?
+    [
+      { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = module.bastion_security_group.security_group_id_for_ref },
+      { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group }
+    ] :
+    [
+      { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = module.bastion_security_group.security_group_id_for_ref }
+    ]
+  )
+}

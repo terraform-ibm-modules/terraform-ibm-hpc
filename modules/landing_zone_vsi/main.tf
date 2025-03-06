@@ -40,6 +40,39 @@ module "storage_key" {
   private_key_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage_id_rsa" : "${path.root}/modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
 }
 
+# module "client_sg" {
+#   count                        = local.enable_client ? 1 : 0
+#   source                       = "terraform-ibm-modules/security-group/ibm"
+#   version                      = "2.6.2"
+#   add_ibm_cloud_internal_rules = true
+#   resource_group               = local.resource_group_id
+#   security_group_name          = format("%s-client-sg", local.prefix)
+#   security_group_rules         = local.client_security_group_rules
+#   vpc_id                       = var.vpc_id
+# }
+
+# module "compute_sg" {
+#   count                        = local.enable_compute ? 1 : 0
+#   source                       = "terraform-ibm-modules/security-group/ibm"
+#   version                      = "2.6.2"
+#   add_ibm_cloud_internal_rules = true
+#   resource_group               = local.resource_group_id
+#   security_group_name          = format("%s-comp-sg", local.prefix)
+#   security_group_rules         = local.compute_security_group_rules
+#   vpc_id                       = var.vpc_id
+# }
+
+# module "storage_sg" {
+#   count                        = local.enable_storage ? 1 : 0
+#   source                       = "terraform-ibm-modules/security-group/ibm"
+#   version                      = "2.6.2"
+#   add_ibm_cloud_internal_rules = true
+#   resource_group               = local.resource_group_id
+#   security_group_name          = format("%s-strg-sg", local.prefix)
+#   security_group_rules         = local.storage_security_group_rules
+#   vpc_id                       = var.vpc_id
+# }
+
 module "client_sg" {
   count                        = local.enable_client ? 1 : 0
   source                       = "terraform-ibm-modules/security-group/ibm"
@@ -49,6 +82,7 @@ module "client_sg" {
   security_group_name          = format("%s-client-sg", local.prefix)
   security_group_rules         = local.client_security_group_rules
   vpc_id                       = var.vpc_id
+  # vpc_id                       = module.vpc.vpc_id
 }
 
 module "compute_sg" {
@@ -60,6 +94,7 @@ module "compute_sg" {
   security_group_name          = format("%s-comp-sg", local.prefix)
   security_group_rules         = local.compute_security_group_rules
   vpc_id                       = var.vpc_id
+  # vpc_id                       = module.vpc.vpc_id
 }
 
 module "storage_sg" {
@@ -71,6 +106,7 @@ module "storage_sg" {
   security_group_name          = format("%s-strg-sg", local.prefix)
   security_group_rules         = local.storage_security_group_rules
   vpc_id                       = var.vpc_id
+  # vpc_id                       = module.vpc.vpc_id
 }
 
 resource "ibm_is_security_group_rule" "add_comp_sg_bastion" {
