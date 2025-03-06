@@ -87,7 +87,11 @@ resource "null_resource" "export_api" {
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command = <<EOT
-      export VPC_API_KEY="${var.ibmcloud_api_key}"      
+      # Append API key export to shell profile for persistence
+      echo 'export VPC_API_KEY="${var.ibmcloud_api_key}"' >> ~/.bashrc
+      echo 'export VPC_API_KEY="${var.ibmcloud_api_key}"' >> ~/.bash_profile
+      # Export API key for immediate availability in the current session
+      export VPC_API_KEY="${var.ibmcloud_api_key}"
     EOT
   }
   triggers = {

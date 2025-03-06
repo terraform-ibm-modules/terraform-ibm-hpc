@@ -131,6 +131,6 @@
 
 - name: Test cloud logs configuration
   ansible.builtin.shell: |
-    echo "INFO Testing IBM Cloud LSF Logs from management: {{ ansible_hostname }}" >> /opt/ibm/lsflogs/test.log
+    echo "INFO Testing IBM Cloud LSF Logs from management: {{ ansible_hostname }}" >> /opt/ibm/lsflogs/test.log.com
     logger -u /tmp/in_syslog my_ident my_syslog_test_message_from_management:{{ ansible_hostname }}
   when: logs_enable_for_management | bool
