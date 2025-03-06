@@ -93,6 +93,9 @@ module "landing_zone_vsi" {
 
 module "prepare_tf_input" {
   source                    = "./modules/prepare_tf_input"
+  enable_deployer           = var.enable_deployer
+  bastion_fip               = local.bastion_fip
+  deployer_ip               = local.deployer_ip
   ibmcloud_api_key          = var.ibmcloud_api_key
   resource_group            = var.resource_group
   prefix                    = var.prefix

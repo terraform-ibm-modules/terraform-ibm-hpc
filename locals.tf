@@ -37,9 +37,6 @@ locals {
   deployer_hostname = var.enable_bastion ? flatten(module.deployer.deployer_vsi_data[*].list)[0].name : ""
   deployer_ip       = module.deployer.deployer_ip
 
-  # compute_public_key_contents  = module.deployer.compute_public_key_content
-  # compute_private_key_contents = module.deployer.compute_private_key_content
-
   # Existing subnets details
   existing_compute_subnets = [
     for subnet in data.ibm_is_subnet.existing_compute_subnets :
@@ -167,11 +164,6 @@ locals {
   # dependency: landing_zone_vsi -> file-share
 }
 
-# data "external" "get_hostname" {
-#   program = ["sh", "-c", "echo '{\"name\": \"'$(hostname)'\", \"ipv4_address\": \"'$(hostname -I | awk '{print $1}')'\"}'"]
-# }
-
-
 # locals needed for dns-records
 locals {
   # dependency: dns -> dns-records
@@ -258,4 +250,3 @@ locals {
   Enable_Monitoring     = false
   lsf_deployer_hostname = var.deployer_hostname #data.external.get_hostname.result.name  #var.enable_bastion ? "" : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
 }
-
