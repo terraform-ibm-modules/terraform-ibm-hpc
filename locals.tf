@@ -237,6 +237,7 @@ locals {
   storage_private_key_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage_id_rsa" : "${path.root}/modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
   compute_playbook_path    = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute_ssh.yaml" : "${path.root}/modules/ansible-roles/compute_ssh.yaml" 
   storage_playbook_path    = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage_ssh.yaml" : "${path.root}/modules/ansible-roles/storage_ssh.yaml"
+  observability_playbook_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/observability.yaml" : "${path.root}/modules/ansible-roles/observability.yaml"
 }
 
 # file Share OutPut
@@ -295,6 +296,6 @@ locals {
     bucket_crn      = local.cloud_metrics_bucket.crn
     bucket_endpoint = local.cloud_metrics_bucket.s3_endpoint_direct
   } : null)
-  scc_cos_bucket = length(module.landing_zone.cos_buckets_names) > 0 ? [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0] : null
-  scc_cos_instance_crn = length(module.landing_zone.cos_instance_crns) > 0 ? module.landing_zone.cos_instance_crns[0] : null
+  scc_cos_bucket = length(module.landing_zone.cos_buckets_names) > 0 && var.scc_enable ? [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0] : ""
+  scc_cos_instance_crn = length(module.landing_zone.cos_instance_crns) > 0 && var.scc_enable ? module.landing_zone.cos_instance_crns[0] : ""
 }

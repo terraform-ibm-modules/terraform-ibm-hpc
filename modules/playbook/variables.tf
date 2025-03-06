@@ -22,6 +22,12 @@ variable "playbook_path" {
   default     = "ssh.yaml"
 }
 
+variable "observability_playbook_path" {
+  description = "Observability Playbook path"
+  type        = string
+  default     = "ssh.yaml"
+}
+
 variable "enable_bastion" {
   type        = bool
   default     = true
