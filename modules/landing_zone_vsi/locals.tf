@@ -165,6 +165,11 @@ locals {
       direction = "inbound"
       remote    = var.bastion_security_group_id
     },
+    {
+      name      = "allow-all-client-in"
+      direction = "inbound"
+      remote    = local.client_security_group_id
+    },
     /*
     {
       name      = "allow-all-compute"
@@ -195,6 +200,11 @@ locals {
       direction = "inbound"
       remote    = var.bastion_security_group_id
     },
+    {
+      name      = "allow-all-client-in"
+      direction = "inbound"
+      remote    = local.compute_security_group_id
+    },
     /*
     {
       name      = "allow-all-client-in"
@@ -216,11 +226,13 @@ locals {
       remote    = module.client_sg[0].security_group_id
     }
     */
+    /*
     {
       name      = "allow-all-compute-in"
       direction = "inbound"
       remote    = "0.0.0.0/0"
     },
+    */
     {
       name      = "allow-all-compute-out"
       direction = "outbound"
@@ -232,6 +244,11 @@ locals {
       name      = "allow-all-bastion-in"
       direction = "inbound"
       remote    = var.bastion_security_group_id
+    },
+    {
+      name      = "allow-all-client-in"
+      direction = "inbound"
+      remote    = local.storage_security_group_id
     },
     /*
     {

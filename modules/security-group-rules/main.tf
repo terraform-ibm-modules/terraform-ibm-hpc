@@ -14,24 +14,8 @@ locals {
       icmp      = {}
     },
     {
-      name      = "ibmflow-iaas-inbound"
-      direction = "inbound"
-      remote    = "161.26.0.0/16"
-      tcp       = {}
-      udp       = {}
-      icmp      = {}
-    },
-    {
       name      = "ibmflow-paas-outbound"
       direction = "outbound"
-      remote    = "166.8.0.0/14"
-      tcp       = {}
-      udp       = {}
-      icmp      = {}
-    },
-    {
-      name      = "ibmflow-paas-inbound"
-      direction = "inbound"
       remote    = "166.8.0.0/14"
       tcp       = {}
       udp       = {}
