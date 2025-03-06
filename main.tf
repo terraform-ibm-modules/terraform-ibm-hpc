@@ -131,8 +131,8 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "bastion_security_group_id": "${local.bastion_security_group_id}",
   "deployer_hostname": "${local.deployer_hostname}",
   "deployer_ip": "${local.deployer_ip}",
-  "scc_enable": "${var.scc_enable},
-  "scc_profile": "${var.scc_profile},
+  "scc_enable": ${var.scc_enable},
+  "scc_profile": "${var.scc_profile}",
   "scc_location": "${var.scc_location}",
   "scc_cos_bucket": "${local.scc_cos_bucket}",
   "scc_cos_instance_crn": "${local.scc_cos_instance_crn}",
@@ -143,7 +143,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "observability_logs_enable_for_compute": ${var.observability_logs_enable_for_compute},
   "observability_enable_platform_logs": ${var.observability_enable_platform_logs},
   "observability_monitoring_enable": ${var.observability_monitoring_enable},
-  "observability_monitoring_plan": ${var.observability_monitoring_plan},
+  "observability_monitoring_plan": "${var.observability_monitoring_plan}",
   "observability_logs_retention_period": ${var.observability_logs_retention_period},
   "observability_monitoring_on_compute_nodes_enable": ${var.observability_monitoring_on_compute_nodes_enable},
   "observability_enable_metrics_routing": ${var.observability_enable_metrics_routing},
@@ -327,7 +327,6 @@ module "compute_inventory" {
   cloud_monitoring_prws_url = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_url : ""  
   logs_enable_for_compute = var.observability_logs_enable_for_compute
   cloud_logs_ingress_private_endpoint = local.cloud_logs_ingress_private_endpoint
-  # VPC_APIKEY_VALUE = var.ibmcloud_api_key  
   depends_on          = [ module.write_compute_cluster_inventory ]
 }
 
