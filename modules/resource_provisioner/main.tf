@@ -1,3 +1,5 @@
+
+
 resource "null_resource" "tf_resource_provisioner" {
   count = var.enable_deployer == true ? 1 : 0
   connection {
@@ -28,10 +30,6 @@ resource "null_resource" "tf_resource_provisioner" {
   triggers = {
     always_run = timestamp()
   }
-
-  depends_on = [
-    local_sensitive_file.prepare_tf_input
-  ]
 }
 
 resource "null_resource" "cluster_destroyer" {

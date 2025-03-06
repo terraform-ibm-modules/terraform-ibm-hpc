@@ -71,8 +71,6 @@ module "landing_zone_vsi" {
   vpc_id                     = local.vpc_id
   bastion_security_group_id  = var.bastion_security_group_id
   bastion_public_key_content = local.bastion_public_key_content
-  # compute_public_key_content  = var.compute_public_key_content
-  # compute_private_key_content = var.compute_private_key_content
   client_subnets             = local.client_subnets
   client_ssh_keys            = local.client_ssh_keys
   client_instances           = var.client_instances
@@ -93,42 +91,46 @@ module "landing_zone_vsi" {
   enable_bastion             = var.enable_bastion
 }
 
+module "prepare_tf_input" {
+  source                    = "./modules/prepare_tf_input"
+  ibmcloud_api_key          = var.ibmcloud_api_key
+  resource_group            = var.resource_group
+  prefix                    = var.prefix
+  zones                     = var.zones
+  compute_ssh_keys          = local.compute_ssh_keys
+  storage_ssh_keys          = local.storage_ssh_keys
+  storage_instances         = var.storage_instances
+  management_instances      = var.management_instances
+  protocol_instances        = var.protocol_instances
+  ibm_customer_number       = var.ibm_customer_number
+  static_compute_instances  = var.static_compute_instances
+  client_instances          = var.client_instances
+  enable_cos_integration    = var.enable_cos_integration
+  enable_atracker           = var.enable_atracker
+  enable_vpc_flow_logs      = var.enable_vpc_flow_logs
+  allowed_cidr              = var.allowed_cidr
+  vpc                       = local.vpc
+  vpc_id                    = local.vpc_id
+  storage_subnets           = local.storage_subnet
+  protocol_subnets          = local.protocol_subnet
+  compute_subnets           = local.compute_subnet
+  client_subnets            = local.client_subnet
+  bastion_subnets           = local.bastion_subnet
+  dns_domain_names          = var.dns_domain_names
+  bastion_security_group_id = local.bastion_security_group_id
+  deployer_hostname         = local.deployer_hostname
+  depends_on                = [module.deployer]
+}
+
 module "resource_provisioner" {
-  source                   = "./modules/resource_provisioner"
-  ibmcloud_api_key         = var.ibmcloud_api_key
-  resource_group           = var.resource_group
-  prefix                   = var.prefix
-  zones                    = var.zones
-  enable_deployer          = var.enable_deployer
-  compute_ssh_keys         = local.compute_ssh_keys
-  storage_ssh_keys         = local.storage_ssh_keys
-  storage_instances        = var.storage_instances
-  management_instances     = var.management_instances
-  protocol_instances       = var.protocol_instances
-  ibm_customer_number      = var.ibm_customer_number
-  static_compute_instances = var.static_compute_instances
-  client_instances         = var.client_instances
-  enable_cos_integration   = var.enable_cos_integration
-  enable_atracker          = var.enable_atracker
-  enable_vpc_flow_logs     = var.enable_vpc_flow_logs
-  allowed_cidr             = var.allowed_cidr
-  vpc                      = local.vpc
-  vpc_id                   = local.vpc_id
-  storage_subnets          = local.storage_subnet
-  protocol_subnets         = local.protocol_subnet
-  compute_subnets          = local.compute_subnet
-  client_subnets           = local.client_subnet
-  bastion_subnets          = local.bastion_subnet
-  dns_domain_names         = var.dns_domain_names
-  # compute_public_key_content  = local.compute_public_key_contents
-  # compute_private_key_content = local.compute_private_key_contents
+  source                      = "./modules/resource_provisioner"
+  ibmcloud_api_key            = var.ibmcloud_api_key
+  enable_deployer             = var.enable_deployer
   bastion_fip                 = local.bastion_fip
   bastion_public_key_content  = local.bastion_public_key_content
   bastion_private_key_content = local.bastion_private_key_content
-  bastion_security_group_id   = local.bastion_security_group_id
-  deployer_hostname           = local.deployer_hostname
   deployer_ip                 = local.deployer_ip
-  depends_on                  = [module.deployer]
+  depends_on                  = [module.prepare_tf_input]
 }
 
 module "file_storage" {

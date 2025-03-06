@@ -37,4 +37,3 @@ resource "local_sensitive_file" "prepare_tf_input" {
 EOT
   filename = local.schematics_inputs_path
 }
-
