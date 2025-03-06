@@ -887,18 +887,6 @@ variable "enable_atracker" {
   description = "Enable Activity tracker"
 }
 
-variable "cloud_logs_data_bucket" {
-  type        = list(string)
-  default     = []
-  description = ""
-}
-
-variable "cloud_metrics_data_bucket" {
-  type        = list(string)
-  default     = []
-  description = ""
-}
-
 variable "bastion_security_group_id" {
   type        = string
   default     = null
@@ -915,4 +903,28 @@ variable "deployer_ip" {
   type        = string
   default     = null
   description = "deployer node ip"
+}
+
+variable "cloud_logs_data_bucket" {
+  type        = any
+  default     = null
+  description = "cloud logs data bucket"
+}
+
+variable "cloud_metrics_data_bucket" {
+  type        = any
+  default     = null
+  description = "cloud metrics data bucket"
+}
+
+variable "scc_cos_bucket" {
+  type        = string
+  default     = null
+  description = "scc cos bucket"
+}
+
+variable "scc_cos_instance_crn" {
+  type        = string
+  default     = null
+  description = "scc cos instance crn"
 }

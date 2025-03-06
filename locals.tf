@@ -21,7 +21,7 @@ locals {
   kms_encryption_enabled     = var.key_management != null ? true : false
   boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   existing_kms_instance_guid = var.key_management != null ? module.landing_zone.key_management_guid : null
-  cos_data                   = var.enable_bastion ? [] : module.landing_zone.cos_buckets_data
+  cos_data                   = module.landing_zone.cos_buckets_data
   # Future use
   # skip_iam_authorization_policy = true
 }
@@ -237,11 +237,13 @@ locals {
   storage_private_key_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage_id_rsa" : "${path.root}/modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
   compute_playbook_path    = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute_ssh.yaml" : "${path.root}/modules/ansible-roles/compute_ssh.yaml" 
   storage_playbook_path    = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage_ssh.yaml" : "${path.root}/modules/ansible-roles/storage_ssh.yaml"
+  observability_playbook_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/observability.yaml" : "${path.root}/modules/ansible-roles/observability.yaml"
 }
 
 # file Share OutPut
 locals {
   fileshare_name_mount_path_map =  var.enable_deployer ? {} : module.file_storage[0].name_mount_path_map
+  cloud_logs_ingress_private_endpoint = module.cloud_monitoring_instance_creation.cloud_logs_ingress_private_endpoint
 }
 
 # details needed for json file
@@ -284,4 +286,16 @@ locals {
   dns_domain_names          = jsonencode(var.dns_domain_names)
   compute_public_key_content  = local.compute_public_key_contents != null ? jsonencode(base64encode(local.compute_public_key_contents)) : ""
   compute_private_key_content = local.compute_private_key_contents != null ? jsonencode(base64encode(local.compute_private_key_contents)) : ""
+  cloud_logs_bucket    = length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")][0] : null
+  cloud_metrics_bucket = length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")][0] : null
+  cloud_logs_data_bucket = jsonencode(local.cloud_logs_bucket != null ? {
+    bucket_crn      = local.cloud_logs_bucket.crn
+    bucket_endpoint = local.cloud_logs_bucket.s3_endpoint_direct
+  } : null)
+  cloud_metrics_data_bucket = jsonencode(local.cloud_metrics_bucket != null ? {
+    bucket_crn      = local.cloud_metrics_bucket.crn
+    bucket_endpoint = local.cloud_metrics_bucket.s3_endpoint_direct
+  } : null)
+  scc_cos_bucket = length(module.landing_zone.cos_buckets_names) > 0 && var.scc_enable ? [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0] : ""
+  scc_cos_instance_crn = length(module.landing_zone.cos_instance_crns) > 0 && var.scc_enable ? module.landing_zone.cos_instance_crns[0] : ""
 }
