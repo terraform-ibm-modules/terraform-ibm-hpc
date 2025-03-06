@@ -887,18 +887,6 @@ variable "enable_atracker" {
   description = "Enable Activity tracker"
 }
 
-# variable "cloud_logs_data_bucket" {
-#   type        = list(string)
-#   default     = []
-#   description = ""
-# }
-
-# variable "cloud_metrics_data_bucket" {
-#   type        = list(string)
-#   default     = []
-#   description = ""
-# }
-
 variable "bastion_security_group_id" {
   type        = string
   default     = null

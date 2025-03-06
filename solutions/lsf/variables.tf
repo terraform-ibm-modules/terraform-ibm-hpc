@@ -183,7 +183,7 @@ variable "client_instances" {
   )
   default = [{
     profile = "cx2-2x4"
-    count   = 0
+    count   = 2
     image   = "ibm-redhat-8-10-minimal-amd64-2"
   }]
   description = "Number of instances to be launched for client."
@@ -210,7 +210,7 @@ variable "management_instances" {
     })
   )
   default = [{
-    profile = "bx2d-16x64"
+    profile = "cx2-2x4"
     count   = 2
     image   = "ibm-redhat-8-10-minimal-amd64-2"
   }]
@@ -341,7 +341,7 @@ variable "storage_instances" {
   )
   default = [{
     profile         = "bx2-2x8"
-    count           = 0
+    count           = 2
     image           = "ibm-redhat-8-10-minimal-amd64-2"
     filesystem_name = "fs1"
   }]
@@ -364,7 +364,7 @@ variable "protocol_instances" {
   )
   default = [{
     profile = "bx2-2x8"
-    count   = 0
+    count   = 2
     image   = "ibm-redhat-8-10-minimal-amd64-2"
   }]
   description = "Number of instances to be launched for protocol hosts."
@@ -479,12 +479,6 @@ variable "cos_instance_name" {
   default     = null
   description = "Exiting COS instance name"
 }
-
-# variable "enable_atracker" {
-#   type        = bool
-#   default     = true
-#   description = "Enable Activity tracker"
-# }
 
 variable "enable_vpc_flow_logs" {
   type        = bool
