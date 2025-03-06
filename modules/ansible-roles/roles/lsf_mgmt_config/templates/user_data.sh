@@ -32,7 +32,7 @@ fi
 sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo \'Please login as the user \\\\\"$USER\\\\\" rather than the user \\\\\"root\\\\\".\';echo;sleep 5; exit 142\" /" /root/.ssh/authorized_keys
 
 # Make lsfadmin and vpcuser set to newer expire
-chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
+chage -I -1 -m 0 -M 99999 -E -1 -W 14 $USER
 chage -I -1 -m 0 -M 99999 -E -1 -W 14 lsfadmin
 
 # Setup Network configuration
