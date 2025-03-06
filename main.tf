@@ -340,14 +340,15 @@ module "storage_inventory" {
 }
 
 module "compute_playbook" {
-  count            = var.enable_deployer == false ? 1 : 0
-  source           = "./modules/playbook"
-  bastion_fip      = local.bastion_fip
-  private_key_path = local.compute_private_key_path
-  inventory_path   = local.compute_inventory_path
-  playbook_path    = local.compute_playbook_path
-  enable_bastion   = var.enable_bastion
-  ibmcloud_api_key = var.ibmcloud_api_key
+  count                = var.enable_deployer == false ? 1 : 0
+  source               = "./modules/playbook"
+  bastion_fip          = local.bastion_fip
+  private_key_path     = local.compute_private_key_path
+  inventory_path       = local.compute_inventory_path
+  playbook_path        = local.compute_playbook_path
+  enable_bastion       = var.enable_bastion
+  ibmcloud_api_key     = var.ibmcloud_api_key
+  observability_provision = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || var.observability_monitoring_enable ? true : false
   depends_on       = [ module.compute_inventory ]
 }
 
