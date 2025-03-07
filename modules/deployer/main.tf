@@ -15,7 +15,6 @@ module "bastion_sg" {
   vpc_id                       = var.vpc_id
 }
 
-
 module "bastion_vsi" {
   count                         = var.enable_bastion ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"

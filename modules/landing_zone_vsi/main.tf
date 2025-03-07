@@ -109,6 +109,18 @@ module "storage_sg" {
   # vpc_id                       = module.vpc.vpc_id
 }
 
+module "bastion_sg_existing" {
+  source                         = "terraform-ibm-modules/security-group/ibm"
+  version                        = "2.6.2"
+  add_ibm_cloud_internal_rules   = true
+  resource_group                 = local.resource_group_id
+  existing_security_group_name   = format("%s-bastion-sg", local.prefix)
+  use_existing_security_group_id = var.bastion_security_group_id
+  security_group_rules           = local.bastion_security_group_rules
+  vpc_id                         = var.vpc_id
+  # vpc_id                       = module.vpc.vpc_id
+}
+
 # resource "ibm_is_security_group_rule" "add_comp_sg_bastion" {
 #   group     = var.bastion_security_group_id
 #   direction = "inbound"
