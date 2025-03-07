@@ -31,6 +31,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "bastion_subnets": ${local.list_bastion_subnets},
   "dns_domain_names": ${local.dns_domain_names},
   "bastion_security_group_id": "${var.bastion_security_group_id}",
+  "bastion_security_group_id_for_ref": "${var.bastion_security_group_id_for_ref}",
   "deployer_hostname": "${var.deployer_hostname}",
   "deployer_ip": "${var.deployer_ip}"
 }    

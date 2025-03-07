@@ -16,6 +16,11 @@ output "bastion_security_group_id" {
   value       = one(module.bastion_sg[*].security_group_id)
 }
 
+output "bastion_security_group_id_for_ref" {
+  description = "Bastion SG"
+  value       = one(module.bastion_sg[*].security_group_id_for_ref)
+}
+
 output "bastion_public_key_content" {
   description = "Bastion public key content"
   sensitive   = true

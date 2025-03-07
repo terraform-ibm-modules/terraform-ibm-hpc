@@ -30,9 +30,10 @@ locals {
 # locals needed for landing_zone_vsi
 locals {
   # dependency: landing_zone -> deployer -> landing_zone_vsi
-  bastion_security_group_id   = module.deployer.bastion_security_group_id
-  bastion_public_key_content  = module.deployer.bastion_public_key_content
-  bastion_private_key_content = module.deployer.bastion_private_key_content
+  bastion_security_group_id         = module.deployer.bastion_security_group_id
+  bastion_security_group_id_for_ref = module.deployer.bastion_security_group_id_for_ref
+  bastion_public_key_content        = module.deployer.bastion_public_key_content
+  bastion_private_key_content       = module.deployer.bastion_private_key_content
 
   deployer_hostname = var.enable_bastion ? flatten(module.deployer.deployer_vsi_data[*].list)[0].name : ""
   deployer_ip       = module.deployer.deployer_ip

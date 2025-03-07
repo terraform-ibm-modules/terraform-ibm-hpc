@@ -60,6 +60,11 @@ variable "bastion_security_group_id" {
   description = "Bastion security group id."
 }
 
+variable "bastion_security_group_id_for_ref" {
+  type        = string
+  description = "Bastion security group id."
+}
+
 variable "bastion_public_key_content" {
   type        = string
   sensitive   = true

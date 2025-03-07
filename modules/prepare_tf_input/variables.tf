@@ -229,6 +229,12 @@ variable "bastion_security_group_id" {
   description = "bastion security group id"
 }
 
+variable "bastion_security_group_id_for_ref" {
+  type        = string
+  default     = null
+  description = "bastion security group id"
+}
+
 variable "deployer_hostname" {
   type        = string
   default     = null
