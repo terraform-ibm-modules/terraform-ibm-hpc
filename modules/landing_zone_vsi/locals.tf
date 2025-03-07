@@ -267,6 +267,10 @@ locals {
   storage_subnets  = var.storage_subnets
   protocol_subnets = var.protocol_subnets
 
+  compute_public_key_content  = one(module.compute_key[*].public_key_content)
+  compute_private_key_content = one(module.compute_key[*].private_key_content)
+
+
   # Security Groups
   protocol_secondary_security_group = [for subnet in local.protocol_subnets :
     {

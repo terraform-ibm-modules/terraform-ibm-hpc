@@ -24,9 +24,6 @@ systemctl restart NetworkManager
 echo "${bastion_public_key_content}" >> /home/$USER/.ssh/authorized_keys
 echo "StrictHostKeyChecking no" >> /home/$USER/.ssh/config
 echo "StrictHostKeyChecking no" >> ~/.ssh/config
-echo "${compute_public_key_content}" >> ~/.ssh/authorized_keys
-echo "${compute_private_key_content}" > ~/.ssh/id_rsa
-chmod 600 ~/.ssh/id_rsa
 
 # # setup env
 # # TODO: Conditional installation (python3, terraform & ansible)
