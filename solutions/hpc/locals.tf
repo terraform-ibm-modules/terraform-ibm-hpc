@@ -295,11 +295,38 @@ locals {
   allowed_cidr = concat(var.remote_allowed_ips, local.remote_allowed_ips_extra, local.add_current_ip_to_allowed_cidr ? module.my_ip.my_cidr : [])
 }
 
+# Listing families for the Dedicated Hosts
 locals {
-  profile_str = split("-", var.worker_node_instance_type[0].instance_type)
-  dh_profiles = var.enable_dedicated_host ? [
-    for p in data.ibm_is_dedicated_host_profiles.worker[0].profiles : p if p.class == local.profile_str[0]
-  ] : []
-  dh_profile_index = length(local.dh_profiles) == 0 ? "Profile class ${local.profile_str[0]} for dedicated hosts does not exist in ${local.region}.Check available class with `ibmcloud target -r ${local.region}; ibmcloud is dedicated-host-profiles` and retry with another worker_node_instance_type." : 0
-  dh_profile       = var.enable_dedicated_host ? local.dh_profiles[local.dh_profile_index] : null
+  family_keywords = {
+    "bx" = "balanced"
+    "cx" = "compute"
+    "mx" = "memory"
+  }
+
+  # Mapping the class for the Dedicated Hosts)
+  instance_prefix = regex("^([a-z]+[0-9]+[a-z]*)", var.worker_node_instance_type[0].instance_type)[0]
+
+  # Determine instance class dynamically
+  instance_class = try(
+    element([for k, v in local.family_keywords : v if startswith(local.instance_prefix, k)], 0),
+    "unknown"
+  )
 }
+
+# Fetch dedicated host profiles in the selected region
+data "ibm_is_dedicated_host_profiles" "profiles" {}
+
+# Filter the dedicated host profiles based on the selected class
+locals {
+  matching_profiles = [for profile in data.ibm_is_dedicated_host_profiles.profiles.profiles :
+    profile.name if profile.family == local.instance_class
+  ]
+
+  available_profiles = [for profile in data.ibm_is_dedicated_host_profiles.profiles.profiles : profile.name]
+}
+
+# Error Handling: If no matching profile is found, return an error message with available profiles
+output "selected_dedicated_host_profile" {
+  value = length(local.matching_profiles) > 0 ? local.matching_profiles[0] : "Error: No matching dedicated host profile found in ${local.region}. Available profiles: ${join(", ", local.available_profiles)}"
+}
+
