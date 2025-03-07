@@ -138,9 +138,9 @@ if [ "${solution}" != "lsf" ]; then
     fi
 else
     if [ "${private_catalog_id}" ]; then
-        SOLUTION=${solution} IBM_CUSTOMER_NUMBER=${ibm_customer_number} PREFIX=${prefix} CLUSTER_ID=${cluster_id} SSH_FILE_PATH="/HPCaaS/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY CATALOG_VALIDATE_SSH_KEY=${catalog_validate_ssh_key} ZONES=${zones} RESOURCE_GROUP=${resource_group} COMPUTE_IMAGE_NAME=${image_name} PRIVATE_CATALOG_ID=${private_catalog_id} VPC_ID=${vpc_id} SUBNET_ID=${vpc_subnet_id} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunHpcDeploymentForCustomImageBuilder" | tee hpc_log_$(date +%d-%m-%Y-%H-%M-%S).log
+        SOLUTION=${solution} PREFIX=${prefix} CLUSTER_ID=${cluster_id} SSH_FILE_PATH="/HPCaaS/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY CATALOG_VALIDATE_SSH_KEY=${catalog_validate_ssh_key} ZONES=${zones} RESOURCE_GROUP=${resource_group} COMPUTE_IMAGE_NAME=${image_name} PRIVATE_CATALOG_ID=${private_catalog_id} VPC_ID=${vpc_id} SUBNET_ID=${vpc_subnet_id} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunHpcDeploymentForCustomImageBuilder" | tee hpc_log_$(date +%d-%m-%Y-%H-%M-%S).log
     else
-        SOLUTION=${solution} IBM_CUSTOMER_NUMBER=${ibm_customer_number} PREFIX=${prefix} CLUSTER_ID=${cluster_id} SSH_FILE_PATH="/HPCaaS/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY ZONES=${zones} RESOURCE_GROUP=${resource_group} COMPUTE_IMAGE_NAME=${image_name} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunHpcDeploymentForCustomImageBuilder" | tee hpc_log_$(date +%d-%m-%Y-%H-%M-%S).log
+        SOLUTION=${solution} PREFIX=${prefix} CLUSTER_ID=${cluster_id} SSH_FILE_PATH="/HPCaaS/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY ZONES=${zones} RESOURCE_GROUP=${resource_group} COMPUTE_IMAGE_NAME=${image_name} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunHpcDeploymentForCustomImageBuilder" | tee hpc_log_$(date +%d-%m-%Y-%H-%M-%S).log
     fi
 fi
 echo "========== Deleting the SSH key ========="

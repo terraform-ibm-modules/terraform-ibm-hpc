@@ -40,7 +40,7 @@ common_suite() {
                 # get ssh-key created based on pr-id
                 get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}"
                 SSH_KEY=${CICD_SSH_KEY:?} COMPUTE_IMAGE_NAME=${compute_image_name:?} LOGIN_NODE_IMAGE_NAME=${login_image_name:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
-                    ZONE=${zone:?} SOLUTION=${solution:?} IBM_CUSTOMER_NUMBER=${ibm_customer_number:?} DEFAULT_EXISTING_RESOURCE_GROUP=${resource_group:?} \
+                    ZONE=${zone:?} SOLUTION=${solution:?} DEFAULT_EXISTING_RESOURCE_GROUP=${resource_group:?} \
                     go test -v -timeout 9000m -run "${test_cases}" | tee -a "$LOG_FILE"
                 # Upload log/test_output files to cos bucket
                 cos_upload "PR" "${CHECK_SOLUTION}" "${DIRECTORY}"
@@ -78,7 +78,7 @@ common_suite() {
                 # get ssh-key created based on commit-id
                 get_commit_ssh_key "${REVISION}" "${CHECK_SOLUTION}"
                 SSH_KEY=${CICD_SSH_KEY:?} COMPUTE_IMAGE_NAME=${compute_image_name:?} LOGIN_NODE_IMAGE_NAME=${login_image_name:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
-                    ZONE=${zone:?} SOLUTION=${solution:?} IBM_CUSTOMER_NUMBER=${ibm_customer_number:?} DEFAULT_EXISTING_RESOURCE_GROUP=${resource_group:?} \
+                    ZONE=${zone:?} SOLUTION=${solution:?} DEFAULT_EXISTING_RESOURCE_GROUP=${resource_group:?} \
                     go test -v -timeout 9000m -run "${test_cases}" | tee -a "$LOG_FILE"
                 # Upload log/test_output files to cos bucket
                 cos_upload "REGRESSION" "${CHECK_SOLUTION}" "${DIRECTORY}" "${VALIDATION_LOG_FILE_NAME}"

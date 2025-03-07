@@ -700,8 +700,8 @@ func VerifyCloudMonitoring(
 	mgmtErr := LSFPrometheusAndDragentServiceForManagementNodes(t, sshClient, managementNodeIPList, isCloudMonitoringEnabledForManagement, logger)
 	utils.LogVerificationResult(t, mgmtErr, "Prometheus and Dragent service for management nodes", logger)
 
-	// Verify Prometheus Dragent service for compute nodes
-	compErr := LSFPrometheusAndDragentServiceForComputeNodes(t, sshClient, expectedSolution, staticWorkerNodeIPList, isCloudMonitoringEnabledForCompute, logger)
+	// Verify Dragent service for compute nodes
+	compErr := LSFDragentServiceForComputeNodes(t, sshClient, expectedSolution, staticWorkerNodeIPList, isCloudMonitoringEnabledForCompute, logger)
 	utils.LogVerificationResult(t, compErr, "Prometheus and Dragent service for compute nodes", logger)
 
 }

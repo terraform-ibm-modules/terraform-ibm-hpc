@@ -71,9 +71,6 @@ spec:
     - name: solution
       description: Provide the value for the solution that is needed for the support of lsf and HPC.
       default: "lsf"
-    - name: ibm_customer_number
-      description: Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)..
-      default: ""
   workspaces:
     - name: workspace
       mountPath: /artifacts
@@ -121,8 +118,6 @@ spec:
         value: $(params.git_access_token)
       - name: solution
         value: $(params.solution)
-      - name: ibm_customer_number
-        value: $(params.ibm_customer_number)
       - name: management_image_name
         value: $(params.management_image_name)
   steps:
