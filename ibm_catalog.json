@@ -78,10 +78,6 @@
                             "key": "remote_allowed_ips"
                         },
                         {
-                            "key": "ibm_customer_number",
-                            "required": true
-                        },
-                        {
                             "key": "zones",
                             "required": true,
                             "default_value": ["us-east-1"],

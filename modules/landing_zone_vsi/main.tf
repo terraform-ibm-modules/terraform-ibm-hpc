@@ -98,7 +98,6 @@ module "management_candidate_vsi" {
   machine_type                  = data.ibm_is_instance_profile.management_node.name
   vsi_per_subnet                = 1
   tags                          = local.tags
-  depends_on                    = [module.lsf_entitlement]
 }
 
 module "worker_vsi" {
@@ -124,7 +123,7 @@ module "worker_vsi" {
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   enable_dedicated_host         = var.enable_dedicated_host
   dedicated_host_id             = var.dedicated_host_id
-  depends_on                    = [module.management_vsi, module.lsf_entitlement, module.do_management_vsi_configuration]
+  depends_on                    = [module.management_vsi, module.do_management_vsi_configuration]
 }
 
 module "login_vsi" {
@@ -236,22 +235,6 @@ module "wait_worker_vsi_booted" {
   ]
 }
 
-module "lsf_entitlement" {
-  count               = var.solution == "lsf" ? 1 : 0
-  source              = "./../../modules/null/remote_exec"
-  cluster_host        = concat([local.management_private_ip])
-  cluster_user        = var.cluster_user #"root"            #"root"
-  cluster_private_key = var.compute_private_key_content
-  login_host          = var.bastion_fip
-  login_user          = "ubuntu"
-  login_private_key   = var.bastion_private_key_content
-  command             = ["sudo python3.8 /opt/IBM/cloud_entitlement/entitlement_check.py --products ${local.products} --icns ${var.ibm_customer_number != null ? var.ibm_customer_number : ""}"]
-  depends_on = [
-    module.management_vsi,
-    module.wait_management_vsi_booted # this implies vsi have been configured too
-  ]
-}
-
 module "do_management_vsi_configuration" {
   source              = "./../../modules/null/remote_exec_script"
   cluster_host        = concat([local.management_private_ip])
@@ -268,8 +251,7 @@ module "do_management_vsi_configuration" {
   sudo_user           = "root"
   with_bash           = true
   depends_on = [
-    module.wait_management_vsi_booted,
-    module.lsf_entitlement
+    module.wait_management_vsi_booted
   ]
   trigger_string = join(",", module.management_vsi[0].ids)
 }

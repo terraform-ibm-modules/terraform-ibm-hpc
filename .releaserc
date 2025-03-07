@@ -10,7 +10,7 @@
     }],
     ["@semantic-release/exec", {
       "successCmd": "echo \"SEMVER_VERSION=${nextRelease.version}\" >> $GITHUB_ENV",
-      "publishCmd": "./ci/trigger-catalog-onboarding-pipeline.sh --version=${nextRelease.version}"
+      "publishCmd": "./ci/trigger-catalog-onboarding-pipeline.sh --version=v${nextRelease.version}"
     }]
   ]
 }

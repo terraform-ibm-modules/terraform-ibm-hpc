@@ -16,7 +16,7 @@ locals {
   management_ssh_keys           = local.compute_ssh_keys
   ldap_enable                   = var.enable_ldap == true && var.ldap_server == "null" ? 1 : 0
   #  enable_worker_vsi             = var.solution == "lsf" && var.worker_node_min_count >= 0 ? var.worker_node_min_count : 0
-  products = var.solution == "lsf" && var.enable_app_center ? "lsf,lsf-app-center" : "lsf"
+  # products = var.solution == "lsf" && var.enable_app_center ? "lsf,lsf-app-center" : "lsf"
 
   # Region and Zone calculations
   region = join("-", slice(split("-", var.zones[0]), 0, 2))

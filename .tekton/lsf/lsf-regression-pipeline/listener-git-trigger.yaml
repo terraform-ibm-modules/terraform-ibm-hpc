@@ -80,9 +80,6 @@ spec:
     - name: solution
       description: Provide the value for the solution that is needed for the support of lsf and HPC.
       default: "lsf"
-    - name: ibm_customer_number
-      description: Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)..
-      default: ""
     - name: pac_ha_exist_certificate
       description: PAC HA Existing Certificate
       default: ""
@@ -142,8 +139,6 @@ spec:
             value: $(params.cos_api_key)
           - name: solution
             value: $(params.solution)
-          - name: ibm_customer_number
-            value: $(params.ibm_customer_number)
           - name: hpc_custom_reports_repo
             value: $(params.hpc_custom_reports_repo)
           - name: hpc_custom_reports_branch
@@ -199,8 +194,6 @@ spec:
       value: $(params.git_user_email)
     - name: solution
       value: $(params.solution)
-    - name: ibm_customer_number
-      value: $(params.ibm_customer_number)
     - name: pac_ha_exist_certificate
       value: $(params.pac_ha_exist_certificate)
 ---
@@ -265,8 +258,6 @@ spec:
     - name: git_user_email
       value: $(event.ref)
     - name: solution
-      value: $(event.ref)
-    - name: ibm_customer_number
       value: $(event.ref)
     - name: pac_ha_exist_certificate
       value: $(event.ref)

@@ -144,7 +144,6 @@ module "landing_zone_vsi" {
   observability_logs_enable_for_compute            = var.observability_logs_enable_for_compute
   solution                                         = var.solution
   worker_node_max_count                            = var.worker_node_max_count
-  ibm_customer_number                              = var.ibm_customer_number
   worker_node_instance_type                        = var.worker_node_instance_type
   enable_dedicated_host                            = var.enable_dedicated_host
   dedicated_host_id                                = var.enable_dedicated_host && local.total_worker_node_count >= 1 ? module.dedicated_host[0].dedicated_host_id[0] : null

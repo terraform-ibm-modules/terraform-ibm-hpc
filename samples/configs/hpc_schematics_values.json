@@ -84,13 +84,6 @@
           "description": "Provide a unique cluster name that LSF uses to configure and group the cluster. Without this name, LSF cannot form a cluster, and the initial deployments will fail. The cluster name can be up to 39 alphanumeric characters and may include underscores (_), hyphens (-), and periods (.). Spaces and other special characters are not allowed. Avoid using the name of any host or user as the cluster name. Note that the cluster name cannot be changed after deployment."
         },
         {
-          "name": "ibm_customer_number",
-          "value": "__NULL__",
-          "type": "string",
-          "secure": true,
-          "description": "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
-        },
-        {
           "name": "bastion_ssh_keys",
           "value": "[\"Please fill here\"]",
           "type": "list(string)",

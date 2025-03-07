@@ -11,10 +11,9 @@ import (
 )
 
 var (
-	ip                   string
-	reservationIDSouth   string
-	reservationIDEast    string
-	HPCIbmCustomerNumber string
+	ip                 string
+	reservationIDSouth string
+	reservationIDEast  string
 )
 
 // Define a struct with fields that match the structure of the YAML data
@@ -70,7 +69,6 @@ type Config struct {
 	SSHFilePath                                 string       `yaml:"ssh_file_path"`
 	SSHFilePathTwo                              string       `yaml:"ssh_file_path_two"`
 	Solution                                    string       `yaml:"solution"`
-	IBMCustomerNumber                           string       `yaml:"ibm_customer_number"`
 	WorkerNodeMaxCount                          int          `yaml:"worker_node_max_count"`
 	WorkerNodeInstanceType                      []WorkerNode `yaml:"worker_node_instance_type"`
 	SccEnabled                                  bool         `yaml:"scc_enable"`
@@ -127,24 +125,6 @@ func GetConfigFromYAML(filePath string) (*Config, error) {
 		reservationIDEast = *reservationIDEastPtr
 	}
 
-	// Retrieve IBM customer number from Secret Manager                        // pragma: allowlist secret
-	val, ok := permanentResources["hpc_ibm_customer_number_secret_id"].(string)
-	if !ok {
-		fmt.Println("Invalid type or nil value")
-	}
-
-	IBMCustomerNumberPtr, err := GetSecretsManagerKey(
-		permanentResources["secretsManagerGuid"].(string),
-		permanentResources["secretsManagerRegion"].(string),
-		val, // Use `val` here after checking
-	)
-
-	if err != nil {
-		fmt.Printf("Retrieving IBM Customer Number from secrets: %v\n", err) // pragma: allowlist secret
-	} else if IBMCustomerNumberPtr != nil {
-		HPCIbmCustomerNumber = *IBMCustomerNumberPtr
-	}
-
 	// Set environment variables from config
 	if err := setEnvFromConfig(&config); err != nil {
 		return nil, fmt.Errorf("failed to set environment variables: %v", err)
@@ -197,7 +177,6 @@ func setEnvFromConfig(config *Config) error {
 		"SSH_FILE_PATH":                       config.SSHFilePath,
 		"SSH_FILE_PATH_TWO":                   config.SSHFilePathTwo,
 		"SOLUTION":                            config.Solution,
-		"IBM_CUSTOMER_NUMBER":                 config.IBMCustomerNumber,  //LSF specific parameter
 		"WORKER_NODE_MAX_COUNT":               config.WorkerNodeMaxCount, //LSF specific parameter
 		"SCC_ENABLED":                         config.SccEnabled,
 		"SCC_EVENT_NOTIFICATION_PLAN":         config.SccEventNotificationPlan,
@@ -280,8 +259,7 @@ func setEnvFromConfig(config *Config) error {
 			os.Setenv("EU_DE_RESERVATION_ID", reservationIDEast)
 		case key == "US_SOUTH_RESERVATION_ID" && !ok && value == "":
 			os.Setenv("US_SOUTH_RESERVATION_ID", reservationIDSouth)
-		case key == "IBM_CUSTOMER_NUMBER" && !ok && value == "":
-			os.Setenv("IBM_CUSTOMER_NUMBER", HPCIbmCustomerNumber)
+
 		}
 	}
 	return nil

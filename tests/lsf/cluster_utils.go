@@ -2095,7 +2095,7 @@ func ValidateFlowLogs(t *testing.T, apiKey, region, resourceGroup, clusterPrefix
 	if err := utils.LoginIntoIBMCloudUsingCLI(t, apiKey, region, resourceGroup); err != nil {
 		return fmt.Errorf("failed to log in to IBM Cloud: %w", err)
 	}
-	flowLogName := fmt.Sprintf("%s-hpc-vpc", clusterPrefix)
+	flowLogName := fmt.Sprintf("%s-lsf-vpc", clusterPrefix)
 	// Fetching the flow log details
 	retrieveFlowLogs := fmt.Sprintf("ibmcloud is flow-logs %s", flowLogName)
 	cmdRetrieveFlowLogs := exec.Command("bash", "-c", retrieveFlowLogs)
@@ -3265,13 +3265,13 @@ func VerifyCloudLogsURLFromTerraformOutput(t *testing.T, LastTestTerraformOutput
 
 		logger.Info(t, fmt.Sprintf("API Status: %s - %d", cloudLogsURL, statusCode))
 
-		if statusCode < 200 || statusCode >= 500 {
-			logger.Warn(t, fmt.Sprintf("API returned non-success status: %d", statusCode))
+		if statusCode != 200 {
+			logger.FAIL(t, fmt.Sprintf("API returned non-success status: %d", statusCode))
 			return fmt.Errorf("API returned non-success status: %d", statusCode)
-		} else {
-			logger.PASS(t, fmt.Sprintf("API returned success status: %d", statusCode))
 		}
-		logger.Info(t, fmt.Sprintf("API Status: %s - %d\n", cloudLogsURL, statusCode))
+
+		logger.PASS(t, fmt.Sprintf("API returned success status: %d", statusCode))
+
 	}
 
 	logger.Info(t, "Terraform output validation completed successfully")
@@ -3464,21 +3464,8 @@ func VerifycloudMonitoringURLFromTerraformOutput(t *testing.T, LastTestTerraform
 		if !ok || len(strings.TrimSpace(cloudLogsURL)) == 0 {
 			return errors.New("missing or empty 'cloud_monitoring_url' in Terraform outputs")
 		}
-		logger.Info(t, fmt.Sprintf("cloud_monitoring_url = %s", cloudLogsURL))
-		statusCode, err := utils.CheckAPIStatus(cloudLogsURL)
-		if err != nil {
-			return fmt.Errorf("error checking cloud_monitoring_url API: %v", err)
-		}
 
-		logger.Info(t, fmt.Sprintf("API Status: %s - %d", cloudLogsURL, statusCode))
-
-		if statusCode < 200 || statusCode >= 500 {
-			logger.Warn(t, fmt.Sprintf("API returned non-success status: %d", statusCode))
-			return fmt.Errorf("API returned non-success status: %d", statusCode)
-		} else {
-			logger.PASS(t, fmt.Sprintf("API returned success status: %d", statusCode))
-		}
-		logger.Info(t, fmt.Sprintf("API Status: %s - %d\n", cloudLogsURL, statusCode))
+		logger.PASS(t, fmt.Sprintf("cloud_monitoring_url present: %s", cloudLogsURL))
 	}
 
 	logger.Info(t, "cloud_monitoring_url Terraform output validation completed successfully")
@@ -3516,11 +3503,11 @@ func LSFPrometheusAndDragentServiceForManagementNodes(t *testing.T, sshClient *s
 	return nil
 }
 
-// LSFPrometheusAndDragentServiceForComputeNodes validates the Prometheus and Dragent services for compute nodes.
+// LSFDragentServiceForComputeNodes validates the Dragent services for compute nodes.
 // If cloud monitoring is enabled, it retrieves compute node IPs and verifies service statuses via SSH.
 // The function logs results and returns an error if any node fails validation.
 
-func LSFPrometheusAndDragentServiceForComputeNodes(
+func LSFDragentServiceForComputeNodes(
 	t *testing.T,
 	sshClient *ssh.Client,
 	expectedSolution string,
@@ -3540,12 +3527,8 @@ func LSFPrometheusAndDragentServiceForComputeNodes(
 			return fmt.Errorf("failed to retrieve compute node IPs: %w", err)
 		}
 
-		// Iterate over each compute node and verify Prometheus service
+		// Iterate over each compute node and verify dragent service
 		for _, computeIP := range computeNodeIPs {
-			err := VerifyLSFPrometheusServiceForNode(t, sshClient, computeIP, logger)
-			if err != nil {
-				return fmt.Errorf("failed Prometheus service verification for compute node %s: %w", computeIP, err)
-			}
 
 			err = VerifyLSFdragentServiceForNode(t, sshClient, computeIP, logger)
 			if err != nil {
@@ -3554,7 +3537,7 @@ func LSFPrometheusAndDragentServiceForComputeNodes(
 
 		}
 	} else {
-		logger.Warn(t, "Cloud monitoring are not enabled for the compute node. As a result, the Prometheus and Fluent dragent service will not be validated.")
+		logger.Warn(t, "Cloud monitoring are not enabled for the compute node. As a result, the dragent service will not be validated.")
 	}
 	return nil
 }

@@ -48,6 +48,7 @@ var ignoreDestroys = []string{
 	"module.landing_zone_vsi[0].module.wait_worker_vsi_booted[0].null_resource.remote_exec[0]",
 	"module.check_node_status.null_resource.remote_exec[2]",
 	"module.landing_zone_vsi[0].module.wait_worker_vsi_booted[0].null_resource.remote_exec[1]",
+	"module.landing_zone_vsi[0].module.do_management_vsi_configuration.null_resource.remote_exec_script_run[0]",
 }
 
 var ignoreUpdates = []string{
@@ -101,7 +102,6 @@ type EnvVars struct {
 	JPTokClusterName                            string
 	WorkerNodeMaxCount                          string
 	WorkerNodeInstanceType                      string
-	IBMCustomerNumber                           string
 	Solution                                    string
 	sccEnabled                                  string
 	sccEventNotificationPlan                    string
@@ -154,7 +154,6 @@ func GetEnvVars() EnvVars {
 		SSHFilePath:                     os.Getenv("SSH_FILE_PATH"),
 		WorkerNodeMaxCount:              os.Getenv("WORKER_NODE_MAX_COUNT"),     //LSF specific parameter
 		WorkerNodeInstanceType:          os.Getenv("WORKER_NODE_INSTANCE_TYPE"), //LSF specific parameter
-		IBMCustomerNumber:               os.Getenv("IBM_CUSTOMER_NUMBER"),       //LSF specific parameter
 		Solution:                        os.Getenv("SOLUTION"),
 		sccEnabled:                      os.Getenv("SCC_ENABLED"),
 		sccEventNotificationPlan:        os.Getenv("SCC_EVENT_NOTIFICATION_PLAN"),
@@ -223,7 +222,7 @@ func validateEnvVars(solution string, envVars EnvVars) error {
 	if strings.Contains(solution, "hpc") {
 		requiredVars = []string{"SSHKey", "ClusterName", "Zone", "ReservationID"}
 	} else if strings.Contains(solution, "lsf") {
-		requiredVars = []string{"SSHKey", "ClusterName", "Zone", "IBMCustomerNumber"}
+		requiredVars = []string{"SSHKey", "ClusterName", "Zone"}
 	} else {
 		return fmt.Errorf("invalid solution type: %s", solution)
 	}
@@ -331,7 +330,6 @@ func setupOptions(t *testing.T, hpcClusterPrefix, terraformDir, existingResource
 			"observability_atracker_enable": false,
 			"dns_domain_name":               map[string]string{"compute": envVars.DnsDomainName},
 			"worker_node_max_count":         envVars.WorkerNodeMaxCount,     //LSF specific parameter
-			"ibm_customer_number":           envVars.IBMCustomerNumber,      //LSF specific parameter
 			"worker_node_instance_type":     envVars.WorkerNodeInstanceType, //LSF specific parameter
 			"solution":                      envVars.Solution,
 			"scc_enable":                    false,
@@ -342,7 +340,6 @@ func setupOptions(t *testing.T, hpcClusterPrefix, terraformDir, existingResource
 	if solution == "hpc" {
 		delete(options.TerraformVars, "worker_node_max_count")
 		delete(options.TerraformVars, "worker_node_instance_type")
-		delete(options.TerraformVars, "ibm_customer_number")
 
 	}
 
