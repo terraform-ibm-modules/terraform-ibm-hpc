@@ -22,6 +22,12 @@ variable "playbook_path" {
   default     = "ssh.yaml"
 }
 
+variable "playbooks_root_path" {
+  description = "Playbook root path"
+  type        = string
+  default     = ""
+}
+
 variable "enable_bastion" {
   type        = bool
   default     = true

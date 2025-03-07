@@ -1,0 +1,20 @@
+# Update the Network Tunables
+---
+- name: LSF_Tunables | Ensure sysctl parameters are set
+  ansible.builtin.lineinfile:
+    path: "{{ sysctl_conf }}"
+    line: "{{ item }}"
+    create: yes
+  loop:
+    - "vm.overcommit_memory=1"
+    - "net.core.rmem_max=26214400"
+    - "net.core.rmem_default=26214400"
+    - "net.core.wmem_max=26214400"
+    - "net.core.wmem_default=26214400"
+    - "net.ipv4.tcp_fin_timeout=5"
+    - "net.core.somaxconn=8000"
+
+- name: LSF_Tunables | Apply sysctl settings
+  ansible.builtin.command:
+    cmd: sysctl -p "{{ sysctl_conf }}"
+  changed_when: false

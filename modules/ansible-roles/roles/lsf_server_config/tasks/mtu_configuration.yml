@@ -1,0 +1,32 @@
+---
+- name: MTU | Check if MTU and Domain are already configured
+  ansible.builtin.shell: |
+    grep -q '^MTU=9000' {{ network_script_path }}/ifcfg-{{ network_interface }} && \
+    grep -q '^DOMAIN={{ dns_domain_names }}' {{ network_script_path }}/ifcfg-{{ network_interface }}
+  register: mtu_check
+  failed_when: false
+  changed_when: false
+  ignore_errors: true
+
+- name: MTU | Set MTU and Domain in network script
+  ansible.builtin.blockinfile:
+    path: "{{ network_script_path }}/ifcfg-{{ network_interface }}"
+    block: |
+      MTU=9000
+      DOMAIN={{ dns_domain_names }}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+  when: mtu_check.rc != 0
+
+- name: MTU | Get default gateway and CIDR range
+  ansible.builtin.shell: |
+    gateway_ip=$(ip route | grep default | awk '{print $3}' | head -n 1)
+    cidr_range=$(ip route show | grep "kernel" | awk '{print $1}' | head -n 1)
+    echo "$cidr_range via $gateway_ip dev {{ network_interface }} metric 0 mtu 9000"
+  register: route
+  changed_when: false
+
+- name: MTU | Set MTU at the router level
+  ansible.builtin.lineinfile:
+    path: "{{ network_script_path }}/route-{{ network_interface }}"
+    line: "{{ route.stdout }}"
+    create: yes
