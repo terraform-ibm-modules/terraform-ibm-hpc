@@ -57,7 +57,7 @@ module "nfs_storage_sg" {
 module "management_vsi" {
   count                         = 1
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.5.0"
+  version                       = "4.6.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -80,7 +80,7 @@ module "management_vsi" {
 module "management_candidate_vsi" {
   count                         = var.management_node_count - 1
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.5.0"
+  version                       = "4.6.0"
   create_security_group         = false
   security_group                = null
   security_group_ids            = module.compute_sg[*].security_group_id
@@ -103,7 +103,7 @@ module "management_candidate_vsi" {
 module "worker_vsi" {
   count                         = length(local.flattened_worker_nodes)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.5.0"
+  version                       = "4.6.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -129,7 +129,7 @@ module "worker_vsi" {
 module "login_vsi" {
   #  count                         = 1
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.5.0"
+  version                       = "4.6.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -153,7 +153,7 @@ module "login_vsi" {
 module "ldap_vsi" {
   count                         = local.ldap_enable
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.5.0"
+  version                       = "4.6.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
