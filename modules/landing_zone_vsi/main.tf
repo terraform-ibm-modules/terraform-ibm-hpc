@@ -47,7 +47,7 @@ module "client_sg" {
   add_ibm_cloud_internal_rules = true
   resource_group               = local.resource_group_id
   security_group_name          = format("%s-client-sg", local.prefix)
-  security_group_rules         = distinct(concat(local.client_security_group_rules))
+  security_group_rules         = local.client_security_group_rules
   vpc_id                       = var.vpc_id
 }
 
@@ -58,7 +58,7 @@ module "compute_sg" {
   add_ibm_cloud_internal_rules = true
   resource_group               = local.resource_group_id
   security_group_name          = format("%s-comp-sg", local.prefix)
-  security_group_rules         = distinct(concat(local.compute_security_group_rules))
+  security_group_rules         = local.compute_security_group_rules
   vpc_id                       = var.vpc_id
 }
 
@@ -69,7 +69,7 @@ module "storage_sg" {
   add_ibm_cloud_internal_rules = true
   resource_group               = local.resource_group_id
   security_group_name          = format("%s-strg-sg", local.prefix)
-  security_group_rules         = distinct(concat(local.storage_security_group_rules))
+  security_group_rules         = local.storage_security_group_rules
   vpc_id                       = var.vpc_id
 }
 
@@ -80,7 +80,7 @@ module "bastion_sg_existing" {
   resource_group                 = local.resource_group_id
   use_existing_security_group_id = true
   existing_security_group_id     = var.bastion_security_group_id
-  security_group_rules           = distinct(concat(local.compute_security_group_rules))
+  security_group_rules           = local.compute_security_group_rules
   vpc_id                         = var.vpc_id
 }
 
