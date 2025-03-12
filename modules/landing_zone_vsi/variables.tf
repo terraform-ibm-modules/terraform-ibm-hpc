@@ -457,10 +457,6 @@ variable "worker_node_max_count" {
   type        = number
   default     = 10
   description = "The maximum number of worker nodes that can be deployed in the Spectrum LSF cluster. In order to use the [Resource Connector](https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=lsf-resource-connnector) feature to dynamically create and delete worker nodes based on workload demand, the value selected for this parameter must be larger than worker_node_min_count. If you plan to deploy only static worker nodes in the LSF cluster, e.g., when using Spectrum Scale storage, the value for this parameter should be equal to worker_node_min_count. Enter a value in the range 1 - 500."
-  validation {
-    condition     = 1 <= var.worker_node_max_count && var.worker_node_max_count <= 500
-    error_message = "Input \"worker_node_max_count must\" be >= 1 and <= 500."
-  }
 }
 ##############################################################################
 # Dedicated Host
