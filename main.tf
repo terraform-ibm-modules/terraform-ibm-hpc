@@ -111,7 +111,7 @@ module "prepare_tf_input" {
   enable_atracker           = var.enable_atracker
   enable_vpc_flow_logs      = var.enable_vpc_flow_logs
   allowed_cidr              = var.allowed_cidr
-  vpc                       = local.vpc
+  vpc                       = local.vpc_name
   vpc_id                    = local.vpc_id
   storage_subnets           = local.storage_subnet
   protocol_subnets          = local.protocol_subnet

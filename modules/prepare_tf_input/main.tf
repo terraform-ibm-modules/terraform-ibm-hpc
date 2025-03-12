@@ -3,7 +3,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   content  = <<EOT
 {
   "ibmcloud_api_key": "${var.ibmcloud_api_key}",
-  "resource_group": "${var.resource_group}",
+  "existing_resource_group": "${var.resource_group}",
   "prefix": "${var.prefix}",
   "zones": ${local.zones},
   "enable_landing_zone": false,
@@ -22,7 +22,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "enable_atracker": ${var.enable_atracker},
   "enable_vpc_flow_logs": ${var.enable_vpc_flow_logs},
   "allowed_cidr": ${local.allowed_cidr},
-  "vpc": "${var.vpc}",
+  "vpc_name": "${var.vpc}",
   "vpc_id": "${var.vpc_id}",
   "storage_subnets": ${local.list_storage_subnets},
   "protocol_subnets": ${local.list_protocol_subnets},
