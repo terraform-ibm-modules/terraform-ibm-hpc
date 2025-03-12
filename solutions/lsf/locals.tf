@@ -20,7 +20,7 @@ locals {
 
 locals {
   config = {
-    resource_group                                   = var.resource_group
+    existing_resource_group                          = var.existing_resource_group
     allowed_cidr                                     = var.allowed_cidr
     deployer_instance_profile                        = var.deployer_instance_profile
     ssh_keys                                         = var.ssh_keys
@@ -62,7 +62,7 @@ locals {
     storage_instances                                = var.storage_instances
     storage_ssh_keys                                 = var.storage_ssh_keys
     storage_subnets_cidr                             = var.storage_subnets_cidr
-    vpc                                              = var.vpc
+    vpc_name                                         = var.vpc_name
     vpn_peer_address                                 = var.vpn_peer_address
     vpn_peer_cidr                                    = var.vpn_peer_cidr
     vpn_preshared_key                                = var.vpn_preshared_key
@@ -81,14 +81,14 @@ locals {
     scc_enable                                       = var.scc_enable
     scc_profile                                      = var.scc_profile
     # scc_profile_version                              = var.scc_profile_version
-    scc_location                                     = var.scc_location
-    scc_event_notification_plan                      = var.scc_event_notification_plan
-    skip_flowlogs_s2s_auth_policy                    = var.skip_flowlogs_s2s_auth_policy
-    skip_iam_authorization_policy                    = var.skip_iam_authorization_policy
-    skip_kms_s2s_auth_policy                         = var.skip_kms_s2s_auth_policy
+    scc_location                  = var.scc_location
+    scc_event_notification_plan   = var.scc_event_notification_plan
+    skip_flowlogs_s2s_auth_policy = var.skip_flowlogs_s2s_auth_policy
+    skip_iam_authorization_policy = var.skip_iam_authorization_policy
+    skip_kms_s2s_auth_policy      = var.skip_kms_s2s_auth_policy
 
     # New Variables
-    ibmcloud_api_key                                 = var.ibmcloud_api_key
+    ibmcloud_api_key = var.ibmcloud_api_key
   }
 }
 
@@ -96,7 +96,7 @@ locals {
 # Compile Environment for Config output
 locals {
   env = {
-    resource_group                                   = lookup(local.override[local.override_type], "resource_group", local.config.resource_group)
+    existing_resource_group                          = lookup(local.override[local.override_type], "existing_resource_group", local.config.existing_resource_group)
     allowed_cidr                                     = lookup(local.override[local.override_type], "allowed_cidr", local.config.allowed_cidr)
     deployer_instance_profile                        = lookup(local.override[local.override_type], "deployer_instance_profile", local.config.deployer_instance_profile)
     ssh_keys                                         = lookup(local.override[local.override_type], "ssh_keys", local.config.ssh_keys)
@@ -138,7 +138,7 @@ locals {
     storage_instances                                = lookup(local.override[local.override_type], "storage_instances", local.config.storage_instances)
     storage_ssh_keys                                 = lookup(local.override[local.override_type], "storage_ssh_keys", local.config.storage_ssh_keys)
     storage_subnets_cidr                             = lookup(local.override[local.override_type], "storage_subnets_cidr", local.config.storage_subnets_cidr)
-    vpc                                              = lookup(local.override[local.override_type], "vpc", local.config.vpc)
+    vpc_name                                         = lookup(local.override[local.override_type], "vpc_name", local.config.vpc_name)
     vpn_peer_address                                 = lookup(local.override[local.override_type], "vpn_peer_address", local.config.vpn_peer_address)
     vpn_peer_cidr                                    = lookup(local.override[local.override_type], "vpn_peer_cidr", local.config.vpn_peer_cidr)
     vpn_preshared_key                                = lookup(local.override[local.override_type], "vpn_preshared_key", local.config.vpn_preshared_key)
@@ -157,12 +157,12 @@ locals {
     scc_enable                                       = lookup(local.override[local.override_type], "scc_enable", local.config.scc_enable)
     scc_profile                                      = lookup(local.override[local.override_type], "scc_profile", local.config.scc_profile)
     # scc_profile_version                              = lookup(local.override[local.override_type], "scc_profile_version", local.config.scc_profile_version)
-    scc_location                                     = lookup(local.override[local.override_type], "scc_location", local.config.scc_location)
-    scc_event_notification_plan                      = lookup(local.override[local.override_type], "scc_event_notification_plan", local.config.scc_event_notification_plan)
-    skip_flowlogs_s2s_auth_policy                    = lookup(local.override[local.override_type], "skip_flowlogs_s2s_auth_policy", local.config.skip_flowlogs_s2s_auth_policy)
-    skip_iam_authorization_policy                    = lookup(local.override[local.override_type], "skip_iam_authorization_policy", local.config.skip_iam_authorization_policy)
-    skip_kms_s2s_auth_policy                         = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
+    scc_location                  = lookup(local.override[local.override_type], "scc_location", local.config.scc_location)
+    scc_event_notification_plan   = lookup(local.override[local.override_type], "scc_event_notification_plan", local.config.scc_event_notification_plan)
+    skip_flowlogs_s2s_auth_policy = lookup(local.override[local.override_type], "skip_flowlogs_s2s_auth_policy", local.config.skip_flowlogs_s2s_auth_policy)
+    skip_iam_authorization_policy = lookup(local.override[local.override_type], "skip_iam_authorization_policy", local.config.skip_iam_authorization_policy)
+    skip_kms_s2s_auth_policy      = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
     # New Variables
-    ibmcloud_api_key                                 = lookup(local.override[local.override_type], "ibmcloud_api_key", local.config.ibmcloud_api_key)
+    ibmcloud_api_key = lookup(local.override[local.override_type], "ibmcloud_api_key", local.config.ibmcloud_api_key)
   }
 }

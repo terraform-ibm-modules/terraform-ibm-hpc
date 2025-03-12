@@ -25,7 +25,7 @@ ENABLE_FLOATING_CLIENTS: false
 ENABLE_STATIC_CLIENTS: true
 
 PACKAGES:
-  GUI: 
+  GUI:
     es: [ ]
     kibana: [ ]
     gpfsio: [ ]
@@ -38,13 +38,13 @@ PACKAGES:
   LSF_Master:
     base: [ lsf-ego-master, lsf-master, lsf-ls-server, lsf-release, lsf-resource-connector ]
     dm: [ lsf-data-mgr ]
-  LSF_Server: 
+  LSF_Server:
     base: [ lsf-ego-server, lsf-server, lsf-integrations, lsf-devel, lsf-man-pages ]
     smpi: []
     smpi_misc: []
     pmpi: []
     nfs: [ lsf-nfs-support ]
-  LSF_Client: 
+  LSF_Client:
     base: [ lsf-conf, lsf-client, lsf-ls-client ]
     pm: [ lsf-pm-client ]
     dm: [ lsf-data-mgr ]
@@ -53,10 +53,10 @@ PACKAGES:
     current: [ MariaDB-server, MariaDB-client ]
     previous: [ mariadb-server, mariadb ]
 
-# NOTE:  The packages to remove are not the same as what you need to 
+# NOTE:  The packages to remove are not the same as what you need to
 #        install, because they are dependencies of what was installed
 UNPACKAGES:
-  GUI: 
+  GUI:
     explorer: [ lsf-monitor, lsf-explorer-server ]
     pac: [ lsf-appcenter ]
     base: [ lsf-perf, lsf-gui, logstash-for-lsf, elasticsearch-for-lsf, lsf-gui ,lsf-pm-server ,lsf-pm-client ]
@@ -68,7 +68,7 @@ UNPACKAGES:
   LSF_Server:
     base: [ lsf-conf, lsf-ego-server, lsf-server, lsf-integrations, lsf-devel, lsf-man-pages ,ibm_smpi_lic_s, ibm_smpi ,lsf-pmpi-hpc, lsf-nfs-support ]
     smpi_misc: [ ibm_smpi-devel, ibm_smpi_gpusupport, ibm_smpi-libgpump, ibm_smpi-pami_devel, ibm_spindle, ibm_smpi_mpipsupport ]
-  LSF_Client: 
+  LSF_Client:
     base: [ lsf-ls-client, lsf-man-pages ]
     pm: [ lsf-pm-client ]
     dm: [ lsf-data-mgr ]
@@ -102,7 +102,7 @@ PERF_WORK_DIR: "{{ EXT_TOP }}/{{ PERF_TOP_FOLDER }}/work"
 GUI_TOP: "{{ EXT_TOP }}/{{ GUI_TOP_FOLDER }}"
 GUI_CONF_DIR: "{{ EXT_TOP }}/{{ GUI_TOP_FOLDER }}/conf"
 GUI_WORK_DIR: "{{ EXT_TOP }}/{{ GUI_TOP_FOLDER }}/work"
-# Elasticsearch 
+# Elasticsearch
 ELK_TOP: {{ ELK_TOP }}
 ES_TOP: "{{ ELK_TOP }}/elasticsearch"
 # Logstash

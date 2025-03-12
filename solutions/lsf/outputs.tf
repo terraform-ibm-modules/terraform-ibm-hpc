@@ -1,5 +1,6 @@
 output "lsf" {
-  value = module.lsf.file_storage
+  description = "LSF details"
+  value       = module.lsf.file_storage
   #sensitive = true
 }
 

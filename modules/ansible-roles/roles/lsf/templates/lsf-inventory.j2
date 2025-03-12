@@ -44,11 +44,11 @@ localhost
 {{ host }}
 {% endfor %}
 
-# DB_HOST is optional, and is the machine that hosts the database 
-# used by the Application Center component in LSF Suite.  
-# However, this database is not configured for High Availability (HA). 
+# DB_HOST is optional, and is the machine that hosts the database
+# used by the Application Center component in LSF Suite.
+# However, this database is not configured for High Availability (HA).
 # To enable HA for this database, manually create the database using MariaDB
-# and configure it to be HA-ready, then set the JDBC_string parameter 
+# and configure it to be HA-ready, then set the JDBC_string parameter
 # in the /opt/ibm/lsf_installer/playbook/lsf-config.yml file to specify the database connection.
 [DB_Host]
 {% for host in db_hosts %}

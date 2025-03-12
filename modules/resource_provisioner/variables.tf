@@ -32,12 +32,12 @@ variable "bastion_fip" {
   description = "bastion fip"
 }
 
-variable "bastion_public_key_content" {
-  type        = string
-  sensitive   = true
-  default     = null
-  description = "Bastion public key content."
-}
+# variable "bastion_public_key_content" {
+#   type        = string
+#   sensitive   = true
+#   default     = null
+#   description = "Bastion public key content."
+# }
 
 variable "bastion_private_key_content" {
   type        = string
@@ -49,18 +49,21 @@ variable "bastion_private_key_content" {
 ##############################################################################
 # Terraform generic Variables
 #############################################################################
+# tflint-ignore: all
 variable "TF_PARALLELISM" {
   type        = string
   default     = "250"
   description = "Limit the number of concurrent operation."
 }
 
-variable "TF_VERSION" {
-  type        = string
-  default     = "1.9"
-  description = "The version of the Terraform engine that's used in the Schematics workspace."
-}
+# tflint-ignore: all
+# variable "TF_VERSION" {
+#   type        = string
+#   default     = "1.9"
+#   description = "The version of the Terraform engine that's used in the Schematics workspace."
+# }
 
+# tflint-ignore: all
 variable "TF_LOG" {
   type        = string
   default     = "ERROR"

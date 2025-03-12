@@ -52,7 +52,7 @@ variable "prefix" {
 ##############################################################################
 # Resource Groups Variables
 ##############################################################################
-variable "resource_group" {
+variable "existing_resource_group" {
   type        = string
   default     = "Default"
   description = "String describing resource groups to create or reference"
@@ -62,7 +62,7 @@ variable "resource_group" {
 ##############################################################################
 # VPC Variables
 ##############################################################################
-variable "vpc" {
+variable "vpc_name" {
   type        = string
   default     = null
   description = "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
@@ -263,57 +263,57 @@ variable "compute_gui_password" {
   description = "Password for compute cluster GUI"
 }
 
-variable "cluster_id" {
-  type        = string
-  default     = "HPCCluster"
-  description = "Unique ID of the cluster used by LSF for configuration of resources. This can be up to 39 alphanumeric characters."
-  validation {
-    condition     = 0 < length(var.cluster_id) && length(var.cluster_id) < 40 && can(regex("^[a-zA-Z0-9_.-]+$", var.cluster_id))
-    error_message = "The ID can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters."
-  }
-}
+# variable "cluster_name" {
+#   type        = string
+#   default     = "HPCCluster"
+#   description = "Unique ID of the cluster used by LSF for configuration of resources. This can be up to 39 alphanumeric characters."
+#   validation {
+#     condition     = 0 < length(var.cluster_name) && length(var.cluster_name) < 40 && can(regex("^[a-zA-Z0-9_.-]+$", var.cluster_name))
+#     error_message = "The ID can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters."
+#   }
+# }
 
-variable "enable_hyperthreading" {
-  type        = bool
-  default     = true
-  description = "Setting this to true will enable hyper-threading in the worker nodes of the cluster (default). Otherwise, hyper-threading will be disabled."
-}
+# variable "enable_hyperthreading" {
+#   type        = bool
+#   default     = true
+#   description = "Setting this to true will enable hyper-threading in the worker nodes of the cluster (default). Otherwise, hyper-threading will be disabled."
+# }
 
-variable "enable_dedicated_host" {
-  type        = bool
-  default     = false
-  description = "Set to true to use dedicated hosts for compute hosts (default: false)."
-}
+# variable "enable_dedicated_host" {
+#   type        = bool
+#   default     = false
+#   description = "Set to true to use dedicated hosts for compute hosts (default: false)."
+# }
 
-variable "dedicated_host_placement" {
-  type        = string
-  default     = "spread"
-  description = "Specify 'pack' or 'spread'. The 'pack' option will deploy VSIs on one dedicated host until full before moving on to the next dedicated host."
-  validation {
-    condition     = var.dedicated_host_placement == "spread" || var.dedicated_host_placement == "pack"
-    error_message = "Supported values for dedicated_host_placement: spread or pack."
-  }
-}
+# variable "dedicated_host_placement" {
+#   type        = string
+#   default     = "spread"
+#   description = "Specify 'pack' or 'spread'. The 'pack' option will deploy VSIs on one dedicated host until full before moving on to the next dedicated host."
+#   validation {
+#     condition     = var.dedicated_host_placement == "spread" || var.dedicated_host_placement == "pack"
+#     error_message = "Supported values for dedicated_host_placement: spread or pack."
+#   }
+# }
 
-variable "enable_app_center" {
-  type        = bool
-  default     = false
-  description = "Set to true to install and enable use of the IBM Spectrum LSF Application Center GUI."
-}
+# variable "enable_app_center" {
+#   type        = bool
+#   default     = false
+#   description = "Set to true to install and enable use of the IBM Spectrum LSF Application Center GUI."
+# }
 
-variable "app_center_gui_password" {
-  type        = string
-  default     = "hpc@IBMCloud"
-  sensitive   = true
-  description = "Password for IBM Spectrum LSF Application Center GUI."
-}
+# variable "app_center_gui_password" {
+#   type        = string
+#   default     = "hpc@IBMCloud"
+#   sensitive   = true
+#   description = "Password for IBM Spectrum LSF Application Center GUI."
+# }
 
-variable "app_center_db_password" {
-  type        = string
-  default     = "hpc@IBMCloud"
-  sensitive   = true
-  description = "Password for IBM Spectrum LSF Application Center database GUI."
-}
+# variable "app_center_db_password" {
+#   type        = string
+#   default     = "hpc@IBMCloud"
+#   sensitive   = true
+#   description = "Password for IBM Spectrum LSF Application Center database GUI."
+# }
 
 ##############################################################################
 # Storage Scale Variables
@@ -480,11 +480,11 @@ variable "cos_instance_name" {
   description = "Exiting COS instance name"
 }
 
-variable "enable_atracker" {
-  type        = bool
-  default     = true
-  description = "Enable Activity tracker"
-}
+# variable "enable_atracker" {
+#   type        = bool
+#   default     = true
+#   description = "Enable Activity tracker"
+# }
 
 variable "enable_vpc_flow_logs" {
   type        = bool

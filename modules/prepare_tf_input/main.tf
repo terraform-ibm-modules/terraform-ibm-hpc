@@ -33,7 +33,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "bastion_security_group_id": "${var.bastion_security_group_id}",
   "deployer_hostname": "${var.deployer_hostname}",
   "deployer_ip": "${var.deployer_ip}"
-}    
+}
 EOT
   filename = local.schematics_inputs_path
 }

@@ -52,7 +52,7 @@ variable "prefix" {
 ##############################################################################
 # Resource Groups Variables
 ##############################################################################
-variable "resource_group" {
+variable "existing_resource_group" {
   type        = string
   default     = "Default"
   description = "String describing resource groups to create or reference"
@@ -62,10 +62,10 @@ variable "resource_group" {
 ##############################################################################
 # VPC Variables
 ##############################################################################
-variable "vpc" {
+variable "vpc_name" {
   type        = string
   default     = null
-  description = "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+  description = "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc_name)"
 }
 
 variable "network_cidr" {

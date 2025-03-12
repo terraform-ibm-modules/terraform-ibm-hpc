@@ -1,9 +1,11 @@
 output "bastion_vsi_data" {
-  value = module.bastion_vsi[*]
+  description = "Bastion VSI data"
+  value       = module.bastion_vsi[*]
 }
 
 output "deployer_vsi_data" {
-  value = module.deployer_vsi[*]
+  description = "Deployer VSI data"
+  value       = module.deployer_vsi[*]
 }
 
 output "bastion_fip" {

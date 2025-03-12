@@ -1,3 +1,4 @@
 output "custom" {
-  value = module.custom
+  description = "Custom details"
+  value       = module.custom
 }

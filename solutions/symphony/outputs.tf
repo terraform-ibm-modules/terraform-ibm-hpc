@@ -1,3 +1,4 @@
 output "symphony" {
-  value = module.symphony
+  description = "Symphony details"
+  value       = module.symphony
 }

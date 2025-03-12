@@ -1,3 +1,4 @@
 output "scale" {
-  value = module.scale
+  description = "Scale details"
+  value       = module.scale
 }

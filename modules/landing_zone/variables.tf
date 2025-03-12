@@ -256,11 +256,11 @@ variable "kms_key_name" {
   description = "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. (for example kms_key_name: my-encryption-key)."
 }
 
-variable "hpcs_instance_name" {
-  type        = string
-  default     = null
-  description = "Hyper Protect Crypto Service instance"
-}
+# variable "hpcs_instance_name" {
+#   type        = string
+#   default     = null
+#   description = "Hyper Protect Crypto Service instance"
+# }
 
 variable "skip_flowlogs_s2s_auth_policy" {
   type        = bool

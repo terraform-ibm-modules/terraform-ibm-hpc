@@ -5,7 +5,7 @@ locals {
 }
 
 module "observability_instance" {
-  count = var.enable_deployer ? 1 : 0 
+  count = var.enable_deployer ? 1 : 0
   # Replace "master" with a GIT release version to lock into a specific release
   source            = "terraform-ibm-modules/observability-instances/ibm"
   version           = "3.3.1"

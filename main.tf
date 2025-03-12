@@ -3,13 +3,11 @@ module "landing_zone" {
   enable_landing_zone           = var.enable_landing_zone
   allowed_cidr                  = var.allowed_cidr
   compute_subnets_cidr          = var.compute_subnets_cidr
-  clusters                      = var.clusters
   cos_instance_name             = var.cos_instance_name
   enable_atracker               = var.observability_atracker_enable && (var.observability_atracker_target_type == "cos") ? true : false
   enable_cos_integration        = var.enable_cos_integration
   enable_vpc_flow_logs          = var.enable_vpc_flow_logs
   enable_vpn                    = var.enable_vpn
-  hpcs_instance_name            = var.hpcs_instance_name
   key_management                = var.key_management
   kms_instance_name             = var.kms_instance_name
   kms_key_name                  = var.kms_key_name
@@ -22,10 +20,10 @@ module "landing_zone" {
   prefix                        = var.prefix
   protocol_instances            = var.protocol_instances
   protocol_subnets_cidr         = var.protocol_subnets_cidr
-  resource_group                = var.resource_group
+  resource_group                = var.existing_resource_group
   storage_instances             = var.storage_instances
   storage_subnets_cidr          = var.storage_subnets_cidr
-  vpc                           = var.vpc
+  vpc                           = var.vpc_name
   vpn_peer_address              = var.vpn_peer_address
   vpn_peer_cidr                 = var.vpn_peer_cidr
   vpn_preshared_key             = var.vpn_preshared_key
@@ -34,13 +32,14 @@ module "landing_zone" {
   skip_flowlogs_s2s_auth_policy = var.skip_flowlogs_s2s_auth_policy
   skip_kms_s2s_auth_policy      = var.skip_kms_s2s_auth_policy
   observability_logs_enable     = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || (var.observability_atracker_enable && var.observability_atracker_target_type == "cloudlogs") ? true : false
+  # hpcs_instance_name            = var.hpcs_instance_name
+  # clusters                      = var.clusters
 }
 
 module "deployer" {
   source                        = "./modules/deployer"
-  resource_group                = var.resource_group
+  resource_group                = var.existing_resource_group
   prefix                        = var.prefix
-  zones                         = var.zones
   vpc_id                        = local.vpc_id
   network_cidr                  = var.network_cidr
   enable_bastion                = var.enable_bastion
@@ -56,18 +55,18 @@ module "deployer" {
   boot_volume_encryption_key    = local.boot_volume_encryption_key
   existing_kms_instance_guid    = local.existing_kms_instance_guid
   skip_iam_authorization_policy = var.skip_iam_authorization_policy
-  static_compute_instances      = var.static_compute_instances
-  management_instances          = var.management_instances
   dns_domain_names              = var.dns_domain_names
+  # zones                         = var.zones
+  # static_compute_instances      = var.static_compute_instances
+  # management_instances          = var.management_instances
 
 }
 
 module "landing_zone_vsi" {
   count                      = var.enable_deployer == false ? 1 : 0
   source                     = "./modules/landing_zone_vsi"
-  resource_group             = var.resource_group
+  resource_group             = var.existing_resource_group
   prefix                     = var.prefix
-  zones                      = var.zones
   vpc_id                     = local.vpc_id
   bastion_security_group_id  = var.bastion_security_group_id
   bastion_public_key_content = local.bastion_public_key_content
@@ -97,7 +96,7 @@ module "prepare_tf_input" {
   bastion_fip               = local.bastion_fip
   deployer_ip               = local.deployer_ip
   ibmcloud_api_key          = var.ibmcloud_api_key
-  resource_group            = var.resource_group
+  resource_group            = var.existing_resource_group
   prefix                    = var.prefix
   zones                     = var.zones
   compute_ssh_keys          = local.compute_ssh_keys
@@ -130,7 +129,6 @@ module "resource_provisioner" {
   ibmcloud_api_key            = var.ibmcloud_api_key
   enable_deployer             = var.enable_deployer
   bastion_fip                 = local.bastion_fip
-  bastion_public_key_content  = local.bastion_public_key_content
   bastion_private_key_content = local.bastion_private_key_content
   deployer_ip                 = local.deployer_ip
   depends_on                  = [module.deployer, module.prepare_tf_input]
@@ -203,7 +201,7 @@ module "write_compute_cluster_inventory" {
   my_cluster_name       = var.prefix
   ha_shared_dir         = local.ha_shared_dir
   nfs_install_dir       = local.nfs_install_dir
-  Enable_Monitoring     = local.Enable_Monitoring
+  enable_monitoring     = local.enable_monitoring
   lsf_deployer_hostname = local.lsf_deployer_hostname
   depends_on            = [time_sleep.wait_60_seconds]
 }
@@ -220,7 +218,7 @@ module "write_storage_cluster_inventory" {
   my_cluster_name       = var.prefix
   ha_shared_dir         = local.ha_shared_dir
   nfs_install_dir       = local.nfs_install_dir
-  Enable_Monitoring     = local.Enable_Monitoring
+  enable_monitoring     = local.enable_monitoring
   lsf_deployer_hostname = local.lsf_deployer_hostname
   depends_on            = [time_sleep.wait_60_seconds]
 }

@@ -1,23 +1,28 @@
 output "landing_zone" {
-  value = module.landing_zone
+  description = "Landing Zone data"
+  value       = module.landing_zone
 }
 
 output "deployer" {
-  value     = module.deployer
-  sensitive = true
+  description = "Deployer data"
+  value       = module.deployer
+  sensitive   = true
 }
 
 output "landing_zone_vsi" {
-  value     = module.landing_zone_vsi
-  sensitive = true
+  description = "Landing Zone VSI data"
+  value       = module.landing_zone_vsi
+  sensitive   = true
 }
 
 output "dns" {
-  value = module.dns
+  description = "DNS data"
+  value       = module.dns
 }
 
 output "file_storage" {
-  value = module.file_storage
+  description = "File Storage data"
+  value       = module.file_storage
 }
 
 output "ssh_to_deployer" {

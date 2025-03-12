@@ -19,7 +19,7 @@
   run_once: true
 
 # Update deployer_hostname in group_vars/all
-  
+
 - name: Update deployer_hostname in group_vars/all
   ansible.builtin.lineinfile:
     path: "{{ inventory_path }}/group_vars/all"

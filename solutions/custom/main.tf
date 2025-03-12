@@ -1,17 +1,14 @@
 module "custom" {
   source                    = "./../.."
-  scheduler                 = var.scheduler
   ibm_customer_number       = var.ibm_customer_number
   zones                     = var.zones
   allowed_cidr              = var.allowed_cidr
   prefix                    = local.env.prefix
   ssh_keys                  = local.env.ssh_keys
-  resource_group            = local.env.resource_group
+  existing_resource_group   = local.env.existing_resource_group
   deployer_instance_profile = local.env.deployer_instance_profile
   bastion_ssh_keys          = local.env.bastion_ssh_keys
   bastion_subnets_cidr      = local.env.bastion_subnets_cidr
-  compute_gui_password      = local.env.compute_gui_password
-  compute_gui_username      = local.env.compute_gui_username
   compute_ssh_keys          = local.env.compute_ssh_keys
   compute_subnets_cidr      = local.env.compute_subnets_cidr
   cos_instance_name         = local.env.cos_instance_name
@@ -26,11 +23,9 @@ module "custom" {
   enable_vpc_flow_logs      = local.env.enable_vpc_flow_logs
   enable_vpn                = local.env.enable_vpn
   file_shares               = local.env.file_shares
-  hpcs_instance_name        = local.env.hpcs_instance_name
   key_management            = local.env.key_management
   client_instances          = local.env.client_instances
   client_ssh_keys           = local.env.client_ssh_keys
-  client_subnets_cidr       = local.env.client_subnets_cidr
   management_instances      = local.env.management_instances
   network_cidr              = local.env.network_cidr
   nsd_details               = local.env.nsd_details
@@ -38,13 +33,19 @@ module "custom" {
   protocol_instances        = local.env.protocol_instances
   protocol_subnets_cidr     = local.env.protocol_subnets_cidr
   static_compute_instances  = local.env.static_compute_instances
-  storage_gui_password      = local.env.storage_gui_password
-  storage_gui_username      = local.env.storage_gui_username
   storage_instances         = local.env.storage_instances
   storage_ssh_keys          = local.env.storage_ssh_keys
   storage_subnets_cidr      = local.env.storage_subnets_cidr
-  vpc                       = local.env.vpc
+  vpc_name                  = local.env.vpc_name
   vpn_peer_address          = local.env.vpn_peer_address
   vpn_peer_cidr             = local.env.vpn_peer_cidr
   vpn_preshared_key         = local.env.vpn_preshared_key
+
+  # scheduler            = var.scheduler
+  # compute_gui_password = local.env.compute_gui_password
+  # compute_gui_username = local.env.compute_gui_username
+  # client_subnets_cidr  = local.env.client_subnets_cidr
+  # hpcs_instance_name   = local.env.hpcs_instance_name
+  # storage_gui_password = local.env.storage_gui_password
+  # storage_gui_username = local.env.storage_gui_username
 }

@@ -52,7 +52,7 @@ variable "nfs_install_dir" {
   description = "Private key file path"
 }
 
-variable "Enable_Monitoring" {
+variable "enable_monitoring" {
   type        = bool
   default     = null
   description = "Option to enable the monitoring"

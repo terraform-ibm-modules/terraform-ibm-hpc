@@ -10,8 +10,9 @@ variable "inventory_path" {
   default     = "inventory.ini"
 }
 
+# tflint-ignore: all
 variable "name_mount_path_map" {
   description = "File share mount path"
   #type        = list(string)
-  default     = null
+  default = null
 }

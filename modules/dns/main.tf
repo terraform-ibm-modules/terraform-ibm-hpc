@@ -1,4 +1,4 @@
-resource "ibm_resource_instance" "itself" {
+resource "ibm_resource_instance" "resource_instance" {
   count             = var.dns_instance_id == null ? 1 : 0
   name              = format("%s-dns-instance", var.prefix)
   resource_group_id = var.resource_group_id
@@ -7,11 +7,7 @@ resource "ibm_resource_instance" "itself" {
   plan              = "standard-dns"
 }
 
-locals {
-  dns_instance_id = var.dns_instance_id == null ? ibm_resource_instance.itself[0].guid : var.dns_instance_id
-}
-
-resource "ibm_dns_custom_resolver" "itself" {
+resource "ibm_dns_custom_resolver" "dns_custom_resolver" {
   count             = var.dns_custom_resolver_id == null ? 1 : 0
   name              = format("%s-custom-resolver", var.prefix)
   instance_id       = local.dns_instance_id
@@ -26,33 +22,13 @@ resource "ibm_dns_custom_resolver" "itself" {
   }
 }
 
-data "ibm_dns_zones" "conditional" {
-  count       = var.dns_instance_id != null ? 1 : 0
-  instance_id = var.dns_instance_id
-}
-
-locals {
-  dns_domain_names = flatten([setsubtract(var.dns_domain_names == null ? [] : var.dns_domain_names, flatten(data.ibm_dns_zones.conditional[*].dns_zones[*]["name"]))])
-}
-
-resource "ibm_dns_zone" "itself" {
+resource "ibm_dns_zone" "dns_zone" {
   count       = length(local.dns_domain_names)
   instance_id = local.dns_instance_id
   name        = local.dns_domain_names[count.index]
 }
 
-data "ibm_dns_zones" "itself" {
-  instance_id = local.dns_instance_id
-  depends_on  = [ibm_dns_zone.itself]
-}
-
-locals {
-  dns_zone_maps = [for zone in data.ibm_dns_zones.itself.dns_zones : {
-    (zone["name"]) = zone["zone_id"]
-  } if contains(var.dns_domain_names, zone["name"])]
-}
-
-resource "ibm_dns_permitted_network" "itself" {
+resource "ibm_dns_permitted_network" "dns_permitted_network" {
   count       = length(var.dns_domain_names)
   instance_id = local.dns_instance_id
   vpc_crn     = var.vpc_crn

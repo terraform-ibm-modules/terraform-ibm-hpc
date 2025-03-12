@@ -1,4 +1,4 @@
-data "ibm_resource_group" "itself" {
+data "ibm_resource_group" "resource_group" {
   name = var.resource_group
 }
 
@@ -41,10 +41,10 @@ data "ibm_is_image" "storage" {
   name  = var.storage_instances[count.index]["image"]
 }
 
-data "ibm_is_image" "protocol" {
-  count = length(var.protocol_instances)
-  name  = var.protocol_instances[count.index]["image"]
-}
+# data "ibm_is_image" "protocol" {
+#   count = length(var.protocol_instances)
+#   name  = var.protocol_instances[count.index]["image"]
+# }
 
 
 data "ibm_is_ssh_key" "client" {
