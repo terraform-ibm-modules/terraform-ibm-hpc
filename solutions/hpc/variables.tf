@@ -242,10 +242,6 @@ variable "worker_node_max_count" {
   type        = number
   default     = 10
   description = "The maximum number of worker nodes that can be deployed in the Spectrum LSF cluster. In order to use the [Resource Connector](https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=lsf-resource-connnector) feature to dynamically create and delete worker nodes based on workload demand, the value selected for this parameter must be larger than the total count of worker_node_instance_type. If you plan to deploy only static worker nodes in the LSF cluster."
-  validation {
-    condition     = 1 <= var.worker_node_max_count && var.worker_node_max_count <= 500
-    error_message = "Input \"worker_node_max_count must\" be >= 1 and <= 500."
-  }
 }
 
 variable "custom_file_shares" {
@@ -296,7 +292,7 @@ variable "dns_domain_name" {
   }
   description = "IBM Cloud DNS Services domain name to be used for the IBM Spectrum LSF cluster."
   validation {
-    condition     = can(regex("^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])\\.com$", var.dns_domain_name.compute))
+    condition     = can(regex("^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,}$", var.dns_domain_name.compute))
     error_message = "The domain name provided for compute is not a fully qualified domain name (FQDN). An FQDN can contain letters (a-z, A-Z), digits (0-9), hyphens (-), dots (.), and must start and end with an alphanumeric character."
   }
 }
