@@ -155,10 +155,10 @@ variable "vpc" {
   description = "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
 }
 
-variable "vpc_id" {
-  type        = string
-  description = "ID of an existing VPC in which the cluster resources will be deployed."
-}
+# variable "vpc_id" {
+#   type        = string
+#   description = "ID of an existing VPC in which the cluster resources will be deployed."
+# }
 
 ##############################################################################
 # DNS Variables
@@ -184,11 +184,11 @@ variable "enable_deployer" {
 ##############################################################################
 # Bastion Variables
 ##############################################################################
-variable "bastion_fip" {
-  type        = string
-  default     = null
-  description = "bastion fip"
-}
+# variable "bastion_fip" {
+#   type        = string
+#   default     = null
+#   description = "bastion fip"
+# }
 
 ##############################################################################
 # Offering Variations

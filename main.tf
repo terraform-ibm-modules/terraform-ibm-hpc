@@ -93,7 +93,6 @@ module "landing_zone_vsi" {
 module "prepare_tf_input" {
   source                    = "./modules/prepare_tf_input"
   enable_deployer           = var.enable_deployer
-  bastion_fip               = local.bastion_fip
   deployer_ip               = local.deployer_ip
   ibmcloud_api_key          = var.ibmcloud_api_key
   resource_group            = var.existing_resource_group
@@ -112,7 +111,6 @@ module "prepare_tf_input" {
   enable_vpc_flow_logs      = var.enable_vpc_flow_logs
   allowed_cidr              = var.allowed_cidr
   vpc                       = local.vpc_name
-  vpc_id                    = local.vpc_id
   storage_subnets           = local.storage_subnet
   protocol_subnets          = local.protocol_subnet
   compute_subnets           = local.compute_subnet
