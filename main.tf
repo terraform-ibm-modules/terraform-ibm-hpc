@@ -111,7 +111,6 @@ module "landing_zone_vsi" {
   kms_encryption_enabled     = local.kms_encryption_enabled
   boot_volume_encryption_key = local.boot_volume_encryption_key
   enable_bastion             = var.enable_bastion
-  depends_on = [module.ldap]
 }
 
 
