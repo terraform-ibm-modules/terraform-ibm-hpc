@@ -219,37 +219,37 @@ resource "null_resource" "tf_resource_provisioner" {
   ]
 }
 
-# resource "null_resource" "cluster_destroyer" {
-#   count    = var.enable_deployer == true ? 1 : 0
-#   triggers = {
-#     conn_host                  = flatten(module.deployer.deployer_vsi_data[*].list)[0].ipv4_address
-#     conn_private_key           = local.bastion_private_key_content
-#     conn_bastion_host          = local.bastion_fip
-#     conn_bastion_private_key   = local.bastion_private_key_content
-#     conn_ibmcloud_api_key      = var.ibmcloud_api_key
-#     conn_remote_terraform_path = local.remote_terraform_path
-#     conn_terraform_log_level   = var.TF_LOG
-#   }
+resource "null_resource" "cluster_destroyer" {
+  count    = var.enable_deployer == true ? 1 : 0
+  triggers = {
+    conn_host                  = flatten(module.deployer.deployer_vsi_data[*].list)[0].ipv4_address
+    conn_private_key           = local.bastion_private_key_content
+    conn_bastion_host          = local.bastion_fip
+    conn_bastion_private_key   = local.bastion_private_key_content
+    conn_ibmcloud_api_key      = var.ibmcloud_api_key
+    conn_remote_terraform_path = local.remote_terraform_path
+    conn_terraform_log_level   = var.TF_LOG
+  }
 
-#   connection {
-#     type                = "ssh"
-#     host                = self.triggers.conn_host
-#     user                = "vpcuser"
-#     private_key         = self.triggers.conn_private_key
-#     bastion_host        = self.triggers.conn_bastion_host
-#     bastion_user        = "ubuntu"
-#     bastion_private_key = self.triggers.conn_bastion_private_key
-#     timeout             = "60m"
-#   }
+  connection {
+    type                = "ssh"
+    host                = self.triggers.conn_host
+    user                = "vpcuser"
+    private_key         = self.triggers.conn_private_key
+    bastion_host        = self.triggers.conn_bastion_host
+    bastion_user        = "ubuntu"
+    bastion_private_key = self.triggers.conn_bastion_private_key
+    timeout             = "60m"
+  }
 
-#   provisioner "remote-exec" {
-#     when       = destroy
-#     on_failure = fail
-#     inline = [
-#       "export TF_LOG=${self.triggers.conn_terraform_log_level} && sudo -E terraform -chdir=${self.triggers.conn_remote_terraform_path} destroy -auto-approve"
-#     ]
-#   }
-# }
+  provisioner "remote-exec" {
+    when       = destroy
+    on_failure = fail
+    inline = [
+      "export TF_LOG=${self.triggers.conn_terraform_log_level} && sudo -E terraform -chdir=${self.triggers.conn_remote_terraform_path} destroy -auto-approve"
+    ]
+  }
+}
 
 module "file_storage" {
   count              = var.enable_deployer == false ? 1 : 0 
