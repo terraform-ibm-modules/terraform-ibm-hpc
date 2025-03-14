@@ -204,8 +204,9 @@ resource "null_resource" "tf_resource_provisioner" {
     inline = [
       "if [ ! -d ${local.remote_terraform_path} ]; then sudo git clone -b ${local.da_hpc_repo_tag} ${local.da_hpc_repo_url} ${local.remote_terraform_path}; fi",
       "sudo ln -fs /usr/local/bin/ansible-playbook /usr/bin/ansible-playbook",
-      "sudo cp ${local.remote_inputs_path} ${local.remote_terraform_path}"
-      # "export TF_LOG=${var.TF_LOG} && sudo -E terraform -chdir=${local.remote_terraform_path} init && sudo -E terraform -chdir=${local.remote_terraform_path} apply -parallelism=${var.TF_PARALLELISM} -auto-approve"
+      "sudo cp ${local.remote_inputs_path} ${local.remote_terraform_path}",
+      "export TF_LOG=${var.TF_LOG} && sudo -E terraform -chdir=${local.remote_terraform_path} init"
+      # "sudo -E terraform -chdir=${local.remote_terraform_path} apply -parallelism=${var.TF_PARALLELISM} -auto-approve"
     ]
   }
 
@@ -220,7 +221,7 @@ resource "null_resource" "tf_resource_provisioner" {
 }
 
 resource "null_resource" "cluster_destroyer" {
-  count    = var.enable_deployer == true ? 1 : 0
+  count    = var.enable_deployer == true ? 0 : 0
   triggers = {
     conn_host                  = flatten(module.deployer.deployer_vsi_data[*].list)[0].ipv4_address
     conn_private_key           = local.bastion_private_key_content
