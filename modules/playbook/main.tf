@@ -3,7 +3,7 @@ locals {
 }
 
 resource "local_file" "create_playbook" {
-  count    = var.inventory_path != null ? 1 : 0
+  count    = var.inventory_path != null ? 0 : 0
   content  = <<EOT
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
@@ -53,7 +53,7 @@ EOT
 
 
 resource "null_resource" "run_playbook" {
-  count = var.inventory_path != null ? 1 : 0
+  count = var.inventory_path != null ? 0 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook -f 50 -i ${var.inventory_path} ${var.playbook_path}"
@@ -84,7 +84,7 @@ resource "null_resource" "run_lsf_playbooks" {
 }
 
 resource "local_file" "create_playbook_for_lsf_config" {
-  count    = var.inventory_path != null ? 1 : 0
+  count    = var.inventory_path != null ? 0 : 0
   content  = <<EOT
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
@@ -111,7 +111,7 @@ EOT
 }
 
 resource "null_resource" "run_playbook_management_for_mgmt" {
-  count = var.inventory_path != null ? 1 : 0
+  count = var.inventory_path != null ? 0 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook  -f 50 -i ${var.inventory_path} '/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/lsf_config.yml'"
@@ -149,7 +149,7 @@ EOT
 }
 
 resource "null_resource" "run_playbook_management_configure" {
-  count = var.inventory_path != null ? 1 : 0
+  count = var.inventory_path != null ? 0 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook -i ${var.inventory_path} '/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/lsf_mgmt.yml'"
