@@ -74,13 +74,13 @@ module "lsf" {
   enable_hyperthreading                            = local.env.enable_hyperthreading
 
   # LDAP 
-  enable_ldap                                      = local.enable_ldap
-  ldap_basedns                                     = local.ldap_basedns
-  ldap_vsi_profile                                 = local.ldap_vsi_profile
-  ldap_admin_password                              = local.ldap_admin_password
-  ldap_user_name                                   = local.ldap_user_name
-  ldap_user_password                               = local.ldap_user_password
-  ldap_server                                      = local.ldap_server
-  ldap_server_cert                                 = local.ldap_server_cert
-  ldap_vsi_osimage_name                            = local.ldap_vsi_osimage_name
+  enable_ldap                                      = local.env.enable_ldap
+  ldap_basedns                                     = local.env.ldap_basedns
+  ldap_vsi_profile                                 = local.env.ldap_vsi_profile
+  ldap_admin_password                              = local.env.ldap_admin_password
+  ldap_user_name                                   = local.env.ldap_user_name
+  ldap_user_password                               = local.env.ldap_user_password
+  ldap_server                                      = local.env.ldap_server
+  ldap_server_cert                                 = local.env.ldap_server_cert
+  ldap_vsi_osimage_name                            = local.env.ldap_vsi_osimage_name
 }

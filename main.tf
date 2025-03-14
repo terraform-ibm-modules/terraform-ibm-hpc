@@ -59,7 +59,27 @@ module "deployer" {
   static_compute_instances      = var.static_compute_instances
   management_instances          = var.management_instances
   dns_domain_names              = var.dns_domain_names
+}
 
+module "ldap" {
+  count                         = var.enable_deployer == false &&  var.enable_ldap ? 1 : 0
+  source                        = "./modules/ldap"
+  resource_group                = var.resource_group
+  prefix                        = var.prefix
+  zones                         = var.zones
+  vpc_id                        = local.vpc_id
+  enable_ldap                   = var.enable_ldap
+  ldap_vsi_profile              = var.ldap_vsi_profile
+  ldap_vsi_osimage_name         = var.ldap_vsi_osimage_name
+  ldap_basedns                  = var.ldap_basedns
+  ldap_admin_password           = var.ldap_admin_password
+  ldap_user_name                = var.ldap_user_name
+  ldap_user_password            = var.ldap_user_password
+  ldap_server                   = var.ldap_server
+  ldap_server_cert              = var.ldap_server_cert
+  compute_ssh_keys              = local.compute_ssh_keys
+  compute_subnets               = local.compute_subnets
+  compute_security_group_id     = local.compute_security_group_id
 }
 
 module "landing_zone_vsi" {
@@ -145,7 +165,17 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "compute_subnets_cidr": ${jsonencode(local.compute_subnets_cidr)},
   "dynamic_compute_instances": ${jsonencode(local.dynamic_compute_instances)},
   "compute_ssh_keys_ids": ${jsonencode(local.compute_ssh_keys_ids)},
-  "compute_subnet_crn": ${jsonencode(local.compute_subnet_crn)}
+  "compute_subnet_crn": ${jsonencode(local.compute_subnet_crn)},
+  "compute_security_group_id": ${jsonencode(local.compute_security_group_id)},
+  "enable_ldap": ${local.enable_ldap},
+  "ldap_vsi_profile": ${jsonencode(local.ldap_vsi_profile)},
+  "ldap_vsi_osimage_name": ${jsonencode(local.ldap_vsi_osimage_name)},
+  "ldap_basedns": ${jsonencode(local.ldap_basedns)},
+  "ldap_admin_password": ${jsonencode(local.ldap_admin_password)},
+  "ldap_user_name": ${jsonencode(local.ldap_user_name)},
+  "ldap_user_password": ${jsonencode(local.ldap_user_password)},
+  "ldap_server": ${jsonencode(local.ldap_server)},
+  "ldap_server_cert": ${jsonencode(local.ldap_server_cert)}
 }    
 EOT
   filename = local.schematics_inputs_path
@@ -173,8 +203,8 @@ resource "null_resource" "tf_resource_provisioner" {
     inline = [
       "if [ ! -d ${local.remote_terraform_path} ]; then sudo git clone -b ${local.da_hpc_repo_tag} ${local.da_hpc_repo_url} ${local.remote_terraform_path}; fi",
       "sudo ln -fs /usr/local/bin/ansible-playbook /usr/bin/ansible-playbook",
-      "sudo cp ${local.remote_inputs_path} ${local.remote_terraform_path}",
-      "export TF_LOG=${var.TF_LOG} && sudo -E terraform -chdir=${local.remote_terraform_path} init && sudo -E terraform -chdir=${local.remote_terraform_path} apply -parallelism=${var.TF_PARALLELISM} -auto-approve"
+      "sudo cp ${local.remote_inputs_path} ${local.remote_terraform_path}"
+      # "export TF_LOG=${var.TF_LOG} && sudo -E terraform -chdir=${local.remote_terraform_path} init && sudo -E terraform -chdir=${local.remote_terraform_path} apply -parallelism=${var.TF_PARALLELISM} -auto-approve"
     ]
   }
 
@@ -188,37 +218,37 @@ resource "null_resource" "tf_resource_provisioner" {
   ]
 }
 
-resource "null_resource" "cluster_destroyer" {
-  count    = var.enable_deployer == true ? 1 : 0
-  triggers = {
-    conn_host                  = flatten(module.deployer.deployer_vsi_data[*].list)[0].ipv4_address
-    conn_private_key           = local.bastion_private_key_content
-    conn_bastion_host          = local.bastion_fip
-    conn_bastion_private_key   = local.bastion_private_key_content
-    conn_ibmcloud_api_key      = var.ibmcloud_api_key
-    conn_remote_terraform_path = local.remote_terraform_path
-    conn_terraform_log_level   = var.TF_LOG
-  }
+# resource "null_resource" "cluster_destroyer" {
+#   count    = var.enable_deployer == true ? 1 : 0
+#   triggers = {
+#     conn_host                  = flatten(module.deployer.deployer_vsi_data[*].list)[0].ipv4_address
+#     conn_private_key           = local.bastion_private_key_content
+#     conn_bastion_host          = local.bastion_fip
+#     conn_bastion_private_key   = local.bastion_private_key_content
+#     conn_ibmcloud_api_key      = var.ibmcloud_api_key
+#     conn_remote_terraform_path = local.remote_terraform_path
+#     conn_terraform_log_level   = var.TF_LOG
+#   }
 
-  connection {
-    type                = "ssh"
-    host                = self.triggers.conn_host
-    user                = "vpcuser"
-    private_key         = self.triggers.conn_private_key
-    bastion_host        = self.triggers.conn_bastion_host
-    bastion_user        = "ubuntu"
-    bastion_private_key = self.triggers.conn_bastion_private_key
-    timeout             = "60m"
-  }
+#   connection {
+#     type                = "ssh"
+#     host                = self.triggers.conn_host
+#     user                = "vpcuser"
+#     private_key         = self.triggers.conn_private_key
+#     bastion_host        = self.triggers.conn_bastion_host
+#     bastion_user        = "ubuntu"
+#     bastion_private_key = self.triggers.conn_bastion_private_key
+#     timeout             = "60m"
+#   }
 
-  provisioner "remote-exec" {
-    when       = destroy
-    on_failure = fail
-    inline = [
-      "export TF_LOG=${self.triggers.conn_terraform_log_level} && sudo -E terraform -chdir=${self.triggers.conn_remote_terraform_path} destroy -auto-approve"
-    ]
-  }
-}
+#   provisioner "remote-exec" {
+#     when       = destroy
+#     on_failure = fail
+#     inline = [
+#       "export TF_LOG=${self.triggers.conn_terraform_log_level} && sudo -E terraform -chdir=${self.triggers.conn_remote_terraform_path} destroy -auto-approve"
+#     ]
+#   }
+# }
 
 module "file_storage" {
   count              = var.enable_deployer == false ? 1 : 0 

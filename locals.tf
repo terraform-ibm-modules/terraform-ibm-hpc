@@ -269,6 +269,16 @@ locals {
   dynamic_compute_instances = var.dynamic_compute_instances
   compute_subnet_crn    = data.ibm_is_subnet.compute_subnet_crn.crn
   compute_ssh_keys_ids  = [for name in local.compute_ssh_keys : data.ibm_is_ssh_key.compute_ssh_keys[name].id]
+  enable_ldap           = var.enable_deployer ? false : var.enable_ldap
+  ldap_vsi_profile      = var.enable_deployer ? "" : var.ldap_vsi_profile
+  ldap_vsi_osimage_name = var.enable_deployer ? "" : var.ldap_vsi_osimage_name
+  ldap_basedns          = var.enable_deployer ? "" : var.ldap_basedns
+  ldap_admin_password   = var.enable_deployer ? "" : var.ldap_admin_password
+  ldap_user_name        = var.enable_deployer ? "" : var.ldap_user_name
+  ldap_user_password    = var.enable_deployer ? "" : var.ldap_user_password
+  ldap_server           = var.enable_deployer ? "" : var.ldap_server
+  ldap_server_cert      = var.enable_deployer ? "" : var.ldap_server_cert
+
 }
 
 locals {
