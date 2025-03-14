@@ -11,11 +11,11 @@ variable "ibmcloud_api_key" {
 ##############################################################################
 # Offering Variations
 ##############################################################################
-# variable "scheduler" {
-#   type        = string
-#   default     = null
-#   description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
-# }
+variable "scheduler" {
+  type        = string
+  default     = null
+  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+}
 
 variable "ibm_customer_number" {
   type        = string
@@ -166,7 +166,6 @@ variable "deployer_instance_profile" {
   default     = "bx2-8x32"
   description = "Deployer should be only used for better deployment performance"
 }
-
 
 ##############################################################################
 # Compute Variables
@@ -633,100 +632,6 @@ variable "enable_vpc_flow_logs" {
 ##############################################################################
 
 ##############################################################################
-# Landing Zone Variables
-##############################################################################
-# variable "clusters" {
-#   default     = null
-#   description = "A list describing clusters workloads to create"
-#   type = list(
-#     object({
-#       name                                  = string           # Name of Cluster
-#       vpc_name                              = string           # Name of VPC
-#       subnet_names                          = list(string)     # List of vpc subnets for cluster
-#       workers_per_subnet                    = number           # Worker nodes per subnet.
-#       machine_type                          = string           # Worker node flavor
-#       kube_type                             = string           # iks or openshift
-#       kube_version                          = optional(string) # Can be a version from `ibmcloud ks versions` or `default`
-#       entitlement                           = optional(string) # entitlement option for openshift
-#       secondary_storage                     = optional(string) # Secondary storage type
-#       pod_subnet                            = optional(string) # Portable subnet for pods
-#       service_subnet                        = optional(string) # Portable subnet for services
-#       existing_resource_group               = string           # Resource Group used for cluster
-#       cos_name                              = optional(string) # Name of COS instance Required only for OpenShift clusters
-#       access_tags                           = optional(list(string), [])
-#       boot_volume_crk_name                  = optional(string)      # Boot volume encryption key name
-#       disable_public_endpoint               = optional(bool, true)  # disable cluster public, leaving only private endpoint
-#       disable_outbound_traffic_protection   = optional(bool, false) # public outbound access from the cluster workers
-#       cluster_force_delete_storage          = optional(bool, false) # force the removal of persistent storage associated with the cluster during cluster deletion
-#       operating_system                      = string                # The operating system of the workers in the default worker pool. See https://cloud.ibm.com/docs/openshift?topic=openshift-openshift_versions#openshift_versions_available .
-#       kms_wait_for_apply                    = optional(bool, true)  # make terraform wait until KMS is applied to master and it is ready and deployed
-#       verify_cluster_network_readiness      = optional(bool, true)  # Flag to run a script will run kubectl commands to verify that all worker nodes can communicate successfully with the master. If the runtime does not have access to the kube cluster to run kubectl commands, this should be set to false.
-#       use_ibm_cloud_private_api_endpoints   = optional(bool, true)  # Flag to force all cluster related api calls to use the IBM Cloud private endpoints.
-#       import_default_worker_pool_on_create  = optional(bool)        # (Advanced users) Whether to handle the default worker pool as a stand-alone ibm_container_vpc_worker_pool resource on cluster creation. Only set to false if you understand the implications of managing the default worker pool as part of the cluster resource. Set to true to import the default worker pool as a separate resource. Set to false to manage the default worker pool as part of the cluster resource.
-#       allow_default_worker_pool_replacement = optional(bool)        # (Advanced users) Set to true to allow the module to recreate a default worker pool. Only use in the case where you are getting an error indicating that the default worker pool cannot be replaced on apply. Once the default worker pool is handled as a stand-alone ibm_container_vpc_worker_pool, if you wish to make any change to the default worker pool which requires the re-creation of the default pool set this variable to true
-#       labels                                = optional(map(string)) # A list of labels that you want to add to the default worker pool.
-#       addons = optional(object({                                    # Map of OCP cluster add-on versions to install
-#         debug-tool                = optional(string)
-#         image-key-synchronizer    = optional(string)
-#         openshift-data-foundation = optional(string)
-#         vpc-file-csi-driver       = optional(string)
-#         static-route              = optional(string)
-#         cluster-autoscaler        = optional(string)
-#         vpc-block-csi-driver      = optional(string)
-#         ibm-storage-operator      = optional(string)
-#       }), {})
-#       manage_all_addons = optional(bool, false) # Instructs Terraform to manage all cluster addons, even if addons were installed outside of the module. If set to 'true' this module will destroy any addons that were installed by other sources.
-#       kms_config = optional(
-#         object({
-#           crk_name         = string         # Name of key
-#           private_endpoint = optional(bool) # Private endpoint
-#         })
-#       )
-#       worker_pools = optional(
-#         list(
-#           object({
-#             name                 = string                # Worker pool name
-#             vpc_name             = string                # VPC name
-#             workers_per_subnet   = number                # Worker nodes per subnet
-#             flavor               = string                # Worker node flavor
-#             subnet_names         = list(string)          # List of vpc subnets for worker pool
-#             entitlement          = optional(string)      # entitlement option for openshift
-#             secondary_storage    = optional(string)      # Secondary storage type
-#             boot_volume_crk_name = optional(string)      # Boot volume encryption key name
-#             operating_system     = string                # The operating system of the workers in the worker pool. See https://cloud.ibm.com/docs/openshift?topic=openshift-openshift_versions#openshift_versions_available .
-#             labels               = optional(map(string)) # A list of labels that you want to add to all the worker nodes in the worker pool.
-#           })
-#         )
-#       )
-#     })
-#   )
-# }
-
-##############################################################################
-# Terraform generic Variables
-##############################################################################
-# # tflint-ignore: all
-# variable "TF_PARALLELISM" {
-#   type        = string
-#   default     = "250"
-#   description = "Limit the number of concurrent operation."
-# }
-
-# # tflint-ignore: all
-# variable "TF_VERSION" {
-#   type        = string
-#   default     = "1.9"
-#   description = "The version of the Terraform engine that's used in the Schematics workspace."
-# }
-
-# # tflint-ignore: all
-# variable "TF_LOG" {
-#   type        = string
-#   default     = "ERROR"
-#   description = "The Terraform log level used for output in the Schematics workspace."
-# }
-
-##############################################################################
 # Observability Variables
 ##############################################################################
 
@@ -857,32 +762,6 @@ variable "enable_landing_zone" {
   default     = true
   description = "Run landing zone module."
 }
-
-# variable "vpc_id" {
-#   type        = string
-#   default     = null
-#   description = "ID of an existing VPC in which the cluster resources will be deployed."
-# }
-
-# variable "bastion_fip" {
-#   type        = string
-#   default     = null
-#   description = "bastion fip"
-# }
-
-# variable "compute_public_key_content" {
-#   type        = string
-#   sensitive   = true
-#   default     = null
-#   description = "Compute security key content."
-# }
-
-# variable "compute_private_key_content" {
-#   type        = string
-#   sensitive   = true
-#   default     = null
-#   description = "Compute security key content."
-# }
 
 variable "enable_atracker" {
   type        = bool

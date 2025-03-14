@@ -10,7 +10,6 @@ data "ibm_is_zone" "zone" {
 }
 */
 
-
 data "ibm_is_vpc" "existing_vpc" {
   count = var.vpc_name != null ? 1 : 0
   name  = var.vpc_name
@@ -23,7 +22,7 @@ data "ibm_is_subnet" "subnet" {
 }
 */
 
-data "ibm_resource_group" "resource_group" {
+data "ibm_resource_group" "existing_resource_group" {
   count = var.existing_resource_group == null ? 0 : 1
   name  = var.existing_resource_group
 }

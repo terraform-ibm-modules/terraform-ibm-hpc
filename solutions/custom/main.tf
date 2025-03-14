@@ -1,5 +1,6 @@
 module "custom" {
   source                    = "./../.."
+  scheduler                 = var.scheduler
   ibm_customer_number       = var.ibm_customer_number
   zones                     = var.zones
   allowed_cidr              = var.allowed_cidr
@@ -41,7 +42,6 @@ module "custom" {
   vpn_peer_cidr             = local.env.vpn_peer_cidr
   vpn_preshared_key         = local.env.vpn_preshared_key
 
-  # scheduler            = var.scheduler
   # compute_gui_password = local.env.compute_gui_password
   # compute_gui_username = local.env.compute_gui_username
   # client_subnets_cidr  = local.env.client_subnets_cidr

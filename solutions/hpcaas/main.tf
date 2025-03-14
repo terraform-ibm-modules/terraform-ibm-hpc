@@ -1,7 +1,8 @@
 module "hpcaas" {
   source                    = "./../.."
+  scheduler                 = "HPCaaS"
   ibm_customer_number       = var.ibm_customer_number
-  zones                     = [var.zone]
+  zones                     = var.zones
   allowed_cidr              = var.allowed_cidr
   prefix                    = local.env.prefix
   ssh_keys                  = local.env.ssh_keys
@@ -40,7 +41,6 @@ module "hpcaas" {
   vpn_peer_cidr             = local.env.vpn_peer_cidr
   vpn_preshared_key         = local.env.vpn_preshared_key
 
-  # scheduler            = "HPCaaS"
   # compute_gui_password = local.env.compute_gui_password
   # compute_gui_username = local.env.compute_gui_username
   # hpcs_instance_name   = local.env.hpcs_instance_name

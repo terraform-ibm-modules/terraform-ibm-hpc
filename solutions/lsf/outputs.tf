@@ -1,7 +1,6 @@
 output "lsf" {
   description = "LSF details"
   value       = module.lsf.file_storage
-  #sensitive = true
 }
 
 # output "ssh_to_compute" {

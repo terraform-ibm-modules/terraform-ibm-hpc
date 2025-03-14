@@ -12,7 +12,7 @@ variable "enable_landing_zone" {
 # Resource Groups Variables
 ##############################################################################
 
-variable "resource_group" {
+variable "existing_resource_group" {
   description = "String describing resource groups to create or reference"
   type        = string
   default     = null
@@ -41,7 +41,7 @@ variable "zones" {
 # VPC Variables
 ##############################################################################
 
-variable "vpc" {
+variable "vpc_name" {
   type        = string
   description = "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
   default     = null

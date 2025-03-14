@@ -15,7 +15,7 @@
     {
       "folder": "solutions/hpc",
       "type": "terraform_v1.5",
-      "env_values":[
+      "env_values": [
         {
           "TF_CLI_ARGS_apply": "-parallelism=250"
         },
@@ -26,10 +26,10 @@
           "TF_CLI_ARGS_destroy": "-parallelism=100"
         },
         {
-          "VAR1":"<val1>"
+          "VAR1": "<val1>"
         },
         {
-          "VAR2":"<val2>"
+          "VAR2": "<val2>"
         }
       ],
       "variablestore": [
@@ -55,12 +55,11 @@
           "description": "IBM Cloud API key for the IBM Cloud account where the IBM Cloud HPC cluster needs to be deployed. For more information on how to create an API key, see [Managing user API keys](https://cloud.ibm.com/docs/account?topic=account-userapikey)."
         },
         {
-          "name": "resource_group",
+          "name": "existing_resource_group",
           "value": "Default",
           "type": "string",
           "secure": false,
           "description": "Specify the existing resource group name from your IBM Cloud account where the VPC resources should be deployed. By default, the resource group name is set to 'Default.' Note that in some older accounts, the resource group name may be 'default,' so please validate the resource_group name before deployment. If the resource group value is set to the string \"null\", the automation will create two different resource groups named 'workload-rg' and 'service-rg.' For more information on resource groups, refer to Managing resource groups."
-
         },
         {
           "name": "zones",
@@ -77,7 +76,7 @@
           "description": "Prefix that is used to name the IBM Cloud HPC cluster and IBM Cloud resources that are provisioned to build the IBM Cloud HPC cluster instance. You cannot create more than one instance of the IBM Cloud HPC cluster with the same name. Ensure that the name is unique. Prefix must start with a lowercase letter and contain only lowercase letters, digits, and hyphens in between. Hyphens must be followed by at least one lowercase letter or digit. There are no leading, trailing, or consecutive hyphens.Character length for cluster_prefix should be less than 16."
         },
         {
-          "name": "cluster_id",
+          "name": "cluster_name",
           "value": "Please fill here",
           "type": "string",
           "secure": false,
@@ -208,7 +207,6 @@
           "type": "string",
           "secure": false,
           "description": "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-8 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v7). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering."
-
         },
         {
           "name": "login_image_name",
@@ -229,7 +227,7 @@
           "value": "bx2-16x64",
           "type": "string",
           "secure": false,
-          "description" : "Specify the virtual server instance profile type to be used to create the management nodes for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
+          "description": "Specify the virtual server instance profile type to be used to create the management nodes for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
         },
         {
           "name": "management_node_count",
@@ -245,11 +243,12 @@
           "secure": false,
           "description": "Mount points and sizes in GB and IOPS range of file shares that can be used to customize shared file storage layout. Provide the details for up to 5 shares. Each file share size in GB supports different range of IOPS. For more information, see [file share IOPS value](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=ui)"
         },
-        { "name": "storage_security_group_id",
+        {
+          "name": "storage_security_group_id",
           "value": "__NULL__",
           "type": "string",
           "secure": false,
-          "description" : "Provide the security group id that is created from Scale storage, if the nfs_share is not equal to null from cluster_file_share variable."
+          "description": "Provide the security group id that is created from Scale storage, if the nfs_share is not equal to null from cluster_file_share variable."
         },
         {
           "name": "hyperthreading_enabled",
@@ -300,13 +299,15 @@
           "secure": true,
           "description": "Password for IBM Spectrum LSF Application Center GUI. Note: Password should be at least 8 characters, must have one number, one lowercase letter, one uppercase letter, and at least one special character."
         },
-        {  "name": "app_center_high_availability",
+        {
+          "name": "app_center_high_availability",
           "value": "true",
           "type": "bool",
           "secure": false,
           "description": "Set to false to disable the IBM Spectrum LSF Application Center GUI High Availability (default: true)."
         },
-        {  "name": "existing_certificate_instance",
+        {
+          "name": "existing_certificate_instance",
           "value": "",
           "type": "string",
           "secure": false,
@@ -438,7 +439,8 @@
           "secure": false,
           "description": "Event Notifications Instance plan to be used (it's used with S.C.C. instance), possible values 'lite' and 'standard'"
         },
-        { "name": "observability_monitoring_enable",
+        {
+          "name": "observability_monitoring_enable",
           "value": "false",
           "type": "bool",
           "secure": false,
@@ -456,35 +458,35 @@
           "value": "graduated-tier",
           "type": "string",
           "secure": false,
-          "description" : "Type of service plan for IBM Cloud Monitoring instance. You can choose one of the following: lite, graduated-tier. For all details visit [IBM Cloud Monitoring Service Plans](https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans)."
+          "description": "Type of service plan for IBM Cloud Monitoring instance. You can choose one of the following: lite, graduated-tier. For all details visit [IBM Cloud Monitoring Service Plans](https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans)."
         },
         {
           "name": "bastion_instance_name",
           "value": "__NULL__",
           "type": "string",
           "secure": false,
-          "description" : "Provide the name of the bastion instance. If none given then new bastion will be created."
+          "description": "Provide the name of the bastion instance. If none given then new bastion will be created."
         },
         {
           "name": "bastion_instance_public_ip",
           "value": "__NULL__",
           "type": "string",
           "secure": false,
-          "description" : "Provide the public ip address of the bastion instance to establish the remote connection."
+          "description": "Provide the public ip address of the bastion instance to establish the remote connection."
         },
         {
           "name": "bastion_security_group_id",
           "value": "__NULL__",
           "type": "string",
           "secure": false,
-          "description" : "Provide the security group ID of the bastion server. This security group ID will be added as an allowlist rule on the HPC cluster nodes to establish an SSH connection through the bastion node."
+          "description": "Provide the security group ID of the bastion server. This security group ID will be added as an allowlist rule on the HPC cluster nodes to establish an SSH connection through the bastion node."
         },
         {
           "name": "bastion_ssh_private_key",
           "value": "__NULL__",
           "type": "string",
           "secure": false,
-          "description" : "Provide the private SSH key (named id_rsa) used during the creation and configuration of the bastion server to securely authenticate and connect to the bastion server. This allows access to internal network resources from a secure entry point. Note: The corresponding public SSH key (named id_rsa.pub) must already be available in the ~/.ssh/authorized_keys file on the bastion host to establish authentication."
+          "description": "Provide the private SSH key (named id_rsa) used during the creation and configuration of the bastion server to securely authenticate and connect to the bastion server. This allows access to internal network resources from a secure entry point. Note: The corresponding public SSH key (named id_rsa.pub) must already be available in the ~/.ssh/authorized_keys file on the bastion host to establish authentication."
         }
       ]
     }

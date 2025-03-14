@@ -23,9 +23,10 @@ locals {
   existing_kms_instance_guid = var.key_management != null ? module.landing_zone.key_management_guid : null
   cos_data                   = var.enable_bastion ? [] : module.landing_zone.cos_buckets_data
   # Future use
+  # When we implement the existing bastion concept we need the changes to implemented like below. Which is already there on our LSF DA
   # skip_iam_authorization_policy = true
+  # skip_iam_authorization_policy = var.bastion_instance_name != null ? false : local.skip_iam_authorization_policy
 }
-
 
 # locals needed for landing_zone_vsi
 locals {
@@ -102,17 +103,10 @@ locals {
 
   #boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   #skip_iam_authorization_policy = true
-  #resource_group_id = data.ibm_resource_group.itself.id
-  #vpc_id            = var.vpc_name == null ? module.landing_zone.vpc_id[0] : data.ibm_is_vpc.existing_vpc[0].id
-  #vpc_crn           = var.vpc_name == null ? module.landing_zone.vpc_crn[0] : data.ibm_is_vpc.existing_vpc[0].crn
 }
 
 # locals needed for file-storage
 locals {
-  # dependency: landing_zone -> file-storage
-  #vpc_id                        = var.vpc_name == null ? one(module.landing_zone.vpc_id) : var.vpc_name
-  #boot_volume_encryption_key    = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
-
   # dependency: landing_zone_vsi -> file-share
   compute_subnet_id         = var.vpc_name == null && var.compute_subnets == null ? local.compute_subnets[0].id : [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.id][0]
   compute_security_group_id = var.enable_deployer ? [] : module.landing_zone_vsi[0].compute_sg_id
@@ -142,8 +136,8 @@ locals {
   # resource_group = var.existing_resource_group == null ? "workload-rg" : var.existing_resource_group
   resource_group_ids = {
     # management_rg = var.existing_resource_group == null ? module.landing_zone.resource_group_id[0]["management-rg"] : one(values(one(module.landing_zone.resource_group_id)))
-    service_rg  = var.existing_resource_group == null ? module.landing_zone.resource_group_id[0]["service-rg"] : data.ibm_resource_group.resource_group[0].id
-    workload_rg = var.existing_resource_group == null ? module.landing_zone.resource_group_id[0]["workload-rg"] : data.ibm_resource_group.resource_group[0].id
+    service_rg  = var.existing_resource_group == null ? module.landing_zone.resource_group_id[0]["service-rg"] : data.ibm_resource_group.existing_resource_group[0].id
+    workload_rg = var.existing_resource_group == null ? module.landing_zone.resource_group_id[0]["workload-rg"] : data.ibm_resource_group.existing_resource_group[0].id
   }
   # resource_group_id = one(values(one(module.landing_zone.resource_group_id)))
   vpc_crn = var.vpc_name == null ? one(module.landing_zone.vpc_crn) : one(data.ibm_is_vpc.existing_vpc[*].crn)
@@ -155,11 +149,11 @@ locals {
   existing_client_subnet_crns   = [for subnet in data.ibm_is_subnet.existing_client_subnets : subnet.crn]
   existing_bastion_subnet_crns  = [for subnet in data.ibm_is_subnet.existing_bastion_subnets : subnet.crn]
   subnets_crn                   = concat(local.existing_compute_subnet_crns, local.existing_storage_subnet_crns, local.existing_protocol_subnet_crns, local.existing_client_subnet_crns, local.existing_bastion_subnet_crns)
-  # subnets_crn        = var.vpc_name == null && var.compute_subnets == null ? module.landing_zone.subnets_crn : concat(local.existing_subnet_crns, module.landing_zone.subnets_crn)
-  #subnets           = flatten([local.compute_subnets, local.storage_subnets, local.protocol_subnets])
-  #subnets_crns      = data.ibm_is_subnet.itself[*].crn
-  # subnets_crn = module.landing_zone.subnets_crn
-  #boot_volume_encryption_key    = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
+  # subnets_crn                 = var.vpc_name == null && var.compute_subnets == null ? module.landing_zone.subnets_crn : concat(local.existing_subnet_crns, module.landing_zone.subnets_crn)
+  # subnets                     = flatten([local.compute_subnets, local.storage_subnets, local.protocol_subnets])
+  # subnets_crns                = data.ibm_is_subnet.itself[*].crn
+  # subnets_crn                 = module.landing_zone.subnets_crn
+  # boot_volume_encryption_key  = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
 
   # dependency: landing_zone_vsi -> file-share
 }

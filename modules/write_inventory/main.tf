@@ -1,7 +1,4 @@
-/*
-    Write provisioned infrastructure details to JSON.
-*/
-
+# Write provisioned infrastructure details to JSON.
 resource "local_sensitive_file" "infra_details_to_json" {
   content  = <<EOT
 {

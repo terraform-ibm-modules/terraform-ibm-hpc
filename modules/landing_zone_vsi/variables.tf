@@ -11,7 +11,7 @@ variable "storage_type" {
 # Resource Groups Variables
 ##############################################################################
 
-variable "resource_group" {
+variable "existing_resource_group" {
   description = "String describing resource groups to create or reference"
   type        = string
   default     = null

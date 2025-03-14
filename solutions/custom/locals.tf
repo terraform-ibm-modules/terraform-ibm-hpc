@@ -4,7 +4,6 @@ locals {
   region = join("-", slice(split("-", var.zones[0]), 0, 2))
 }
 
-
 locals {
   override_json_path = abspath("./override.json")
   override = {
@@ -16,7 +15,6 @@ locals {
   }
   override_type = var.override_json_string == null ? "override" : "override_json_string"
 }
-
 
 locals {
   config = {
@@ -66,7 +64,6 @@ locals {
     vpn_preshared_key         = var.vpn_preshared_key
   }
 }
-
 
 # Compile Environment for Config output
 locals {

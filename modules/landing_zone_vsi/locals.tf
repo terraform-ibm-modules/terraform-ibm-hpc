@@ -257,7 +257,7 @@ locals {
 
   # Derived configs
   # VPC
-  resource_group_id = data.ibm_resource_group.resource_group.id
+  resource_group_id = data.ibm_resource_group.existing_resource_group.id
 
   # Subnets
   # TODO: Multi-zone multi-vNIC VSIs deployment support (bug #https://github.ibm.com/GoldenEye/issues/issues/5830)
@@ -269,7 +269,6 @@ locals {
 
   compute_public_key_content  = one(module.compute_key[*].public_key_content)
   compute_private_key_content = one(module.compute_key[*].private_key_content)
-
 
   # Security Groups
   protocol_secondary_security_group = [for subnet in local.protocol_subnets :

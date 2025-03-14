@@ -109,7 +109,7 @@ curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
 ibmcloud plugin install infrastructure-service
 ibmcloud login --apikey ${ibm_api_key} -r ${vpc_region}
 echo "========== Uploading SSH key to IBM cloud ========="
-ibmcloud is key-create $CICD_SSH_KEY @/HPCaaS/artifacts/.ssh/id_rsa.pub --resource-group-name ${resource_group}
+ibmcloud is key-create $CICD_SSH_KEY @/HPCaaS/artifacts/.ssh/id_rsa.pub --resource-group-name ${existing_resource_group}
 
 cd /HPCaaS/terraform-ibm-hpc/tools/tests
 git submodule update --init
@@ -130,9 +130,9 @@ echo "========== Executing Go function to validate the image through HPC deploym
 export TF_VAR_ibmcloud_api_key=${ibm_api_key}
 
 if [ "${private_catalog_id}" ]; then
-    PREFIX=${prefix} CLUSTER_ID=${cluster_id} RESERVATION_ID=${reservation_id} SSH_FILE_PATH="/HPCaaS/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY CATALOG_VALIDATE_SSH_KEY=${catalog_validate_ssh_key} ZONES=${zones} RESOURCE_GROUP=${resource_group} COMPUTE_IMAGE_NAME=${image_name} PRIVATE_CATALOG_ID=${private_catalog_id} VPC_ID=${vpc_id} SUBNET_ID=${vpc_subnet_id} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunHpcDeploymentForCustomImageBuilder" | tee hpc_log_$(date +%d-%m-%Y-%H-%M-%S).log
+    PREFIX=${prefix} CLUSTER_NAME=${cluster_name} RESERVATION_ID=${reservation_id} SSH_FILE_PATH="/HPCaaS/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY CATALOG_VALIDATE_SSH_KEY=${catalog_validate_ssh_key} ZONES=${zones} EXISTING_RESOURCE_GROUP=${existing_resource_group} COMPUTE_IMAGE_NAME=${image_name} PRIVATE_CATALOG_ID=${private_catalog_id} VPC_ID=${vpc_id} SUBNET_ID=${vpc_subnet_id} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunHpcDeploymentForCustomImageBuilder" | tee hpc_log_$(date +%d-%m-%Y-%H-%M-%S).log
 else
-    PREFIX=${prefix} CLUSTER_ID=${cluster_id} RESERVATION_ID=${reservation_id} SSH_FILE_PATH="/HPCaaS/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY ZONES=${zones} RESOURCE_GROUP=${resource_group} COMPUTE_IMAGE_NAME=${image_name} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunHpcDeploymentForCustomImageBuilder" | tee hpc_log_$(date +%d-%m-%Y-%H-%M-%S).log
+    PREFIX=${prefix} CLUSTER_NAME=${cluster_name} RESERVATION_ID=${reservation_id} SSH_FILE_PATH="/HPCaaS/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY ZONES=${zones} EXISTING_RESOURCE_GROUP=${existing_resource_group} COMPUTE_IMAGE_NAME=${image_name} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunHpcDeploymentForCustomImageBuilder" | tee hpc_log_$(date +%d-%m-%Y-%H-%M-%S).log
 fi
 
 echo "========== Deleting the SSH key ========="

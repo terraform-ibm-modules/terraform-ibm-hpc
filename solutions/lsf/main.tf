@@ -1,7 +1,8 @@
 module "lsf" {
   source                                   = "./../.."
+  scheduler                                = "LSF"
   ibm_customer_number                      = var.ibm_customer_number
-  zones                                    = [var.zone]
+  zones                                    = var.zones
   allowed_cidr                             = var.allowed_cidr
   prefix                                   = local.env.prefix
   ssh_keys                                 = local.env.ssh_keys
@@ -63,7 +64,6 @@ module "lsf" {
   # New Variables
   ibmcloud_api_key = local.env.ibmcloud_api_key
 
-  # scheduler                                        = "LSF"
   # compute_gui_password                             = local.env.compute_gui_password
   # compute_gui_username                             = local.env.compute_gui_username
   # hpcs_instance_name                               = local.env.hpcs_instance_name
@@ -72,5 +72,4 @@ module "lsf" {
   # storage_gui_username                             = local.env.storage_gui_username
   # observability_monitoring_on_compute_nodes_enable = local.env.observability_monitoring_on_compute_nodes_enable
   # scc_profile_version                              = local.env.scc_profile_version
-
 }

@@ -2,7 +2,7 @@
 # Resource Groups Variables
 ##############################################################################
 
-variable "resource_group" {
+variable "existing_resource_group" {
   description = "String describing resource groups to create or reference"
   type        = string
   default     = null
@@ -22,11 +22,6 @@ variable "prefix" {
   }
 }
 
-# variable "zones" {
-#   description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
-#   type        = list(string)
-# }
-
 ##############################################################################
 # VPC Variables
 ##############################################################################
@@ -40,6 +35,15 @@ variable "network_cidr" {
   description = "Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning."
   type        = string
   default     = "10.0.0.0/8"
+}
+
+##############################################################################
+# Offering Variations
+##############################################################################
+variable "scheduler" {
+  type        = string
+  default     = null
+  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
 }
 
 ##############################################################################
@@ -130,28 +134,6 @@ variable "skip_iam_authorization_policy" {
   default     = false
   description = "Set to false if authorization policy is required for VPC block storage volumes to access kms. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for block storage volume](https://cloud.ibm.com/docs/vpc?topic=vpc-block-s2s-auth&interface=ui)."
 }
-
-# variable "management_instances" {
-#   type = list(
-#     object({
-#       profile = string
-#       count   = number
-#       image   = string
-#     })
-#   )
-#   description = "Number of instances to be launched for management."
-# }
-
-# variable "static_compute_instances" {
-#   type = list(
-#     object({
-#       profile = string
-#       count   = number
-#       image   = string
-#     })
-#   )
-#   description = "Total Number of instances to be launched for compute cluster."
-# }
 
 variable "dns_domain_names" {
   type = object({

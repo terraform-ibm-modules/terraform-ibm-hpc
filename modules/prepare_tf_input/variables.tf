@@ -32,7 +32,7 @@ variable "allowed_cidr" {
   description = "Network CIDR to access the VPC. This is used to manage network ACL rules for accessing the cluster."
 }
 
-variable "resource_group" {
+variable "existing_resource_group" {
   type        = string
   default     = "Default"
   description = "String describing resource groups to create or reference"
@@ -149,16 +149,11 @@ variable "protocol_subnets" {
 ##############################################################################
 # VPC Variables
 ##############################################################################
-variable "vpc" {
+variable "vpc_name" {
   type        = string
   default     = null
   description = "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
 }
-
-# variable "vpc_id" {
-#   type        = string
-#   description = "ID of an existing VPC in which the cluster resources will be deployed."
-# }
 
 ##############################################################################
 # DNS Variables
@@ -180,15 +175,6 @@ variable "enable_deployer" {
   default     = false
   description = "Deployer should be only used for better deployment performance"
 }
-
-##############################################################################
-# Bastion Variables
-##############################################################################
-# variable "bastion_fip" {
-#   type        = string
-#   default     = null
-#   description = "bastion fip"
-# }
 
 ##############################################################################
 # Offering Variations
@@ -240,17 +226,3 @@ variable "deployer_ip" {
   default     = null
   description = "deployer node ip"
 }
-
-# variable "compute_public_key_content" {
-#   type        = string
-#   sensitive   = true
-#   default     = null
-#   description = "Compute security key content."
-# }
-
-# variable "compute_private_key_content" {
-#   type        = string
-#   sensitive   = true
-#   default     = null
-#   description = "Compute security key content."
-# }

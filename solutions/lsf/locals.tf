@@ -1,9 +1,8 @@
 # locals needed for ibm provider
 locals {
   # Region and Zone calculations
-  region = join("-", slice(split("-", var.zone), 0, 2))
+  region = join("-", slice(split("-", var.zones[0]), 0, 2))
 }
-
 
 locals {
   override_json_path = abspath("./override.json")
@@ -16,7 +15,6 @@ locals {
   }
   override_type = var.override_json_string == null ? "override" : "override_json_string"
 }
-
 
 locals {
   config = {
@@ -80,18 +78,17 @@ locals {
     observability_monitoring_plan                    = var.observability_monitoring_plan
     scc_enable                                       = var.scc_enable
     scc_profile                                      = var.scc_profile
-    # scc_profile_version                              = var.scc_profile_version
-    scc_location                  = var.scc_location
-    scc_event_notification_plan   = var.scc_event_notification_plan
-    skip_flowlogs_s2s_auth_policy = var.skip_flowlogs_s2s_auth_policy
-    skip_iam_authorization_policy = var.skip_iam_authorization_policy
-    skip_kms_s2s_auth_policy      = var.skip_kms_s2s_auth_policy
+    scc_location                                     = var.scc_location
+    scc_event_notification_plan                      = var.scc_event_notification_plan
+    skip_flowlogs_s2s_auth_policy                    = var.skip_flowlogs_s2s_auth_policy
+    skip_iam_authorization_policy                    = var.skip_iam_authorization_policy
+    skip_kms_s2s_auth_policy                         = var.skip_kms_s2s_auth_policy
 
     # New Variables
     ibmcloud_api_key = var.ibmcloud_api_key
+    # scc_profile_version = var.scc_profile_version
   }
 }
-
 
 # Compile Environment for Config output
 locals {
@@ -156,13 +153,14 @@ locals {
     observability_monitoring_plan                    = lookup(local.override[local.override_type], "observability_monitoring_plan", local.config.observability_monitoring_plan)
     scc_enable                                       = lookup(local.override[local.override_type], "scc_enable", local.config.scc_enable)
     scc_profile                                      = lookup(local.override[local.override_type], "scc_profile", local.config.scc_profile)
-    # scc_profile_version                              = lookup(local.override[local.override_type], "scc_profile_version", local.config.scc_profile_version)
-    scc_location                  = lookup(local.override[local.override_type], "scc_location", local.config.scc_location)
-    scc_event_notification_plan   = lookup(local.override[local.override_type], "scc_event_notification_plan", local.config.scc_event_notification_plan)
-    skip_flowlogs_s2s_auth_policy = lookup(local.override[local.override_type], "skip_flowlogs_s2s_auth_policy", local.config.skip_flowlogs_s2s_auth_policy)
-    skip_iam_authorization_policy = lookup(local.override[local.override_type], "skip_iam_authorization_policy", local.config.skip_iam_authorization_policy)
-    skip_kms_s2s_auth_policy      = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
+    scc_location                                     = lookup(local.override[local.override_type], "scc_location", local.config.scc_location)
+    scc_event_notification_plan                      = lookup(local.override[local.override_type], "scc_event_notification_plan", local.config.scc_event_notification_plan)
+    skip_flowlogs_s2s_auth_policy                    = lookup(local.override[local.override_type], "skip_flowlogs_s2s_auth_policy", local.config.skip_flowlogs_s2s_auth_policy)
+    skip_iam_authorization_policy                    = lookup(local.override[local.override_type], "skip_iam_authorization_policy", local.config.skip_iam_authorization_policy)
+    skip_kms_s2s_auth_policy                         = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
     # New Variables
     ibmcloud_api_key = lookup(local.override[local.override_type], "ibmcloud_api_key", local.config.ibmcloud_api_key)
+    # scc_profile_version = lookup(local.override[local.override_type], "scc_profile_version", local.config.scc_profile_version)
+
   }
 }

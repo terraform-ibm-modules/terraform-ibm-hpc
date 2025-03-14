@@ -1,11 +1,11 @@
 ##############################################################################
 # Offering Variations
 ##############################################################################
-# variable "scheduler" {
-#   type        = string
-#   default     = "LSF"
-#   description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
-# }
+variable "scheduler" {
+  type        = string
+  default     = "LSF"
+  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+}
 
 variable "ibm_customer_number" {
   type        = string

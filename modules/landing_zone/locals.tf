@@ -20,8 +20,8 @@ locals {
 
   # Resource group calculation
   # If user defined then use existing else create new
-  create_resource_group = var.resource_group == null ? true : false
-  resource_groups = var.resource_group == null ? [
+  create_resource_group = var.existing_resource_group == null ? true : false
+  new_resource_groups = var.existing_resource_group == null ? [
     {
       name   = "service-rg",
       create = local.create_resource_group,
@@ -39,12 +39,12 @@ locals {
     }
     ] : [
     {
-      name   = var.resource_group,
+      name   = var.existing_resource_group,
       create = local.create_resource_group
     }
   ]
   # For the variables looking for resource group names only (transit_gateway, key_management, atracker)
-  resource_group = var.resource_group == null ? "service-rg" : var.resource_group
+  existing_service_resource_group = var.existing_resource_group == null ? "service-rg" : var.existing_resource_group
 
   client_instance_count         = sum(var.client_instances[*]["count"])
   management_instance_count     = sum(var.management_instances[*]["count"])
@@ -141,10 +141,10 @@ locals {
   ]
   network_acl_rules = flatten([local.network_acl_inbound_rules, local.network_acl_outbound_rules])
 
-  vpcs = var.vpc == null ? [
+  vpcs = var.vpc_name == null ? [
     {
       prefix                       = local.name
-      resource_group               = var.resource_group == null ? "workload-rg" : var.resource_group
+      resource_group               = var.existing_resource_group == null ? "workload-rg" : var.existing_resource_group
       clean_default_security_group = true
       clean_default_acl            = true
       flow_logs_bucket_name        = var.enable_vpc_flow_logs ? "vpc-flow-logs-bucket" : null
@@ -167,97 +167,17 @@ locals {
       name = item
     }
   ]
-  #bastion_ssh_keys = var.bastion_ssh_keys
 
-  # Sample to spin VSI
-  /*
-  bastion_vsi = {
-    name                            = "bastion-vsi"
-    resource_group                  = var.resource_group == null ? "management-rg" : var.resource_group
-    image_name                      = "ibm-ubuntu-22-04-1-minimal-amd64-4"
-    machine_type                    = "cx2-4x8"
-    vpc_name                        = var.vpc == null ? local.name : var.vpc
-    subnet_names                    = ["bastion-subnet"]
-    ssh_keys                        = local.bastion_ssh_keys
-    vsi_per_subnet                  = 1
-    user_data                       = var.enable_bastion ? data.template_file.bastion_user_data.rendered : null
-    enable_floating_ip              = true
-    boot_volume_encryption_key_name = var.key_management == null ? null : format("%s-vsi-key", var.prefix)
-    security_group = {
-      name = "bastion-sg"
-      rules = flatten([
-        {
-          name      = "allow-ibm-inbound"
-          direction = "inbound"
-          source    = "161.26.0.0/16"
-        },
-        {
-          name      = "allow-vpc-inbound"
-          direction = "inbound"
-          source    = var.network_cidr
-        },
-        [for cidr_index in range(length(flatten([local.schematics_reserved_cidrs, var.allowed_cidr]))) : {
-          name      = format("allow-variable-inbound-%s", cidr_index + 1)
-          direction = "inbound"
-          source    = element(var.allowed_cidr, cidr_index)
-          # ssh port
-          tcp = {
-            port_min = 22
-            port_max = 22
-          }
-        }],
-        {
-          name      = "allow-ibm-http-outbound"
-          direction = "outbound"
-          source    = "161.26.0.0/16"
-          tcp = {
-            port_min = 80
-            port_max = 80
-          }
-        },
-        {
-          name      = "allow-ibm-https-outbound"
-          direction = "outbound"
-          source    = "161.26.0.0/16"
-          tcp = {
-            port_min = 443
-            port_max = 443
-          }
-        },
-        {
-          name      = "allow-ibm-dns-outbound"
-          direction = "outbound"
-          source    = "161.26.0.0/16"
-          tcp = {
-            port_min = 53
-            port_max = 53
-          }
-        },
-        {
-          name      = "allow-vpc-outbound"
-          direction = "outbound"
-          source    = var.network_cidr
-        },
-        [for cidr_index in range(length(flatten([local.schematics_reserved_cidrs, var.allowed_cidr]))) : {
-          name      = format("allow-variable-outbound-%s", cidr_index + 1)
-          direction = "outbound"
-          source    = element(var.allowed_cidr, cidr_index)
-        }]
-      ])
-    }
-  }
-  vsi = [local.bastion_vsi]
-  */
   vsi = []
 
   # Define VPN
   vpn_gateways = var.enable_vpn ? [
     {
       name           = "vpn-gw"
-      vpc_name       = var.vpc == null ? local.name : var.vpc
+      vpc_name       = var.vpc_name == null ? local.name : var.vpc_name
       subnet_name    = "bastion-subnet"
       mode           = "policy"
-      resource_group = local.resource_group
+      resource_group = local.existing_service_resource_group
       connections = [
         {
           peer_address  = var.vpn_peer_address
@@ -272,15 +192,15 @@ locals {
   # Define transit gateway (to connect multiple VPC)
   enable_transit_gateway         = false
   transit_gateway_global         = false
-  transit_gateway_resource_group = local.resource_group
-  transit_gateway_connections    = [var.vpc]
+  transit_gateway_resource_group = local.existing_service_resource_group
+  transit_gateway_connections    = [var.vpc_name]
 
   active_cos = [
     (
       var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker || var.scc_enable || var.observability_logs_enable
       ) ? {
       name                          = var.cos_instance_name == null ? "hpc-cos" : var.cos_instance_name
-      resource_group                = local.resource_group
+      resource_group                = local.existing_service_resource_group
       plan                          = "standard"
       random_suffix                 = true
       use_data                      = var.cos_instance_name == null ? false : true
@@ -420,7 +340,7 @@ locals {
 
   key_management = var.key_management == "key_protect" ? {
     name           = var.kms_instance_name != null ? var.kms_instance_name : format("%s-kms", var.prefix) # var.key_management == "hs_crypto" ? var.hpcs_instance_name : format("%s-kms", var.prefix)
-    resource_group = local.resource_group
+    resource_group = local.existing_service_resource_group
     use_hs_crypto  = false
     keys           = [for each in local.active_keys : each if each != null]
     use_data       = var.kms_instance_name != null ? true : false
@@ -442,7 +362,7 @@ locals {
   vpc_placement_groups = [
     for placement_group in range(local.placement_groups_count) : {
       name           = format("%s", placement_group + 1)
-      resource_group = local.resource_group
+      resource_group = local.existing_service_resource_group
       strategy       = var.placement_strategy
     }
   ]
@@ -455,7 +375,7 @@ locals {
   virtual_private_endpoints = []
   service_endpoints         = "private"
   atracker = {
-    resource_group        = local.resource_group
+    resource_group        = local.existing_service_resource_group
     receive_global_events = var.enable_atracker
     collector_bucket_name = "atracker-bucket"
     add_route             = var.enable_atracker ? true : false
@@ -479,8 +399,7 @@ locals {
 # env variables (use to override)
 locals {
   env = {
-    #ibmcloud_api_key              = var.ibmcloud_api_key
-    resource_groups                        = local.resource_groups
+    resource_groups                        = local.new_resource_groups
     network_cidr                           = var.network_cidr
     vpcs                                   = local.vpcs
     vpn_gateways                           = local.vpn_gateways

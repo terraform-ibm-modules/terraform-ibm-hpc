@@ -1,22 +1,3 @@
-# To debug local values
-/*
-output "env_var" {
-  value = local.env
-}
-
-output "landing_zone_data" {
-  value = module.landing_zone[*]
-}
-
-output "vpc_data" {
-  value = module.landing_zone[*].vpc_data
-}
-
-output "subnet_data" {
-  value = module.landing_zone[*].subnet_data
-}
-*/
-
 output "resource_group_id" {
   description = "Resource group ID"
   value       = module.landing_zone[*].resource_group_data
@@ -36,7 +17,6 @@ output "vpc_crn" {
   description = "VPC CRN"
   value       = module.landing_zone[*].vpc_data[0].vpc_crn
 }
-
 
 output "bastion_subnets" {
   description = "Bastion subnets"

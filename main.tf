@@ -20,10 +20,10 @@ module "landing_zone" {
   prefix                        = var.prefix
   protocol_instances            = var.protocol_instances
   protocol_subnets_cidr         = var.protocol_subnets_cidr
-  resource_group                = var.existing_resource_group
+  existing_resource_group       = var.existing_resource_group
   storage_instances             = var.storage_instances
   storage_subnets_cidr          = var.storage_subnets_cidr
-  vpc                           = var.vpc_name
+  vpc_name                      = var.vpc_name
   vpn_peer_address              = var.vpn_peer_address
   vpn_peer_cidr                 = var.vpn_peer_cidr
   vpn_preshared_key             = var.vpn_preshared_key
@@ -38,7 +38,8 @@ module "landing_zone" {
 
 module "deployer" {
   source                        = "./modules/deployer"
-  resource_group                = var.existing_resource_group
+  scheduler                     = var.scheduler
+  existing_resource_group       = var.existing_resource_group
   prefix                        = var.prefix
   vpc_id                        = local.vpc_id
   network_cidr                  = var.network_cidr
@@ -56,16 +57,12 @@ module "deployer" {
   existing_kms_instance_guid    = local.existing_kms_instance_guid
   skip_iam_authorization_policy = var.skip_iam_authorization_policy
   dns_domain_names              = var.dns_domain_names
-  # zones                         = var.zones
-  # static_compute_instances      = var.static_compute_instances
-  # management_instances          = var.management_instances
-
 }
 
 module "landing_zone_vsi" {
   count                      = var.enable_deployer == false ? 1 : 0
   source                     = "./modules/landing_zone_vsi"
-  resource_group             = var.existing_resource_group
+  existing_resource_group    = var.existing_resource_group
   prefix                     = var.prefix
   vpc_id                     = local.vpc_id
   bastion_security_group_id  = var.bastion_security_group_id
@@ -95,7 +92,7 @@ module "prepare_tf_input" {
   enable_deployer           = var.enable_deployer
   deployer_ip               = local.deployer_ip
   ibmcloud_api_key          = var.ibmcloud_api_key
-  resource_group            = var.existing_resource_group
+  existing_resource_group   = var.existing_resource_group
   prefix                    = var.prefix
   zones                     = var.zones
   compute_ssh_keys          = local.compute_ssh_keys
@@ -110,7 +107,7 @@ module "prepare_tf_input" {
   enable_atracker           = var.enable_atracker
   enable_vpc_flow_logs      = var.enable_vpc_flow_logs
   allowed_cidr              = var.allowed_cidr
-  vpc                       = local.vpc_name
+  vpc_name                  = local.vpc_name
   storage_subnets           = local.storage_subnet
   protocol_subnets          = local.protocol_subnet
   compute_subnets           = local.compute_subnet
@@ -287,15 +284,16 @@ module "cloud_monitoring_instance_creation" {
 
 # Code for SCC Instance
 module "scc_instance_and_profile" {
-  count       = var.enable_deployer == true && var.scc_enable ? 1 : 0
-  source      = "./modules/security/scc"
-  location    = var.scc_location != "" ? var.scc_location : "us-south"
-  rg          = local.resource_group_ids["service_rg"]
-  scc_profile = var.scc_enable ? var.scc_profile : ""
-  # scc_profile_version     = var.scc_profile != "" && var.scc_profile != null ? var.scc_profile_version : ""
+  count                   = var.enable_deployer == true && var.scc_enable ? 1 : 0
+  source                  = "./modules/security/scc"
+  location                = var.scc_location != "" ? var.scc_location : "us-south"
+  rg                      = local.resource_group_ids["service_rg"]
+  scc_profile             = var.scc_enable ? var.scc_profile : ""
   event_notification_plan = var.scc_event_notification_plan
   tags                    = ["hpc", var.prefix]
   prefix                  = var.prefix
   cos_bucket              = [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0]
   cos_instance_crn        = module.landing_zone.cos_instance_crns[0]
+  # scc_profile_version     = var.scc_profile != "" && var.scc_profile != null ? var.scc_profile_version : ""
+
 }

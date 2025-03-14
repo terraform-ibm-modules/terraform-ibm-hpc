@@ -23,9 +23,10 @@ variable "ibmcloud_api_key" {
 ##############################################################################
 # Cluster Level Variables
 ##############################################################################
-variable "zone" {
-  type        = string
-  description = "Zone where VPC will be created."
+variable "zones" {
+  type        = list(string)
+  default     = ["us-south-1", "us-south-2", "us-south-3"]
+  description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
 }
 
 variable "ssh_keys" {

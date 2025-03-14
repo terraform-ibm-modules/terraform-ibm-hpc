@@ -51,7 +51,6 @@ EOT
   filename = var.playbook_path
 }
 
-
 resource "null_resource" "run_playbook" {
   count = var.inventory_path != null ? 1 : 0
   provisioner "local-exec" {

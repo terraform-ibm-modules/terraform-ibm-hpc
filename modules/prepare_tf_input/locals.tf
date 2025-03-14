@@ -1,6 +1,5 @@
 locals {
-  schematics_inputs_path = "/tmp/.schematics/solution_terraform.auto.tfvars.json"
-
+  schematics_inputs_path    = "/tmp/.schematics/solution_terraform.auto.tfvars.json"
   zones                     = jsonencode(var.zones)
   list_compute_ssh_keys     = jsonencode(var.compute_ssh_keys)
   list_storage_ssh_keys     = jsonencode(var.storage_ssh_keys)
@@ -16,12 +15,4 @@ locals {
   list_client_subnets       = jsonencode(length(var.client_subnets) == 0 ? null : var.client_subnets)
   list_bastion_subnets      = jsonencode(length(var.bastion_subnets) == 0 ? null : var.bastion_subnets)
   dns_domain_names          = jsonencode(var.dns_domain_names)
-  # deployer_path               = "/opt/ibm"
-  # remote_inputs_path          = format("%s/terraform.tfvars.json", "/tmp")
-  # remote_terraform_path       = format("%s/terraform-ibm-hpc", local.deployer_path)
-  # remote_ansible_path         = format("%s/terraform-ibm-hpc", local.deployer_path)
-  # da_hpc_repo_url             = "https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git"
-  # da_hpc_repo_tag             = "pr-199" ###### change it to main in future
-  # compute_public_key_content  = var.compute_public_key_content != null ? jsonencode(base64encode(var.compute_public_key_content)) : ""
-  # compute_private_key_content = var.compute_private_key_content != null ? jsonencode(base64encode(var.compute_private_key_content)) : ""
 }

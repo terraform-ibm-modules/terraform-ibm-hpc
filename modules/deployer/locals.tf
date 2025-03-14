@@ -1,7 +1,6 @@
 # define variables
 locals {
-  #products = "scale"
-  name   = "hpc"
+  name   = var.scheduler == "LSF" ? "LSF" : (var.scheduler == null ? "Scale" : (var.scheduler == "HPCaaS" ? "HPCaaS" : (var.scheduler == "Symphony" ? "Symphony" : (var.scheduler == "Slurm" ? "Slurm" : ""))))
   prefix = var.prefix
   tags   = [local.prefix, local.name]
 
@@ -43,9 +42,6 @@ locals {
   # LSF static configs
   # lsf_cloud_deployer_path = "/opt/ibm/lsf"
 
-  # Region and Zone calculations
-  # region = join("-", slice(split("-", var.zones[0]), 0, 2))
-
   # Security group rules
   # TODO: Fix SG rules
   bastion_security_group_rules = flatten([
@@ -68,7 +64,7 @@ locals {
 
   # Derived configs
   # VPC
-  resource_group_id = data.ibm_resource_group.resource_group.id
+  resource_group_id = data.ibm_resource_group.existing_resource_group.id
 
   # Subnets
   bastion_subnets = var.bastion_subnets
@@ -78,8 +74,4 @@ locals {
   vsi_interfaces     = ["eth0", "eth1"]
   compute_interfaces = local.vsi_interfaces[0]
   compute_dns_domain = var.dns_domain_names["compute"]
-
-  # management_instance_count     = sum(var.management_instances[*]["count"])
-  # static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
-  # enable_compute                = local.management_instance_count > 0 || local.static_compute_instance_count > 0
 }
