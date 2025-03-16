@@ -227,7 +227,7 @@ module "ldap_vsi" {
   create_security_group         = false
   security_group                = null
   image_id                      = local.ldap_image_id[count.index]
-  machine_type                  = var.ldap_vsi_profile
+  machine_type                  = var.ldap_instances[count.index]["count"]
   prefix                        = local.ldap_node_name
   resource_group_id             = local.resource_group_id
   enable_floating_ip            = false

@@ -284,6 +284,7 @@ locals {
   dns_domain_names          = jsonencode(var.dns_domain_names)
   compute_public_key_content  = local.compute_public_key_contents != null ? jsonencode(base64encode(local.compute_public_key_contents)) : ""
   compute_private_key_content = local.compute_private_key_contents != null ? jsonencode(base64encode(local.compute_private_key_contents)) : ""
+  ldap_instances            = jsonencode(var.ldap_instances)
 }
 
 # locals {

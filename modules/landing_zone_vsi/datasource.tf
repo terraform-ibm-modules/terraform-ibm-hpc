@@ -62,8 +62,7 @@ data "ibm_is_ssh_key" "storage" {
   name     = each.key
 }
 
-
 data "ibm_is_image" "ldap_vsi_image" {
-  count = var.ldap_basedns != null && var.ldap_server == null ? 1 : 0
-  name  = var.ldap_vsi_osimage_name
+  count = var.enable_ldap != null && var.ldap_server == null ? 1 : 0
+  name  = var.ldap_instances[count.index]["image"]
 }

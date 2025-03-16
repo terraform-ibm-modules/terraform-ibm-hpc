@@ -91,14 +91,13 @@ module "landing_zone_vsi" {
   boot_volume_encryption_key = local.boot_volume_encryption_key
   enable_bastion             = var.enable_bastion
   enable_ldap                = var.enable_ldap
-  ldap_basedns               = var.ldap_basedns
-  ldap_vsi_profile           = var.ldap_vsi_profile
-  ldap_admin_password        = var.ldap_admin_password
-  ldap_user_name             = var.ldap_user_name
-  ldap_user_password         = var.ldap_user_password
+  ldap_instances             = var.ldap_instances
   ldap_server                = var.ldap_server
-  ldap_server_cert           = var.ldap_server_cert
-  ldap_vsi_osimage_name      = var.ldap_vsi_osimage_name
+  # ldap_admin_password        = var.ldap_admin_password
+  # ldap_user_name             = var.ldap_user_name
+  # ldap_user_password         = var.ldap_user_password
+  # ldap_basedns               = var.ldap_basedns
+  # ldap_server_cert           = var.ldap_server_cert
 }
 
 
@@ -138,7 +137,10 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "compute_private_key_content": ${local.compute_private_key_content},
   "bastion_security_group_id": "${local.bastion_security_group_id}",
   "deployer_hostname": "${local.deployer_hostname}",
-  "deployer_ip": "${local.deployer_ip}"
+  "deployer_ip": "${local.deployer_ip}",
+  "ldap_instances": "${local.ldap_instances}",
+  "enable_ldap": "${var.enable_ldap}",
+  "ldap_server": "${var.ldap_server}"
 }    
 EOT
   filename = local.schematics_inputs_path
