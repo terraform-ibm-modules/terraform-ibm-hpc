@@ -140,7 +140,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "deployer_ip": "${local.deployer_ip}",
   "ldap_instances": "${local.ldap_instances}",
   "enable_ldap": "${var.enable_ldap}",
-  "ldap_server": "${var.ldap_server}"
+  "ldap_server": "${local.ldap_server}"
 }    
 EOT
   filename = local.schematics_inputs_path
