@@ -402,15 +402,15 @@ module "compute_playbook" {
 }
 
 module "ldap_playbook" {
-  count            = var.enable_deployer == false ? 1 : 0
-  source           = "./modules/playbook"
-  enable_ldap      = local.enable_ldap
-  bastion_fip      = local.bastion_fip
-  private_key_path = local.compute_private_key_path
-  inventory_path   = local.ldap_inventory_path
-  playbook_path    = local.ldap_playbook_path
-  enable_bastion   = var.enable_bastion
-  depends_on       = [ module.ldap_inventory ]
+  count                 = var.enable_deployer == false ? 1 : 0
+  source                = "./modules/playbook"
+  enable_ldap           = local.enable_ldap
+  bastion_fip           = local.bastion_fip
+  private_key_path      = local.compute_private_key_path
+  ldap_inventory_path   = local.ldap_inventory_path
+  ldap_playbook_path    = local.ldap_playbook_path
+  enable_bastion        = var.enable_bastion
+  depends_on            = [ module.ldap_inventory ]
 }
 
 # module "storage_playbook" {
