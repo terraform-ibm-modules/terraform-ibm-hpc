@@ -27,3 +27,13 @@ output "compute_sg_id" {
   description = "Compute SG id"
   value       = module.compute_sg[*].security_group_id
 }
+
+output "afm_vsi_data" {
+  description = "AFM VSI data"
+  value       = module.afm_vsi[*]["list"]
+}
+
+# output "gklm_vsi_data" {
+#   description = "GKLM VSI data"
+#   value       = module.gklm_vsi[*]["list"]
+# }

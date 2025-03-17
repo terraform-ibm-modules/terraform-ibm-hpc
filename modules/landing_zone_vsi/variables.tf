@@ -349,7 +349,7 @@ variable "ldap_instances" {
   )
   default = [{
     profile = "cx2-2x4"
-    image   = "ibm-ubuntu-22-04-3-minimal-amd64-1"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-1"
   }]
   description = "Profile and Image name to be used for provisioning the LDAP instances. Note: Debian based OS are only supported for the LDAP feature"
 }
@@ -386,3 +386,19 @@ variable "ldap_instances" {
 #   default     = ""
 #   description = "The LDAP user password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required.It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
 # }
+
+variable "afm_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  default = [{
+    profile = "bx2-2x8"
+    count   = 0
+    image   = "ibm-redhat-8-10-minimal-amd64-2"
+  }]
+  description = "Number of instances to be launched for afm hosts."
+}

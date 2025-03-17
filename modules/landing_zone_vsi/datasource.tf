@@ -66,3 +66,8 @@ data "ibm_is_image" "ldap_vsi_image" {
   count = var.enable_ldap != null && var.ldap_server == null ? 1 : 0
   name  = var.ldap_instances[count.index]["image"]
 }
+
+data "ibm_is_image" "afm" {
+  count = length(var.afm_instances)
+  name  = var.afm_instances[count.index]["image"]
+}

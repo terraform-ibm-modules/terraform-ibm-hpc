@@ -138,9 +138,10 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "bastion_security_group_id": "${local.bastion_security_group_id}",
   "deployer_hostname": "${local.deployer_hostname}",
   "deployer_ip": "${local.deployer_ip}",
-  "ldap_instances": "${local.ldap_instances}",
-  "enable_ldap": "${var.enable_ldap}",
-  "ldap_server": "${local.ldap_server}"
+  "ldap_instances": ${local.ldap_instances},
+  "enable_ldap": ${var.enable_ldap},
+  "ldap_server": ${local.ldap_server},
+  "afm_instances": ${local.afm_instances}
 }    
 EOT
   filename = local.schematics_inputs_path

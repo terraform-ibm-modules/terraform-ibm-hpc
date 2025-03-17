@@ -286,6 +286,7 @@ locals {
   compute_private_key_content = local.compute_private_key_contents != null ? jsonencode(base64encode(local.compute_private_key_contents)) : ""
   ldap_instances            = jsonencode(var.ldap_instances)
   ldap_server               = jsonencode(var.ldap_server)
+  afm_instances             = jsonencode(var.afm_instances)
 }
 
 # locals {

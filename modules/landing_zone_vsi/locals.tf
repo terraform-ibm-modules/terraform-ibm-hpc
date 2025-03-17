@@ -56,11 +56,14 @@ locals {
   # TODO: Fix the logic
   # enable_load_balancer = false
 
-  client_node_name     = format("%s-%s", local.prefix, "client")
-  management_node_name = format("%s-%s", local.prefix, "mgmt")
-  compute_node_name    = format("%s-%s", local.prefix, "comp")
-  storage_node_name    = format("%s-%s", local.prefix, "strg")
-  protocol_node_name   = format("%s-%s", local.prefix, "proto")
+  client_node_name             = format("%s-%s", local.prefix, "client")
+  management_node_name         = format("%s-%s", local.prefix, "mgmt")
+  compute_node_name            = format("%s-%s", local.prefix, "comp")
+  storage_node_name            = format("%s-%s", local.prefix, "strg")
+  protocol_node_name           = format("%s-%s", local.prefix, "proto")
+  storage_management_node_name = format("%s-%s", local.prefix, "strg-mgmt")
+  ldap_node_name               = format("%s-%s", local.prefix, "ldap")
+  afm_node_name                = format("%s-%s", local.prefix, "afm")
 
   # Future use
   /*
@@ -88,6 +91,8 @@ locals {
   storage_image_id    = data.ibm_is_image.storage[*].id
   protocol_image_id   = data.ibm_is_image.storage[*].id
   ldap_image_id       = data.ibm_is_image.ldap_vsi_image[*].id
+  afm_image_id        = data.ibm_is_image.afm[*].id
+  
 
   storage_ssh_keys    = [for name in var.storage_ssh_keys : data.ibm_is_ssh_key.storage[name].id]
   compute_ssh_keys    = [for name in var.compute_ssh_keys : data.ibm_is_ssh_key.compute[name].id]
@@ -275,10 +280,4 @@ locals {
       interface_name    = subnet["name"]
     }
   ]
-}
-
-
-locals {
-  storage_management_node_name = format("%s-%s", local.prefix, "strg-mgmt")
-  ldap_node_name         = format("%s-%s", local.prefix, "ldap")
 }

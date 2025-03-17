@@ -706,7 +706,7 @@ variable "ldap_instances" {
   )
   default = [{
     profile = "cx2-2x4"
-    image   = "ibm-ubuntu-22-04-3-minimal-amd64-1"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-1"
   }]
   description = "Profile and Image name to be used for provisioning the LDAP instances. Note: Debian based OS are only supported for the LDAP feature"
 }
