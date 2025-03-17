@@ -144,7 +144,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "afm_instances": ${local.afm_instances},
   "ldap_instance_key_pair": ${local.ldap_instance_key_pair},
   "scale_encryption_enabled": ${var.scale_encryption_enabled},
-  "scale_encryption_type": ${var.scale_encryption_type},
+  "scale_encryption_type": ${local.scale_encryption_type},
   "gklm_instance_key_pair": ${local.gklm_instance_key_pair},
   "gklm_instances": ${local.gklm_instances}
 }    

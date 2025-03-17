@@ -292,6 +292,7 @@ locals {
   afm_instances             = jsonencode(var.afm_instances)
   gklm_instance_key_pair    = jsonencode(local.gklm_ssh_keys)
   gklm_instances            = jsonencode(var.gklm_instances)
+  scale_encryption_type     = jsonencode(var.scale_encryption_type)
 }
 
 # locals {

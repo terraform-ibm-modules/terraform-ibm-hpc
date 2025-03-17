@@ -91,10 +91,10 @@ locals {
     ldap_server                     = var.ldap_server
     ldap_server_cert                = var.ldap_server_cert
     ldap_instances                  = var.ldap_instances
-    scale_encryption_enabled        = local.env.scale_encryption_enabled
-    scale_encryption_type           = local.env.scale_encryption_type
-    gklm_instance_key_pair          = local.env.gklm_instance_key_pair
-    gklm_instances                  = local.env.gklm_instances
+    scale_encryption_enabled        = var.scale_encryption_enabled
+    scale_encryption_type           = var.scale_encryption_type
+    gklm_instance_key_pair          = var.gklm_instance_key_pair
+    gklm_instances                  = var.gklm_instances
   }
 }
 
