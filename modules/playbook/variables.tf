@@ -27,3 +27,16 @@ variable "enable_bastion" {
   default     = true
   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
 }
+
+# LDAP
+variable "ldap_inventory_path" {
+  description = "Inventory file path"
+  type        = string
+  default     = "ldap.ini"
+}
+
+variable "ldap_playbook_path" {
+  description = "Playbook path"
+  type        = string
+  default     = "ldap.yaml"
+}

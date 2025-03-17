@@ -80,7 +80,7 @@ resource "local_file" "playbook_for_ldap_server_prepare" {
       -o UserKnownHostsFile=/dev/null
       -o StrictHostKeyChecking=no
     ansible_user: root
-    ansible_ssh_private_key_file: ${var.ldap_private_key_path}
+    ansible_ssh_private_key_file: ${var.private_key_path}
   tasks:
     - name: Check passwordless SSH on all scale inventory hosts
       shell: echo PASSWDLESS_SSH_ENABLED
@@ -101,7 +101,7 @@ resource "local_file" "playbook_for_ldap_server_prepare" {
       -o UserKnownHostsFile=/dev/null
       -o StrictHostKeyChecking=no
     ansible_user: root
-    ansible_ssh_private_key_file: ${var.ldap_private_key_path}
+    ansible_ssh_private_key_file: ${var.private_key_path}
   pre_tasks:
     - name: Load cluster-specific variables
       include_vars: all.json
@@ -112,7 +112,7 @@ EOT
 }
 
 resource "null_resource" "run_ldap_server_prepare" {
-  count = var.inventory_path != null ? 1 : 0
+  count = var.ldap_inventory_path != null ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook -f 50 -i ${var.ldap_inventory_path} ${var.ldap_playbook_path}"
