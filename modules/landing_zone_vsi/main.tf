@@ -232,7 +232,7 @@ module "ldap_vsi" {
   resource_group_id             = local.resource_group_id
   enable_floating_ip            = false
   security_group_ids            = module.storage_sg[*].security_group_id
-  ssh_key_ids                   = local.storage_ssh_keys
+  ssh_key_ids                   = local.ldap_ssh_keys
   subnets                       = [local.storage_subnets[0]]
   tags                          = local.tags
   user_data                     = data.template_file.storage_user_data.rendered
@@ -281,7 +281,7 @@ module "gklm_vsi" {
   resource_group_id             = local.resource_group_id
   enable_floating_ip            = false
   security_group_ids            = module.storage_sg[*].security_group_id
-  ssh_key_ids                   = local.storage_ssh_keys
+  ssh_key_ids                   = local.gklm_ssh_keys
   subnets                       = local.storage_subnets
   tags                          = local.tags
   user_data                     = data.template_file.protocol_user_data.rendered
