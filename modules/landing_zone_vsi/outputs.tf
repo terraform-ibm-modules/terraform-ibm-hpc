@@ -27,3 +27,15 @@ output "compute_sg_id" {
   description = "Compute SG id"
   value       = module.compute_sg[*].security_group_id
 }
+
+output "compute_public_key_content" {
+  description = "Compute public key content"
+  sensitive   = true
+  value       = one(module.compute_key[*].public_key_content)
+}
+
+output "compute_private_key_content" {
+  description = "Compute private key content"
+  sensitive   = true
+  value       = one(module.compute_key[*].private_key_content)
+}

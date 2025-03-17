@@ -1,14 +1,37 @@
-# module "compute_key" {
-#   count            = local.enable_compute ? 1 : 0
-#   source           = "./../key"
-#   private_key_path = "./../../modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
-# }
+module "compute_key" {
+  count            = local.enable_compute ? 1 : 0
+  source           = "./../key"
+  private_key_path = "./../../modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
+}
 
 resource "local_sensitive_file" "write_meta_private_key" {
   count           = local.enable_compute ? 1 : 0
-  content         = base64decode(var.compute_private_key_content)
+  content         = (local.compute_private_key_content)
   filename        = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute_id_rsa" : "${path.root}/modules/ansible-roles/compute_id_rsa"
   file_permission = "0600"
+}
+
+resource "local_sensitive_file" "copy_compute_private_key_content" {
+  count           = local.enable_compute ? 1 : 0
+  content         = (local.compute_private_key_content)
+  filename        = "/root/.ssh/id_rsa"
+  file_permission = "0600"
+}
+
+resource "null_resource" "copy_compute_public_key_content" {
+  count = local.enable_compute ? 1 : 0
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<EOT
+      echo "StrictHostKeyChecking no" >> /root/.ssh/config
+      echo "${local.compute_public_key_content}" >> /root/.ssh/authorized_keys
+    EOT
+  }
+
+  triggers = {
+    build = timestamp()
+  }
 }
 
 module "storage_key" {
@@ -65,7 +88,7 @@ resource "ibm_is_security_group_rule" "add_comp_sg_comp" {
 module "client_vsi" {
   count                         = length(var.client_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "4.6.0"
   vsi_per_subnet                = var.client_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -88,7 +111,7 @@ module "client_vsi" {
 module "management_vsi" {
   count                         = length(var.management_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "4.6.0"
   vsi_per_subnet                = var.management_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -113,7 +136,7 @@ module "management_vsi" {
 module "compute_vsi" {
   count                         = length(var.static_compute_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "4.6.0"
   vsi_per_subnet                = var.static_compute_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -138,7 +161,7 @@ module "compute_vsi" {
 module "storage_vsi" {
   count                         = length(var.storage_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "4.6.0"
   vsi_per_subnet                = var.storage_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -164,7 +187,7 @@ module "storage_vsi" {
 module "protocol_vsi" {
   count                         = length(var.protocol_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "4.6.0"
   vsi_per_subnet                = var.protocol_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null

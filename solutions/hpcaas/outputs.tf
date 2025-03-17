@@ -1,3 +1,4 @@
 output "hpcaas" {
-  value = module.hpcaas
+  description = "HPCaaS details"
+  value       = module.hpcaas
 }

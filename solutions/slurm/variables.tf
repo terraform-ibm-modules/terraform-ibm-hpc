@@ -23,9 +23,10 @@ variable "ibmcloud_api_key" {
 ##############################################################################
 # Cluster Level Variables
 ##############################################################################
-variable "zone" {
-  type        = string
-  description = "Zone where VPC will be created."
+variable "zones" {
+  type        = list(string)
+  default     = ["us-south-1", "us-south-2", "us-south-3"]
+  description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
 }
 
 variable "ssh_keys" {
@@ -52,7 +53,7 @@ variable "prefix" {
 ##############################################################################
 # Resource Groups Variables
 ##############################################################################
-variable "resource_group" {
+variable "existing_resource_group" {
   type        = string
   default     = "Default"
   description = "String describing resource groups to create or reference"
@@ -62,7 +63,7 @@ variable "resource_group" {
 ##############################################################################
 # VPC Variables
 ##############################################################################
-variable "vpc" {
+variable "vpc_name" {
   type        = string
   default     = null
   description = "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"

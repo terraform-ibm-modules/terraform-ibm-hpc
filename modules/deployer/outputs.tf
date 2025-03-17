@@ -1,9 +1,11 @@
 output "bastion_vsi_data" {
-  value = module.bastion_vsi[*]
+  description = "Bastion VSI data"
+  value       = module.bastion_vsi[*]
 }
 
 output "deployer_vsi_data" {
-  value = module.deployer_vsi[*]
+  description = "Deployer VSI data"
+  value       = module.deployer_vsi[*]
 }
 
 output "bastion_fip" {
@@ -31,16 +33,4 @@ output "bastion_private_key_content" {
   description = "Bastion private key content"
   sensitive   = true
   value       = one(module.ssh_key[*].private_key_content)
-}
-
-output "compute_public_key_content" {
-  description = "Compute public key content"
-  sensitive   = true
-  value       = one(module.compute_key[*].public_key_content)
-}
-
-output "compute_private_key_content" {
-  description = "Compute private key content"
-  sensitive   = true
-  value       = one(module.compute_key[*].private_key_content)
 }

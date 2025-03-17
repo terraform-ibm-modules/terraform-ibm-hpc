@@ -1,5 +1,5 @@
-data "ibm_resource_group" "itself" {
-  name = var.resource_group
+data "ibm_resource_group" "existing_resource_group" {
+  name = var.existing_resource_group
 }
 
 # TODO: Verify distinct profiles
@@ -41,10 +41,10 @@ data "ibm_is_image" "storage" {
   name  = var.storage_instances[count.index]["image"]
 }
 
-data "ibm_is_image" "protocol" {
-  count = length(var.protocol_instances)
-  name  = var.protocol_instances[count.index]["image"]
-}
+# data "ibm_is_image" "protocol" {
+#   count = length(var.protocol_instances)
+#   name  = var.protocol_instances[count.index]["image"]
+# }
 
 
 data "ibm_is_ssh_key" "client" {

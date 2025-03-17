@@ -91,14 +91,14 @@ variable "scc_attachment_schedule" {
   description = "Schedule of the SCC Attachment"
 }
 
-# Event Notification Instance Plan
+# Event Notification Instance Plan
 variable "event_notification_plan" {
   type        = string
   default     = "lite"
   description = "Event Notifications Instance plan to be used"
 }
 
-# Event Notification Instance Service Endpoints
+# Event Notification Instance Service Endpoints
 variable "event_notification_service_endpoints" {
   type        = string
   default     = "public-and-private"

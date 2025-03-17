@@ -51,7 +51,6 @@ EOT
   filename = var.playbook_path
 }
 
-
 resource "null_resource" "run_playbook" {
   count = var.inventory_path != null ? 1 : 0
   provisioner "local-exec" {
@@ -69,7 +68,7 @@ resource "null_resource" "run_lsf_playbooks" {
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command = <<EOT
+    command     = <<EOT
       sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml &&
       sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml &&
       sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml

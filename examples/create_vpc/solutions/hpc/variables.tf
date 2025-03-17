@@ -16,13 +16,13 @@ variable "ibmcloud_api_key" {
 # Resource Groups Variables
 ##############################################################################
 
-variable "resource_group" {
+variable "existing_resource_group" {
   description = "Resource group name from your IBM Cloud account where the VPC resources should be deployed. Note. If the resource group value is set as null, automation creates two different RG with the name (workload-rg and service-rg). For additional information on resource groups, see [Managing resource groups](https://cloud.ibm.com/docs/account?topic=account-rgs)."
   type        = string
   default     = "Default"
   validation {
-    condition     = var.resource_group != null
-    error_message = "If you want to provide null for resource_group variable, it should be within double quotes."
+    condition     = var.existing_resource_group != null
+    error_message = "If you want to provide null for existing_resource_group variable, it should be within double quotes."
   }
 }
 

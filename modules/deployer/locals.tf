@@ -1,7 +1,6 @@
 # define variables
 locals {
-  #products = "scale"
-  name   = "hpc"
+  name   = var.scheduler == "LSF" ? "LSF" : (var.scheduler == null ? "Scale" : (var.scheduler == "HPCaaS" ? "HPCaaS" : (var.scheduler == "Symphony" ? "Symphony" : (var.scheduler == "Slurm" ? "Slurm" : ""))))
   prefix = var.prefix
   tags   = [local.prefix, local.name]
 
@@ -35,16 +34,13 @@ locals {
   bastion_ssh_keys = [for name in var.ssh_keys : data.ibm_is_ssh_key.bastion[name].id]
 
   # Scale static configs
-  scale_cloud_deployer_path   = "/opt/IBM/ibm-spectrumscale-cloud-deploy"
-  scale_cloud_infra_repo_url  = "https://github.com/IBM/ibm-spectrum-scale-install-infra"
-  scale_cloud_infra_repo_name = "ibm-spectrum-scale-install-infra"
-  scale_cloud_infra_repo_tag  = "ibmcloud_v2.6.0"
+  # scale_cloud_deployer_path   = "/opt/IBM/ibm-spectrumscale-cloud-deploy"
+  # scale_cloud_infra_repo_url  = "https://github.com/IBM/ibm-spectrum-scale-install-infra"
+  # scale_cloud_infra_repo_name = "ibm-spectrum-scale-install-infra"
+  # scale_cloud_infra_repo_tag  = "ibmcloud_v2.6.0"
 
   # LSF static configs
-  lsf_cloud_deployer_path = "/opt/ibm/lsf"
-
-  # Region and Zone calculations
-  region = join("-", slice(split("-", var.zones[0]), 0, 2))
+  # lsf_cloud_deployer_path = "/opt/ibm/lsf"
 
   # Security group rules
   # TODO: Fix SG rules
@@ -68,7 +64,7 @@ locals {
 
   # Derived configs
   # VPC
-  resource_group_id = data.ibm_resource_group.itself.id
+  resource_group_id = data.ibm_resource_group.existing_resource_group.id
 
   # Subnets
   bastion_subnets = var.bastion_subnets
@@ -78,8 +74,4 @@ locals {
   vsi_interfaces     = ["eth0", "eth1"]
   compute_interfaces = local.vsi_interfaces[0]
   compute_dns_domain = var.dns_domain_names["compute"]
-
-  management_instance_count     = sum(var.management_instances[*]["count"])
-  static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
-  enable_compute    = local.management_instance_count > 0 || local.static_compute_instance_count > 0
 }

@@ -11,7 +11,7 @@ variable "storage_type" {
 # Resource Groups Variables
 ##############################################################################
 
-variable "resource_group" {
+variable "existing_resource_group" {
   description = "String describing resource groups to create or reference"
   type        = string
   default     = null
@@ -31,10 +31,10 @@ variable "prefix" {
   }
 }
 
-variable "zones" {
-  description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
-  type        = list(string)
-}
+# variable "zones" {
+#   description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
+#   type        = list(string)
+# }
 
 ##############################################################################
 # VPC Variables
@@ -169,19 +169,19 @@ variable "dynamic_compute_instances" {
   description = "MaxNumber of instances to be launched for compute cluster."
 }
 
-variable "compute_gui_username" {
-  type        = string
-  default     = "admin"
-  sensitive   = true
-  description = "GUI user to perform system management and monitoring tasks on compute cluster."
-}
+# variable "compute_gui_username" {
+#   type        = string
+#   default     = "admin"
+#   sensitive   = true
+#   description = "GUI user to perform system management and monitoring tasks on compute cluster."
+# }
 
-variable "compute_gui_password" {
-  type        = string
-  default     = "hpc@IBMCloud"
-  sensitive   = true
-  description = "Password for compute cluster GUI"
-}
+# variable "compute_gui_password" {
+#   type        = string
+#   default     = "hpc@IBMCloud"
+#   sensitive   = true
+#   description = "Password for compute cluster GUI"
+# }
 
 ##############################################################################
 # Scale Storage Variables
@@ -299,19 +299,19 @@ variable "boot_volume_encryption_key" {
 # TODO: Auth Server (LDAP/AD) Variables
 ##############################################################################
 
-variable "compute_public_key_content" {
-  type        = string
-  sensitive   = true
-  default     = null
-  description = "Compute security key content."
-}
+# variable "compute_public_key_content" {
+#   type        = string
+#   sensitive   = true
+#   default     = null
+#   description = "Compute security key content."
+# }
 
-variable "compute_private_key_content" {
-  type        = string
-  sensitive   = true
-  default     = null
-  description = "Compute security key content."
-}
+# variable "compute_private_key_content" {
+#   type        = string
+#   sensitive   = true
+#   default     = null
+#   description = "Compute security key content."
+# }
 
 variable "enable_bastion" {
   type        = bool

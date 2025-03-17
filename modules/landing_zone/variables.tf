@@ -12,7 +12,7 @@ variable "enable_landing_zone" {
 # Resource Groups Variables
 ##############################################################################
 
-variable "resource_group" {
+variable "existing_resource_group" {
   description = "String describing resource groups to create or reference"
   type        = string
   default     = null
@@ -41,7 +41,7 @@ variable "zones" {
 # VPC Variables
 ##############################################################################
 
-variable "vpc" {
+variable "vpc_name" {
   type        = string
   description = "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
   default     = null
@@ -256,11 +256,11 @@ variable "kms_key_name" {
   description = "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. (for example kms_key_name: my-encryption-key)."
 }
 
-variable "hpcs_instance_name" {
-  type        = string
-  default     = null
-  description = "Hyper Protect Crypto Service instance"
-}
+# variable "hpcs_instance_name" {
+#   type        = string
+#   default     = null
+#   description = "Hyper Protect Crypto Service instance"
+# }
 
 variable "skip_flowlogs_s2s_auth_policy" {
   type        = bool

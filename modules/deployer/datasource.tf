@@ -1,5 +1,5 @@
-data "ibm_resource_group" "itself" {
-  name = var.resource_group
+data "ibm_resource_group" "existing_resource_group" {
+  name = var.existing_resource_group
 }
 
 data "ibm_is_image" "bastion" {

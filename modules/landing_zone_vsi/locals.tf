@@ -107,7 +107,7 @@ locals {
   */
 
   # Region and Zone calculations
-  region = join("-", slice(split("-", var.zones[0]), 0, 2))
+  # region = join("-", slice(split("-", var.zones[0]), 0, 2))
 
   # TODO: DNS configs
   # Security group rules
@@ -257,7 +257,7 @@ locals {
 
   # Derived configs
   # VPC
-  resource_group_id = data.ibm_resource_group.itself.id
+  resource_group_id = data.ibm_resource_group.existing_resource_group.id
 
   # Subnets
   # TODO: Multi-zone multi-vNIC VSIs deployment support (bug #https://github.ibm.com/GoldenEye/issues/issues/5830)
@@ -266,6 +266,9 @@ locals {
   compute_subnets  = var.compute_subnets
   storage_subnets  = var.storage_subnets
   protocol_subnets = var.protocol_subnets
+
+  compute_public_key_content  = one(module.compute_key[*].public_key_content)
+  compute_private_key_content = one(module.compute_key[*].private_key_content)
 
   # Security Groups
   protocol_secondary_security_group = [for subnet in local.protocol_subnets :

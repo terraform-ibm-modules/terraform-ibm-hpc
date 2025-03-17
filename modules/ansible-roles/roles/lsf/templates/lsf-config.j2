@@ -36,7 +36,7 @@ LSF:
   # to permit upgrading of LSF Masters independently \
   # of the rest of the cluster.  This is controlled \
   # by the LSF_MASTERS_ON_LOCAL parameter in: \
-  #      /opt/ibm/lsf_installer/playbook/group_vars/all 
+  #      /opt/ibm/lsf_installer/playbook/group_vars/all
   NFS_install_dir: {{ NFS_install_dir }}
 
   # JDBC_string is the connection string for the
@@ -45,14 +45,14 @@ LSF:
   # lsf-inventory file, the specified value is set
   # automatically. If you do not specify a host in the DB_Host role
   # in the lsf-inventory file, you must define a JDBC_string.
-  # The external database must be created 
+  # The external database must be created
   # by sourcing the database schema files:
   #   - Copy the /opt/ibm/lsf_installer/DBschema/MySQL/*.sql files on the deployer machine to the remote database host
   #   - Create a database that is named pac
-  #   - Create a database user who is named pacuser 
+  #   - Create a database user who is named pacuser
   #   - Grant this user all privileges on the pac database
   #   - Run the schema files for the database
-  # For more information, see 
+  # For more information, see
   # "https://www.ibm.com/support/knowledgecenter/SSZRJV_10.2.0/install_guide/pac_install_config.html".
   # Set the following environment variables on the deployer machine:
   #   - JDBC_USER
@@ -92,15 +92,15 @@ LSF:
   #
   # LSF has the following default port number values listed below.
   # All are used for TCP, except LSF_LIM_PORT which also uses UDP.
-  #LSF_LIM_PORT: 7869 
-  #LSF_RES_PORT: 6878 
-  #LSB_SBD_PORT: 6882 
-  #LSB_MBD_PORT: 6881 
-  #LSB_QUERY_PORT: 6891 
+  #LSF_LIM_PORT: 7869
+  #LSF_RES_PORT: 6878
+  #LSB_SBD_PORT: 6882
+  #LSB_MBD_PORT: 6881
+  #LSB_QUERY_PORT: 6891
   #LSF_DATA_PORT: 9998
-  #EGO_KD_PORT: 7870 
-  #EGO_PEM_PORT: 7871 
-  #ESC_PORT: 7872 
+  #EGO_KD_PORT: 7870
+  #EGO_PEM_PORT: 7871
+  #ESC_PORT: 7872
   #
   # Specify either nine individual port numbers or
   # a range with the starting port number followed by '-'.
@@ -116,11 +116,11 @@ LSF:
 
   # (Optional) Private_IPv4_Range allows you to specify a range of private IPv4
   # addresses used by LSF hosts.
-  # This parameter can be used in scenarios where the LSF master host has both 
+  # This parameter can be used in scenarios where the LSF master host has both
   # public and private IP addresses, but the compute nodes have only private IP
-  # addresses. 
-  # Specify a range of IPv4 addresses in the form of a Classless Inter-Domain 
-  # Routing (CIDR) block. 
+  # addresses.
+  # Specify a range of IPv4 addresses in the form of a Classless Inter-Domain
+  # Routing (CIDR) block.
   # For example, Private_IPv4_Range: 10.10.99.0/8
   #Private_IPv4_Range: none
 
@@ -151,12 +151,12 @@ LSF:
   #
   # The directory path must point to the top directory of Logstash on a host in the GUI_Hosts role.
   # For example, LOGSTASH_TOP: /path/to/logstash/top/directory
-  # 
+  #
   # If the Logstash path.settings is not set to LOGSTASH_TOP/config,
   # make a symbolic link for LOGSTASH_TOP/config to the Logstash path.settings directory.
   # For example,
   # ln -s /etc/logstash LOGSTASH_TOP/config
   #
   #LOGSTASH_TOP: none
-  
+
 # END OF LSF-CONFIG.YML

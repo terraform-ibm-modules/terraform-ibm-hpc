@@ -1,9 +1,8 @@
 # locals needed for ibm provider
 locals {
   # Region and Zone calculations
-  region = join("-", slice(split("-", var.zone), 0, 2))
+  region = join("-", slice(split("-", var.zones[0]), 0, 2))
 }
-
 
 locals {
   override_json_path = abspath("./override.json")
@@ -17,10 +16,9 @@ locals {
   override_type = var.override_json_string == null ? "override" : "override_json_string"
 }
 
-
 locals {
   config = {
-    resource_group            = var.resource_group
+    existing_resource_group   = var.existing_resource_group
     allowed_cidr              = var.allowed_cidr
     deployer_instance_profile = var.deployer_instance_profile
     ssh_keys                  = var.ssh_keys
@@ -60,7 +58,7 @@ locals {
     storage_instances         = var.storage_instances
     storage_ssh_keys          = var.storage_ssh_keys
     storage_subnets_cidr      = var.storage_subnets_cidr
-    vpc                       = var.vpc
+    vpc_name                  = var.vpc_name
     vpn_peer_address          = var.vpn_peer_address
     vpn_peer_cidr             = var.vpn_peer_cidr
     vpn_preshared_key         = var.vpn_preshared_key
@@ -71,7 +69,7 @@ locals {
 # Compile Environment for Config output
 locals {
   env = {
-    resource_group            = lookup(local.override[local.override_type], "resource_group", local.config.resource_group)
+    existing_resource_group   = lookup(local.override[local.override_type], "existing_resource_group", local.config.existing_resource_group)
     allowed_cidr              = lookup(local.override[local.override_type], "allowed_cidr", local.config.allowed_cidr)
     ssh_keys                  = lookup(local.override[local.override_type], "ssh_keys", local.config.ssh_keys)
     bastion_ssh_keys          = lookup(local.override[local.override_type], "bastion_ssh_keys", local.config.bastion_ssh_keys)
@@ -110,7 +108,7 @@ locals {
     storage_instances         = lookup(local.override[local.override_type], "storage_instances", local.config.storage_instances)
     storage_ssh_keys          = lookup(local.override[local.override_type], "storage_ssh_keys", local.config.storage_ssh_keys)
     storage_subnets_cidr      = lookup(local.override[local.override_type], "storage_subnets_cidr", local.config.storage_subnets_cidr)
-    vpc                       = lookup(local.override[local.override_type], "vpc", local.config.vpc)
+    vpc_name                  = lookup(local.override[local.override_type], "vpc_name", local.config.vpc_name)
     vpn_peer_address          = lookup(local.override[local.override_type], "vpn_peer_address", local.config.vpn_peer_address)
     vpn_peer_cidr             = lookup(local.override[local.override_type], "vpn_peer_cidr", local.config.vpn_peer_cidr)
     vpn_preshared_key         = lookup(local.override[local.override_type], "vpn_preshared_key", local.config.vpn_preshared_key)

@@ -1,3 +1,4 @@
 output "slurm" {
-  value = module.slurm
+  description = "Slurm details"
+  value       = module.slurm
 }
