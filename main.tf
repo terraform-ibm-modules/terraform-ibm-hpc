@@ -383,9 +383,9 @@ module "ldap_inventory" {
   count                    = var.enable_deployer == false ? 1 : 0
   source                   = "./modules/inventory"
   hosts                    = local.ldap_hosts
-  ldap_inventory_path      = local.ldap_inventory_path
-  ldap_playbook_path       = local.ldap_playbook_path
-  ldap_private_key_path    = local.compute_private_key_path
+  inventory_path           = local.ldap_inventory_path
+  playbook_path            = local.ldap_playbook_path
+  name_mount_path_map      = local.fileshare_name_mount_path_map
   depends_on               = [ module.write_compute_cluster_inventory ]
 }
 
