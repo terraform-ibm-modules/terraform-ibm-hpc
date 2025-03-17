@@ -240,7 +240,7 @@ locals {
   storage_private_key_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage_id_rsa" : "${path.root}/modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
   compute_playbook_path    = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute_ssh.yaml" : "${path.root}/modules/ansible-roles/compute_ssh.yaml" 
   storage_playbook_path    = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage_ssh.yaml" : "${path.root}/modules/ansible-roles/storage_ssh.yaml"
-  ldap_playbook_path       = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/ldap_server_setup.yaml" : "${path.root}/modules/ansible-roles/ldap_server_setup.yaml"
+  ldap_playbook_path       = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/ldap_server_prepare.yaml" : "${path.root}/modules/ansible-roles/ldap_server_prepare.yaml"
 }
 
 # file Share OutPut
