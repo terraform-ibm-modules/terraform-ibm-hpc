@@ -29,6 +29,12 @@ variable "enable_bastion" {
 }
 
 # LDAP
+variable "enable_ldap" {
+  type        = bool
+  default     = false
+  description = "Set this option to true to enable LDAP for IBM Spectrum LSF, with the default value set to false."
+}
+
 variable "ldap_inventory_path" {
   description = "Inventory file path"
   type        = string

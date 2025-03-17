@@ -3,7 +3,7 @@ locals {
 }
 
 resource "local_file" "create_playbook" {
-  count    = var.inventory_path != null ? 0 : 0
+  count    = var.inventory_path != null ? 1 : 0
   content  = <<EOT
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
@@ -64,14 +64,14 @@ resource "null_resource" "run_playbook" {
 }
 
 resource "local_file" "playbook_for_ldap_server_prepare" {
-  count    = var.inventory_path != null ? 1 : 0
+  count    = var.enable_ldap && var.ldap_inventory_path != null ? 1 : 0
   content  = <<EOT
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
 - name: Check passwordless SSH connection is setup
   hosts: [all_nodes]
   any_errors_fatal: true
-  gather_facts: True
+  gather_facts: false
   vars:
     ansible_ssh_common_args: >
       ${local.proxyjump}
@@ -108,14 +108,14 @@ resource "local_file" "playbook_for_ldap_server_prepare" {
   roles:
      - ldap_server_prepare
 EOT
-  filename = "/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/ldap_server_prepare.yml"
+  filename = var.ldap_playbook_path
 }
 
 resource "null_resource" "run_ldap_server_prepare" {
-  count = var.inventory_path != null ? 1 : 0
+  count = var.enable_ldap && var.ldap_inventory_path != null ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -i ${var.inventory_path} '/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/ldap_server_prepare.yml'"
+    command     = "ansible-playbook -i ${var.ldap_inventory_path} ${var.ldap_playbook_path}"
   }
   triggers = {
     build = timestamp()
