@@ -16,7 +16,7 @@ fi
 sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo \'Please client as the user \\\\\"$USER\\\\\" rather than the user \\\\\"root\\\\\".\';echo;sleep 5; exit 142\" /" /root/.ssh/authorized_keys
 
 # input parameters
-echo "${bastion_public_key_content}" >> /~/.ssh/authorized_keys
+echo "${bastion_public_key_content}" >> ~/.ssh/authorized_keys
 echo "${client_public_key_content}" >> ~/.ssh/authorized_keys
 echo "StrictHostKeyChecking no" >> ~/.ssh/config
 echo "${client_private_key_content}" > ~/.ssh/id_rsa
