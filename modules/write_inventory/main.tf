@@ -37,15 +37,15 @@ resource "local_sensitive_file" "itself" {
   "compute_subnet_crn": ${jsonencode(var.compute_subnet_crn)},
   "compute_public_key_content": ${jsonencode(var.compute_public_key_content)},
   "compute_private_key_content": ${jsonencode(var.compute_private_key_content)},
-  "enable_ldap": ${local.enable_ldap},
-  "ldap_vsi_profile": ${jsonencode(local.ldap_vsi_profile)},
-  "ldap_vsi_osimage_name": ${jsonencode(local.ldap_vsi_osimage_name)},
-  "ldap_basedns": ${jsonencode(local.ldap_basedns)},
-  "ldap_admin_password": ${jsonencode(local.ldap_admin_password)},
-  "ldap_user_name": ${jsonencode(local.ldap_user_name)},
-  "ldap_user_password": ${jsonencode(local.ldap_user_password)},
-  "ldap_server": ${jsonencode(local.ldap_server)},
-  "ldap_server_cert": ${jsonencode(local.ldap_server_cert)}
+  "enable_ldap": ${var.enable_ldap},
+  "ldap_vsi_profile": ${jsonencode(var.ldap_vsi_profile)},
+  "ldap_vsi_osimage_name": ${jsonencode(var.ldap_vsi_osimage_name)},
+  "ldap_basedns": ${jsonencode(var.ldap_basedns)},
+  "ldap_admin_password": ${jsonencode(var.ldap_admin_password)},
+  "ldap_user_name": ${jsonencode(var.ldap_user_name)},
+  "ldap_user_password": ${jsonencode(var.ldap_user_password)},
+  "ldap_server": ${jsonencode(var.ldap_server)},
+  "ldap_server_cert": ${jsonencode(var.ldap_server_cert)}
 }
 EOT
   filename = var.json_inventory_path
