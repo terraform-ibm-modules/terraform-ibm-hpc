@@ -386,6 +386,7 @@ module "ldap_inventory" {
   enable_ldap              = local.enable_ldap
   ldap_hosts               = local.ldap_hosts
   ldap_inventory_path      = local.ldap_inventory_path
+  name_mount_path_map      = local.fileshare_name_mount_path_map
   depends_on               = [ module.write_compute_cluster_inventory ]
 }
 
