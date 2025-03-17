@@ -384,7 +384,6 @@ module "ldap_inventory" {
   source                   = "./modules/inventory"
   hosts                    = local.ldap_hosts
   inventory_path           = local.ldap_inventory_path
-  playbook_path            = local.ldap_playbook_path
   name_mount_path_map      = local.fileshare_name_mount_path_map
   depends_on               = [ module.write_compute_cluster_inventory ]
 }
