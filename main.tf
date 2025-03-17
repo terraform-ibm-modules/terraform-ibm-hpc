@@ -332,6 +332,15 @@ module "write_compute_cluster_inventory" {
   compute_subnet_crn    = local.compute_subnet_crn
   compute_public_key_content = var.compute_public_key_content
   compute_private_key_content =  var.compute_private_key_content
+  enable_ldap                   = var.enable_ldap
+  ldap_vsi_profile              = var.ldap_vsi_profile
+  ldap_vsi_osimage_name         = var.ldap_vsi_osimage_name
+  ldap_basedns                  = var.ldap_basedns
+  ldap_admin_password           = var.ldap_admin_password
+  ldap_user_name                = var.ldap_user_name
+  ldap_user_password            = var.ldap_user_password
+  ldap_server                   = var.ldap_server
+  ldap_server_cert              = var.ldap_server_cert
   depends_on                    = [ time_sleep.wait_60_seconds ]
 }
 
