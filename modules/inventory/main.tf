@@ -16,7 +16,7 @@ EOT
 resource "local_sensitive_file" "ldap_ini" {
   count = var.enable_ldap ? 1 : 0
   content  = <<EOT
-[all_nodes]
+[ldap_server_node]
 ${join("\n", var.ldap_hosts)}
 [all:vars]
 

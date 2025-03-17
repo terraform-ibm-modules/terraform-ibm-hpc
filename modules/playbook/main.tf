@@ -66,31 +66,8 @@ resource "null_resource" "run_playbook" {
 resource "local_file" "playbook_for_ldap_server_prepare" {
   count    = var.enable_ldap && var.ldap_inventory_path != null ? 1 : 0
   content  = <<EOT
-# Ensure provisioned VMs are up and Passwordless SSH setup has been established
-
-- name: Check passwordless SSH connection is setup
-  hosts: [all_nodes]
-  any_errors_fatal: true
-  gather_facts: false
-  vars:
-    ansible_ssh_common_args: >
-      ${local.proxyjump}
-      -o ControlMaster=auto
-      -o ControlPersist=30m
-      -o UserKnownHostsFile=/dev/null
-      -o StrictHostKeyChecking=no
-    ansible_user: root
-    ansible_ssh_private_key_file: ${var.private_key_path}
-  tasks:
-    - name: Check passwordless SSH on all scale inventory hosts
-      shell: echo PASSWDLESS_SSH_ENABLED
-      register: result
-      until: result.stdout.find("PASSWDLESS_SSH_ENABLED") != -1
-      retries: 60
-      delay: 10
-
 - name: Prerequisite Configuration
-  hosts: [all_nodes]
+  hosts: [ldap_server_node]
   any_errors_fatal: true
   gather_facts: True
   vars:
