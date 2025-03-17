@@ -9,8 +9,8 @@ locals {
   storage_ssh_keys = distinct(concat(coalesce(var.storage_ssh_keys, []), coalesce(var.ssh_keys, [])))
   compute_ssh_keys = distinct(concat(coalesce(var.compute_ssh_keys, []), coalesce(var.ssh_keys, [])))
   client_ssh_keys  = distinct(concat(coalesce(var.client_ssh_keys, []), coalesce(var.ssh_keys, [])))
-  gklm_ssh_keys    = distinct(concat(coalesce(var.gklm_instance_key_pair, []), coalesce(var.ssh_keys, [])))
-  ldap_ssh_keys    = distinct(concat(coalesce(var.ldap_instance_key_pair, []), coalesce(var.ssh_keys, [])))
+  gklm_instance_key_pair  = distinct(concat(coalesce(var.gklm_instance_key_pair, []), coalesce(var.ssh_keys, [])))
+  ldap_instance_key_pair    = distinct(concat(coalesce(var.ldap_instance_key_pair, []), coalesce(var.ssh_keys, [])))
 }
 
 
@@ -277,6 +277,7 @@ locals {
   list_protocol_instances   = jsonencode(var.protocol_instances)
   list_compute_instances    = jsonencode(var.static_compute_instances)
   list_client_instances     = jsonencode(var.client_instances)
+  list_client_ssh_keys      = jsonencode(var.client_ssh_keys)
   allowed_cidr              = jsonencode(var.allowed_cidr)
   list_storage_subnets      = jsonencode(length(local.storage_subnet) == 0 ? null : local.storage_subnet)
   list_protocol_subnets     = jsonencode(length(local.protocol_subnet) == 0 ? null : local.protocol_subnet)
@@ -288,9 +289,9 @@ locals {
   compute_private_key_content = local.compute_private_key_contents != null ? jsonencode(base64encode(local.compute_private_key_contents)) : ""
   ldap_instances            = jsonencode(var.ldap_instances)
   ldap_server               = jsonencode(var.ldap_server)
-  ldap_instance_key_pair    = jsonencode(local.ldap_ssh_keys)
+  list_ldap_ssh_keys        = jsonencode(local.ldap_instance_key_pair)
   afm_instances             = jsonencode(var.afm_instances)
-  gklm_instance_key_pair    = jsonencode(local.gklm_ssh_keys)
+  list_gklm_ssh_keys        = jsonencode(local.gklm_instance_key_pair)
   gklm_instances            = jsonencode(var.gklm_instances)
   scale_encryption_type     = jsonencode(var.scale_encryption_type)
 }

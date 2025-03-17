@@ -93,6 +93,11 @@ module "landing_zone_vsi" {
   enable_ldap                = var.enable_ldap
   ldap_instances             = var.ldap_instances
   ldap_server                = var.ldap_server
+  ldap_instance_key_pair     = local.ldap_instance_key_pair
+  scale_encryption_enabled   = var.scale_encryption_enabled
+  scale_encryption_type      = var.scale_encryption_type
+  gklm_instance_key_pair     = local.gklm_instance_key_pair
+  gklm_instances             = var.gklm_instances
   # ldap_admin_password        = var.ldap_admin_password
   # ldap_user_name             = var.ldap_user_name
   # ldap_user_password         = var.ldap_user_password
@@ -121,6 +126,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "ibm_customer_number": "${var.ibm_customer_number}",
   "static_compute_instances": ${local.list_compute_instances},
   "client_instances": ${local.list_client_instances},
+  "client_ssh_keys": ${local.list_client_ssh_keys},
   "enable_cos_integration": ${var.enable_cos_integration},
   "enable_atracker": ${var.enable_atracker},
   "enable_vpc_flow_logs": ${var.enable_vpc_flow_logs},
@@ -141,11 +147,11 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "ldap_instances": ${local.ldap_instances},
   "enable_ldap": ${var.enable_ldap},
   "ldap_server": ${local.ldap_server},
+  "ldap_instance_key_pair": ${local.list_ldap_ssh_keys},
   "afm_instances": ${local.afm_instances},
-  "ldap_instance_key_pair": ${local.ldap_instance_key_pair},
   "scale_encryption_enabled": ${var.scale_encryption_enabled},
   "scale_encryption_type": ${local.scale_encryption_type},
-  "gklm_instance_key_pair": ${local.gklm_instance_key_pair},
+  "gklm_instance_key_pair": ${local.list_gklm_ssh_keys},
   "gklm_instances": ${local.gklm_instances}
 }    
 EOT
