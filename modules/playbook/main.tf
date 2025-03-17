@@ -71,7 +71,7 @@ resource "local_file" "playbook_for_ldap_server_prepare" {
 - name: Check passwordless SSH connection is setup
   hosts: [all_nodes]
   any_errors_fatal: true
-  gather_facts: false
+  gather_facts: True
   vars:
     ansible_ssh_common_args: >
       ${local.proxyjump}
