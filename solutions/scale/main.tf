@@ -73,4 +73,8 @@ module "scale" {
   ldap_server                     = local.env.ldap_server
   ldap_server_cert                = local.env.ldap_server_cert
   ldap_instances                  = local.env.ldap_instances
+  scale_encryption_enabled        = local.env.scale_encryption_enabled
+  scale_encryption_type           = local.env.scale_encryption_type
+  gklm_instance_key_pair          = local.env.gklm_instance_key_pair
+  gklm_instances                  = local.env.gklm_instances
 }

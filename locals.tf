@@ -5,10 +5,12 @@ locals {
 
   # SSH key calculations
   # Combining the common ssh keys with host specific ssh keys
-  bastion_ssh_keys = distinct(concat(coalesce(var.bastion_ssh_keys, []), coalesce(var.ssh_keys, [])))
-  storage_ssh_keys = distinct(concat(coalesce(var.storage_ssh_keys, []), coalesce(var.ssh_keys, [])))
-  compute_ssh_keys = distinct(concat(coalesce(var.compute_ssh_keys, []), coalesce(var.ssh_keys, [])))
-  client_ssh_keys  = distinct(concat(coalesce(var.client_ssh_keys, []), coalesce(var.ssh_keys, [])))
+  bastion_ssh_keys        = distinct(concat(coalesce(var.bastion_ssh_keys, []), coalesce(var.ssh_keys, [])))
+  storage_ssh_keys        = distinct(concat(coalesce(var.storage_ssh_keys, []), coalesce(var.ssh_keys, [])))
+  compute_ssh_keys        = distinct(concat(coalesce(var.compute_ssh_keys, []), coalesce(var.ssh_keys, [])))
+  client_ssh_keys         = distinct(concat(coalesce(var.client_ssh_keys, []), coalesce(var.ssh_keys, [])))
+  gklm_instance_key_pair  = distinct(concat(coalesce(var.gklm_instance_key_pair, []), coalesce(var.ssh_keys, [])))
+  ldap_instance_key_pair  = distinct(concat(coalesce(var.ldap_instance_key_pair, []), coalesce(var.ssh_keys, [])))
 }
 
 
@@ -286,7 +288,10 @@ locals {
   compute_private_key_content = local.compute_private_key_contents != null ? jsonencode(base64encode(local.compute_private_key_contents)) : ""
   ldap_instances            = jsonencode(var.ldap_instances)
   ldap_server               = jsonencode(var.ldap_server)
+  ldap_instance_key_pair    = jsonencode(var.ldap_instance_key_pair)
   afm_instances             = jsonencode(var.afm_instances)
+  gklm_instance_key_pair    = jsonencode(var.gklm_instance_key_pair)
+  gklm_instances            = jsonencode(var.gklm_instances)
 }
 
 # locals {

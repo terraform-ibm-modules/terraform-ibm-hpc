@@ -91,6 +91,10 @@ locals {
     ldap_server                     = var.ldap_server
     ldap_server_cert                = var.ldap_server_cert
     ldap_instances                  = var.ldap_instances
+    scale_encryption_enabled        = local.env.scale_encryption_enabled
+    scale_encryption_type           = local.env.scale_encryption_type
+    gklm_instance_key_pair          = local.env.gklm_instance_key_pair
+    gklm_instances                  = local.env.gklm_instances
   }
 }
 
@@ -168,5 +172,9 @@ locals {
     ldap_server                     = lookup(local.override[local.override_type], "ldap_server", local.config.ldap_server)
     ldap_server_cert                = lookup(local.override[local.override_type], "ldap_server_cert", local.config.ldap_server_cert)
     ldap_instances                  = lookup(local.override[local.override_type], "ldap_instances", local.config.ldap_instances)
+    scale_encryption_enabled        = lookup(local.override[local.override_type], "scale_encryption_enabled", local.config.scale_encryption_enabled)
+    scale_encryption_type           = lookup(local.override[local.override_type], "scale_encryption_type", local.config.scale_encryption_type)
+    gklm_instance_key_pair          = lookup(local.override[local.override_type], "gklm_instance_key_pair", local.config.gklm_instance_key_pair)
+    gklm_instances                  = lookup(local.override[local.override_type], "gklm_instances", local.config.gklm_instances)
   }
 }

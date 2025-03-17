@@ -64,6 +64,7 @@ locals {
   storage_management_node_name = format("%s-%s", local.prefix, "strg-mgmt")
   ldap_node_name               = format("%s-%s", local.prefix, "ldap")
   afm_node_name                = format("%s-%s", local.prefix, "afm")
+  gklm_node_name               = format("%s-%s", local.prefix, "gklm")
 
   # Future use
   /*
@@ -92,6 +93,7 @@ locals {
   protocol_image_id   = data.ibm_is_image.storage[*].id
   ldap_image_id       = data.ibm_is_image.ldap_vsi_image[*].id
   afm_image_id        = data.ibm_is_image.afm[*].id
+  gklm_image_id       = data.ibm_is_image.gklm[*].id
   
 
   storage_ssh_keys    = [for name in var.storage_ssh_keys : data.ibm_is_ssh_key.storage[name].id]
@@ -99,6 +101,8 @@ locals {
   client_ssh_keys     = [for name in var.client_ssh_keys : data.ibm_is_ssh_key.client[name].id]
   management_ssh_keys = local.compute_ssh_keys
   protocol_ssh_keys   = local.storage_ssh_keys
+  ldap_ssh_keys       = [for name in var.ldap_instance_key_pair : data.ibm_is_ssh_key.ldap[name].id]
+  gklm_ssh_keys       = [for name in var.gklm_instance_key_pair : data.ibm_is_ssh_key.gklm[name].id]
 
   # Future use
   /*

@@ -33,7 +33,7 @@ output "afm_vsi_data" {
   value       = module.afm_vsi[*]["list"]
 }
 
-# output "gklm_vsi_data" {
-#   description = "GKLM VSI data"
-#   value       = module.gklm_vsi[*]["list"]
-# }
+output "gklm_vsi_data" {
+  description = "GKLM VSI data"
+  value       = module.gklm_vsi[*]["list"]
+}

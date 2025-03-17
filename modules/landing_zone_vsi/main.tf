@@ -261,6 +261,29 @@ module "afm_vsi" {
   ssh_key_ids                   = local.storage_ssh_keys
   subnets                       = local.storage_subnets
   tags                          = local.tags
+  user_data                     = data.template_file.storage_user_data.rendered
+  vpc_id                        = var.vpc_id
+  kms_encryption_enabled        = var.kms_encryption_enabled
+  skip_iam_authorization_policy = local.skip_iam_authorization_policy
+  boot_volume_encryption_key    = var.boot_volume_encryption_key
+}
+
+module "gklm_vsi" {
+  count                         = var.scale_encryption_enabled == true && var.scale_encryption_type == "gklm" ? 1 : 0
+  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version                       = "4.2.0"
+  vsi_per_subnet                = var.gklm_instances[count.index]["count"]
+  create_security_group         = false
+  security_group                = null
+  image_id                      = local.gklm_image_id[count.index]
+  machine_type                  = var.gklm_instances[count.index]["profile"]
+  prefix                        = count.index == 0 ? local.gklm_node_name : format("%s-%s", local.gklm_node_name, count.index)
+  resource_group_id             = local.resource_group_id
+  enable_floating_ip            = false
+  security_group_ids            = module.storage_sg[*].security_group_id
+  ssh_key_ids                   = local.storage_ssh_keys
+  subnets                       = local.storage_subnets
+  tags                          = local.tags
   user_data                     = data.template_file.protocol_user_data.rendered
   vpc_id                        = var.vpc_id
   kms_encryption_enabled        = var.kms_encryption_enabled

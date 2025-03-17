@@ -355,8 +355,8 @@ variable "afm_instances" {
     })
   )
   default = [{
-    profile = "bx2-2x8"
-    count   = 0
+    profile = "bx2-32x128"
+    count   = 1
     image   = "ibm-redhat-8-10-minimal-amd64-2"
   }]
   description = "Number of instances to be launched for afm hosts."
@@ -709,4 +709,41 @@ variable "ldap_instances" {
     image   = "ibm-ubuntu-22-04-5-minimal-amd64-1"
   }]
   description = "Profile and Image name to be used for provisioning the LDAP instances. Note: Debian based OS are only supported for the LDAP feature"
+}
+
+##############################################################################
+# GKLM variables
+##############################################################################
+variable "scale_encryption_enabled" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the filesystem. Select true or false"
+}
+
+variable "scale_encryption_type" {
+  type        = string
+  default     = ""
+  description = "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled"
+}
+
+variable "gklm_instance_key_pair" {
+  type        = list(string)
+  default     = null
+  description = "The key pair to use to launch the GKLM host."
+}
+
+variable "gklm_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  default = [{
+    profile = "bx2-2x8"
+    count   = 2
+    image   = "ibm-redhat-8-10-minimal-amd64-2"
+  }]
+  description = "Number of instances to be launched for client."
 }
