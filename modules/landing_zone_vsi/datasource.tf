@@ -61,3 +61,8 @@ data "ibm_is_ssh_key" "storage" {
   for_each = toset(var.storage_ssh_keys)
   name     = each.key
 }
+
+data "ibm_is_image" "ldap_vsi_image" {
+  name  = var.ldap_vsi_osimage_name
+  count = var.ldap_basedns != null && var.ldap_server == "null" ? 1 : 0
+}

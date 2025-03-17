@@ -61,27 +61,6 @@ module "deployer" {
   dns_domain_names              = var.dns_domain_names
 }
 
-module "ldap" {
-  count                         = var.enable_deployer == false &&  var.enable_ldap ? 1 : 0
-  source                        = "./modules/ldap"
-  resource_group                = var.resource_group
-  prefix                        = var.prefix
-  zones                         = var.zones
-  vpc_id                        = local.vpc_id
-  enable_ldap                   = var.enable_ldap
-  ldap_vsi_profile              = var.ldap_vsi_profile
-  ldap_vsi_osimage_name         = var.ldap_vsi_osimage_name
-  ldap_basedns                  = var.ldap_basedns
-  ldap_admin_password           = var.ldap_admin_password
-  ldap_user_name                = var.ldap_user_name
-  ldap_user_password            = var.ldap_user_password
-  ldap_server                   = var.ldap_server
-  ldap_server_cert              = var.ldap_server_cert
-  compute_ssh_keys              = local.compute_ssh_keys
-  compute_subnets               = local.compute_subnets
-  compute_security_group_id     = local.compute_security_group_id
-}
-
 module "landing_zone_vsi" {
   count                      = var.enable_deployer == false ? 1 : 0
   source                     = "./modules/landing_zone_vsi"
@@ -111,6 +90,17 @@ module "landing_zone_vsi" {
   kms_encryption_enabled     = local.kms_encryption_enabled
   boot_volume_encryption_key = local.boot_volume_encryption_key
   enable_bastion             = var.enable_bastion
+  # LDAP
+  enable_ldap                   = var.enable_ldap
+  ldap_primary_ip               = local.ldap_private_ips
+  ldap_vsi_profile              = var.ldap_vsi_profile
+  ldap_vsi_osimage_name         = var.ldap_vsi_osimage_name
+  ldap_basedns                  = var.ldap_basedns
+  ldap_admin_password           = var.ldap_admin_password
+  ldap_user_name                = var.ldap_user_name
+  ldap_user_password            = var.ldap_user_password
+  ldap_server                   = var.ldap_server
+  ldap_server_cert              = var.ldap_server_cert
 }
 
 

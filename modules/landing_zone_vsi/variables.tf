@@ -318,3 +318,66 @@ variable "enable_bastion" {
   default     = true
   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
 }
+
+# LDAP
+variable "enable_ldap" {
+  type        = bool
+  default     = false
+  description = "Set this option to true to enable LDAP for IBM Cloud HPC, with the default value set to false."
+}
+
+variable "ldap_basedns" {
+  type        = string
+  default     = "hpcaas.com"
+  description = "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."
+}
+
+variable "ldap_server" {
+  type        = string
+  default     = "null"
+  description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
+}
+
+variable "ldap_server_cert" {
+  type        = string
+  sensitive   = true
+  default     = "null"
+  description = "Provide the existing LDAP server certificate. If not provided, the value should be set to 'null'."
+}
+
+variable "ldap_admin_password" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "The LDAP administrative password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required. It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
+}
+
+variable "ldap_user_name" {
+  type        = string
+  default     = ""
+  description = "Custom LDAP User for performing cluster operations. Note: Username should be between 4 to 32 characters, (any combination of lowercase and uppercase letters).[This value is ignored for an existing LDAP server]"
+}
+
+variable "ldap_user_password" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "The LDAP user password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required.It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
+}
+
+variable "ldap_vsi_profile" {
+  type        = string
+  default     = "cx2-2x4"
+  description = "Profile to be used for LDAP virtual server instance."
+}
+
+variable "ldap_vsi_osimage_name" {
+  type        = string
+  default     = "ibm-ubuntu-22-04-4-minimal-amd64-3"
+  description = "Image name to be used for provisioning the LDAP instances."
+}
+
+# variable "ldap_primary_ip" {
+#   type        = list(string)
+#   description = "List of LDAP primary IPs."
+# }

@@ -278,7 +278,9 @@ locals {
   ldap_user_password    = var.ldap_user_password
   ldap_server           = var.ldap_server
   ldap_server_cert      = var.ldap_server_cert
-
+  # ldap_vsi_data         = var.enable_deployer ? [] : (flatten(module.landing_zone_vsi[0].ldap_vsi_data))
+  # ldap_private_ips      = var.enable_deployer ? [] : (local.ldap_vsi_data[*]["ipv4_address"])
+  # ldap_hostnames        = var.enable_deployer ? [] : (local.ldap_vsi_data[*]["name"])
 }
 
 locals {
