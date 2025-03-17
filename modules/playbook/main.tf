@@ -123,7 +123,7 @@ resource "null_resource" "run_playbook_management_for_mgmt" {
 }
 
 resource "local_file" "create_playbook_for_lsf_mgmt" {
-  count    = var.inventory_path != null ? 1 : 0
+  count    = var.inventory_path != null ? 0 : 0
   content  = <<EOT
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 - name: Prerequisite Configuration

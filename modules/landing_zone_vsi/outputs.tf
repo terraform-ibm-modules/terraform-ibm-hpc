@@ -28,11 +28,11 @@ output "compute_sg_id" {
   value       = module.compute_sg[*].security_group_id
 }
 
-# # LDAP
-# output "ldap_vsi_data" {
-#   description = "Login VSI data"
-#   value       = module.ldap_vsi[*]["list"]
-# }
+# LDAP
+output "ldap_vsi_data" {
+  description = "Login VSI data"
+  value       = module.ldap_vsi[*]["list"]
+}
 
 # output "ldap_server" {
 #   description = "LDAP server IP"

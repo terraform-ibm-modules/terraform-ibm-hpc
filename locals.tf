@@ -192,6 +192,7 @@ locals {
   compute_instances  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data, module.landing_zone_vsi[0].compute_vsi_data])
   storage_instances  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_vsi_data, module.landing_zone_vsi[0].protocol_vsi_data])
   protocol_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].protocol_vsi_data])
+  ldap_instances     = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].ldap_vsi_data])
   deployer_instances = [
     {
       name         = var.deployer_hostname
@@ -200,7 +201,7 @@ locals {
   ]
 
   compute_dns_records = [
-    for instance in concat(local.compute_instances, local.deployer_instances):
+    for instance in concat(local.compute_instances, local.deployer_instances, local.ldap_instances):
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]

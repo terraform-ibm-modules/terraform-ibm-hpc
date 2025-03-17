@@ -72,17 +72,17 @@ module "ldap_vsi" {
   image_id                      = local.ldap_instance_image_id
   machine_type                  = var.ldap_vsi_profile
   prefix                        = local.ldap_node_name
-  resource_group_id             = var.resource_group
+  resource_group_id             = local.resource_group_id
   enable_floating_ip            = false
   security_group_ids            = module.compute_sg[*].security_group_id
   ssh_key_ids                   = local.management_ssh_keys
   subnets                       = local.compute_subnets
   tags                          = local.tags
-  user_data                     = ""
+  user_data                     = data.template_file.ldap_user_data.rendered
   vpc_id                        = var.vpc_id
-  # kms_encryption_enabled        = var.kms_encryption_enabled
-  # skip_iam_authorization_policy = local.skip_iam_authorization_policy
-  # boot_volume_encryption_key    = var.boot_volume_encryption_key
+  kms_encryption_enabled        = var.kms_encryption_enabled
+  skip_iam_authorization_policy = local.skip_iam_authorization_policy
+  boot_volume_encryption_key    = var.boot_volume_encryption_key
 }
 
 module "client_vsi" {
