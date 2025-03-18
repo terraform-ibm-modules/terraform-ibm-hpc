@@ -224,7 +224,7 @@ EOT
 }
 
 resource "null_resource" "run_ldap_client_config" {
-  count = var.enable_ldap ? 1 : 0
+  count = var.enable_ldap ? 0 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook -i ${var.inventory_path} '/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/ldap_client_config.yml'"
