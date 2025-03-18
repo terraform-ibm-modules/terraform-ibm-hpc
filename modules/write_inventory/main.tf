@@ -45,7 +45,8 @@ resource "local_sensitive_file" "itself" {
   "ldap_user_name": ${jsonencode(var.ldap_user_name)},
   "ldap_user_password": ${jsonencode(var.ldap_user_password)},
   "ldap_server": ${jsonencode(var.ldap_server)},
-  "ldap_server_cert": ${jsonencode(var.ldap_server_cert)}
+  "ldap_server_cert": ${jsonencode(var.ldap_server_cert)},
+  "ldap_private_ips": ${jsonencode(local.ldap_private_ips)}
 }
 EOT
   filename = var.json_inventory_path
