@@ -405,6 +405,7 @@ module "ldap_playbook" {
   count                 = var.enable_deployer == false ? 1 : 0
   source                = "./modules/playbook"
   enable_ldap           = local.enable_ldap
+  ldap_server           = local.ldap_server
   bastion_fip           = local.bastion_fip
   private_key_path      = local.compute_private_key_path
   ldap_inventory_path   = local.ldap_inventory_path
