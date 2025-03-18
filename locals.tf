@@ -282,7 +282,7 @@ locals {
   ldap_user_password    = var.ldap_user_password
   ldap_server           = var.ldap_server
   ldap_server_cert      = var.ldap_server_cert
-  ldap_private_ips      = var.enable_deployer && var.ldap_server == "null" ? [] : (local.ldap_instances[*]["ipv4_address"])
+  ldap_private_ips      = var.enable_deployer == false  && var.ldap_server == "null" ? [] : (local.ldap_instances[*]["ipv4_address"])
 }
 
 locals {
