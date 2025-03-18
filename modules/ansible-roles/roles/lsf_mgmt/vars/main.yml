@@ -1,0 +1,6 @@
+LSF_CONF_FILE_PATH: "/opt/ibm/lsfsuite/lsf/conf"
+LSF_CONF_FILE: "{{ LSF_CONF_FILE_PATH }}/lsf.conf"
+LSF_RC_IC_CONF: "{{ LSF_CONF_FILE_PATH }}/resource_connector/ibmcloudgen2/conf"
+LSF_LSBATCH_CONF: "{{ LSF_CONF_FILE_PATH }}/lsbatch/{{ my_cluster_name }}/configdir"
+LSF_HOSTS_FILE: "{{ LSF_CONF_FILE_PATH }}/hosts"
+LSF_EGO_CONF_FILE: "{{ LSF_CONF_FILE }}/ego/{{ my_cluster_name }}/kernel/ego.conf"
