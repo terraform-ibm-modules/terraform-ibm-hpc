@@ -65,6 +65,7 @@ locals {
   ldap_node_name               = format("%s-%s", local.prefix, "ldap")
   afm_node_name                = format("%s-%s", local.prefix, "afm")
   gklm_node_name               = format("%s-%s", local.prefix, "gklm")
+  cpmoute_management_node_name = format("%s-%s", local.prefix, "comp-mgmt")
 
   # Future use
   /*

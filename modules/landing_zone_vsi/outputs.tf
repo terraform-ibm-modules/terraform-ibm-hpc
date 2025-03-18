@@ -37,3 +37,8 @@ output "gklm_vsi_data" {
   description = "GKLM VSI data"
   value       = module.gklm_vsi[*]["list"]
 }
+
+output "storage_cluster_tie_breaker_vsi_data" {
+  description = "Storage Cluster Tie Breaker VSI data"
+  value       = module.storage_cluster_tie_breaker_vsi[*]["list"]
+}

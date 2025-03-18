@@ -135,6 +135,31 @@ module "compute_vsi" {
   #placement_group_id = var.placement_group_ids[(var.static_compute_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
+module "compute_cluster_management_vsi" {
+  count                         = length(var.static_compute_instances)
+  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version                       = "4.2.0"
+  vsi_per_subnet                = 1
+  create_security_group         = false
+  security_group                = null
+  image_id                      = local.compute_image_id[count.index]
+  machine_type                  = var.static_compute_instances[count.index]["profile"]
+  prefix                        = count.index == 0 ? local.cpmoute_management_node_name : format("%s-%s", local.cpmoute_management_node_name, count.index)
+  resource_group_id             = local.resource_group_id
+  enable_floating_ip            = false
+  security_group_ids            = module.compute_sg[*].security_group_id
+  ssh_key_ids                   = local.compute_ssh_keys
+  subnets                       = local.compute_subnets
+  tags                          = local.tags
+  user_data                     = data.template_file.compute_user_data.rendered
+  vpc_id                        = var.vpc_id
+  kms_encryption_enabled        = var.kms_encryption_enabled
+  skip_iam_authorization_policy = local.skip_iam_authorization_policy
+  boot_volume_encryption_key    = var.boot_volume_encryption_key
+  placement_group_id            = var.placement_group_ids
+  #placement_group_id = var.placement_group_ids[(var.static_compute_instances[count.index]["count"])%(length(var.placement_group_ids))]
+}
+
 module "storage_vsi" {
   count                         = length(var.storage_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
@@ -219,20 +244,20 @@ module "protocol_vsi" {
   #placement_group_id = var.placement_group_ids[(var.protocol_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
-module "ldap_vsi" {
-  count                         = var.enable_ldap == true && var.ldap_server == null ? 1 : 0
+module "storage_cluster_tie_breaker_vsi" {
+  count                         = var.storage_type != "persistent" ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
   version                       = "4.2.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
-  image_id                      = local.ldap_image_id[count.index]
-  machine_type                  = var.ldap_instances[count.index]["profile"]
-  prefix                        = local.ldap_node_name
+  image_id                      = local.storage_image_id[count.index]
+  machine_type                  = var.storage_instances[count.index]["profile"]
+  prefix                        = format("%s-strg-tie", local.prefix)
   resource_group_id             = local.resource_group_id
   enable_floating_ip            = false
   security_group_ids            = module.storage_sg[*].security_group_id
-  ssh_key_ids                   = local.ldap_ssh_keys
+  ssh_key_ids                   = local.storage_ssh_keys
   subnets                       = [local.storage_subnets[0]]
   tags                          = local.tags
   user_data                     = data.template_file.storage_user_data.rendered
@@ -289,4 +314,30 @@ module "gklm_vsi" {
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
+}
+
+module "ldap_vsi" {
+  count                         = var.enable_ldap == true && var.ldap_server == null ? 1 : 0
+  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version                       = "4.2.0"
+  vsi_per_subnet                = 1
+  create_security_group         = false
+  security_group                = null
+  image_id                      = local.ldap_image_id[count.index]
+  machine_type                  = var.ldap_instances[count.index]["profile"]
+  prefix                        = local.ldap_node_name
+  resource_group_id             = local.resource_group_id
+  enable_floating_ip            = false
+  security_group_ids            = module.storage_sg[*].security_group_id
+  ssh_key_ids                   = local.ldap_ssh_keys
+  subnets                       = [local.storage_subnets[0]]
+  tags                          = local.tags
+  user_data                     = data.template_file.storage_user_data.rendered
+  vpc_id                        = var.vpc_id
+  block_storage_volumes         = local.enable_block_storage ? local.block_storage_volumes : []
+  kms_encryption_enabled        = var.kms_encryption_enabled
+  skip_iam_authorization_policy = local.skip_iam_authorization_policy
+  boot_volume_encryption_key    = var.boot_volume_encryption_key
+  placement_group_id            = var.placement_group_ids
+  #placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
