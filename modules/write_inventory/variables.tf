@@ -267,8 +267,8 @@ variable "ldap_vsi_osimage_name" {
   description = "Image name to be used for provisioning the LDAP instances. By default ldap server are created on Ubuntu based OS flavour."
 }
 
-variable "ldap_private_ips" {
-  type        = list(string)
+variable "ldap_server_ip" {
+  type        = string
   default     = null
   description = "List of LDAP primary IPs."
 }

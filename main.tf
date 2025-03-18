@@ -92,7 +92,7 @@ module "landing_zone_vsi" {
   enable_bastion             = var.enable_bastion
   # LDAP
   enable_ldap                   = var.enable_ldap
-  ldap_primary_ip               = local.ldap_private_ips
+  ldap_primary_ip               = local.ldap_server_ip
   ldap_vsi_profile              = var.ldap_vsi_profile
   ldap_vsi_osimage_name         = var.ldap_vsi_osimage_name
   ldap_basedns                  = var.ldap_basedns
@@ -166,7 +166,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "ldap_user_password": ${jsonencode(local.ldap_user_password)},
   "ldap_server": ${jsonencode(local.ldap_server)},
   "ldap_server_cert": ${jsonencode(local.ldap_server_cert)},
-  "ldap_private_ips": ${jsonencode(local.ldap_private_ips)}
+  "ldap_server_ip": ${jsonencode(local.ldap_server_ip)}
 }    
 EOT
   filename = local.schematics_inputs_path
@@ -343,7 +343,7 @@ module "write_compute_cluster_inventory" {
   ldap_user_password            = local.ldap_user_password
   ldap_server                   = local.ldap_server
   ldap_server_cert              = local.ldap_server_cert
-  ldap_private_ips              = local.ldap_private_ips
+  ldap_server_ip                = local.ldap_server_ip
   depends_on                    = [ time_sleep.wait_60_seconds ]
 }
 

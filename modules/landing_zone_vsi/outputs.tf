@@ -34,7 +34,7 @@ output "ldap_vsi_data" {
   value       = module.ldap_vsi[*]["list"]
 }
 
-output "ldap_server" {
+output "ldap_server_ip" {
   description = "LDAP server IP"
-  value       = local.ldap_server
+  value       = [for vsi in module.ldap_vsi[*].list : vsi[0].ipv4_address]
 }
