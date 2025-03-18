@@ -377,7 +377,7 @@ variable "ldap_vsi_osimage_name" {
   description = "Image name to be used for provisioning the LDAP instances."
 }
 
-variable "ldap_primary_ip" {
-  type        = list(string)
+variable "ldap_server_ip" {
+  type        = ""
   description = "List of LDAP primary IPs."
 }
