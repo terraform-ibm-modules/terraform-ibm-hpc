@@ -343,6 +343,7 @@ module "write_compute_cluster_inventory" {
   ldap_user_password            = local.ldap_user_password
   ldap_server                   = local.ldap_server
   ldap_server_cert              = local.ldap_server_cert
+  ldap_private_ips              = local.ldap_private_ips
   depends_on                    = [ time_sleep.wait_60_seconds ]
 }
 
