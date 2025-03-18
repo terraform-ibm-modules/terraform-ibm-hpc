@@ -269,5 +269,6 @@ variable "ldap_vsi_osimage_name" {
 
 variable "ldap_private_ips" {
   type        = list(string)
+  default     = null
   description = "List of LDAP primary IPs."
 }
