@@ -378,6 +378,6 @@ variable "ldap_vsi_osimage_name" {
 }
 
 variable "ldap_server_ip" {
-  type        = string
+  type        = list(string)
   description = "List of LDAP primary IPs."
 }
