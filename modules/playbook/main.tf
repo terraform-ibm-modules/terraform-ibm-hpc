@@ -52,7 +52,7 @@ EOT
 }
 
 resource "null_resource" "run_playbook" {
-  count = var.inventory_path != null ? 1 : 0
+  count = var.inventory_path != null ? 0 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook -f 50 -i ${var.inventory_path} ${var.playbook_path}"
@@ -101,7 +101,7 @@ resource "null_resource" "run_ldap_server_prepare" {
 }
 
 resource "null_resource" "run_lsf_playbooks" {
-  count = var.inventory_path != null ? 1 : 0
+  count = var.inventory_path != null ? 0 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -147,7 +147,7 @@ EOT
 }
 
 resource "null_resource" "run_playbook_management_for_mgmt" {
-  count = var.inventory_path != null ? 1 : 0
+  count = var.inventory_path != null ? 0 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook  -f 50 -i ${var.inventory_path} '/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/lsf_config.yml'"
@@ -185,7 +185,7 @@ EOT
 }
 
 resource "null_resource" "run_playbook_management_configure" {
-  count = var.inventory_path != null ? 1 : 0
+  count = var.inventory_path != null ? 0 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook -i ${var.inventory_path} '/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/lsf_mgmt.yml'"
@@ -196,41 +196,41 @@ resource "null_resource" "run_playbook_management_configure" {
   depends_on = [ local_file.create_playbook_for_lsf_mgmt, null_resource.run_playbook_management_for_mgmt ]
 }
 
-# # LDAP Client Configuration
-# resource "local_file" "playbook_for_ldap_client_config" {
-#   count    = var.enable_ldap ? 1 : 0
-#   content  = <<EOT
-# # Ensure provisioned VMs are up and Passwordless SSH setup has been established
-# - name: Prerequisite Configuration
-#   hosts: [all_nodes]
-#   any_errors_fatal: true
-#   gather_facts: True
-#   vars:
-#     ansible_ssh_common_args: >
-#       ${local.proxyjump}
-#       -o ControlMaster=auto
-#       -o ControlPersist=30m
-#       -o UserKnownHostsFile=/dev/null
-#       -o StrictHostKeyChecking=no
-#     ansible_user: root
-#     ansible_ssh_private_key_file: ${var.private_key_path}
-#   pre_tasks:
-#     - name: Load cluster-specific variables
-#       include_vars: all.json
-#   roles:
-#      - lsf_client_config
-# EOT
-#   filename = "/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/lsf_mgmt.yml"
-# }
+# LDAP Client Configuration
+resource "local_file" "playbook_for_ldap_client_config" {
+  count    = var.enable_ldap ? 1 : 0
+  content  = <<EOT
+# Ensure provisioned VMs are up and Passwordless SSH setup has been established
+- name: Prerequisite Configuration
+  hosts: [all_nodes]
+  any_errors_fatal: true
+  gather_facts: True
+  vars:
+    ansible_ssh_common_args: >
+      ${local.proxyjump}
+      -o ControlMaster=auto
+      -o ControlPersist=30m
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+    ansible_user: root
+    ansible_ssh_private_key_file: ${var.private_key_path}
+  pre_tasks:
+    - name: Load cluster-specific variables
+      include_vars: all.json
+  roles:
+     - ldap_client_config
+EOT
+  filename = "/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/ldap_client_config.yml"
+}
 
-# resource "null_resource" "run_ldap_client_config" {
-#   count = var.enable_ldap ? 1 : 0
-#   provisioner "local-exec" {
-#     interpreter = ["/bin/bash", "-c"]
-#     command     = "ansible-playbook -i ${var.inventory_path} '/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/lsf_mgmt.yml'"
-#   }
-#   triggers = {
-#     build = timestamp()
-#   }
-#   depends_on = [ local_file.create_playbook_for_lsf_mgmt, null_resource.run_playbook_management_for_mgmt ]
-# }
+resource "null_resource" "run_ldap_client_config" {
+  count = var.enable_ldap ? 1 : 0
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "ansible-playbook -i ${var.inventory_path} '/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/ldap_client_config.yml'"
+  }
+  triggers = {
+    build = timestamp()
+  }
+  depends_on = [ local_file.playbook_for_ldap_client_config, null_resource.run_ldap_server_prepare ]
+}
