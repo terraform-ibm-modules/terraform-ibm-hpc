@@ -92,7 +92,7 @@ module "landing_zone_vsi" {
   enable_bastion             = var.enable_bastion
   # LDAP
   enable_ldap                   = var.enable_ldap
-  # ldap_primary_ip               = local.ldap_private_ips
+  ldap_primary_ip               = local.ldap_private_ips
   ldap_vsi_profile              = var.ldap_vsi_profile
   ldap_vsi_osimage_name         = var.ldap_vsi_osimage_name
   ldap_basedns                  = var.ldap_basedns
