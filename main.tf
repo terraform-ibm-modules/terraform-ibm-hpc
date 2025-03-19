@@ -211,7 +211,7 @@ resource "null_resource" "tf_resource_provisioner" {
 }
 
 resource "null_resource" "cluster_destroyer" {
-  count    = var.enable_deployer == true ? 0 : 0
+  count    = var.enable_deployer == true ? 1 : 0
   triggers = {
     conn_host                  = flatten(module.deployer.deployer_vsi_data[*].list)[0].ipv4_address
     conn_private_key           = local.bastion_private_key_content
