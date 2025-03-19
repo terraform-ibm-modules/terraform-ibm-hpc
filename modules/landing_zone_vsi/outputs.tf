@@ -36,5 +36,5 @@ output "ldap_vsi_data" {
 
 output "ldap_server_ip" {
   description = "LDAP server IP"
-  value       = [for vsi in module.ldap_vsi[*].list : vsi[0].ipv4_address]
+  value       = one([for vsi in module.ldap_vsi[*].list : vsi[0].ipv4_address])  # [for vsi in module.ldap_vsi[*].list : vsi[0].ipv4_address]
 }

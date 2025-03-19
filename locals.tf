@@ -281,7 +281,8 @@ locals {
   ldap_user_password    = var.ldap_user_password
   ldap_server           = var.ldap_server
   ldap_server_cert      = var.ldap_server_cert
-  ldap_server_ip        = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].ldap_server_ip])
+  # ldap_server_ip        = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].ldap_server_ip])
+  ldap_server_ip        = var.enable_deployer ? "" : module.landing_zone_vsi[0].ldap_server_ip
 }
 
 locals {
