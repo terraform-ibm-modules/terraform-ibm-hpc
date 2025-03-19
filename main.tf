@@ -171,8 +171,27 @@ EOT
   filename = local.schematics_inputs_path
 }
 
+// The resource is used to validate the existing LDAP server connection.
+resource "null_resource" "validate_ldap_server_connection" {
+  count = var.enable_deployer == true && var.enable_ldap == true && var.ldap_server != "null" ? 1 : 0
+  connection {
+    type        = "ssh"
+    user        = "ubuntu"
+    private_key = local.bastion_private_key_content
+    host        = local.bastion_fip
+  }
+  provisioner "remote-exec" {
+    inline = [
+      "if openssl s_client -connect '${var.ldap_server}:389' </dev/null 2>/dev/null | grep -q 'CONNECTED'; then echo 'The connection to the existing LDAP server ${var.ldap_server} was successfully established.'; else echo 'The connection to the existing LDAP server ${var.ldap_server} failed, Please ensure that the connection is established before proceeding.'; exit 1; fi",
+    ]
+  }
+  depends_on = [
+    module.deployer
+  ]
+}
+
 resource "null_resource" "tf_resource_provisioner" {
-  count = var.enable_deployer == true ? 1 : 0
+  count = var.enable_deployer == true ? 0 : 0
   connection {
     type                = "ssh"
     host                = flatten(module.deployer.deployer_vsi_data[*].list)[0].ipv4_address
@@ -206,12 +225,13 @@ resource "null_resource" "tf_resource_provisioner" {
 
   depends_on = [
     module.deployer,
-    local_sensitive_file.prepare_tf_input
+    local_sensitive_file.prepare_tf_input,
+    null_resource.validate_ldap_server_connection
   ]
 }
 
 resource "null_resource" "cluster_destroyer" {
-  count    = var.enable_deployer == true ? 1 : 0
+  count    = var.enable_deployer == true ? 0 : 0
   triggers = {
     conn_host                  = flatten(module.deployer.deployer_vsi_data[*].list)[0].ipv4_address
     conn_private_key           = local.bastion_private_key_content
