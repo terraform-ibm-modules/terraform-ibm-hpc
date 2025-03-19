@@ -277,6 +277,24 @@ module "protocol_dns_records" {
   depends_on      = [ module.dns ]
 }
 
+module "client_dns_records" {
+  count           = var.enable_deployer == false ? 1 : 0
+  source          = "./modules/dns_record"
+  dns_instance_id = local.dns_instance_id
+  dns_zone_id     = local.client_dns_zone_id
+  dns_records     = local.client_dns_records
+  depends_on      = [ module.dns ]
+}
+
+module "gklm_dns_records" {
+  count           = var.enable_deployer == false ? 1 : 0
+  source          = "./modules/dns_record"
+  dns_instance_id = local.dns_instance_id
+  dns_zone_id     = local.gklm_dns_zone_id
+  dns_records     = local.gklm_dns_records
+  depends_on      = [ module.dns ]
+}
+
 resource "time_sleep" "wait_60_seconds" {
   create_duration = "60s"
   depends_on          = [ module.storage_dns_records, module.protocol_dns_records, module.compute_dns_records ]

@@ -169,11 +169,6 @@ locals {
   # dependency: landing_zone_vsi -> file-share
 }
 
-data "external" "get_hostname" {
-  program = ["sh", "-c", "echo '{\"name\": \"'$(hostname)'\", \"ipv4_address\": \"'$(hostname -I | awk '{print $1}')'\"}'"]
-}
-
-
 # locals needed for dns-records
 locals {
   # dependency: dns -> dns-records
@@ -189,12 +184,25 @@ locals {
   protocol_dns_zone_id = one(flatten([
     for dns_zone in local.dns_zone_map_list : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["protocol"]
   ]))
+  client_dns_zone_id = one(flatten([
+    for dns_zone in local.dns_zone_map_list : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["client"]
+  ]))
+  gklm_dns_zone_id = one(flatten([
+    for dns_zone in local.dns_zone_map_list : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["gklm"]
+  ]))
 
   # dependency: landing_zone_vsi -> dns-records
-  compute_instances  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data, module.landing_zone_vsi[0].compute_vsi_data])
-  storage_instances  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_vsi_data, module.landing_zone_vsi[0].protocol_vsi_data])
-  protocol_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].protocol_vsi_data])
-  deployer_instances = [
+  compute_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data, module.landing_zone_vsi[0].compute_vsi_data, module.landing_zone_vsi[0].compute_management_vsi_data])
+  storage_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_vsi_data, module.landing_zone_vsi[0].protocol_vsi_data, module.landing_zone_vsi[0].afm_vsi_data, module.landing_zone_vsi[0].storage_cluster_tie_breaker_vsi_data, module.landing_zone_vsi[0].storage_cluster_management_vsi])
+  protocol_instances  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].protocol_vsi_data])
+  gklm_instancess     = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].gklm_vsi_data])
+  client_instances    = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].client_vsi_data])
+  # afm_instances       = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].afm_vsi_data])
+  # ldap_instances      = var.enable_deployer ? [] : flatten(module.landing_zone_vsi[0].ldap_vsi_data)
+  # tie_brkr_instances  = var.enable_deployer ? [] : flatten(module.landing_zone_vsi[0].storage_cluster_tie_breaker_vsi_data)
+  # comp_mgmt_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_management_vsi_data])
+  # strg_mgmt_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_cluster_management_vsi])
+  deployer_instances  = [
     {
       name         = var.deployer_hostname
       ipv4_address = var.deployer_ip
@@ -217,6 +225,20 @@ locals {
   ]
   protocol_dns_records = [
     for instance in local.protocol_instances :
+    {
+      name  = instance["name"]
+      rdata = instance["ipv4_address"]
+    }
+  ]
+  client_dns_records = [
+    for instance in local.client_instances :
+    {
+      name  = instance["name"]
+      rdata = instance["ipv4_address"]
+    }
+  ]
+  gklm_dns_records = [
+    for instance in local.gklm_instancess :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]

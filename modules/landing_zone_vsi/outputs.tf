@@ -13,9 +13,19 @@ output "compute_vsi_data" {
   value       = module.compute_vsi[*]["list"]
 }
 
+output "compute_management_vsi_data" {
+  description = "Compute Management VSI data"
+  value       = module.compute_cluster_management_vsi[*]["list"]
+}
+
 output "storage_vsi_data" {
   description = "Storage VSI data"
   value       = module.storage_vsi[*]["list"]
+}
+
+output "storage_cluster_management_vsi" {
+  description = "Storage VSI data"
+  value       = module.storage_cluster_management_vsi[*]["list"]
 }
 
 output "protocol_vsi_data" {
