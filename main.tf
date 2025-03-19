@@ -165,8 +165,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "ldap_user_name": ${jsonencode(local.ldap_user_name)},
   "ldap_user_password": ${jsonencode(local.ldap_user_password)},
   "ldap_server": ${jsonencode(local.ldap_server)},
-  "ldap_server_cert": ${jsonencode(local.ldap_server_cert)},
-  "ldap_server_ip": ${local.ldap_server_ip}
+  "ldap_server_cert": ${jsonencode(local.ldap_server_cert)}
 }    
 EOT
   filename = local.schematics_inputs_path
