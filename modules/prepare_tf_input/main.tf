@@ -30,7 +30,25 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "dns_domain_names": ${local.dns_domain_names},
   "bastion_security_group_id": "${var.bastion_security_group_id}",
   "deployer_hostname": "${var.deployer_hostname}",
-  "deployer_ip": "${var.deployer_ip}"
+  "deployer_ip": "${var.deployer_ip}",
+  "scc_enable": ${var.scc_enable},
+  "scc_profile": "${var.scc_profile}",
+  "scc_location": "${var.scc_location}",
+  "scc_cos_bucket": "${var.scc_cos_bucket}",
+  "scc_cos_instance_crn": "${var.scc_cos_instance_crn}",
+  "scc_event_notification_plan": "${var.scc_event_notification_plan}",
+  "cloud_logs_data_bucket": ${var.cloud_logs_data_bucket},
+  "cloud_metrics_data_bucket": ${var.cloud_metrics_data_bucket},
+  "observability_logs_enable_for_management": ${var.observability_logs_enable_for_management},
+  "observability_logs_enable_for_compute": ${var.observability_logs_enable_for_compute},
+  "observability_enable_platform_logs": ${var.observability_enable_platform_logs},
+  "observability_monitoring_enable": ${var.observability_monitoring_enable},
+  "observability_monitoring_plan": "${var.observability_monitoring_plan}",
+  "observability_logs_retention_period": ${var.observability_logs_retention_period},
+  "observability_monitoring_on_compute_nodes_enable": ${var.observability_monitoring_on_compute_nodes_enable},
+  "observability_enable_metrics_routing": ${var.observability_enable_metrics_routing},
+  "observability_atracker_enable": ${var.observability_atracker_enable},
+  "observability_atracker_target_type": "${var.observability_atracker_target_type}"
 }
 EOT
   filename = local.schematics_inputs_path
