@@ -77,4 +77,6 @@ module "scale" {
   scale_encryption_type           = local.env.scale_encryption_type
   gklm_instance_key_pair          = local.env.gklm_instance_key_pair
   gklm_instances                  = local.env.gklm_instances
+  storage_type                    = local.env.storage_type
+  filesystem_block_size           = local.env.filesystem_block_size
 }

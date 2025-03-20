@@ -50,3 +50,11 @@ data "ibm_is_subnet" "existing_bastion_subnets" {
   count = var.vpc != null && var.bastion_subnets != null ? 1 : 0
   name  = var.bastion_subnets[count.index]
 }
+
+data "ibm_is_instance_profile" "compute_profile" {
+  name = local.compute_vsi_profile[0]
+}
+
+data "ibm_is_instance_profile" "storage_profile" {
+  name = local.storage_vsi_profile[0]
+}

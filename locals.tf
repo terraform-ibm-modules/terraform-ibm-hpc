@@ -121,7 +121,6 @@ locals {
   # dependency: landing_zone_vsi -> file-share
   compute_subnet_id         = var.vpc == null && var.compute_subnets == null ? local.compute_subnets[0].id : [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.id][0]
   compute_security_group_id = var.enable_deployer ? [] : module.landing_zone_vsi[0].compute_sg_id
-  management_instance_count = sum(var.management_instances[*]["count"])
   default_share = local.management_instance_count > 0 ? [
     {
       mount_path = "/mnt/lsf"
@@ -129,8 +128,15 @@ locals {
       iops       = 1000
     }
   ] : []
+
+  management_instance_count = sum(var.management_instances[*]["count"])
   storage_instance_count = sum(var.storage_instances[*]["count"])
-  total_shares           = local.storage_instance_count > 0 ? [] : concat(local.default_share, var.file_shares)
+  client_instance_count         = sum(var.client_instances[*]["count"])
+  protocol_instance_count       = sum(var.protocol_instances[*]["count"])
+  static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
+  afm_instance_count            = sum(var.afm_instances[*]["count"])
+
+  total_shares           = local.storage_instance_count > 0 ? var.file_shares : concat(local.default_share, var.file_shares)
   file_shares = [
     for count in range(length(local.total_shares)) :
     {
@@ -195,13 +201,13 @@ locals {
   compute_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data, module.landing_zone_vsi[0].compute_vsi_data, module.landing_zone_vsi[0].compute_management_vsi_data])
   storage_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_vsi_data, module.landing_zone_vsi[0].protocol_vsi_data, module.landing_zone_vsi[0].afm_vsi_data, module.landing_zone_vsi[0].storage_cluster_tie_breaker_vsi_data, module.landing_zone_vsi[0].storage_cluster_management_vsi])
   protocol_instances  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].protocol_vsi_data])
-  gklm_instancess     = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].gklm_vsi_data])
+  gklm_instances      = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].gklm_vsi_data])
   client_instances    = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].client_vsi_data])
-  # afm_instances       = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].afm_vsi_data])
+  afm_instances       = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].afm_vsi_data])
   # ldap_instances      = var.enable_deployer ? [] : flatten(module.landing_zone_vsi[0].ldap_vsi_data)
-  # tie_brkr_instances  = var.enable_deployer ? [] : flatten(module.landing_zone_vsi[0].storage_cluster_tie_breaker_vsi_data)
+  tie_brkr_instances  = var.enable_deployer ? [] : flatten(module.landing_zone_vsi[0].storage_cluster_tie_breaker_vsi_data)
   # comp_mgmt_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_management_vsi_data])
-  # strg_mgmt_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_cluster_management_vsi])
+  strg_mgmt_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_cluster_management_vsi])
   deployer_instances  = [
     {
       name         = var.deployer_hostname
@@ -238,7 +244,7 @@ locals {
     }
   ]
   gklm_dns_records = [
-    for instance in local.gklm_instancess :
+    for instance in local.gklm_instances :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
@@ -268,9 +274,60 @@ locals {
   fileshare_name_mount_path_map =  var.enable_deployer ? {} : module.file_storage[0].name_mount_path_map
 }
 
+locals {
+  # gpfs_base_rpm_path  = fileset(var.spectrumscale_rpms_path, "gpfs.base-*")
+  # scale_org_version   = regex("gpfs.base-(.*).x86_64.rpm", tolist(local.gpfs_base_rpm_path)[0])[0]
+  scale_version       = "5221" #replace(local.scale_org_version, "-", ".")
+  
+  compute_vsi_profile    = var.static_compute_instances[*]["profile"]
+  storage_vsi_profile    = var.storage_instances[*]["profile"]
+  management_vsi_profile = var.management_instances[*]["profile"]
+  afm_vsi_profile        = var.afm_instances[*]["profile"]
+  protocol_vsi_profile   = var.protocol_instances[*]["profile"]
+  afm_server_type        = strcontains(local.afm_vsi_profile[0], "metal")
+  ces_server_type        = strcontains(local.protocol_vsi_profile[0], "metal")
+
+  scale_ces_enabled            = local.protocol_instance_count > 0 ? true : false
+  # is_colocate_protocol_subset  = local.scale_ces_enabled && var.colocate_protocol_cluster_instances ? local.protocol_instance_count < local.total_storage_cluster_instances ? true : false : false
+  enable_sec_interface_compute = local.scale_ces_enabled == false && data.ibm_is_instance_profile.compute_profile.bandwidth[0].value >= 64000 ? true : false
+  enable_sec_interface_storage = local.scale_ces_enabled == false && var.storage_type != "persistent" && data.ibm_is_instance_profile.storage_profile.bandwidth[0].value >= 64000 ? true : false
+  enable_mrot_conf             = local.enable_sec_interface_compute && local.enable_sec_interface_storage ? true : false
+
+  compute_instance_private_ips = flatten(local.compute_instances[*]["ipv4_address"])
+  compute_instance_ids         = flatten(local.compute_instances[*]["id"])
+  compute_instance_names       = flatten(local.compute_instances[*]["name"])
+
+  storage_instance_private_ips = flatten(local.storage_instances[*]["ipv4_address"])
+  storage_instance_ids         = flatten(local.storage_instances[*]["id"])
+  storage_instance_names       = flatten(local.storage_instances[*]["name"])
+
+  storage_mgmt_instance_private_ips = flatten(local.strg_mgmt_instances[*]["ipv4_address"])
+  storage_mgmtt_instance_ids        = flatten(local.strg_mgmt_instances[*]["id"])
+  storage_mgmt_instance_names       = flatten(local.strg_mgmt_instances[*]["name"])
+
+  strg_tie_breaker_private_ips    = flatten(local.tie_brkr_instances[*]["ipv4_address"])
+  strg_tie_breaker_instance_ids   = flatten(local.tie_brkr_instances[*]["id"])
+  strg_tie_breaker_instance_names = flatten(local.tie_brkr_instances[*]["name"])
+
+  secondary_compute_instance_private_ips = flatten(local.compute_instances[*]["secondary_ipv4_address"])
+  secondary_storage_instance_private_ips = flatten(local.storage_instances[*]["secondary_ipv4_address"])
+
+  afm_instance_private_ips = flatten(local.afm_instances[*]["ipv4_address"])
+  afm_instance_ids         = flatten(local.afm_instances[*]["id"])
+  afm_instance_names       = flatten(local.afm_instances[*]["name"])
+
+  protocol_instance_private_ips = flatten(local.protocol_instances[*]["ipv4_address"])
+  protocol_instance_ids         = flatten(local.protocol_instances[*]["id"])
+  protocol_instance_names       = flatten(local.protocol_instances[*]["name"])
+
+  gklm_instance_private_ips = flatten(local.gklm_instances[*]["ipv4_address"])
+  gklm_instance_ids         = flatten(local.gklm_instances[*]["id"])
+  gklm_instance_names       = flatten(local.gklm_instances[*]["name"])
+}
+
 # details needed for json file
 locals {
-  json_inventory_path   = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json"
+  json_inventory_path   = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/" : "${path.root}/modules/ansible-roles/"
   management_nodes      = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"] : []
   compute_nodes         = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].compute_vsi_data]))[*]["name"] : []
   client_nodes          = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].client_vsi_data]))[*]["name"] : []
@@ -309,12 +366,12 @@ locals {
   dns_domain_names          = jsonencode(var.dns_domain_names)
   compute_public_key_content  = local.compute_public_key_contents != null ? jsonencode(base64encode(local.compute_public_key_contents)) : ""
   compute_private_key_content = local.compute_private_key_contents != null ? jsonencode(base64encode(local.compute_private_key_contents)) : ""
-  ldap_instances            = jsonencode(var.ldap_instances)
+  list_ldap_instances       = jsonencode(var.ldap_instances)
   ldap_server               = jsonencode(var.ldap_server)
   list_ldap_ssh_keys        = jsonencode(local.ldap_instance_key_pair)
-  afm_instances             = jsonencode(var.afm_instances)
+  list_afm_instances        = jsonencode(var.afm_instances)
   list_gklm_ssh_keys        = jsonencode(local.gklm_instance_key_pair)
-  gklm_instances            = jsonencode(var.gklm_instances)
+  list_gklm_instances       = jsonencode(var.gklm_instances)
   scale_encryption_type     = jsonencode(var.scale_encryption_type)
 }
 

@@ -43,7 +43,7 @@ resource "local_file" "create_playbook" {
     ansible_ssh_private_key_file: ${var.private_key_path}
   pre_tasks:
     - name: Load cluster-specific variables
-      include_vars: all.json
+      include_vars: compute_cluster_inventory.json
   roles:
      - { role: vpc_fileshare_configure, when: scheduler == 'LSF' }
      - { role: lsf, when: scheduler == 'LSF' }

@@ -1032,3 +1032,21 @@ variable "gklm_instances" {
   }]
   description = "Number of instances to be launched for client."
 }
+
+variable "spectrumscale_rpms_path" {
+  type        = string
+  default     = "/opt/IBM/gpfs_cloud_rpms"
+  description = "Path that contains IBM Spectrum Scale product cloud rpms."
+}
+
+variable "storage_type" {
+  type        = string
+  default     = "scratch"
+  description = "Select the required storage type(scratch/persistent/eval)."
+}
+
+variable "filesystem_block_size" {
+  type        = string
+  default     = "4M"
+  description = "Filesystem block size."
+}

@@ -95,6 +95,8 @@ locals {
     scale_encryption_type           = var.scale_encryption_type
     gklm_instance_key_pair          = var.gklm_instance_key_pair
     gklm_instances                  = var.gklm_instances
+    storage_type                    = var.storage_type
+    filesystem_block_size           = var.filesystem_block_size
   }
 }
 
@@ -176,5 +178,7 @@ locals {
     scale_encryption_type           = lookup(local.override[local.override_type], "scale_encryption_type", local.config.scale_encryption_type)
     gklm_instance_key_pair          = lookup(local.override[local.override_type], "gklm_instance_key_pair", local.config.gklm_instance_key_pair)
     gklm_instances                  = lookup(local.override[local.override_type], "gklm_instances", local.config.gklm_instances)
+    storage_type                    = lookup(local.override[local.override_type], "storage_type", local.config.storage_type)
+    filesystem_block_size           = lookup(local.override[local.override_type], "filesystem_block_size", local.config.filesystem_block_size)
   }
 }
