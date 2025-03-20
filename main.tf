@@ -105,7 +105,6 @@ module "landing_zone_vsi" {
   # ldap_server_cert           = var.ldap_server_cert
 }
 
-
 resource "local_sensitive_file" "prepare_tf_input" {
   count    = var.enable_deployer == true ? 1 : 0
   content  = <<EOT
@@ -228,7 +227,7 @@ resource "null_resource" "cluster_destroyer" {
 }
 
 module "file_storage" {
-  count              = var.enable_deployer == false ? 1 : 0 
+  count              = var.enable_deployer == false && var.scheduler != null ? 1 : 0 
   source             = "./modules/file_storage"
   zone               = var.zones[0] # always the first zone
   resource_group_id  = local.resource_group_ids["service_rg"]
@@ -404,7 +403,7 @@ module "write_storage_cluster_inventory" {
   interface                                        = jsonencode([])
   export_ip_pool                                   = jsonencode([])
   filesystem                                       = local.scale_ces_enabled == true ? jsonencode("cesSharedRoot") : jsonencode("")
-  mountpoint                                       = local.scale_ces_enabled == true ? jsonencode(jsonencode(var.storage_instances[count.index].filesystem)) : jsonencode("")
+  mountpoint                                       = local.scale_ces_enabled == true ? jsonencode(var.storage_instances[count.index].filesystem) : jsonencode("")
   protocol_gateway_ip                              = jsonencode("")
   filesets                                         = jsonencode(local.file_shares)
   afm_cos_bucket_details                           = jsonencode([])
@@ -412,6 +411,53 @@ module "write_storage_cluster_inventory" {
   afm_cluster_instance_names                       = jsonencode(local.afm_instance_names)
   filesystem_mountpoint                            = var.scale_encryption_type == "key_protect" ? jsonencode(element(split("/",var.storage_instances["filesystem"]), length(split("/",var.storage_instances["filesystem"])) - 1)) : jsonencode("")
   depends_on                                       = [ time_sleep.wait_60_seconds ]
+}
+
+
+module "write_client_cluster_inventory" {
+  count                                            = var.enable_deployer == false ? 1 : 0 
+  source                                           = "./modules/write_inventory"
+  json_inventory_path                              = format("%s/client_cluster_inventory.json", local.json_inventory_path)
+  cloud_platform                                   = jsonencode("")
+  resource_prefix                                  = jsonencode("")
+  vpc_region                                       = jsonencode("")
+  vpc_availability_zones                           = jsonencode([])
+  scale_version                                    = jsonencode("")
+  filesystem_block_size                            = jsonencode("")
+  compute_cluster_filesystem_mountpoint            = jsonencode("None")
+  compute_cluster_instance_ids                     = jsonencode("")
+  compute_cluster_instance_private_ips             = jsonencode("")
+  compute_cluster_instance_private_dns_ip_map      = jsonencode({})
+  storage_cluster_filesystem_mountpoint            = local.scale_ces_enabled == true ? jsonencode(var.storage_instances[count.index].filesystem) : jsonencode("")
+  storage_cluster_instance_ids                     = jsonencode([])
+  storage_cluster_instance_private_ips             = jsonencode([])
+  storage_cluster_with_data_volume_mapping         = jsonencode({})
+  storage_cluster_instance_private_dns_ip_map      = jsonencode({})
+  storage_cluster_desc_instance_ids                = jsonencode([])
+  storage_cluster_desc_instance_private_ips        = jsonencode([])
+  storage_cluster_desc_data_volume_mapping         = jsonencode({})
+  storage_cluster_desc_instance_private_dns_ip_map = jsonencode({})
+  storage_cluster_instance_names                   = jsonencode([])
+  compute_cluster_instance_names                   = jsonencode([])
+  storage_subnet_cidr                              = jsonencode("")
+  compute_subnet_cidr                              = jsonencode("")
+  scale_remote_cluster_clustername                 = jsonencode("")
+  protocol_cluster_instance_names                  = jsonencode([])
+  client_cluster_instance_names                    = local.scale_ces_enabled == true ? jsonencode(local.client_instance_names) : jsonencode([])
+  protocol_cluster_reserved_names                  = local.scale_ces_enabled == true ? jsonencode(format("%s-ces.%s", var.prefix, var.dns_domain_names["protocol"])) : jsonencode([])
+  smb                                              = false
+  nfs                                              = false
+  object                                           = false
+  interface                                        = jsonencode([])
+  export_ip_pool                                   = jsonencode([])
+  filesystem                                       = jsonencode("")
+  mountpoint                                       = jsonencode("")
+  protocol_gateway_ip                              = jsonencode("")
+  filesets                                         = local.scale_ces_enabled == true ? jsonencode(local.file_shares) : jsonencode({})
+  afm_cos_bucket_details                           = jsonencode([])
+  afm_config_details                               = jsonencode([])
+  afm_cluster_instance_names                       = jsonencode([])
+  filesystem_mountpoint                            = jsonencode("")
 }
 
 module "compute_inventory" {

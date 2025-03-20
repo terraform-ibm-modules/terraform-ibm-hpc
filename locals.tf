@@ -271,7 +271,7 @@ locals {
 
 # file Share OutPut
 locals {
-  fileshare_name_mount_path_map =  var.enable_deployer ? {} : module.file_storage[0].name_mount_path_map
+  fileshare_name_mount_path_map =  var.enable_deployer ? {} : (var.scheduler != null ? module.file_storage[0].name_mount_path_map : {})
 }
 
 locals {
@@ -319,6 +319,10 @@ locals {
   protocol_instance_private_ips = flatten(local.protocol_instances[*]["ipv4_address"])
   protocol_instance_ids         = flatten(local.protocol_instances[*]["id"])
   protocol_instance_names       = flatten(local.protocol_instances[*]["name"])
+
+  client_instance_private_ips = flatten(local.client_instances[*]["ipv4_address"])
+  client_instance_ids         = flatten(local.client_instances[*]["id"])
+  client_instance_names       = flatten(local.client_instances[*]["name"])
 
   gklm_instance_private_ips = flatten(local.gklm_instances[*]["ipv4_address"])
   gklm_instance_ids         = flatten(local.gklm_instances[*]["id"])
