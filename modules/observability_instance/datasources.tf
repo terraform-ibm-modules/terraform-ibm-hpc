@@ -8,6 +8,6 @@ data "http" "sysdig_prws_key" {
   request_headers = {
     Accept        = "application/json"
     Authorization = data.ibm_iam_auth_token.tokendata.iam_access_token
-    IBMInstanceID = var.enable_deployer && var.cloud_monitoring_provision ? module.observability_instance.cloud_monitoring_guid : ""
+    IBMInstanceID = var.enable_deployer == false && var.cloud_monitoring_provision ? module.observability_instance[0].cloud_monitoring_guid : ""
   }
 }

@@ -81,3 +81,71 @@ resource "null_resource" "run_lsf_playbooks" {
 
   depends_on = [null_resource.run_playbook]
 }
+
+resource "null_resource" "export_api" {
+  count = var.inventory_path != null && var.observability_provision ? 1 : 0
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<EOT
+      # Append API key export to shell profile for persistence
+      echo 'export VPC_API_KEY="${var.ibmcloud_api_key}"' >> ~/.bashrc
+      echo 'export VPC_API_KEY="${var.ibmcloud_api_key}"' >> ~/.bash_profile
+      # Export API key for immediate availability in the current session
+      export VPC_API_KEY="${var.ibmcloud_api_key}"
+    EOT
+  }
+  triggers = {
+    build = timestamp()
+  }
+  depends_on = [null_resource.run_lsf_playbooks]
+}
+
+resource "local_file" "create_observability_playbook" {
+  count    = var.inventory_path != null && var.observability_provision ? 1 : 0
+  content  = <<EOT
+- name: Cloud Logs Configuration
+  hosts: [all_nodes]
+  any_errors_fatal: true
+  gather_facts: true
+  vars:
+    ansible_ssh_common_args: >
+      ${local.proxyjump}
+      -o ControlMaster=auto
+      -o ControlPersist=30m
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+    ansible_user: root
+    ansible_ssh_private_key_file: ${var.private_key_path}
+  roles:
+    - { role: cloudlogs, tags: ["cloud_logs"] }
+
+- name: Cloud Monitoring Configuration
+  hosts: [all_nodes]
+  any_errors_fatal: true
+  gather_facts: true
+  vars:
+    ansible_ssh_common_args: >
+      ${local.proxyjump}
+      -o ControlMaster=auto
+      -o ControlPersist=30m
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+    ansible_user: root
+    ansible_ssh_private_key_file: ${var.private_key_path}
+  roles:
+    - { role: cloudmonitoring, tags: ["cloud_monitoring"] }
+EOT
+  filename = var.observability_playbook_path
+}
+
+resource "null_resource" "run_observability_playbooks" {
+  count = var.inventory_path != null && var.observability_provision ? 1 : 0
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "ansible-playbook -f 50 -i ${var.inventory_path} ${var.observability_playbook_path}"
+  }
+  triggers = {
+    build = timestamp()
+  }
+  depends_on = [null_resource.export_api]
+}

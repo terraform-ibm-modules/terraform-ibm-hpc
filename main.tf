@@ -88,35 +88,53 @@ module "landing_zone_vsi" {
 }
 
 module "prepare_tf_input" {
-  source                    = "./modules/prepare_tf_input"
-  enable_deployer           = var.enable_deployer
-  deployer_ip               = local.deployer_ip
-  ibmcloud_api_key          = var.ibmcloud_api_key
-  existing_resource_group   = var.existing_resource_group
-  prefix                    = var.prefix
-  zones                     = var.zones
-  compute_ssh_keys          = local.compute_ssh_keys
-  storage_ssh_keys          = local.storage_ssh_keys
-  storage_instances         = var.storage_instances
-  management_instances      = var.management_instances
-  protocol_instances        = var.protocol_instances
-  ibm_customer_number       = var.ibm_customer_number
-  static_compute_instances  = var.static_compute_instances
-  client_instances          = var.client_instances
-  enable_cos_integration    = var.enable_cos_integration
-  enable_atracker           = var.enable_atracker
-  enable_vpc_flow_logs      = var.enable_vpc_flow_logs
-  allowed_cidr              = var.allowed_cidr
-  vpc_name                  = local.vpc_name
-  storage_subnets           = local.storage_subnet
-  protocol_subnets          = local.protocol_subnet
-  compute_subnets           = local.compute_subnet
-  client_subnets            = local.client_subnet
-  bastion_subnets           = local.bastion_subnet
-  dns_domain_names          = var.dns_domain_names
-  bastion_security_group_id = local.bastion_security_group_id
-  deployer_hostname         = local.deployer_hostname
-  depends_on                = [module.deployer]
+  source                                           = "./modules/prepare_tf_input"
+  enable_deployer                                  = var.enable_deployer
+  deployer_ip                                      = local.deployer_ip
+  ibmcloud_api_key                                 = var.ibmcloud_api_key
+  existing_resource_group                          = var.existing_resource_group
+  prefix                                           = var.prefix
+  zones                                            = var.zones
+  compute_ssh_keys                                 = local.compute_ssh_keys
+  storage_ssh_keys                                 = local.storage_ssh_keys
+  storage_instances                                = var.storage_instances
+  management_instances                             = var.management_instances
+  protocol_instances                               = var.protocol_instances
+  ibm_customer_number                              = var.ibm_customer_number
+  static_compute_instances                         = var.static_compute_instances
+  client_instances                                 = var.client_instances
+  enable_cos_integration                           = var.enable_cos_integration
+  enable_atracker                                  = var.enable_atracker
+  enable_vpc_flow_logs                             = var.enable_vpc_flow_logs
+  allowed_cidr                                     = var.allowed_cidr
+  vpc_name                                         = local.vpc_name
+  storage_subnets                                  = local.storage_subnet
+  protocol_subnets                                 = local.protocol_subnet
+  compute_subnets                                  = local.compute_subnet
+  client_subnets                                   = local.client_subnet
+  bastion_subnets                                  = local.bastion_subnet
+  dns_domain_names                                 = var.dns_domain_names
+  bastion_security_group_id                        = local.bastion_security_group_id
+  deployer_hostname                                = local.deployer_hostname
+  scc_enable                                       = var.scc_enable
+  scc_profile                                      = var.scc_profile
+  scc_location                                     = var.scc_location
+  scc_cos_bucket                                   = local.scc_cos_bucket
+  scc_cos_instance_crn                             = local.scc_cos_instance_crn
+  scc_event_notification_plan                      = var.scc_event_notification_plan
+  cloud_logs_data_bucket                           = local.cloud_logs_data_bucket
+  cloud_metrics_data_bucket                        = local.cloud_metrics_data_bucket
+  observability_logs_enable_for_management         = var.observability_logs_enable_for_management
+  observability_logs_enable_for_compute            = var.observability_logs_enable_for_compute
+  observability_enable_platform_logs               = var.observability_enable_platform_logs
+  observability_monitoring_enable                  = var.observability_monitoring_enable
+  observability_monitoring_plan                    = var.observability_monitoring_plan
+  observability_logs_retention_period              = var.observability_logs_retention_period
+  observability_monitoring_on_compute_nodes_enable = var.observability_monitoring_on_compute_nodes_enable
+  observability_enable_metrics_routing             = var.observability_enable_metrics_routing
+  observability_atracker_enable                    = var.observability_atracker_enable
+  observability_atracker_target_type               = var.observability_atracker_target_type
+  depends_on                                       = [module.deployer]
 }
 
 module "resource_provisioner" {
@@ -219,12 +237,21 @@ module "write_storage_cluster_inventory" {
 }
 
 module "compute_inventory" {
-  count               = var.enable_deployer == false ? 1 : 0
-  source              = "./modules/inventory"
-  hosts               = local.compute_hosts
-  inventory_path      = local.compute_inventory_path
-  name_mount_path_map = local.fileshare_name_mount_path_map
-  depends_on          = [module.write_compute_cluster_inventory]
+  count                               = var.enable_deployer == false ? 1 : 0
+  source                              = "./modules/inventory"
+  hosts                               = local.compute_hosts
+  inventory_path                      = local.compute_inventory_path
+  name_mount_path_map                 = local.fileshare_name_mount_path_map
+  logs_enable_for_management          = var.observability_logs_enable_for_management
+  monitoring_enable_for_management    = var.observability_monitoring_enable
+  monitoring_enable_for_compute       = var.observability_monitoring_on_compute_nodes_enable
+  cloud_monitoring_access_key         = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_access_key : ""
+  cloud_monitoring_ingestion_url      = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_ingestion_url : ""
+  cloud_monitoring_prws_key           = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_key : ""
+  cloud_monitoring_prws_url           = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_url : ""
+  logs_enable_for_compute             = var.observability_logs_enable_for_compute
+  cloud_logs_ingress_private_endpoint = local.cloud_logs_ingress_private_endpoint
+  depends_on                          = [module.write_compute_cluster_inventory]
 }
 
 module "storage_inventory" {
@@ -237,14 +264,17 @@ module "storage_inventory" {
 }
 
 module "compute_playbook" {
-  count            = var.enable_deployer == false ? 1 : 0
-  source           = "./modules/playbook"
-  bastion_fip      = local.bastion_fip
-  private_key_path = local.compute_private_key_path
-  inventory_path   = local.compute_inventory_path
-  playbook_path    = local.compute_playbook_path
-  enable_bastion   = var.enable_bastion
-  depends_on       = [module.compute_inventory]
+  count                       = var.enable_deployer == false ? 1 : 0
+  source                      = "./modules/playbook"
+  bastion_fip                 = local.bastion_fip
+  private_key_path            = local.compute_private_key_path
+  inventory_path              = local.compute_inventory_path
+  playbook_path               = local.compute_playbook_path
+  enable_bastion              = var.enable_bastion
+  ibmcloud_api_key            = var.ibmcloud_api_key
+  observability_provision     = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || var.observability_monitoring_enable ? true : false
+  observability_playbook_path = local.observability_playbook_path
+  depends_on                  = [module.compute_inventory]
 }
 
 # module "storage_playbook" {
@@ -277,14 +307,14 @@ module "cloud_monitoring_instance_creation" {
   cloud_logs_instance_name       = "${var.prefix}-cloud-logs"
   cloud_logs_retention_period    = var.observability_logs_retention_period
   cloud_logs_as_atracker_target  = var.observability_atracker_enable && (var.observability_atracker_target_type == "cloudlogs") ? true : false
-  cloud_logs_data_bucket         = length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")][0] : null
-  cloud_metrics_data_bucket      = length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")][0] : null
+  cloud_logs_data_bucket         = var.cloud_logs_data_bucket
+  cloud_metrics_data_bucket      = var.cloud_metrics_data_bucket
   tags                           = ["hpc", var.prefix]
 }
 
 # Code for SCC Instance
 module "scc_instance_and_profile" {
-  count                   = var.enable_deployer == true && var.scc_enable ? 1 : 0
+  count                   = var.enable_deployer == false && var.scc_enable ? 1 : 0
   source                  = "./modules/security/scc"
   location                = var.scc_location != "" ? var.scc_location : "us-south"
   rg                      = local.resource_group_ids["service_rg"]
@@ -292,8 +322,6 @@ module "scc_instance_and_profile" {
   event_notification_plan = var.scc_event_notification_plan
   tags                    = ["hpc", var.prefix]
   prefix                  = var.prefix
-  cos_bucket              = [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0]
-  cos_instance_crn        = module.landing_zone.cos_instance_crns[0]
-  # scc_profile_version     = var.scc_profile != "" && var.scc_profile != null ? var.scc_profile_version : ""
-
+  cos_bucket              = var.scc_cos_bucket
+  cos_instance_crn        = var.scc_cos_instance_crn
 }

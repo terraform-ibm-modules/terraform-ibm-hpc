@@ -481,12 +481,6 @@ variable "cos_instance_name" {
   description = "Exiting COS instance name"
 }
 
-# variable "enable_atracker" {
-#   type        = bool
-#   default     = true
-#   description = "Enable Activity tracker"
-# }
-
 variable "enable_vpc_flow_logs" {
   type        = bool
   default     = true

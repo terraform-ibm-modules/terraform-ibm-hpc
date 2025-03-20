@@ -226,3 +226,143 @@ variable "deployer_ip" {
   default     = null
   description = "deployer node ip"
 }
+
+##############################################################################
+# SCC Variables
+##############################################################################
+
+variable "scc_enable" {
+  type        = bool
+  default     = true
+  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+}
+
+variable "scc_profile" {
+  type        = string
+  default     = "CIS IBM Cloud Foundations Benchmark v1.1.0"
+  description = "Profile to be set on the SCC Instance (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')"
+  validation {
+    condition     = can(regex("^(|CIS IBM Cloud Foundations Benchmark v1.1.0|IBM Cloud Framework for Financial Services)$", var.scc_profile))
+    error_message = "Provide SCC Profile Name to be used (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')."
+  }
+}
+
+variable "scc_location" {
+  description = "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
+  type        = string
+  default     = "us-south"
+  validation {
+    condition     = can(regex("^(|us-south|eu-de|ca-tor|eu-es)$", var.scc_location))
+    error_message = "Provide region where it's possible to deploy an SCC Instance (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es') or leave blank and it will default to 'us-south'."
+  }
+}
+
+variable "scc_event_notification_plan" {
+  type        = string
+  default     = "lite"
+  description = "Event Notifications Instance plan to be used (it's used with S.C.C. instance), possible values 'lite' and 'standard'."
+  validation {
+    condition     = can(regex("^(|lite|standard)$", var.scc_event_notification_plan))
+    error_message = "Provide Event Notification instance plan to be used (accepting 'lite' and 'standard', defaulting to 'lite'). This instance is used in conjuction with S.C.C. one."
+  }
+}
+
+variable "cloud_logs_data_bucket" {
+  type        = any
+  default     = null
+  description = "cloud logs data bucket"
+}
+
+variable "cloud_metrics_data_bucket" {
+  type        = any
+  default     = null
+  description = "cloud metrics data bucket"
+}
+
+variable "scc_cos_bucket" {
+  type        = string
+  default     = null
+  description = "scc cos bucket"
+}
+
+variable "scc_cos_instance_crn" {
+  type        = string
+  default     = null
+  description = "scc cos instance crn"
+}
+
+##############################################################################
+# Observability Variables
+##############################################################################
+
+variable "observability_atracker_enable" {
+  type        = bool
+  default     = true
+  description = "Activity Tracker Event Routing to configure how to route auditing events. While multiple Activity Tracker instances can be created, only one tracker is needed to capture all events. Creating additional trackers is unnecessary if an existing Activity Tracker is already integrated with a COS bucket. In such cases, set the value to false, as all events can be monitored and accessed through the existing Activity Tracker."
+}
+
+variable "observability_atracker_target_type" {
+  type        = string
+  default     = "cloudlogs"
+  description = "All the events will be stored in either COS bucket or Cloud Logs on the basis of user input, so customers can retrieve or ingest them in their system."
+  validation {
+    condition     = contains(["cloudlogs", "cos"], var.observability_atracker_target_type)
+    error_message = "Allowed values for atracker target type is cloudlogs and cos."
+  }
+}
+
+variable "observability_monitoring_enable" {
+  description = "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure and LSF application metrics from Management Nodes will be ingested."
+  type        = bool
+  default     = true
+}
+
+variable "observability_logs_enable_for_management" {
+  description = "Set false to disable IBM Cloud Logs integration. If enabled, infrastructure and LSF application logs from Management Nodes will be ingested."
+  type        = bool
+  default     = false
+}
+
+variable "observability_logs_enable_for_compute" {
+  description = "Set false to disable IBM Cloud Logs integration. If enabled, infrastructure and LSF application logs from Compute Nodes will be ingested."
+  type        = bool
+  default     = false
+}
+
+variable "observability_enable_platform_logs" {
+  description = "Setting this to true will create a tenant in the same region that the Cloud Logs instance is provisioned to enable platform logs for that region. NOTE: You can only have 1 tenant per region in an account."
+  type        = bool
+  default     = false
+}
+
+variable "observability_enable_metrics_routing" {
+  description = "Enable metrics routing to manage metrics at the account-level by configuring targets and routes that define where data points are routed."
+  type        = bool
+  default     = false
+}
+
+variable "observability_logs_retention_period" {
+  description = "The number of days IBM Cloud Logs will retain the logs data in Priority insights. Allowed values: 7, 14, 30, 60, 90."
+  type        = number
+  default     = 7
+  validation {
+    condition     = contains([7, 14, 30, 60, 90], var.observability_logs_retention_period)
+    error_message = "Allowed values for cloud logs retention period is 7, 14, 30, 60, 90."
+  }
+}
+
+variable "observability_monitoring_on_compute_nodes_enable" {
+  description = "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure metrics from Compute Nodes will be ingested."
+  type        = bool
+  default     = false
+}
+
+variable "observability_monitoring_plan" {
+  description = "Type of service plan for IBM Cloud Monitoring instance. You can choose one of the following: lite, graduated-tier. For all details visit [IBM Cloud Monitoring Service Plans](https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans)."
+  type        = string
+  default     = "graduated-tier"
+  validation {
+    condition     = can(regex("lite|graduated-tier", var.observability_monitoring_plan))
+    error_message = "Please enter a valid plan for IBM Cloud Monitoring, for all details visit https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans."
+  }
+}
