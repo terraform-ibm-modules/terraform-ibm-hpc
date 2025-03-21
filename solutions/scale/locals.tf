@@ -97,6 +97,10 @@ locals {
     gklm_instances                  = var.gklm_instances
     storage_type                    = var.storage_type
     filesystem_block_size           = var.filesystem_block_size
+    colocate_protocol_cluster_instances = var.colocate_protocol_cluster_instances
+    scale_encryption_admin_default_password          = var.scale_encryption_admin_default_password
+    scale_encryption_admin_password                  = var.scale_encryption_admin_password
+    scale_encryption_admin_username                  = var.scale_encryption_admin_username
   }
 }
 
@@ -166,19 +170,23 @@ locals {
     skip_iam_authorization_policy                    = lookup(local.override[local.override_type], "skip_iam_authorization_policy", local.config.skip_iam_authorization_policy)
     skip_kms_s2s_auth_policy                         = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
     ibmcloud_api_key                                 = lookup(local.override[local.override_type], "ibmcloud_api_key", local.config.ibmcloud_api_key)
-    enable_ldap                     = lookup(local.override[local.override_type], "enable_ldap", local.config.enable_ldap)
-    ldap_basedns                    = lookup(local.override[local.override_type], "ldap_basedns", local.config.ldap_basedns)
-    ldap_admin_password             = lookup(local.override[local.override_type], "ldap_admin_password", local.config.ldap_admin_password)
-    ldap_user_name                  = lookup(local.override[local.override_type], "ldap_user_name", local.config.ldap_user_name)
-    ldap_user_password              = lookup(local.override[local.override_type], "ldap_user_password", local.config.ldap_user_password)
-    ldap_server                     = lookup(local.override[local.override_type], "ldap_server", local.config.ldap_server)
-    ldap_server_cert                = lookup(local.override[local.override_type], "ldap_server_cert", local.config.ldap_server_cert)
-    ldap_instances                  = lookup(local.override[local.override_type], "ldap_instances", local.config.ldap_instances)
-    scale_encryption_enabled        = lookup(local.override[local.override_type], "scale_encryption_enabled", local.config.scale_encryption_enabled)
-    scale_encryption_type           = lookup(local.override[local.override_type], "scale_encryption_type", local.config.scale_encryption_type)
-    gklm_instance_key_pair          = lookup(local.override[local.override_type], "gklm_instance_key_pair", local.config.gklm_instance_key_pair)
-    gklm_instances                  = lookup(local.override[local.override_type], "gklm_instances", local.config.gklm_instances)
-    storage_type                    = lookup(local.override[local.override_type], "storage_type", local.config.storage_type)
-    filesystem_block_size           = lookup(local.override[local.override_type], "filesystem_block_size", local.config.filesystem_block_size)
+    enable_ldap                                      = lookup(local.override[local.override_type], "enable_ldap", local.config.enable_ldap)
+    ldap_basedns                                     = lookup(local.override[local.override_type], "ldap_basedns", local.config.ldap_basedns)
+    ldap_admin_password                              = lookup(local.override[local.override_type], "ldap_admin_password", local.config.ldap_admin_password)
+    ldap_user_name                                   = lookup(local.override[local.override_type], "ldap_user_name", local.config.ldap_user_name)
+    ldap_user_password                               = lookup(local.override[local.override_type], "ldap_user_password", local.config.ldap_user_password)
+    ldap_server                                      = lookup(local.override[local.override_type], "ldap_server", local.config.ldap_server)
+    ldap_server_cert                                 = lookup(local.override[local.override_type], "ldap_server_cert", local.config.ldap_server_cert)
+    ldap_instances                                   = lookup(local.override[local.override_type], "ldap_instances", local.config.ldap_instances)
+    scale_encryption_enabled                         = lookup(local.override[local.override_type], "scale_encryption_enabled", local.config.scale_encryption_enabled)
+    scale_encryption_type                            = lookup(local.override[local.override_type], "scale_encryption_type", local.config.scale_encryption_type)
+    gklm_instance_key_pair                           = lookup(local.override[local.override_type], "gklm_instance_key_pair", local.config.gklm_instance_key_pair)
+    gklm_instances                                   = lookup(local.override[local.override_type], "gklm_instances", local.config.gklm_instances)
+    storage_type                                     = lookup(local.override[local.override_type], "storage_type", local.config.storage_type)
+    filesystem_block_size                            = lookup(local.override[local.override_type], "filesystem_block_size", local.config.filesystem_block_size)
+    colocate_protocol_cluster_instances              = lookup(local.override[local.override_type], "colocate_protocol_cluster_instances", local.config.colocate_protocol_cluster_instances)
+    scale_encryption_admin_default_password          = lookup(local.override[local.override_type], "scale_encryption_admin_default_password", local.config.scale_encryption_admin_default_password)
+    scale_encryption_admin_password                  = lookup(local.override[local.override_type], "scale_encryption_admin_password", local.config.scale_encryption_admin_password)
+    scale_encryption_admin_username                  = lookup(local.override[local.override_type], "scale_encryption_admin_username", local.config.scale_encryption_admin_username)
   }
 }

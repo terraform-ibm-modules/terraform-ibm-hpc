@@ -313,6 +313,9 @@ module "write_compute_cluster_inventory" {
   nfs_install_dir                                  = local.nfs_install_dir
   Enable_Monitoring                                = local.Enable_Monitoring
   lsf_deployer_hostname                            = local.lsf_deployer_hostname
+  bastion_user                                     = jsonencode("None") #jsonencode(var.bastion_user)
+  bastion_instance_id                              = jsonencode("None") #var.bastion_instance_id == null ? jsonencode("None") : jsonencode(var.bastion_instance_id)
+  bastion_instance_public_ip                       = jsonencode("None") #var.bastion_instance_public_ip == null ? jsonencode("None") : jsonencode(var.bastion_instance_public_ip)
   cloud_platform                                   = jsonencode("IBMCloud")
   resource_prefix                                  = jsonencode(format("%s.%s", var.prefix, var.dns_domain_names["compute"])) 
   vpc_region                                       = jsonencode(local.region)
@@ -370,13 +373,16 @@ module "write_storage_cluster_inventory" {
   nfs_install_dir                                  = local.nfs_install_dir
   Enable_Monitoring                                = local.Enable_Monitoring
   lsf_deployer_hostname                            = local.lsf_deployer_hostname
+  bastion_user                                     = jsonencode("None") #jsonencode(var.bastion_user)
+  bastion_instance_id                              = jsonencode("None") #var.bastion_instance_id == null ? jsonencode("None") : jsonencode(var.bastion_instance_id)
+  bastion_instance_public_ip                       = jsonencode("None") #var.bastion_instance_public_ip == null ? jsonencode("None") : jsonencode(var.bastion_instance_public_ip)
   cloud_platform                                   = jsonencode("IBMCloud")
   resource_prefix                                  = jsonencode(format("%s.%s", var.prefix, var.dns_domain_names["storage"]))
   vpc_region                                       = jsonencode(local.region)
   vpc_availability_zones                           = jsonencode(var.zones)
   scale_version                                    = jsonencode(local.scale_version)
   compute_cluster_filesystem_mountpoint            = jsonencode("None")
-  storage_cluster_filesystem_mountpoint            = jsonencode(var.storage_instances[count.index].filesystem)
+  storage_cluster_filesystem_mountpoint            = jsonencode("/gpfs/fs1") #jsonencode(var.storage_instances[count.index].filesystem)
   filesystem_block_size                            = jsonencode(var.filesystem_block_size)
   compute_cluster_instance_ids                     = jsonencode([])
   compute_cluster_instance_private_ips             = jsonencode([])
@@ -405,7 +411,7 @@ module "write_storage_cluster_inventory" {
   filesystem                                       = local.scale_ces_enabled == true ? jsonencode("cesSharedRoot") : jsonencode("")
   mountpoint                                       = local.scale_ces_enabled == true ? jsonencode(var.storage_instances[count.index].filesystem) : jsonencode("")
   protocol_gateway_ip                              = jsonencode("")
-  filesets                                         = jsonencode(local.file_shares)
+  filesets                                         = jsonencode(local.fileset_size_map)
   afm_cos_bucket_details                           = jsonencode([])
   afm_config_details                               = jsonencode([])
   afm_cluster_instance_names                       = jsonencode(local.afm_instance_names)
@@ -413,11 +419,27 @@ module "write_storage_cluster_inventory" {
   depends_on                                       = [ time_sleep.wait_60_seconds ]
 }
 
+locals {
+  fileset_size_map = try({ for details in var.file_shares : details.mount_path => details.size }, {})
+}
 
 module "write_client_cluster_inventory" {
   count                                            = var.enable_deployer == false ? 1 : 0 
   source                                           = "./modules/write_inventory"
   json_inventory_path                              = format("%s/client_cluster_inventory.json", local.json_inventory_path)
+  lsf_masters                                      = local.management_nodes
+  lsf_servers                                      = local.compute_nodes
+  lsf_clients                                      = local.client_nodes
+  gui_hosts                                        = local.gui_hosts
+  db_hosts                                         = local.db_hosts
+  my_cluster_name                                  = var.prefix
+  ha_shared_dir                                    = local.ha_shared_dir
+  nfs_install_dir                                  = local.nfs_install_dir
+  Enable_Monitoring                                = local.Enable_Monitoring
+  lsf_deployer_hostname                            = local.lsf_deployer_hostname
+  bastion_user                                     = jsonencode("None") #jsonencode(var.bastion_user)
+  bastion_instance_id                              = jsonencode("None") #var.bastion_instance_id == null ? jsonencode("None") : jsonencode(var.bastion_instance_id)
+  bastion_instance_public_ip                       = jsonencode("None") #var.bastion_instance_public_ip == null ? jsonencode("None") : jsonencode(var.bastion_instance_public_ip)
   cloud_platform                                   = jsonencode("")
   resource_prefix                                  = jsonencode("")
   vpc_region                                       = jsonencode("")
@@ -453,7 +475,7 @@ module "write_client_cluster_inventory" {
   filesystem                                       = jsonencode("")
   mountpoint                                       = jsonencode("")
   protocol_gateway_ip                              = jsonencode("")
-  filesets                                         = local.scale_ces_enabled == true ? jsonencode(local.file_shares) : jsonencode({})
+  filesets                                         = local.scale_ces_enabled == true ? jsonencode(local.fileset_size_map) : jsonencode({})
   afm_cos_bucket_details                           = jsonencode([])
   afm_config_details                               = jsonencode([])
   afm_cluster_instance_names                       = jsonencode([])
@@ -470,15 +492,76 @@ module "compute_inventory" {
   depends_on          = [ module.write_compute_cluster_inventory ]
 }
 
-module "storage_inventory" {
-  count               = var.enable_deployer == false ? 1 : 0
-  source              = "./modules/inventory"
-  hosts               = local.storage_hosts
-  inventory_path      = local.storage_inventory_path
-  name_mount_path_map = local.fileshare_name_mount_path_map
-  scheduler           = var.scheduler
-  depends_on          = [ module.write_storage_cluster_inventory ]
+module "storage_cluster_configuration" {
+  source                              = "./modules/common/storage_configuration"
+  turn_on                             = (var.scheduler != null && local.storage_instance_count > 0) ? true : false
+  clone_complete                      = true #module.prepare_ansible_configuration.clone_complete
+  bastion_user                        = "ubuntu" #jsonencode(var.bastion_user)
+  write_inventory_complete            = true #module.write_storage_cluster_inventory.write_inventory_complete
+  inventory_format                    = "ini" #var.inventory_format
+  create_scale_cluster                = true #var.create_scale_cluster
+  clone_path                          = var.scale_ansible_repo_clone_path
+  inventory_path                      = format("%s/storage_cluster_inventory.json", local.json_inventory_path)
+  using_packer_image                  = false #var.using_packer_image
+  using_jumphost_connection           = false #var.using_jumphost_connection
+  using_rest_initialization           = true
+  storage_cluster_gui_username        = var.storage_gui_username
+  storage_cluster_gui_password        = var.storage_gui_password
+  colocate_protocol_cluster_instances = var.colocate_protocol_cluster_instances == true ? "True" : "False"
+  is_colocate_protocol_subset         = local.is_colocate_protocol_subset == true ? "True" : "False"
+  mgmt_memory                         = data.ibm_is_instance_profile.management_profile.memory[0].value
+  mgmt_vcpus_count                    = data.ibm_is_instance_profile.management_profile.vcpu_count[0].value
+  mgmt_bandwidth                      = data.ibm_is_instance_profile.management_profile.bandwidth[0].value
+  strg_desc_memory                    = data.ibm_is_instance_profile.storage_profile.memory[0].value
+  strg_desc_vcpus_count               = data.ibm_is_instance_profile.storage_profile.vcpu_count[0].value
+  strg_desc_bandwidth                 = data.ibm_is_instance_profile.storage_profile.bandwidth[0].value
+  strg_memory                         = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.memory[0].value
+  strg_vcpus_count                    = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.vcpu_count[0].value
+  strg_bandwidth                      = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.bandwidth[0].value
+  proto_memory                        = (local.scale_ces_enabled == true && var.colocate_protocol_cluster_instances == false) ? local.ces_server_type == false ? data.ibm_is_instance_profile.protocol_profile[0].memory[0].value : jsonencode(0) : jsonencode(0)
+  proto_vcpus_count                   = (local.scale_ces_enabled == true && var.colocate_protocol_cluster_instances == false) ? local.ces_server_type == false ? data.ibm_is_instance_profile.protocol_profile[0].vcpu_count[0].value : jsonencode(0) : jsonencode(0)
+  proto_bandwidth                     = (local.scale_ces_enabled == true && var.colocate_protocol_cluster_instances == false) ? local.ces_server_type == false ? data.ibm_is_instance_profile.protocol_profile[0].bandwidth[0].value : jsonencode(0) : jsonencode(0)
+  strg_proto_memory                   = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.memory[0].value
+  strg_proto_vcpus_count              = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.vcpu_count[0].value
+  strg_proto_bandwidth                = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.bandwidth[0].value
+  afm_memory                          = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].memory[0].value
+  afm_vcpus_count                     = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].vcpu_count[0].value
+  afm_bandwidth                       = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].bandwidth[0].value
+  disk_type                           = "network-attached"
+  max_data_replicas                   = 3
+  max_metadata_replicas               = 3
+  default_metadata_replicas           = 2
+  default_data_replicas               = 2
+  bastion_instance_public_ip          = "null" #local.bastion_fip
+  bastion_ssh_private_key             = "null" #local.bastion_private_key_path
+  meta_private_key                    = local.storage_private_key_path
+  scale_version                       = local.scale_version
+  spectrumscale_rpms_path             = var.spectrumscale_rpms_path
+  enable_mrot_conf                    = local.enable_mrot_conf ? "True" : "False"
+  enable_ces                          = local.scale_ces_enabled == true ? "True" : "False"
+  enable_afm                          = local.enable_afm == true ? "True" : "False"
+  scale_encryption_enabled            = true #var.scale_encryption_enabled
+  scale_encryption_type               = var.scale_encryption_type != null ? var.scale_encryption_type : null
+  scale_encryption_admin_password     = "jncjks" #var.scale_encryption_admin_password
+  scale_encryption_servers            = var.scale_encryption_enabled && var.scale_encryption_type == "gklm" ? jsonencode(local.gklm_instance_private_ips) : null
+  enable_ldap                         = var.enable_ldap
+  ldap_basedns                        = var.ldap_basedns
+  ldap_server                         = local.ldap_instance_private_ips
+  ldap_admin_password                 = "sdwd" #var.ldap_admin_password
+  ldap_server_cert                    = "hai"
+  enable_key_protect                  = var.scale_encryption_type == "key_protect" ? "True" : "False"
+  depends_on                          = [module.write_storage_cluster_inventory]
 }
+
+# module "storage_inventory" {
+#   count               = var.enable_deployer == false ? 1 : 0
+#   source              = "./modules/inventory"
+#   hosts               = local.storage_hosts
+#   inventory_path      = local.storage_inventory_path
+#   name_mount_path_map = local.fileshare_name_mount_path_map
+#   scheduler           = var.scheduler
+#   depends_on          = [ module.write_storage_cluster_inventory ]
+# }
 
 module "compute_playbook" {
   count            = var.enable_deployer == false ? 1 : 0
@@ -502,7 +585,7 @@ module "storage_playbook" {
   enable_bastion   = var.enable_bastion
   enable_scale     = var.enable_scale
   scheduler        = var.scheduler
-  depends_on       = [ module.storage_inventory ]
+  depends_on       = [ module.write_storage_cluster_inventory ]
 }
 
 ###################################################

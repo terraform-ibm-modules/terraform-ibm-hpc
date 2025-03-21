@@ -106,6 +106,9 @@ variable "compute_cluster_filesystem_mountpoint" {
   description = "Compute cluster (accessingCluster) Filesystem mount point."
 }
 
+variable "bastion_user" {}
+variable "bastion_instance_id" {}
+variable "bastion_instance_public_ip" {}
 variable "compute_cluster_instance_ids" {}
 variable "compute_cluster_instance_private_ips" {}
 variable "compute_cluster_instance_private_dns_ip_map" {}

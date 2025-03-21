@@ -129,8 +129,8 @@ locals {
     }
   ] : []
 
-  management_instance_count = sum(var.management_instances[*]["count"])
-  storage_instance_count = sum(var.storage_instances[*]["count"])
+  management_instance_count     = sum(var.management_instances[*]["count"])
+  storage_instance_count        = sum(var.storage_instances[*]["count"])
   client_instance_count         = sum(var.client_instances[*]["count"])
   protocol_instance_count       = sum(var.protocol_instances[*]["count"])
   static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
@@ -204,7 +204,7 @@ locals {
   gklm_instances      = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].gklm_vsi_data])
   client_instances    = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].client_vsi_data])
   afm_instances       = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].afm_vsi_data])
-  # ldap_instances      = var.enable_deployer ? [] : flatten(module.landing_zone_vsi[0].ldap_vsi_data)
+  ldap_instances      = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].ldap_vsi_data])
   tie_brkr_instances  = var.enable_deployer ? [] : flatten(module.landing_zone_vsi[0].storage_cluster_tie_breaker_vsi_data)
   # comp_mgmt_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_management_vsi_data])
   strg_mgmt_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_cluster_management_vsi])
@@ -288,10 +288,11 @@ locals {
   ces_server_type        = strcontains(local.protocol_vsi_profile[0], "metal")
 
   scale_ces_enabled            = local.protocol_instance_count > 0 ? true : false
-  # is_colocate_protocol_subset  = local.scale_ces_enabled && var.colocate_protocol_cluster_instances ? local.protocol_instance_count < local.total_storage_cluster_instances ? true : false : false
+  is_colocate_protocol_subset  = local.scale_ces_enabled && var.colocate_protocol_cluster_instances ? local.protocol_instance_count < local.storage_instance_count ? true : false : false
   enable_sec_interface_compute = local.scale_ces_enabled == false && data.ibm_is_instance_profile.compute_profile.bandwidth[0].value >= 64000 ? true : false
   enable_sec_interface_storage = local.scale_ces_enabled == false && var.storage_type != "persistent" && data.ibm_is_instance_profile.storage_profile.bandwidth[0].value >= 64000 ? true : false
   enable_mrot_conf             = local.enable_sec_interface_compute && local.enable_sec_interface_storage ? true : false
+  enable_afm                   = sum(var.afm_instances[*]["count"]) > 0 ? true : false
 
   compute_instance_private_ips = flatten(local.compute_instances[*]["ipv4_address"])
   compute_instance_ids         = flatten(local.compute_instances[*]["id"])
@@ -327,6 +328,10 @@ locals {
   gklm_instance_private_ips = flatten(local.gklm_instances[*]["ipv4_address"])
   gklm_instance_ids         = flatten(local.gklm_instances[*]["id"])
   gklm_instance_names       = flatten(local.gklm_instances[*]["name"])
+
+  ldap_instance_private_ips = flatten(local.ldap_instances[*]["ipv4_address"])
+  ldap_instance_ids         = flatten(local.ldap_instances[*]["id"])
+  ldap_instance_names       = flatten(local.ldap_instances[*]["name"])
 }
 
 # details needed for json file

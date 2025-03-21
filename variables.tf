@@ -312,14 +312,14 @@ variable "storage_instances" {
       profile    = string
       count      = number
       image      = string
-      filesystem = optional(string)
+      filesystem = string
     })
   )
   default = [{
     profile    = "bx2-2x8"
     count      = 0
     image      = "ibm-redhat-8-10-minimal-amd64-2"
-    filesystem = "fs1"
+    filesystem = "/gpfs/fs1"
   }]
   description = "Number of instances to be launched for storage cluster."
 }
@@ -396,7 +396,8 @@ variable "file_shares" {
     mount_path = "/mnt/binaries"
     size       = 100
     iops       = 1000
-    }, {
+    }, 
+    {
     mount_path = "/mnt/data"
     size       = 100
     iops       = 1000
@@ -1033,6 +1034,30 @@ variable "gklm_instances" {
   description = "Number of instances to be launched for client."
 }
 
+variable "scale_encryption_admin_default_password" {
+  type        = string
+  default     = null
+  description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
+}
+
+variable "scale_encryption_admin_username" {
+  type        = string
+  default     = null
+  description = "The default Admin username for Security Key Lifecycle Manager(GKLM)."
+}
+
+variable "scale_encryption_admin_password" {
+  type        = string
+  default     = null
+  description = "Password that is used for performing administrative operations for the GKLM.The password must contain at least 8 characters and at most 20 characters. For a strong password, at least three alphabetic characters are required, with at least one uppercase and one lowercase letter.  Two numbers, and at least one special character from this(~@_+:). Make sure that the password doesn't include the username. Visit this [page](https://www.ibm.com/docs/en/gklm/3.0.1?topic=roles-password-policy) to know more about password policy of GKLM. "
+}
+
+variable "scale_ansible_repo_clone_path" {
+  type        = string
+  default     = "/opt/IBM/ibm-spectrumscale-cloud-deploy"
+  description = "Path to clone github.com/IBM/ibm-spectrum-scale-install-infra."
+}
+
 variable "spectrumscale_rpms_path" {
   type        = string
   default     = "/opt/IBM/gpfs_cloud_rpms"
@@ -1049,4 +1074,10 @@ variable "filesystem_block_size" {
   type        = string
   default     = "4M"
   description = "Filesystem block size."
+}
+
+variable "colocate_protocol_cluster_instances" {
+  type        = bool
+  default     = true
+  description = "Enable it to use storage instances as protocol instances"
 }

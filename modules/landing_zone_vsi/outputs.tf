@@ -24,7 +24,7 @@ output "storage_vsi_data" {
 }
 
 output "storage_cluster_management_vsi" {
-  description = "Storage VSI data"
+  description = "Storage Management VSI data"
   value       = module.storage_cluster_management_vsi[*]["list"]
 }
 
@@ -46,6 +46,11 @@ output "afm_vsi_data" {
 output "gklm_vsi_data" {
   description = "GKLM VSI data"
   value       = module.gklm_vsi[*]["list"]
+}
+
+output "ldap_vsi_data" {
+  description = "LDAP VSI data"
+  value       = module.ldap_vsi[*]["list"]
 }
 
 output "storage_cluster_tie_breaker_vsi_data" {
