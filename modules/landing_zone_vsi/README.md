@@ -10,8 +10,8 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_ibm"></a> [ibm](#provider\_ibm) | 1.59.0 |
-| <a name="provider_template"></a> [template](#provider\_template) | 2.2.0 |
+| <a name="provider_ibm"></a> [ibm](#provider\_ibm) | >= 1.56.2 |
+| <a name="provider_template"></a> [template](#provider\_template) | ~> 2 |
 
 ## Modules
 
@@ -25,7 +25,6 @@
 | <a name="module_generate_db_password"></a> [generate\_db\_password](#module\_generate\_db\_password) | ../../modules/security/password | n/a |
 | <a name="module_ldap_vsi"></a> [ldap\_vsi](#module\_ldap\_vsi) | terraform-ibm-modules/landing-zone-vsi/ibm | 4.5.0 |
 | <a name="module_login_vsi"></a> [login\_vsi](#module\_login\_vsi) | terraform-ibm-modules/landing-zone-vsi/ibm | 4.5.0 |
-| <a name="module_lsf_entitlement"></a> [lsf\_entitlement](#module\_lsf\_entitlement) | ./../../modules/null/remote_exec | n/a |
 | <a name="module_management_candidate_vsi"></a> [management\_candidate\_vsi](#module\_management\_candidate\_vsi) | terraform-ibm-modules/landing-zone-vsi/ibm | 4.5.0 |
 | <a name="module_management_vsi"></a> [management\_vsi](#module\_management\_vsi) | terraform-ibm-modules/landing-zone-vsi/ibm | 4.5.0 |
 | <a name="module_nfs_storage_sg"></a> [nfs\_storage\_sg](#module\_nfs\_storage\_sg) | terraform-ibm-modules/security-group/ibm | 2.6.2 |
@@ -82,7 +81,7 @@
 | <a name="input_compute_subnets"></a> [compute\_subnets](#input\_compute\_subnets) | Subnets to launch the compute host. | <pre>list(object({<br>    name = string<br>    id   = string<br>    zone = string<br>    cidr = string<br>    crn  = string<br>  }))</pre> | `[]` | no |
 | <a name="input_contract_id"></a> [contract\_id](#input\_contract\_id) | Ensure that you have received the contract ID from IBM technical sales. Contract ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (\_). | `string` | n/a | yes |
 | <a name="input_db_admin_password"></a> [db\_admin\_password](#input\_db\_admin\_password) | The IBM Cloud Database for MySQL password required to reference the PAC database. | `string` | `null` | no |
-| <a name="input_db_instance_info"></a> [db\_instance\_info](#input\_db\_instance\_info) | The IBM Cloud Database for MySQL information required to reference the PAC database. | <pre>object({<br>    id             = string<br>    admin_user     = string<br>    hostname       = string<br>    port           = number<br>    certificate    = string<br>  })</pre> | `null` | no |
+| <a name="input_db_instance_info"></a> [db\_instance\_info](#input\_db\_instance\_info) | The IBM Cloud Database for MySQL information required to reference the PAC database. | <pre>object({<br>    id          = string<br>    admin_user  = string<br>    hostname    = string<br>    port        = number<br>    certificate = string<br>  })</pre> | `null` | no |
 | <a name="input_dedicated_host_id"></a> [dedicated\_host\_id](#input\_dedicated\_host\_id) | Dedicated Host for the worker nodes | `string` | `null` | no |
 | <a name="input_dns_domain_names"></a> [dns\_domain\_names](#input\_dns\_domain\_names) | IBM Cloud HPC DNS domain names. | <pre>object({<br>    compute = string<br>    #storage  = string<br>    #protocol = string<br>  })</pre> | <pre>{<br>  "compute": "comp.com",<br>  "protocol": "ces.com",<br>  "storage": "strg.com"<br>}</pre> | no |
 | <a name="input_enable_app_center"></a> [enable\_app\_center](#input\_enable\_app\_center) | Set to true to enable the IBM Spectrum LSF Application Center GUI (default: false). [System requirements](https://www.ibm.com/docs/en/slac/10.2.0?topic=requirements-system-102-fix-pack-14) for IBM Spectrum LSF Application Center Version 10.2 Fix Pack 14. | `bool` | `false` | no |
@@ -105,7 +104,7 @@
 | <a name="input_login_image_name"></a> [login\_image\_name](#input\_login\_image\_name) | Image name to use for provisioning the login instance. | `string` | `"hpcaas-lsf10-rhel810-compute-v8"` | no |
 | <a name="input_login_node_instance_type"></a> [login\_node\_instance\_type](#input\_login\_node\_instance\_type) | Specify the virtual server instance profile type to be used to create the login node for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles). | `string` | `"bx2-2x8"` | no |
 | <a name="input_login_private_ips"></a> [login\_private\_ips](#input\_login\_private\_ips) | Login private IPs | `string` | n/a | yes |
-| <a name="input_management_image_name"></a> [management\_image\_name](#input\_management\_image\_name) | Image name to use for provisioning the management cluster instances. | `string` | `"hpcaas-lsf10-rhel810-v12"` | no |
+| <a name="input_management_image_name"></a> [management\_image\_name](#input\_management\_image\_name) | Image name to use for provisioning the management cluster instances. | `string` | n/a | yes |
 | <a name="input_management_node_count"></a> [management\_node\_count](#input\_management\_node\_count) | Number of management nodes. This is the total number of management nodes. Enter a value between 1 and 10. | `number` | `3` | no |
 | <a name="input_management_node_instance_type"></a> [management\_node\_instance\_type](#input\_management\_node\_instance\_type) | Specify the virtual server instance profile type to be used to create the management nodes for the IBM Cloud HPC cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles). | `string` | `"bx2-16x64"` | no |
 | <a name="input_mount_path"></a> [mount\_path](#input\_mount\_path) | Provide the path for the vpc file share to be mounted on to the HPC Cluster nodes | <pre>list(object({<br>    mount_path = string,<br>    size       = optional(number),<br>    iops       = optional(number),<br>    nfs_share  = optional(string)<br>  }))</pre> | n/a | yes |

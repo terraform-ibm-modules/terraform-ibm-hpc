@@ -115,7 +115,6 @@ variable "compute_ssh_keys" {
 
 variable "management_image_name" {
   type        = string
-  default     = "hpcaas-lsf10-rhel810-v12"
   description = "Image name to use for provisioning the management cluster instances."
 }
 
