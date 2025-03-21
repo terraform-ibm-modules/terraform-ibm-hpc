@@ -383,8 +383,3 @@ locals {
   list_gklm_instances       = jsonencode(var.gklm_instances)
   scale_encryption_type     = jsonencode(var.scale_encryption_type)
 }
-
-# locals {
-#   ldap_private_ips = local.ldap_instances[*]["ipv4_address"]
-#   ldap_hostnames   = local.ldap_instances[*]["name"]
-# }

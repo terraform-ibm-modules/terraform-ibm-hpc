@@ -493,6 +493,7 @@ module "compute_inventory" {
 }
 
 module "storage_cluster_configuration" {
+  count                               = var.enable_deployer == false ? 1 : 0
   source                              = "./modules/common/storage_configuration"
   turn_on                             = (var.scheduler != null && local.storage_instance_count > 0) ? true : false
   clone_complete                      = true #module.prepare_ansible_configuration.clone_complete
