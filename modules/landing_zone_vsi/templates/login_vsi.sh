@@ -115,7 +115,7 @@ mount_nfs_with_retries() {
   local retries=5
   local success=false
 
-  rm -rf "${client_path}"
+
   mkdir -p "${client_path}"
 
   for (( j=0; j<retries; j++ )); do
@@ -134,7 +134,6 @@ mount_nfs_with_retries() {
     echo "${server_path} ${client_path} nfs rw,sec=sys,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,_netdev 0 0" >> /etc/fstab
   else
     echo "Mount not found for ${server_path} on ${client_path} after $retries attempts." >> $logfile
-    rm -rf "${client_path}"
   fi
 
   if [ "$success" = true ]; then
@@ -166,21 +165,6 @@ else
   exit 1
 fi
 echo "Setting LSF share is completed." >> $logfile
-
-# Setup Custom file shares
-echo "Setting custom file shares." >> $logfile
-if [ -n "${custom_file_shares}" ]; then
-  echo "Custom file share ${custom_file_shares} found" >> $logfile
-  file_share_array=(${custom_file_shares})
-  mount_path_array=(${custom_mount_paths})
-  length=${#file_share_array[@]}
-
-  for (( i=0; i<length; i++ )); do
-    mount_nfs_with_retries "${file_share_array[$i]}" "${mount_path_array[$i]}"
-    chmod 777 "${mount_path_array[$i]}"
-  done
-fi
-echo "Setting custom file shares is completed." >> $logfile
 
 echo "source ${LSF_CONF}/profile.lsf" >> "${lsfadmin_home_dir}"/.bashrc
 echo "source ${LSF_CONF}/profile.lsf" >> /root/.bashrc
