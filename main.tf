@@ -109,7 +109,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   count    = var.enable_deployer == true ? 1 : 0
   content  = <<EOT
 {
-  "scheduler": "${var.scheduler}",
+  "scheduler": "${local.scheduler}",
   "ibmcloud_api_key": "${var.ibmcloud_api_key}",
   "resource_group": "${var.resource_group}",
   "prefix": "${var.prefix}",
@@ -534,8 +534,8 @@ module "storage_cluster_configuration" {
   max_metadata_replicas               = 3
   default_metadata_replicas           = 2
   default_data_replicas               = 2
-  bastion_instance_public_ip          = local.bastion_fip
-  bastion_ssh_private_key             = var.bastion_ssh_private_key
+  bastion_instance_public_ip          = jsonencode(local.bastion_fip)
+  bastion_ssh_private_key             = jsonencode(var.bastion_ssh_private_key)
   meta_private_key                    = local.storage_private_key_path
   scale_version                       = local.scale_version
   spectrumscale_rpms_path             = var.spectrumscale_rpms_path
