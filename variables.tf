@@ -929,6 +929,22 @@ variable "enable_scale" {
   description =  "Type of storage needed for the solution"
 }
 
+
+
+
+
+
+#############################################################################
+# VARIABLES TO BE CHECKED
+##############################################################################
+
+
+
+
+
+
+
+
 #############################################################################
 # LDAP variables
 ##############################################################################
@@ -1080,4 +1096,52 @@ variable "colocate_protocol_cluster_instances" {
   type        = bool
   default     = true
   description = "Enable it to use storage instances as protocol instances"
+}
+
+variable "using_packer_image" {
+  type        = bool
+  default     = false
+  description = "If true, gpfs rpm copy step will be skipped during the configuration."
+}
+
+variable "using_jumphost_connection" {
+  type        = bool
+  default     = false
+  description = "If true, will skip the jump/bastion host configuration."
+}
+
+variable "bastion_user" {
+  type        = string
+  default     = "ubuntu"
+  description = "Provide the username for Bastion login."
+}
+
+variable "inventory_format" {
+  type        = string
+  default     = "ini"
+  description = "Specify inventory format suited for ansible playbooks."
+}
+
+variable "bastion_instance_id" {
+  type        = string
+  default     = null
+  description = "Bastion instance id."
+}
+
+variable "bastion_ssh_private_key" {
+  type        = string
+  default     = null
+  description = "Bastion SSH private key path, which will be used to login to bastion host."
+}
+
+variable "create_separate_namespaces" {
+  type        = bool
+  default     = true
+  description = "Flag to select if separate namespace needs to be created for compute instances."
+}
+
+variable "create_scale_cluster" {
+  type        = bool
+  default     = false
+  description = "Flag to represent whether to create scale cluster or not."
 }

@@ -109,6 +109,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   count    = var.enable_deployer == true ? 1 : 0
   content  = <<EOT
 {
+  "scheduler": "${var.scheduler}",
   "ibmcloud_api_key": "${var.ibmcloud_api_key}",
   "resource_group": "${var.resource_group}",
   "prefix": "${var.prefix}",
@@ -313,7 +314,7 @@ module "write_compute_cluster_inventory" {
   nfs_install_dir                                  = local.nfs_install_dir
   Enable_Monitoring                                = local.Enable_Monitoring
   lsf_deployer_hostname                            = local.lsf_deployer_hostname
-  bastion_user                                     = jsonencode("None") #jsonencode(var.bastion_user)
+  bastion_user                                     = jsonencode(var.bastion_user)
   bastion_instance_id                              = jsonencode("None") #var.bastion_instance_id == null ? jsonencode("None") : jsonencode(var.bastion_instance_id)
   bastion_instance_public_ip                       = jsonencode("None") #var.bastion_instance_public_ip == null ? jsonencode("None") : jsonencode(var.bastion_instance_public_ip)
   cloud_platform                                   = jsonencode("IBMCloud")
@@ -373,7 +374,7 @@ module "write_storage_cluster_inventory" {
   nfs_install_dir                                  = local.nfs_install_dir
   Enable_Monitoring                                = local.Enable_Monitoring
   lsf_deployer_hostname                            = local.lsf_deployer_hostname
-  bastion_user                                     = jsonencode("None") #jsonencode(var.bastion_user)
+  bastion_user                                     = jsonencode(var.bastion_user)
   bastion_instance_id                              = jsonencode("None") #var.bastion_instance_id == null ? jsonencode("None") : jsonencode(var.bastion_instance_id)
   bastion_instance_public_ip                       = jsonencode("None") #var.bastion_instance_public_ip == null ? jsonencode("None") : jsonencode(var.bastion_instance_public_ip)
   cloud_platform                                   = jsonencode("IBMCloud")
@@ -437,7 +438,7 @@ module "write_client_cluster_inventory" {
   nfs_install_dir                                  = local.nfs_install_dir
   Enable_Monitoring                                = local.Enable_Monitoring
   lsf_deployer_hostname                            = local.lsf_deployer_hostname
-  bastion_user                                     = jsonencode("None") #jsonencode(var.bastion_user)
+  bastion_user                                     = jsonencode(var.bastion_user)
   bastion_instance_id                              = jsonencode("None") #var.bastion_instance_id == null ? jsonencode("None") : jsonencode(var.bastion_instance_id)
   bastion_instance_public_ip                       = jsonencode("None") #var.bastion_instance_public_ip == null ? jsonencode("None") : jsonencode(var.bastion_instance_public_ip)
   cloud_platform                                   = jsonencode("")
@@ -495,16 +496,16 @@ module "compute_inventory" {
 module "storage_cluster_configuration" {
   count                               = var.enable_deployer == false ? 1 : 0
   source                              = "./modules/common/storage_configuration"
-  turn_on                             = (var.scheduler != null && local.storage_instance_count > 0) ? true : false
+  turn_on                             = (var.create_separate_namespaces == true && var.scheduler == null && local.storage_instance_count > 0) ? true : false
   clone_complete                      = true #module.prepare_ansible_configuration.clone_complete
-  bastion_user                        = "ubuntu" #jsonencode(var.bastion_user)
+  bastion_user                        = jsonencode(var.bastion_user)
   write_inventory_complete            = true #module.write_storage_cluster_inventory.write_inventory_complete
-  inventory_format                    = "ini" #var.inventory_format
-  create_scale_cluster                = true #var.create_scale_cluster
+  inventory_format                    = var.inventory_format
+  create_scale_cluster                = var.create_scale_cluster
   clone_path                          = var.scale_ansible_repo_clone_path
   inventory_path                      = format("%s/storage_cluster_inventory.json", local.json_inventory_path)
-  using_packer_image                  = false #var.using_packer_image
-  using_jumphost_connection           = false #var.using_jumphost_connection
+  using_packer_image                  = var.using_packer_image
+  using_jumphost_connection           = var.using_jumphost_connection
   using_rest_initialization           = true
   storage_cluster_gui_username        = var.storage_gui_username
   storage_cluster_gui_password        = var.storage_gui_password
@@ -533,8 +534,8 @@ module "storage_cluster_configuration" {
   max_metadata_replicas               = 3
   default_metadata_replicas           = 2
   default_data_replicas               = 2
-  bastion_instance_public_ip          = "null" #local.bastion_fip
-  bastion_ssh_private_key             = "null" #local.bastion_private_key_path
+  bastion_instance_public_ip          = local.bastion_fip
+  bastion_ssh_private_key             = var.bastion_ssh_private_key
   meta_private_key                    = local.storage_private_key_path
   scale_version                       = local.scale_version
   spectrumscale_rpms_path             = var.spectrumscale_rpms_path
