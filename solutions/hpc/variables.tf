@@ -184,7 +184,7 @@ variable "login_node_instance_type" {
 
 variable "management_image_name" {
   type        = string
-  default     = "hpc-lsf10-rhel810-v1"
+  default     = "hpc-lsf10-rhel810-v2"
   description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud Spectrum LSF cluster management nodes. By default, the solution uses a RHEL810 base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the lsf cluster through this offering."
 }
 

@@ -327,7 +327,7 @@ cat <<EOT > "$LSF_RC_IC_CONF"/ibmcloudgen2_templates.json
 {
     "templates": [
         {
-            "templateId": "Template-1",
+            "templateId": "Template-${cluster_prefix}-1",
             "maxNumber": "$rc_max_num",
             "attributes": {
                 "type": ["String", "X86_64"],
