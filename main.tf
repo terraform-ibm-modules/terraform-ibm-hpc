@@ -179,6 +179,7 @@ resource "null_resource" "tf_resource_provisioner" {
   provisioner "remote-exec" {
     inline = [
       "if [ ! -d ${local.remote_terraform_path} ]; then sudo git clone -b ${local.da_hpc_repo_tag} ${local.da_hpc_repo_url} ${local.remote_terraform_path}; fi",
+      "if [ ! -d ${local.remote_ansible_path}/${local.scale_cloud_infra_repo_name}/collections/ansible_collections/ibm/spectrum_scale ]; then sudo git clone -b ${local.scale_cloud_infra_repo_tag} ${local.scale_cloud_infra_repo_url} ${local.remote_ansible_path}/${local.scale_cloud_infra_repo_name}/collections/ansible_collections/ibm/spectrum_scale; fi",
       "sudo ln -fs /usr/local/bin/ansible-playbook /usr/bin/ansible-playbook",
       "sudo cp ${local.remote_inputs_path} ${local.remote_terraform_path}",
       "export TF_LOG=${var.TF_LOG} && sudo -E terraform -chdir=${local.remote_terraform_path} init && sudo -E terraform -chdir=${local.remote_terraform_path} apply -parallelism=${var.TF_PARALLELISM} -auto-approve"
@@ -496,10 +497,10 @@ module "compute_inventory" {
 module "storage_cluster_configuration" {
   count                               = var.enable_deployer == false ? 1 : 0
   source                              = "./modules/common/storage_configuration"
-  turn_on                             = (var.create_separate_namespaces == true && var.scheduler == null && local.storage_instance_count > 0) ? true : false
+  turn_on                             = (var.create_separate_namespaces == true && local.storage_instance_count > 0) ? true : false
   clone_complete                      = true #module.prepare_ansible_configuration.clone_complete
   bastion_user                        = jsonencode(var.bastion_user)
-  write_inventory_complete            = true #module.write_storage_cluster_inventory.write_inventory_complete
+  write_inventory_complete            = module.write_storage_cluster_inventory[0].write_inventory_complete
   inventory_format                    = var.inventory_format
   create_scale_cluster                = var.create_scale_cluster
   clone_path                          = var.scale_ansible_repo_clone_path

@@ -1130,7 +1130,7 @@ variable "bastion_instance_id" {
 
 variable "bastion_ssh_private_key" {
   type        = string
-  default     = null
+  default     = "None"
   description = "Bastion SSH private key path, which will be used to login to bastion host."
 }
 

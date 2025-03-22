@@ -350,37 +350,40 @@ locals {
 }
 
 locals {
-  schematics_inputs_path    = "/tmp/.schematics/solution_terraform.auto.tfvars.json"
-  remote_inputs_path        = format("%s/terraform.tfvars.json", "/tmp")
-  deployer_path             = "/opt/ibm"
-  remote_terraform_path     = format("%s/terraform-ibm-hpc", local.deployer_path)
-  remote_ansible_path       = format("%s/terraform-ibm-hpc", local.deployer_path)
-  da_hpc_repo_url           = "https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git"
-  da_hpc_repo_tag           = "jay_da_scale_deployer" ###### change it to main in future
-  scheduler                 = jsonencode(var.scheduler)
-  zones                     = jsonencode(var.zones)
-  list_compute_ssh_keys     = jsonencode(local.compute_ssh_keys)
-  list_storage_ssh_keys     = jsonencode(local.storage_ssh_keys)
-  list_storage_instances    = jsonencode(var.storage_instances)
-  list_management_instances = jsonencode(var.management_instances)
-  list_protocol_instances   = jsonencode(var.protocol_instances)
-  list_compute_instances    = jsonencode(var.static_compute_instances)
-  list_client_instances     = jsonencode(var.client_instances)
-  list_client_ssh_keys      = jsonencode(var.client_ssh_keys)
-  allowed_cidr              = jsonencode(var.allowed_cidr)
-  list_storage_subnets      = jsonencode(length(local.storage_subnet) == 0 ? null : local.storage_subnet)
-  list_protocol_subnets     = jsonencode(length(local.protocol_subnet) == 0 ? null : local.protocol_subnet)
-  list_compute_subnets      = jsonencode(length(local.compute_subnet) == 0 ? null : local.compute_subnet)
-  list_client_subnets       = jsonencode(length(local.client_subnet) == 0 ? null : local.client_subnet)
-  list_bastion_subnets      = jsonencode(length(local.bastion_subnet) == 0 ? null : local.bastion_subnet)
-  dns_domain_names          = jsonencode(var.dns_domain_names)
+  schematics_inputs_path      = "/tmp/.schematics/solution_terraform.auto.tfvars.json"
+  remote_inputs_path          = format("%s/terraform.tfvars.json", "/tmp")
+  deployer_path               = "/opt/ibm"
+  remote_terraform_path       = format("%s/terraform-ibm-hpc", local.deployer_path)
+  da_hpc_repo_url             = "https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git"
+  da_hpc_repo_tag             = "jay_da_scale_deployer" ###### change it to main in future
+  remote_ansible_path         = format("%s/ibm-spectrumscale-cloud-deploy", local.deployer_path)
+  scale_cloud_infra_repo_url  = "https://github.com/IBM/ibm-spectrum-scale-install-infra"
+  scale_cloud_infra_repo_name = "ibm-spectrum-scale-install-infra"
+  scale_cloud_infra_repo_tag  = "scale_hpc"
+  scheduler                   = jsonencode(var.scheduler)
+  zones                       = jsonencode(var.zones)
+  list_compute_ssh_keys       = jsonencode(local.compute_ssh_keys)
+  list_storage_ssh_keys       = jsonencode(local.storage_ssh_keys)
+  list_storage_instances      = jsonencode(var.storage_instances)
+  list_management_instances   = jsonencode(var.management_instances)
+  list_protocol_instances     = jsonencode(var.protocol_instances)
+  list_compute_instances      = jsonencode(var.static_compute_instances)
+  list_client_instances       = jsonencode(var.client_instances)
+  list_client_ssh_keys        = jsonencode(var.client_ssh_keys)
+  allowed_cidr                = jsonencode(var.allowed_cidr)
+  list_storage_subnets        = jsonencode(length(local.storage_subnet) == 0 ? null : local.storage_subnet)
+  list_protocol_subnets       = jsonencode(length(local.protocol_subnet) == 0 ? null : local.protocol_subnet)
+  list_compute_subnets        = jsonencode(length(local.compute_subnet) == 0 ? null : local.compute_subnet)
+  list_client_subnets         = jsonencode(length(local.client_subnet) == 0 ? null : local.client_subnet)
+  list_bastion_subnets        = jsonencode(length(local.bastion_subnet) == 0 ? null : local.bastion_subnet)
+  dns_domain_names            = jsonencode(var.dns_domain_names)
   compute_public_key_content  = local.compute_public_key_contents != null ? jsonencode(base64encode(local.compute_public_key_contents)) : ""
   compute_private_key_content = local.compute_private_key_contents != null ? jsonencode(base64encode(local.compute_private_key_contents)) : ""
-  list_ldap_instances       = jsonencode(var.ldap_instances)
-  ldap_server               = jsonencode(var.ldap_server)
-  list_ldap_ssh_keys        = jsonencode(local.ldap_instance_key_pair)
-  list_afm_instances        = jsonencode(var.afm_instances)
-  list_gklm_ssh_keys        = jsonencode(local.gklm_instance_key_pair)
-  list_gklm_instances       = jsonencode(var.gklm_instances)
-  scale_encryption_type     = jsonencode(var.scale_encryption_type)
+  list_ldap_instances         = jsonencode(var.ldap_instances)
+  ldap_server                 = jsonencode(var.ldap_server)
+  list_ldap_ssh_keys          = jsonencode(local.ldap_instance_key_pair)
+  list_afm_instances          = jsonencode(var.afm_instances)
+  list_gklm_ssh_keys          = jsonencode(local.gklm_instance_key_pair)
+  list_gklm_instances         = jsonencode(var.gklm_instances)
+  scale_encryption_type       = jsonencode(var.scale_encryption_type)
 }
