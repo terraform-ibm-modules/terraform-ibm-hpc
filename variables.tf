@@ -1070,13 +1070,13 @@ variable "scale_encryption_admin_password" {
 
 variable "scale_ansible_repo_clone_path" {
   type        = string
-  default     = "/opt/IBM/ibm-spectrumscale-cloud-deploy"
+  default     = "/opt/ibm/ibm-spectrumscale-cloud-deploy"
   description = "Path to clone github.com/IBM/ibm-spectrum-scale-install-infra."
 }
 
 variable "spectrumscale_rpms_path" {
   type        = string
-  default     = "/opt/IBM/gpfs_cloud_rpms"
+  default     = "/opt/ibm/gpfs_cloud_rpms"
   description = "Path that contains IBM Spectrum Scale product cloud rpms."
 }
 
