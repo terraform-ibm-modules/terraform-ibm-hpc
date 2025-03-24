@@ -409,7 +409,7 @@ module "write_storage_cluster_inventory" {
   nfs                                              = local.scale_ces_enabled == true ? true : false
   object                                           = false
   interface                                        = jsonencode([])
-  export_ip_pool                                   = jsonencode([])
+  export_ip_pool                                   = local.scale_ces_enabled == true ? jsonencode(local.protocol_instance_private_ips) : jsonencode([])
   filesystem                                       = local.scale_ces_enabled == true ? jsonencode("cesSharedRoot") : jsonencode("")
   mountpoint                                       = local.scale_ces_enabled == true ? jsonencode(var.storage_instances[count.index].filesystem) : jsonencode("")
   protocol_gateway_ip                              = jsonencode("")
@@ -498,7 +498,6 @@ module "storage_cluster_configuration" {
   count                               = var.enable_deployer == false ? 1 : 0
   source                              = "./modules/common/storage_configuration"
   turn_on                             = (var.create_separate_namespaces == true && local.storage_instance_count > 0) ? true : false
-  clone_complete                      = true #module.prepare_ansible_configuration.clone_complete
   bastion_user                        = jsonencode(var.bastion_user)
   write_inventory_complete            = module.write_storage_cluster_inventory[0].write_inventory_complete
   inventory_format                    = var.inventory_format
@@ -536,7 +535,7 @@ module "storage_cluster_configuration" {
   default_metadata_replicas           = 2
   default_data_replicas               = 2
   bastion_instance_public_ip          = jsonencode(local.bastion_fip)
-  bastion_ssh_private_key             = jsonencode(var.bastion_ssh_private_key)
+  bastion_ssh_private_key             = var.bastion_ssh_private_key
   meta_private_key                    = local.storage_private_key_path
   scale_version                       = local.scale_version
   spectrumscale_rpms_path             = var.spectrumscale_rpms_path
