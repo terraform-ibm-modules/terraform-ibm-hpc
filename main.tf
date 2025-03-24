@@ -98,11 +98,6 @@ module "landing_zone_vsi" {
   scale_encryption_type      = var.scale_encryption_type
   gklm_instance_key_pair     = local.gklm_instance_key_pair
   gklm_instances             = var.gklm_instances
-  # ldap_admin_password        = var.ldap_admin_password
-  # ldap_user_name             = var.ldap_user_name
-  # ldap_user_password         = var.ldap_user_password
-  # ldap_basedns               = var.ldap_basedns
-  # ldap_server_cert           = var.ldap_server_cert
 }
 
 resource "local_sensitive_file" "prepare_tf_input" {
@@ -147,12 +142,18 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "ldap_instances": ${local.list_ldap_instances},
   "enable_ldap": ${var.enable_ldap},
   "ldap_server": ${local.ldap_server},
+  "ldap_basedns": ${local.ldap_basedns},
   "ldap_instance_key_pair": ${local.list_ldap_ssh_keys},
+  "ldap_admin_password": "${local.ldap_admin_password}",
+  "ldap_user_name": "${var.ldap_user_name}",
+  "ldap_user_password": "${var.ldap_user_password}",
+  "ldap_server_cert": "${local.ldap_server_cert}",
   "afm_instances": ${local.list_afm_instances},
   "scale_encryption_enabled": ${var.scale_encryption_enabled},
   "scale_encryption_type": ${local.scale_encryption_type},
   "gklm_instance_key_pair": ${local.list_gklm_ssh_keys},
   "gklm_instances": ${local.list_gklm_instances},
+  "scale_encryption_admin_password": "${local.scale_encryption_admin_password}",
   "filesystem_config": ${local.filesystem_config}
 }    
 EOT
@@ -543,15 +544,15 @@ module "storage_cluster_configuration" {
   enable_mrot_conf                    = local.enable_mrot_conf ? "True" : "False"
   enable_ces                          = local.scale_ces_enabled == true ? "True" : "False"
   enable_afm                          = local.enable_afm == true ? "True" : "False"
-  scale_encryption_enabled            = true #var.scale_encryption_enabled
+  scale_encryption_enabled            = var.scale_encryption_enabled
   scale_encryption_type               = var.scale_encryption_type != null ? var.scale_encryption_type : null
-  scale_encryption_admin_password     = "jncjks" #var.scale_encryption_admin_password
+  scale_encryption_admin_password     = var.scale_encryption_admin_password
   scale_encryption_servers            = var.scale_encryption_enabled && var.scale_encryption_type == "gklm" ? jsonencode(local.gklm_instance_private_ips) : null
   enable_ldap                         = var.enable_ldap
   ldap_basedns                        = var.ldap_basedns
   ldap_server                         = local.ldap_instance_private_ips[0]
-  ldap_admin_password                 = "sdwd" #var.ldap_admin_password
-  ldap_server_cert                    = "hai"
+  ldap_admin_password                 = var.ldap_admin_password
+  ldap_server_cert                    = var.ldap_server_cert
   enable_key_protect                  = var.scale_encryption_type == "key_protect" ? "True" : "False"
   depends_on                          = [module.write_storage_cluster_inventory]
 }

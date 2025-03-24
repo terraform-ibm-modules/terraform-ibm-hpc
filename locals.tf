@@ -381,10 +381,14 @@ locals {
   compute_private_key_content = local.compute_private_key_contents != null ? jsonencode(base64encode(local.compute_private_key_contents)) : ""
   list_ldap_instances         = jsonencode(var.ldap_instances)
   ldap_server                 = jsonencode(var.ldap_server)
+  ldap_basedns                = jsonencode(var.ldap_basedns)
+  ldap_server_cert            = jsonencode(var.ldap_server_cert)
+  ldap_admin_password         = jsonencode(var.ldap_admin_password)
   list_ldap_ssh_keys          = jsonencode(local.ldap_instance_key_pair)
   list_afm_instances          = jsonencode(var.afm_instances)
   list_gklm_ssh_keys          = jsonencode(local.gklm_instance_key_pair)
   list_gklm_instances         = jsonencode(var.gklm_instances)
   scale_encryption_type       = jsonencode(var.scale_encryption_type)
   filesystem_config           = jsonencode(var.filesystem_config)
+  scale_encryption_admin_password = jsonencode(var.scale_encryption_admin_password)
 }
