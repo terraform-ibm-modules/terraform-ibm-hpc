@@ -777,12 +777,6 @@ variable "storage_type" {
   description = "Select the required storage type(scratch/persistent/eval)."
 }
 
-variable "filesystem_block_size" {
-  type        = string
-  default     = "4M"
-  description = "Filesystem block size."
-}
-
 variable "colocate_protocol_cluster_instances" {
   type        = bool
   default     = true

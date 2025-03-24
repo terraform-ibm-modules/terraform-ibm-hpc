@@ -78,7 +78,6 @@ module "scale" {
   gklm_instance_key_pair                           = local.env.gklm_instance_key_pair
   gklm_instances                                   = local.env.gklm_instances
   storage_type                                     = local.env.storage_type
-  filesystem_block_size                            = local.env.filesystem_block_size
   colocate_protocol_cluster_instances              = local.env.colocate_protocol_cluster_instances
   scale_encryption_admin_default_password          = local.env.scale_encryption_admin_default_password
   scale_encryption_admin_password                  = local.env.scale_encryption_admin_password
