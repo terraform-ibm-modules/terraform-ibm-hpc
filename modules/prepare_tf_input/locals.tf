@@ -15,4 +15,6 @@ locals {
   list_client_subnets       = jsonencode(length(var.client_subnets) == 0 ? null : var.client_subnets)
   list_bastion_subnets      = jsonencode(length(var.bastion_subnets) == 0 ? null : var.bastion_subnets)
   dns_domain_names          = jsonencode(var.dns_domain_names)
+  dns_custom_resolver_id    = jsonencode(var.dns_custom_resolver_id != null ? (length(var.dns_custom_resolver_id) > 0 ? var.dns_custom_resolver_id : null) : var.dns_custom_resolver_id)
+  dns_instance_id           = jsonencode(var.dns_instance_id != null ? (length(var.dns_instance_id) > 0 ? var.dns_instance_id : null) : var.dns_instance_id)
 }

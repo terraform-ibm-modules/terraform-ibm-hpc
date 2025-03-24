@@ -114,6 +114,8 @@ module "prepare_tf_input" {
   client_subnets                                   = local.client_subnet
   bastion_subnets                                  = local.bastion_subnet
   dns_domain_names                                 = var.dns_domain_names
+  dns_custom_resolver_id                           = var.dns_custom_resolver_id
+  dns_instance_id                                  = var.dns_instance_id
   bastion_security_group_id                        = local.bastion_security_group_id
   deployer_hostname                                = local.deployer_hostname
   scc_enable                                       = var.scc_enable
