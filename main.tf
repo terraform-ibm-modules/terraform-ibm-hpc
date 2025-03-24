@@ -152,7 +152,8 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "scale_encryption_enabled": ${var.scale_encryption_enabled},
   "scale_encryption_type": ${local.scale_encryption_type},
   "gklm_instance_key_pair": ${local.list_gklm_ssh_keys},
-  "gklm_instances": ${local.list_gklm_instances}
+  "gklm_instances": ${local.list_gklm_instances},
+  "filesystem_config": ${local.filesystem_config}
 }    
 EOT
   filename = local.schematics_inputs_path
@@ -530,10 +531,10 @@ module "storage_cluster_configuration" {
   afm_vcpus_count                     = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].vcpu_count[0].value
   afm_bandwidth                       = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].bandwidth[0].value
   disk_type                           = "network-attached"
-  max_data_replicas                   = 3
-  max_metadata_replicas               = 3
-  default_metadata_replicas           = 2
-  default_data_replicas               = 2
+  max_data_replicas                   = var.filesystem_config[0]["max_data_replica"]
+  max_metadata_replicas               = var.filesystem_config[0]["max_metadata_replica"]
+  default_metadata_replicas           = var.filesystem_config[0]["default_metadata_replica"]
+  default_data_replicas               = var.filesystem_config[0]["default_data_replica"]
   bastion_instance_public_ip          = jsonencode(local.bastion_fip)
   bastion_ssh_private_key             = var.bastion_ssh_private_key
   meta_private_key                    = local.storage_private_key_path

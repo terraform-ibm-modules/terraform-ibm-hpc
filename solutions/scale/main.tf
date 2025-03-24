@@ -83,4 +83,5 @@ module "scale" {
   scale_encryption_admin_default_password          = local.env.scale_encryption_admin_default_password
   scale_encryption_admin_password                  = local.env.scale_encryption_admin_password
   scale_encryption_admin_username                  = local.env.scale_encryption_admin_username
+  filesystem_config                                = local.env.filesystem_config
 }

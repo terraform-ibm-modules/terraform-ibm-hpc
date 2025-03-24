@@ -386,4 +386,5 @@ locals {
   list_gklm_ssh_keys          = jsonencode(local.gklm_instance_key_pair)
   list_gklm_instances         = jsonencode(var.gklm_instances)
   scale_encryption_type       = jsonencode(var.scale_encryption_type)
+  filesystem_config           = jsonencode(var.filesystem_config)
 }

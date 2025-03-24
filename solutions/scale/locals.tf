@@ -101,6 +101,7 @@ locals {
     scale_encryption_admin_default_password          = var.scale_encryption_admin_default_password
     scale_encryption_admin_password                  = var.scale_encryption_admin_password
     scale_encryption_admin_username                  = var.scale_encryption_admin_username
+    filesystem_config                                = var.filesystem_config
   }
 }
 
@@ -188,5 +189,6 @@ locals {
     scale_encryption_admin_default_password          = lookup(local.override[local.override_type], "scale_encryption_admin_default_password", local.config.scale_encryption_admin_default_password)
     scale_encryption_admin_password                  = lookup(local.override[local.override_type], "scale_encryption_admin_password", local.config.scale_encryption_admin_password)
     scale_encryption_admin_username                  = lookup(local.override[local.override_type], "scale_encryption_admin_username", local.config.scale_encryption_admin_username)
+    filesystem_config                                = lookup(local.override[local.override_type], "filesystem_config", local.config.filesystem_config)
   }
 }
