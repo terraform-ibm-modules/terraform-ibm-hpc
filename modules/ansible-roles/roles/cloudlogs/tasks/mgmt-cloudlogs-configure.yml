@@ -115,7 +115,7 @@
   shell: "echo $VPC_API_KEY"
   register: env_api_key
   environment:
-    VPC_API_KEY: "{{ lookup('env', 'VPC_API_KEY') }}" 
+    VPC_API_KEY: "{{ lookup('env', 'VPC_API_KEY') }}"
 
 - name: Run post-config.sh script
   ansible.builtin.command: >
