@@ -6,7 +6,9 @@
 
 - name: Install required packages
   ansible.builtin.yum:
-    name: git
+    name:
+      - git
+      - python3-pip
     state: present
   when: monitoring_enable_for_management | bool
 
@@ -60,6 +62,37 @@
     dest: "{{ prometheus_config_file }}"
   when: monitoring_enable_for_management | bool
 
+- name: Install Python 3.11
+  ansible.builtin.yum:
+    name: python3.11
+    state: present
+  when: monitoring_enable_for_management | bool
+
+- name: Ensure Python 3.11 is set as default
+  ansible.builtin.file:
+    src: /usr/bin/python3.11
+    dest: /usr/bin/python3
+    state: link
+  when: monitoring_enable_for_management | bool
+
+- name: Ensure pip is installed for Python 3.11
+  ansible.builtin.shell: |
+    /usr/bin/python3.11 -m ensurepip --default-pip
+    /usr/bin/python3.11 -m pip install --upgrade pip
+  args:
+    executable: /bin/bash
+  when: monitoring_enable_for_management | bool
+
+- name: Detect correct pip executable
+  ansible.builtin.command: "/usr/bin/python3.11 -m pip --version"
+  register: pip_check
+  ignore_errors: true
+  changed_when: false
+
+- name: Set correct pip executable path
+  ansible.builtin.set_fact:
+    pip_executable: "{{ '/usr/bin/python3.11 -m pip' if 'pip' in pip_check.stdout else '/usr/bin/pip3' }}"
+
 - name: Clone LSF Prometheus Exporter repository
   ansible.builtin.git:
     repo: "https://89088669eefb301f1aaa7046c9e567a372c51fe2@github.ibm.com/platformcomputing/lsf_prometheus_exporter"
@@ -67,51 +100,74 @@
     version: "wheel_pkg"
   when: monitoring_enable_for_management | bool
 
-- name: Install LSF Prometheus Exporter
-  ansible.builtin.pip:
-    name: "/tmp/lsf_prometheus_exporter/lsf_prometheus_exporter-1.0.0-py3-none-any.whl"
+- name: Ensure /opt/ibm/lsf directory exists
+  ansible.builtin.file:
+    path: /opt/ibm/lsf
+    state: directory
+    mode: '0755'
+    owner: lsfadmin
+    group: lsfadmin
   when: monitoring_enable_for_management | bool
 
-- name: Reload systemd daemon
+- name: Install LSF Prometheus Exporter
+  ansible.builtin.command:
+    cmd: "{{ pip_executable }} install /tmp/lsf_prometheus_exporter/lsf_prometheus_exporter-1.0.0-py3-none-any.whl"
+  when: monitoring_enable_for_management | bool
+
+- name: Create start script for LSF Prometheus Exporter
+  ansible.builtin.copy:
+    dest: /opt/ibm/lsf/start_lsf_prometheus_exporter.sh
+    content: |
+      #!/bin/bash
+      source /opt/ibm/lsf/conf/profile.lsf
+      exec /usr/bin/python3 -m lsf_prometheus_exporter
+    mode: '0755'
+    owner: lsfadmin
+    group: lsfadmin
+  when: monitoring_enable_for_management | bool
+
+- name: Ensure start script has correct permissions
+  ansible.builtin.file:
+    path: /opt/ibm/lsf/start_lsf_prometheus_exporter.sh
+    mode: '0755'
+    owner: lsfadmin
+    group: lsfadmin
+  when: monitoring_enable_for_management | bool
+
+- name: Create systemd service for LSF Prometheus Exporter
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/lsf_prometheus_exporter.service
+    content: |
+      [Unit]
+      Description=IBM LSF Prometheus Exporter Service
+      After=network-online.target
+
+      [Service]
+      Type=simple
+      ExecStart=/opt/ibm/lsf/start_lsf_prometheus_exporter.sh
+      TimeoutSec=0
+      RemainAfterExit=yes
+      GuessMainPID=no
+      RestartSec=10
+      User=lsfadmin
+      Group=lsfadmin
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: '0644'
+  when: monitoring_enable_for_management | bool
+
+- name: Reload systemd and start LSF Prometheus Exporter
   ansible.builtin.systemd:
     daemon_reload: yes
+    name: lsf_prometheus_exporter
+    enabled: yes
+    state: restarted
   when: monitoring_enable_for_management | bool
 
 - name: Enable and restart Sysdig Agent
   ansible.builtin.systemd:
     name: dragent
-    enabled: yes
-    state: restarted
-  when: monitoring_enable_for_management | bool
-
-# - name: Install LSF Prometheus Exporter
-#   ansible.builtin.shell: |
-#     mkdir -p /opt/ibm/lsf_prometheus_exporter
-#     cp -av /tmp/lsf_prometheus_exporter /opt/ibm/
-#     cp /opt/ibm/lsf_prometheus_exporter/examples/linux_service/start_lsf_prometheus_exporter.sh /opt/ibm/lsf_prometheus_exporter
-#     cp /opt/ibm/lsf_prometheus_exporter/examples/linux_service/lsf_prometheus_exporter.service /etc/systemd/system/
-#     chown -R lsfadmin:root /opt/ibm/lsf_prometheus_exporter
-#     chmod +x /opt/ibm/lsf_prometheus_exporter/start_lsf_prometheus_exporter.sh
-#     su - lsfadmin -c "pip3 install -r /opt/ibm/lsf_prometheus_exporter/requirements.txt --user"
-#   when: monitoring_enable_for_management | bool
-
-# - name: Enable and restart Prometheus
-#   ansible.builtin.systemd:
-#     name: prometheus
-#     enabled: yes
-#     state: restarted
-#   when: monitoring_enable_for_management | bool
-
-- name: Ensure lsf_prometheus_exporter starts after shared filesystem mount
-  ansible.builtin.lineinfile:
-    path: "/etc/systemd/system/lsf_prometheus_exporter.service"
-    regexp: "^After=network-online.target"
-    line: "After=network-online.target mnt-lsf.mount"
-  when: monitoring_enable_for_management | bool
-
-- name: Enable and restart LSF Prometheus Exporter
-  ansible.builtin.systemd:
-    name: lsf_prometheus_exporter
     enabled: yes
     state: restarted
   when: monitoring_enable_for_management | bool
