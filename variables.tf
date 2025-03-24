@@ -691,11 +691,11 @@ variable "observability_logs_retention_period" {
   }
 }
 
-# variable "observability_monitoring_on_compute_nodes_enable" {
-#   description = "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure metrics from Compute Nodes will be ingested."
-#   type        = bool
-#   default     = false
-# }
+variable "observability_monitoring_on_compute_nodes_enable" {
+  description = "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure metrics from Compute Nodes will be ingested."
+  type        = bool
+  default     = false
+}
 
 variable "observability_monitoring_plan" {
   description = "Type of service plan for IBM Cloud Monitoring instance. You can choose one of the following: lite, graduated-tier. For all details visit [IBM Cloud Monitoring Service Plans](https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans)."
@@ -726,16 +726,6 @@ variable "scc_profile" {
     error_message = "Provide SCC Profile Name to be used (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')."
   }
 }
-
-# variable "scc_profile_version" {
-#   type        = string
-#   default     = "1.1.0"
-#   description = "Version of the Profile to be set on the SCC Instance (accepting empty, CIS and Financial Services profiles versions)"
-#   validation {
-#     condition     = can(regex("^(|\\d+\\.\\d+(\\.\\d+)?)$", var.scc_profile_version))
-#     error_message = "Provide SCC Profile Version to be used."
-#   }
-# }
 
 variable "scc_location" {
   description = "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
@@ -769,18 +759,6 @@ variable "enable_atracker" {
   description = "Enable Activity tracker"
 }
 
-# variable "cloud_logs_data_bucket" {
-#   type        = list(string)
-#   default     = []
-#   description = ""
-# }
-
-# variable "cloud_metrics_data_bucket" {
-#   type        = list(string)
-#   default     = []
-#   description = ""
-# }
-
 variable "bastion_security_group_id" {
   type        = string
   default     = null
@@ -797,4 +775,28 @@ variable "deployer_ip" {
   type        = string
   default     = null
   description = "deployer node ip"
+}
+
+variable "cloud_logs_data_bucket" {
+  type        = any
+  default     = null
+  description = "cloud logs data bucket"
+}
+
+variable "cloud_metrics_data_bucket" {
+  type        = any
+  default     = null
+  description = "cloud metrics data bucket"
+}
+
+variable "scc_cos_bucket" {
+  type        = string
+  default     = null
+  description = "scc cos bucket"
+}
+
+variable "scc_cos_instance_crn" {
+  type        = string
+  default     = null
+  description = "scc cos instance crn"
 }

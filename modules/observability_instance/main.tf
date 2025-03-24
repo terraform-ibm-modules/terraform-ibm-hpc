@@ -5,7 +5,7 @@ locals {
 }
 
 module "observability_instance" {
-  count = var.enable_deployer ? 1 : 0
+  count = (var.enable_deployer == false) ? 1 : 0
   # Replace "master" with a GIT release version to lock into a specific release
   source            = "terraform-ibm-modules/observability-instances/ibm"
   version           = "3.3.1"
@@ -22,25 +22,25 @@ module "observability_instance" {
     # logs and metrics buckets must be different
     logs_data = {
       enabled         = true
-      bucket_crn      = var.cloud_logs_data_bucket != null ? var.cloud_logs_data_bucket["crn"] : ""
-      bucket_endpoint = var.cloud_logs_data_bucket != null ? var.cloud_logs_data_bucket["s3_endpoint_direct"] : ""
+      bucket_crn      = var.cloud_logs_data_bucket != null ? var.cloud_logs_data_bucket["bucket_crn"] : ""
+      bucket_endpoint = var.cloud_logs_data_bucket != null ? var.cloud_logs_data_bucket["bucket_endpoint"] : ""
     },
     metrics_data = {
       enabled         = true
-      bucket_crn      = var.cloud_metrics_data_bucket != null ? var.cloud_metrics_data_bucket["crn"] : ""
-      bucket_endpoint = var.cloud_metrics_data_bucket != null ? var.cloud_metrics_data_bucket["s3_endpoint_direct"] : ""
+      bucket_crn      = var.cloud_metrics_data_bucket != null ? var.cloud_metrics_data_bucket["bucket_crn"] : ""
+      bucket_endpoint = var.cloud_metrics_data_bucket != null ? var.cloud_metrics_data_bucket["bucket_endpoint"] : ""
     }
   }
   activity_tracker_routes = var.cloud_logs_as_atracker_target ? [
     {
       locations  = ["*", "global"]
-      target_ids = [module.observability_instance.activity_tracker_targets["${var.cluster_prefix}-atracker-target"].id]
+      target_ids = [module.observability_instance[0].activity_tracker_targets["${var.cluster_prefix}-atracker-target"].id]
       route_name = "${var.cluster_prefix}-atracker-route"
     }
   ] : []
   at_cloud_logs_targets = var.cloud_logs_as_atracker_target ? [
     {
-      instance_id   = module.observability_instance.cloud_logs_crn
+      instance_id   = module.observability_instance[0].cloud_logs_crn
       target_region = var.location
       target_name   = "${var.cluster_prefix}-atracker-target"
     }
@@ -55,7 +55,7 @@ module "observability_instance" {
   enable_platform_metrics = false
   metrics_router_targets = (var.enable_metrics_routing && var.cloud_monitoring_provision) ? [
     {
-      destination_crn = module.observability_instance.cloud_monitoring_crn
+      destination_crn = module.observability_instance[0].cloud_monitoring_crn
       target_region   = var.location
       target_name     = "${var.cluster_prefix}-metrics-routing-target"
     }
@@ -67,7 +67,7 @@ module "observability_instance" {
         {
           action = "send"
           targets = [{
-            id = module.observability_instance.metrics_router_targets["${var.cluster_prefix}-metrics-routing-target"].id
+            id = module.observability_instance[0].metrics_router_targets["${var.cluster_prefix}-metrics-routing-target"].id
           }]
           inclusion_filters = [{
             operand  = "location"

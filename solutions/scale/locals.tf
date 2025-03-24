@@ -20,7 +20,6 @@ locals {
   config = {
     existing_resource_group   = var.existing_resource_group
     allowed_cidr              = var.allowed_cidr
-    deployer_instance_profile = var.deployer_instance_profile
     ssh_keys                  = var.ssh_keys
     bastion_ssh_keys          = var.bastion_ssh_keys
     bastion_subnets_cidr      = var.bastion_subnets_cidr

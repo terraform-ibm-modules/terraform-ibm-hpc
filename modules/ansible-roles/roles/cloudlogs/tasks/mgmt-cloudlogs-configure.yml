@@ -1,0 +1,135 @@
+---
+# Installation Section
+- name: Print start message
+  ansible.builtin.debug:
+    msg: "Cloud logs agent installation started"
+
+- name: Download Cloud Logs Agent RPM package checksum
+  ansible.builtin.get_url:
+    url: "https://logs-router-agent-install-packages.s3.us.cloud-object-storage.appdomain.cloud/logs-router-agent-rhel8-1.3.1.rpm.sha256"
+    dest: "/tmp/logs-router-agent-rhel8-1.3.1.rpm.sha256"
+
+- name: Download Cloud Logs Agent RPM package
+  ansible.builtin.get_url:
+    url: "https://logs-router-agent-install-packages.s3.us.cloud-object-storage.appdomain.cloud/logs-router-agent-rhel8-1.3.1.rpm"
+    dest: "/tmp/logs-router-agent-rhel8-1.3.1.rpm"
+
+- name: Verify package integrity
+  ansible.builtin.command: sha256sum -c /tmp/logs-router-agent-rhel8-1.3.1.rpm.sha256
+  args:
+    chdir: /tmp
+  register: checksum_result
+  changed_when: false
+
+- name: Debug checksum result
+  ansible.builtin.debug:
+    msg: "{{ checksum_result.stdout_lines }}"
+
+- name: Install Cloud Logs Agent
+  ansible.builtin.yum:
+    name: /tmp/logs-router-agent-rhel8-1.3.1.rpm
+    state: present
+    disable_gpg_check: yes
+
+- name: Verify installation
+  ansible.builtin.shell: rpm -qa | grep logs-router-agent
+  register: agent_installed
+  changed_when: false
+
+- name: Debug installed package
+  ansible.builtin.debug:
+    msg: "{{ agent_installed.stdout }}"
+
+- name: Download post-config.sh script
+  ansible.builtin.get_url:
+    url: "https://logs-router-agent-config.s3.us.cloud-object-storage.appdomain.cloud/post-config.sh"
+    dest: "/root/post-config.sh"
+    mode: "0755"
+
+- name: Print installation completion message
+  ansible.builtin.debug:
+    msg: "Cloud logs agent installed successfully"
+
+# Observability Logs Setup
+- name: Check if observability logs for management are enabled
+  ansible.builtin.debug:
+    msg: "Configuring cloud logs for management since observability logs for management is enabled"
+  when: logs_enable_for_management | bool
+
+- name: Copy post-config.sh script
+  ansible.builtin.copy:
+    src: /root/post-config.sh
+    dest: /opt/ibm/post-config.sh
+    mode: '0755'
+    remote_src: true
+  when: logs_enable_for_management | bool
+
+- name: Create fluent-bit.conf for cloud logs
+  ansible.builtin.copy:
+    dest: /etc/fluent-bit/fluent-bit.conf
+    content: |
+      [SERVICE]
+        Flush                   1
+        Log_Level               info
+        Daemon                  off
+        Parsers_File            parsers.conf
+        Plugins_File            plugins.conf
+        HTTP_Server             On
+        HTTP_Listen             0.0.0.0
+        HTTP_Port               9001
+        Health_Check            On
+        HC_Errors_Count         1
+        HC_Retry_Failure_Count  1
+        HC_Period               30
+        storage.path            /fluent-bit/cache
+        storage.max_chunks_up   192
+        storage.metrics         On
+      [INPUT]
+        Name                syslog
+        Path                /tmp/in_syslog
+        Buffer_Chunk_Size   32000
+        Buffer_Max_Size     64000
+        Receive_Buffer_Size 512000
+      [INPUT]
+        Name              tail
+        Tag               *
+        Path              /opt/ibm/lsflogs/*.log.*
+        Path_Key          file
+        Exclude_Path      /var/log/at/**
+        DB                /opt/ibm/lsflogs/fluent-bit.DB
+        Buffer_Chunk_Size 32KB
+        Buffer_Max_Size   256KB
+        Skip_Long_Lines   On
+        Refresh_Interval  10
+        storage.type      filesystem
+        storage.pause_on_chunks_overlimit on
+      [FILTER]
+        Name modify
+        Match *
+        Add subsystemName management
+        Add applicationName lsf
+      @INCLUDE output-logs-router-agent.conf
+  when: logs_enable_for_management | bool
+
+- name: Fetch API KEY from environmental variable of Ansible controller
+  shell: "echo $VPC_API_KEY"
+  register: env_api_key
+  environment:
+    VPC_API_KEY: "{{ lookup('env', 'VPC_API_KEY') }}"
+
+- name: Run post-config.sh script
+  ansible.builtin.command: >
+    /opt/ibm/post-config.sh -h {{ cloud_logs_ingress_private_endpoint }}
+    -p "3443"
+    -t "/logs/v1/singles"
+    -a IAMAPIKey
+    -k {{ env_api_key.stdout }}
+    --send-directly-to-icl
+    -s true
+    -i Production
+  when: logs_enable_for_management | bool
+
+- name: Test cloud logs configuration
+  ansible.builtin.shell: |
+    echo "INFO Testing IBM Cloud LSF Logs from management: {{ ansible_hostname }}" >> /opt/ibm/lsflogs/test.log.com
+  when: logs_enable_for_management | bool
