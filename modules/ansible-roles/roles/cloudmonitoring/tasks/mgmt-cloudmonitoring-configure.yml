@@ -4,6 +4,12 @@
     msg: "Cloud Monitoring is enabled for management"
   when: monitoring_enable_for_management | bool
 
+- name: Install required packages
+  ansible.builtin.yum:
+    name: git
+    state: present
+  when: monitoring_enable_for_management | bool
+
 - name: Install Sysdig Agent
   ansible.builtin.shell: |
     curl -sL https://ibm.biz/install-sysdig-agent | sudo bash -s -- --access_key {{ cloud_monitoring_access_key }} --collector {{ cloud_monitoring_ingestion_url }} --collector_port 6443 --secure true --check_certificate false --additional_conf 'sysdig_capture_enabled: false\nremotefs: true\nfeature:\n mode: monitor_light'
@@ -54,6 +60,30 @@
     dest: "{{ prometheus_config_file }}"
   when: monitoring_enable_for_management | bool
 
+- name: Clone LSF Prometheus Exporter repository
+  ansible.builtin.git:
+    repo: "https://89088669eefb301f1aaa7046c9e567a372c51fe2@github.ibm.com/platformcomputing/lsf_prometheus_exporter"
+    dest: "/tmp/lsf_prometheus_exporter"
+    version: "wheel_pkg"
+  when: monitoring_enable_for_management | bool
+
+- name: Install LSF Prometheus Exporter
+  ansible.builtin.pip:
+    name: "/tmp/lsf_prometheus_exporter/lsf_prometheus_exporter-1.0.0-py3-none-any.whl"
+  when: monitoring_enable_for_management | bool
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  when: monitoring_enable_for_management | bool
+
+- name: Enable and restart Sysdig Agent
+  ansible.builtin.systemd:
+    name: dragent
+    enabled: yes
+    state: restarted
+  when: monitoring_enable_for_management | bool
+
 # - name: Install LSF Prometheus Exporter
 #   ansible.builtin.shell: |
 #     mkdir -p /opt/ibm/lsf_prometheus_exporter
@@ -65,11 +95,6 @@
 #     su - lsfadmin -c "pip3 install -r /opt/ibm/lsf_prometheus_exporter/requirements.txt --user"
 #   when: monitoring_enable_for_management | bool
 
-- name: Reload systemd daemon
-  ansible.builtin.systemd:
-    daemon_reload: yes
-  when: monitoring_enable_for_management | bool
-
 # - name: Enable and restart Prometheus
 #   ansible.builtin.systemd:
 #     name: prometheus
@@ -77,23 +102,16 @@
 #     state: restarted
 #   when: monitoring_enable_for_management | bool
 
-- name: Enable and restart Sysdig Agent
+- name: Ensure lsf_prometheus_exporter starts after shared filesystem mount
+  ansible.builtin.lineinfile:
+    path: "/etc/systemd/system/lsf_prometheus_exporter.service"
+    regexp: "^After=network-online.target"
+    line: "After=network-online.target mnt-lsf.mount"
+  when: monitoring_enable_for_management | bool
+
+- name: Enable and restart LSF Prometheus Exporter
   ansible.builtin.systemd:
-    name: dragent
+    name: lsf_prometheus_exporter
     enabled: yes
     state: restarted
   when: monitoring_enable_for_management | bool
-
-# - name: Ensure lsf_prometheus_exporter starts after shared filesystem mount
-#   ansible.builtin.lineinfile:
-#     path: "/etc/systemd/system/lsf_prometheus_exporter.service"
-#     regexp: "^After=network-online.target"
-#     line: "After=network-online.target mnt-lsf.mount"
-#   when: monitoring_enable_for_management | bool
-
-# - name: Enable and restart LSF Prometheus Exporter
-#   ansible.builtin.systemd:
-#     name: lsf_prometheus_exporter
-#     enabled: yes
-#     state: restarted
-#   when: monitoring_enable_for_management | bool
