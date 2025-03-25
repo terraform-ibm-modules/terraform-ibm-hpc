@@ -4,5 +4,5 @@ locals {
   deployer_path          = "/opt/ibm"
   remote_terraform_path  = format("%s/terraform-ibm-hpc", local.deployer_path)
   da_hpc_repo_url        = "https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git"
-  da_hpc_repo_tag        = "develop" ###### change it to main in future
+  da_hpc_repo_tag        = "anand_dynamic_node_support" ###### change it to main in future
 }
