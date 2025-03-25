@@ -1,0 +1,10 @@
+---
+- name: Restart lsfd service
+  service:
+    name: lsfd
+    state: restarted
+
+- name: Restart NetworkManager
+  ansible.builtin.systemd:
+    name: NetworkManager
+    state: restarted

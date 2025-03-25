@@ -34,6 +34,12 @@ variable "observability_playbook_path" {
   default     = "ssh.yaml"
 }
 
+variable "playbooks_root_path" {
+  description = "Playbook root path"
+  type        = string
+  default     = ""
+}
+
 variable "ibmcloud_api_key" {
   type        = string
   default     = ""
