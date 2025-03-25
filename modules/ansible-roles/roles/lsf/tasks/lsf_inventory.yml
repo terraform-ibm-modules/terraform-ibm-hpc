@@ -1,5 +1,4 @@
 ---
-
 # tasks file for lsf_templates
 
 - name: Create inventory file from template
@@ -7,7 +6,7 @@
     src: lsf-inventory.j2
     dest: "{{ inventory_path }}/lsf-inventory"
   # delegate_to: localhost
-  delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
+  delegate_to: "{{ lsf_deployer_hostname }}.{{ compute_dns_name }}"
   run_once: true
 
 - name: Create config file from template
@@ -15,7 +14,7 @@
     src: lsf-config.j2
     dest: "{{ inventory_path }}/lsf-config.yml"
   # delegate_to: localhost
-  delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
+  delegate_to: "{{ lsf_deployer_hostname }}.{{ compute_dns_name }}"
   run_once: true
 
 # Update deployer_hostname in group_vars/all
@@ -23,15 +22,14 @@
 - name: Update deployer_hostname in group_vars/all
   ansible.builtin.lineinfile:
     path: "{{ inventory_path }}/group_vars/all"
-    regexp: '^deployer_hostname: .*'
-    line: 'deployer_hostname: {{ lsf_deployer_hostname }}'
+    regexp: "^deployer_hostname: .*"
+    line: "deployer_hostname: {{ lsf_deployer_hostname }}"
     # backup: yes
-  delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
+  delegate_to: "{{ lsf_deployer_hostname }}.{{ compute_dns_name }}"
   run_once: true
-
 # - name: Create all variable file from template
 #   template:
 #     src: lsf-all.j2
 #     dest: "{{ inventory_path }}/group_vars/all"
 #   # delegate_to: localhost
-#   delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
+#   delegate_to: "{{ lsf_deployer_hostname }}.{{ compute_dns_name }}"

@@ -1,5 +1,4 @@
 ---
-
 # Restart the NetworkManager on deployer node
 
 - name: Restart NetworkManager
@@ -7,7 +6,7 @@
     name: NetworkManager
     state: restarted
     enabled: yes
-  delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
+  delegate_to: "{{ lsf_deployer_hostname }}.{{ compute_dns_name }}"
   run_once: true
 
 # Installing required prerequisite packages for the LSF cluster creation.
@@ -35,4 +34,4 @@
   file:
     path: "/mnt/lsf/{{ lsf_dir }}"
     state: directory
-    mode: '0777'
+    mode: "0777"

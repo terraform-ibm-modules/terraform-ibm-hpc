@@ -164,6 +164,7 @@ locals {
   dns_instance_id = var.enable_deployer ? "" : module.dns[0].dns_instance_id
   # dns_custom_resolver_id = var.enable_deployer ? "" : module.dns[0].dns_custom_resolver_id
   dns_zone_map_list = var.enable_deployer ? [] : module.dns[0].dns_zone_maps
+  compute_dns_name  = var.dns_domain_names["compute"]
   compute_dns_zone_id = one(flatten([
     for dns_zone in local.dns_zone_map_list : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["compute"]
   ]))

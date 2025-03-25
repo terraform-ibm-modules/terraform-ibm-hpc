@@ -63,3 +63,9 @@ variable "lsf_deployer_hostname" {
   default     = null
   description = "Deployer host name"
 }
+
+variable "compute_dns_name" {
+  type        = string
+  default     = null
+  description = "Compute dns name"
+}

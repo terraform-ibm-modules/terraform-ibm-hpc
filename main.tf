@@ -218,6 +218,7 @@ module "write_compute_cluster_inventory" {
   nfs_install_dir       = local.nfs_install_dir
   enable_monitoring     = local.enable_monitoring
   lsf_deployer_hostname = local.lsf_deployer_hostname
+  compute_dns_name      = local.compute_dns_name
   depends_on            = [time_sleep.wait_60_seconds]
 }
 
