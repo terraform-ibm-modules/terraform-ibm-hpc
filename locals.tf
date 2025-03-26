@@ -240,8 +240,8 @@ locals {
   compute_nodes         = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].compute_vsi_data]))[*]["name"]
   compute_nodes_list    = var.enable_deployer ? [] : (length(local.compute_nodes) > 0 ? [format("%s-[001:%s]", join("-", slice(split("-", local.compute_nodes[0]), 0, length(split("-", local.compute_nodes[0])) - 1)), split("-", local.compute_nodes[length(local.compute_nodes) - 1])[length(split("-", local.compute_nodes[length(local.compute_nodes) - 1])) - 1])] : local.compute_nodes) #(length(local.compute_nodes) >= 10 ? [format("%s-00[%d:%d]", regex("^(.*?)-\\d+$", local.compute_nodes[0])[0], 1, length(local.compute_nodes))] : local.compute_nodes)
   client_nodes          = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].client_vsi_data]))[*]["name"]
-  compute_public_key_content  = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].compute_public_key_content]))
-  compute_private_key_content = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].compute_private_key_content]))
+  compute_public_key_contents  = var.enable_deployer ? "" : (flatten([module.landing_zone_vsi[0].compute_public_key_content]))
+  compute_private_key_contents = var.enable_deployer ? "" : (flatten([module.landing_zone_vsi[0].compute_private_key_content]))
   gui_hosts             = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA
   db_hosts              = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA
   ha_shared_dir         = "/mnt/lsf/shared"
@@ -274,4 +274,6 @@ locals {
   dynamic_compute_instances = var.dynamic_compute_instances
   compute_subnet_crn    = data.ibm_is_subnet.compute_subnet_crn.crn
   compute_ssh_keys_ids  = [for name in local.compute_ssh_keys : data.ibm_is_ssh_key.compute_ssh_keys[name].id]
+  compute_public_key_content  = local.compute_public_key_contents != null ? jsonencode(base64encode(local.compute_public_key_contents)) : ""
+  compute_private_key_content = local.compute_private_key_contents != null ? jsonencode(base64encode(local.compute_private_key_contents)) : ""
 }
