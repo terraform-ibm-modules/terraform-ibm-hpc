@@ -300,34 +300,34 @@ locals {
 
   storage_instance_private_ips = flatten(local.storage_instances[*]["ipv4_address"])
   storage_instance_ids         = flatten(local.storage_instances[*]["id"])
-  storage_instance_names       = flatten(local.storage_instances[*]["name"])
+  storage_instance_names       = try(toset([for name_details in flatten(local.storage_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
   storage_mgmt_instance_private_ips = flatten(local.strg_mgmt_instances[*]["ipv4_address"])
   storage_mgmtt_instance_ids        = flatten(local.strg_mgmt_instances[*]["id"])
-  storage_mgmt_instance_names       = flatten(local.strg_mgmt_instances[*]["name"])
+  storage_mgmt_instance_names       = try(toset([for name_details in flatten(local.strg_mgmt_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
   strg_tie_breaker_private_ips    = flatten(local.tie_brkr_instances[*]["ipv4_address"])
   strg_tie_breaker_instance_ids   = flatten(local.tie_brkr_instances[*]["id"])
-  strg_tie_breaker_instance_names = flatten(local.tie_brkr_instances[*]["name"])
+  strg_tie_breaker_instance_names = try(toset([for name_details in flatten(local.tie_brkr_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
   secondary_compute_instance_private_ips = flatten(local.compute_instances[*]["secondary_ipv4_address"])
   secondary_storage_instance_private_ips = flatten(local.storage_instances[*]["secondary_ipv4_address"])
 
   afm_instance_private_ips = flatten(local.afm_instances[*]["ipv4_address"])
   afm_instance_ids         = flatten(local.afm_instances[*]["id"])
-  afm_instance_names       = flatten(local.afm_instances[*]["name"])
+  afm_instance_names       = try(toset([for name_details in flatten(local.afm_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
   protocol_instance_private_ips = flatten(local.protocol_instances[*]["ipv4_address"])
   protocol_instance_ids         = flatten(local.protocol_instances[*]["id"])
-  protocol_instance_names       = flatten(local.protocol_instances[*]["name"])
+  protocol_instance_names       = try(toset([for name_details in flatten(local.protocol_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
   client_instance_private_ips = flatten(local.client_instances[*]["ipv4_address"])
   client_instance_ids         = flatten(local.client_instances[*]["id"])
-  client_instance_names       = flatten(local.client_instances[*]["name"])
+  client_instance_names       = try(toset([for name_details in flatten(local.client_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
   gklm_instance_private_ips = flatten(local.gklm_instances[*]["ipv4_address"])
   gklm_instance_ids         = flatten(local.gklm_instances[*]["id"])
-  gklm_instance_names       = flatten(local.gklm_instances[*]["name"])
+  gklm_instance_names       = try(toset([for name_details in flatten(local.gklm_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
   ldap_instance_private_ips = flatten(local.ldap_instances[*]["ipv4_address"])
   ldap_instance_ids         = flatten(local.ldap_instances[*]["id"])
