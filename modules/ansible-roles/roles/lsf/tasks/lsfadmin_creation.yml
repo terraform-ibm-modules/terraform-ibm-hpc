@@ -1,0 +1,27 @@
+---
+# Create and configure the lsfadmin user
+- name: Check if lsfadmin user exists
+  ansible.builtin.getent:
+    database: passwd
+    key: lsfadmin
+  register: user_info
+  ignore_errors: yes
+  run_once: true
+
+- name: Create lsfadmin user if not present
+  ansible.builtin.user:
+    name: lsfadmin
+    comment: "LSF Admin User"
+    create_home: yes
+    home: /home/lsfadmin
+    shell: /bin/bash
+  when: user_info.failed
+  register: user_created
+  run_once: true
+
+- name: Provide sudo access to lsfadmin only if new user is created
+  ansible.builtin.shell: "echo 'lsfadmin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers"
+  args:
+    executable: /bin/bash
+  when: user_created is changed
+  run_once: true

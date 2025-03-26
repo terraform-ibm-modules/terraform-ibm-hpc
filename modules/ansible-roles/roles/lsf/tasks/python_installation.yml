@@ -1,0 +1,66 @@
+---
+# Check if Python 3.11 is installed
+- name: Verify if Python 3.11 is installed
+  ansible.builtin.shell: "python3.11 --version"
+  register: python_check
+  ignore_errors: yes
+  changed_when: false
+
+# Install required packages if Python 3.11 is missing
+- name: Install prerequisite packages
+  ansible.builtin.yum:
+    name:
+      - python3.11
+      - ed
+      - libnsl
+      - python3.11-pip
+    state: present
+  when: python_check.rc != 0
+
+# Remove old Python 3 and pip3 symbolic links if a new Python 3.11 is installed
+- name: Remove existing symbolic links for Python 3 and pip3
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /usr/bin/python3
+    - /bin/pip3
+    - /etc/alternatives/python3
+  when: python_check.rc != 0
+
+# Create symbolic links for Python 3.11 and pip3.11
+- name: Create symbolic links for Python 3.11 and pip3.11
+  ansible.builtin.file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+  loop:
+    - { src: "/usr/bin/python3.11", dest: "/usr/bin/python3" }
+    - { src: "/usr/bin/pip3.11", dest: "/bin/pip3" }
+    - { src: "/usr/bin/python3.11", dest: "/etc/alternatives/python3" }
+  when: python_check.rc != 0
+
+# Install necessary Python packages using pip
+- name: Install required Python packages via pip
+  ansible.builtin.pip:
+    name:
+      - ibm-vpc==0.10.0
+      - ibm-cloud-networking-services
+      - ibm-cloud-sdk-core
+      - selinux
+      - requests==2.27.1
+      - pyyaml==6.0
+      - ansible==5.9.0
+      - ansible-core==2.12.6
+      - jmespath==1.0.1
+    executable: python3.11 -m pip
+
+# Ensure correct permissions for Python 3.11 library directories
+- name: Set proper permissions for Python 3.11 library directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: '0755'
+    recurse: yes
+  loop:
+    - /usr/local/lib/python3.11
+    - /usr/local/lib64/python3.11
