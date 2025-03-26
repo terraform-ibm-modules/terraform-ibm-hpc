@@ -100,15 +100,6 @@
     version: "wheel_pkg"
   when: monitoring_enable_for_management | bool
 
-- name: Ensure /opt/ibm/lsfsuite directory exists
-  ansible.builtin.file:
-    path: /opt/ibm/lsfsuite
-    state: directory
-    mode: '0755'
-    owner: lsfadmin
-    group: lsfadmin
-  when: monitoring_enable_for_management | bool
-
 - name: Install LSF Prometheus Exporter
   ansible.builtin.command:
     cmd: "{{ pip_executable }} install /tmp/lsf_prometheus_exporter/lsf_prometheus_exporter-1.0.0-py3-none-any.whl"
