@@ -1,7 +1,7 @@
 solution: lsf
 default_existing_resource_group: Default
 non_default_existing_resource_group: HPCC
-zone: eu-de-2
+zone: us-east-2
 cluster_name: HPC-LSF-1
 remote_allowed_ips:
 ssh_key: geretain-hpc
