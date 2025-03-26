@@ -12,14 +12,20 @@ data "ibm_is_instance_profile" "compute" {
   name = var.compute_profile
 }
 
-data "ibm_is_instance_profile" "storage" {
-  name = var.storage_profile
-}
-
 data "ibm_is_instance_profile" "protocol" {
   name = var.protocol_profile
 }
 */
+
+data "ibm_is_instance_profile" "storage" {
+  count = length(var.storage_instances)
+  name = var.storage_instances[count.index]["profile"]
+}
+
+data "ibm_is_instance_profile" "storage_tie_instance" {
+  count = length(var.storage_instances)
+  name = var.storage_instances[count.index]["profile"]
+}
 
 data "ibm_is_image" "client" {
   count = length(var.client_instances)

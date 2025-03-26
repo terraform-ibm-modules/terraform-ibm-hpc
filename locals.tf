@@ -301,14 +301,16 @@ locals {
   storage_instance_private_ips = flatten(local.storage_instances[*]["ipv4_address"])
   storage_instance_ids         = flatten(local.storage_instances[*]["id"])
   storage_instance_names       = try(toset([for name_details in flatten(local.storage_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+  storage_ips_with_vol_mapping = module.landing_zone_vsi[*].instance_ips_with_vol_mapping
 
   storage_mgmt_instance_private_ips = flatten(local.strg_mgmt_instances[*]["ipv4_address"])
   storage_mgmtt_instance_ids        = flatten(local.strg_mgmt_instances[*]["id"])
   storage_mgmt_instance_names       = try(toset([for name_details in flatten(local.strg_mgmt_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
-  strg_tie_breaker_private_ips    = flatten(local.tie_brkr_instances[*]["ipv4_address"])
-  strg_tie_breaker_instance_ids   = flatten(local.tie_brkr_instances[*]["id"])
-  strg_tie_breaker_instance_names = try(toset([for name_details in flatten(local.tie_brkr_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+  strg_tie_breaker_private_ips     = flatten(local.tie_brkr_instances[*]["ipv4_address"])
+  strg_tie_breaker_instance_ids    = flatten(local.tie_brkr_instances[*]["id"])
+  strg_tie_breaker_instance_names  = try(toset([for name_details in flatten(local.tie_brkr_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+  tie_breaker_ips_with_vol_mapping = module.landing_zone_vsi[*].instance_ips_with_vol_mapping_tie_breaker
 
   secondary_compute_instance_private_ips = flatten(local.compute_instances[*]["secondary_ipv4_address"])
   secondary_storage_instance_private_ips = flatten(local.storage_instances[*]["secondary_ipv4_address"])
