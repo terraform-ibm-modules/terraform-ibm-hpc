@@ -218,8 +218,8 @@ module "write_compute_cluster_inventory" {
   lsf_deployer_hostname = local.lsf_deployer_hostname
   # Other Code
   dns_domain_names      = var.dns_domain_names["compute"]
-  # compute_public_key_content = var.compute_public_key_content
-  # compute_private_key_content =  var.compute_private_key_content
+  compute_public_key_content  = local.compute_public_key_content
+  compute_private_key_content = local.compute_private_key_content
   enable_hyperthreading = var.enable_hyperthreading
   vpc_id                = local.vpc_id
   vcpus                 = local.vcpus

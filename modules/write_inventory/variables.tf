@@ -71,19 +71,19 @@ variable "dns_domain_names" {
   description = "IBM Cloud HPC DNS domain names."
 }
 
-# variable "compute_public_key_content" {
-#   type        = string
-#   sensitive   = true
-#   default     = null
-#   description = "Compute security key content."
-# }
+variable "compute_public_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Compute security key content."
+}
 
-# variable "compute_private_key_content" {
-#   type        = string
-#   sensitive   = true
-#   default     = null
-#   description = "Compute security key content."
-# }
+variable "compute_private_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Compute security key content."
+}
 
 variable "enable_hyperthreading" {
   description = "Enable or disable hyperthreading"

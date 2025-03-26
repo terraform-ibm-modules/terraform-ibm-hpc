@@ -15,6 +15,8 @@ resource "local_sensitive_file" "infra_details_to_json" {
   "dns_domain_names": ${jsonencode(var.dns_domain_names)},
   "enable_hyperthreading": ${jsonencode(var.enable_hyperthreading)},
   "ibmcloud_api_key": ${jsonencode(var.ibmcloud_api_key)},
+  "compute_public_key_content": ${jsonencode(var.compute_public_key_content)},
+  "compute_private_key_content": ${jsonencode(var.compute_private_key_content)},
   "vpc_id": ${jsonencode(var.vpc_id)},
   "vcpus": ${jsonencode(var.vcpus)},
   "rc_ncores": ${jsonencode(var.ncores)},
