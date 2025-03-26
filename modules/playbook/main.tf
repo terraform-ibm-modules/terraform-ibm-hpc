@@ -111,7 +111,7 @@ resource "local_file" "create_playbook_for_mgmt_config" {
       delay: 10
 
 - name: Prerequisite Configuration
-  hosts: [all_nodes]
+  hosts: [management_nodes]
   any_errors_fatal: true
   gather_facts: false
   vars:
