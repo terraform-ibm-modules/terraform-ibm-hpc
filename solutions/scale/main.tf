@@ -65,6 +65,7 @@ module "scale" {
   skip_iam_authorization_policy                    = local.env.skip_iam_authorization_policy
   skip_kms_s2s_auth_policy                         = local.env.skip_kms_s2s_auth_policy
   ibmcloud_api_key                                 = local.env.ibmcloud_api_key
+  afm_instances                                    = local.env.afm_instances
   enable_ldap                                      = local.env.enable_ldap
   ldap_basedns                                     = local.env.ldap_basedns
   ldap_admin_password                              = local.env.ldap_admin_password

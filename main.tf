@@ -231,7 +231,7 @@ resource "null_resource" "cluster_destroyer" {
 }
 
 module "file_storage" {
-  count              = var.enable_deployer == false && var.scheduler != null ? 1 : 0 
+  count              = var.enable_deployer == false && var.scheduler != "null" ? 1 : 0 
   source             = "./modules/file_storage"
   zone               = var.zones[0] # always the first zone
   resource_group_id  = local.resource_group_ids["service_rg"]

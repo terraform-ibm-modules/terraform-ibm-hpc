@@ -271,7 +271,7 @@ locals {
 
 # file Share OutPut
 locals {
-  fileshare_name_mount_path_map =  var.enable_deployer ? {} : (var.scheduler != null ? module.file_storage[0].name_mount_path_map : {})
+  fileshare_name_mount_path_map =  var.enable_deployer ? {} : (var.scheduler != "null" ? module.file_storage[0].name_mount_path_map : {})
 }
 
 locals {
