@@ -66,7 +66,7 @@ resource "null_resource" "run_playbook" {
 }
 
 resource "null_resource" "run_lsf_playbooks" {
-  count = var.inventory_path != null ? 0 : 0
+  count = var.inventory_path != null ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -90,7 +90,7 @@ resource "local_file" "create_playbook_for_mgmt_config" {
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
 - name: Check passwordless SSH connection is setup
-  hosts: [all_nodes]
+  hosts: [management_nodes]
   any_errors_fatal: true
   gather_facts: false
   vars:
