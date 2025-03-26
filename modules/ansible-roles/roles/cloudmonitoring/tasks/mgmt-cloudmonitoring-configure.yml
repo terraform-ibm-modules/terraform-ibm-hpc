@@ -100,9 +100,9 @@
     version: "wheel_pkg"
   when: monitoring_enable_for_management | bool
 
-- name: Ensure /opt/ibm/lsf directory exists
+- name: Ensure /opt/ibm/lsfsuite directory exists
   ansible.builtin.file:
-    path: /opt/ibm/lsf
+    path: /opt/ibm/lsfsuite
     state: directory
     mode: '0755'
     owner: lsfadmin
@@ -116,10 +116,10 @@
 
 - name: Create start script for LSF Prometheus Exporter
   ansible.builtin.copy:
-    dest: /opt/ibm/lsf/start_lsf_prometheus_exporter.sh
+    dest: /opt/ibm/lsfsuite/start_lsf_prometheus_exporter.sh
     content: |
       #!/bin/bash
-      source /opt/ibm/lsf/conf/profile.lsf
+      source /opt/ibm/lsfsuite/conf/profile.lsf
       exec /usr/bin/python3 -m lsf_prometheus_exporter
     mode: '0755'
     owner: lsfadmin
@@ -128,7 +128,7 @@
 
 - name: Ensure start script has correct permissions
   ansible.builtin.file:
-    path: /opt/ibm/lsf/start_lsf_prometheus_exporter.sh
+    path: /opt/ibm/lsfsuite/start_lsf_prometheus_exporter.sh
     mode: '0755'
     owner: lsfadmin
     group: lsfadmin
@@ -144,7 +144,7 @@
 
       [Service]
       Type=simple
-      ExecStart=/opt/ibm/lsf/start_lsf_prometheus_exporter.sh
+      ExecStart=/opt/ibm/lsfsuite/start_lsf_prometheus_exporter.sh
       TimeoutSec=0
       RemainAfterExit=yes
       GuessMainPID=no
