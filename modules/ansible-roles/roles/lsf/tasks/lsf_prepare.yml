@@ -1,13 +1,30 @@
 ---
-# Restart the NetworkManager on deployer node
+# NetworkManager status check
+- name: Check NetworkManager status
+  ansible.builtin.command: systemctl is-active NetworkManager
+  register: nm_status
+  delegate_to: "{{ lsf_deployer_hostname }}.{{ compute_dns_name }}"
+  run_once: true
 
-- name: Restart NetworkManager
+# NetworkManager not in active, again restart
+- name: Restart NetworkManager if not active
   ansible.builtin.systemd:
     name: NetworkManager
     state: restarted
     enabled: yes
   delegate_to: "{{ lsf_deployer_hostname }}.{{ compute_dns_name }}"
+  when: nm_status.stdout != 'active'
   run_once: true
+
+# # Restart the NetworkManager on deployer node
+
+# - name: Restart NetworkManager
+#   ansible.builtin.systemd:
+#     name: NetworkManager
+#     state: restarted
+#     enabled: yes
+#   delegate_to: "{{ lsf_deployer_hostname }}.{{ compute_dns_name }}"
+#   run_once: true
 
 # Installing required prerequisite packages for the LSF cluster creation.
 
@@ -35,20 +52,3 @@
     path: "/mnt/lsf/{{ lsf_dir }}"
     state: directory
     mode: "0777"
-
-# NetworkManager status check
-- name: Check NetworkManager status
-  ansible.builtin.command: systemctl is-active NetworkManager
-  register: nm_status
-  delegate_to: "{{ lsf_deployer_hostname }}.{{ compute_dns_name }}"
-  run_once: true
-
-# NetworkManager not in active, again restart
-- name: Restart NetworkManager if not active
-  ansible.builtin.systemd:
-    name: NetworkManager
-    state: restarted
-    enabled: yes
-  delegate_to: "{{ lsf_deployer_hostname }}.{{ compute_dns_name }}"
-  when: nm_status.stdout != 'active'
-  run_once: true
