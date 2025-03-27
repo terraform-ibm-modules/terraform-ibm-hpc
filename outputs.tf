@@ -9,6 +9,7 @@ output "deployer" {
 
 output "landing_zone_vsi" {
   value = module.landing_zone_vsi
+  sensitive = true
 }
 
 output "dns" {

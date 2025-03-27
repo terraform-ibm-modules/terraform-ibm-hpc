@@ -99,7 +99,7 @@ variable "client_instances" {
   default = [{
     profile = "cx2-2x4"
     count   = 2
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "Number of instances to be launched for client."
 }
@@ -132,7 +132,7 @@ variable "management_instances" {
   default = [{
     profile = "cx2-2x4"
     count   = 2
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "Number of instances to be launched for management."
 }
@@ -148,7 +148,7 @@ variable "static_compute_instances" {
   default = [{
     profile = "cx2-2x4"
     count   = 1
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "Min Number of instances to be launched for compute cluster."
 }
@@ -164,7 +164,7 @@ variable "dynamic_compute_instances" {
   default = [{
     profile = "cx2-2x4"
     count   = 250
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "MaxNumber of instances to be launched for compute cluster."
 }
@@ -215,7 +215,7 @@ variable "storage_instances" {
   default = [{
     profile         = "bx2-2x8"
     count           = 2
-    image           = "ibm-redhat-8-10-minimal-amd64-2"
+    image           = "ibm-redhat-8-10-minimal-amd64-4"
     filesystem_name = "fs1"
   }]
   description = "Number of instances to be launched for storage cluster."
@@ -243,7 +243,7 @@ variable "protocol_instances" {
   default = [{
     profile = "bx2-2x8"
     count   = 2
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "Number of instances to be launched for protocol hosts."
 }
@@ -398,7 +398,7 @@ variable "afm_instances" {
   default = [{
     profile = "bx2-32x128"
     count   = 1
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "Number of instances to be launched for afm hosts."
 }
@@ -435,7 +435,7 @@ variable "gklm_instances" {
   default = [{
     profile = "bx2-2x8"
     count   = 2
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "Number of instances to be launched for client."
 }

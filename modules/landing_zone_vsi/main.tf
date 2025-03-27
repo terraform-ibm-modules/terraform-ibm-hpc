@@ -14,7 +14,7 @@ resource "local_sensitive_file" "write_meta_private_key" {
 module "storage_key" {
   count            = local.enable_storage ? 1 : 0
   source           = "./../key"
-  private_key_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage_id_rsa" : "${path.root}/modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
+  # private_key_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage_id_rsa" : "${path.root}/modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
 }
 
 module "client_sg" {

@@ -67,3 +67,13 @@ output "instance_ips_with_vol_mapping_tie_breaker" {
   value = try({ for instance_details in flatten([for name_details in (flatten(module.storage_cluster_tie_breaker_vsi[*]["list"])[*]["name"]): name_details]) : instance_details =>
   data.ibm_is_instance_profile.storage_tie_instance[0].disks[0].quantity[0].value == 1 ? ["/dev/vdb"] : ["/dev/vdb", "/dev/vdc"] }, {})
 }
+
+output "storage_private_key_content" {
+  value = try(module.storage_key[0].private_key_content, "")
+  sensitive = true
+}
+
+output "storage_public_key_content" {
+  value = try(module.storage_key[0].public_key_content, "")
+  sensitive = true
+}

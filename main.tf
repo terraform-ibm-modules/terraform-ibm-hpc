@@ -538,7 +538,7 @@ module "storage_cluster_configuration" {
   default_data_replicas               = var.filesystem_config[0]["default_data_replica"]
   bastion_instance_public_ip          = jsonencode(local.bastion_fip)
   bastion_ssh_private_key             = var.bastion_ssh_private_key
-  meta_private_key                    = local.storage_private_key_path
+  meta_private_key                    = module.landing_zone_vsi[0].storage_private_key_content
   scale_version                       = local.scale_version
   spectrumscale_rpms_path             = var.spectrumscale_rpms_path
   enable_mrot_conf                    = local.enable_mrot_conf ? "True" : "False"
@@ -579,18 +579,18 @@ module "compute_playbook" {
   depends_on       = [ module.compute_inventory ]
 }
 
-module "storage_playbook" {
-  count            = var.enable_deployer == false && var.scheduler == null ? 1 : 0
-  source           = "./modules/playbook"
-  bastion_fip      = local.bastion_fip
-  private_key_path = local.storage_private_key_path
-  inventory_path   = local.storage_inventory_path
-  playbook_path    = local.storage_playbook_path
-  enable_bastion   = var.enable_bastion
-  enable_scale     = var.enable_scale
-  scheduler        = var.scheduler
-  depends_on       = [ module.write_storage_cluster_inventory ]
-}
+# module "storage_playbook" {
+#   count            = var.enable_deployer == false && var.scheduler == null ? 1 : 0
+#   source           = "./modules/playbook"
+#   bastion_fip      = local.bastion_fip
+#   private_key_path = local.storage_private_key_path
+#   inventory_path   = local.storage_inventory_path
+#   playbook_path    = local.storage_playbook_path
+#   enable_bastion   = var.enable_bastion
+#   enable_scale     = var.enable_scale
+#   scheduler        = var.scheduler
+#   depends_on       = [ module.write_storage_cluster_inventory ]
+# }
 
 ###################################################
 # Observability Modules
