@@ -1136,6 +1136,6 @@ variable "create_separate_namespaces" {
 
 variable "create_scale_cluster" {
   type        = bool
-  default     = false
+  default     = true
   description = "Flag to represent whether to create scale cluster or not."
 }
