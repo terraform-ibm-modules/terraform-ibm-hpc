@@ -551,7 +551,7 @@ module "storage_cluster_configuration" {
   scale_encryption_servers            = var.scale_encryption_enabled && var.scale_encryption_type == "gklm" ? jsonencode(local.gklm_instance_private_ips) : null
   enable_ldap                         = var.enable_ldap
   ldap_basedns                        = var.ldap_basedns
-  ldap_server                         = var.enable_ldap ? local.ldap_instance_private_ips[0] : []
+  ldap_server                         = var.enable_ldap ? local.ldap_instance_private_ips[0] : jsonencode("")
   ldap_admin_password                 = var.ldap_admin_password
   ldap_server_cert                    = var.ldap_server_cert
   enable_key_protect                  = var.scale_encryption_type == "key_protect" ? "True" : "False"
