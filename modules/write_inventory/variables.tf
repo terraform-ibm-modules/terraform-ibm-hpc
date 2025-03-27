@@ -158,9 +158,19 @@ variable "compute_subnets_cidr" {
 }
 
 variable "dynamic_compute_instances" {
-  description = "Dynamic compute instances configuration"
-  type        = list(map(any))
-  default     = null
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  default = [{
+    profile = "cx2-2x4"
+    count   = 250
+    image   = "ibm-redhat-8-10-minimal-amd64-2"
+  }]
+  description = "MaxNumber of instances to be launched for compute cluster."
 }
 
 variable "compute_ssh_keys_ids" {
