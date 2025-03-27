@@ -259,7 +259,7 @@ func LSFControlBctrld(t *testing.T, sClient *ssh.Client, startOrStop string, log
 
 	// Sleep for a specified duration to allow time for the daemon to start or stop
 	if startOrStop == "stop" {
-		time.Sleep(30 * time.Second)
+		time.Sleep(63 * time.Second)
 	} else {
 		time.Sleep(120 * time.Second)
 	}
@@ -1305,8 +1305,8 @@ func VerifyEncryption(t *testing.T, apiKey, region, resourceGroup, clusterPrefix
 		fileSharesCmd = fmt.Sprintf("ibmcloud is shares | grep %s | awk 'NR>1 {print $2}'", clusterPrefix)
 	}
 
-	// Retrieve the list of file shares
-	fileSharesOutput, err := exec.Command("bash", "-c", fileSharesCmd).CombinedOutput()
+	//	// Retrieve the list of file shares (retry once after 2s if it fails)
+	fileSharesOutput, err := utils.RunCommandWithRetry(fileSharesCmd, 1, 60*time.Second)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve file shares: %w", err)
 	}

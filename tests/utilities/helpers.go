@@ -564,3 +564,21 @@ func GetFirstWorkerNodeInstanceType(t *testing.T, terraformVars map[string]inter
 	logger.Info(t, fmt.Sprintf("First Worker Node Instance Type: %s", instanceTypeStr))
 	return instanceTypeStr, nil
 }
+
+// RunCommandWithRetry executes a shell command with retries
+func RunCommandWithRetry(cmd string, retries int, delay time.Duration) ([]byte, error) {
+	var output []byte
+	var err error
+
+	for i := 0; i <= retries; i++ {
+		output, err = exec.Command("bash", "-c", cmd).CombinedOutput()
+		if err == nil {
+			return output, nil
+		}
+		if i < retries {
+			time.Sleep(delay) // Wait before retrying
+		}
+	}
+
+	return output, err
+}
