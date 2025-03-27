@@ -59,7 +59,7 @@
       remote_write:
        - url: "{{ cloud_monitoring_prws_url }}"
          authorization:
-          credentials: "{{ cloud_monitoring_prws_key }}"
+          credentials: "{{ cloud_monitoring_prws_key }}" #pragma: allowlist secret
     dest: "{{ prometheus_config_file }}"
   when: monitoring_enable_for_management | bool
 
@@ -115,7 +115,7 @@
     executable: /bin/bash
   when: monitoring_enable_for_management | bool
 
-- name: Detect correct pip executable
+- name: Detect correct pip executable #pragma: allowlist secret
   ansible.builtin.command: "/usr/bin/python3.11 -m pip --version"
   register: pip_check
   ignore_errors: true
@@ -127,7 +127,7 @@
 
 - name: Clone LSF Prometheus Exporter repository
   ansible.builtin.git:
-    repo: "https://89088669eefb301f1aaa7046c9e567a372c51fe2@github.ibm.com/platformcomputing/lsf_prometheus_exporter"
+    repo: "https://89088669eefb301f1aaa7046c9e567a372c51fe2@github.ibm.com/platformcomputing/lsf_prometheus_exporter" #pragma: allowlist secret
     dest: "/tmp/lsf_prometheus_exporter"
     version: "wheel_pkg"
   when: monitoring_enable_for_management | bool
@@ -194,5 +194,3 @@
     enabled: yes
     state: restarted
   when: monitoring_enable_for_management | bool
-
-
