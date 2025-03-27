@@ -4,7 +4,7 @@ locals {
 }
 
 resource "local_file" "create_playbook" {
-  count    = var.inventory_path != null ? 0 : 0
+  count    = var.inventory_path != null ? 1 : 0
   content  = <<EOT
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
@@ -54,7 +54,7 @@ EOT
 }
 
 resource "null_resource" "run_playbook" {
-  count = var.inventory_path != null ? 0 : 0
+  count = var.inventory_path != null ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook -f 50 -i ${var.inventory_path} ${var.playbook_path}"
@@ -66,7 +66,7 @@ resource "null_resource" "run_playbook" {
 }
 
 resource "null_resource" "run_lsf_playbooks" {
-  count = var.inventory_path != null ? 0 : 0
+  count = var.inventory_path != null ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -85,7 +85,7 @@ resource "null_resource" "run_lsf_playbooks" {
 }
 
 resource "local_file" "create_playbook_for_mgmt_config" {
-  count    = var.inventory_path != null ? 0 : 0
+  count    = var.inventory_path != null ? 1 : 0
   content  = <<EOT
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
@@ -134,7 +134,7 @@ EOT
 
 
 resource "null_resource" "run_playbook_for_mgmt_config" {
-  count = var.inventory_path != null ? 0 : 0
+  count = var.inventory_path != null ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook -i ${var.inventory_path} ${local.lsf_mgmt_config}"
@@ -146,7 +146,7 @@ resource "null_resource" "run_playbook_for_mgmt_config" {
 }
 
 resource "null_resource" "export_api" {
-  count = var.inventory_path != null && var.observability_provision ? 0 : 0
+  count = var.inventory_path != null && var.observability_provision ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<EOT
@@ -164,7 +164,7 @@ resource "null_resource" "export_api" {
 }
 
 resource "local_file" "create_observability_playbook" {
-  count    = var.inventory_path != null && var.observability_provision ? 0 : 0
+  count    = var.inventory_path != null && var.observability_provision ? 1 : 0
   content  = <<EOT
 - name: Cloud Logs Configuration
   hosts: [all_nodes]
@@ -202,7 +202,7 @@ EOT
 }
 
 resource "null_resource" "run_observability_playbooks" {
-  count = var.inventory_path != null && var.observability_provision ? 0 : 0
+  count = var.inventory_path != null && var.observability_provision ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook -f 50 -i ${var.inventory_path} ${var.observability_playbook_path}"
