@@ -9,6 +9,7 @@
     name:
       - git
       - python3-pip
+      - wget
     state: present
   when: monitoring_enable_for_management | bool
 
@@ -62,6 +63,37 @@
     dest: "{{ prometheus_config_file }}"
   when: monitoring_enable_for_management | bool
 
+- name: Create systemd service for Prometheus Agent
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/prometheus.service
+    content: |
+      [Unit]
+      Description=Prometheus Agent
+      After=network-online.target
+
+      [Service]
+      Type=simple
+      ExecStart=/opt/prometheus/prometheus --config.file=/opt/prometheus/prometheus.yml --enable-feature=agent --storage.agent.path="/opt/prometheus/data-agent"
+      TimeoutSec=0
+      RemainAfterExit=yes
+      GuessMainPID=no
+      RestartSec=10
+      User=prometheus
+      Group=prometheus
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: '0644'
+  when: monitoring_enable_for_management | bool
+
+- name: Reload systemd and start Prometheus Agent
+  ansible.builtin.systemd:
+    daemon_reload: yes
+    name: prometheus
+    enabled: yes
+    state: restarted
+  when: monitoring_enable_for_management | bool
+
 - name: Install Python 3.11
   ansible.builtin.yum:
     name: python3.11
@@ -107,10 +139,10 @@
 
 - name: Create start script for LSF Prometheus Exporter
   ansible.builtin.copy:
-    dest: /opt/ibm/lsfsuite/start_lsf_prometheus_exporter.sh
+    dest: /opt/ibm/lsfsuite/lsf/start_lsf_prometheus_exporter.sh
     content: |
       #!/bin/bash
-      source /opt/ibm/lsfsuite/conf/profile.lsf
+      source /opt/ibm/lsfsuite/lsf/conf/profile.lsf
       exec /usr/bin/python3 -m lsf_prometheus_exporter
     mode: '0755'
     owner: lsfadmin
@@ -119,7 +151,7 @@
 
 - name: Ensure start script has correct permissions
   ansible.builtin.file:
-    path: /opt/ibm/lsfsuite/start_lsf_prometheus_exporter.sh
+    path: /opt/ibm/lsfsuite/lsf/start_lsf_prometheus_exporter.sh
     mode: '0755'
     owner: lsfadmin
     group: lsfadmin
@@ -135,7 +167,7 @@
 
       [Service]
       Type=simple
-      ExecStart=/opt/ibm/lsfsuite/start_lsf_prometheus_exporter.sh
+      ExecStart=/opt/ibm/lsfsuite/lsf/start_lsf_prometheus_exporter.sh
       TimeoutSec=0
       RemainAfterExit=yes
       GuessMainPID=no
@@ -162,3 +194,5 @@
     enabled: yes
     state: restarted
   when: monitoring_enable_for_management | bool
+
+

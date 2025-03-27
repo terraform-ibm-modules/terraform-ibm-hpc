@@ -117,6 +117,10 @@
   environment:
     VPC_API_KEY: "{{ lookup('env', 'VPC_API_KEY') }}"
 
+- name: Debug API Key
+  debug:
+    msg: "API Key is {{ env_api_key.stdout }}"
+
 - name: Run post-config.sh script
   ansible.builtin.command: >
     /opt/ibm/post-config.sh -h {{ cloud_logs_ingress_private_endpoint }}
