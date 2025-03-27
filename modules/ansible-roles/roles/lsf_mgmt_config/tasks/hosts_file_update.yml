@@ -18,18 +18,23 @@
   run_once: true
   when: ip_mapping_check.rc != 0
 
-- name: Get IP addresses using nslookup
-  shell: "nslookup {{ inventory_hostname }} | awk '/Address: / { print $2 }' | tail -n 1"
+- name: Get IP addresses using getent
+  shell: "getent hosts {{ inventory_hostname }} | awk '{ print $1 }'"
   register: dns_ip
   changed_when: false
 
 - name: Store IPs for each host
   set_fact:
     host_ip: "{{ dns_ip.stdout }}"
-
+    
 - name: Aggregate all IPs from all hosts
   set_fact:
     all_ips: "{{ groups['all'] | map('extract', hostvars, 'host_ip') | list }}"
+  run_once: true
+
+- name: Display all resolved IP addresses
+  debug:
+    msg: "Resolved IPs: {{ all_ips }}"
   run_once: true
 
 - name: Check if each IP exists in LSF hosts file

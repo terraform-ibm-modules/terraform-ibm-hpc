@@ -90,7 +90,7 @@ resource "local_file" "create_playbook_for_mgmt_config" {
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
 - name: Check passwordless SSH connection is setup
-  hosts: [management_nodes]
+  hosts: [all_nodes]
   any_errors_fatal: true
   gather_facts: false
   vars:
@@ -111,7 +111,7 @@ resource "local_file" "create_playbook_for_mgmt_config" {
       delay: 10
 
 - name: Prerequisite Configuration
-  hosts: [management_nodes]
+  hosts: [all_nodes]
   any_errors_fatal: true
   gather_facts: false
   vars:

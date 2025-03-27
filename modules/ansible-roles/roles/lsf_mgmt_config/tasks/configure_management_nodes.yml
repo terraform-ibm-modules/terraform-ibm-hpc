@@ -22,6 +22,7 @@
   register: queue_check
   changed_when: false
   failed_when: false
+  run_once: true
 
 - name: Management Config | Append LSF queue configuration to lsb.queues
   blockinfile:
@@ -82,6 +83,7 @@
   register: lsf_host_addr_range_marker_check
   changed_when: false
   failed_when: false
+  run_once: true
 
 - name: Management Config | Append LSF_HOST_ADDR_RANGE to lsf.cluster
   blockinfile:
