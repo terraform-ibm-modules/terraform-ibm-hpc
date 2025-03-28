@@ -265,10 +265,10 @@ locals {
   vcpus                       = var.enable_deployer ? 0 : tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile.vcpu_count[0].value)
   ncores                      = var.enable_deployer ? 0 : tonumber(local.vcpus / 2)
   ncpus                       = var.enable_deployer ? 0 : tonumber(var.enable_hyperthreading ? local.vcpus : local.ncores)
-  memInMB                     = var.enable_deployer ? 0 : tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile.memory[0].value) * 1024
-  rc_maxNum                   = var.enable_deployer ? 0 : tonumber(var.dynamic_compute_instances[0].count)
+  mem_in_mb                   = var.enable_deployer ? 0 : tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile.memory[0].value) * 1024
+  rc_max_num                  = var.enable_deployer ? 0 : tonumber(var.dynamic_compute_instances[0].count)
   rc_profile                  = var.enable_deployer ? "" : var.dynamic_compute_instances[0].profile
-  imageID                     = var.enable_deployer ? "" : data.ibm_is_image.dynamic_compute.id
+  image_id                    = var.enable_deployer ? "" : data.ibm_is_image.dynamic_compute.id
   compute_subnets_cidr        = var.compute_subnets_cidr
   dynamic_compute_instances   = var.dynamic_compute_instances
   compute_subnet_crn          = data.ibm_is_subnet.compute_subnet_crn.crn

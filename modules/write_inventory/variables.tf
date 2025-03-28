@@ -109,13 +109,13 @@ variable "ncpus" {
   default     = null
 }
 
-variable "memInMB" {
+variable "mem_in_mb" {
   description = "Memory in MB"
   type        = number
   default     = null
 }
 
-variable "rc_maxNum" {
+variable "rc_max_num" {
   description = "Maximum number of resource instances"
   type        = number
   default     = null
@@ -127,7 +127,7 @@ variable "rc_profile" {
   default     = null
 }
 
-variable "imageID" {
+variable "image_id" {
   description = "Image ID for the compute instance"
   type        = string
   default     = null
@@ -180,9 +180,10 @@ variable "compute_ssh_keys_ids" {
 }
 
 variable "ibmcloud_api_key" {
-  type      = string
-  sensitive = true
-  default   = null
+  description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
+  type        = string
+  sensitive   = true
+  default     = null
 }
 
 variable "zones" {

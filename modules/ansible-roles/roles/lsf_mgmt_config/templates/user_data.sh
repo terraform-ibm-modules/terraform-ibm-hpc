@@ -17,7 +17,7 @@ network_interface="eth0"
 # Setup Hostname
 HostIP=$(hostname -I | awk '{print $1}')
 hostname=${cluster_prefix}-${HostIP//./-}
-hostnamectl set-hostname $hostname
+hostnamectl set-hostname "${hostname}"
 systemctl stop firewalld
 systemctl disable firewalld
 
@@ -32,7 +32,7 @@ fi
 sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo \'Please login as the user \\\\\"$USER\\\\\" rather than the user \\\\\"root\\\\\".\';echo;sleep 5; exit 142\" /" /root/.ssh/authorized_keys
 
 # Make lsfadmin and vpcuser set to newer expire
-chage -I -1 -m 0 -M 99999 -E -1 -W 14 $USER
+chage -I -1 -m 0 -M 99999 -E -1 -W 14 "${USER}"
 chage -I -1 -m 0 -M 99999 -E -1 -W 14 lsfadmin
 
 # Setup Network configuration
@@ -114,7 +114,6 @@ LSF_TOP="/opt/ibm/lsf_worker"
 LSF_TOP_VERSION=10.1
 LSF_CONF=$LSF_TOP/conf
 LSF_CONF_FILE=$LSF_CONF/lsf.conf
-LSF_HOSTS_FILE=${LSF_CONF}/hosts
 . $LSF_CONF/profile.lsf >> $logfile
 echo "Logging env variables" >> $logfile
 env >> $logfile
@@ -181,9 +180,9 @@ echo "LSF_STARTUP_PATH=$LSF_TOP_VERSION/linux3.10-glibc2.17-x86_64/etc/" | sudo 
 chmod 600 /etc/lsf.sudoers
 ls -l /etc/lsf.sudoers
 
-cd /opt/ibm/lsf_worker/10.1/linux3.10-glibc2.17-x86_64/etc/
+cd /opt/ibm/lsf_worker/10.1/linux3.10-glibc2.17-x86_64/etc/ || exit
 sed -i "s|/opt/ibm/lsf/|/opt/ibm/lsf_worker/|g" lsf_daemons
-cd -
+cd - || exit
 
 sudo /opt/ibm/lsf_worker/10.1/install/hostsetup --top="/opt/ibm/lsf_worker" --setuid >> $logfile
 /opt/ibm/lsf_worker/10.1/install/hostsetup --top="/opt/ibm/lsf_worker" --boot="y" --start="y" --dynamic 2>&1 >> $logfile

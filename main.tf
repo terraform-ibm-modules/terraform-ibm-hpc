@@ -226,10 +226,10 @@ module "write_compute_cluster_inventory" {
   vcpus                       = local.vcpus
   ncores                      = local.ncores
   ncpus                       = local.ncpus
-  memInMB                     = local.memInMB
-  rc_maxNum                   = local.rc_maxNum
+  mem_in_mb                   = local.mem_in_mb
+  rc_max_num                  = local.rc_max_num
   rc_profile                  = local.rc_profile
-  imageID                     = local.imageID
+  image_id                    = local.image_id
   compute_subnet_id           = local.compute_subnet_id
   region                      = local.region
   resource_group_id           = local.resource_group_ids["service_rg"]
