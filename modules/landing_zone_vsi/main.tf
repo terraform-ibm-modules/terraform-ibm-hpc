@@ -241,7 +241,7 @@ module "storage_cluster_tie_breaker_vsi" {
 module "protocol_vsi" {
   count                         = length(var.protocol_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "4.5.0"
   vsi_per_subnet                = var.protocol_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -265,8 +265,8 @@ module "protocol_vsi" {
   secondary_security_groups   = local.protocol_secondary_security_group
   secondary_subnets           = local.protocol_subnets
   placement_group_id          = var.placement_group_ids
-  # manage_reserved_ips             = true
-  # primary_vni_additional_ip_count = var.protocol_instances[count.index]["count"]
+  manage_reserved_ips             = true
+  primary_vni_additional_ip_count = var.protocol_instances[count.index]["count"]
   #placement_group_id = var.placement_group_ids[(var.protocol_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
