@@ -183,9 +183,9 @@ module "storage_vsi" {
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
-  manage_reserved_ips             = true
+  # manage_reserved_ips             = true
   # primary_vni_additional_ip_count = var.storage_instances[count.index]["count"]
-  #placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
+  # placement_group_id              = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
 module "storage_cluster_management_vsi" {
@@ -237,9 +237,9 @@ module "storage_cluster_tie_breaker_vsi" {
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
-  manage_reserved_ips             = true
+  # manage_reserved_ips             = true
   # primary_vni_additional_ip_count = var.storage_instances[count.index]["count"]
-  #placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
+  # placement_group_id              = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
 module "protocol_vsi" {
@@ -295,8 +295,8 @@ module "afm_vsi" {
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
-  manage_reserved_ips             = true
-  # primary_vni_additional_ip_count = var.protocol_instances[count.index]["count"]
+  # manage_reserved_ips             = true
+  # primary_vni_additional_ip_count = var.afm_instances[count.index]["count"]
 }
 
 module "gklm_vsi" {
