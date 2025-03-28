@@ -11,8 +11,8 @@ resource "local_sensitive_file" "infra_details_to_json" {
   "HA_shared_dir": ${jsonencode(var.ha_shared_dir)},
   "NFS_install_dir": ${jsonencode(var.nfs_install_dir)},
   "Enable_Monitoring": ${jsonencode(var.enable_monitoring)},
-  "compute_dns_name": ${jsonencode(var.compute_dns_name)},
-  "lsf_deployer_hostname": ${jsonencode(var.lsf_deployer_hostname)}
+  "lsf_deployer_hostname": ${jsonencode(var.lsf_deployer_hostname)},
+  "compute_dns_name": ${jsonencode(var.compute_dns_name)}
 }
 EOT
   filename = var.json_inventory_path
