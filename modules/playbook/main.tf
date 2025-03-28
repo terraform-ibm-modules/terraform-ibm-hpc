@@ -82,23 +82,23 @@ resource "null_resource" "run_lsf_playbooks" {
   depends_on = [null_resource.run_playbook]
 }
 
-resource "null_resource" "export_api" {
-  count = var.inventory_path != null && var.observability_provision ? 1 : 0
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    command     = <<EOT
-      # Append API key export to shell profile for persistence
-      echo 'export VPC_API_KEY="${var.ibmcloud_api_key}"' >> ~/.bashrc
-      echo 'export VPC_API_KEY="${var.ibmcloud_api_key}"' >> ~/.bash_profile
-      # Export API key for immediate availability in the current session
-      export VPC_API_KEY="${var.ibmcloud_api_key}"
-    EOT
-  }
-  triggers = {
-    build = timestamp()
-  }
-  depends_on = [null_resource.run_lsf_playbooks]
-}
+# resource "null_resource" "export_api" {
+#   count = var.inventory_path != null && var.observability_provision ? 1 : 0
+#   provisioner "local-exec" {
+#     interpreter = ["/bin/bash", "-c"]
+#     command     = <<EOT
+#       # Append API key export to shell profile for persistence
+#       echo 'export VPC_API_KEY="${var.ibmcloud_api_key}"' >> ~/.bashrc
+#       echo 'export VPC_API_KEY="${var.ibmcloud_api_key}"' >> ~/.bash_profile
+#       # Export API key for immediate availability in the current session
+#       export VPC_API_KEY="${var.ibmcloud_api_key}"
+#     EOT
+#   }
+#   triggers = {
+#     build = timestamp()
+#   }
+#   depends_on = [null_resource.run_lsf_playbooks]
+# }
 
 resource "local_file" "create_observability_playbook" {
   count    = var.inventory_path != null && var.observability_provision ? 1 : 0
@@ -142,10 +142,14 @@ resource "null_resource" "run_observability_playbooks" {
   count = var.inventory_path != null && var.observability_provision ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -f 50 -i ${var.inventory_path} ${var.observability_playbook_path}"
+    command     = <<EOT
+      export ANSIBLE_FORCE_COLOR=true
+      ansible-playbook -f 50 -i ${var.inventory_path} ${var.observability_playbook_path} \
+      --extra-vars "VPC_API_KEY=${var.ibmcloud_api_key}"
+    EOT
   }
   triggers = {
     build = timestamp()
   }
-  depends_on = [null_resource.export_api]
+  depends_on = [null_resource.run_lsf_playbooks]
 }
