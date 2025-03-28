@@ -6,11 +6,11 @@ echo "START $(date '+%Y-%m-%d %H:%M:%S')" >> $logfile
 # Initialize variables
 cluster_prefix="{{ my_cluster_name }}"
 nfs_server_with_mount_path="{{ name_mount_path_map.lsf }}"
-custom_file_shares="{% for key, value in name_mount_path_map.items() if key != 'lsf' %}{{ value }}{% if not loop.last %} {% endif %}{% endfor %}"
-custom_mount_paths="{% for key in name_mount_path_map.keys() if key != 'lsf' %}{{ key }}{% if not loop.last %} {% endif %}{% endfor %}"
+# custom_file_shares="{% for key, value in name_mount_path_map.items() if key != 'lsf' %}{{ value }}{% if not loop.last %} {% endif %}{% endfor %}"
+# custom_mount_paths="{% for key in name_mount_path_map.keys() if key != 'lsf' %}{{ key }}{% if not loop.last %} {% endif %}{% endfor %}"
 hyperthreading="{{ enable_hyperthreading }}"
 ManagementHostNames="{{ lsf_masters | join(' ') }}"
-rc_cidr_block="{{ compute_subnets_cidr | first }}"
+# rc_cidr_block="{{ compute_subnets_cidr | first }}"
 dns_domain="{{ dns_domain_names }}"
 network_interface="eth0"
 
@@ -86,7 +86,7 @@ if [ -n "${nfs_server_with_mount_path}" ]; then
   nfs_client_mount_path="/mnt/lsf"
   if mount_nfs_with_retries "${nfs_server_with_mount_path}" "${nfs_client_mount_path}"; then
     for dir in conf work; do
-      rm -rf "${LSF_TOP}/$dir"
+      rm -rf "${LSF_TOP:?}/$dir"
       ln -fs "${nfs_client_mount_path}/shared/lsf/$dir" "${LSF_TOP}/$dir"
     done
     chown -R lsfadmin:root "${LSF_TOP}"
@@ -114,11 +114,13 @@ LSF_TOP="/opt/ibm/lsf_worker"
 LSF_TOP_VERSION=10.1
 LSF_CONF=$LSF_TOP/conf
 LSF_CONF_FILE=$LSF_CONF/lsf.conf
-. $LSF_CONF/profile.lsf >> $logfile
-echo "Logging env variables" >> $logfile
-env >> $logfile
+{
+  . "$LSF_CONF/profile.lsf"
+  echo "Logging environment variables"
+  env
+} >> "$logfile"
 echo "source ${LSF_CONF}/profile.lsf" >> ~/.bashrc
-source ~/.bashrc
+source "$HOME/.bashrc"
 
 # DNS Setup
 echo "search ${dns_domain}" >> /etc/resolv.conf
@@ -144,13 +146,15 @@ cat /opt/ibm/lsf/conf/hosts >> /etc/hosts
 
 # Apply system tuning parameters
 LSF_TUNABLES="/etc/sysctl.conf"
-echo 'vm.overcommit_memory=1' >> $LSF_TUNABLES
-echo 'net.core.rmem_max=26214400' >> $LSF_TUNABLES
-echo 'net.core.rmem_default=26214400' >> $LSF_TUNABLES
-echo 'net.core.wmem_max=26214400' >> $LSF_TUNABLES
-echo 'net.core.wmem_default=26214400' >> $LSF_TUNABLES
-echo 'net.ipv4.tcp_fin_timeout = 5' >> $LSF_TUNABLES
-echo 'net.core.somaxconn = 8000' >> $LSF_TUNABLES
+{
+  echo 'vm.overcommit_memory=1'
+  echo 'net.core.rmem_max=26214400'
+  echo 'net.core.rmem_default=26214400'
+  echo 'net.core.wmem_max=26214400'
+  echo 'net.core.wmem_default=26214400'
+  echo 'net.ipv4.tcp_fin_timeout = 5'
+  echo 'net.core.somaxconn = 8000'
+} >> "$LSF_TUNABLES"
 sudo sysctl -p $LSF_TUNABLES
 
 # Update lsf configuration
@@ -184,7 +188,7 @@ cd /opt/ibm/lsf_worker/10.1/linux3.10-glibc2.17-x86_64/etc/ || exit
 sed -i "s|/opt/ibm/lsf/|/opt/ibm/lsf_worker/|g" lsf_daemons
 cd - || exit
 
-sudo /opt/ibm/lsf_worker/10.1/install/hostsetup --top="/opt/ibm/lsf_worker" --setuid >> $logfile
-/opt/ibm/lsf_worker/10.1/install/hostsetup --top="/opt/ibm/lsf_worker" --boot="y" --start="y" --dynamic 2>&1 >> $logfile
+sudo /opt/ibm/lsf_worker/10.1/install/hostsetup --top="/opt/ibm/lsf_worker" --setuid | sudo tee -a "$logfile"
+/opt/ibm/lsf_worker/10.1/install/hostsetup --top="/opt/ibm/lsf_worker" --boot="y" --start="y" --dynamic >> "$logfile" 2>&1
 
 echo "END $(date '+%Y-%m-%d %H:%M:%S')" >> $logfile

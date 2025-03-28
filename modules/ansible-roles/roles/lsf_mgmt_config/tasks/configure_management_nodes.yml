@@ -41,30 +41,31 @@
   when: queue_check.rc != 0
   run_once: true
 
-- name: Management Config | Update LSF configuration files
-  block:
-    - name: Management Config | Uncomment "icgen2host" in lsf.shared
-      replace:
-        path: "{{ LSF_CONF_FILE_PATH }}/lsf.shared"
-        regexp: '^#\s*(icgen2host)'
-        replace: '   \1'
+- name: Management Config | Uncomment "icgen2host" in lsf.shared
+  replace:
+    path: "{{ LSF_CONF_FILE_PATH }}/lsf.shared"
+    regexp: '^#\s*(icgen2host)'
+    replace: '   \1'
+  run_once: true
 
-    - name: Management Config | Uncomment "schmod_demand" in lsb.modules
-      replace:
-        path: "{{ LSF_LSBATCH_CONF }}/lsb.modules"
-        regexp: '^#\s*(schmod_demand)'
-        replace: '\1'
+- name: Management Config | Uncomment "schmod_demand" in lsb.modules
+  replace:
+    path: "{{ LSF_LSBATCH_CONF }}/lsb.modules"
+    regexp: '^#\s*(schmod_demand)'
+    replace: '\1'
+  run_once: true
 
-    - name: Check if RC_HOSTS modification was already done
-      stat:
-        path: "/tmp/rc_hosts_added"
-      register: rc_hosts_marker
+- name: Check if RC_HOSTS modification was already done
+  stat:
+    path: "/tmp/rc_hosts_added"
+  register: rc_hosts_marker
+  run_once: true
 
-    - name: Management Config | Add "RC_HOSTS = all" after QUEUE_NAME in lsb.queues using sed
-      shell: |
-        sed -i '/^Begin Queue$/,/^End Queue$/{/QUEUE_NAME/{N;s/\(QUEUE_NAME\s*=[^\n]*\)\n/\1\nRC_HOSTS     = all\n/}}' "{{ LSF_LSBATCH_CONF }}/lsb.queues"
-        touch /tmp/rc_hosts_added
-      when: not rc_hosts_marker.stat.exists
+- name: Management Config | Add "RC_HOSTS = all" after QUEUE_NAME in lsb.queues using sed
+  shell: |
+    sed -i '/^Begin Queue$/,/^End Queue$/{/QUEUE_NAME/{N;s/\(QUEUE_NAME\s*=[^\n]*\)\n/\1\nRC_HOSTS     = all\n/}}' "{{ LSF_LSBATCH_CONF }}/lsb.queues"
+    touch /tmp/rc_hosts_added
+  when: not rc_hosts_marker.stat.exists
   run_once: true
 
 - name: Management Config | Append management hostnames to lsb.hosts
