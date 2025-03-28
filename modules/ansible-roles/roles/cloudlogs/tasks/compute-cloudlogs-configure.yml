@@ -111,23 +111,23 @@
       @INCLUDE output-logs-router-agent.conf
   when: logs_enable_for_compute | bool
 
-- name: Fetch API KEY from extra vars
-  set_fact:
-    env_api_key: "{{ VPC_API_KEY }}"
-
-- name: Debug API Key
-  debug:
-    msg: "API Key is {{ env_api_key }}"
-
-# - name: Fetch API KEY from environmental variable of Ansible controller
-#   shell: "echo $VPC_API_KEY"
-#   register: env_api_key
-#   environment:
-#     VPC_API_KEY: "{{ lookup('env', 'VPC_API_KEY') }}" #pragma: allowlist secret
+# - name: Fetch API KEY from extra vars
+#   set_fact:
+#     env_api_key: "{{ VPC_API_KEY }}"
 
 # - name: Debug API Key
 #   debug:
-#     msg: "API Key is {{ env_api_key.stdout }}"
+#     msg: "API Key is {{ env_api_key }}"
+
+- name: Fetch API KEY from environmental variable of Ansible controller
+  shell: "echo $VPC_API_KEY"
+  register: env_api_key
+  environment:
+    VPC_API_KEY: "{{ lookup('env', 'VPC_API_KEY') }}" #pragma: allowlist secret
+
+- name: Debug API Key
+  debug:
+    msg: "API Key is {{ env_api_key.stdout }}"
 
 - name: Run post-config.sh script
   ansible.builtin.command: >
@@ -135,7 +135,7 @@
     -p "3443"
     -t "/logs/v1/singles"
     -a IAMAPIKey
-    -k {{ env_api_key }}
+    -k {{ env_api_key.stdout }}
     --send-directly-to-icl
     -s true
     -i Production
