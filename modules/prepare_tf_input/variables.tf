@@ -93,6 +93,22 @@ variable "static_compute_instances" {
   description = "Min Number of instances to be launched for compute cluster."
 }
 
+variable "dynamic_compute_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  default = [{
+    profile = "cx2-2x4"
+    count   = 1024
+    image   = "ibm-redhat-8-10-minimal-amd64-2"
+  }]
+  description = "MaxNumber of instances to be launched for compute cluster."
+}
+
 ##############################################################################
 # Access Variables
 ##############################################################################

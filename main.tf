@@ -204,43 +204,42 @@ resource "time_sleep" "wait_60_seconds" {
 }
 
 module "write_compute_cluster_inventory" {
-  count                 = var.enable_deployer == false ? 1 : 0
-  source                = "./modules/write_inventory"
-  json_inventory_path   = local.json_inventory_path
-  lsf_masters           = local.management_nodes
-  lsf_servers           = local.compute_nodes_list
-  lsf_clients           = local.client_nodes
-  gui_hosts             = local.gui_hosts
-  db_hosts              = local.db_hosts
-  my_cluster_name       = var.prefix
-  ha_shared_dir         = local.ha_shared_dir
-  nfs_install_dir       = local.nfs_install_dir
-  enable_monitoring     = local.enable_monitoring
-  lsf_deployer_hostname = local.lsf_deployer_hostname
-  # Other Code
-  ibmcloud_api_key      = var.ibmcloud_api_key
-  dns_domain_names      = var.dns_domain_names["compute"]
+  count                       = var.enable_deployer == false ? 1 : 0
+  source                      = "./modules/write_inventory"
+  json_inventory_path         = local.json_inventory_path
+  lsf_masters                 = local.management_nodes
+  lsf_servers                 = local.compute_nodes_list
+  lsf_clients                 = local.client_nodes
+  gui_hosts                   = local.gui_hosts
+  db_hosts                    = local.db_hosts
+  my_cluster_name             = var.prefix
+  ha_shared_dir               = local.ha_shared_dir
+  nfs_install_dir             = local.nfs_install_dir
+  enable_monitoring           = local.enable_monitoring
+  lsf_deployer_hostname       = local.lsf_deployer_hostname
+  ibmcloud_api_key            = var.ibmcloud_api_key
+  dns_domain_names            = var.dns_domain_names["compute"]
   compute_public_key_content  = local.compute_public_key_content
   compute_private_key_content = local.compute_private_key_content
-  enable_hyperthreading = var.enable_hyperthreading
-  vpc_id                = local.vpc_id
-  vcpus                 = local.vcpus
-  ncores                = local.ncores
-  ncpus                 = local.ncpus
-  memInMB               = local.memInMB
-  rc_maxNum             = local.rc_maxNum
-  rc_profile            = local.rc_profile
-  imageID               = local.imageID
-  compute_subnet_id     = local.compute_subnet_id
-  region                = local.region
-  resource_group_id     = local.resource_group_ids["service_rg"]
-  zones                 = var.zones
-  compute_subnets_cidr  = local.compute_subnets_cidr
-  dynamic_compute_instances = local.dynamic_compute_instances
-  compute_security_group_id = local.compute_security_group_id
-  compute_ssh_keys_ids  = local.compute_ssh_keys_ids
-  compute_subnet_crn    = local.compute_subnet_crn
-  depends_on            = [time_sleep.wait_60_seconds]
+  enable_hyperthreading       = var.enable_hyperthreading
+  vpc_id                      = local.vpc_id
+  vcpus                       = local.vcpus
+  ncores                      = local.ncores
+  ncpus                       = local.ncpus
+  memInMB                     = local.memInMB
+  rc_maxNum                   = local.rc_maxNum
+  rc_profile                  = local.rc_profile
+  imageID                     = local.imageID
+  compute_subnet_id           = local.compute_subnet_id
+  region                      = local.region
+  resource_group_id           = local.resource_group_ids["service_rg"]
+  zones                       = var.zones
+  compute_subnets_cidr        = local.compute_subnets_cidr
+  dynamic_compute_instances   = local.dynamic_compute_instances
+  compute_security_group_id   = local.compute_security_group_id
+  compute_ssh_keys_ids        = local.compute_ssh_keys_ids
+  compute_subnet_crn          = local.compute_subnet_crn
+  depends_on                  = [time_sleep.wait_60_seconds]
 }
 
 module "write_storage_cluster_inventory" {

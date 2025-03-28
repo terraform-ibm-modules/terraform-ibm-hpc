@@ -180,9 +180,9 @@ variable "compute_ssh_keys_ids" {
 }
 
 variable "ibmcloud_api_key" {
-  type        = string
-  sensitive   = true
-  default     = null
+  type      = string
+  sensitive = true
+  default   = null
 }
 
 variable "zones" {

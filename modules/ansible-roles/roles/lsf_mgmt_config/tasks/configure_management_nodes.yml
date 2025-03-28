@@ -54,7 +54,7 @@
         path: "{{ LSF_LSBATCH_CONF }}/lsb.modules"
         regexp: '^#\s*(schmod_demand)'
         replace: '\1'
-    
+
     - name: Check if RC_HOSTS modification was already done
       stat:
         path: "/tmp/rc_hosts_added"

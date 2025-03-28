@@ -1,5 +1,5 @@
 locals {
-  proxyjump = var.enable_bastion ? "-o ProxyJump=ubuntu@${var.bastion_fip}" : ""
+  proxyjump       = var.enable_bastion ? "-o ProxyJump=ubuntu@${var.bastion_fip}" : ""
   lsf_mgmt_config = format("%s/lsf_mgmt_config.yml", var.playbooks_root_path)
 }
 
