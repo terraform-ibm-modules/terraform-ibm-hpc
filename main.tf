@@ -102,6 +102,7 @@ module "prepare_tf_input" {
   protocol_instances                               = var.protocol_instances
   ibm_customer_number                              = var.ibm_customer_number
   static_compute_instances                         = var.static_compute_instances
+  dynamic_compute_instances                        = var.dynamic_compute_instances
   client_instances                                 = var.client_instances
   enable_cos_integration                           = var.enable_cos_integration
   enable_atracker                                  = var.enable_atracker
@@ -234,7 +235,7 @@ module "write_compute_cluster_inventory" {
   resource_group_id           = local.resource_group_ids["service_rg"]
   zones                       = var.zones
   compute_subnets_cidr        = local.compute_subnets_cidr
-  dynamic_compute_instances   = local.dynamic_compute_instances
+  dynamic_compute_instances   = var.dynamic_compute_instances
   compute_security_group_id   = local.compute_security_group_id
   compute_ssh_keys_ids        = local.compute_ssh_keys_ids
   compute_subnet_crn          = local.compute_subnet_crn

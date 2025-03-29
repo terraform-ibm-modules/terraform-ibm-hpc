@@ -262,15 +262,14 @@ locals {
   scc_cos_bucket       = length(module.landing_zone.cos_buckets_names) > 0 && var.scc_enable ? [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0] : ""
   scc_cos_instance_crn = length(module.landing_zone.cos_instance_crns) > 0 && var.scc_enable ? module.landing_zone.cos_instance_crns[0] : ""
 
-  vcpus                     = tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile.vcpu_count[0].value)
-  ncores                    = tonumber(local.vcpus / 2)
-  ncpus                     = tonumber(var.enable_hyperthreading ? local.vcpus : local.ncores)
-  mem_in_mb                 = tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile.memory[0].value) * 1024
-  rc_max_num                = tonumber(var.dynamic_compute_instances[0].count)
-  rc_profile                = var.dynamic_compute_instances[0].profile
-  image_id                  = data.ibm_is_image.dynamic_compute.id
-  compute_subnets_cidr      = var.compute_subnets_cidr
-  dynamic_compute_instances = var.dynamic_compute_instances
-  compute_subnet_crn        = data.ibm_is_subnet.compute_subnet_crn.crn
-  compute_ssh_keys_ids      = [for name in local.compute_ssh_keys : data.ibm_is_ssh_key.compute_ssh_keys[name].id]
+  vcpus                = tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile.vcpu_count[0].value)
+  ncores               = tonumber(local.vcpus / 2)
+  ncpus                = tonumber(var.enable_hyperthreading ? local.vcpus : local.ncores)
+  mem_in_mb            = tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile.memory[0].value) * 1024
+  rc_max_num           = tonumber(var.dynamic_compute_instances[0].count)
+  rc_profile           = var.dynamic_compute_instances[0].profile
+  image_id             = data.ibm_is_image.dynamic_compute.id
+  compute_subnets_cidr = var.compute_subnets_cidr
+  compute_subnet_crn   = data.ibm_is_subnet.compute_subnet_crn.crn
+  compute_ssh_keys_ids = [for name in local.compute_ssh_keys : data.ibm_is_ssh_key.compute_ssh_keys[name].id]
 }

@@ -16,6 +16,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "protocol_instances": ${local.list_protocol_instances},
   "ibm_customer_number": "${var.ibm_customer_number}",
   "static_compute_instances": ${local.list_compute_instances},
+  "dynamic_compute_instances": ${var.dynamic_compute_instances},
   "client_instances": ${local.list_client_instances},
   "enable_cos_integration": ${var.enable_cos_integration},
   "enable_atracker": ${var.enable_atracker},
