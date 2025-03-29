@@ -57,7 +57,7 @@ data "template_file" "protocol_user_data" {
     storage_dns_domain          = var.dns_domain_names["storage"]
     protocol_dns_domain         = var.dns_domain_names["protocol"]
     vpc_region                  = var.vpc_region
-    resource_group_id           = ""#local.resource_group_id
+    resource_group_id           = data.ibm_resource_group.itself.id
     protocol_subnets            = local.protocol_subnets[0].id
   }
 }

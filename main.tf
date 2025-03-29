@@ -278,7 +278,7 @@ module "protocol_reserved_ip" {
   count                   = var.enable_deployer == false ? 1 : 0
   source                  = "./modules/protocol_reserved_ip"
   total_reserved_ips      = local.protocol_instance_count
-  subnet_id               = local.protocol_subnets[0].id
+  subnet_id               = [local.protocol_subnets[0].id]
   name                    = format("%s-ces", var.prefix)
   protocol_domain         = var.dns_domain_names["protocol"]
   protocol_dns_service_id = local.dns_instance_id
@@ -426,7 +426,7 @@ module "write_storage_cluster_inventory" {
   nfs                                              = local.scale_ces_enabled == true ? true : false
   object                                           = false
   interface                                        = jsonencode([])
-  export_ip_pool                                   = local.scale_ces_enabled == true ? jsonencode(local.protocol_instance_private_ips) : jsonencode([])
+  export_ip_pool                                   = local.scale_ces_enabled == true ? jsonencode(values(one(module.protocol_reserved_ip[*].instance_name_ip_map))) : jsonencode([])
   filesystem                                       = local.scale_ces_enabled == true ? jsonencode("cesSharedRoot") : jsonencode("")
   mountpoint                                       = local.scale_ces_enabled == true ? jsonencode(var.filesystem_config[0]["mount_point"]) : jsonencode("")
   protocol_gateway_ip                              = jsonencode("")
