@@ -108,7 +108,7 @@ locals {
 # locals needed for file-storage
 locals {
   # dependency: landing_zone_vsi -> file-share
-  compute_subnet_id         = var.vpc_name != null && var.compute_subnets != null ? local.existing_compute_subnets.id[0] : module.landing_zone.compute_subnets
+  compute_subnet_id         = var.vpc_name == null && var.compute_subnets == null ? local.compute_subnets[0].id : [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.id][0]
   bastion_subnet_id         = var.enable_deployer && var.vpc_name != null && var.bastion_subnets != null ? local.existing_bastion_subnets.id[0] : ""
   subnet_id                 = var.enable_deployer && var.vpc_name != null && var.compute_subnets != null ? local.existing_compute_subnets.id[0] : ""
   compute_security_group_id = var.enable_deployer ? [] : module.landing_zone_vsi[0].compute_sg_id
