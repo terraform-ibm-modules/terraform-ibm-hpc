@@ -47,18 +47,6 @@ variable "vpc_name" {
   default     = null
 }
 
-variable "bastion_subnet_id" {
-  type        = string
-  description = "Name of an existing bastion subnet_id in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
-  default     = null
-}
-
-variable "compute_subnet_id" {
-  type        = string
-  description = "Name of an existing compute subnet_id in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
-  default     = null
-}
-
 variable "network_cidr" {
   description = "Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning."
   type        = string
@@ -83,7 +71,7 @@ variable "ssh_keys" {
 
 variable "bastion_subnets_cidr" {
   type        = list(string)
-  default     = null
+  default     = ["10.0.0.0/24"]
   description = "Subnet CIDR block to launch the bastion host."
 }
 
@@ -142,6 +130,18 @@ variable "compute_subnets_cidr" {
   description = "Subnet CIDR block to launch the compute cluster host."
 }
 
+variable "bastion_subnet_id" {
+  type        = string
+  description = "Name of an existing bastion subnet_id in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+  default     = null
+}
+
+variable "compute_subnet_id" {
+  type        = string
+  description = "Name of an existing compute subnet_id in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+  default     = null
+}
+
 variable "management_instances" {
   type = list(
     object({
@@ -168,7 +168,6 @@ variable "compute_instances" {
 
 variable "storage_subnets_cidr" {
   type        = list(string)
-  default     = null
   description = "Subnet CIDR block to launch the storage cluster host."
 }
 
@@ -184,7 +183,6 @@ variable "storage_instances" {
 
 variable "protocol_subnets_cidr" {
   type        = list(string)
-  default     = null
   description = "Subnet CIDR block to launch the storage cluster host."
 }
 
