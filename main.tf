@@ -61,6 +61,17 @@ module "deployer" {
   dns_domain_names              = var.dns_domain_names
 }
 
+module "protocol_reserved_ip" {
+  count                   = var.enable_deployer == false ? 1 : 0
+  source                  = "./modules/protocol_reserved_ip"
+  total_reserved_ips      = local.protocol_instance_count
+  subnet_id               = local.protocol_subnets[0].id
+  name                    = format("%s-ces", var.prefix)
+  protocol_domain         = var.dns_domain_names["protocol"]
+  protocol_dns_service_id = local.dns_instance_id
+  protocol_dns_zone_id    = local.protocol_dns_zone_id
+}
+
 module "landing_zone_vsi" {
   count                      = var.enable_deployer == false ? 1 : 0
   source                     = "./modules/landing_zone_vsi"
@@ -99,6 +110,7 @@ module "landing_zone_vsi" {
   scale_encryption_type      = var.scale_encryption_type
   gklm_instance_key_pair     = local.gklm_instance_key_pair
   gklm_instances             = var.gklm_instances
+  vpc_region                 = local.region
 }
 
 resource "local_sensitive_file" "prepare_tf_input" {
@@ -119,6 +131,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "storage_instances": ${local.list_storage_instances},
   "management_instances": ${local.list_management_instances},
   "protocol_instances": ${local.list_protocol_instances},
+  "colocate_protocol_cluster_instances": ${var.colocate_protocol_cluster_instances},
   "ibm_customer_number": "${var.ibm_customer_number}",
   "static_compute_instances": ${local.list_compute_instances},
   "client_instances": ${local.list_client_instances},

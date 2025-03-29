@@ -439,3 +439,9 @@ variable "gklm_instances" {
   }]
   description = "Number of instances to be launched for client."
 }
+
+variable "vpc_region" {
+  type        = string
+  default     = null
+  description = "vpc region"
+}
