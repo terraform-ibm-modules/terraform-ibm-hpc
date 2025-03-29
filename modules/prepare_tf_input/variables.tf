@@ -101,11 +101,6 @@ variable "dynamic_compute_instances" {
       image   = string
     })
   )
-  default = [{
-    profile = "cx2-2x4"
-    count   = 1024
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
-  }]
   description = "MaxNumber of instances to be launched for compute cluster."
 }
 
