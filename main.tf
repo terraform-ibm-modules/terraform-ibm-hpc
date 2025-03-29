@@ -61,17 +61,6 @@ module "deployer" {
   dns_domain_names              = var.dns_domain_names
 }
 
-module "protocol_reserved_ip" {
-  count                   = var.enable_deployer == false ? 1 : 0
-  source                  = "./modules/protocol_reserved_ip"
-  total_reserved_ips      = local.protocol_instance_count
-  subnet_id               = local.protocol_subnets[0].id
-  name                    = format("%s-ces", var.prefix)
-  protocol_domain         = var.dns_domain_names["protocol"]
-  protocol_dns_service_id = local.dns_instance_id
-  protocol_dns_zone_id    = local.protocol_dns_zone_id
-}
-
 module "landing_zone_vsi" {
   count                      = var.enable_deployer == false ? 1 : 0
   source                     = "./modules/landing_zone_vsi"
@@ -285,14 +274,26 @@ module "storage_dns_records" {
   depends_on      = [ module.dns ]
 }
 
-module "protocol_dns_records" {
-  count           = var.enable_deployer == false ? 1 : 0
-  source          = "./modules/dns_record"
-  dns_instance_id = local.dns_instance_id
-  dns_zone_id     = local.protocol_dns_zone_id
-  dns_records     = local.protocol_dns_records
-  depends_on      = [ module.dns ]
+module "protocol_reserved_ip" {
+  count                   = var.enable_deployer == false ? 1 : 0
+  source                  = "./modules/protocol_reserved_ip"
+  total_reserved_ips      = local.protocol_instance_count
+  subnet_id               = local.protocol_subnets[0].id
+  name                    = format("%s-ces", var.prefix)
+  protocol_domain         = var.dns_domain_names["protocol"]
+  protocol_dns_service_id = local.dns_instance_id
+  protocol_dns_zone_id    = local.protocol_dns_zone_id
+  depends_on              = [ module.dns ]
 }
+
+# module "protocol_dns_records" {
+#   count           = var.enable_deployer == false ? 1 : 0
+#   source          = "./modules/dns_record"
+#   dns_instance_id = local.dns_instance_id
+#   dns_zone_id     = local.protocol_dns_zone_id
+#   dns_records     = local.protocol_dns_records
+#   depends_on      = [ module.dns ]
+# }
 
 module "client_dns_records" {
   count           = var.enable_deployer == false ? 1 : 0
@@ -314,7 +315,7 @@ module "gklm_dns_records" {
 
 resource "time_sleep" "wait_60_seconds" {
   create_duration = "60s"
-  depends_on          = [ module.storage_dns_records, module.protocol_dns_records, module.compute_dns_records ]
+  depends_on          = [ module.storage_dns_records, module.protocol_reserved_ip, module.compute_dns_records ]
 }
 
 module "write_compute_cluster_inventory" {
