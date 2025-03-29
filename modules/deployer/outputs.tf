@@ -29,6 +29,11 @@ output "deployer_ip" {
   value       = one(module.deployer_vsi[*]["list"][0]["ipv4_address"])
 }
 
+output "deployer_ip_new" {
+  description = "Deployer IP"
+  value       = one(module.deployer_vsi[*])
+}
+
 output "bastion_private_key_content" {
   description = "Bastion private key content"
   sensitive   = true

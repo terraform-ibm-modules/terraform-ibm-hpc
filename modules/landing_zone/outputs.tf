@@ -5,17 +5,17 @@ output "resource_group_id" {
 
 output "vpc_name" {
   description = "VPC name"
-  value       = var.vpc_name == null ? one(module.landing_zone[*].vpc_data[0].vpc_name) : ""
+  value       = module.landing_zone[*].vpc_data[0].vpc_name
 }
 
 output "vpc_id" {
   description = "VPC ID"
-  value       = var.vpc_name == null ? one(module.landing_zone[*].vpc_data[0].vpc_id) : ""
+  value       = module.landing_zone[*].vpc_data[0].vpc_id
 }
 
 output "vpc_crn" {
   description = "VPC CRN"
-  value       = var.vpc_name == null ? one(module.landing_zone[*].vpc_data[0].vpc_crn) : ""
+  value       = module.landing_zone[*].vpc_data[0].vpc_crn
 }
 
 output "bastion_subnets" {

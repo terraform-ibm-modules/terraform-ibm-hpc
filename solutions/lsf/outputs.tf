@@ -8,6 +8,6 @@ output "lsf" {
 #   #sensitive = true
 # }
 
-# output "lsf" {
+# output "lsf_all" {
 #   value = module.lsf
 # }

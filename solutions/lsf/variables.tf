@@ -108,6 +108,12 @@ variable "bastion_ssh_keys" {
   description = "The key pair to use to access the bastion host."
 }
 
+variable "bastion_subnets" {
+  type        = list(string)
+  default     = [""]
+  description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+}
+
 variable "bastion_subnets_cidr" {
   type        = string
   default     = "10.0.0.0/24"
@@ -188,6 +194,12 @@ variable "client_instances" {
     image   = "ibm-redhat-8-10-minimal-amd64-2"
   }]
   description = "Number of instances to be launched for client."
+}
+
+variable "compute_subnets" {
+  type        = list(string)
+  default     = [""]
+  description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
 }
 
 variable "compute_subnets_cidr" {

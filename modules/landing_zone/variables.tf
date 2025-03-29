@@ -47,6 +47,18 @@ variable "vpc_name" {
   default     = null
 }
 
+variable "bastion_subnet_id" {
+  type        = string
+  description = "Name of an existing bastion subnet_id in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+  default     = null
+}
+
+variable "compute_subnet_id" {
+  type        = string
+  description = "Name of an existing compute subnet_id in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+  default     = null
+}
+
 variable "network_cidr" {
   description = "Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning."
   type        = string
@@ -71,7 +83,7 @@ variable "ssh_keys" {
 
 variable "bastion_subnets_cidr" {
   type        = list(string)
-  default     = ["10.0.0.0/24"]
+  default     = null
   description = "Subnet CIDR block to launch the bastion host."
 }
 
@@ -110,7 +122,7 @@ variable "allowed_cidr" {
 ##############################################################################
 variable "client_subnets_cidr" {
   type        = list(string)
-  default     = ["10.10.10.0/24", "10.20.10.0/24", "10.30.10.0/24"]
+  default     = null
   description = "Subnet CIDR block to launch the client host."
 }
 
@@ -121,16 +133,12 @@ variable "client_instances" {
       count   = number
     })
   )
-  default = [{
-    profile = "cx2-2x4"
-    count   = 1
-  }]
   description = "Number of instances to be launched for client."
 }
 
 variable "compute_subnets_cidr" {
   type        = list(string)
-  default     = ["10.10.20.0/24", "10.20.20.0/24", "10.30.20.0/24"]
+  default     = null
   description = "Subnet CIDR block to launch the compute cluster host."
 }
 
@@ -141,10 +149,6 @@ variable "management_instances" {
       count   = number
     })
   )
-  default = [{
-    profile = "cx2-2x4"
-    count   = 3
-  }]
   description = "Number of instances to be launched for management."
 }
 
@@ -155,10 +159,6 @@ variable "compute_instances" {
       count   = number
     })
   )
-  default = [{
-    profile = "cx2-2x4"
-    count   = 0
-  }]
   description = "Min Number of instances to be launched for compute cluster."
 }
 
@@ -168,7 +168,7 @@ variable "compute_instances" {
 
 variable "storage_subnets_cidr" {
   type        = list(string)
-  default     = ["10.10.30.0/24", "10.20.30.0/24", "10.30.30.0/24"]
+  default     = null
   description = "Subnet CIDR block to launch the storage cluster host."
 }
 
@@ -179,16 +179,12 @@ variable "storage_instances" {
       count   = number
     })
   )
-  default = [{
-    profile = "bx2-2x8"
-    count   = 3
-  }]
   description = "Number of instances to be launched for storage cluster."
 }
 
 variable "protocol_subnets_cidr" {
   type        = list(string)
-  default     = ["10.10.40.0/24", "10.20.40.0/24", "10.30.40.0/24"]
+  default     = null
   description = "Subnet CIDR block to launch the storage cluster host."
 }
 
@@ -199,10 +195,6 @@ variable "protocol_instances" {
       count   = number
     })
   )
-  default = [{
-    profile = "bx2-2x8"
-    count   = 2
-  }]
   description = "Number of instances to be launched for protocol hosts."
 }
 
