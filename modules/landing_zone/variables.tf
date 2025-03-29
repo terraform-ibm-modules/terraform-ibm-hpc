@@ -110,7 +110,7 @@ variable "allowed_cidr" {
 ##############################################################################
 variable "client_subnets_cidr" {
   type        = list(string)
-  default     = null
+  default     = ["10.10.10.0/24", "10.20.10.0/24", "10.30.10.0/24"]
   description = "Subnet CIDR block to launch the client host."
 }
 
@@ -121,13 +121,45 @@ variable "client_instances" {
       count   = number
     })
   )
+  default = [{
+    profile = "cx2-2x4"
+    count   = 0
+  }]
   description = "Number of instances to be launched for client."
 }
 
 variable "compute_subnets_cidr" {
   type        = list(string)
-  default     = null
+  default     = ["10.10.20.0/24", "10.20.20.0/24", "10.30.20.0/24"]
   description = "Subnet CIDR block to launch the compute cluster host."
+}
+
+variable "management_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+    })
+  )
+  default = [{
+    profile = "cx2-2x4"
+    count   = 0
+  }]
+  description = "Number of instances to be launched for management."
+}
+
+variable "compute_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+    })
+  )
+  default = [{
+    profile = "cx2-2x4"
+    count   = 0
+  }]
+  description = "Min Number of instances to be launched for compute cluster."
 }
 
 variable "bastion_subnet_id" {
@@ -142,32 +174,13 @@ variable "compute_subnet_id" {
   default     = null
 }
 
-variable "management_instances" {
-  type = list(
-    object({
-      profile = string
-      count   = number
-    })
-  )
-  description = "Number of instances to be launched for management."
-}
-
-variable "compute_instances" {
-  type = list(
-    object({
-      profile = string
-      count   = number
-    })
-  )
-  description = "Min Number of instances to be launched for compute cluster."
-}
-
 ##############################################################################
 # Scale Storage Variables
 ##############################################################################
 
 variable "storage_subnets_cidr" {
   type        = list(string)
+  default     = ["10.10.30.0/24", "10.20.30.0/24", "10.30.30.0/24"]
   description = "Subnet CIDR block to launch the storage cluster host."
 }
 
@@ -178,11 +191,16 @@ variable "storage_instances" {
       count   = number
     })
   )
+  default = [{
+    profile = "bx2-2x8"
+    count   = 0
+  }]
   description = "Number of instances to be launched for storage cluster."
 }
 
 variable "protocol_subnets_cidr" {
   type        = list(string)
+  default     = ["10.10.40.0/24", "10.20.40.0/24", "10.30.40.0/24"]
   description = "Subnet CIDR block to launch the storage cluster host."
 }
 
@@ -193,6 +211,10 @@ variable "protocol_instances" {
       count   = number
     })
   )
+  default = [{
+    profile = "bx2-2x8"
+    count   = 0
+  }]
   description = "Number of instances to be launched for protocol hosts."
 }
 
