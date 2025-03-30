@@ -18,6 +18,18 @@ output "vpc_crn" {
   value       = module.landing_zone[*].vpc_data[0].vpc_crn
 }
 
+output "subnets" {
+  description = "subnets"
+  value = [for subnet in flatten(module.landing_zone[*].subnet_data) : {
+    name = subnet["name"]
+    id   = subnet["id"]
+    zone = subnet["zone"]
+    cidr = subnet["cidr"]
+    crn  = subnet["crn"]
+    }
+  ]
+}
+
 output "bastion_subnets" {
   description = "Bastion subnets"
   value = [for subnet in flatten(module.landing_zone[*].subnet_data) : {

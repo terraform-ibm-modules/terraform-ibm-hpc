@@ -11,7 +11,6 @@ locals {
   client_ssh_keys  = distinct(concat(coalesce(var.client_ssh_keys, []), coalesce(var.ssh_keys, [])))
 }
 
-
 # locals needed for deployer
 locals {
   # dependency: landing_zone -> deployer
@@ -89,6 +88,7 @@ locals {
   ]
 
   # dependency: landing_zone -> landing_zone_vsi
+  subnets_output   = var.enable_deployer ? module.landing_zone[0].subnets : []
   client_subnets   = var.vpc_name != null && var.client_subnets != null ? local.existing_client_subnets : module.landing_zone.client_subnets
   compute_subnets  = var.vpc_name != null && var.compute_subnets != null ? local.existing_compute_subnets : module.landing_zone.compute_subnets
   storage_subnets  = var.vpc_name != null && var.storage_subnets != null ? local.existing_storage_subnets : module.landing_zone.storage_subnets
@@ -108,6 +108,20 @@ locals {
 # locals needed for file-storage
 locals {
   # dependency: landing_zone_vsi -> file-share
+
+  # sorted_subnets = length(var.compute_subnets) != 0 ? [
+  #   element(local.subnets_output, index(local.subnets_output[*].id, local.compute_subnets[0].id)),
+  #   element(local.subnets_output, index(local.subnets_output[*].id, var.bastion_subnets))
+  # ] : []
+
+  # sorted_compute_subnets = length(var.compute_subnets) == 0 ? [
+  #   element(module.landing_zone[0].compute_subnets, index(module.landing_zone[0].compute_subnets[*].zone, var.zones[0]))
+  # ] : []
+
+
+  # compute_subnets = length(var.compute_subnets) == 0 ? local.sorted_compute_subnets : local.sorted_subnets
+
+
   compute_subnet_id         = var.vpc_name == null && var.compute_subnets == null ? local.compute_subnets[0].id : [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.id][0]
   bastion_subnet_id         = var.enable_deployer && var.vpc_name != null && var.bastion_subnets != null ? local.existing_bastion_subnets.id[0] : ""
   subnet_id                 = var.enable_deployer && var.vpc_name != null && var.compute_subnets != null ? local.existing_compute_subnets.id[0] : ""

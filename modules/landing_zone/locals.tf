@@ -176,7 +176,7 @@ locals {
       existing_vpc_id = var.vpc_name == null ? null : data.ibm_is_vpc.existing_vpc[0].id
       existing_subnets = (var.vpc_name != null && length(var.compute_subnet_id) > 0) ? [
         {
-          id             = var.compute_subnet_id[0]
+          id             = var.compute_subnet_id
           public_gateway = false
         },
         {
