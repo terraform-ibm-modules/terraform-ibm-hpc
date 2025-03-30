@@ -88,7 +88,7 @@ locals {
   ]
 
   # dependency: landing_zone -> landing_zone_vsi
-  subnets_output   = var.enable_deployer ? module.landing_zone[0].subnets : []
+  # subnets_output   = var.enable_deployer ? module.landing_zone[0].subnets : []
   client_subnets   = var.vpc_name != null && var.client_subnets != null ? local.existing_client_subnets : module.landing_zone.client_subnets
   compute_subnets  = var.vpc_name != null && var.compute_subnets != null ? local.existing_compute_subnets : module.landing_zone.compute_subnets
   storage_subnets  = var.vpc_name != null && var.storage_subnets != null ? local.existing_storage_subnets : module.landing_zone.storage_subnets
@@ -123,8 +123,8 @@ locals {
 
 
   compute_subnet_id         = var.vpc_name == null && var.compute_subnets == null ? local.compute_subnets[0].id : [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.id][0]
-  bastion_subnet_id         = var.enable_deployer && var.vpc_name != null && var.bastion_subnets != null ? local.existing_bastion_subnets.id[0] : ""
-  subnet_id                 = var.enable_deployer && var.vpc_name != null && var.compute_subnets != null ? local.existing_compute_subnets.id[0] : ""
+  bastion_subnet_id         = (var.enable_deployer && var.vpc_name != null && var.bastion_subnets != null) ? local.existing_bastion_subnets[0].id : ""
+  subnet_id                 = (var.enable_deployer && var.vpc_name != null && var.compute_subnets != null) ? local.existing_compute_subnets[0].id : ""
   compute_security_group_id = var.enable_deployer ? [] : module.landing_zone_vsi[0].compute_sg_id
   management_instance_count = sum(var.management_instances[*]["count"])
   default_share = local.management_instance_count > 0 ? [

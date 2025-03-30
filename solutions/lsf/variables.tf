@@ -110,7 +110,7 @@ variable "bastion_ssh_keys" {
 
 variable "bastion_subnets" {
   type        = list(string)
-  default     = [""]
+  default     = null
   description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
 }
 
@@ -198,7 +198,7 @@ variable "client_instances" {
 
 variable "compute_subnets" {
   type        = list(string)
-  default     = [""]
+  default     = null
   description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
 }
 
