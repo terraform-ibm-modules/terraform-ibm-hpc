@@ -34,7 +34,6 @@ locals {
   # Cluster node details: 
   compute_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data, module.landing_zone_vsi[0].compute_vsi_data, module.landing_zone_vsi[0].compute_management_vsi_data])
   storage_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_vsi_data])
-  storage_instancess  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_vsi_data])
   protocol_instances  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].protocol_vsi_data])
   gklm_instances      = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].gklm_vsi_data])
   client_instances    = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].client_vsi_data])
@@ -226,7 +225,7 @@ locals {
     }
   ]
   storage_dns_records = [
-    for instance in local.storage_instances :
+    for instance in concat(local.storage_instances,local.protocol_instances, local.afm_instances, local.tie_brkr_instances, local.strg_mgmt_instances) :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
@@ -344,9 +343,9 @@ locals {
   storage_instance_names       = var.storage_type != "persistent" ? local.enable_afm == true ? concat(local.strg_instance_names, local.afm_instance_names) : local.strg_instance_names : []
   storage_ips_with_vol_mapping = module.landing_zone_vsi[*].instance_ips_with_vol_mapping
 
-  storage_cluster_instance_private_ips = local.scale_ces_enabled == false ? local.strg_instance_private_ips : concat(local.strg_instance_private_ips, local.protocol_instance_private_ips)
-  storage_cluster_instance_ids         = local.scale_ces_enabled == false ? local.strg_instance_ids : concat(local.strg_instance_ids, local.protocol_instance_ids)
-  storage_cluster_instance_names       = local.scale_ces_enabled == false ? local.strg_instance_names : concat(local.strg_instance_names, local.protocol_instance_names)
+  storage_cluster_instance_private_ips = local.scale_ces_enabled == false ? local.storage_instance_private_ips : concat(local.storage_instance_private_ips, local.protocol_instance_private_ips)
+  storage_cluster_instance_ids         = local.scale_ces_enabled == false ? local.storage_instance_ids : concat(local.storage_instance_ids, local.protocol_instance_ids)
+  storage_cluster_instance_names       = local.scale_ces_enabled == false ? local.storage_instance_names : concat(local.storage_instance_names, local.protocol_instance_names)
 
   baremetal_instance_private_ips = var.storage_type == "persistent" ? local.enable_afm == true ? concat(["bm_value"], local.afm_instance_private_ips) : ["bm_value"] : []
   baremetal_instance_ids         = var.storage_type == "persistent" ? local.enable_afm == true ? concat(["bm_value"], local.afm_instance_ids) : ["bm_value"] : []

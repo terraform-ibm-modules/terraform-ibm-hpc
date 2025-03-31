@@ -117,6 +117,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "bastion_fip": "${local.bastion_fip}",
   "compute_ssh_keys": ${local.list_compute_ssh_keys},
   "storage_ssh_keys": ${local.list_storage_ssh_keys},
+  "storage_type": "${var.storage_type}",
   "storage_instances": ${local.list_storage_instances},
   "management_instances": ${local.list_management_instances},
   "protocol_instances": ${local.list_protocol_instances},
