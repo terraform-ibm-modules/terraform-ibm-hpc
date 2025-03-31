@@ -54,12 +54,10 @@ data "ibm_is_subnet" "existing_bastion_subnets" {
 
 # New Code
 data "ibm_is_instance_profile" "dynmaic_worker_profile" {
-  count = var.enable_deployer ? 0 : 1
   name  = var.dynamic_compute_instances[0].profile
 }
 
 data "ibm_is_image" "dynamic_compute" {
-  count = var.enable_deployer ? 0 : 1
   name  = var.dynamic_compute_instances[0].image
 }
 

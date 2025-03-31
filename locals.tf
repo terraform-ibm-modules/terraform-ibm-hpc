@@ -262,13 +262,13 @@ locals {
   scc_cos_bucket       = length(module.landing_zone.cos_buckets_names) > 0 && var.scc_enable ? [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0] : ""
   scc_cos_instance_crn = length(module.landing_zone.cos_instance_crns) > 0 && var.scc_enable ? module.landing_zone.cos_instance_crns[0] : ""
 
-  vcpus                = var.enable_deployer ? 0 : tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile[0].vcpu_count[0].value)
-  ncores               = var.enable_deployer ? 0 : tonumber(local.vcpus / 2)
-  ncpus                = var.enable_deployer ? 0 : tonumber(var.enable_hyperthreading ? local.vcpus : local.ncores)
-  mem_in_mb            = var.enable_deployer ? 0 : tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile[0].memory[0].value) * 1024
-  rc_max_num           = var.enable_deployer ? 0 : tonumber(var.dynamic_compute_instances[0].count)
-  rc_profile           = var.enable_deployer ? "" : var.dynamic_compute_instances[0].profile
-  image_id             = var.enable_deployer ? "" : data.ibm_is_image.dynamic_compute[0].id
+  vcpus                = tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile.vcpu_count[0].value)
+  ncores               = tonumber(local.vcpus / 2)
+  ncpus                = tonumber(var.enable_hyperthreading ? local.vcpus : local.ncores)
+  mem_in_mb            = tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile.memory[0].value) * 1024
+  rc_max_num           = tonumber(var.dynamic_compute_instances.count)
+  rc_profile           = var.dynamic_compute_instances.profile
+  image_id             = data.ibm_is_image.dynamic_compute[0].id
   compute_subnets_cidr = var.compute_subnets_cidr
   compute_subnet_crn   = data.ibm_is_subnet.compute_subnet_crn.crn
   compute_ssh_keys_ids = [for name in local.compute_ssh_keys : data.ibm_is_ssh_key.compute_ssh_keys[name].id]
