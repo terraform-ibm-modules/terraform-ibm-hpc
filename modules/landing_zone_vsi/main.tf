@@ -290,7 +290,7 @@ module "afm_vsi" {
   ssh_key_ids                   = local.storage_ssh_keys
   subnets                       = local.storage_subnets
   tags                          = local.tags
-  user_data                     = data.template_file.storage_user_data.rendered
+  user_data                     = data.template_file.afm_user_data.rendered
   vpc_id                        = var.vpc_id
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy

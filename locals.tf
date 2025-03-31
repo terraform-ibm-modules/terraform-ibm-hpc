@@ -199,7 +199,7 @@ locals {
 
   # dependency: landing_zone_vsi -> dns-records
   compute_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data, module.landing_zone_vsi[0].compute_vsi_data, module.landing_zone_vsi[0].compute_management_vsi_data])
-  storage_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_vsi_data, module.landing_zone_vsi[0].afm_vsi_data, module.landing_zone_vsi[0].protocol_vsi_data, module.landing_zone_vsi[0].storage_cluster_tie_breaker_vsi_data, module.landing_zone_vsi[0].storage_cluster_management_vsi])
+  storage_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].afm_vsi_data, module.landing_zone_vsi[0].protocol_vsi_data, module.landing_zone_vsi[0].storage_vsi_data, module.landing_zone_vsi[0].storage_cluster_tie_breaker_vsi_data, module.landing_zone_vsi[0].storage_cluster_management_vsi])
   protocol_instances  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].protocol_vsi_data])
   gklm_instances      = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].gklm_vsi_data])
   client_instances    = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].client_vsi_data])
