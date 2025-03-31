@@ -272,4 +272,6 @@ locals {
   compute_subnets_cidr = var.compute_subnets_cidr
   compute_subnet_crn   = data.ibm_is_subnet.compute_subnet_crn.crn
   compute_ssh_keys_ids = [for name in local.compute_ssh_keys : data.ibm_is_ssh_key.compute_ssh_keys[name].id]
+  compute_public_key_content  = var.enable_deployer ? "" : jsonencode(base64encode(join("", flatten([module.landing_zone_vsi[0].compute_public_key_content]))))
+  compute_private_key_content = var.enable_deployer ? "" : jsonencode(base64encode(join("", flatten([module.landing_zone_vsi[0].compute_private_key_content]))))
 }

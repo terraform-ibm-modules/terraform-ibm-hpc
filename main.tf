@@ -129,8 +129,8 @@ module "prepare_tf_input" {
   compute_subnet_id                                = local.compute_subnet_id
   region                                           = local.region
   resource_group_id                                = local.resource_group_ids["service_rg"]
-  compute_public_key_content                       = local.compute_public_key_contents
-  compute_private_key_content                      = local.compute_private_key_contents
+  compute_public_key_content                       = local.compute_public_key_content
+  compute_private_key_content                      = local.compute_private_key_content
   scc_enable                                       = var.scc_enable
   scc_profile                                      = var.scc_profile
   scc_location                                     = var.scc_location
@@ -233,8 +233,8 @@ module "write_compute_cluster_inventory" {
   lsf_deployer_hostname       = local.lsf_deployer_hostname
   ibmcloud_api_key            = var.ibmcloud_api_key
   dns_domain_names            = var.dns_domain_names["compute"]
-  compute_public_key_content  = local.compute_public_key_contents
-  compute_private_key_content = local.compute_private_key_contents
+  compute_public_key_content  = local.compute_public_key_content
+  compute_private_key_content = local.compute_private_key_content
   enable_hyperthreading       = var.enable_hyperthreading
   vpc_id                      = local.vpc_id
   vcpus                       = local.vcpus
