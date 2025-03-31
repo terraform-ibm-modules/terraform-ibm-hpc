@@ -36,7 +36,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "compute_public_key_content": "${var.compute_public_key_content}",
   "compute_private_key_content": "${var.compute_private_key_content}",
   "resource_group_id": "${var.resource_group_id}",
-  "vpc_id":${var.vpc_id},
+  "vpc_id": "${var.vpc_id}",
   "vcpus": ${var.vcpus},
   "ncores": ${var.ncores},
   "ncpus": ${var.ncpus},
