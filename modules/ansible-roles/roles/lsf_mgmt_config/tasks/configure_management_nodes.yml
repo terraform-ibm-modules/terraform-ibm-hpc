@@ -55,7 +55,7 @@
     replace: '\1'
   run_once: true
 
-- name: Check if RC_HOSTS modification was already done
+- name: Management Config | Check if RC_HOSTS modification was already done
   stat:
     path: "/tmp/rc_hosts_added"
   register: rc_hosts_marker
@@ -97,13 +97,3 @@
     marker: ""
   when: lsf_host_addr_range_marker_check.rc != 0
   run_once: true
-
-- name: Set permissions for Python directories
-  file:
-    path: "{{ item }}"
-    mode: "0755"
-    recurse: yes
-  loop:
-    - /usr/local/lib/python3.11
-    - /usr/local/lib64/python3.11
-  ignore_errors: yes

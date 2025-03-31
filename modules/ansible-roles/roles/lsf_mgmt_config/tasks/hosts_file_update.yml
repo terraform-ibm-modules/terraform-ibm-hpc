@@ -18,33 +18,33 @@
   run_once: true
   when: ip_mapping_check.rc != 0
 
-- name: Get IP addresses using getent
+- name:  Management Config | Get IP addresses using getent
   shell: "getent hosts {{ inventory_hostname }} | awk '{ print $1 }'"
   register: dns_ip
   changed_when: false
 
-- name: Store IPs for each host
+- name:  Management Config | Store IPs for each host
   set_fact:
     host_ip: "{{ dns_ip.stdout }}"
 
-- name: Aggregate all IPs from all hosts
+- name:  Management Config | Aggregate all IPs from all hosts
   set_fact:
     all_ips: "{{ groups['all'] | map('extract', hostvars, 'host_ip') | list }}"
   run_once: true
 
-- name: Display all resolved IP addresses
+- name:  Management Config | Display all resolved IP addresses
   debug:
     msg: "Resolved IPs: {{ all_ips }}"
   run_once: true
 
-- name: Check if each IP exists in LSF hosts file
+- name:  Management Config | Check if each IP exists in LSF hosts file
   shell: "grep -w '{{ item }}' {{ LSF_HOSTS_FILE }} || true"
   register: ip_check
   loop: "{{ all_ips }}"
   changed_when: false
   run_once: true
 
-- name: Remove matched IPs from LSF hosts file if they exist
+- name:  Management Config | Remove matched IPs from LSF hosts file if they exist
   lineinfile:
     path: "{{ LSF_HOSTS_FILE }}"
     state: absent
@@ -53,7 +53,7 @@
   when: item.stdout | length > 0
   run_once: true
 
-- name: Copy the Hosts file to /etc/hosts
+- name:  Management Config | Copy the Hosts file to /etc/hosts
   copy:
     src: "{{ LSF_HOSTS_FILE }}"
     dest: /etc/hosts

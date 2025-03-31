@@ -1,13 +1,13 @@
 ---
 # Check if Python 3.11 is installed
-- name: Verify if Python 3.11 is installed
+- name: Python Installation | Verify if Python 3.11 is installed
   ansible.builtin.shell: "python3.11 --version"
   register: python_check
   ignore_errors: yes
   changed_when: false
 
 # Install required packages if Python 3.11 is missing
-- name: Install prerequisite packages
+- name: Python Installation | Install prerequisite packages
   ansible.builtin.yum:
     name:
       - python3.11
@@ -18,7 +18,7 @@
   when: python_check.rc != 0
 
 # Remove old Python 3 and pip3 symbolic links if Python 3.11 is newly installed
-- name: Remove existing symbolic links for Python 3 and pip3
+- name: Python Installation | Remove existing symbolic links for Python 3 and pip3
   ansible.builtin.file:
     path: "{{ item }}"
     state: absent
@@ -29,7 +29,7 @@
   when: python_check.rc != 0
 
 # Create symbolic links for Python 3.11 and pip3.11
-- name: Create symbolic links for Python 3.11 and pip3.11
+- name: Python Installation | Create symbolic links for Python 3.11 and pip3.11
   ansible.builtin.file:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
@@ -40,20 +40,20 @@
     - { src: "/usr/bin/python3.11", dest: "/etc/alternatives/python3" }
   when: python_check.rc != 0
 
-- name: Install IBM Cloud Networking Services, SDK Core, and selinux
+- name: Python Installation | Install IBM Cloud Networking Services, SDK Core, and selinux
   ansible.builtin.shell: "python3.11 -m pip install ibm-cloud-networking-services ibm-cloud-sdk-core selinux"
   args:
     executable: /bin/bash
   when: python_check.rc != 0
 
-- name: Install requests, PyYAML, Ansible, Ansible Core, and jmespath
+- name: Python Installation | Install requests, PyYAML, Ansible, Ansible Core, and jmespath
   ansible.builtin.shell: "python3.11 -m pip install ibm-vpc==0.10.0 requests==2.27.1 pyyaml==6.0 ansible==5.9.0 ansible-core==2.12.6 jmespath==1.0.1"
   args:
     executable: /bin/bash
   when: python_check.rc != 0
 
 # Set proper permissions for Python 3.11 library directories
-- name: Adjust permissions for Python 3.11 library directories
+- name: Python Installation | Adjust permissions for Python 3.11 library directories
   ansible.builtin.file:
     path: "{{ item }}"
     mode: '0755'
