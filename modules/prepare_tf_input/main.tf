@@ -46,7 +46,6 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "image_id": "${var.image_id}",
   "compute_subnet_id": "${var.compute_subnet_id}",
   "region": "${var.region}",
-  "dynamic_compute_instances": ${local.dynamic_compute_instances},
   "scc_enable": ${var.scc_enable},
   "scc_profile": "${var.scc_profile}",
   "scc_location": "${var.scc_location}",
