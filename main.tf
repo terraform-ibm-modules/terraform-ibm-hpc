@@ -129,10 +129,6 @@ module "prepare_tf_input" {
   compute_subnet_id                                = local.compute_subnet_id
   region                                           = local.region
   resource_group_id                                = local.resource_group_ids["service_rg"]
-  compute_subnets_cidr                             = local.compute_subnets_cidr
-  compute_security_group_id                        = local.compute_security_group_id
-  compute_ssh_keys_ids                             = local.compute_ssh_keys_ids
-  compute_subnet_crn                               = local.compute_subnet_crn
   compute_public_key_content                       = local.compute_public_key_contents
   compute_private_key_content                      = local.compute_private_key_contents
   scc_enable                                       = var.scc_enable

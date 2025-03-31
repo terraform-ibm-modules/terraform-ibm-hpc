@@ -458,23 +458,11 @@ variable "resource_group_id" {
   default     = null
 }
 
-variable "compute_subnets_cidr" {
-  description = "List of compute subnets CIDR"
-  type        = list(string)
-  default     = null
-}
-
-variable "compute_ssh_keys_ids" {
-  description = "List of compute SSH key IDs"
-  type        = list(string)
-  default     = null
-}
-
-variable "compute_security_group_id" {
-  type        = list(string)
-  description = "List of Security group IDs to allow File share access"
-  default     = null
-}
+# variable "compute_security_group_id" {
+#   type        = list(string)
+#   description = "List of Security group IDs to allow File share access"
+#   default     = null
+# }
 
 variable "vpc_id" {
   type        = string
@@ -482,8 +470,20 @@ variable "vpc_id" {
   description = "ID of an existing VPC in which the cluster resources will be deployed."
 }
 
-variable "compute_subnet_crn" {
-  type        = string
-  default     = null
-  description = "ID of an existing VPC in which the cluster resources will be deployed."
-}
+# variable "compute_subnet_crn" {
+#   type        = string
+#   default     = null
+#   description = "ID of an existing VPC in which the cluster resources will be deployed."
+# }
+
+# variable "compute_ssh_keys_ids" {
+#   description = "List of compute SSH key IDs"
+#   type        = list(string)
+#   default     = null
+# }
+
+# variable "compute_subnets_cidr" {
+#   description = "List of compute subnets CIDR"
+#   type        = list(string)
+#   default     = null
+# }
