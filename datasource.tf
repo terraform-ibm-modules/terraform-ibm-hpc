@@ -52,7 +52,6 @@ data "ibm_is_subnet" "existing_bastion_subnets" {
   name  = var.bastion_subnets[count.index]
 }
 
-# New Code
 data "ibm_is_ssh_key" "compute_ssh_keys" {
   for_each = toset(local.compute_ssh_keys)
   name     = each.key

@@ -30,3 +30,5 @@
     path: "{{ network_script_path }}/route-{{ network_interface }}"
     line: "{{ route.stdout }}"
     create: yes
+  notify:
+    - Restart NetworkManager

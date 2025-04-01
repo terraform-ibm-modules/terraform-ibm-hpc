@@ -53,7 +53,19 @@
   when: item.stdout | length > 0
   run_once: true
 
-- name:  Management Config | Copy the Hosts file to /etc/hosts
+- name: Management Config | Ensure LSF hosts file exists
+  stat:
+    path: "{{ LSF_HOSTS_FILE }}"
+  register: lsf_hosts_stat
+
+- name: Management Config | Restore LSF hosts file if missing
+  copy:
+    src: "{{ HA_shared_dir }}/lsf/conf/hosts"
+    dest: "{{ LSF_HOSTS_FILE }}"
+    remote_src: yes
+  when: not lsf_hosts_stat.stat.exists
+
+- name: Management Config | Copy the Hosts file to /etc/hosts
   copy:
     src: "{{ LSF_HOSTS_FILE }}"
     dest: /etc/hosts
