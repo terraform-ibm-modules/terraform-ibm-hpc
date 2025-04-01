@@ -1,5 +1,7 @@
 ---
 
+# Update the /etc/hosts file for Dynamic node Support
+
 - name: Management Config | Check if IP-to-host mapping already exists
   shell: "grep -q '# ANSIBLE MANAGED: IP mapping added' '{{ LSF_HOSTS_FILE }}'"
   register: ip_mapping_check

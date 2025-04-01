@@ -9,5 +9,5 @@
 # Create lsfadmin user
 - import_tasks: lsfadmin_creation.yml
 
-# INstall Python dependencies
+# Install Python dependencies
 - import_tasks: python_installation.yml

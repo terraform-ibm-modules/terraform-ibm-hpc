@@ -1,4 +1,6 @@
 ---
+# Hyperthreading Configuration
+
 - name: Hyperthreading | Define ego_define_ncpus based on hyperthreading
   set_fact:
     ego_define_ncpus: "{{ 'threads' if enable_hyperthreading else 'cores' }}"
