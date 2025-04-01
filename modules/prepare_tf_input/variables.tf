@@ -467,3 +467,9 @@ variable "resource_group_id" {
   type        = string
   default     = null
 }
+
+variable "vpc_id" {
+  type        = string
+  default     = null
+  description = "ID of an existing VPC in which the cluster resources will be deployed."
+}

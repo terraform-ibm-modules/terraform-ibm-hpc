@@ -800,3 +800,82 @@ variable "scc_cos_instance_crn" {
   default     = null
   description = "scc cos instance crn"
 }
+
+# New Variables
+variable "compute_ssh_keys_ids" {
+  type        = list(string)
+  default     = null
+  description = "The key pair to use to launch the compute host."
+}
+
+variable "compute_subnet_crn" {
+  type        = string
+  default     = null
+  description = "ID of an existing VPC in which the cluster resources will be deployed."
+}
+
+variable "vcpus" {
+  description = "Number of vCPUs"
+  type        = number
+  default     = null
+}
+
+variable "ncores" {
+  description = "Number of cores"
+  type        = number
+  default     = null
+}
+
+variable "ncpus" {
+  description = "Number of CPUs"
+  type        = number
+  default     = null
+}
+
+variable "mem_in_mb" {
+  description = "Memory in MB"
+  type        = number
+  default     = null
+}
+
+variable "rc_max_num" {
+  description = "Maximum number of resource instances"
+  type        = number
+  default     = null
+}
+
+variable "rc_profile" {
+  description = "Resource profile"
+  type        = string
+  default     = null
+}
+
+variable "image_id" {
+  description = "Image ID for the compute instance"
+  type        = string
+  default     = null
+}
+
+variable "compute_subnet_id" {
+  description = "Compute subnet ID"
+  type        = string
+  default     = null
+}
+
+variable "region" {
+  description = "Deployment region"
+  type        = string
+  default     = null
+}
+
+variable "resource_group_id" {
+  description = "Resource group ID"
+  type        = string
+  default     = null
+}
+
+variable "vpc_id" {
+  type        = string
+  default     = null
+  description = "ID of an existing VPC in which the cluster resources will be deployed."
+}

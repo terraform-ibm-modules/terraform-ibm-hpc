@@ -54,6 +54,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "compute_subnets_cidr": ${local.compute_subnets_cidr},
   "compute_ssh_keys_ids": ${local.compute_ssh_keys_ids},
   "compute_subnet_crn": "${var.compute_subnet_crn}",
+  "vpc_id": ${jsonencode(var.vpc_id)},
   "vcpus": ${jsonencode(var.vcpus)},
   "rc_ncores": ${jsonencode(var.ncores)},
   "rc_ncpus": ${jsonencode(var.ncpus)},
