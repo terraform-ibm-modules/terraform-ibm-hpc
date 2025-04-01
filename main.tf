@@ -140,7 +140,6 @@ module "prepare_tf_input" {
   compute_subnets_cidr                             = var.compute_subnets_cidr
   compute_subnet_crn                               = local.compute_subnet_crn
   compute_ssh_keys_ids                             = local.compute_ssh_keys_ids
-  compute_security_group_id                        = local.compute_security_group_id
   vcpus                                            = local.vcpus
   ncores                                           = local.ncores
   ncpus                                            = local.ncpus
