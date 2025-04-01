@@ -53,7 +53,7 @@ data "ibm_is_subnet" "existing_bastion_subnets" {
 }
 
 # New Code
-data "ibm_is_instance_profile" "dynmaic_worker_profile" {
+data "ibm_is_instance_profile" "dynamic_worker_profile" {
   name = var.dynamic_compute_instances[0].profile
 }
 

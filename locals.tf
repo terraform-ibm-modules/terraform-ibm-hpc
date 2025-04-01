@@ -235,17 +235,17 @@ locals {
 
 # details needed for json file
 locals {
-  json_inventory_path          = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json"
-  management_nodes             = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"]
-  compute_nodes                = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].compute_vsi_data]))[*]["name"]
-  compute_nodes_list           = var.enable_deployer ? [] : (length(local.compute_nodes) > 0 ? [format("%s-[001:%s]", join("-", slice(split("-", local.compute_nodes[0]), 0, length(split("-", local.compute_nodes[0])) - 1)), split("-", local.compute_nodes[length(local.compute_nodes) - 1])[length(split("-", local.compute_nodes[length(local.compute_nodes) - 1])) - 1])] : local.compute_nodes) #(length(local.compute_nodes) >= 10 ? [format("%s-00[%d:%d]", regex("^(.*?)-\\d+$", local.compute_nodes[0])[0], 1, length(local.compute_nodes))] : local.compute_nodes)
-  client_nodes                 = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].client_vsi_data]))[*]["name"]
-  gui_hosts                    = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA
-  db_hosts                     = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA
-  ha_shared_dir                = "/mnt/lsf/shared"
-  nfs_install_dir              = "none"
-  enable_monitoring            = false
-  lsf_deployer_hostname        = var.deployer_hostname #data.external.get_hostname.result.name  #var.enable_bastion ? "" : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
+  json_inventory_path   = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json"
+  management_nodes      = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"]
+  compute_nodes         = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].compute_vsi_data]))[*]["name"]
+  compute_nodes_list    = var.enable_deployer ? [] : (length(local.compute_nodes) > 0 ? [format("%s-[001:%s]", join("-", slice(split("-", local.compute_nodes[0]), 0, length(split("-", local.compute_nodes[0])) - 1)), split("-", local.compute_nodes[length(local.compute_nodes) - 1])[length(split("-", local.compute_nodes[length(local.compute_nodes) - 1])) - 1])] : local.compute_nodes) #(length(local.compute_nodes) >= 10 ? [format("%s-00[%d:%d]", regex("^(.*?)-\\d+$", local.compute_nodes[0])[0], 1, length(local.compute_nodes))] : local.compute_nodes)
+  client_nodes          = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].client_vsi_data]))[*]["name"]
+  gui_hosts             = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA
+  db_hosts              = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA
+  ha_shared_dir         = "/mnt/lsf/shared"
+  nfs_install_dir       = "none"
+  enable_monitoring     = false
+  lsf_deployer_hostname = var.deployer_hostname #data.external.get_hostname.result.name  #var.enable_bastion ? "" : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
 
   cloud_logs_bucket    = length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")][0] : null
   cloud_metrics_bucket = length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")][0] : null
@@ -260,13 +260,13 @@ locals {
   scc_cos_bucket       = length(module.landing_zone.cos_buckets_names) > 0 && var.scc_enable ? [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0] : ""
   scc_cos_instance_crn = length(module.landing_zone.cos_instance_crns) > 0 && var.scc_enable ? module.landing_zone.cos_instance_crns[0] : ""
 
-  vcpus                       = tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile.vcpu_count[0].value)
-  ncores                      = tonumber(local.vcpus / 2)
-  ncpus                       = tonumber(var.enable_hyperthreading ? local.vcpus : local.ncores)
-  mem_in_mb                   = tonumber(data.ibm_is_instance_profile.dynmaic_worker_profile.memory[0].value) * 1024
-  rc_max_num                  = tonumber(var.dynamic_compute_instances[0].count)
-  rc_profile                  = var.dynamic_compute_instances[0].profile
-  image_id                    = data.ibm_is_image.dynamic_compute.id
+  vcpus                       = var.enable_deployer ? 0 : tonumber(data.ibm_is_instance_profile.dynamic_worker_profile.vcpu_count[0].value)
+  ncores                      = var.enable_deployer ? 0 : tonumber(local.vcpus / 2)
+  ncpus                       = var.enable_deployer ? 0 : tonumber(var.enable_hyperthreading ? local.vcpus : local.ncores)
+  mem_in_mb                   = var.enable_deployer ? 0 : tonumber(data.ibm_is_instance_profile.dynamic_worker_profile.memory[0].value) * 1024
+  rc_max_num                  = var.enable_deployer ? 0 : tonumber(var.dynamic_compute_instances[0].count)
+  rc_profile                  = var.enable_deployer ? "" : var.dynamic_compute_instances[0].profile
+  image_id                    = var.enable_deployer ? "" : data.ibm_is_image.dynamic_compute.id
   compute_subnets_cidr        = var.compute_subnets_cidr
   compute_subnet_crn          = data.ibm_is_subnet.compute_subnet_crn.crn
   compute_ssh_keys_ids        = [for name in local.compute_ssh_keys : data.ibm_is_ssh_key.compute_ssh_keys[name].id]

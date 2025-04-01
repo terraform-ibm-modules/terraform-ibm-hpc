@@ -66,8 +66,16 @@ variable "lsf_deployer_hostname" {
 
 # New Variables
 variable "dns_domain_names" {
-  type        = string
-  default     = null
+  type = object({
+    compute  = string
+    storage  = string
+    protocol = string
+  })
+  default = {
+    compute  = "comp.com"
+    storage  = "strg.com"
+    protocol = "ces.com"
+  }
   description = "IBM Cloud HPC DNS domain names."
 }
 
