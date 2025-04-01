@@ -150,11 +150,8 @@ resource "null_resource" "export_api" {
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<EOT
-      # Append API key export to shell profile for persistence
-      echo 'export VPC_API_KEY="${var.ibmcloud_api_key}"' >> ~/.bashrc
-      echo 'export VPC_API_KEY="${var.ibmcloud_api_key}"' >> ~/.bash_profile
-      # Export API key for immediate availability in the current session
       export VPC_API_KEY="${var.ibmcloud_api_key}"
+      echo "$VPC_API_KEY" | tee /opt/ibm/temp_file.txt
     EOT
   }
   triggers = {
@@ -203,6 +200,7 @@ EOT
 
 resource "null_resource" "run_observability_playbooks" {
   count = var.inventory_path != null && var.observability_provision ? 1 : 0
+
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook -f 50 -i ${var.inventory_path} ${var.observability_playbook_path}"

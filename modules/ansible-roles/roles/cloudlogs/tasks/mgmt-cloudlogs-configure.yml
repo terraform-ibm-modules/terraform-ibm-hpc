@@ -111,11 +111,21 @@
       @INCLUDE output-logs-router-agent.conf
   when: logs_enable_for_management | bool
 
-- name: Fetch API KEY from environmental variable of Ansible controller
-  shell: "echo $VPC_API_KEY"
-  register: env_api_key
-  environment:
-    VPC_API_KEY: "{{ lookup('env', 'VPC_API_KEY') }}"
+- name: Fetch API KEY from file
+  ansible.builtin.slurp:
+    src: /opt/ibm/temp_file.txt
+  register: api_key_file
+  delegate_to: localhost
+
+- name: Decode API Key
+  set_fact:
+    env_api_key: "{{ api_key_file['content'] | b64decode | trim }}" #pragma: allowlist secret
+
+- name: Delete API Key file
+  ansible.builtin.file:
+    path: /opt/ibm/temp_file.txt
+    state: absent
+  delegate_to: localhost
 
 - name: Run post-config.sh script
   ansible.builtin.command: >
@@ -123,7 +133,7 @@
     -p "3443"
     -t "/logs/v1/singles"
     -a IAMAPIKey
-    -k {{ env_api_key.stdout }}
+    -k {{ env_api_key }}
     --send-directly-to-icl
     -s true
     -i Production
