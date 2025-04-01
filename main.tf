@@ -158,6 +158,16 @@ module "file_storage" {
   subnet_id          = local.compute_subnet_id
 }
 
+module "dns_da" {
+  count         = var.enable_deployer == false ? 1 : 0
+  source        = "./modules/dns_da"
+  prefix        = var.prefix
+  vpc_name      = local.vpc_name
+  dns_zone_name = "mani.com"
+  dns_records   = local.compute_dns_records
+
+}
+
 module "dns" {
   count                  = var.enable_deployer == false ? 1 : 0
   source                 = "./modules/dns"
