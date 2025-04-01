@@ -135,12 +135,12 @@ module "prepare_tf_input" {
   observability_atracker_enable                    = var.observability_atracker_enable
   observability_atracker_target_type               = var.observability_atracker_target_type
   # New Variables
-  enable_hyperthreading     = var.enable_hyperthreading
-  dynamic_compute_instances = var.dynamic_compute_instances
-  compute_subnets_cidr      = var.compute_subnets_cidr
-  compute_subnet_crn        = local.compute_subnet_crn
-  compute_ssh_keys_ids      = local.compute_ssh_keys_ids
-  depends_on                = [module.deployer]
+  enable_hyperthreading                            = var.enable_hyperthreading
+  dynamic_compute_instances                        = var.dynamic_compute_instances
+  compute_subnets_cidr                             = var.compute_subnets_cidr
+  compute_subnet_crn                               = local.compute_subnet_crn
+  compute_ssh_keys_ids                             = local.compute_ssh_keys_ids
+  depends_on                                       = [module.deployer]
 }
 
 module "resource_provisioner" {
