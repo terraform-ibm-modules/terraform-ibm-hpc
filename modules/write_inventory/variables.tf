@@ -63,3 +63,10 @@ variable "lsf_deployer_hostname" {
   default     = null
   description = "Deployer host name"
 }
+
+# New Variables
+variable "enable_hyperthreading" {
+  type        = bool
+  default     = true
+  description = "Option to enable the Hyperthreading"
+}

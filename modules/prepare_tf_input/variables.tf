@@ -366,3 +366,44 @@ variable "observability_monitoring_plan" {
     error_message = "Please enter a valid plan for IBM Cloud Monitoring, for all details visit https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans."
   }
 }
+
+# New Variables
+variable "enable_hyperthreading" {
+  type        = bool
+  default     = true
+  description = "Option to enable the Hyperthreading"
+}
+
+variable "dynamic_compute_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  default = [{
+    profile = "cx2-2x4"
+    count   = 250
+    image   = "ibm-redhat-8-10-minimal-amd64-2"
+  }]
+  description = "MaxNumber of instances to be launched for compute cluster."
+}
+
+variable "compute_subnets_cidr" {
+  type        = list(string)
+  default     = ["10.10.20.0/24", "10.20.20.0/24", "10.30.20.0/24"]
+  description = "Subnet CIDR block to launch the compute cluster host."
+}
+
+variable "compute_ssh_keys_ids" {
+  type        = list(string)
+  default     = null
+  description = "The key pair to use to launch the compute host."
+}
+
+variable "compute_subnet_crn" {
+  type        = string
+  default     = null
+  description = "ID of an existing VPC in which the cluster resources will be deployed."
+}

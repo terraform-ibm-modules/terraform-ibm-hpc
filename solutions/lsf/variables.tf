@@ -274,11 +274,11 @@ variable "compute_gui_password" {
 #   }
 # }
 
-# variable "enable_hyperthreading" {
-#   type        = bool
-#   default     = true
-#   description = "Setting this to true will enable hyper-threading in the worker nodes of the cluster (default). Otherwise, hyper-threading will be disabled."
-# }
+variable "enable_hyperthreading" {
+  type        = bool
+  default     = true
+  description = "Setting this to true will enable hyper-threading in the worker nodes of the cluster (default). Otherwise, hyper-threading will be disabled."
+}
 
 # variable "enable_dedicated_host" {
 #   type        = bool
