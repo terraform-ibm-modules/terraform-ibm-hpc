@@ -153,6 +153,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "ldap_user_password": "${var.ldap_user_password}",
   "ldap_server_cert": "${local.ldap_server_cert}",
   "afm_instances": ${local.list_afm_instances},
+  "afm_cos_config": ${local.afm_cos_config},
   "scale_encryption_enabled": ${var.scale_encryption_enabled},
   "scale_encryption_type": ${local.scale_encryption_type},
   "gklm_instance_key_pair": ${local.list_gklm_ssh_keys},

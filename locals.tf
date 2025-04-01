@@ -414,6 +414,7 @@ locals {
   ldap_admin_password         = jsonencode(var.ldap_admin_password)
   list_ldap_ssh_keys          = jsonencode(local.ldap_instance_key_pair)
   list_afm_instances          = jsonencode(var.afm_instances)
+  afm_cos_config              = jsonencode(var.afm_cos_config)
   list_gklm_ssh_keys          = jsonencode(local.gklm_instance_key_pair)
   list_gklm_instances         = jsonencode(var.gklm_instances)
   scale_encryption_type       = jsonencode(var.scale_encryption_type)

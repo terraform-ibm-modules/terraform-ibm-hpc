@@ -84,6 +84,7 @@ locals {
     skip_kms_s2s_auth_policy                         = var.skip_kms_s2s_auth_policy
     ibmcloud_api_key                                 = var.ibmcloud_api_key
     afm_instances                                = var.afm_instances
+    afm_cos_config                               = var.afm_cos_config 
     enable_ldap                     = var.enable_ldap
     ldap_basedns                    = var.ldap_basedns
     ldap_admin_password             = var.ldap_admin_password
@@ -172,6 +173,7 @@ locals {
     skip_kms_s2s_auth_policy                         = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
     ibmcloud_api_key                                 = lookup(local.override[local.override_type], "ibmcloud_api_key", local.config.ibmcloud_api_key)
     afm_instances                                    = lookup(local.override[local.override_type], "afm_instances", local.config.afm_instances)
+    afm_cos_config                                   = lookup(local.override[local.override_type], "afm_cos_config", local.config.afm_cos_config)
     enable_ldap                                      = lookup(local.override[local.override_type], "enable_ldap", local.config.enable_ldap)
     ldap_basedns                                     = lookup(local.override[local.override_type], "ldap_basedns", local.config.ldap_basedns)
     ldap_admin_password                              = lookup(local.override[local.override_type], "ldap_admin_password", local.config.ldap_admin_password)
