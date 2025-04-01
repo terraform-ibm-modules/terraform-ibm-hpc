@@ -161,18 +161,20 @@ locals {
 # locals needed for dns-records
 locals {
   # dependency: dns -> dns-records
-  dns_instance_id = var.enable_deployer ? "" : module.dns[0].dns_instance_id
+  # dns_instance_id = var.enable_deployer ? "" : module.dns[0].dns_instance_id
+
+  # dns_instance_id_da = var.enable_deployer ? "" : module.dns_da[0].dns_instance_id
   # dns_custom_resolver_id = var.enable_deployer ? "" : module.dns[0].dns_custom_resolver_id
-  dns_zone_map_list = var.enable_deployer ? [] : module.dns[0].dns_zone_maps
-  compute_dns_zone_id = one(flatten([
-    for dns_zone in local.dns_zone_map_list : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["compute"]
-  ]))
-  storage_dns_zone_id = one(flatten([
-    for dns_zone in local.dns_zone_map_list : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["storage"]
-  ]))
-  protocol_dns_zone_id = one(flatten([
-    for dns_zone in local.dns_zone_map_list : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["protocol"]
-  ]))
+  # dns_zone_map_list = var.enable_deployer ? [] : module.dns[0].dns_zone_maps
+  # compute_dns_zone_id = one(flatten([
+  #   for dns_zone in local.dns_zone_map_list : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["compute"]
+  # ]))
+  # storage_dns_zone_id = one(flatten([
+  #   for dns_zone in local.dns_zone_map_list : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["storage"]
+  # ]))
+  # protocol_dns_zone_id = one(flatten([
+  #   for dns_zone in local.dns_zone_map_list : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["protocol"]
+  # ]))
 
   # dependency: landing_zone_vsi -> dns-records
   compute_instances  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data, module.landing_zone_vsi[0].compute_vsi_data])

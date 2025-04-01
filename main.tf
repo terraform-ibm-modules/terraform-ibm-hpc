@@ -158,58 +158,74 @@ module "file_storage" {
   subnet_id          = local.compute_subnet_id
 }
 
-module "dns_da" {
+module "compute_dns_da" {
   count         = var.enable_deployer == false ? 1 : 0
   source        = "./modules/dns_da"
   prefix        = var.prefix
   vpc_name      = local.vpc_name
-  dns_zone_name = "mani.com"
+  dns_zone_name = "comp.com"
   dns_records   = local.compute_dns_records
-
 }
 
-module "dns" {
-  count                  = var.enable_deployer == false ? 1 : 0
-  source                 = "./modules/dns"
-  prefix                 = var.prefix
-  resource_group_id      = local.resource_group_ids["service_rg"]
-  vpc_crn                = local.vpc_crn
-  subnets_crn            = local.subnets_crn
-  dns_instance_id        = var.dns_instance_id
-  dns_custom_resolver_id = var.dns_custom_resolver_id
-  dns_domain_names       = values(var.dns_domain_names)
+module "storage_dns_da" {
+  count         = var.enable_deployer == false ? 1 : 0
+  source        = "./modules/dns_da"
+  prefix        = var.prefix
+  vpc_name      = local.vpc_name
+  dns_zone_name = "strg.com"
+  dns_records   = local.storage_dns_records
 }
 
-module "compute_dns_records" {
-  count           = var.enable_deployer == false ? 1 : 0
-  source          = "./modules/dns_record"
-  dns_instance_id = local.dns_instance_id
-  dns_zone_id     = local.compute_dns_zone_id
-  dns_records     = local.compute_dns_records
-  depends_on      = [module.dns]
+module "protocol_dns_da" {
+  count         = var.enable_deployer == false ? 1 : 0
+  source        = "./modules/dns_da"
+  prefix        = var.prefix
+  vpc_name      = local.vpc_name
+  dns_zone_name = "prop.com"
+  dns_records   = local.protocol_dns_records
 }
 
-module "storage_dns_records" {
-  count           = var.enable_deployer == false ? 1 : 0
-  source          = "./modules/dns_record"
-  dns_instance_id = local.dns_instance_id
-  dns_zone_id     = local.storage_dns_zone_id
-  dns_records     = local.storage_dns_records
-  depends_on      = [module.dns]
-}
+# module "dns" {
+#   count                  = var.enable_deployer == false ? 1 : 0
+#   source                 = "./modules/dns"
+#   prefix                 = var.prefix
+#   resource_group_id      = local.resource_group_ids["service_rg"]
+#   vpc_crn                = local.vpc_crn
+#   subnets_crn            = local.subnets_crn
+#   dns_instance_id        = var.dns_instance_id
+#   dns_custom_resolver_id = var.dns_custom_resolver_id
+#   dns_domain_names       = values(var.dns_domain_names)
+# }
 
-module "protocol_dns_records" {
-  count           = var.enable_deployer == false ? 1 : 0
-  source          = "./modules/dns_record"
-  dns_instance_id = local.dns_instance_id
-  dns_zone_id     = local.protocol_dns_zone_id
-  dns_records     = local.protocol_dns_records
-  depends_on      = [module.dns]
-}
+# module "compute_dns_records" {
+#   count           = var.enable_deployer == false ? 1 : 0
+#   source          = "./modules/dns_record"
+#   dns_instance_id = local.dns_instance_id_da
+#   dns_zone_id     = local.compute_dns_zone_id
+#   dns_records     = local.compute_dns_records
+#   depends_on      = [module.dns]
+# }
+
+# module "storage_dns_records" {
+#   count           = var.enable_deployer == false ? 1 : 0
+#   source          = "./modules/dns_record"
+#   dns_instance_id = local.dns_instance_id
+#   dns_zone_id     = local.storage_dns_zone_id
+#   dns_records     = local.storage_dns_records
+#   depends_on      = [module.dns]
+# }
+
+# module "protocol_dns_records" {
+#   count           = var.enable_deployer == false ? 1 : 0
+#   source          = "./modules/dns_record"
+#   dns_instance_id = local.dns_instance_id
+#   dns_zone_id     = local.protocol_dns_zone_id
+#   dns_records     = local.protocol_dns_records
+#   depends_on      = [module.dns]
+# }
 
 resource "time_sleep" "wait_60_seconds" {
   create_duration = "60s"
-  depends_on      = [module.storage_dns_records, module.protocol_dns_records, module.compute_dns_records]
 }
 
 module "write_compute_cluster_inventory" {

@@ -15,9 +15,19 @@ output "landing_zone_vsi" {
   sensitive   = true
 }
 
-output "dns" {
+output "compute_dns_da" {
   description = "DNS data"
-  value       = module.dns
+  value       = module.compute_dns_da
+}
+
+output "storage_dns_da" {
+  description = "DNS data"
+  value       = module.storage_dns_da
+}
+
+output "protocol_dns_da" {
+  description = "DNS data"
+  value       = module.protocol_dns_da
 }
 
 output "file_storage" {
