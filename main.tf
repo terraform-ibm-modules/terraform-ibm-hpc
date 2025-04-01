@@ -153,7 +153,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "ldap_user_password": "${var.ldap_user_password}",
   "ldap_server_cert": "${local.ldap_server_cert}",
   "afm_instances": ${local.list_afm_instances},
-  "afm_cos_config": ${local.afm_cos_config},
+  "afm_cos_config": ${local.afm_cos_config_details},
   "scale_encryption_enabled": ${var.scale_encryption_enabled},
   "scale_encryption_type": ${local.scale_encryption_type},
   "gklm_instance_key_pair": ${local.list_gklm_ssh_keys},
@@ -434,7 +434,7 @@ module "write_storage_cluster_inventory" {
   protocol_gateway_ip                              = jsonencode("")
   filesets                                         = jsonencode(local.fileset_size_map)
   afm_cos_bucket_details                           = jsonencode([])
-  afm_config_details                               = local.enable_afm == true ? jsonencode(local.afm_cos_config) : jsonencode([])
+  afm_config_details                               = jsonencode([]) #local.enable_afm == true ? jsonencode(local.afm_cos_config) : jsonencode([])
   afm_cluster_instance_names                       = jsonencode(local.afm_instance_names)
   filesystem_mountpoint                            = var.scale_encryption_type == "key_protect" ? (var.storage_instances[*]["filesystem"] != "" ? var.storage_instances[*]["filesystem"] : jsonencode(var.filesystem_config[0]["filesystem"])) : jsonencode("")
   depends_on                                       = [ time_sleep.wait_60_seconds ]

@@ -320,7 +320,7 @@ locals {
   afm_instance_names       = try(tolist([for name_details in flatten(local.afm_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
   # afm_cos_bucket_details = local.enable_afm == true ? flatten(module.cos[*].afm_cos_bucket_details) : []
-  afm_cos_config     = local.enable_afm == true ? flatten(module.cos[*].afm_cos_config) : []
+  # afm_cos_config     = local.enable_afm == true ? flatten(module.cos[*].afm_cos_config) : []
 
   protocol_instance_private_ips = flatten(local.protocol_instances[*]["ipv4_address"])
   protocol_instance_ids         = flatten(local.protocol_instances[*]["id"])
@@ -417,7 +417,7 @@ locals {
   ldap_admin_password         = jsonencode(var.ldap_admin_password)
   list_ldap_ssh_keys          = jsonencode(local.ldap_instance_key_pair)
   list_afm_instances          = jsonencode(var.afm_instances)
-  afm_cos_config              = jsonencode(var.afm_cos_config)
+  afm_cos_config_details      = jsonencode(var.afm_cos_config)
   list_gklm_ssh_keys          = jsonencode(local.gklm_instance_key_pair)
   list_gklm_instances         = jsonencode(var.gklm_instances)
   scale_encryption_type       = jsonencode(var.scale_encryption_type)
