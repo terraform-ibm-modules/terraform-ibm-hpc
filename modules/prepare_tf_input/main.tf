@@ -53,7 +53,18 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "dynamic_compute_instances": ${local.dynamic_compute_instances},
   "compute_subnets_cidr": ${local.compute_subnets_cidr},
   "compute_ssh_keys_ids": ${local.compute_ssh_keys_ids},
-  "compute_subnet_crn": "${var.compute_subnet_crn}"
+  "compute_subnet_crn": "${var.compute_subnet_crn}",
+  "vcpus": ${jsonencode(var.vcpus)},
+  "rc_ncores": ${jsonencode(var.ncores)},
+  "rc_ncpus": ${jsonencode(var.ncpus)},
+  "rc_mem_in_mb": ${jsonencode(var.mem_in_mb)},
+  "rc_max_num": ${jsonencode(var.rc_max_num)},
+  "rc_profile": ${jsonencode(var.rc_profile)},
+  "image_id": ${jsonencode(var.image_id)},
+  "compute_subnet_id": ${jsonencode(var.compute_subnet_id)},
+  "region_name": ${jsonencode(var.region)},
+  "resource_group_id": ${jsonencode(var.resource_group_id)},
+  "zone_name": ${jsonencode(var.zones)}
 }
 EOT
   filename = local.schematics_inputs_path

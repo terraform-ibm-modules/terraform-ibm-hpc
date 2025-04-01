@@ -140,6 +140,16 @@ module "prepare_tf_input" {
   compute_subnets_cidr                             = var.compute_subnets_cidr
   compute_subnet_crn                               = local.compute_subnet_crn
   compute_ssh_keys_ids                             = local.compute_ssh_keys_ids
+  vcpus                                            = local.vcpus
+  ncores                                           = local.ncores
+  ncpus                                            = local.ncpus
+  mem_in_mb                                        = local.mem_in_mb
+  rc_max_num                                       = local.rc_max_num
+  rc_profile                                       = local.rc_profile
+  image_id                                         = local.image_id
+  compute_subnet_id                                = local.compute_subnet_id
+  region                                           = local.region
+  resource_group_id                                = local.resource_group_ids["service_rg"]
   depends_on                                       = [module.deployer]
 }
 
