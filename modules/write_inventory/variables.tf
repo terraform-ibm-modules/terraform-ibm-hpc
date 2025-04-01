@@ -99,48 +99,6 @@ variable "enable_hyperthreading" {
   default     = null
 }
 
-variable "vcpus" {
-  description = "Number of vCPUs"
-  type        = number
-  default     = null
-}
-
-variable "ncores" {
-  description = "Number of cores"
-  type        = number
-  default     = null
-}
-
-variable "ncpus" {
-  description = "Number of CPUs"
-  type        = number
-  default     = null
-}
-
-variable "mem_in_mb" {
-  description = "Memory in MB"
-  type        = number
-  default     = null
-}
-
-variable "rc_max_num" {
-  description = "Maximum number of resource instances"
-  type        = number
-  default     = null
-}
-
-variable "rc_profile" {
-  description = "Resource profile"
-  type        = string
-  default     = null
-}
-
-variable "image_id" {
-  description = "Image ID for the compute instance"
-  type        = string
-  default     = null
-}
-
 variable "compute_subnet_id" {
   description = "Compute subnet ID"
   type        = string
