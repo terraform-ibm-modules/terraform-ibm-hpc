@@ -51,57 +51,50 @@ EOT
   filename = var.playbook_path
 }
 
-resource "null_resource" "run_playbook" {
-  count = var.inventory_path != null ? 1 : 0
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -f 50 -i ${var.inventory_path} ${var.playbook_path}"
-  }
-  triggers = {
-    build = timestamp()
-  }
-  depends_on = [local_file.create_playbook]
-}
+# resource "null_resource" "run_playbook" {
+#   count = var.inventory_path != null ? 1 : 0
+#   provisioner "local-exec" {
+#     interpreter = ["/bin/bash", "-c"]
+#     command     = "ansible-playbook -f 50 -i ${var.inventory_path} ${var.playbook_path}"
+#   }
+#   triggers = {
+#     build = timestamp()
+#   }
+#   depends_on = [local_file.create_playbook]
+# }
 
-resource "null_resource" "run_lsf_playbooks" {
-  count = var.inventory_path != null ? 1 : 0
+# resource "null_resource" "run_lsf_playbooks" {
+#   count = var.inventory_path != null ? 1 : 0
 
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    command     = <<EOT
-      sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml &&
-      sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml &&
-      sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml
-    EOT
-  }
+#   provisioner "local-exec" {
+#     interpreter = ["/bin/bash", "-c"]
+#     command     = <<EOT
+#       sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml &&
+#       sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml &&
+#       sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml
+#     EOT
+#   }
 
-  triggers = {
-    build = timestamp()
-  }
+#   triggers = {
+#     build = timestamp()
+#   }
 
-  depends_on = [null_resource.run_playbook]
-}
+#   depends_on = [null_resource.run_playbook]
+# }
 
 resource "null_resource" "export_api" {
   count = var.inventory_path != null && var.observability_provision ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<EOT
-      # Define API key variable
-      API_KEY="${var.ibmcloud_api_key}"
-
-      # Append to shell profiles for future sessions
-      echo 'export VPC_API_KEY="'$API_KEY'"' | tee -a ~/.bashrc ~/.bash_profile ~/.zshrc > /dev/null
-
-      # Apply changes immediately for the current session
-      export VPC_API_KEY="$API_KEY"
-      source ~/.bashrc || source ~/.bash_profile || source ~/.zshrc
+      export VPC_API_KEY="${var.ibmcloud_api_key}"
+      echo "$VPC_API_KEY" | tee /opt/ibm/temp_file.txt
     EOT
   }
   triggers = {
     build = timestamp()
   }
-  depends_on = [null_resource.run_lsf_playbooks]
+  # depends_on = [null_resource.run_lsf_playbooks]
 }
 
 resource "local_file" "create_observability_playbook" {
@@ -144,6 +137,7 @@ EOT
 
 resource "null_resource" "run_observability_playbooks" {
   count = var.inventory_path != null && var.observability_provision ? 1 : 0
+
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook -f 50 -i ${var.inventory_path} ${var.observability_playbook_path}"
