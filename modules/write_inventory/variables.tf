@@ -96,7 +96,7 @@ variable "compute_private_key_content" {
 variable "enable_hyperthreading" {
   description = "Enable or disable hyperthreading"
   type        = bool
-  default     = null
+  default     = true
 }
 
 variable "compute_subnet_id" {

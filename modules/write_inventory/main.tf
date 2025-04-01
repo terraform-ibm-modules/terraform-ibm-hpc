@@ -19,7 +19,7 @@ resource "local_sensitive_file" "infra_details_to_json" {
   "Enable_Monitoring": ${jsonencode(var.enable_monitoring)},
   "lsf_deployer_hostname": ${jsonencode(var.lsf_deployer_hostname)},
   "dns_domain_names": ${jsonencode(var.dns_domain_names["compute"])},
-  "enable_hyperthreading": ${jsonencode(var.enable_hyperthreading)},
+  "enable_hyperthreading": ${var.enable_hyperthreading},
   "ibmcloud_api_key": ${jsonencode(var.ibmcloud_api_key)},
   "compute_public_key_content": ${jsonencode(var.compute_public_key_content)},
   "compute_private_key_content": ${jsonencode(var.compute_private_key_content)},
