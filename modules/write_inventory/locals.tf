@@ -1,4 +1,4 @@
-localocals {
+locals {
   vcpus                       = tonumber(data.ibm_is_instance_profile.dynamic_worker_profile.vcpu_count[0].value)
   ncores                      = tonumber(local.vcpus / 2)
   ncpus                       = tonumber(var.enable_hyperthreading ? local.vcpus : local.ncores)

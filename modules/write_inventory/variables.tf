@@ -123,22 +123,6 @@ variable "compute_subnets_cidr" {
   default     = null
 }
 
-variable "dynamic_compute_instances" {
-  type = list(
-    object({
-      profile = string
-      count   = number
-      image   = string
-    })
-  )
-  default = [{
-    profile = "cx2-2x4"
-    count   = 250
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
-  }]
-  description = "MaxNumber of instances to be launched for compute cluster."
-}
-
 variable "compute_ssh_keys_ids" {
   description = "List of compute SSH key IDs"
   type        = list(string)
@@ -174,4 +158,20 @@ variable "compute_subnet_crn" {
   type        = string
   default     = null
   description = "ID of an existing VPC in which the cluster resources will be deployed."
+}
+
+variable "dynamic_compute_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  default = [{
+    profile = "cx2-2x4"
+    count   = 1024
+    image   = "ibm-redhat-8-10-minimal-amd64-2"
+  }]
+  description = "MaxNumber of instances to be launched for compute cluster."
 }
