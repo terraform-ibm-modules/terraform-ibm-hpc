@@ -315,13 +315,6 @@ locals {
   secondary_compute_instance_private_ips = flatten(local.compute_instances[*]["secondary_ipv4_address"])
   secondary_storage_instance_private_ips = flatten(local.storage_instances[*]["secondary_ipv4_address"])
 
-  afm_instance_private_ips = flatten(local.afm_instances[*]["ipv4_address"])
-  afm_instance_ids         = flatten(local.afm_instances[*]["id"])
-  afm_instance_names       = try(tolist([for name_details in flatten(local.afm_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
-
-  # afm_cos_bucket_details = local.enable_afm == true ? flatten(module.cos[*].afm_cos_bucket_details) : []
-  # afm_cos_config     = local.enable_afm == true ? flatten(module.cos[*].afm_cos_config) : []
-
   protocol_instance_private_ips = flatten(local.protocol_instances[*]["ipv4_address"])
   protocol_instance_ids         = flatten(local.protocol_instances[*]["id"])
   protocol_instance_names       = try(tolist([for name_details in flatten(local.protocol_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
@@ -338,6 +331,24 @@ locals {
   ldap_instance_ids         = flatten(local.ldap_instances[*]["id"])
   ldap_instance_names       = flatten(local.ldap_instances[*]["name"])
 }
+
+locals {
+
+  afm_instance_private_ips = flatten(local.afm_instances[*]["ipv4_address"])
+  afm_instance_ids         = flatten(local.afm_instances[*]["id"])
+  afm_instance_names       = try(tolist([for name_details in flatten(local.afm_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+
+  new_instance_bucket_hmac        = [for details in var.afm_cos_config : details if(details.cos_instance == "" && details.bucket_name == "" && details.cos_service_cred_key == "")]
+  exstng_instance_new_bucket_hmac = [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name == "" && details.cos_service_cred_key == "")]
+  exstng_instance_bucket_new_hmac = [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name != "" && details.cos_service_cred_key == "")]
+  exstng_instance_hmac_new_bucket = [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name == "" && details.cos_service_cred_key != "")]
+  exstng_instance_bucket_hmac     = [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name != "" && details.cos_service_cred_key != "")]
+
+  afm_cos_bucket_details = local.enable_afm == true ? flatten(module.cos[*].afm_cos_bucket_details) : []
+  afm_cos_config         = local.enable_afm == true ? flatten(module.cos[*].afm_config_details) : []
+
+}
+
 
 locals {
 

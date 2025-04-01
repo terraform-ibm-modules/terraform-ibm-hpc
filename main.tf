@@ -235,6 +235,24 @@ resource "null_resource" "cluster_destroyer" {
   }
 }
 
+module "cos" {
+  count                           = local.enable_afm == true ? 1 : 0
+  source                          = "./modules/cos"
+  prefix                          = "jay-afm-"
+  resource_group_id               = local.resource_group_ids["service_rg"]
+  cos_instance_plan               = "standard"
+  cos_instance_location           = "global"
+  cos_instance_service            = "cloud-object-storage"
+  cos_hmac_role                   = "Manager"
+  new_instance_bucket_hmac        = local.new_instance_bucket_hmac
+  exstng_instance_new_bucket_hmac = local.exstng_instance_new_bucket_hmac
+  exstng_instance_bucket_new_hmac = local.exstng_instance_bucket_new_hmac
+  exstng_instance_hmac_new_bucket = local.exstng_instance_hmac_new_bucket
+  exstng_instance_bucket_hmac     = local.exstng_instance_bucket_hmac
+  filesystem                      = var.filesystem_config[0]["filesystem"]
+  depends_on                      = [module.landing_zone_vsi]
+}
+
 module "file_storage" {
   count              = var.enable_deployer == false && var.scheduler != "null" ? 1 : 0 
   source             = "./modules/file_storage"
@@ -433,8 +451,8 @@ module "write_storage_cluster_inventory" {
   mountpoint                                       = local.scale_ces_enabled == true ? jsonencode(var.filesystem_config[0]["mount_point"]) : jsonencode("")
   protocol_gateway_ip                              = jsonencode("")
   filesets                                         = jsonencode(local.fileset_size_map)
-  afm_cos_bucket_details                           = jsonencode([])
-  afm_config_details                               = jsonencode([]) #local.enable_afm == true ? jsonencode(local.afm_cos_config) : jsonencode([])
+  afm_cos_bucket_details                           = local.enable_afm == true ? jsonencode(local.afm_cos_bucket_details) : jsonencode([])
+  afm_config_details                               = local.enable_afm == true ? jsonencode(local.afm_cos_config) : jsonencode([])
   afm_cluster_instance_names                       = jsonencode(local.afm_instance_names)
   filesystem_mountpoint                            = var.scale_encryption_type == "key_protect" ? (var.storage_instances[*]["filesystem"] != "" ? var.storage_instances[*]["filesystem"] : jsonencode(var.filesystem_config[0]["filesystem"])) : jsonencode("")
   depends_on                                       = [ time_sleep.wait_60_seconds ]
