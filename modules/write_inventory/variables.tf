@@ -171,6 +171,11 @@ variable "vpc_id" {
   description = "ID of an existing VPC in which the cluster resources will be deployed."
 }
 
+variable "zones" {
+  description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
+  type        = list(string)
+}
+
 variable "ibmcloud_api_key" {
   type        = string
   sensitive   = true

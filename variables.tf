@@ -879,3 +879,9 @@ variable "vpc_id" {
   default     = null
   description = "ID of an existing VPC in which the cluster resources will be deployed."
 }
+
+variable "compute_security_group_id" {
+  type        = list(string)
+  description = "List of Security group IDs to allow File share access"
+  default     = null
+}
