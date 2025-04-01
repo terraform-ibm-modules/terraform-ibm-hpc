@@ -434,7 +434,7 @@ module "write_storage_cluster_inventory" {
   protocol_gateway_ip                              = jsonencode("")
   filesets                                         = jsonencode(local.fileset_size_map)
   afm_cos_bucket_details                           = jsonencode([])
-  afm_config_details                               = jsonencode([])
+  afm_config_details                               = local.enable_afm == true ? jsonencode(local.afm_cos_config) : jsonencode([])
   afm_cluster_instance_names                       = jsonencode(local.afm_instance_names)
   filesystem_mountpoint                            = var.scale_encryption_type == "key_protect" ? (var.storage_instances[*]["filesystem"] != "" ? var.storage_instances[*]["filesystem"] : jsonencode(var.filesystem_config[0]["filesystem"])) : jsonencode("")
   depends_on                                       = [ time_sleep.wait_60_seconds ]
