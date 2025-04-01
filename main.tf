@@ -227,6 +227,7 @@ module "write_compute_cluster_inventory" {
   region                      = local.region
   resource_group_id           = local.resource_group_ids["service_rg"]
   zones                       = var.zones
+  vpc_id                      = local.vpc_id
   compute_subnets_cidr        = var.compute_subnets_cidr
   dynamic_compute_instances   = var.dynamic_compute_instances
   compute_security_group_id   = local.compute_security_group_id
