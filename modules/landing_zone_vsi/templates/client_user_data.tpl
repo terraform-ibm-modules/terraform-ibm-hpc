@@ -26,4 +26,5 @@ chmod 600 ~/.ssh/id_rsa
 echo "DOMAIN=${client_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${client_interfaces}"
 echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${client_interfaces}"
 chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
+sleep 10
 systemctl restart NetworkManager
