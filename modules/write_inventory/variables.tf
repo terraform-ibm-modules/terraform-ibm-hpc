@@ -182,3 +182,9 @@ variable "ibmcloud_api_key" {
   default     = null
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
 }
+
+variable "compute_security_group_id" {
+  type        = list(string)
+  description = "List of Security group IDs to allow File share access"
+  default     = null
+}
