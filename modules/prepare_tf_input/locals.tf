@@ -18,4 +18,5 @@ locals {
   dynamic_compute_instances = jsonencode(var.dynamic_compute_instances)
   compute_subnets_cidr      = jsonencode(var.compute_subnets_cidr)
   compute_ssh_keys_ids      = jsonencode(var.compute_ssh_keys_ids)
+  compute_security_group_id = jsonencode(var.compute_security_group_id)
 }

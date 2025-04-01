@@ -467,3 +467,9 @@ variable "resource_group_id" {
   type        = string
   default     = null
 }
+
+variable "compute_security_group_id" {
+  type        = list(string)
+  description = "List of Security group IDs to allow File share access"
+  default     = null
+}

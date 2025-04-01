@@ -140,6 +140,7 @@ module "prepare_tf_input" {
   compute_subnets_cidr                             = var.compute_subnets_cidr
   compute_subnet_crn                               = local.compute_subnet_crn
   compute_ssh_keys_ids                             = local.compute_ssh_keys_ids
+  compute_security_group_id                        = local.compute_security_group_id
   vcpus                                            = local.vcpus
   ncores                                           = local.ncores
   ncpus                                            = local.ncpus
@@ -233,7 +234,24 @@ module "write_compute_cluster_inventory" {
   enable_monitoring     = local.enable_monitoring
   lsf_deployer_hostname = local.lsf_deployer_hostname
   enable_hyperthreading = var.enable_hyperthreading
-  depends_on            = [time_sleep.wait_60_seconds]
+  # vpc_id                      = local.vpc_id
+  # vcpus                       = var.vcpus
+  # ncores                      = var.ncores
+  # ncpus                       = var.ncpus
+  # mem_in_mb                   = var.mem_in_mb
+  # rc_max_num                  = var.rc_max_num
+  # rc_profile                  = var.rc_profile
+  # image_id                    = var.image_id
+  # compute_subnet_id           = var.compute_subnet_id
+  # region                      = var.region_name
+  # resource_group_id           = local.resource_group_ids["service_rg"]
+  # zones                       = var.zones
+  # compute_subnets_cidr        = local.compute_subnets_cidr
+  # dynamic_compute_instances   = var.dynamic_compute_instances
+  # compute_security_group_id   = local.compute_security_group_id
+  # compute_ssh_keys_ids        = local.compute_ssh_keys_ids
+  # compute_subnet_crn          = local.compute_subnet_crn
+  depends_on                  = [time_sleep.wait_60_seconds]
 }
 
 module "write_storage_cluster_inventory" {
