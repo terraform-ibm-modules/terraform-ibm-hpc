@@ -244,7 +244,7 @@ module "write_compute_cluster_inventory" {
   rc_profile                  = var.rc_profile
   image_id                    = var.image_id
   compute_subnet_id           = var.compute_subnet_id
-  region                      = var.region_name
+  region                      = var.region
   resource_group_id           = var.resource_group_id
   zones                       = var.zones
   compute_subnets_cidr        = var.compute_subnets_cidr
