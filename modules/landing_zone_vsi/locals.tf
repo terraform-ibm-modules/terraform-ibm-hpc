@@ -61,6 +61,7 @@ locals {
   compute_node_name    = format("%s-%s", local.prefix, "comp")
   storage_node_name    = format("%s-%s", local.prefix, "strg")
   protocol_node_name   = format("%s-%s", local.prefix, "proto")
+  ldap_node_name       = format("%s-%s", local.prefix, "ldap")
 
   # Future use
   /*
@@ -277,4 +278,6 @@ locals {
       interface_name    = subnet["name"]
     }
   ]
+
+  ldap_instance_image_id = var.enable_ldap == true && var.ldap_server == "null" ? data.ibm_is_image.ldap_vsi_image[0].id : "null"
 }

@@ -85,6 +85,29 @@ resource "ibm_is_security_group_rule" "add_comp_sg_comp" {
   remote    = module.compute_sg[0].security_group_id
 }
 
+module "ldap_vsi" {
+  count                         = var.enable_ldap == true && var.ldap_server == "null" ? 1 : 0
+  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version                       = "4.6.0"
+  vsi_per_subnet                = 1
+  create_security_group         = false
+  security_group                = null
+  image_id                      = local.ldap_instance_image_id
+  machine_type                  = var.ldap_vsi_profile
+  prefix                        = local.ldap_node_name
+  resource_group_id             = local.resource_group_id
+  enable_floating_ip            = false
+  security_group_ids            = module.compute_sg[*].security_group_id
+  ssh_key_ids                   = local.management_ssh_keys
+  subnets                       = local.compute_subnets
+  tags                          = local.tags
+  user_data                     = data.template_file.ldap_user_data.rendered
+  vpc_id                        = var.vpc_id
+  kms_encryption_enabled        = var.kms_encryption_enabled
+  skip_iam_authorization_policy = local.skip_iam_authorization_policy
+  boot_volume_encryption_key    = var.boot_volume_encryption_key
+}
+
 module "client_vsi" {
   count                         = length(var.client_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"

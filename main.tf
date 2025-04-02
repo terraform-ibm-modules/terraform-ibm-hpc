@@ -85,6 +85,15 @@ module "landing_zone_vsi" {
   kms_encryption_enabled     = local.kms_encryption_enabled
   boot_volume_encryption_key = local.boot_volume_encryption_key
   enable_bastion             = var.enable_bastion
+  enable_ldap                = var.enable_ldap
+  ldap_vsi_profile           = var.ldap_vsi_profile
+  ldap_vsi_osimage_name      = var.ldap_vsi_osimage_name
+  ldap_basedns               = var.ldap_basedns
+  ldap_admin_password        = var.ldap_admin_password
+  ldap_user_name             = var.ldap_user_name
+  ldap_user_password         = var.ldap_user_password
+  ldap_server                = var.ldap_server
+  ldap_server_cert           = var.ldap_server_cert
 }
 
 module "prepare_tf_input" {
@@ -118,6 +127,15 @@ module "prepare_tf_input" {
   bastion_security_group_id                        = local.bastion_security_group_id
   deployer_hostname                                = local.deployer_hostname
   enable_hyperthreading                            = var.enable_hyperthreading
+  enable_ldap                                      = var.enable_ldap
+  ldap_vsi_profile                                 = var.ldap_vsi_profile
+  ldap_vsi_osimage_name                            = var.ldap_vsi_osimage_name
+  ldap_basedns                                     = var.ldap_basedns
+  ldap_admin_password                              = var.ldap_admin_password
+  ldap_user_name                                   = var.ldap_user_name
+  ldap_user_password                               = var.ldap_user_password
+  ldap_server                                      = var.ldap_server
+  ldap_server_cert                                 = var.ldap_server_cert
   scc_enable                                       = var.scc_enable
   scc_profile                                      = var.scc_profile
   scc_location                                     = var.scc_location
