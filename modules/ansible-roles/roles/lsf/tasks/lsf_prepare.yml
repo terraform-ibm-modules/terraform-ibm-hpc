@@ -5,7 +5,7 @@
     name: NetworkManager
     state: restarted
     enabled: yes
-  delegate_to: "{{ lsf_deployer_hostname }}.{{ compute_dns_name }}"
+  delegate_to: "{{ lsf_deployer_hostname }}.{{ dns_domain_names }}"
   run_once: true
 
 # Installing required prerequisite packages for the LSF cluster creation.
