@@ -58,3 +58,6 @@ localtweak__*.tf
 
 # tests folder log file
 *.log
+
+# Ignore RSA files
+*id_rsa

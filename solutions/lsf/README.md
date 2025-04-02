@@ -2,7 +2,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.3 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.0 |
 | <a name="requirement_ibm"></a> [ibm](#requirement\_ibm) | >= 1.68.1, < 2.0.0 |
 
 ## Providers
@@ -36,7 +36,7 @@ No resources.
 | <a name="input_compute_ssh_keys"></a> [compute\_ssh\_keys](#input\_compute\_ssh\_keys) | The key pair to use to launch the compute host. | `list(string)` | `null` | no |
 | <a name="input_compute_subnets_cidr"></a> [compute\_subnets\_cidr](#input\_compute\_subnets\_cidr) | Subnet CIDR block to launch the compute cluster host. | `string` | `"10.10.20.0/24"` | no |
 | <a name="input_cos_instance_name"></a> [cos\_instance\_name](#input\_cos\_instance\_name) | Exiting COS instance name | `string` | `null` | no |
-| <a name="input_deployer_image"></a> [deployer\_image](#input\_deployer\_image) | The image to use to deploy the deployer host. | `string` | `"ibm-redhat-8-10-minimal-amd64-2"` | no |
+| <a name="input_deployer_image"></a> [deployer\_image](#input\_deployer\_image) | The image to use to deploy the deployer host. | `string` | `"jay-lsf-new-image"` | no |
 | <a name="input_deployer_instance_profile"></a> [deployer\_instance\_profile](#input\_deployer\_instance\_profile) | Deployer should be only used for better deployment performance | `string` | `"bx2-8x32"` | no |
 | <a name="input_dns_custom_resolver_id"></a> [dns\_custom\_resolver\_id](#input\_dns\_custom\_resolver\_id) | IBM Cloud DNS custom resolver id. | `string` | `null` | no |
 | <a name="input_dns_domain_names"></a> [dns\_domain\_names](#input\_dns\_domain\_names) | IBM Cloud HPC DNS domain names. | <pre>object({<br>    compute  = string<br>    storage  = string<br>    protocol = string<br>  })</pre> | <pre>{<br>  "compute": "comp.com",<br>  "protocol": "ces.com",<br>  "storage": "strg.com"<br>}</pre> | no |
@@ -45,6 +45,7 @@ No resources.
 | <a name="input_enable_bastion"></a> [enable\_bastion](#input\_enable\_bastion) | The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false. | `bool` | `true` | no |
 | <a name="input_enable_cos_integration"></a> [enable\_cos\_integration](#input\_enable\_cos\_integration) | Integrate COS with HPC solution | `bool` | `true` | no |
 | <a name="input_enable_deployer"></a> [enable\_deployer](#input\_enable\_deployer) | Deployer should be only used for better deployment performance | `bool` | `false` | no |
+| <a name="input_enable_hyperthreading"></a> [enable\_hyperthreading](#input\_enable\_hyperthreading) | Setting this to true will enable hyper-threading in the worker nodes of the cluster (default). Otherwise, hyper-threading will be disabled. | `bool` | `true` | no |
 | <a name="input_enable_vpc_flow_logs"></a> [enable\_vpc\_flow\_logs](#input\_enable\_vpc\_flow\_logs) | Enable Activity tracker | `bool` | `true` | no |
 | <a name="input_enable_vpn"></a> [enable\_vpn](#input\_enable\_vpn) | The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN, set this value to true. | `bool` | `false` | no |
 | <a name="input_existing_resource_group"></a> [existing\_resource\_group](#input\_existing\_resource\_group) | String describing resource groups to create or reference | `string` | `"Default"` | no |
@@ -87,11 +88,11 @@ No resources.
 | <a name="input_storage_instances"></a> [storage\_instances](#input\_storage\_instances) | Number of instances to be launched for storage cluster. | <pre>list(<br>    object({<br>      profile         = string<br>      count           = number<br>      image           = string<br>      filesystem_name = optional(string)<br>    })<br>  )</pre> | <pre>[<br>  {<br>    "count": 2,<br>    "filesystem_name": "fs1",<br>    "image": "ibm-redhat-8-10-minimal-amd64-2",<br>    "profile": "bx2-2x8"<br>  }<br>]</pre> | no |
 | <a name="input_storage_ssh_keys"></a> [storage\_ssh\_keys](#input\_storage\_ssh\_keys) | The key pair to use to launch the storage cluster host. | `list(string)` | `null` | no |
 | <a name="input_storage_subnets_cidr"></a> [storage\_subnets\_cidr](#input\_storage\_subnets\_cidr) | Subnet CIDR block to launch the storage cluster host. | `string` | `"10.10.30.0/24"` | no |
-| <a name="input_vpc"></a> [vpc](#input\_vpc) | Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc) | `string` | `null` | no |
+| <a name="input_vpc_name"></a> [vpc\_name](#input\_vpc\_name) | Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc) | `string` | `null` | no |
 | <a name="input_vpn_peer_address"></a> [vpn\_peer\_address](#input\_vpn\_peer\_address) | The peer public IP address to which the VPN will be connected. | `string` | `null` | no |
 | <a name="input_vpn_peer_cidr"></a> [vpn\_peer\_cidr](#input\_vpn\_peer\_cidr) | The peer CIDRs (e.g., 192.168.0.0/24) to which the VPN will be connected. | `list(string)` | `null` | no |
 | <a name="input_vpn_preshared_key"></a> [vpn\_preshared\_key](#input\_vpn\_preshared\_key) | The pre-shared key for the VPN. | `string` | `null` | no |
-| <a name="input_zone"></a> [zone](#input\_zone) | Zone where VPC will be created. | `string` | n/a | yes |
+| <a name="input_zones"></a> [zones](#input\_zones) | Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions. | `list(string)` | <pre>[<br>  "us-south-1",<br>  "us-south-2",<br>  "us-south-3"<br>]</pre> | no |
 
 ## Outputs
 

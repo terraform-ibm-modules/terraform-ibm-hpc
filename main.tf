@@ -102,6 +102,7 @@ module "prepare_tf_input" {
   protocol_instances                               = var.protocol_instances
   ibm_customer_number                              = var.ibm_customer_number
   static_compute_instances                         = var.static_compute_instances
+  dynamic_compute_instances                        = var.dynamic_compute_instances
   client_instances                                 = var.client_instances
   enable_cos_integration                           = var.enable_cos_integration
   enable_atracker                                  = var.enable_atracker
@@ -116,6 +117,7 @@ module "prepare_tf_input" {
   dns_domain_names                                 = var.dns_domain_names
   bastion_security_group_id                        = local.bastion_security_group_id
   deployer_hostname                                = local.deployer_hostname
+  enable_hyperthreading                            = var.enable_hyperthreading
   scc_enable                                       = var.scc_enable
   scc_profile                                      = var.scc_profile
   scc_location                                     = var.scc_location
@@ -203,20 +205,35 @@ resource "time_sleep" "wait_60_seconds" {
 }
 
 module "write_compute_cluster_inventory" {
-  count                 = var.enable_deployer == false ? 1 : 0
-  source                = "./modules/write_inventory"
-  json_inventory_path   = local.json_inventory_path
-  lsf_masters           = local.management_nodes
-  lsf_servers           = local.compute_nodes_list
-  lsf_clients           = local.client_nodes
-  gui_hosts             = local.gui_hosts
-  db_hosts              = local.db_hosts
-  my_cluster_name       = var.prefix
-  ha_shared_dir         = local.ha_shared_dir
-  nfs_install_dir       = local.nfs_install_dir
-  enable_monitoring     = local.enable_monitoring
-  lsf_deployer_hostname = local.lsf_deployer_hostname
-  depends_on            = [time_sleep.wait_60_seconds]
+  count                       = var.enable_deployer == false ? 1 : 0
+  source                      = "./modules/write_inventory"
+  json_inventory_path         = local.json_inventory_path
+  lsf_masters                 = local.management_nodes
+  lsf_servers                 = local.compute_nodes_list
+  lsf_clients                 = local.client_nodes
+  gui_hosts                   = local.gui_hosts
+  db_hosts                    = local.db_hosts
+  my_cluster_name             = var.prefix
+  ha_shared_dir               = local.ha_shared_dir
+  nfs_install_dir             = local.nfs_install_dir
+  enable_monitoring           = local.enable_monitoring
+  lsf_deployer_hostname       = local.lsf_deployer_hostname
+  ibmcloud_api_key            = var.ibmcloud_api_key
+  dns_domain_names            = var.dns_domain_names
+  compute_public_key_content  = local.compute_public_key_content
+  compute_private_key_content = local.compute_private_key_content
+  enable_hyperthreading       = var.enable_hyperthreading
+  compute_subnet_id           = local.compute_subnet_id
+  region                      = local.region
+  resource_group_id           = local.resource_group_ids["service_rg"]
+  zones                       = var.zones
+  vpc_id                      = local.vpc_id
+  compute_subnets_cidr        = var.compute_subnets_cidr
+  dynamic_compute_instances   = var.dynamic_compute_instances
+  compute_security_group_id   = local.compute_security_group_id
+  compute_ssh_keys_ids        = local.compute_ssh_keys_ids
+  compute_subnet_crn          = local.compute_subnet_crn
+  depends_on                  = [time_sleep.wait_60_seconds]
 }
 
 module "write_storage_cluster_inventory" {
@@ -274,6 +291,7 @@ module "compute_playbook" {
   ibmcloud_api_key            = var.ibmcloud_api_key
   observability_provision     = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || var.observability_monitoring_enable ? true : false
   observability_playbook_path = local.observability_playbook_path
+  playbooks_root_path         = local.playbooks_root_path
   depends_on                  = [module.compute_inventory]
 }
 

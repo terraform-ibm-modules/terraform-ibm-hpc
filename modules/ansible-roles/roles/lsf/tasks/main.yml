@@ -5,3 +5,9 @@
 
 # tasks file for template tasks
 - import_tasks: lsf_inventory.yml
+
+# Create lsfadmin user
+- import_tasks: lsfadmin_creation.yml
+
+# Install Python dependencies
+- import_tasks: python_installation.yml

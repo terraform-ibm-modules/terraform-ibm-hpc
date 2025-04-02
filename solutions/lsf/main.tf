@@ -63,7 +63,8 @@ module "lsf" {
   skip_kms_s2s_auth_policy                         = local.env.skip_kms_s2s_auth_policy
 
   # New Variables
-  ibmcloud_api_key = local.env.ibmcloud_api_key
+  ibmcloud_api_key                                 = local.env.ibmcloud_api_key
+  enable_hyperthreading                            = local.env.enable_hyperthreading
 
   # compute_gui_password                             = local.env.compute_gui_password
   # compute_gui_username                             = local.env.compute_gui_username

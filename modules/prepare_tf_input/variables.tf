@@ -93,6 +93,17 @@ variable "static_compute_instances" {
   description = "Min Number of instances to be launched for compute cluster."
 }
 
+variable "dynamic_compute_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  description = "MaxNumber of instances to be launched for compute cluster."
+}
+
 ##############################################################################
 # Access Variables
 ##############################################################################
@@ -365,4 +376,10 @@ variable "observability_monitoring_plan" {
     condition     = can(regex("lite|graduated-tier", var.observability_monitoring_plan))
     error_message = "Please enter a valid plan for IBM Cloud Monitoring, for all details visit https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans."
   }
+}
+
+variable "enable_hyperthreading" {
+  description = "Enable or disable hyperthreading"
+  type        = bool
+  default     = null
 }
