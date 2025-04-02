@@ -61,10 +61,17 @@ module "lsf" {
   skip_flowlogs_s2s_auth_policy                    = local.env.skip_flowlogs_s2s_auth_policy
   skip_iam_authorization_policy                    = local.env.skip_iam_authorization_policy
   skip_kms_s2s_auth_policy                         = local.env.skip_kms_s2s_auth_policy
-
-  # New Variables
   ibmcloud_api_key                                 = local.env.ibmcloud_api_key
   enable_hyperthreading                            = local.env.enable_hyperthreading
+  enable_ldap                                      = local.env.enable_ldap
+  ldap_basedns                                     = local.env.ldap_basedns
+  ldap_vsi_profile                                 = local.env.ldap_vsi_profile
+  ldap_admin_password                              = local.env.ldap_admin_password
+  ldap_user_name                                   = local.env.ldap_user_name
+  ldap_user_password                               = local.env.ldap_user_password
+  ldap_server                                      = local.env.ldap_server
+  ldap_server_cert                                 = local.env.ldap_server_cert
+  ldap_vsi_osimage_name                            = local.env.ldap_vsi_osimage_name
 
   # compute_gui_password                             = local.env.compute_gui_password
   # compute_gui_username                             = local.env.compute_gui_username
