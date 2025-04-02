@@ -1139,3 +1139,9 @@ variable "create_scale_cluster" {
   default     = true
   description = "Flag to represent whether to create scale cluster or not."
 }
+
+variable "using_rest_api_remote_mount" {
+  type        = string
+  default     = true
+  description = "If false, skips GUI initialization on compute cluster for remote mount configuration."
+}

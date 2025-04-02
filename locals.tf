@@ -148,8 +148,8 @@ locals {
   static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
   afm_instance_count            = sum(var.afm_instances[*]["count"])
 
-  total_shares           = local.storage_instance_count > 0 ? var.file_shares : concat(local.default_share, var.file_shares)
-  file_shares = [
+  total_shares = local.storage_instance_count > 0 ? var.file_shares : concat(local.default_share, var.file_shares)
+  file_shares  = [
     for count in range(length(local.total_shares)) :
     {
       name = format("%s-%s", var.prefix, element(split("/", local.total_shares[count]["mount_path"]), length(split("/", local.total_shares[count]["mount_path"])) - 1))

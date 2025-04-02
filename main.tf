@@ -532,6 +532,43 @@ module "compute_inventory" {
   depends_on          = [ module.write_compute_cluster_inventory ]
 }
 
+module "compute_cluster_configuration" {
+  count                           = var.enable_deployer == false ? 1 : 0
+  source                          = "./modules/common/compute_configuration"
+  turn_on                         = (var.create_separate_namespaces == true && local.static_compute_instance_count > 0) ? true : false
+  bastion_user                    = jsonencode(var.bastion_user)
+  write_inventory_complete        = module.write_compute_cluster_inventory[0].write_inventory_complete
+  inventory_format                = var.inventory_format
+  create_scale_cluster            = var.create_scale_cluster
+  clone_path                      = var.scale_ansible_repo_clone_path
+  inventory_path                  = format("%s/compute_cluster_inventory.json", local.json_inventory_path)
+  using_packer_image              = var.using_packer_image
+  using_jumphost_connection       = var.using_jumphost_connection
+  using_rest_initialization       = var.using_rest_api_remote_mount
+  compute_cluster_gui_username    = var.compute_gui_username
+  compute_cluster_gui_password    = var.compute_gui_password
+  comp_memory                     = data.ibm_is_instance_profile.compute_profile.memory[0].value
+  comp_vcpus_count                = data.ibm_is_instance_profile.compute_profile.vcpu_count[0].value
+  comp_bandwidth                  = data.ibm_is_instance_profile.compute_profile.bandwidth[0].value
+  bastion_instance_public_ip      = jsonencode(local.bastion_fip)
+  bastion_ssh_private_key         = var.bastion_ssh_private_key
+  meta_private_key                = var.compute_private_key_content
+  scale_version                   = local.scale_version
+  spectrumscale_rpms_path         = var.spectrumscale_rpms_path
+  enable_mrot_conf                = local.enable_mrot_conf ? "True" : "False"
+  enable_ces                      = "False"
+  enable_afm                      = "False"
+  scale_encryption_enabled        = var.scale_encryption_enabled
+  scale_encryption_admin_password = var.scale_encryption_admin_password
+  scale_encryption_servers        = var.scale_encryption_enabled && var.scale_encryption_type == "gklm" ? jsonencode(local.gklm_instance_private_ips) : null
+  enable_ldap                     = var.enable_ldap
+  ldap_basedns                    = var.ldap_basedns
+  ldap_server                     = var.enable_ldap ? local.ldap_instance_private_ips[0] : jsonencode("")
+  ldap_admin_password             = var.ldap_admin_password
+  enable_key_protect              = var.scale_encryption_type == "key_protect" ? "True" : "False"
+  depends_on                      = [module.write_compute_cluster_inventory]
+}
+
 module "storage_cluster_configuration" {
   count                               = var.enable_deployer == false ? 1 : 0
   source                              = "./modules/common/storage_configuration"
