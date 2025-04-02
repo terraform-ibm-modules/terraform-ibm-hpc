@@ -17,7 +17,6 @@ sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=
 echo "DOMAIN=${compute_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
 echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
 chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
-sleep 10
 systemctl restart NetworkManager
 
 # input parameters
