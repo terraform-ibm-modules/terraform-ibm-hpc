@@ -27,6 +27,7 @@ locals {
     compute_gui_username                             = var.compute_gui_username
     compute_ssh_keys                                 = var.compute_ssh_keys
     compute_subnets_cidr                             = var.compute_subnets_cidr
+    compute_subnets                                  = var.compute_subnets
     cos_instance_name                                = var.cos_instance_name
     dns_custom_resolver_id                           = var.dns_custom_resolver_id
     dns_instance_id                                  = var.dns_instance_id
@@ -35,6 +36,7 @@ locals {
     enable_bastion                                   = var.enable_bastion
     bastion_image                                    = var.bastion_image
     bastion_instance_profile                         = var.bastion_instance_profile
+    bastion_subnets                                  = var.bastion_subnets
     enable_deployer                                  = var.enable_deployer
     deployer_image                                   = var.deployer_image
     deployer_instance_profile                        = var.deployer_instance_profile
@@ -96,10 +98,12 @@ locals {
     ssh_keys                                         = lookup(local.override[local.override_type], "ssh_keys", local.config.ssh_keys)
     bastion_ssh_keys                                 = lookup(local.override[local.override_type], "bastion_ssh_keys", local.config.bastion_ssh_keys)
     bastion_subnets_cidr                             = lookup(local.override[local.override_type], "bastion_subnets_cidr", local.config.bastion_subnets_cidr)
+    bastion_subnets                                  = lookup(local.override[local.override_type], "bastion_subnets", local.config.bastion_subnets)
     compute_gui_password                             = lookup(local.override[local.override_type], "compute_gui_password", local.config.compute_gui_password)
     compute_gui_username                             = lookup(local.override[local.override_type], "compute_gui_username", local.config.compute_gui_username)
     compute_ssh_keys                                 = lookup(local.override[local.override_type], "compute_ssh_keys", local.config.compute_ssh_keys)
     compute_subnets_cidr                             = lookup(local.override[local.override_type], "compute_subnets_cidr", local.config.compute_subnets_cidr)
+    compute_subnets                                  = lookup(local.override[local.override_type], "compute_subnets", local.config.compute_subnets)
     cos_instance_name                                = lookup(local.override[local.override_type], "cos_instance_name", local.config.cos_instance_name)
     dns_custom_resolver_id                           = lookup(local.override[local.override_type], "dns_custom_resolver_id", local.config.dns_custom_resolver_id)
     dns_instance_id                                  = lookup(local.override[local.override_type], "dns_instance_id", local.config.dns_instance_id)

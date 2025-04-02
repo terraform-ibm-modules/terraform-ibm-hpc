@@ -9,8 +9,10 @@ module "lsf" {
   existing_resource_group                          = local.env.existing_resource_group
   bastion_ssh_keys                                 = local.env.bastion_ssh_keys
   bastion_subnets_cidr                             = [local.env.bastion_subnets_cidr]
+  bastion_subnets                                  = local.env.bastion_subnets
   compute_ssh_keys                                 = local.env.compute_ssh_keys
   compute_subnets_cidr                             = [local.env.compute_subnets_cidr]
+  compute_subnets                                  = local.env.compute_subnets
   cos_instance_name                                = local.env.cos_instance_name
   dns_custom_resolver_id                           = local.env.dns_custom_resolver_id
   dns_instance_id                                  = local.env.dns_instance_id
@@ -63,8 +65,8 @@ module "lsf" {
   skip_kms_s2s_auth_policy                         = local.env.skip_kms_s2s_auth_policy
 
   # New Variables
-  ibmcloud_api_key                                 = local.env.ibmcloud_api_key
-  enable_hyperthreading                            = local.env.enable_hyperthreading
+  ibmcloud_api_key      = local.env.ibmcloud_api_key
+  enable_hyperthreading = local.env.enable_hyperthreading
 
   # compute_gui_password                             = local.env.compute_gui_password
   # compute_gui_username                             = local.env.compute_gui_username

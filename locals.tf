@@ -17,7 +17,6 @@ locals {
   # dependency: landing_zone -> deployer
   vpc_id                     = var.vpc_name == null ? one(module.landing_zone.vpc_id) : data.ibm_is_vpc.existing_vpc[0].id
   vpc_name                   = var.vpc_name == null ? one(module.landing_zone.vpc_name) : var.vpc_name
-  bastion_subnets            = module.landing_zone.bastion_subnets
   kms_encryption_enabled     = var.key_management != null ? true : false
   boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   existing_kms_instance_guid = var.key_management != null ? module.landing_zone.key_management_guid : null
@@ -79,21 +78,22 @@ locals {
     }
   ]
 
-  # existing_bastion_subnets = [
-  #   for subnet in data.ibm_is_subnet.existing_bastion_subnets :
-  #   {
-  #     cidr = subnet.ipv4_cidr_block
-  #     id   = subnet.id
-  #     name = subnet.name
-  #     zone = subnet.zone
-  #   }
-  # ]
+  existing_bastion_subnets = [
+    for subnet in data.ibm_is_subnet.existing_bastion_subnets :
+    {
+      cidr = subnet.ipv4_cidr_block
+      id   = subnet.id
+      name = subnet.name
+      zone = subnet.zone
+    }
+  ]
 
   # dependency: landing_zone -> landing_zone_vsi
   client_subnets   = var.vpc_name != null && var.client_subnets != null ? local.existing_client_subnets : module.landing_zone.client_subnets
   compute_subnets  = var.vpc_name != null && var.compute_subnets != null ? local.existing_compute_subnets : module.landing_zone.compute_subnets
   storage_subnets  = var.vpc_name != null && var.storage_subnets != null ? local.existing_storage_subnets : module.landing_zone.storage_subnets
   protocol_subnets = var.vpc_name != null && var.protocol_subnets != null ? local.existing_protocol_subnets : module.landing_zone.protocol_subnets
+  bastion_subnets  = var.vpc_name != null && var.bastion_subnets != null ? local.existing_bastion_subnets : module.landing_zone.bastion_subnets
 
   storage_subnet  = [for subnet in local.storage_subnets : subnet.name]
   protocol_subnet = [for subnet in local.protocol_subnets : subnet.name]
@@ -109,6 +109,8 @@ locals {
 locals {
   # dependency: landing_zone_vsi -> file-share
   compute_subnet_id         = var.vpc_name == null && var.compute_subnets == null ? local.compute_subnets[0].id : [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.id][0]
+  bastion_subnet_id         = (var.enable_deployer && var.vpc_name != null && var.bastion_subnets != null) ? local.existing_bastion_subnets[0].id : ""
+  subnet_id                 = (var.enable_deployer && var.vpc_name != null && var.compute_subnets != null) ? local.existing_compute_subnets[0].id : ""
   compute_security_group_id = var.enable_deployer ? [] : module.landing_zone_vsi[0].compute_sg_id
   management_instance_count = sum(var.management_instances[*]["count"])
   default_share = local.management_instance_count > 0 ? [

@@ -114,6 +114,12 @@ variable "bastion_subnets_cidr" {
   description = "Subnet CIDR block to launch the bastion host."
 }
 
+variable "bastion_subnets" {
+  type        = list(string)
+  default     = null
+  description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+}
+
 variable "enable_vpn" {
   type        = bool
   default     = false
@@ -166,6 +172,12 @@ variable "client_subnets_cidr" {
   type        = string
   default     = "10.10.10.0/24"
   description = "Subnet CIDR block to launch the client host."
+}
+
+variable "compute_subnets" {
+  type        = list(string)
+  default     = null
+  description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
 }
 
 variable "client_ssh_keys" {

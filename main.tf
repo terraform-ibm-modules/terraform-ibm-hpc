@@ -4,6 +4,8 @@ module "landing_zone" {
   allowed_cidr                  = var.allowed_cidr
   compute_subnets_cidr          = var.compute_subnets_cidr
   cos_instance_name             = var.cos_instance_name
+  bastion_subnet_id             = local.bastion_subnet_id
+  compute_subnet_id             = local.subnet_id
   enable_atracker               = var.observability_atracker_enable && (var.observability_atracker_target_type == "cos") ? true : false
   enable_cos_integration        = var.enable_cos_integration
   enable_vpc_flow_logs          = var.enable_vpc_flow_logs
@@ -14,6 +16,7 @@ module "landing_zone" {
   ssh_keys                      = local.bastion_ssh_keys
   bastion_subnets_cidr          = var.bastion_subnets_cidr
   management_instances          = var.management_instances
+  client_instances              = var.client_instances
   compute_instances             = var.static_compute_instances
   network_cidr                  = var.network_cidr
   placement_strategy            = var.placement_strategy
@@ -115,6 +118,8 @@ module "prepare_tf_input" {
   client_subnets                                   = local.client_subnet
   bastion_subnets                                  = local.bastion_subnet
   dns_domain_names                                 = var.dns_domain_names
+  dns_custom_resolver_id                           = var.dns_custom_resolver_id
+  dns_instance_id                                  = var.dns_instance_id
   bastion_security_group_id                        = local.bastion_security_group_id
   deployer_hostname                                = local.deployer_hostname
   enable_hyperthreading                            = var.enable_hyperthreading
