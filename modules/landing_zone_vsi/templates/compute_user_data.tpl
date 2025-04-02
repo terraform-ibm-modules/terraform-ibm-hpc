@@ -9,7 +9,7 @@
 # LSF Compute Cluter User Data
 ##################################################################################################################
 
-if [ "${var.scheduler}" == "LSF" ]; then
+if [ "${scheduler}" == "LSF" ]; then
 
     #!/usr/bin/env bash
     if grep -E -q "CentOS|Red Hat" /etc/os-release
@@ -41,7 +41,7 @@ fi
 # Scale Compute Cluter User Data
 ##################################################################################################################
 
-if [ "${var.scheduler}" == "null" ]; then
+if [ "${scheduler}" == "null" ]; then
     #!/usr/bin/env bash
 
     exec > >(tee /var/log/ibm_spectrumscale_user-data.log)
@@ -126,23 +126,21 @@ if [ "${var.scheduler}" == "null" ]; then
     sleep 120
     systemctl restart NetworkManager
 
-    if [ "${var.scale_firewall_rules_enabled}" == true ]; then
-        systemctl stop firewalld
-        firewall-offline-cmd --zone=public --add-port=1191/tcp
-        firewall-offline-cmd --zone=public --add-port=60000-61000/tcp
-        firewall-offline-cmd --zone=public --add-port=47080/tcp
-        firewall-offline-cmd --zone=public --add-port=47080/udp
-        firewall-offline-cmd --zone=public --add-port=47443/tcp
-        firewall-offline-cmd --zone=public --add-port=47443/udp
-        firewall-offline-cmd --zone=public --add-port=4444/tcp
-        firewall-offline-cmd --zone=public --add-port=4444/udp
-        firewall-offline-cmd --zone=public --add-port=4739/udp
-        firewall-offline-cmd --zone=public --add-port=4739/tcp
-        firewall-offline-cmd --zone=public --add-port=9084/tcp
-        firewall-offline-cmd --zone=public --add-port=9085/tcp
-        firewall-offline-cmd --zone=public --add-service=http
-        firewall-offline-cmd --zone=public --add-service=https
-    fi
+    systemctl stop firewalld
+    firewall-offline-cmd --zone=public --add-port=1191/tcp
+    firewall-offline-cmd --zone=public --add-port=60000-61000/tcp
+    firewall-offline-cmd --zone=public --add-port=47080/tcp
+    firewall-offline-cmd --zone=public --add-port=47080/udp
+    firewall-offline-cmd --zone=public --add-port=47443/tcp
+    firewall-offline-cmd --zone=public --add-port=47443/udp
+    firewall-offline-cmd --zone=public --add-port=4444/tcp
+    firewall-offline-cmd --zone=public --add-port=4444/udp
+    firewall-offline-cmd --zone=public --add-port=4739/udp
+    firewall-offline-cmd --zone=public --add-port=4739/tcp
+    firewall-offline-cmd --zone=public --add-port=9084/tcp
+    firewall-offline-cmd --zone=public --add-port=9085/tcp
+    firewall-offline-cmd --zone=public --add-service=http
+    firewall-offline-cmd --zone=public --add-service=https
 
     systemctl start firewalld
     systemctl enable firewalld
