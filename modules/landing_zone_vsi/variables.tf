@@ -445,3 +445,9 @@ variable "vpc_region" {
   default     = null
   description = "vpc region"
 }
+
+variable "scheduler" {
+  type        = string
+  default     = null
+  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+}

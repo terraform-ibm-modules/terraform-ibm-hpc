@@ -62,29 +62,6 @@ resource "ibm_is_security_group_rule" "add_comp_sg_comp" {
   remote    = module.compute_sg[0].security_group_id
 }
 
-module "client_vsi" {
-  count                         = length(var.client_instances)
-  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
-  vsi_per_subnet                = var.client_instances[count.index]["count"]
-  create_security_group         = false
-  security_group                = null
-  image_id                      = local.client_image_id[count.index]
-  machine_type                  = var.client_instances[count.index]["profile"]
-  prefix                        = count.index == 0 ? local.client_node_name : format("%s-%s", local.client_node_name, count.index)
-  resource_group_id             = local.resource_group_id
-  enable_floating_ip            = false
-  security_group_ids            = module.client_sg[*].security_group_id
-  ssh_key_ids                   = local.client_ssh_keys
-  subnets                       = local.client_subnets
-  tags                          = local.tags
-  user_data                     = data.template_file.client_user_data.rendered
-  vpc_id                        = var.vpc_id
-  kms_encryption_enabled        = var.kms_encryption_enabled
-  skip_iam_authorization_policy = local.skip_iam_authorization_policy
-  boot_volume_encryption_key    = var.boot_volume_encryption_key
-}
-
 module "management_vsi" {
   count                         = length(var.management_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
@@ -158,6 +135,29 @@ module "compute_cluster_management_vsi" {
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
   #placement_group_id = var.placement_group_ids[(var.static_compute_instances[count.index]["count"])%(length(var.placement_group_ids))]
+}
+
+module "client_vsi" {
+  count                         = length(var.client_instances)
+  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version                       = "4.2.0"
+  vsi_per_subnet                = var.client_instances[count.index]["count"]
+  create_security_group         = false
+  security_group                = null
+  image_id                      = local.client_image_id[count.index]
+  machine_type                  = var.client_instances[count.index]["profile"]
+  prefix                        = count.index == 0 ? local.client_node_name : format("%s-%s", local.client_node_name, count.index)
+  resource_group_id             = local.resource_group_id
+  enable_floating_ip            = false
+  security_group_ids            = module.client_sg[*].security_group_id
+  ssh_key_ids                   = local.client_ssh_keys
+  subnets                       = local.client_subnets
+  tags                          = local.tags
+  user_data                     = data.template_file.client_user_data.rendered
+  vpc_id                        = var.vpc_id
+  kms_encryption_enabled        = var.kms_encryption_enabled
+  skip_iam_authorization_policy = local.skip_iam_authorization_policy
+  boot_volume_encryption_key    = var.boot_volume_encryption_key
 }
 
 module "storage_vsi" {

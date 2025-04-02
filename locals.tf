@@ -333,7 +333,6 @@ locals {
 }
 
 locals {
-
   afm_instance_private_ips = flatten(local.afm_instances[*]["ipv4_address"])
   afm_instance_ids         = flatten(local.afm_instances[*]["id"])
   afm_instance_names       = try(tolist([for name_details in flatten(local.afm_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
@@ -346,7 +345,6 @@ locals {
 
   afm_cos_bucket_details = local.enable_afm == true ? flatten(module.cos[*].afm_cos_bucket_details) : []
   afm_cos_config         = local.enable_afm == true ? flatten(module.cos[*].afm_config_details) : []
-
 }
 
 

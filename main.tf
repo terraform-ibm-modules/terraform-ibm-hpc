@@ -100,6 +100,7 @@ module "landing_zone_vsi" {
   gklm_instance_key_pair     = local.gklm_instance_key_pair
   gklm_instances             = var.gklm_instances
   vpc_region                 = local.region
+  scheduler                  = var.scheduler
 }
 
 resource "local_sensitive_file" "prepare_tf_input" {
