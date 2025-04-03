@@ -278,3 +278,12 @@ locals {
     }
   ]
 }
+
+#Mapping Dedicated Host
+locals {
+  dedicated_host_id_map = var.dedicated_host_map
+}
+
+locals {
+  dh_map = jsondecode(local.dedicated_host_id_map)
+}
