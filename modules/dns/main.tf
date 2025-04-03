@@ -29,6 +29,9 @@ resource "ibm_dns_zone" "dns_zone" {
 }
 
 resource "ibm_dns_permitted_network" "dns_permitted_network" {
+  lifecycle {
+    prevent_destroy = true
+  }
   count       = length(var.dns_domain_names)
   instance_id = local.dns_instance_id
   vpc_crn     = var.vpc_crn

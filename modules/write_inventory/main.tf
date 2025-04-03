@@ -18,7 +18,6 @@ resource "local_sensitive_file" "infra_details_to_json" {
   "NFS_install_dir": ${jsonencode(var.nfs_install_dir)},
   "Enable_Monitoring": ${jsonencode(var.enable_monitoring)},
   "lsf_deployer_hostname": ${jsonencode(var.lsf_deployer_hostname)},
-  "dns_domain_names": ${jsonencode(var.dns_domain_names)},
   "enable_hyperthreading": ${var.enable_hyperthreading},
   "ibmcloud_api_key": ${jsonencode(var.ibmcloud_api_key)},
   "compute_public_key_content": ${jsonencode(var.compute_public_key_content)},
@@ -39,7 +38,8 @@ resource "local_sensitive_file" "infra_details_to_json" {
   "dynamic_compute_instances": ${jsonencode(var.dynamic_compute_instances)},
   "compute_subnets_cidr": ${jsonencode(var.compute_subnets_cidr)},
   "compute_security_group_id": ${jsonencode(var.compute_security_group_id)},
-  "compute_subnet_crn": ${jsonencode(var.compute_subnet_crn)}
+  "compute_subnet_crn": ${jsonencode(var.compute_subnet_crn)},
+  "dns_domain_names": ${jsonencode(var.dns_domain_names)}
 }
 EOT
   filename = var.json_inventory_path
