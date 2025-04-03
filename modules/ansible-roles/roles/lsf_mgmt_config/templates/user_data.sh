@@ -197,8 +197,7 @@ cd - || exit
 sudo /opt/ibm/lsf_worker/10.1/install/hostsetup --top="/opt/ibm/lsf_worker" --setuid | sudo tee -a "$logfile"
 /opt/ibm/lsf_worker/10.1/install/hostsetup --top="/opt/ibm/lsf_worker" --boot="y" --start="y" --dynamic >> "$logfile" 2>&1
 
-# Setting up the Metrics Agent
-
+# Setting up the Cloud Monitoring Agent
 if [ "$cloud_monitoring_access_key" != "" ] && [ "$cloud_monitoring_ingestion_url" != "" ]; then
 
     SYSDIG_CONFIG_FILE="/opt/draios/etc/dragent.yaml"
@@ -229,7 +228,7 @@ if [ "$observability_logs_enable_for_compute" = true ]; then
 
   echo "Configuring cloud logs for compute since observability logs for compute is enabled"
   sudo cp /root/post-config.sh /opt/ibm
-  cd /opt/ibm
+  cd /opt/ibm || exit
 
   cat <<EOL > /etc/fluent-bit/fluent-bit.conf
 [SERVICE]
@@ -259,7 +258,7 @@ if [ "$observability_logs_enable_for_compute" = true ]; then
 [INPUT]
   Name              tail
   Tag               *
-  Path              /opt/ibm/lsf_worker/log/*.log
+  Path              /opt/ibm/lsf_worker/log/*.log.*
   Path_Key          file
   Exclude_Path      /var/log/at/**
   DB                /opt/ibm/lsf_worker/log/fluent-bit.DB
@@ -280,9 +279,9 @@ if [ "$observability_logs_enable_for_compute" = true ]; then
 EOL
 
   sudo chmod +x post-config.sh
-  sudo ./post-config.sh -h $cloud_logs_ingress_private_endpoint -p "3443" -t "/logs/v1/singles" -a IAMAPIKey -k $VPC_APIKEY_VALUE --send-directly-to-icl -s true -i Production
-  sudo echo "2024-10-16T14:31:16+0000 INFO Testing IBM Cloud LSF Logs from compute: $hostname" >> /opt/ibm/lsf_worker/log/test.log
-
+  sudo ./post-config.sh -h "$cloud_logs_ingress_private_endpoint" -p "3443" -t "/logs/v1/singles" -a IAMAPIKey -k "$VPC_APIKEY_VALUE" --send-directly-to-icl -s true -i Production
+  echo "INFO Testing IBM Cloud LSF Logs from compute: $hostname" | sudo tee -a /opt/ibm/lsf_worker/log/test.log.com > /dev/null
+  sudo logger -u /tmp/in_syslog my_ident my_syslog_test_message_from_compute:"$hostname"
 else
   echo "Cloud Logs configuration skipped since observability logs for compute is not enabled"
 fi

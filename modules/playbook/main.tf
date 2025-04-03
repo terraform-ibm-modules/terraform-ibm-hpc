@@ -53,36 +53,36 @@ EOT
   filename = var.playbook_path
 }
 
-resource "null_resource" "run_playbook" {
-  count = var.inventory_path != null ? 1 : 0
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -f 50 -i ${var.inventory_path} ${var.playbook_path}"
-  }
-  triggers = {
-    build = timestamp()
-  }
-  depends_on = [local_file.create_playbook]
-}
+# resource "null_resource" "run_playbook" {
+#   count = var.inventory_path != null ? 1 : 0
+#   provisioner "local-exec" {
+#     interpreter = ["/bin/bash", "-c"]
+#     command     = "ansible-playbook -f 50 -i ${var.inventory_path} ${var.playbook_path}"
+#   }
+#   triggers = {
+#     build = timestamp()
+#   }
+#   depends_on = [local_file.create_playbook]
+# }
 
-resource "null_resource" "run_lsf_playbooks" {
-  count = var.inventory_path != null ? 1 : 0
+# resource "null_resource" "run_lsf_playbooks" {
+#   count = var.inventory_path != null ? 1 : 0
 
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    command     = <<EOT
-      sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml &&
-      sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml &&
-      sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml
-    EOT
-  }
+#   provisioner "local-exec" {
+#     interpreter = ["/bin/bash", "-c"]
+#     command     = <<EOT
+#       sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml &&
+#       sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml &&
+#       sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml
+#     EOT
+#   }
 
-  triggers = {
-    build = timestamp()
-  }
+#   triggers = {
+#     build = timestamp()
+#   }
 
-  depends_on = [null_resource.run_playbook]
-}
+#   depends_on = [null_resource.run_playbook]
+# }
 
 resource "local_file" "create_playbook_for_mgmt_config" {
   count    = var.inventory_path != null ? 1 : 0
@@ -142,7 +142,7 @@ resource "null_resource" "run_playbook_for_mgmt_config" {
   triggers = {
     build = timestamp()
   }
-  depends_on = [local_file.create_playbook_for_mgmt_config, null_resource.run_lsf_playbooks]
+  depends_on = [local_file.create_playbook_for_mgmt_config]
 }
 
 resource "null_resource" "export_api" {
@@ -157,7 +157,7 @@ resource "null_resource" "export_api" {
   triggers = {
     build = timestamp()
   }
-  depends_on = [null_resource.run_lsf_playbooks]
+  # depends_on = [null_resource.run_lsf_playbooks]
 }
 
 resource "local_file" "create_observability_playbook" {
