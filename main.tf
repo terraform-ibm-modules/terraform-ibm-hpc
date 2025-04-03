@@ -361,7 +361,7 @@ module "write_compute_cluster_inventory" {
   vpc_region                                       = jsonencode(local.region)
   vpc_availability_zones                           = jsonencode(var.zones)
   scale_version                                    = jsonencode(local.scale_version)
-  compute_cluster_filesystem_mountpoint            = jsonencode("/gpfs/fs1") #var.compute_cluster_filesystem_mountpoint)
+  compute_cluster_filesystem_mountpoint            = jsonencode(var.static_compute_instances[*]["filesystem"])
   storage_cluster_filesystem_mountpoint            = jsonencode("None")
   filesystem_block_size                            = jsonencode("None")
   compute_cluster_instance_private_ips             = jsonencode(concat((local.enable_sec_interface_compute ? local.compute_instance_private_ips : local.compute_instance_private_ips)))
