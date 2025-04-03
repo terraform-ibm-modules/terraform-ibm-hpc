@@ -326,7 +326,7 @@ variable "enable_dedicated_host" {
 }
 
 variable "dedicated_host_map" {
-  type = map(string)
+  type = any
   default = {}
   description = "List of map having the dedicated host ID's with the instance profiles if enabled"
 }

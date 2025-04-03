@@ -277,13 +277,7 @@ locals {
       interface_name    = subnet["name"]
     }
   ]
-}
 
-#Mapping Dedicated Host
-locals {
-  dedicated_host_id_map = var.dedicated_host_map
-}
+  dedicated_host_map = jsondecode(var.dedicated_host_map)
 
-locals {
-  dh_map = jsondecode(local.dedicated_host_id_map)
 }

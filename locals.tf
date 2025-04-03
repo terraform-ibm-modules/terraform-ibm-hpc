@@ -330,7 +330,14 @@ locals {
     if vr.instance_valid && vr.dh_profile_available
   }
 
-  dedicated_host_map = { for instance in local.dedicated_host_ids : instance.profile => instance.id }
+  dedicated_host_ids = [
+    for instance in var.static_compute_instances : {
+      profile = instance.profile
+      id      = try(one(module.dedicated_host[instance.profile].dedicated_host_id), "")
+    }
+  ]
+
+  dedicated_host_profiles = { for instance in local.dedicated_host_ids : instance.profile => instance.id }
   
 }
 
@@ -350,10 +357,5 @@ check "profile_validation" {
 #Mapping the dedicated host ID's to the instance profile
 
 locals {
-  dedicated_host_ids = [
-    for instance in var.static_compute_instances : {
-      profile = instance.profile
-      id      = try(one(module.dedicated_host[instance.profile].dedicated_host_id), "")
-    }
-  ]
+  dedicated_host_map = jsonencode(local.dedicated_host_profiles)
 }

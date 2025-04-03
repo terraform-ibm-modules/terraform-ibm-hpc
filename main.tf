@@ -86,7 +86,6 @@ module "landing_zone_vsi" {
   boot_volume_encryption_key = local.boot_volume_encryption_key
   enable_bastion             = var.enable_bastion
   enable_dedicated_host      = var.enable_dedicated_host
-  dedicated_host_map         = local.dedicated_host_map
   depends_on                 = [ module.dedicated_host ]
 }
 
