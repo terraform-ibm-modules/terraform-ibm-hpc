@@ -44,4 +44,3 @@ resource "local_sensitive_file" "infra_details_to_json" {
 EOT
   filename = var.json_inventory_path
 }
-# pass vars here
