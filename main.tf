@@ -342,7 +342,7 @@ resource "time_sleep" "wait_60_seconds" {
 module "write_compute_cluster_inventory" {
   count                                            = var.enable_deployer == false ? 1 : 0 
   source                                           = "./modules/write_inventory"
-  json_inventory_path                              = format("%s/compute_cluster_inventory.json", local.json_inventory_path)
+  json_inventory_path                              = var.scheduler == "null" ? format("%s/compute_cluster_inventory.json", var.scale_ansible_repo_clone_path) : format("%s/compute_cluster_inventory.json", local.json_inventory_path)
   lsf_masters                                      = local.management_nodes
   lsf_servers                                      = local.compute_nodes
   lsf_clients                                      = local.client_nodes
@@ -402,7 +402,7 @@ module "write_compute_cluster_inventory" {
 module "write_storage_cluster_inventory" {
   count                                            = var.enable_deployer == false ? 1 : 0 
   source                                           = "./modules/write_inventory"
-  json_inventory_path                              = format("%s/storage_cluster_inventory.json", local.json_inventory_path)
+  json_inventory_path                              = format("%s/storage_cluster_inventory.json", var.scale_ansible_repo_clone_path)
   lsf_masters                                      = local.management_nodes
   lsf_servers                                      = local.compute_nodes
   lsf_clients                                      = local.client_nodes
@@ -466,7 +466,7 @@ locals {
 module "write_client_cluster_inventory" {
   count                                            = var.enable_deployer == false ? 1 : 0 
   source                                           = "./modules/write_inventory"
-  json_inventory_path                              = format("%s/client_cluster_inventory.json", local.json_inventory_path)
+  json_inventory_path                              = format("%s/client_cluster_inventory.json", var.scale_ansible_repo_clone_path)
   lsf_masters                                      = local.management_nodes
   lsf_servers                                      = local.compute_nodes
   lsf_clients                                      = local.client_nodes
@@ -541,7 +541,7 @@ module "compute_cluster_configuration" {
   inventory_format                = var.inventory_format
   create_scale_cluster            = var.create_scale_cluster
   clone_path                      = var.scale_ansible_repo_clone_path
-  inventory_path                  = format("%s/compute_cluster_inventory.json", local.json_inventory_path)
+  inventory_path                  = format("%s/compute_cluster_inventory.json", var.scale_ansible_repo_clone_path)
   using_packer_image              = var.using_packer_image
   using_jumphost_connection       = var.using_jumphost_connection
   using_rest_initialization       = var.using_rest_api_remote_mount
@@ -578,7 +578,7 @@ module "storage_cluster_configuration" {
   inventory_format                    = var.inventory_format
   create_scale_cluster                = var.create_scale_cluster
   clone_path                          = var.scale_ansible_repo_clone_path
-  inventory_path                      = format("%s/storage_cluster_inventory.json", local.json_inventory_path)
+  inventory_path                      = format("%s/storage_cluster_inventory.json", var.scale_ansible_repo_clone_path)
   using_packer_image                  = var.using_packer_image
   using_jumphost_connection           = var.using_jumphost_connection
   using_rest_initialization           = true
@@ -639,6 +639,29 @@ module "storage_cluster_configuration" {
 #   scheduler           = var.scheduler
 #   depends_on          = [ module.write_storage_cluster_inventory ]
 # }
+
+module "remote_mount_configuration" {
+  source                          = "./modules/common/remote_mount_configuration"
+  turn_on                         = (local.static_compute_instance_count > 0 && local.storage_instance_count > 0 && var.create_separate_namespaces == true) ? true : false
+  create_scale_cluster            = var.create_scale_cluster
+  bastion_user                    = jsonencode(var.bastion_user)
+  clone_path                      = var.scale_ansible_repo_clone_path
+  compute_inventory_path          = format("%s/compute_cluster_inventory.json", var.scale_ansible_repo_clone_path)
+  compute_gui_inventory_path      = format("%s/compute_cluster_gui_details.json", var.scale_ansible_repo_clone_path)
+  storage_inventory_path          = format("%s/storage_cluster_inventory.json", var.scale_ansible_repo_clone_path)
+  storage_gui_inventory_path      = format("%s/storage_cluster_gui_details.json", var.scale_ansible_repo_clone_path)
+  compute_cluster_gui_username    = var.compute_gui_username
+  compute_cluster_gui_password    = var.compute_gui_password
+  storage_cluster_gui_username    = var.storage_gui_username
+  storage_cluster_gui_password    = var.storage_gui_password
+  using_jumphost_connection       = var.using_jumphost_connection
+  using_rest_initialization       = var.using_rest_api_remote_mount
+  bastion_instance_public_ip      = jsonencode(local.bastion_fip)
+  bastion_ssh_private_key         = var.bastion_ssh_private_key
+  compute_cluster_create_complete = module.compute_cluster_configuration[0].compute_cluster_create_complete
+  storage_cluster_create_complete = module.storage_cluster_configuration[0].storage_cluster_create_complete
+  depends_on                      = [module.compute_cluster_configuration, module.storage_cluster_configuration]
+}
 
 module "compute_playbook" {
   count            = var.enable_deployer == false ? 1 : 0
