@@ -658,8 +658,8 @@ module "remote_mount_configuration" {
   using_rest_initialization       = var.using_rest_api_remote_mount
   bastion_instance_public_ip      = jsonencode(local.bastion_fip)
   bastion_ssh_private_key         = var.bastion_ssh_private_key
-  compute_cluster_create_complete = module.compute_cluster_configuration[0].compute_cluster_create_complete
-  storage_cluster_create_complete = module.storage_cluster_configuration[0].storage_cluster_create_complete
+  compute_cluster_create_complete = var.enable_deployer ? false : module.compute_cluster_configuration[0].compute_cluster_create_complete
+  storage_cluster_create_complete = var.enable_deployer ? false : module.storage_cluster_configuration[0].storage_cluster_create_complete
   depends_on                      = [module.compute_cluster_configuration, module.storage_cluster_configuration]
 }
 
