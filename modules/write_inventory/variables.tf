@@ -71,6 +71,7 @@ variable "dns_domain_names" {
     storage  = string
     protocol = string
   })
+  default     = null
   description = "IBM Cloud HPC DNS domain names."
 }
 
