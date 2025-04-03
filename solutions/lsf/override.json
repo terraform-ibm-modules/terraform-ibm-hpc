@@ -88,6 +88,7 @@
       "protocol": "ces.com"
    },
    "enable_cos_integration": true,
+   "enable_dedicated_host": false,
    "cos_instance_name": null,
    "enable_vpc_flow_logs": true,
    "key_management": "key_protect",

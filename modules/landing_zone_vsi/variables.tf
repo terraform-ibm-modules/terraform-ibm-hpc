@@ -318,3 +318,15 @@ variable "enable_bastion" {
   default     = true
   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
 }
+
+variable "enable_dedicated_host" {
+  type = bool
+  default = false
+  description = "Enables dedicated host to the compute instances"
+}
+
+variable "dedicated_host_map" {
+  type = map(string)
+  default = {}
+  description = "List of map having the dedicated host ID's with the instance profiles if enabled"
+}
