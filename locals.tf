@@ -329,6 +329,9 @@ locals {
     }
     if vr.instance_valid && vr.dh_profile_available
   }
+
+  dedicated_host_map = { for instance in local.dedicated_host_ids : instance.profile => instance.id }
+  
 }
 
 # Validating profile configurations
