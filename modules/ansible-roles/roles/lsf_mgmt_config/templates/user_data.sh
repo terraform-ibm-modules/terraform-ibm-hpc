@@ -6,6 +6,12 @@ echo "START $(date '+%Y-%m-%d %H:%M:%S')" >> $logfile
 # Initialize variables
 cluster_prefix="{{ my_cluster_name }}"
 nfs_server_with_mount_path="{{ name_mount_path_map.lsf }}"
+cloud_monitoring_access_key="{{ cloud_monitoring_access_key }}"
+cloud_monitoring_ingestion_url="{{ cloud_monitoring_ingestion_url }}"
+observability_monitoring_on_compute_nodes_enable="{{ monitoring_enable_for_compute }}"
+observability_logs_enable_for_compute="{{ logs_enable_for_compute }}"
+cloud_logs_ingress_private_endpoint="{{ cloud_logs_ingress_private_endpoint }}"
+VPC_APIKEY_VALUE="{{ ibmcloud_api_key }}"
 # custom_file_shares="{% for key, value in name_mount_path_map.items() if key != 'lsf' %}{{ value }}{% if not loop.last %} {% endif %}{% endfor %}"
 # custom_mount_paths="{% for key in name_mount_path_map.keys() if key != 'lsf' %}{{ key }}{% if not loop.last %} {% endif %}{% endfor %}"
 hyperthreading="{{ enable_hyperthreading }}"
@@ -191,4 +197,93 @@ cd - || exit
 sudo /opt/ibm/lsf_worker/10.1/install/hostsetup --top="/opt/ibm/lsf_worker" --setuid | sudo tee -a "$logfile"
 /opt/ibm/lsf_worker/10.1/install/hostsetup --top="/opt/ibm/lsf_worker" --boot="y" --start="y" --dynamic >> "$logfile" 2>&1
 
-echo "END $(date '+%Y-%m-%d %H:%M:%S')" >> $logfile
+# Setting up the Cloud Monitoring Agent
+if [ "$cloud_monitoring_access_key" != "" ] && [ "$cloud_monitoring_ingestion_url" != "" ]; then
+
+    SYSDIG_CONFIG_FILE="/opt/draios/etc/dragent.yaml"
+
+    #packages installation
+    echo "Writing sysdig config file" >> "$logfile"
+
+    #sysdig config file
+    echo "Setting customerid access key" >> "$logfile"
+    sed -i "s/==ACCESSKEY==/$cloud_monitoring_access_key/g" $SYSDIG_CONFIG_FILE
+    sed -i "s/==COLLECTOR==/$cloud_monitoring_ingestion_url/g" $SYSDIG_CONFIG_FILE
+    echo "tags: type:compute,lsf:true" >> $SYSDIG_CONFIG_FILE
+else
+    echo "Skipping metrics agent configuration due to missing parameters" >> "$logfile"
+fi
+
+if [ "$observability_monitoring_on_compute_nodes_enable" = true ]; then
+
+    echo "Restarting sysdig agent" >> "$logfile"
+    systemctl enable dragent
+    systemctl restart dragent
+  else
+    echo "Metrics agent start skipped since monitoring provisioning is not enabled" >> "$logfile"
+fi
+
+# Setting up the IBM Cloud Logs
+if [ "$observability_logs_enable_for_compute" = true ]; then
+
+  echo "Configuring cloud logs for compute since observability logs for compute is enabled"
+  sudo cp /root/post-config.sh /opt/ibm
+  cd /opt/ibm || exit
+
+  cat <<EOL > /etc/fluent-bit/fluent-bit.conf
+[SERVICE]
+  Flush                   1
+  Log_Level               info
+  Daemon                  off
+  Parsers_File            parsers.conf
+  Plugins_File            plugins.conf
+  HTTP_Server             On
+  HTTP_Listen             0.0.0.0
+  HTTP_Port               9001
+  Health_Check            On
+  HC_Errors_Count         1
+  HC_Retry_Failure_Count  1
+  HC_Period               30
+  storage.path            /fluent-bit/cache
+  storage.max_chunks_up   192
+  storage.metrics         On
+
+[INPUT]
+  Name                syslog
+  Path                /tmp/in_syslog
+  Buffer_Chunk_Size   32000
+  Buffer_Max_Size     64000
+  Receive_Buffer_Size 512000
+
+[INPUT]
+  Name              tail
+  Tag               *
+  Path              /opt/ibm/lsf_worker/log/*.log.*
+  Path_Key          file
+  Exclude_Path      /var/log/at/**
+  DB                /opt/ibm/lsf_worker/log/fluent-bit.DB
+  Buffer_Chunk_Size 32KB
+  Buffer_Max_Size   256KB
+  Skip_Long_Lines   On
+  Refresh_Interval  10
+  storage.type      filesystem
+  storage.pause_on_chunks_overlimit on
+
+[FILTER]
+  Name modify
+  Match *
+  Add subsystemName compute
+  Add applicationName lsf
+
+@INCLUDE output-logs-router-agent.conf
+EOL
+
+  sudo chmod +x post-config.sh
+  sudo ./post-config.sh -h "$cloud_logs_ingress_private_endpoint" -p "3443" -t "/logs/v1/singles" -a IAMAPIKey -k "$VPC_APIKEY_VALUE" --send-directly-to-icl -s true -i Production
+  echo "INFO Testing IBM Cloud LSF Logs from compute: $hostname" | sudo tee -a /opt/ibm/lsf_worker/log/test.log.com > /dev/null
+  sudo logger -u /tmp/in_syslog my_ident my_syslog_test_message_from_compute:"$hostname"
+else
+  echo "Cloud Logs configuration skipped since observability logs for compute is not enabled"
+fi
+
+echo "END $(date '+%Y-%m-%d %H:%M:%S')" >> "$logfile"
