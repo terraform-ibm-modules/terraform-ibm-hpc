@@ -60,3 +60,7 @@ data "ibm_is_ssh_key" "compute_ssh_keys" {
 data "ibm_is_subnet" "compute_subnet_crn" {
   identifier = local.compute_subnet_id
 }
+
+data "ibm_is_dedicated_host_profiles" "profiles" {
+  count = var.enable_dedicated_host ? 1 : 0
+}

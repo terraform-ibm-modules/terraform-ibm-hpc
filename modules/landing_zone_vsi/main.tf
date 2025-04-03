@@ -155,6 +155,8 @@ module "compute_vsi" {
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
+  enable_dedicated_host         = var.enable_dedicated_host
+  dedicated_host_id             = var.enable_dedicated_host ? var.dedicated_host_map[var.static_compute_instances[count.index]["profile"]] : null 
   #placement_group_id = var.placement_group_ids[(var.static_compute_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 

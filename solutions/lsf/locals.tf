@@ -84,6 +84,7 @@ locals {
     skip_kms_s2s_auth_policy                         = var.skip_kms_s2s_auth_policy
     ibmcloud_api_key                                 = var.ibmcloud_api_key
     enable_hyperthreading                            = var.enable_hyperthreading
+    enable_dedicated_host                            = var.enable_dedicated_host
     # scc_profile_version = var.scc_profile_version
   }
 }
@@ -157,6 +158,7 @@ locals {
     skip_kms_s2s_auth_policy                         = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
     ibmcloud_api_key                                 = lookup(local.override[local.override_type], "ibmcloud_api_key", local.config.ibmcloud_api_key)
     enable_hyperthreading                            = lookup(local.override[local.override_type], "enable_hyperthreading", local.config.enable_hyperthreading)
+    enable_dedicated_host                            = lookup(local.override[local.override_type], "enable_dedicated_host", local.config.enable_dedicated_host)
     # scc_profile_version = lookup(local.override[local.override_type], "scc_profile_version", local.config.scc_profile_version)
   }
 }

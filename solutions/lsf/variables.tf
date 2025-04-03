@@ -646,3 +646,8 @@ variable "override_json_string" {
   default     = null
   description = "Override default values with a JSON object. Any JSON other than an empty string overrides other configuration changes."
 }
+
+variable "enable_dedicated_host" {
+  type    = bool
+  default = false
+}

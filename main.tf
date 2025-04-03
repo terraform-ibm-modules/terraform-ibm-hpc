@@ -85,6 +85,9 @@ module "landing_zone_vsi" {
   kms_encryption_enabled     = local.kms_encryption_enabled
   boot_volume_encryption_key = local.boot_volume_encryption_key
   enable_bastion             = var.enable_bastion
+  enable_dedicated_host      = var.enable_dedicated_host
+  dedicated_host_map         = local.dedicated_host_map
+  depends_on                 = [ module.dedicated_host ]
 }
 
 module "prepare_tf_input" {
@@ -136,6 +139,8 @@ module "prepare_tf_input" {
   observability_enable_metrics_routing             = var.observability_enable_metrics_routing
   observability_atracker_enable                    = var.observability_atracker_enable
   observability_atracker_target_type               = var.observability_atracker_target_type
+  enable_dedicated_host                            = var.enable_dedicated_host
+  dedicated_host_map                               = local.dedicated_host_map
   depends_on                                       = [module.deployer]
 }
 
@@ -342,4 +347,20 @@ module "scc_instance_and_profile" {
   prefix                  = var.prefix
   cos_bucket              = var.scc_cos_bucket
   cos_instance_crn        = var.scc_cos_instance_crn
+}
+
+########################################################################
+###                        Dedicated Host                            ###
+########################################################################
+module "dedicated_host" {
+  for_each = var.enable_dedicated_host ? local.dedicated_host_config : {}
+
+  source              = "./modules/dedicated_host"
+  prefix              = var.prefix
+  zone                = var.zones
+  existing_host_group = false
+  class               = each.value.class
+  profile             = each.value.profile
+  family              = each.value.family
+  resource_group_id   = local.resource_group_ids["service_rg"]
 }
