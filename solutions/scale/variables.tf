@@ -204,15 +204,17 @@ variable "compute_ssh_keys" {
 variable "compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = string
     })
   )
   default = [{
-    profile = "cx2-2x4"
-    count   = 0
-    image   = "ibm-redhat-8-10-minimal-amd64-4"
+    profile    = "cx2-2x4"
+    count      = 0
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "/gpfs/fs1"
   }]
   description = "Total Number of instances to be launched for compute cluster."
 }
