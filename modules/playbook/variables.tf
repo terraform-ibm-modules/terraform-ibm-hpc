@@ -51,3 +51,9 @@ variable "observability_provision" {
   type        = bool
   default     = false
 }
+
+variable "cloudlogs_provision" {
+  description = "Set true to provision cloud logs instances"
+  type        = bool
+  default     = false
+}
