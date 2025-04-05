@@ -32,7 +32,8 @@ locals {
 # locals needed for landing_zone_vsi
 locals {
   # Cluster node details: 
-  compute_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data, module.landing_zone_vsi[0].compute_vsi_data, module.landing_zone_vsi[0].compute_management_vsi_data])
+  compute_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data, module.landing_zone_vsi[0].compute_vsi_data])
+  comp_mgmt_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_management_vsi_data])
   storage_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_vsi_data])
   protocol_instances  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].protocol_vsi_data])
   gklm_instances      = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].gklm_vsi_data])
@@ -40,7 +41,6 @@ locals {
   afm_instances       = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].afm_vsi_data])
   ldap_instances      = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].ldap_vsi_data])
   tie_brkr_instances  = var.enable_deployer ? [] : flatten(module.landing_zone_vsi[0].storage_cluster_tie_breaker_vsi_data)
-  # comp_mgmt_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_management_vsi_data])
   strg_mgmt_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_cluster_management_vsi])
 
   # dependency: landing_zone -> deployer -> landing_zone_vsi
@@ -298,7 +298,11 @@ locals {
 
   compute_instance_private_ips = flatten(local.compute_instances[*]["ipv4_address"])
   compute_instance_ids         = flatten(local.compute_instances[*]["id"])
-  compute_instance_names       = flatten(local.compute_instances[*]["name"])
+  compute_instance_names       = try(tolist([for name_details in flatten(local.compute_instances[*]["name"]): "${name_details}.${var.dns_domain_names["compute"]}"]), [])
+
+  compute_mgmt_instance_private_ips = flatten(local.comp_mgmt_instances[*]["ipv4_address"])
+  compute_mgmt_instance_ids         = flatten(local.comp_mgmt_instances[*]["id"])
+  compute_mgmt_instance_names       = try(tolist([for name_details in flatten(local.comp_mgmt_instances[*]["name"]): "${name_details}.${var.dns_domain_names["compute"]}"]), [])
 
   strg_instance_private_ips = flatten(local.storage_instances[*]["ipv4_address"])
   strg_instance_ids         = flatten(local.storage_instances[*]["id"])
