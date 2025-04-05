@@ -29,7 +29,7 @@ module "event_notification" {
 
 module "create_scc_instance" {
   source                            = "terraform-ibm-modules/scc/ibm"
-  version                           = "1.8.36"
+  version                           = "2.1.9"
   instance_name                     = "${var.prefix}-scc-instance"
   plan                              = var.scc_plan
   region                            = local.scc_region
@@ -49,7 +49,7 @@ module "create_scc_instance" {
 module "create_profile_attachment" {
   count                  = var.scc_profile == null || var.scc_profile == "" ? 0 : 1
   source                 = "terraform-ibm-modules/scc/ibm//modules/attachment"
-  version                = "1.8.36"
+  version                = "2.1.9"
   profile_name           = var.scc_profile
   scc_instance_id        = module.create_scc_instance.guid
   attachment_name        = "${var.prefix}-scc-attachment"
