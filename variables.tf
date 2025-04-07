@@ -805,3 +805,8 @@ variable "enable_dedicated_host" {
   type    = bool
   default = false
 }
+
+variable "dedicated_host_map" {
+  type = any
+  default = {}
+}
