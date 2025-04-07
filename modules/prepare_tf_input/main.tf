@@ -52,7 +52,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "gklm_instance_key_pair": ${local.list_gklm_ssh_keys},
   "gklm_instances": ${local.list_gklm_instances},
   "scale_encryption_admin_password": "${local.scale_encryption_admin_password}",
-  "filesystem_config": ${local.filesystem_config}
+  "filesystem_config": ${local.filesystem_config},
   "enable_hyperthreading": ${var.enable_hyperthreading},
   "scc_enable": ${var.scc_enable},
   "scc_profile": "${var.scc_profile}",

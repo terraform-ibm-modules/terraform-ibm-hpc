@@ -338,6 +338,7 @@ module "compute_inventory" {
 module "compute_playbook" {
   count                       = var.enable_deployer == false ? 1 : 0
   source                      = "./modules/playbook"
+  scheduler                   = var.scheduler
   bastion_fip                 = local.bastion_fip
   private_key_path            = local.compute_private_key_path
   inventory_path              = local.compute_inventory_path
