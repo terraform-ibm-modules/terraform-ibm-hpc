@@ -31,10 +31,10 @@ variable "prefix" {
   }
 }
 
-# variable "zones" {
-#   description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
-#   type        = list(string)
-# }
+variable "zones" {
+  description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
+  type        = list(string)
+}
 
 ##############################################################################
 # VPC Variables
@@ -317,4 +317,10 @@ variable "enable_bastion" {
   type        = bool
   default     = true
   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
+}
+
+variable "enable_dedicated_host" {
+  type = bool
+  default = false
+  description = "Enables dedicated host to the compute instances"
 }

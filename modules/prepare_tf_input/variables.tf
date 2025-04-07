@@ -383,3 +383,9 @@ variable "enable_hyperthreading" {
   type        = bool
   default     = null
 }
+
+variable "enable_dedicated_host" {
+  type = bool
+  default = false
+  description = "Enable dedicated hosts for the Compute instances"
+}

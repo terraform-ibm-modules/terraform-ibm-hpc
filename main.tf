@@ -65,6 +65,7 @@ module "landing_zone_vsi" {
   existing_resource_group    = var.existing_resource_group
   prefix                     = var.prefix
   vpc_id                     = local.vpc_id
+  zones                      = var.zones
   bastion_security_group_id  = var.bastion_security_group_id
   bastion_public_key_content = local.bastion_public_key_content
   client_subnets             = local.client_subnets
@@ -85,6 +86,7 @@ module "landing_zone_vsi" {
   kms_encryption_enabled     = local.kms_encryption_enabled
   boot_volume_encryption_key = local.boot_volume_encryption_key
   enable_bastion             = var.enable_bastion
+  enable_dedicated_host      = var.enable_dedicated_host
 }
 
 module "prepare_tf_input" {
@@ -136,6 +138,7 @@ module "prepare_tf_input" {
   observability_enable_metrics_routing             = var.observability_enable_metrics_routing
   observability_atracker_enable                    = var.observability_atracker_enable
   observability_atracker_target_type               = var.observability_atracker_target_type
+  enable_dedicated_host                            = var.enable_dedicated_host
   depends_on                                       = [module.deployer]
 }
 

@@ -61,3 +61,7 @@ data "ibm_is_ssh_key" "storage" {
   for_each = toset(var.storage_ssh_keys)
   name     = each.key
 }
+
+data "ibm_is_dedicated_host_profiles" "profiles" {
+  count = var.enable_dedicated_host ? 1 : 0
+}
