@@ -23,15 +23,12 @@ resource "ibm_dns_custom_resolver" "dns_custom_resolver" {
 }
 
 resource "ibm_dns_zone" "dns_zone" {
-  count       = length(local.dns_domain_names)
+  count       = length(var.dns_domain_names)
   instance_id = local.dns_instance_id
-  name        = local.dns_domain_names[count.index]
+  name        = var.dns_domain_names[count.index]
 }
 
 resource "ibm_dns_permitted_network" "dns_permitted_network" {
-  lifecycle {
-    prevent_destroy = true
-  }
   count       = length(var.dns_domain_names)
   instance_id = local.dns_instance_id
   vpc_crn     = var.vpc_crn
