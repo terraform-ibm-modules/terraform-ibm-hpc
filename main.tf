@@ -85,6 +85,17 @@ module "landing_zone_vsi" {
   kms_encryption_enabled     = local.kms_encryption_enabled
   boot_volume_encryption_key = local.boot_volume_encryption_key
   enable_bastion             = var.enable_bastion
+  afm_instances              = var.afm_instances
+  enable_ldap                = var.enable_ldap
+  ldap_instances             = var.ldap_instances
+  ldap_server                = var.ldap_server
+  ldap_instance_key_pair     = local.ldap_instance_key_pair
+  scale_encryption_enabled   = var.scale_encryption_enabled
+  scale_encryption_type      = var.scale_encryption_type
+  gklm_instance_key_pair     = local.gklm_instance_key_pair
+  gklm_instances             = var.gklm_instances
+  vpc_region                 = local.region
+  scheduler                  = var.scheduler
 }
 
 module "prepare_tf_input" {
@@ -136,6 +147,19 @@ module "prepare_tf_input" {
   observability_enable_metrics_routing             = var.observability_enable_metrics_routing
   observability_atracker_enable                    = var.observability_atracker_enable
   observability_atracker_target_type               = var.observability_atracker_target_type
+  ldap_instances                                   = var.ldap_instances
+  ldap_server                                      = var.ldap_server
+  ldap_basedns                                     = var.ldap_basedns
+  ldap_server_cert                                 = var.ldap_server_cert
+  ldap_admin_password                              = var.ldap_admin_password
+  ldap_instance_key_pair                           = local.ldap_instance_key_pair
+  afm_instances                                    = var.afm_instances
+  afm_cos_config                                   = var.afm_cos_config
+  gklm_instance_key_pair                           = local.gklm_instance_key_pair
+  gklm_instances                                   = var.gklm_instances
+  scale_encryption_type                            = var.scale_encryption_type
+  filesystem_config                                = var.filesystem_config
+  scale_encryption_admin_password                  = var.scale_encryption_admin_password
   depends_on                                       = [module.deployer]
 }
 
@@ -147,6 +171,24 @@ module "resource_provisioner" {
   bastion_private_key_content = local.bastion_private_key_content
   deployer_ip                 = local.deployer_ip
   depends_on                  = [module.deployer, module.prepare_tf_input]
+}
+
+module "cos" {
+  count                           = local.enable_afm == true ? 1 : 0
+  source                          = "./modules/cos"
+  prefix                          = "jay-afm-"
+  resource_group_id               = local.resource_group_ids["service_rg"]
+  cos_instance_plan               = "standard"
+  cos_instance_location           = "global"
+  cos_instance_service            = "cloud-object-storage"
+  cos_hmac_role                   = "Manager"
+  new_instance_bucket_hmac        = local.new_instance_bucket_hmac
+  exstng_instance_new_bucket_hmac = local.exstng_instance_new_bucket_hmac
+  exstng_instance_bucket_new_hmac = local.exstng_instance_bucket_new_hmac
+  exstng_instance_hmac_new_bucket = local.exstng_instance_hmac_new_bucket
+  exstng_instance_bucket_hmac     = local.exstng_instance_bucket_hmac
+  filesystem                      = var.filesystem_config[0]["filesystem"]
+  depends_on                      = [module.landing_zone_vsi]
 }
 
 module "file_storage" {
@@ -190,18 +232,30 @@ module "storage_dns_records" {
   depends_on      = [module.dns]
 }
 
-module "protocol_dns_records" {
-  count           = var.enable_deployer == false ? 1 : 0
-  source          = "./modules/dns_record"
-  dns_instance_id = local.dns_instance_id
-  dns_zone_id     = local.protocol_dns_zone_id
-  dns_records     = local.protocol_dns_records
-  depends_on      = [module.dns]
+module "protocol_reserved_ip" {
+  count                   = var.enable_deployer == false ? 1 : 0
+  source                  = "./modules/protocol_reserved_ip"
+  total_reserved_ips      = local.protocol_instance_count
+  subnet_id               = [local.protocol_subnets[0].id]
+  name                    = format("%s-ces", var.prefix)
+  protocol_domain         = var.dns_domain_names["protocol"]
+  protocol_dns_service_id = local.dns_instance_id
+  protocol_dns_zone_id    = local.protocol_dns_zone_id
+  depends_on              = [ module.dns ]
 }
+
+# module "protocol_dns_records" {
+#   count           = var.enable_deployer == false ? 1 : 0
+#   source          = "./modules/dns_record"
+#   dns_instance_id = local.dns_instance_id
+#   dns_zone_id     = local.protocol_dns_zone_id
+#   dns_records     = local.protocol_dns_records
+#   depends_on      = [module.dns]
+# }
 
 resource "time_sleep" "wait_60_seconds" {
   create_duration = "60s"
-  depends_on      = [module.storage_dns_records, module.protocol_dns_records, module.compute_dns_records]
+  depends_on      = [module.storage_dns_records, module.protocol_reserved_ip, module.compute_dns_records]
 }
 
 module "write_compute_cluster_inventory" {
@@ -256,6 +310,7 @@ module "write_storage_cluster_inventory" {
 module "compute_inventory" {
   count                               = var.enable_deployer == false ? 1 : 0
   source                              = "./modules/inventory"
+  scheduler                           = var.scheduler
   hosts                               = local.compute_hosts
   inventory_path                      = local.compute_inventory_path
   name_mount_path_map                 = local.fileshare_name_mount_path_map
@@ -271,14 +326,14 @@ module "compute_inventory" {
   depends_on                          = [module.write_compute_cluster_inventory]
 }
 
-module "storage_inventory" {
-  count               = var.enable_deployer == false ? 1 : 0
-  source              = "./modules/inventory"
-  hosts               = local.storage_hosts
-  inventory_path      = local.storage_inventory_path
-  name_mount_path_map = local.fileshare_name_mount_path_map
-  depends_on          = [module.write_storage_cluster_inventory]
-}
+# module "storage_inventory" {
+#   count               = var.enable_deployer == false ? 1 : 0
+#   source              = "./modules/inventory"
+#   hosts               = local.storage_hosts
+#   inventory_path      = local.storage_inventory_path
+#   name_mount_path_map = local.fileshare_name_mount_path_map
+#   depends_on          = [module.write_storage_cluster_inventory]
+# }
 
 module "compute_playbook" {
   count                       = var.enable_deployer == false ? 1 : 0

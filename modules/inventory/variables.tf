@@ -72,3 +72,9 @@ variable "cloud_monitoring_prws_url" {
   type        = string
   default     = ""
 }
+
+variable "scheduler" {
+  default     = null
+  type        = string
+  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+}

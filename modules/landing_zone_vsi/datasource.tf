@@ -12,10 +12,6 @@ data "ibm_is_instance_profile" "compute" {
   name = var.compute_profile
 }
 
-data "ibm_is_instance_profile" "storage" {
-  name = var.storage_profile
-}
-
 data "ibm_is_instance_profile" "protocol" {
   name = var.protocol_profile
 }
@@ -41,12 +37,6 @@ data "ibm_is_image" "storage" {
   name  = var.storage_instances[count.index]["image"]
 }
 
-# data "ibm_is_image" "protocol" {
-#   count = length(var.protocol_instances)
-#   name  = var.protocol_instances[count.index]["image"]
-# }
-
-
 data "ibm_is_ssh_key" "client" {
   for_each = toset(var.client_ssh_keys)
   name     = each.key
@@ -60,4 +50,39 @@ data "ibm_is_ssh_key" "compute" {
 data "ibm_is_ssh_key" "storage" {
   for_each = toset(var.storage_ssh_keys)
   name     = each.key
+}
+
+data "ibm_is_instance_profile" "storage" {
+  count = length(var.storage_instances)
+  name = var.storage_instances[count.index]["profile"]
+}
+
+data "ibm_is_instance_profile" "storage_tie_instance" {
+  count = length(var.storage_instances)
+  name = var.storage_instances[count.index]["profile"]
+}
+
+data "ibm_is_ssh_key" "gklm" {
+  for_each = toset(var.gklm_instance_key_pair)
+  name     = each.key
+}
+
+data "ibm_is_ssh_key" "ldap" {
+  for_each = toset(var.ldap_instance_key_pair)
+  name     = each.key
+}
+
+data "ibm_is_image" "ldap_vsi_image" {
+  count = var.enable_ldap != null && var.ldap_server == null ? 1 : 0
+  name  = var.ldap_instances[count.index]["image"]
+}
+
+data "ibm_is_image" "afm" {
+  count = length(var.afm_instances)
+  name  = var.afm_instances[count.index]["image"]
+}
+
+data "ibm_is_image" "gklm" {
+  count = length(var.gklm_instances)
+  name  = var.gklm_instances[count.index]["image"]
 }

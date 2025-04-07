@@ -1,4 +1,4 @@
-output "scale" {
-  description = "Scale details"
-  value       = module.scale
-}
+# output "scale" {
+#   description = "Scale details"
+#   value       = module.scale
+# }
