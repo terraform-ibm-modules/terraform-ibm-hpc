@@ -229,5 +229,5 @@ module "dedicated_host" {
   class               = each.value.class
   profile             = each.value.profile
   family              = each.value.family
-  resource_group_id   = local.resource_group_ids["service_rg"]
+  resource_group_id   = local.resource_group_id
 }
