@@ -91,9 +91,10 @@ variable "management_instances" {
 variable "static_compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = string
     })
   )
   description = "Min Number of instances to be launched for compute cluster."
@@ -180,6 +181,8 @@ variable "dns_domain_names" {
     compute  = string
     storage  = string
     protocol = string
+    client   = string
+    gklm     = string
   })
   description = "IBM Cloud HPC DNS domain names."
 }

@@ -147,12 +147,15 @@ module "prepare_tf_input" {
   observability_enable_metrics_routing             = var.observability_enable_metrics_routing
   observability_atracker_enable                    = var.observability_atracker_enable
   observability_atracker_target_type               = var.observability_atracker_target_type
+  enable_ldap                                      = var.enable_ldap
   ldap_instances                                   = var.ldap_instances
   ldap_server                                      = var.ldap_server
   ldap_basedns                                     = var.ldap_basedns
   ldap_server_cert                                 = var.ldap_server_cert
   ldap_admin_password                              = var.ldap_admin_password
   ldap_instance_key_pair                           = local.ldap_instance_key_pair
+  ldap_user_password                               = var.ldap_user_password
+  ldap_user_name                                   = var.ldap_user_name
   afm_instances                                    = var.afm_instances
   afm_cos_config                                   = var.afm_cos_config
   gklm_instance_key_pair                           = local.gklm_instance_key_pair
@@ -160,6 +163,7 @@ module "prepare_tf_input" {
   scale_encryption_type                            = var.scale_encryption_type
   filesystem_config                                = var.filesystem_config
   scale_encryption_admin_password                  = var.scale_encryption_admin_password
+  scale_encryption_enabled                         = var.scale_encryption_enabled
   depends_on                                       = [module.deployer]
 }
 
@@ -244,14 +248,23 @@ module "protocol_reserved_ip" {
   depends_on              = [ module.dns ]
 }
 
-# module "protocol_dns_records" {
-#   count           = var.enable_deployer == false ? 1 : 0
-#   source          = "./modules/dns_record"
-#   dns_instance_id = local.dns_instance_id
-#   dns_zone_id     = local.protocol_dns_zone_id
-#   dns_records     = local.protocol_dns_records
-#   depends_on      = [module.dns]
-# }
+module "client_dns_records" {
+  count           = var.enable_deployer == false ? 1 : 0
+  source          = "./modules/dns_record"
+  dns_instance_id = local.dns_instance_id
+  dns_zone_id     = local.client_dns_zone_id
+  dns_records     = local.client_dns_records
+  depends_on      = [ module.dns ]
+}
+
+module "gklm_dns_records" {
+  count           = var.enable_deployer == false ? 1 : 0
+  source          = "./modules/dns_record"
+  dns_instance_id = local.dns_instance_id
+  dns_zone_id     = local.gklm_dns_zone_id
+  dns_records     = local.gklm_dns_records
+  depends_on      = [ module.dns ]
+}
 
 resource "time_sleep" "wait_60_seconds" {
   create_duration = "60s"
@@ -290,22 +303,292 @@ module "write_compute_cluster_inventory" {
   depends_on                  = [time_sleep.wait_60_seconds]
 }
 
-module "write_storage_cluster_inventory" {
-  count                 = var.enable_deployer == false ? 1 : 0
-  source                = "./modules/write_inventory"
-  json_inventory_path   = local.json_inventory_path
-  lsf_masters           = local.management_nodes
-  lsf_servers           = local.compute_nodes_list
-  lsf_clients           = local.client_nodes
-  gui_hosts             = local.gui_hosts
-  db_hosts              = local.db_hosts
-  my_cluster_name       = var.prefix
-  ha_shared_dir         = local.ha_shared_dir
-  nfs_install_dir       = local.nfs_install_dir
-  enable_monitoring     = local.enable_monitoring
-  lsf_deployer_hostname = local.lsf_deployer_hostname
-  depends_on            = [time_sleep.wait_60_seconds]
+module "write_compute_scale_cluster_inventory" {
+  count                                            = var.enable_deployer == false ? 1 : 0 
+  source                                           = "./modules/write_scale_inventory"
+  json_inventory_path                              = var.scheduler == "null" ? format("%s/compute_cluster_inventory.json", var.scale_ansible_repo_clone_path) : format("%s/compute_cluster_inventory.json", local.json_inventory_path)
+  bastion_user                                     = jsonencode(var.bastion_user)
+  bastion_instance_id                              = var.bastion_instance_id == null ? jsonencode("None") : jsonencode(var.bastion_instance_id)
+  bastion_instance_public_ip                       = var.bastion_fip == null ? jsonencode("None") : jsonencode(var.bastion_fip)
+  cloud_platform                                   = jsonencode("IBMCloud")
+  resource_prefix                                  = jsonencode(format("%s.%s", var.prefix, var.dns_domain_names["compute"])) 
+  vpc_region                                       = jsonencode(local.region)
+  vpc_availability_zones                           = jsonencode(var.zones)
+  scale_version                                    = jsonencode(local.scale_version)
+  compute_cluster_filesystem_mountpoint            = jsonencode(var.static_compute_instances[0]["filesystem"])
+  storage_cluster_filesystem_mountpoint            = jsonencode("None")
+  filesystem_block_size                            = jsonencode("None")
+  compute_cluster_instance_private_ips             = jsonencode(concat((local.enable_sec_interface_compute ? local.secondary_compute_instance_private_ips : local.compute_instance_private_ips), local.compute_mgmt_instance_private_ips))
+  compute_cluster_instance_ids                     = jsonencode(concat((local.enable_sec_interface_compute ? local.secondary_compute_instance_private_ips : local.compute_instance_ids), local.compute_mgmt_instance_ids))
+  compute_cluster_instance_names                   = jsonencode(concat((local.enable_sec_interface_compute ? local.secondary_compute_instance_private_ips : local.compute_instance_names), local.compute_mgmt_instance_names))
+  compute_cluster_instance_private_dns_ip_map      = jsonencode({})
+  storage_cluster_instance_ids                     = jsonencode([])
+  storage_cluster_instance_private_ips             = jsonencode([])
+  storage_cluster_with_data_volume_mapping         = jsonencode({})
+  storage_cluster_instance_private_dns_ip_map      = jsonencode({})
+  storage_cluster_desc_instance_ids                = jsonencode([])
+  storage_cluster_desc_instance_private_ips        = jsonencode([])
+  storage_cluster_desc_data_volume_mapping         = jsonencode({})
+  storage_cluster_desc_instance_private_dns_ip_map = jsonencode({})
+  storage_cluster_instance_names                   = jsonencode([])
+  storage_subnet_cidr                              = local.enable_mrot_conf ? jsonencode(data.ibm_is_subnet.existing_storage_subnets[*].ipv4_cidr_block) : jsonencode("")
+  compute_subnet_cidr                              = local.enable_mrot_conf ? jsonencode(data.ibm_is_subnet.existing_compute_subnets[*].ipv4_cidr_block) : jsonencode("")
+  scale_remote_cluster_clustername                 = local.enable_mrot_conf ? jsonencode(format("%s.%s", var.prefix, var.prefix, var.dns_domain_names["storage"])) : jsonencode("")
+  protocol_cluster_instance_names                  = jsonencode([])
+  client_cluster_instance_names                    = jsonencode([])
+  protocol_cluster_reserved_names                  = jsonencode([])
+  smb                                              = false
+  nfs                                              = true
+  object                                           = false
+  interface                                        = jsonencode([])
+  export_ip_pool                                   = jsonencode([])
+  filesystem                                       = jsonencode("")
+  mountpoint                                       = jsonencode("")
+  protocol_gateway_ip                              = jsonencode("")
+  filesets                                         = jsonencode({})
+  afm_cos_bucket_details                           = jsonencode([])
+  afm_config_details                               = jsonencode([])
+  afm_cluster_instance_names                       = jsonencode([])
+  filesystem_mountpoint                            =  var.scale_encryption_type == "key_protect" ? (var.storage_instances[*]["filesystem"] != "" ? var.storage_instances[*]["filesystem"] : jsonencode(var.filesystem_config[0]["filesystem"])) : jsonencode("")
+  depends_on                                       = [ time_sleep.wait_60_seconds ] 
 }
+
+module "write_storage_scale_cluster_inventory" {
+  count                                            = var.enable_deployer == false ? 1 : 0 
+  source                                           = "./modules/write_scale_inventory"
+  json_inventory_path                              = format("%s/storage_cluster_inventory.json", var.scale_ansible_repo_clone_path)
+  bastion_user                                     = jsonencode(var.bastion_user)
+  bastion_instance_id                              = var.bastion_instance_id == null ? jsonencode("None") : jsonencode(var.bastion_instance_id)
+  bastion_instance_public_ip                       = var.bastion_fip == null ? jsonencode("None") : jsonencode(var.bastion_fip)
+  cloud_platform                                   = jsonencode("IBMCloud")
+  resource_prefix                                  = jsonencode(format("%s.%s", var.prefix, var.dns_domain_names["storage"]))
+  vpc_region                                       = jsonencode(local.region)
+  vpc_availability_zones                           = jsonencode(var.zones)
+  scale_version                                    = jsonencode(local.scale_version)
+  compute_cluster_filesystem_mountpoint            = jsonencode("None")
+  storage_cluster_filesystem_mountpoint            = jsonencode(var.filesystem_config[0]["mount_point"]) #jsonencode(var.storage_instances[count.index].filesystem)
+  filesystem_block_size                            = jsonencode(var.filesystem_config[0]["block_size"])
+  compute_cluster_instance_ids                     = jsonencode([])
+  compute_cluster_instance_private_ips             = jsonencode([])
+  compute_cluster_instance_private_dns_ip_map      = jsonencode({})
+  compute_cluster_instance_names                   = jsonencode([])
+  storage_cluster_instance_ids                     = var.storage_type == "persistent" ? jsonencode(concat(local.baremetal_cluster_instance_ids, local.strg_mgmtt_instance_ids, local.tie_breaker_storage_instance_ids)) : jsonencode(concat(local.storage_cluster_instance_ids, local.strg_mgmtt_instance_ids, local.tie_breaker_storage_instance_ids))
+  storage_cluster_instance_private_ips             = var.storage_type == "persistent" ? jsonencode(concat(local.baremetal_cluster_instance_private_ips, local.strg_mgmt_instance_private_ips, local.tie_breaker_storage_instance_private_ips)) : jsonencode(concat(local.storage_cluster_instance_private_ips, local.strg_mgmt_instance_private_ips, local.tie_breaker_storage_instance_private_ips))
+  storage_cluster_instance_names                   = var.storage_type == "persistent" ? jsonencode(concat(local.baremetal_cluster_instance_names, local.strg_mgmt_instance_names, local.tie_breaker_storage_instance_names)) : jsonencode(concat(local.storage_cluster_instance_names, local.strg_mgmt_instance_names, local.tie_breaker_storage_instance_names))
+  storage_cluster_with_data_volume_mapping         = jsonencode(local.storage_ips_with_vol_mapping[0])
+  storage_cluster_instance_private_dns_ip_map      = jsonencode({})
+  storage_cluster_desc_instance_private_ips        = jsonencode(local.strg_tie_breaker_private_ips)
+  storage_cluster_desc_instance_ids                = jsonencode(local.strg_tie_breaker_instance_ids)
+  storage_cluster_desc_data_volume_mapping         = jsonencode(local.tie_breaker_ips_with_vol_mapping[0])
+  storage_cluster_desc_instance_private_dns_ip_map = jsonencode({})
+  storage_subnet_cidr                              = local.enable_mrot_conf ? jsonencode(data.ibm_is_subnet.existing_storage_subnets[*].ipv4_cidr_block) : jsonencode("")
+  compute_subnet_cidr                              = local.enable_mrot_conf || local.scale_ces_enabled == true ? jsonencode(data.ibm_is_subnet.existing_compute_subnets[*].ipv4_cidr_block) : jsonencode("")
+  scale_remote_cluster_clustername                 = local.enable_mrot_conf ? jsonencode(format("%s.%s", var.prefix, var.dns_domain_names["compute"])) : jsonencode("")
+  protocol_cluster_instance_names                  = local.scale_ces_enabled == true ? jsonencode(local.protocol_instance_names) : jsonencode([])
+  client_cluster_instance_names                    = jsonencode([])
+  protocol_cluster_reserved_names                  = jsonencode([])
+  smb                                              = false
+  nfs                                              = local.scale_ces_enabled == true ? true : false
+  object                                           = false
+  interface                                        = jsonencode([])
+  export_ip_pool                                   = local.scale_ces_enabled == true ? jsonencode(values(one(module.protocol_reserved_ip[*].instance_name_ip_map))) : jsonencode([])
+  filesystem                                       = local.scale_ces_enabled == true ? jsonencode("cesSharedRoot") : jsonencode("")
+  mountpoint                                       = local.scale_ces_enabled == true ? jsonencode(var.filesystem_config[0]["mount_point"]) : jsonencode("")
+  protocol_gateway_ip                              = jsonencode("")
+  filesets                                         = jsonencode(local.fileset_size_map)
+  afm_cos_bucket_details                           = local.enable_afm == true ? jsonencode(local.afm_cos_bucket_details) : jsonencode([])
+  afm_config_details                               = local.enable_afm == true ? jsonencode(local.afm_cos_config) : jsonencode([])
+  afm_cluster_instance_names                       = jsonencode(local.afm_instance_names)
+  filesystem_mountpoint                            = var.scale_encryption_type == "key_protect" ? (var.storage_instances[*]["filesystem"] != "" ? var.storage_instances[*]["filesystem"] : jsonencode(var.filesystem_config[0]["filesystem"])) : jsonencode("")
+  depends_on                                       = [ time_sleep.wait_60_seconds ]
+}
+
+module "write_client_scale_cluster_inventory" {
+  count                                            = var.enable_deployer == false ? 1 : 0 
+  source                                           = "./modules/write_scale_inventory"
+  json_inventory_path                              = format("%s/client_cluster_inventory.json", var.scale_ansible_repo_clone_path)
+  bastion_user                                     = jsonencode(var.bastion_user)
+  bastion_instance_id                              = var.bastion_instance_id == null ? jsonencode("None") : jsonencode(var.bastion_instance_id)
+  bastion_instance_public_ip                       = var.bastion_fip == null ? jsonencode("None") : jsonencode(var.bastion_fip)
+  cloud_platform                                   = jsonencode("")
+  resource_prefix                                  = jsonencode("")
+  vpc_region                                       = jsonencode("")
+  vpc_availability_zones                           = jsonencode([])
+  scale_version                                    = jsonencode("")
+  filesystem_block_size                            = jsonencode("")
+  compute_cluster_filesystem_mountpoint            = jsonencode("None")
+  compute_cluster_instance_ids                     = jsonencode("")
+  compute_cluster_instance_private_ips             = jsonencode("")
+  compute_cluster_instance_private_dns_ip_map      = jsonencode({})
+  storage_cluster_filesystem_mountpoint            = local.scale_ces_enabled == true ? jsonencode(var.filesystem_config[0]["mount_point"]) : jsonencode("")
+  storage_cluster_instance_ids                     = jsonencode([])
+  storage_cluster_instance_private_ips             = jsonencode([])
+  storage_cluster_with_data_volume_mapping         = jsonencode({})
+  storage_cluster_instance_private_dns_ip_map      = jsonencode({})
+  storage_cluster_desc_instance_ids                = jsonencode([])
+  storage_cluster_desc_instance_private_ips        = jsonencode([])
+  storage_cluster_desc_data_volume_mapping         = jsonencode({})
+  storage_cluster_desc_instance_private_dns_ip_map = jsonencode({})
+  storage_cluster_instance_names                   = jsonencode([])
+  compute_cluster_instance_names                   = jsonencode([])
+  storage_subnet_cidr                              = jsonencode("")
+  compute_subnet_cidr                              = jsonencode("")
+  scale_remote_cluster_clustername                 = jsonencode("")
+  protocol_cluster_instance_names                  = jsonencode([])
+  client_cluster_instance_names                    = local.scale_ces_enabled == true ? jsonencode(local.client_instance_names) : jsonencode([])
+  protocol_cluster_reserved_names                  = local.scale_ces_enabled == true ? jsonencode(format("%s-ces.%s", var.prefix, var.dns_domain_names["protocol"])) : jsonencode([])
+  smb                                              = false
+  nfs                                              = false
+  object                                           = false
+  interface                                        = jsonencode([])
+  export_ip_pool                                   = jsonencode([])
+  filesystem                                       = jsonencode("")
+  mountpoint                                       = jsonencode("")
+  protocol_gateway_ip                              = jsonencode("")
+  filesets                                         = local.scale_ces_enabled == true ? jsonencode(local.fileset_size_map) : jsonencode({})
+  afm_cos_bucket_details                           = jsonencode([])
+  afm_config_details                               = jsonencode([])
+  afm_cluster_instance_names                       = jsonencode([])
+  filesystem_mountpoint                            = jsonencode("")
+}
+
+module "compute_cluster_configuration" {
+  count                           = var.enable_deployer == false ? 1 : 0
+  source                          = "./modules/common/compute_configuration"
+  turn_on                         = (var.create_separate_namespaces == true && local.static_compute_instance_count > 0) ? true : false
+  bastion_user                    = jsonencode(var.bastion_user)
+  write_inventory_complete        = module.write_compute_scale_cluster_inventory[0].write_scale_inventory_complete
+  inventory_format                = var.inventory_format
+  create_scale_cluster            = var.create_scale_cluster
+  clone_path                      = var.scale_ansible_repo_clone_path
+  inventory_path                  = format("%s/compute_cluster_inventory.json", var.scale_ansible_repo_clone_path)
+  using_packer_image              = var.using_packer_image
+  using_jumphost_connection       = var.using_jumphost_connection
+  using_rest_initialization       = var.using_rest_api_remote_mount
+  compute_cluster_gui_username    = var.compute_gui_username
+  compute_cluster_gui_password    = var.compute_gui_password
+  comp_memory                     = data.ibm_is_instance_profile.compute_profile.memory[0].value
+  comp_vcpus_count                = data.ibm_is_instance_profile.compute_profile.vcpu_count[0].value
+  comp_bandwidth                  = data.ibm_is_instance_profile.compute_profile.bandwidth[0].value
+  bastion_instance_public_ip      = jsonencode(local.bastion_fip)
+  bastion_ssh_private_key         = var.bastion_ssh_private_key
+  meta_private_key                = local.compute_private_key_content
+  scale_version                   = local.scale_version
+  spectrumscale_rpms_path         = var.spectrumscale_rpms_path
+  enable_mrot_conf                = local.enable_mrot_conf ? "True" : "False"
+  enable_ces                      = "False"
+  enable_afm                      = "False"
+  scale_encryption_enabled        = var.scale_encryption_enabled
+  scale_encryption_admin_password = var.scale_encryption_admin_password
+  scale_encryption_servers        = var.scale_encryption_enabled && var.scale_encryption_type == "gklm" ? jsonencode(local.gklm_instance_private_ips) : null
+  enable_ldap                     = var.enable_ldap
+  ldap_basedns                    = var.ldap_basedns
+  ldap_server                     = var.enable_ldap ? local.ldap_instance_private_ips[0] : jsonencode("")
+  ldap_admin_password             = var.ldap_admin_password
+  enable_key_protect              = var.scale_encryption_type == "key_protect" ? "True" : "False"
+  depends_on                      = [module.write_compute_scale_cluster_inventory]
+}
+
+module "storage_cluster_configuration" {
+  count                               = var.enable_deployer == false ? 1 : 0
+  source                              = "./modules/common/storage_configuration"
+  turn_on                             = (var.create_separate_namespaces == true && local.storage_instance_count > 0) ? true : false
+  bastion_user                        = jsonencode(var.bastion_user)
+  write_inventory_complete            = module.write_storage_scale_cluster_inventory[0].write_scale_inventory_complete
+  inventory_format                    = var.inventory_format
+  create_scale_cluster                = var.create_scale_cluster
+  clone_path                          = var.scale_ansible_repo_clone_path
+  inventory_path                      = format("%s/storage_cluster_inventory.json", var.scale_ansible_repo_clone_path)
+  using_packer_image                  = var.using_packer_image
+  using_jumphost_connection           = var.using_jumphost_connection
+  using_rest_initialization           = true
+  storage_cluster_gui_username        = var.storage_gui_username
+  storage_cluster_gui_password        = var.storage_gui_password
+  colocate_protocol_cluster_instances = var.colocate_protocol_cluster_instances == true ? "True" : "False"
+  is_colocate_protocol_subset         = local.is_colocate_protocol_subset == true ? "True" : "False"
+  mgmt_memory                         = data.ibm_is_instance_profile.management_profile.memory[0].value
+  mgmt_vcpus_count                    = data.ibm_is_instance_profile.management_profile.vcpu_count[0].value
+  mgmt_bandwidth                      = data.ibm_is_instance_profile.management_profile.bandwidth[0].value
+  strg_desc_memory                    = data.ibm_is_instance_profile.storage_profile.memory[0].value
+  strg_desc_vcpus_count               = data.ibm_is_instance_profile.storage_profile.vcpu_count[0].value
+  strg_desc_bandwidth                 = data.ibm_is_instance_profile.storage_profile.bandwidth[0].value
+  strg_memory                         = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.memory[0].value
+  strg_vcpus_count                    = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.vcpu_count[0].value
+  strg_bandwidth                      = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.bandwidth[0].value
+  proto_memory                        = (local.scale_ces_enabled == true && var.colocate_protocol_cluster_instances == false) ? local.ces_server_type == false ? data.ibm_is_instance_profile.protocol_profile[0].memory[0].value : jsonencode(0) : jsonencode(0)
+  proto_vcpus_count                   = (local.scale_ces_enabled == true && var.colocate_protocol_cluster_instances == false) ? local.ces_server_type == false ? data.ibm_is_instance_profile.protocol_profile[0].vcpu_count[0].value : jsonencode(0) : jsonencode(0)
+  proto_bandwidth                     = (local.scale_ces_enabled == true && var.colocate_protocol_cluster_instances == false) ? local.ces_server_type == false ? data.ibm_is_instance_profile.protocol_profile[0].bandwidth[0].value : jsonencode(0) : jsonencode(0)
+  strg_proto_memory                   = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.memory[0].value
+  strg_proto_vcpus_count              = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.vcpu_count[0].value
+  strg_proto_bandwidth                = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.bandwidth[0].value
+  afm_memory                          = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].memory[0].value
+  afm_vcpus_count                     = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].vcpu_count[0].value
+  afm_bandwidth                       = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].bandwidth[0].value
+  disk_type                           = "network-attached"
+  max_data_replicas                   = var.filesystem_config[0]["max_data_replica"]
+  max_metadata_replicas               = var.filesystem_config[0]["max_metadata_replica"]
+  default_metadata_replicas           = var.filesystem_config[0]["default_metadata_replica"]
+  default_data_replicas               = var.filesystem_config[0]["default_data_replica"]
+  bastion_instance_public_ip          = jsonencode(local.bastion_fip)
+  bastion_ssh_private_key             = var.bastion_ssh_private_key
+  meta_private_key                    = module.landing_zone_vsi[0].storage_private_key_content
+  scale_version                       = local.scale_version
+  spectrumscale_rpms_path             = var.spectrumscale_rpms_path
+  enable_mrot_conf                    = local.enable_mrot_conf ? "True" : "False"
+  enable_ces                          = local.scale_ces_enabled == true ? "True" : "False"
+  enable_afm                          = local.enable_afm == true ? "True" : "False"
+  scale_encryption_enabled            = var.scale_encryption_enabled
+  scale_encryption_type               = var.scale_encryption_type != null ? var.scale_encryption_type : null
+  scale_encryption_admin_password     = var.scale_encryption_admin_password
+  scale_encryption_servers            = var.scale_encryption_enabled && var.scale_encryption_type == "gklm" ? jsonencode(local.gklm_instance_private_ips) : null
+  enable_ldap                         = var.enable_ldap
+  ldap_basedns                        = var.ldap_basedns
+  ldap_server                         = var.enable_ldap ? local.ldap_instance_private_ips[0] : jsonencode("")
+  ldap_admin_password                 = var.ldap_admin_password
+  ldap_server_cert                    = var.ldap_server_cert
+  enable_key_protect                  = var.scale_encryption_type == "key_protect" ? "True" : "False"
+  depends_on                          = [module.write_storage_scale_cluster_inventory]
+}
+
+module "remote_mount_configuration" {
+  source                          = "./modules/common/remote_mount_configuration"
+  turn_on                         = (local.static_compute_instance_count > 0 && local.storage_instance_count > 0 && var.create_separate_namespaces == true) ? true : false
+  create_scale_cluster            = var.create_scale_cluster
+  bastion_user                    = jsonencode(var.bastion_user)
+  clone_path                      = var.scale_ansible_repo_clone_path
+  compute_inventory_path          = format("%s/compute_cluster_inventory.json", var.scale_ansible_repo_clone_path)
+  compute_gui_inventory_path      = format("%s/compute_cluster_gui_details.json", var.scale_ansible_repo_clone_path)
+  storage_inventory_path          = format("%s/storage_cluster_inventory.json", var.scale_ansible_repo_clone_path)
+  storage_gui_inventory_path      = format("%s/storage_cluster_gui_details.json", var.scale_ansible_repo_clone_path)
+  compute_cluster_gui_username    = var.compute_gui_username
+  compute_cluster_gui_password    = var.compute_gui_password
+  storage_cluster_gui_username    = var.storage_gui_username
+  storage_cluster_gui_password    = var.storage_gui_password
+  using_jumphost_connection       = var.using_jumphost_connection
+  using_rest_initialization       = var.using_rest_api_remote_mount
+  bastion_instance_public_ip      = jsonencode(local.bastion_fip)
+  bastion_ssh_private_key         = var.bastion_ssh_private_key
+  compute_cluster_create_complete = var.enable_deployer ? false : module.compute_cluster_configuration[0].compute_cluster_create_complete
+  storage_cluster_create_complete = var.enable_deployer ? false : module.storage_cluster_configuration[0].storage_cluster_create_complete
+  depends_on                      = [module.compute_cluster_configuration, module.storage_cluster_configuration]
+}
+
+# module "write_storage_cluster_inventory" {
+#   count                 = var.enable_deployer == false ? 1 : 0
+#   source                = "./modules/write_inventory"
+#   json_inventory_path   = local.json_inventory_path
+#   lsf_masters           = local.management_nodes
+#   lsf_servers           = local.compute_nodes_list
+#   lsf_clients           = local.client_nodes
+#   gui_hosts             = local.gui_hosts
+#   db_hosts              = local.db_hosts
+#   my_cluster_name       = var.prefix
+#   ha_shared_dir         = local.ha_shared_dir
+#   nfs_install_dir       = local.nfs_install_dir
+#   enable_monitoring     = local.enable_monitoring
+#   lsf_deployer_hostname = local.lsf_deployer_hostname
+#   depends_on            = [time_sleep.wait_60_seconds]
+# }
 
 module "compute_inventory" {
   count                               = var.enable_deployer == false ? 1 : 0

@@ -1023,3 +1023,9 @@ variable "using_rest_api_remote_mount" {
   default     = true
   description = "If false, skips GUI initialization on compute cluster for remote mount configuration."
 }
+
+variable "bastion_fip" {
+  type        = string
+  default     = null
+  description = "bastion fip"
+}

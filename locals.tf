@@ -274,16 +274,16 @@ locals {
 # details needed for json file
 locals {
   json_inventory_path   = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json"
-  management_nodes      = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"]
-  compute_nodes         = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].compute_vsi_data]))[*]["name"]
-  compute_nodes_list    = var.enable_deployer ? [] : (length(local.compute_nodes) > 0 ? [format("%s-[001:%s]", join("-", slice(split("-", local.compute_nodes[0]), 0, length(split("-", local.compute_nodes[0])) - 1)), split("-", local.compute_nodes[length(local.compute_nodes) - 1])[length(split("-", local.compute_nodes[length(local.compute_nodes) - 1])) - 1])] : local.compute_nodes) #(length(local.compute_nodes) >= 10 ? [format("%s-00[%d:%d]", regex("^(.*?)-\\d+$", local.compute_nodes[0])[0], 1, length(local.compute_nodes))] : local.compute_nodes)
-  client_nodes          = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].client_vsi_data]))[*]["name"]
-  gui_hosts             = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA
-  db_hosts              = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA
-  ha_shared_dir         = "/mnt/lsf/shared"
-  nfs_install_dir       = "none"
-  enable_monitoring     = false
-  lsf_deployer_hostname = var.deployer_hostname
+  management_nodes      = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"] : []
+  compute_nodes         = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].compute_vsi_data]))[*]["name"] : []
+  compute_nodes_list    = var.scheduler == "LSF" ? var.enable_deployer ? [] : (length(local.compute_nodes) > 0 ? [format("%s-[001:%s]", join("-", slice(split("-", local.compute_nodes[0]), 0, length(split("-", local.compute_nodes[0])) - 1)), split("-", local.compute_nodes[length(local.compute_nodes) - 1])[length(split("-", local.compute_nodes[length(local.compute_nodes) - 1])) - 1])] : local.compute_nodes) : [] #(length(local.compute_nodes) >= 10 ? [format("%s-00[%d:%d]", regex("^(.*?)-\\d+$", local.compute_nodes[0])[0], 1, length(local.compute_nodes))] : local.compute_nodes)
+  client_nodes          = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].client_vsi_data]))[*]["name"] : []
+  gui_hosts             = var.scheduler == "LSF" ? var.enable_deployer ? [] : [local.management_nodes[0]] : [] # Without Pac HA
+  db_hosts              = var.scheduler == "LSF" ? var.enable_deployer ? [] : [local.management_nodes[0]] : [] # Without Pac HA
+  ha_shared_dir         = var.scheduler == "LSF" ? "/mnt/lsf/shared" : ""
+  nfs_install_dir       = var.scheduler == "LSF" ? "none" : ""
+  enable_monitoring     = var.scheduler == "LSF" ? false : false
+  lsf_deployer_hostname = var.scheduler == "LSF" ? var.deployer_hostname : ""
 
   cloud_logs_bucket    = length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")][0] : null
   cloud_metrics_bucket = length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")][0] : null
@@ -405,4 +405,5 @@ locals {
   tie_breaker_storage_instance_names       = var.storage_type != "persistent" ? local.strg_tie_breaker_instance_names : ["bm_value"]
   tie_breaker_ips_with_vol_mapping = module.landing_zone_vsi[*].instance_ips_with_vol_mapping_tie_breaker
 
+  fileset_size_map = try({ for details in var.file_shares : details.mount_path => details.size }, {})
 }
