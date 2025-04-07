@@ -111,6 +111,7 @@ module "prepare_tf_input" {
   storage_instances                                = var.storage_instances
   management_instances                             = var.management_instances
   protocol_instances                               = var.protocol_instances
+  colocate_protocol_cluster_instances              = var.colocate_protocol_cluster_instances
   ibm_customer_number                              = var.ibm_customer_number
   static_compute_instances                         = var.static_compute_instances
   dynamic_compute_instances                        = var.dynamic_compute_instances
@@ -180,7 +181,7 @@ module "resource_provisioner" {
 module "cos" {
   count                           = local.enable_afm == true ? 1 : 0
   source                          = "./modules/cos"
-  prefix                          = "jay-afm-"
+  prefix                          = "${var.prefix}-"
   resource_group_id               = local.resource_group_ids["service_rg"]
   cos_instance_plan               = "standard"
   cos_instance_location           = "global"

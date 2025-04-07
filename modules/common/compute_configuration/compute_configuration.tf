@@ -65,7 +65,7 @@ EOT
 
 resource "local_sensitive_file" "write_meta_private_key" {
   count           = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true) ? 1 : 0
-  content         = base64decode(var.meta_private_key)
+  content         = var.meta_private_key
   filename        = local.compute_private_key
   file_permission = "0600"
 }
