@@ -31,11 +31,14 @@ ${var.ldap_server}
 
 [all:vars]
 name_mount_path_map      = {}
+prefix                   = ${var.prefix}
 enable_ldap              = ${var.enable_ldap}
 ldap_server              = ${var.ldap_server}
 ldap_basedns             = ${var.ldap_basedns}
 ldap_admin_password      = ${var.ldap_admin_password}
 ldap_server_cert         = ${var.ldap_server_cert}
+ldap_user_name           = ${var.ldap_user_name}
+ldap_user_password       = ${var.ldap_user_password}
 EOT
   filename = var.ldap_inventory_path
 }

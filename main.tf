@@ -301,12 +301,16 @@ module "storage_inventory" {
 module "ldap_inventory" {
   count                    = var.enable_deployer == false && var.enable_ldap ? 1 : 0
   source                   = "./modules/inventory"
+  prefix                   = var.prefix
   name_mount_path_map      = local.fileshare_name_mount_path_map
   enable_ldap              = var.enable_ldap
+  existing_ldap_server     = var.ldap_server != "null" ? var.ldap_server : "null"
   ldap_server              = var.ldap_server != "null" ? var.ldap_server : join(",", local.ldap_hosts)
   ldap_inventory_path      = local.ldap_inventory_path
   ldap_basedns             = var.ldap_basedns
   ldap_admin_password      = var.ldap_admin_password
+  ldap_user_name           = var.ldap_user_name
+  ldap_user_password       = var.ldap_user_password
   ldap_server_cert         = var.ldap_server_cert
   depends_on               = [ module.write_compute_cluster_inventory ]
 }

@@ -147,7 +147,7 @@ resource "null_resource" "run_playbook_for_mgmt_config" {
 resource "local_file" "create_ldap_playbook" {
   count    = var.ldap_inventory_path != null && var.enable_ldap ? 1 : 0
   content  = <<EOT
-- name: Cloud Logs Configuration
+- name: LDAP Server Configuration
   hosts: [ldap_server_node]
   any_errors_fatal: true
   gather_facts: true
@@ -163,7 +163,7 @@ resource "local_file" "create_ldap_playbook" {
   roles:
     - { role: cloudlogs, tags: ["cloud_logs"] }
 
-- name: Cloud Monitoring Configuration
+- name: LDAP Server Configuration
   hosts: [ldap_server_node]
   any_errors_fatal: true
   gather_facts: true
@@ -177,7 +177,7 @@ resource "local_file" "create_ldap_playbook" {
     ansible_user: root
     ansible_ssh_private_key_file: ${var.private_key_path}
   roles:
-    - { role: cloudmonitoring, tags: ["cloud_monitoring"] }
+    - { role: ldap_server_prepare }
 EOT
   filename = var.ldap_playbook_path
 }
