@@ -85,6 +85,24 @@ resource "ibm_is_security_group_rule" "add_comp_sg_comp" {
   remote    = module.compute_sg[0].security_group_id
 }
 
+resource "ibm_is_security_group_rule" "add_comp_sg_strg" {
+  group     = module.storage_sg[0].security_group_id
+  direction = "inbound"
+  remote    = module.compute_sg[0].security_group_id
+}
+
+resource "ibm_is_security_group_rule" "add_strg_sg_comp" {
+  group     = module.compute_sg[0].security_group_id
+  direction = "inbound"
+  remote    = module.storage_sg[0].security_group_id
+}
+
+resource "ibm_is_security_group_rule" "add_strg_sg_strg" {
+  group     = module.storage_sg[0].security_group_id
+  direction = "inbound"
+  remote    = module.storage_sg[0].security_group_id
+}
+
 module "management_vsi" {
   count                         = length(var.management_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"

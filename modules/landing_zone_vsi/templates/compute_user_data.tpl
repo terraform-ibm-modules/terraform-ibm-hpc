@@ -54,6 +54,13 @@ if [ "${scheduler}" == "null" ]; then
         USER=ubuntu
     fi
 
+    sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo \'Please login as the user \\\\\"$USER\\\\\" rather than the user \\\\\"root\\\\\".\';echo;sleep 10; exit 142\" /" ~/.ssh/authorized_keys
+    echo "${bastion_public_key_content}" >> ~/.ssh/authorized_keys
+    echo "${compute_public_key_content}" >> ~/.ssh/authorized_keys
+    echo "StrictHostKeyChecking no" >> ~/.ssh/config
+    echo "${compute_private_key_content}" > ~/.ssh/id_rsa
+    chmod 600 ~/.ssh/id_rsa
+
     if grep -q "Red Hat" /etc/os-release
     then
         USER=vpcuser
@@ -112,13 +119,6 @@ if [ "${scheduler}" == "null" ]; then
     yum versionlock add $package_list
     yum versionlock list
     echo 'export PATH=$PATH:/usr/lpp/mmfs/bin' >> /root/.bashrc
-
-    sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo \'Please login as the user \\\\\"$USER\\\\\" rather than the user \\\\\"root\\\\\".\';echo;sleep 10; exit 142\" /" ~/.ssh/authorized_keys
-    echo "${bastion_public_key_content}" >> ~/.ssh/authorized_keys
-    echo "${compute_public_key_content}" | base64 --decode >> ~/.ssh/authorized_keys
-    echo "StrictHostKeyChecking no" >> ~/.ssh/config
-    echo "${compute_private_key_content}" | base64 --decode > ~/.ssh/id_rsa
-    chmod 600 ~/.ssh/id_rsa
 
     echo "DOMAIN=${compute_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
     echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
