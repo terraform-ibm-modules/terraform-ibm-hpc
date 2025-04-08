@@ -30,6 +30,7 @@ resource "local_sensitive_file" "ldap_ini" {
 ${var.ldap_server}
 
 [all:vars]
+name_mount_path_map      = {}
 enable_ldap              = ${var.enable_ldap}
 ldap_server              = ${var.ldap_server}
 ldap_basedns             = ${var.ldap_basedns}

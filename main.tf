@@ -301,6 +301,7 @@ module "storage_inventory" {
 module "ldap_inventory" {
   count                    = var.enable_deployer == false && var.enable_ldap ? 1 : 0
   source                   = "./modules/inventory"
+  name_mount_path_map      = local.fileshare_name_mount_path_map
   enable_ldap              = var.enable_ldap
   ldap_server              = var.ldap_server != "null" ? var.ldap_server : join(",", local.ldap_hosts)
   ldap_inventory_path      = local.ldap_inventory_path
