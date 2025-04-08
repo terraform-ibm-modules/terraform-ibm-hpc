@@ -473,7 +473,7 @@ module "compute_cluster_configuration" {
   comp_bandwidth                  = data.ibm_is_instance_profile.compute_profile.bandwidth[0].value
   bastion_instance_public_ip      = jsonencode(local.bastion_fip)
   bastion_ssh_private_key         = var.bastion_ssh_private_key
-  meta_private_key                = local.compute_private_key_content
+  meta_private_key                = module.landing_zone_vsi[0].compute_private_key_content
   scale_version                   = local.scale_version
   spectrumscale_rpms_path         = var.spectrumscale_rpms_path
   enable_mrot_conf                = local.enable_mrot_conf ? "True" : "False"

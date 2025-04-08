@@ -1,7 +1,7 @@
 module "compute_key" {
   count            = local.enable_compute ? 1 : 0
   source           = "./../key"
-  private_key_path = "./../../modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
+  # private_key_path = "./../../modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
 }
 
 resource "local_sensitive_file" "write_meta_private_key" {
