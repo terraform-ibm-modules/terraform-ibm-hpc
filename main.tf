@@ -298,6 +298,16 @@ module "storage_inventory" {
   depends_on          = [module.write_storage_cluster_inventory]
 }
 
+# module "ldap_inventory" {
+#   count                    = var.enable_deployer == false ? 1 : 0
+#   source                   = "./modules/inventory"
+#   enable_ldap              = var.enable_ldap
+#   ldap_hosts               = local.ldap_hosts
+#   ldap_inventory_path      = local.ldap_inventory_path
+#   name_mount_path_map      = local.fileshare_name_mount_path_map
+#   depends_on               = [ module.write_compute_cluster_inventory ]
+# }
+
 module "compute_playbook" {
   count                       = var.enable_deployer == false ? 1 : 0
   source                      = "./modules/playbook"
@@ -312,6 +322,19 @@ module "compute_playbook" {
   playbooks_root_path         = local.playbooks_root_path
   depends_on                  = [module.compute_inventory]
 }
+
+# module "ldap_playbook" {
+#   count                 = var.enable_deployer == false ? 1 : 0
+#   source                = "./modules/playbook"
+#   enable_ldap           = local.enable_ldap
+#   ldap_server           = local.ldap_server
+#   bastion_fip           = local.bastion_fip
+#   private_key_path      = local.compute_private_key_path
+#   ldap_inventory_path   = local.ldap_inventory_path
+#   ldap_playbook_path    = local.ldap_playbook_path
+#   enable_bastion        = var.enable_bastion
+#   depends_on            = [ module.ldap_inventory ]
+# }
 
 # module "storage_playbook" {
 #   count            = var.enable_deployer == false ? 1 : 0

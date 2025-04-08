@@ -22,3 +22,14 @@ cloud_logs_ingress_private_endpoint = ${var.cloud_logs_ingress_private_endpoint}
 EOT
   filename = var.inventory_path
 }
+
+# resource "local_sensitive_file" "ldap_ini" {
+#   count = var.enable_ldap && var.ldap_server == "null" ? 1 : 0
+#   content  = <<EOT
+# [ldap_server_node]
+# ${join("\n", var.ldap_hosts)}
+# [all:vars]
+
+# EOT
+#   filename = var.ldap_inventory_path
+# }

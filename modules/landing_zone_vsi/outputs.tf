@@ -1,3 +1,8 @@
+output "ldap_vsi_data" {
+  description = "LDAP VSI data"
+  value       = module.ldap_vsi[*]["list"]
+}
+
 output "client_vsi_data" {
   description = "client VSI data"
   value       = module.client_vsi[*]["list"]

@@ -72,3 +72,28 @@ variable "cloud_monitoring_prws_url" {
   type        = string
   default     = ""
 }
+
+# # LDAP
+# variable "enable_ldap" {
+#   type        = bool
+#   default     = false
+#   description = "Set this option to true to enable LDAP for IBM Spectrum LSF, with the default value set to false."
+# }
+
+# variable "ldap_server" {
+#   type        = string
+#   default     = "null"
+#   description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
+# }
+
+# variable "ldap_inventory_path" {
+#   description = "Inventory file path"
+#   type        = string
+#   default     = "ldap_server_setup.ini"
+# }
+
+# variable "ldap_hosts" {
+#   description = "LDAP Hosts"
+#   type        = list(string)
+#   default     = ["localhost"]
+# }
