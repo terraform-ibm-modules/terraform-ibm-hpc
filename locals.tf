@@ -187,7 +187,7 @@ locals {
   ]
 
   compute_dns_records = [
-    for instance in concat(local.compute_instances, local.deployer_instances) :
+    for instance in concat(local.compute_instances, local.deployer_instances, local.ldap_instances) :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
