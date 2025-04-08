@@ -86,18 +86,21 @@ resource "ibm_is_security_group_rule" "add_comp_sg_comp" {
 }
 
 resource "ibm_is_security_group_rule" "add_comp_sg_strg" {
+  count     = local.enable_storage ? 1 : 0
   group     = module.storage_sg[0].security_group_id
   direction = "inbound"
   remote    = module.compute_sg[0].security_group_id
 }
 
 resource "ibm_is_security_group_rule" "add_strg_sg_comp" {
+  count     = local.enable_storage ? 1 : 0
   group     = module.compute_sg[0].security_group_id
   direction = "inbound"
   remote    = module.storage_sg[0].security_group_id
 }
 
 resource "ibm_is_security_group_rule" "add_strg_sg_strg" {
+  count     = local.enable_storage ? 1 : 0
   group     = module.storage_sg[0].security_group_id
   direction = "inbound"
   remote    = module.storage_sg[0].security_group_id
@@ -246,7 +249,7 @@ module "storage_cluster_tie_breaker_vsi" {
   enable_floating_ip            = false
   security_group_ids            = module.storage_sg[*].security_group_id
   ssh_key_ids                   = local.storage_ssh_keys
-  subnets                       = [local.storage_subnets[0]]
+  subnets                       = local.storage_subnets #[local.storage_subnets[0]]
   tags                          = local.tags
   user_data                     = data.template_file.storage_user_data.rendered
   vpc_id                        = var.vpc_id

@@ -2,7 +2,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   count    = var.enable_deployer == true ? 1 : 0
   content  = <<EOT
 {
-  "scheduler": "${local.scheduler}",
+  "scheduler": ${local.scheduler},
   "ibmcloud_api_key": "${var.ibmcloud_api_key}",
   "existing_resource_group": "${var.existing_resource_group}",
   "prefix": "${var.prefix}",

@@ -100,6 +100,7 @@ module "landing_zone_vsi" {
 
 module "prepare_tf_input" {
   source                                           = "./modules/prepare_tf_input"
+  scheduler                                        = var.scheduler
   enable_deployer                                  = var.enable_deployer
   deployer_ip                                      = local.deployer_ip
   ibmcloud_api_key                                 = var.ibmcloud_api_key
@@ -179,7 +180,7 @@ module "resource_provisioner" {
 }
 
 module "cos" {
-  count                           = local.enable_afm == true ? 1 : 0
+  count                           = var.scheduler == "null" && local.enable_afm == true ? 1 : 0
   source                          = "./modules/cos"
   prefix                          = "${var.prefix}-"
   resource_group_id               = local.resource_group_ids["service_rg"]
@@ -238,7 +239,7 @@ module "storage_dns_records" {
 }
 
 module "protocol_reserved_ip" {
-  count                   = var.enable_deployer == false ? 1 : 0
+  count                   = var.scheduler == "null" && var.enable_deployer == false ? 1 : 0
   source                  = "./modules/protocol_reserved_ip"
   total_reserved_ips      = local.protocol_instance_count
   subnet_id               = [local.protocol_subnets[0].id]
@@ -305,7 +306,7 @@ module "write_compute_cluster_inventory" {
 }
 
 module "write_compute_scale_cluster_inventory" {
-  count                                            = var.enable_deployer == false ? 1 : 0 
+  count                                            = var.scheduler == "null" && var.enable_deployer == false ? 1 : 0 
   source                                           = "./modules/write_scale_inventory"
   json_inventory_path                              = var.scheduler == "null" ? format("%s/compute_cluster_inventory.json", var.scale_ansible_repo_clone_path) : format("%s/compute_cluster_inventory.json", local.json_inventory_path)
   bastion_user                                     = jsonencode(var.bastion_user)
@@ -355,7 +356,7 @@ module "write_compute_scale_cluster_inventory" {
 }
 
 module "write_storage_scale_cluster_inventory" {
-  count                                            = var.enable_deployer == false ? 1 : 0 
+  count                                            = var.scheduler == "null" && var.enable_deployer == false ? 1 : 0 
   source                                           = "./modules/write_scale_inventory"
   json_inventory_path                              = format("%s/storage_cluster_inventory.json", var.scale_ansible_repo_clone_path)
   bastion_user                                     = jsonencode(var.bastion_user)
@@ -405,7 +406,7 @@ module "write_storage_scale_cluster_inventory" {
 }
 
 module "write_client_scale_cluster_inventory" {
-  count                                            = var.enable_deployer == false ? 1 : 0 
+  count                                            = var.scheduler == "null" && var.enable_deployer == false ? 1 : 0 
   source                                           = "./modules/write_scale_inventory"
   json_inventory_path                              = format("%s/client_cluster_inventory.json", var.scale_ansible_repo_clone_path)
   bastion_user                                     = jsonencode(var.bastion_user)
@@ -454,7 +455,7 @@ module "write_client_scale_cluster_inventory" {
 }
 
 module "compute_cluster_configuration" {
-  count                           = var.enable_deployer == false ? 1 : 0
+  count                           = var.scheduler == "null" && var.enable_deployer == false ? 1 : 0
   source                          = "./modules/common/compute_configuration"
   turn_on                         = (var.create_separate_namespaces == true && local.static_compute_instance_count > 0) ? true : false
   bastion_user                    = jsonencode(var.bastion_user)
@@ -491,7 +492,7 @@ module "compute_cluster_configuration" {
 }
 
 module "storage_cluster_configuration" {
-  count                               = var.enable_deployer == false ? 1 : 0
+  count                               = var.scheduler == "null" && var.enable_deployer == false ? 1 : 0
   source                              = "./modules/common/storage_configuration"
   turn_on                             = (var.create_separate_namespaces == true && local.storage_instance_count > 0) ? true : false
   bastion_user                        = jsonencode(var.bastion_user)
@@ -552,6 +553,7 @@ module "storage_cluster_configuration" {
 }
 
 module "remote_mount_configuration" {
+  count                           = var.scheduler == "null" && var.enable_deployer == false ? 1 : 0
   source                          = "./modules/common/remote_mount_configuration"
   turn_on                         = (local.static_compute_instance_count > 0 && local.storage_instance_count > 0 && var.create_separate_namespaces == true) ? true : false
   create_scale_cluster            = var.create_scale_cluster

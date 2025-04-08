@@ -29,7 +29,7 @@ data "template_file" "compute_user_data" {
     compute_interfaces          = var.storage_type == "scratch" ? local.vsi_interfaces[0] : local.bms_interfaces[0]
     compute_dns_domain          = var.dns_domain_names["compute"]
     # TODO: Fix me
-    dynamic_compute_instances = var.dynamic_compute_instances == null ? "" : ""
+    dynamic_compute_instances   = var.dynamic_compute_instances == null ? "" : ""
     scheduler                   = var.scheduler
   }
 }
@@ -58,7 +58,7 @@ data "template_file" "protocol_user_data" {
     protocol_dns_domain         = var.dns_domain_names["protocol"]
     vpc_region                  = var.vpc_region
     resource_group_id           = data.ibm_resource_group.existing_resource_group.id
-    protocol_subnets            = local.protocol_subnets[0].id
+    protocol_subnets            = local.enable_protocol ? local.protocol_subnets[0].id : ""
   }
 }
 
