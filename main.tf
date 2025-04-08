@@ -115,6 +115,9 @@ module "prepare_tf_input" {
   client_subnets                                   = local.client_subnet
   bastion_subnets                                  = local.bastion_subnet
   dns_domain_names                                 = var.dns_domain_names
+  key_management                                   = var.key_management
+  kms_instance_name                                = var.kms_instance_name
+  kms_key_name                                     = var.kms_key_name
   bastion_security_group_id                        = local.bastion_security_group_id
   deployer_hostname                                = local.deployer_hostname
   enable_hyperthreading                            = var.enable_hyperthreading

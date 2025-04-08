@@ -383,3 +383,28 @@ variable "enable_hyperthreading" {
   type        = bool
   default     = null
 }
+
+##############################################################################
+# Encryption Variables
+##############################################################################
+variable "key_management" {
+  type        = string
+  default     = null
+  description = "Set the value as key_protect to enable customer managed encryption for boot volume and file share. If the key_management is set as null, IBM Cloud resources will be always be encrypted through provider managed."
+  validation {
+    condition     = var.key_management == "null" || var.key_management == null || var.key_management == "key_protect"
+    error_message = "key_management must be either 'null' or 'key_protect'."
+  }
+}
+
+variable "kms_instance_name" {
+  type        = string
+  default     = null
+  description = "Provide the name of the existing Key Protect instance associated with the Key Management Service. Note: To use existing kms_instance_name set key_management as key_protect. The name can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
+}
+
+variable "kms_key_name" {
+  type        = string
+  default     = null
+  description = "Provide the existing kms key name that you want to use for the IBM Cloud HPC cluster. Note: kms_key_name to be considered only if key_management value is set as key_protect.(for example kms_key_name: my-encryption-key)."
+}

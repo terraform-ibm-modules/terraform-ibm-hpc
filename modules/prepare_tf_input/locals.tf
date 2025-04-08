@@ -16,4 +16,6 @@ locals {
   list_bastion_subnets      = jsonencode(length(var.bastion_subnets) == 0 ? null : var.bastion_subnets)
   dns_domain_names          = jsonencode(var.dns_domain_names)
   dynamic_compute_instances = jsonencode(var.dynamic_compute_instances)
+  kms_key_name              = jsonencode(var.kms_key_name)
+  kms_instance_name         = jsonencode(var.kms_instance_name)
 }
