@@ -192,7 +192,7 @@ module "cos" {
   exstng_instance_bucket_new_hmac = local.exstng_instance_bucket_new_hmac
   exstng_instance_hmac_new_bucket = local.exstng_instance_hmac_new_bucket
   exstng_instance_bucket_hmac     = local.exstng_instance_bucket_hmac
-  filesystem                      = var.filesystem_config[0]["filesystem"]
+  filesystem                      = var.storage_instances[*]["filesystem"] != "" ? var.storage_instances[0]["filesystem"] : var.filesystem_config[0]["filesystem"]
   depends_on                      = [module.landing_zone_vsi]
 }
 

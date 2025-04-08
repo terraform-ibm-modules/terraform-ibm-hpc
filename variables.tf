@@ -523,7 +523,15 @@ variable "filesystem_config" {
       mount_point              = string
     })
   )
-  default     = null
+  default = [{
+    filesystem               = "fs1"
+    block_size               = "4M"
+    default_data_replica     = 2
+    default_metadata_replica = 2
+    max_data_replica         = 3
+    max_metadata_replica     = 3
+    mount_point              = "/ibm/fs1"
+  }]
   description = "File system configurations."
 }
 
@@ -570,7 +578,16 @@ variable "afm_cos_config" {
       bucket_storage_class = string
     })
   )
-  default     = null
+  default = [{
+    afm_fileset          = "afm_fileset"
+    mode                 = "iw"
+    cos_instance         = null
+    bucket_name          = null
+    bucket_region        = "us-south"
+    cos_service_cred_key = ""
+    bucket_storage_class = "smart"
+    bucket_type          = "region_location"
+  }]
   description = "AFM configurations."
 }
 
