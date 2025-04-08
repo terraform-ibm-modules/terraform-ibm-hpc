@@ -29,7 +29,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "client_subnets": ${local.list_client_subnets},
   "bastion_subnets": ${local.list_bastion_subnets},
   "dns_domain_names": ${local.dns_domain_names},
-  "key_management": ${var.key_management},
+  "key_management": ${local.key_management},
   "kms_instance_name" : ${local.kms_instance_name},
   "kms_key_name": ${local.kms_key_name},
   "bastion_security_group_id": "${var.bastion_security_group_id}",

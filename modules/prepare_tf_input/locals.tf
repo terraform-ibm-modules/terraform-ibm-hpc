@@ -18,4 +18,5 @@ locals {
   dynamic_compute_instances = jsonencode(var.dynamic_compute_instances)
   kms_key_name              = jsonencode(var.kms_key_name)
   kms_instance_name         = jsonencode(var.kms_instance_name)
+  key_management            = jsonencode(var.key_management)
 }
