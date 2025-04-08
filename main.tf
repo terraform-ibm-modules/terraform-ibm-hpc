@@ -298,15 +298,17 @@ module "storage_inventory" {
   depends_on          = [module.write_storage_cluster_inventory]
 }
 
-# module "ldap_inventory" {
-#   count                    = var.enable_deployer == false ? 1 : 0
-#   source                   = "./modules/inventory"
-#   enable_ldap              = var.enable_ldap
-#   ldap_hosts               = local.ldap_hosts
-#   ldap_inventory_path      = local.ldap_inventory_path
-#   name_mount_path_map      = local.fileshare_name_mount_path_map
-#   depends_on               = [ module.write_compute_cluster_inventory ]
-# }
+module "ldap_inventory" {
+  count                    = var.enable_deployer == false && var.enable_ldap ? 1 : 0
+  source                   = "./modules/inventory"
+  enable_ldap              = var.enable_ldap
+  ldap_server              = var.ldap_server != "null" ? var.ldap_server : join(",", local.ldap_hosts)
+  ldap_inventory_path      = local.ldap_inventory_path
+  ldap_basedns             = var.ldap_basedns
+  ldap_admin_password      = var.ldap_admin_password
+  ldap_server_cert         = var.ldap_server_cert
+  depends_on               = [ module.write_compute_cluster_inventory ]
+}
 
 module "compute_playbook" {
   count                       = var.enable_deployer == false ? 1 : 0
@@ -319,22 +321,12 @@ module "compute_playbook" {
   ibmcloud_api_key            = var.ibmcloud_api_key
   observability_provision     = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || var.observability_monitoring_enable ? true : false
   observability_playbook_path = local.observability_playbook_path
-  playbooks_root_path         = local.playbooks_root_path
+  lsf_mgmt_playbooks_path     = local.lsf_mgmt_playbooks_path
+  enable_ldap                 = var.enable_ldap
+  ldap_inventory_path         = local.ldap_inventory_path
+  ldap_playbook_path          = local.ldap_playbook_path
   depends_on                  = [module.compute_inventory]
 }
-
-# module "ldap_playbook" {
-#   count                 = var.enable_deployer == false ? 1 : 0
-#   source                = "./modules/playbook"
-#   enable_ldap           = local.enable_ldap
-#   ldap_server           = local.ldap_server
-#   bastion_fip           = local.bastion_fip
-#   private_key_path      = local.compute_private_key_path
-#   ldap_inventory_path   = local.ldap_inventory_path
-#   ldap_playbook_path    = local.ldap_playbook_path
-#   enable_bastion        = var.enable_bastion
-#   depends_on            = [ module.ldap_inventory ]
-# }
 
 # module "storage_playbook" {
 #   count            = var.enable_deployer == false ? 1 : 0

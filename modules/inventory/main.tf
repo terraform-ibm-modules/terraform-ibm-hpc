@@ -23,13 +23,18 @@ EOT
   filename = var.inventory_path
 }
 
-# resource "local_sensitive_file" "ldap_ini" {
-#   count = var.enable_ldap && var.ldap_server == "null" ? 1 : 0
-#   content  = <<EOT
-# [ldap_server_node]
-# ${join("\n", var.ldap_hosts)}
-# [all:vars]
+resource "local_sensitive_file" "ldap_ini" {
+  count = var.enable_ldap ? 1 : 0
+  content  = <<EOT
+[ldap_server_node]
+${var.ldap_server}
 
-# EOT
-#   filename = var.ldap_inventory_path
-# }
+[all:vars]
+enable_ldap              = ${var.enable_ldap}
+ldap_server              = ${var.ldap_server}
+ldap_basedns             = ${var.ldap_basedns}
+ldap_admin_password      = ${var.ldap_admin_password}
+ldap_server_cert         = ${var.ldap_server_cert}
+EOT
+  filename = var.ldap_inventory_path
+}
