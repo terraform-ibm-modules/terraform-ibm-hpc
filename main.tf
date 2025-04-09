@@ -231,7 +231,7 @@ module "write_compute_cluster_inventory" {
   lsf_clients                 = local.client_nodes
   gui_hosts                   = local.gui_hosts
   db_hosts                    = local.db_hosts
-  my_cluster_name             = var.prefix
+  prefix                      = var.prefix
   ha_shared_dir               = local.ha_shared_dir
   nfs_install_dir             = local.nfs_install_dir
   enable_monitoring           = local.enable_monitoring
@@ -263,7 +263,7 @@ module "write_storage_cluster_inventory" {
   lsf_clients           = local.client_nodes
   gui_hosts             = local.gui_hosts
   db_hosts              = local.db_hosts
-  my_cluster_name       = var.prefix
+  prefix                = var.prefix
   ha_shared_dir         = local.ha_shared_dir
   nfs_install_dir       = local.nfs_install_dir
   enable_monitoring     = local.enable_monitoring

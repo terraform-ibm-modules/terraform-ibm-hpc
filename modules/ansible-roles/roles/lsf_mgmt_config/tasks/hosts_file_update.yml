@@ -13,7 +13,7 @@
   shell: |
     echo "# ANSIBLE MANAGED: IP mapping added" >> '{{ LSF_HOSTS_FILE }}'
     python3 -c "import ipaddress; \
-    print('\\n'.join([str(ip) + ' {{ my_cluster_name }}-' + str(ip).replace('.', '-') \
+    print('\\n'.join([str(ip) + ' {{ prefix }}-' + str(ip).replace('.', '-') \
     for ip in ipaddress.IPv4Network('{{ compute_subnets_cidr | first }}')]))" >> '{{ LSF_HOSTS_FILE }}'
   args:
     executable: /bin/bash

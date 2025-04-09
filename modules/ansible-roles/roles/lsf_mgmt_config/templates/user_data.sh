@@ -4,7 +4,7 @@ logfile="/tmp/user_data.log"
 echo "START $(date '+%Y-%m-%d %H:%M:%S')" >> $logfile
 
 # Initialize variables
-cluster_prefix="{{ my_cluster_name }}"
+cluster_prefix="{{ prefix }}"
 nfs_server_with_mount_path="{{ name_mount_path_map.lsf }}"
 # custom_file_shares="{% for key, value in name_mount_path_map.items() if key != 'lsf' %}{{ value }}{% if not loop.last %} {% endif %}{% endfor %}"
 # custom_mount_paths="{% for key in name_mount_path_map.keys() if key != 'lsf' %}{{ key }}{% if not loop.last %} {% endif %}{% endfor %}"

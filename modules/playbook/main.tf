@@ -161,22 +161,6 @@ resource "local_file" "create_ldap_playbook" {
     ansible_user: root
     ansible_ssh_private_key_file: ${var.private_key_path}
   roles:
-    - { role: cloudlogs, tags: ["cloud_logs"] }
-
-- name: LDAP Server Configuration
-  hosts: [ldap_server_node]
-  any_errors_fatal: true
-  gather_facts: true
-  vars:
-    ansible_ssh_common_args: >
-      ${local.proxyjump}
-      -o ControlMaster=auto
-      -o ControlPersist=30m
-      -o UserKnownHostsFile=/dev/null
-      -o StrictHostKeyChecking=no
-    ansible_user: root
-    ansible_ssh_private_key_file: ${var.private_key_path}
-  roles:
     - { role: ldap_server_prepare }
 EOT
   filename = var.ldap_playbook_path
@@ -187,7 +171,7 @@ resource "null_resource" "run_ldap_playbooks" {
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -f 50 -i ${var.ldap_inventory_path} ${var.ldap_playbook_path}"
+    command     = "ansible-playbook -i ${var.ldap_inventory_path} ${var.ldap_playbook_path}"
   }
   triggers = {
     build = timestamp()

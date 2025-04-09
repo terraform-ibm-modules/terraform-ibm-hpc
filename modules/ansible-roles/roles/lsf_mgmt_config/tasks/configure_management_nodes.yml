@@ -80,7 +80,7 @@
   run_once: true
 
 - name: Management Config | Check if LSF_HOST_ADDR_RANGE is already set
-  shell: "grep -q '# ANSIBLE MANAGED: LSF_HOST_ADDR_RANGE added' '{{ LSF_CONF_FILE_PATH }}/lsf.cluster.{{ my_cluster_name }}'"
+  shell: "grep -q '# ANSIBLE MANAGED: LSF_HOST_ADDR_RANGE added' '{{ LSF_CONF_FILE_PATH }}/lsf.cluster.{{ prefix }}'"
   register: lsf_host_addr_range_marker_check
   changed_when: false
   failed_when: false
@@ -88,7 +88,7 @@
 
 - name: Management Config | Append LSF_HOST_ADDR_RANGE to lsf.cluster
   blockinfile:
-    path: "{{ LSF_CONF_FILE_PATH }}/lsf.cluster.{{ my_cluster_name }}"
+    path: "{{ LSF_CONF_FILE_PATH }}/lsf.cluster.{{ prefix }}"
     block: |
       # ANSIBLE MANAGED: LSF_HOST_ADDR_RANGE added
       Begin Parameters
