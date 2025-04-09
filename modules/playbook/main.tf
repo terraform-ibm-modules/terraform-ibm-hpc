@@ -1,5 +1,6 @@
 locals {
   proxyjump       = var.enable_bastion ? "-o ProxyJump=ubuntu@${var.bastion_fip}" : ""
+  ldap_client_config_playbook = format("%s/ldap_client_config_playbook.yml", var.playbooks_path)
 }
 
 resource "local_file" "create_playbook" {
@@ -148,7 +149,7 @@ resource "local_file" "create_ldap_playbook" {
   count    = var.ldap_inventory_path != null && var.enable_ldap ? 1 : 0
   content  = <<EOT
 - name: LDAP Server Configuration
-  hosts: [ldap_server_node]
+  hosts: [all_nodes]
   any_errors_fatal: true
   gather_facts: true
   vars:
@@ -172,6 +173,41 @@ resource "null_resource" "run_ldap_playbooks" {
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook -i ${var.ldap_inventory_path} ${var.ldap_playbook_path}"
+  }
+  triggers = {
+    build = timestamp()
+  }
+  depends_on = [local_file.create_ldap_playbook]
+}
+
+resource "local_file" "create_ldap_client_playbook" {
+  count    = var.ldap_inventory_path != null && var.enable_ldap ? 1 : 0
+  content  = <<EOT
+- name: LDAP Server Configuration
+  hosts: [all_nodes]
+  any_errors_fatal: true
+  gather_facts: true
+  vars:
+    ansible_ssh_common_args: >
+      ${local.proxyjump}
+      -o ControlMaster=auto
+      -o ControlPersist=30m
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+    ansible_user: root
+    ansible_ssh_private_key_file: ${var.private_key_path}
+  roles:
+    - { role: ldap_client_config }
+EOT
+  filename = var.ldap_client_config_playbook
+}
+
+resource "null_resource" "run_ldap_client_playbooks" {
+  count = var.ldap_inventory_path != null && var.enable_ldap ? 0 : 0
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "ansible-playbook -i ${var.ldap_inventory_path} ${var.ldap_client_config_playbook}"
   }
   triggers = {
     build = timestamp()

@@ -229,6 +229,7 @@ locals {
   observability_playbook_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/observability.yaml" : "${path.root}/modules/ansible-roles/observability.yaml"
   lsf_mgmt_playbooks_path     = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/lsf_mgmt_config.yml" : "${path.root}/modules/ansible-roles/lsf_mgmt_config.yml"
   ldap_playbook_path          = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/ldap.yml" : "${path.root}/modules/ansible-roles/ldap.yml"
+  playbooks_path              = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/" : "${path.root}/modules/ansible-roles/"
   # storage_playbook_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage_ssh.yaml" : "${path.root}/modules/ansible-roles/storage_ssh.yaml"
 }
 

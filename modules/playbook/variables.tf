@@ -69,3 +69,9 @@ variable "ldap_playbook_path" {
   type        = string
   default     = "ldap.yml"
 }
+
+variable "playbooks_path" {
+  description = "Playbooks path"
+  type        = string
+  default     = ""
+}

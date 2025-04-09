@@ -19,6 +19,14 @@ cloud_monitoring_ingestion_url = ${var.cloud_monitoring_ingestion_url}
 cloud_monitoring_prws_key = ${var.cloud_monitoring_prws_key}
 cloud_monitoring_prws_url = ${var.cloud_monitoring_prws_url}
 cloud_logs_ingress_private_endpoint = ${var.cloud_logs_ingress_private_endpoint}
+prefix                   = ${var.prefix}
+enable_ldap              = ${var.enable_ldap}
+ldap_server              = ${var.ldap_server}
+ldap_basedns             = ${var.ldap_basedns}
+ldap_admin_password      = ${var.ldap_admin_password}
+ldap_server_cert         = ${var.ldap_server_cert}
+ldap_user_name           = ${var.ldap_user_name}
+ldap_user_password       = ${var.ldap_user_password}
 EOT
   filename = var.inventory_path
 }

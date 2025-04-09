@@ -330,6 +330,7 @@ module "compute_playbook" {
   enable_ldap                 = var.enable_ldap
   ldap_inventory_path         = local.ldap_inventory_path
   ldap_playbook_path          = local.ldap_playbook_path
+  playbooks_path              = local.playbooks_path
   depends_on                  = [module.compute_inventory]
 }
 
