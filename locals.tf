@@ -19,7 +19,7 @@ locals {
   vpc_name                   = var.vpc_name == null ? one(module.landing_zone.vpc_name) : var.vpc_name
   bastion_subnets            = module.landing_zone.bastion_subnets
   kms_encryption_enabled     = var.key_management != null ? true : false
-  boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
+  boot_volume_encryption_key = var.key_management != null && var.enable_deployer ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   existing_kms_instance_guid = var.key_management != null ? module.landing_zone.key_management_guid : null
   cos_data                   = module.landing_zone.cos_buckets_data
   # Future use
