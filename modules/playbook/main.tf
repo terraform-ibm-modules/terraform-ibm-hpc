@@ -199,15 +199,15 @@ resource "local_file" "create_ldap_client_playbook" {
   roles:
     - { role: ldap_client_config }
 EOT
-  filename = var.ldap_client_config_playbook
+  filename = local.ldap_client_config_playbook
 }
 
 resource "null_resource" "run_ldap_client_playbooks" {
-  count = var.ldap_inventory_path != null && var.enable_ldap ? 0 : 0
+  count = var.inventory_path != null && var.enable_ldap ? 0 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -i ${var.ldap_inventory_path} ${var.ldap_client_config_playbook}"
+    command     = "ansible-playbook -f 50 -i ${var.inventory_path} ${local.ldap_client_config_playbook}"
   }
   triggers = {
     build = timestamp()
