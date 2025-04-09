@@ -147,6 +147,24 @@ variable "storage_instances" {
   description = "Number of instances to be launched for storage cluster."
 }
 
+variable "storage_servers" {
+  type = list(
+    object({
+      profile         = string
+      count           = number
+      image           = string
+      filesystem_name = optional(string)
+    })
+  )
+  default = [{
+    profile         = "cx2d-metal-96x192"
+    count           = 0
+    image           = "ibm-redhat-8-10-minimal-amd64-2"
+    filesystem_name = "fs1"
+  }]
+  description = "Number of BareMetal Servers to be launched for storage cluster."
+}
+
 variable "protocol_instances" {
   type = list(
     object({

@@ -321,6 +321,12 @@ variable "enable_hyperthreading" {
 ##############################################################################
 # Storage Scale Variables
 ##############################################################################
+variable "storage_type" {
+  type        = string
+  default     = "scratch"
+  description = "Select the required storage type(scratch/persistent/eval)."
+}
+
 variable "storage_subnets_cidr" {
   type        = string
   default     = "10.10.30.0/24"

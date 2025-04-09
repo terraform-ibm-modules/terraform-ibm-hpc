@@ -182,7 +182,7 @@ module "compute_cluster_management_vsi" {
 }
 
 module "storage_vsi" {
-  count                         = length(var.storage_instances)
+  count                         = length(var.storage_instances) && var.storage_type != "persistent"
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
   version                       = "4.6.0"
   vsi_per_subnet                = var.storage_instances[count.index]["count"]

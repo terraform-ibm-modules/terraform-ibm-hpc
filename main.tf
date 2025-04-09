@@ -109,7 +109,8 @@ module "prepare_tf_input" {
   zones                                            = var.zones
   compute_ssh_keys                                 = local.compute_ssh_keys
   storage_ssh_keys                                 = local.storage_ssh_keys
-  storage_instances                                = var.storage_instances
+  storage_instances                                = var.storage_type == "scratch" ? var.storage_instances : []
+  storage_servers                                  = var.storage_type == "persistent" ? var.storage_servers : []
   management_instances                             = var.management_instances
   protocol_instances                               = var.protocol_instances
   colocate_protocol_cluster_instances              = var.colocate_protocol_cluster_instances
@@ -193,7 +194,7 @@ module "cos" {
   exstng_instance_bucket_new_hmac = local.exstng_instance_bucket_new_hmac
   exstng_instance_hmac_new_bucket = local.exstng_instance_hmac_new_bucket
   exstng_instance_bucket_hmac     = local.exstng_instance_bucket_hmac
-  filesystem                      = var.storage_instances[*]["filesystem"] != "" ? var.storage_instances[0]["filesystem"] : var.filesystem_config[0]["filesystem"]
+  filesystem                      = local.resolved_filesystem
   depends_on                      = [module.landing_zone_vsi]
 }
 
@@ -247,7 +248,7 @@ module "protocol_reserved_ip" {
   protocol_domain         = var.dns_domain_names["protocol"]
   protocol_dns_service_id = local.dns_instance_id
   protocol_dns_zone_id    = local.protocol_dns_zone_id
-  depends_on              = [ module.dns ]
+  depends_on              = [module.dns]
 }
 
 module "client_dns_records" {
@@ -256,7 +257,7 @@ module "client_dns_records" {
   dns_instance_id = local.dns_instance_id
   dns_zone_id     = local.client_dns_zone_id
   dns_records     = local.client_dns_records
-  depends_on      = [ module.dns ]
+  depends_on      = [module.dns]
 }
 
 module "gklm_dns_records" {
@@ -265,7 +266,7 @@ module "gklm_dns_records" {
   dns_instance_id = local.dns_instance_id
   dns_zone_id     = local.gklm_dns_zone_id
   dns_records     = local.gklm_dns_records
-  depends_on      = [ module.dns ]
+  depends_on      = [module.dns]
 }
 
 resource "time_sleep" "wait_60_seconds" {
@@ -306,14 +307,14 @@ module "write_compute_cluster_inventory" {
 }
 
 module "write_compute_scale_cluster_inventory" {
-  count                                            = var.scheduler == "null" && var.enable_deployer == false ? 1 : 0 
+  count                                            = var.scheduler == "null" && var.enable_deployer == false ? 1 : 0
   source                                           = "./modules/write_scale_inventory"
   json_inventory_path                              = var.scheduler == "null" ? format("%s/compute_cluster_inventory.json", var.scale_ansible_repo_clone_path) : format("%s/compute_cluster_inventory.json", local.json_inventory_path)
   bastion_user                                     = jsonencode(var.bastion_user)
   bastion_instance_id                              = var.bastion_instance_id == null ? jsonencode("None") : jsonencode(var.bastion_instance_id)
   bastion_instance_public_ip                       = var.bastion_fip == null ? jsonencode("None") : jsonencode(var.bastion_fip)
   cloud_platform                                   = jsonencode("IBMCloud")
-  resource_prefix                                  = jsonencode(format("%s.%s", var.prefix, var.dns_domain_names["compute"])) 
+  resource_prefix                                  = jsonencode(format("%s.%s", var.prefix, var.dns_domain_names["compute"]))
   vpc_region                                       = jsonencode(local.region)
   vpc_availability_zones                           = jsonencode(var.zones)
   scale_version                                    = jsonencode(local.scale_version)
@@ -351,12 +352,12 @@ module "write_compute_scale_cluster_inventory" {
   afm_cos_bucket_details                           = jsonencode([])
   afm_config_details                               = jsonencode([])
   afm_cluster_instance_names                       = jsonencode([])
-  filesystem_mountpoint                            =  var.scale_encryption_type == "key_protect" ? (var.storage_instances[*]["filesystem"] != "" ? var.storage_instances[*]["filesystem"] : jsonencode(var.filesystem_config[0]["filesystem"])) : jsonencode("")
-  depends_on                                       = [ time_sleep.wait_60_seconds ] 
+  filesystem_mountpoint                            = var.scale_encryption_type == "key_protect" ? jsonencode(local.resolved_filesystem) : jsonencode("")
+  depends_on                                       = [time_sleep.wait_60_seconds]
 }
 
 module "write_storage_scale_cluster_inventory" {
-  count                                            = var.scheduler == "null" && var.enable_deployer == false ? 1 : 0 
+  count                                            = var.scheduler == "null" && var.enable_deployer == false ? 1 : 0
   source                                           = "./modules/write_scale_inventory"
   json_inventory_path                              = format("%s/storage_cluster_inventory.json", var.scale_ansible_repo_clone_path)
   bastion_user                                     = jsonencode(var.bastion_user)
@@ -402,11 +403,11 @@ module "write_storage_scale_cluster_inventory" {
   afm_config_details                               = local.enable_afm == true ? jsonencode(local.afm_cos_config) : jsonencode([])
   afm_cluster_instance_names                       = jsonencode(local.afm_instance_names)
   filesystem_mountpoint                            = var.scale_encryption_type == "key_protect" ? (var.storage_instances[*]["filesystem"] != "" ? var.storage_instances[*]["filesystem"] : jsonencode(var.filesystem_config[0]["filesystem"])) : jsonencode("")
-  depends_on                                       = [ time_sleep.wait_60_seconds ]
+  depends_on                                       = [time_sleep.wait_60_seconds]
 }
 
 module "write_client_scale_cluster_inventory" {
-  count                                            = var.scheduler == "null" && var.enable_deployer == false ? 1 : 0 
+  count                                            = var.scheduler == "null" && var.enable_deployer == false ? 1 : 0
   source                                           = "./modules/write_scale_inventory"
   json_inventory_path                              = format("%s/client_cluster_inventory.json", var.scale_ansible_repo_clone_path)
   bastion_user                                     = jsonencode(var.bastion_user)
@@ -685,4 +686,17 @@ module "scc_instance_and_profile" {
   prefix                  = var.prefix
   cos_bucket              = var.scc_cos_bucket
   cos_instance_crn        = var.scc_cos_instance_crn
+}
+
+# Baremetal Module
+module "storage_baremetal" {
+  count                      = length(var.storage_instances) && var.enable_deployer == false && storage_type == "persistent" ? 1 : 0
+  source                     = "./modules/baremetal"
+  existing_resource_group    = var.existing_resource_group
+  prefix                     = var.prefix
+  storage_subnets            = local.storage_subnets
+  storage_ssh_keys           = local.storage_ssh_keys
+  storage_servers            = var.storage_servers 
+  bastion_public_key_content = local.bastion_private_key_content
+  bastion_security_group_id  = local.bastion_security_group_id
 }

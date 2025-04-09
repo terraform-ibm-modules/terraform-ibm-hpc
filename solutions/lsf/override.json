@@ -49,6 +49,7 @@
    "compute_gui_username": "admin",
    "compute_gui_password": "hpc@IBMCloud",
    "enable_hyperthreading": true,
+   "storage_type": "scratch",
    "storage_subnets_cidr": "10.10.30.0/24",
    "storage_ssh_keys": null,
    "storage_instances": [
