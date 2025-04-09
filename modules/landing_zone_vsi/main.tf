@@ -359,7 +359,7 @@ module "gklm_vsi" {
   ssh_key_ids                   = local.gklm_ssh_keys
   subnets                       = local.storage_subnets
   tags                          = local.tags
-  user_data                     = data.template_file.protocol_user_data.rendered
+  user_data                     = data.template_file.gklm_user_data.rendered
   vpc_id                        = var.vpc_id
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
