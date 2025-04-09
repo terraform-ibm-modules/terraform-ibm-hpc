@@ -1,6 +1,6 @@
 locals {
   schematics_inputs_path          = "/tmp/.schematics/solution_terraform.auto.tfvars.json"
-  scheduler                       = jsonencode(var.scheduler)
+  scheduler                       = var.scheduler == null ? "null" : jsonencode(var.scheduler)
   zones                           = jsonencode(var.zones)
   list_compute_ssh_keys           = jsonencode(var.compute_ssh_keys)
   list_storage_ssh_keys           = jsonencode(var.storage_ssh_keys)
