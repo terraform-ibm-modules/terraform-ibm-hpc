@@ -83,7 +83,7 @@ module "landing_zone_vsi" {
   nsd_details                = var.nsd_details
   dns_domain_names           = var.dns_domain_names
   kms_encryption_enabled     = local.kms_encryption_enabled
-  boot_volume_encryption_key = local.boot_volume_encryption_key
+  boot_volume_encryption_key = var.boot_volume_encryption_key
   enable_bastion             = var.enable_bastion
 }
 
@@ -139,6 +139,7 @@ module "prepare_tf_input" {
   observability_enable_metrics_routing             = var.observability_enable_metrics_routing
   observability_atracker_enable                    = var.observability_atracker_enable
   observability_atracker_target_type               = var.observability_atracker_target_type
+  boot_volume_encryption_key                       = local.boot_volume_encryption_key
   depends_on                                       = [module.deployer]
 }
 

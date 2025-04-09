@@ -457,6 +457,12 @@ variable "kms_key_name" {
   description = "Provide the existing kms key name that you want to use for the IBM Cloud HPC cluster. Note: kms_key_name to be considered only if key_management value is set as key_protect.(for example kms_key_name: my-encryption-key)."
 }
 
+variable "boot_volume_encryption_key" {
+  type        = string
+  default     = null
+  description = "The kms_key crn."
+}
+
 # variable "hpcs_instance_name" {
 #   type        = string
 #   default     = null
