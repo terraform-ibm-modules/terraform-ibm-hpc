@@ -139,6 +139,6 @@ variable "prefix" {
 
 variable "ha_shared_dir" {
   type        = string
-  default     = null
+  default     = "null"
   description = "Path for lsf shared dir"
 }
