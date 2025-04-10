@@ -92,12 +92,6 @@ variable "ldap_server" {
   description = "Provide the IP address for the LDAP server."
 }
 
-variable "existing_ldap_server" {
-  type        = string
-  default     = "null"
-  description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
-}
-
 variable "ldap_basedns" {
   type        = string
   default     = "lsf.com"

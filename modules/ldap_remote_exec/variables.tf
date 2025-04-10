@@ -13,12 +13,6 @@ variable "bastion_private_key_content" {
   type        = string
 }
 
-variable "enable_deployer" {
-  type        = bool
-  default     = false
-  description = "Deployer should be only used for better deployment performance"
-}
-
 variable "bastion_fip" {
   type        = string
   default     = null

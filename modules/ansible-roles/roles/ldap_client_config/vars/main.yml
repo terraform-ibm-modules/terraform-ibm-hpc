@@ -1,4 +1,4 @@
-LDAP_ADMIN_PASSWORD: "{{ ldap_admin_password }}"
+LDAP_ADMIN_PASSWORD: "{{ ldap_admin_password }}" #pragma: allowlist secret
 BASE_DN: "{{ ldap_basedns }}"
 LDAP_SERVER_IP: "{{ ldap_server }}"
 LDAP_SERVER_CERT: "{{ ldap_server_cert }}"

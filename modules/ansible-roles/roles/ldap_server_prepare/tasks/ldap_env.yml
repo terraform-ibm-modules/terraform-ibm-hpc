@@ -1,5 +1,5 @@
 ---
-    - name: LDAP_Server_Setup | LDAP Directory | Creation 
+    - name: LDAP_Server_Setup | LDAP Directory | Creation
       file:
         path: "{{ LDAP_DIR }}"
         state: directory

@@ -37,7 +37,7 @@ EOT
 }
 
 resource "local_sensitive_file" "ldap_ini" {
-  count = var.enable_ldap ? 1 : 0
+  count    = var.enable_ldap ? 1 : 0
   content  = <<EOT
 [ldap_server_node]
 ${var.ldap_server}

@@ -88,12 +88,7 @@ module "landing_zone_vsi" {
   enable_ldap                = var.enable_ldap
   ldap_vsi_profile           = var.ldap_vsi_profile
   ldap_vsi_osimage_name      = var.ldap_vsi_osimage_name
-  ldap_basedns               = var.ldap_basedns
-  ldap_admin_password        = var.ldap_admin_password
-  ldap_user_name             = var.ldap_user_name
-  ldap_user_password         = var.ldap_user_password
   ldap_server                = var.ldap_server
-  ldap_server_cert           = var.ldap_server_cert
 }
 
 module "prepare_tf_input" {
@@ -161,7 +156,6 @@ module "validate_ldap_server_connection" {
   count                       = var.enable_deployer && var.enable_ldap && var.ldap_server != "null" ? 1 : 0
   source                      = "./modules/ldap_remote_exec"
   ldap_server                 = var.ldap_server
-  enable_deployer             = var.enable_deployer
   bastion_fip                 = local.bastion_fip
   bastion_private_key_content = local.bastion_private_key_content
   deployer_ip                 = local.deployer_ip
@@ -320,19 +314,19 @@ module "storage_inventory" {
 }
 
 module "ldap_inventory" {
-  count                    = var.enable_deployer == false && var.enable_ldap && var.ldap_server == "null"? 1 : 0
-  source                   = "./modules/inventory"
-  prefix                   = var.prefix
-  name_mount_path_map      = local.fileshare_name_mount_path_map
-  enable_ldap              = var.enable_ldap
-  ldap_server              = var.ldap_server != "null" ? var.ldap_server : join(",", local.ldap_hosts)
-  playbooks_path           = local.playbooks_path
-  ldap_basedns             = var.ldap_basedns
-  ldap_admin_password      = var.ldap_admin_password
-  ldap_user_name           = var.ldap_user_name
-  ldap_user_password       = var.ldap_user_password
-  ldap_server_cert         = var.ldap_server_cert
-  depends_on               = [ module.write_compute_cluster_inventory ]
+  count               = var.enable_deployer == false && var.enable_ldap && var.ldap_server == "null" ? 1 : 0
+  source              = "./modules/inventory"
+  prefix              = var.prefix
+  name_mount_path_map = local.fileshare_name_mount_path_map
+  enable_ldap         = var.enable_ldap
+  ldap_server         = var.ldap_server != "null" ? var.ldap_server : join(",", local.ldap_hosts)
+  playbooks_path      = local.playbooks_path
+  ldap_basedns        = var.ldap_basedns
+  ldap_admin_password = var.ldap_admin_password
+  ldap_user_name      = var.ldap_user_name
+  ldap_user_password  = var.ldap_user_password
+  ldap_server_cert    = var.ldap_server_cert
+  depends_on          = [module.write_compute_cluster_inventory]
 }
 
 module "compute_playbook" {

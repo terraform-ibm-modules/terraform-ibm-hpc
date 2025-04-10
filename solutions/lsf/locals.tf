@@ -94,7 +94,7 @@ locals {
     ldap_server_cert                                 = var.ldap_server_cert
     ldap_vsi_osimage_name                            = var.ldap_vsi_osimage_name
     # scc_profile_version                            = var.scc_profile_version
-    
+
   }
 }
 

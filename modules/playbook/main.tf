@@ -1,8 +1,8 @@
 locals {
-  proxyjump       = var.enable_bastion ? "-o ProxyJump=ubuntu@${var.bastion_fip}" : ""
+  proxyjump             = var.enable_bastion ? "-o ProxyJump=ubuntu@${var.bastion_fip}" : ""
   ldap_server_inventory = format("%s/ldap_server_inventory.ini", var.playbooks_path)
   configure_ldap_client = format("%s/configure_ldap_client.yml", var.playbooks_path)
-  prepare_ldap_server = format("%s/prepare_ldap_server.yml", var.playbooks_path)
+  prepare_ldap_server   = format("%s/prepare_ldap_server.yml", var.playbooks_path)
 }
 
 resource "local_file" "create_playbook" {
