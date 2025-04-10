@@ -12,11 +12,10 @@ observability_monitoring_on_compute_nodes_enable="{{ monitoring_enable_for_compu
 observability_logs_enable_for_compute="{{ logs_enable_for_compute }}"
 cloud_logs_ingress_private_endpoint="{{ cloud_logs_ingress_private_endpoint }}"
 VPC_APIKEY_VALUE="{{ ibmcloud_api_key }}"
-# custom_file_shares="{% for key, value in name_mount_path_map.items() if key != 'lsf' %}{{ value }}{% if not loop.last %} {% endif %}{% endfor %}"
-# custom_mount_paths="{% for key in name_mount_path_map.keys() if key != 'lsf' %}{{ key }}{% if not loop.last %} {% endif %}{% endfor %}"
+custom_file_shares="{% for key, value in name_mount_path_map.items() if key != 'lsf' %}{{ value }}{% if not loop.last %} {% endif %}{% endfor %}"
+custom_mount_paths="{% for key in name_mount_path_map.keys() if key != 'lsf' %}{{ key }}{% if not loop.last %} {% endif %}{% endfor %}"
 hyperthreading="{{ enable_hyperthreading }}"
 ManagementHostNames="{{ lsf_masters | join(' ') }}"
-# rc_cidr_block="{{ compute_subnets_cidr | first }}"
 dns_domain="{{ dns_domain_names }}"
 network_interface="eth0"
 
@@ -107,6 +106,22 @@ if [ -n "${nfs_server_with_mount_path}" ]; then
   fi
 fi
 echo "Setting LSF share is completed." >> $logfile
+
+{% raw %}
+# Setup Custom file shares
+echo "Setting custom file shares." >> $logfile
+if [ -n "${custom_file_shares}" ]; then
+  echo "Custom file share ${custom_file_shares} found" >> $logfile
+  file_share_array=(${custom_file_shares})
+  mount_path_array=(${custom_mount_paths})
+  length=${#file_share_array[@]}
+
+  for (( i=0; i<length; i++ )); do
+    mount_nfs_with_retries "${file_share_array[$i]}" "/mnt/${mount_path_array[$i]}"
+  done
+fi
+echo "Setting custom file shares is completed." >> $logfile
+{% endraw %}
 
 # Setup SSH
 SSH_DIR="/home/lsfadmin/.ssh"
