@@ -35,4 +35,4 @@
   run_once: true
   notify:
     - Restart lsfd service
-    # - Restart NetworkManager
+    - Restart NetworkManager
