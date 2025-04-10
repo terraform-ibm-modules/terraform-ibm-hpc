@@ -158,7 +158,7 @@ module "prepare_tf_input" {
 }
 
 module "validate_ldap_server_connection" {
-  count                       = var.enable_ldap && var.ldap_server != "null" ? 1 : 0
+  count                       = var.enable_deployer && var.enable_ldap && var.ldap_server != "null" ? 1 : 0
   source                      = "./modules/ldap_remote_exec"
   ldap_server                 = var.ldap_server
   enable_deployer             = var.enable_deployer

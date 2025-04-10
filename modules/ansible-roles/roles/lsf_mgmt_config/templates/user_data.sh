@@ -216,10 +216,10 @@ if [ "$enable_ldap" = "true" ]; then
             # Check if the SSL certificate file exists, then copy it to the correct location
             # Retry finding SSL certificate with a maximum of 5 attempts and 5 seconds sleep between retries
             for attempt in {1..5}; do
-                if [ -f "/mnt/lsf/openldap/ldap_cacert.pem" ]; then
-                    echo "LDAP SSL cert found under /mnt/lsf/openldap/ldap_cacert.pem path" >> $logfile
+                if [ -f "/mnt/lsf/shared/openldap/ldap_cacert.pem" ]; then
+                    echo "LDAP SSL cert found under /mnt/lsf/shared/openldap/ldap_cacert.pem path" >> $logfile
                     mkdir -p /etc/openldap/certs/
-                    cp -pr /mnt/lsf/openldap/ldap_cacert.pem /etc/openldap/certs/ldap_cacert.pem
+                    cp -pr /mnt/lsf/shared/openldap/ldap_cacert.pem /etc/openldap/certs/ldap_cacert.pem
                     break
                 else
                     echo "SSL cert not found on attempt $attempt. Retrying in 5 seconds..." >> $logfile
@@ -227,7 +227,7 @@ if [ "$enable_ldap" = "true" ]; then
                 fi
             done
             # Exit if the SSL certificate is still not found after 5 attempts
-            [ -f "/mnt/lsf/openldap/ldap_cacert.pem" ] || { echo "SSL cert not found after 5 attempts. Exiting." >> $logfile; exit 1; }
+            [ -f "/mnt/lsf/shared/openldap/ldap_cacert.pem" ] || { echo "SSL cert not found after 5 attempts. Exiting." >> $logfile; exit 1; }
 
 
             # Create and configure the SSSD configuration file for LDAP integration
