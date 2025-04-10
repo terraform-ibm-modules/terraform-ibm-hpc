@@ -157,16 +157,6 @@ module "prepare_tf_input" {
   depends_on                                       = [module.deployer]
 }
 
-module "resource_provisioner" {
-  source                      = "./modules/resource_provisioner"
-  ibmcloud_api_key            = var.ibmcloud_api_key
-  enable_deployer             = var.enable_deployer
-  bastion_fip                 = local.bastion_fip
-  bastion_private_key_content = local.bastion_private_key_content
-  deployer_ip                 = local.deployer_ip
-  depends_on                  = [module.deployer, module.prepare_tf_input]
-}
-
 module "validate_ldap_server_connection" {
   count                       = var.enable_ldap && var.ldap_server != "null" ? 1 : 0
   source                      = "./modules/ldap_remote_exec"
@@ -176,6 +166,16 @@ module "validate_ldap_server_connection" {
   bastion_private_key_content = local.bastion_private_key_content
   deployer_ip                 = local.deployer_ip
   depends_on                  = [module.deployer]
+}
+
+module "resource_provisioner" {
+  source                      = "./modules/resource_provisioner"
+  ibmcloud_api_key            = var.ibmcloud_api_key
+  enable_deployer             = var.enable_deployer
+  bastion_fip                 = local.bastion_fip
+  bastion_private_key_content = local.bastion_private_key_content
+  deployer_ip                 = local.deployer_ip
+  depends_on                  = [module.deployer, module.prepare_tf_input, module.validate_ldap_server_connection]
 }
 
 module "file_storage" {
