@@ -297,6 +297,7 @@ module "compute_inventory" {
   cloud_monitoring_prws_url           = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_url : ""
   logs_enable_for_compute             = var.observability_logs_enable_for_compute
   cloud_logs_ingress_private_endpoint = local.cloud_logs_ingress_private_endpoint
+  ha_shared_dir                       = local.ha_shared_dir
   prefix                              = var.prefix
   enable_ldap                         = var.enable_ldap
   ldap_server                         = var.ldap_server != "null" ? var.ldap_server : join(",", local.ldap_hosts)

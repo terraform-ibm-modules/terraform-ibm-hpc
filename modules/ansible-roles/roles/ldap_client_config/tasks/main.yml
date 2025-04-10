@@ -1,5 +1,7 @@
 ---
 
+- import_tasks: upload_ldap_cert.yml
+
 - import_tasks: ldap_prerequisites.yml
 
 - import_tasks: ldap_user_integration.yml

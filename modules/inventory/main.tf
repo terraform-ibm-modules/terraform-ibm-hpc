@@ -23,12 +23,13 @@ cloud_monitoring_ingestion_url = ${var.cloud_monitoring_ingestion_url}
 cloud_monitoring_prws_key = ${var.cloud_monitoring_prws_key}
 cloud_monitoring_prws_url = ${var.cloud_monitoring_prws_url}
 cloud_logs_ingress_private_endpoint = ${var.cloud_logs_ingress_private_endpoint}
+ha_shared_dir            = ${var.ha_shared_dir}
 prefix                   = ${var.prefix}
 enable_ldap              = ${var.enable_ldap}
 ldap_server              = ${var.ldap_server}
 ldap_basedns             = ${var.ldap_basedns}
 ldap_admin_password      = ${var.ldap_admin_password}
-ldap_server_cert         = ${var.ldap_server_cert}
+ldap_server_cert         = ${replace(var.ldap_server_cert, "\n", "\\n")}
 ldap_user_name           = ${var.ldap_user_name}
 ldap_user_password       = ${var.ldap_user_password}
 EOT
@@ -43,12 +44,13 @@ ${var.ldap_server}
 
 [all:vars]
 name_mount_path_map      = {}
+ha_shared_dir            = ${var.ha_shared_dir}
 prefix                   = ${var.prefix}
 enable_ldap              = ${var.enable_ldap}
 ldap_server              = ${var.ldap_server}
 ldap_basedns             = ${var.ldap_basedns}
 ldap_admin_password      = ${var.ldap_admin_password}
-ldap_server_cert         = ${var.ldap_server_cert}
+ldap_server_cert         = ${replace(var.ldap_server_cert, "\n", "\\n")}
 ldap_user_name           = ${var.ldap_user_name}
 ldap_user_password       = ${var.ldap_user_password}
 EOT

@@ -1,0 +1,26 @@
+---
+- block:
+    - name: Ensure LDAP certificate directory exists locally
+      file:
+        path: "{{ LDAP_CERT_FILES_DIR }}"
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+      run_once: true
+
+    - name: Check if ldap_cacert.pem exists locally
+      stat:
+        path: "{{ LDAP_CERT_FILES_DIR }}/ldap_cacert.pem"
+      register: ldap_cert_status
+      delegate_to: localhost
+      run_once: true
+
+    - name: Copy ldap_cacert.pem to Bootstrap
+      copy:
+        content: "{{ LDAP_SERVER_CERT }}"
+        dest: "{{ LDAP_CERT_FILES_DIR }}/ldap_cacert.pem"
+        mode: '0644'
+      when: not ldap_cert_status.stat.exists
+      delegate_to: localhost
+      run_once: true
+  when: LDAP_SERVER_CERT is defined and LDAP_SERVER_CERT is not none and (LDAP_SERVER_CERT | length > 10)
