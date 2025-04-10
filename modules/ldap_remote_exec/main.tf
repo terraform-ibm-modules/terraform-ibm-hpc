@@ -1,11 +1,13 @@
+# Load and render the LDAP connection validation script template
 data "template_file" "ldap_connection_script" {
   template = file("${path.module}/validate_ldap_connection.tpl")
+
   vars = {
     ldap_server = var.ldap_server
   }
 }
 
-# The resource is used to validate the existing LDAP server connection.
+# Resource to validate the LDAP server connection using remote-exec
 resource "null_resource" "validate_ldap_server_connection" {
   connection {
     type                = "ssh"
@@ -19,6 +21,8 @@ resource "null_resource" "validate_ldap_server_connection" {
   }
 
   provisioner "remote-exec" {
-    inline = [data.template_file.ldap_connection_script.rendered]
+    inline = [
+      data.template_file.ldap_connection_script.rendered
+    ]
   }
 }

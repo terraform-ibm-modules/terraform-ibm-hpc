@@ -1,7 +1,8 @@
 ---
-# Restart the SSH service
-- name: Restart SSH Service
+
+# Task: Restart and enable SSH service
+- name: SSH | Restart and enable sshd service
   ansible.builtin.service:
     name: sshd
     state: restarted
-    enabled: yes
+    enabled: true

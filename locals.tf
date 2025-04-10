@@ -187,7 +187,7 @@ locals {
   ]
 
   compute_dns_records = [
-    for instance in concat(local.compute_instances, local.deployer_instances, local.ldap_instances) :
+    for instance in concat(local.compute_instances, local.deployer_instances) :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
@@ -213,7 +213,6 @@ locals {
 locals {
   compute_hosts = try([for name in local.compute_instances[*]["name"] : "${name}.${var.dns_domain_names["compute"]}"], []) #concat(["${data.external.get_hostname.result["name"]}.${var.dns_domain_names["compute"]}"], try([for name in local.compute_instances[*]["name"] : "${name}.${var.dns_domain_names["compute"]}"], []))
   storage_hosts = try([for name in local.storage_instances[*]["name"] : "${name}.${var.dns_domain_names["storage"]}"], [])
-  # ldap_hosts             = try([for name in local.ldap_instances[*]["name"] : "${name}.${var.dns_domain_names["compute"]}"], [])
   ldap_hosts             = try([for instance in local.ldap_instances : instance["ipv4_address"]], [])
   compute_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute.ini" : "${path.root}/modules/ansible-roles/compute.ini"
   storage_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage.ini" : "${path.root}/modules/ansible-roles/storage.ini"

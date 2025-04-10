@@ -1,5 +1,8 @@
 ---
-- name: Ensure LDAP certificate directory exists locally
+
+# Copy the existing LDAP server certificate to the Ansible controller
+
+- name: LDAP | Ensure the local LDAP certificate directory exists
   file:
     path: "{{ LDAP_CERT_FILES_DIR }}"
     state: directory
@@ -8,7 +11,7 @@
   run_once: true
   when: LDAP_SERVER_CERT is defined and (LDAP_SERVER_CERT | length > 10)
 
-- name: Check if ldap_cacert.pem exists locally
+- name: LDAP | Check if ldap_cacert.pem already exists locally
   stat:
     path: "{{ LDAP_CERT_FILES_DIR }}/ldap_cacert.pem"
   register: ldap_cert_status
@@ -16,9 +19,11 @@
   run_once: true
   when: LDAP_SERVER_CERT is defined and (LDAP_SERVER_CERT | length > 10)
 
-- name: Copy ldap_cacert.pem to Bootstrap
+- name: LDAP | Copy ldap_cacert.pem to the local filesystem if not present
   copy:
     content: "{{ LDAP_SERVER_CERT | replace('\\n', '\n') }}"
     dest: "{{ LDAP_CERT_FILES_DIR }}/ldap_cacert.pem"
     mode: '0644'
-  when: LDAP_SERVER_CERT is defined and (LDAP_SERVER_CERT | length > 10
+  delegate_to: localhost
+  run_once: true
+  when: LDAP_SERVER_CERT is defined and (LDAP_SERVER_CERT | length > 10) and not ldap_cert_status.stat.exists

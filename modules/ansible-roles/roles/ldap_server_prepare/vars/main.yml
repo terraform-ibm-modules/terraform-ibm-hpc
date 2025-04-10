@@ -1,3 +1,5 @@
+# LDAP Server Variables
+
 LDAP_DIR: "/opt/LDAP"
 LDAP_ADMIN_PASSWORD: "{{ ldap_admin_password }}" #pragma: allowlist secret
 LDAP_GROUP: "{{ prefix }}"

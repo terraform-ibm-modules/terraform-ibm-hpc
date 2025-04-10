@@ -1,9 +1,20 @@
 #!/bin/bash
-# shellcheck disable=SC2154
 
-if openssl s_client -connect "${ldap_server}:389" </dev/null 2>/dev/null | grep -q 'CONNECTED'; then
-    echo "The connection to the existing LDAP server ${ldap_server} was successfully established."
+# Validate connectivity to the specified LDAP server over port 389
+# Uses OpenSSL to attempt a TCP connection and check for success
+
+# shellcheck disable=SC2154
+# Suppress warning for undefined variable (handled externally by templating engine)
+
+LDAP_HOST="${ldap_server}"
+LDAP_PORT=389
+
+echo "Attempting to connect to LDAP server at ${LDAP_HOST}:${LDAP_PORT}..."
+
+if openssl s_client -connect "${LDAP_HOST}:${LDAP_PORT}" </dev/null 2>/dev/null | grep -q 'CONNECTED'; then
+    echo "✅ Successfully connected to LDAP server at ${LDAP_HOST}:${LDAP_PORT}."
 else
-    echo "The connection to the existing LDAP server ${ldap_server} failed, please establish it."
+    echo "❌ Failed to connect to LDAP server at ${LDAP_HOST}:${LDAP_PORT}."
+    echo "Please ensure the server is reachable and listening on the expected port."
     exit 1
 fi
