@@ -167,6 +167,15 @@ module "resource_provisioner" {
   depends_on                  = [module.deployer, module.prepare_tf_input]
 }
 
+module "validate_ldap_server_connection" {
+  count                       = var.enable_ldap && var.ldap_server != "null" ? 1 : 0
+  source                      = "./modules/ldap_remote_exec"
+  ldap_server                 = var.ldap_server
+  bastion_private_key_content = local.bastion_private_key_content
+  deployer_ip                 = local.deployer_ip
+  depends_on                  = [module.deployer]
+}
+
 module "file_storage" {
   count              = var.enable_deployer == false ? 1 : 0
   source             = "./modules/file_storage"
