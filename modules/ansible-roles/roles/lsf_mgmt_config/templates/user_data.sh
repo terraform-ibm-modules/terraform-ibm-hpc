@@ -4,7 +4,7 @@ logfile="/tmp/user_data.log"
 echo "START $(date '+%Y-%m-%d %H:%M:%S')" >> $logfile
 
 # Initialize variables
-cluster_prefix="{{ my_cluster_name }}"
+cluster_prefix="{{ prefix }}"
 nfs_server_with_mount_path="{{ name_mount_path_map.lsf }}"
 cloud_monitoring_access_key="{{ cloud_monitoring_access_key }}"
 cloud_monitoring_ingestion_url="{{ cloud_monitoring_ingestion_url }}"
@@ -19,6 +19,11 @@ ManagementHostNames="{{ lsf_masters | join(' ') }}"
 # rc_cidr_block="{{ compute_subnets_cidr | first }}"
 dns_domain="{{ dns_domain_names }}"
 network_interface="eth0"
+
+# LDAP
+enable_ldap="{{ enable_ldap }}"
+ldap_server="{{ ldap_server }}"
+ldap_basedns="{{ ldap_basedns }}"
 
 # Setup Hostname
 HostIP=$(hostname -I | awk '{print $1}')
@@ -196,6 +201,108 @@ cd - || exit
 
 sudo /opt/ibm/lsf_worker/10.1/install/hostsetup --top="/opt/ibm/lsf_worker" --setuid | sudo tee -a "$logfile"
 /opt/ibm/lsf_worker/10.1/install/hostsetup --top="/opt/ibm/lsf_worker" --boot="y" --start="y" --dynamic >> "$logfile" 2>&1
+
+# Setting up the LDAP configuration
+if [ "$enable_ldap" = "true" ]; then
+
+    # Detect if the operating system is RHEL or Rocky Linux
+    if grep -q "NAME=\"Red Hat Enterprise Linux\"" /etc/os-release || grep -q "NAME=\"Rocky Linux\"" /etc/os-release; then
+
+        # Detect RHEL or Rocky version
+        version=$(grep -oE 'release [0-9]+' /etc/redhat-release | awk '{print $2}')
+
+        # Proceed if the detected version is either 8 or 9
+        if [ "$version" == "8" ] || [ "$version" == "9" ]; then
+            echo "Detected as RHEL or Rocky $version. Proceeding with LDAP client configuration..." >> $logfile
+
+            # Enable password authentication for SSH by modifying the configuration file
+            sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+            systemctl restart sshd
+
+            # Check if the SSL certificate file exists, then copy it to the correct location
+            # Retry finding SSL certificate with a maximum of 5 attempts and 5 seconds sleep between retries
+            for attempt in {1..5}; do
+                if [ -f "/mnt/lsf/shared/openldap/ldap_cacert.pem" ]; then
+                    echo "LDAP SSL cert found under /mnt/lsf/shared/openldap/ldap_cacert.pem path" >> $logfile
+                    mkdir -p /etc/openldap/certs/
+                    cp -pr /mnt/lsf/shared/openldap/ldap_cacert.pem /etc/openldap/certs/ldap_cacert.pem
+                    break
+                else
+                    echo "SSL cert not found on attempt $attempt. Retrying in 5 seconds..." >> $logfile
+                    sleep 5
+                fi
+            done
+            # Exit if the SSL certificate is still not found after 5 attempts
+            [ -f "/mnt/lsf/shared/openldap/ldap_cacert.pem" ] || { echo "SSL cert not found after 5 attempts. Exiting." >> $logfile; exit 1; }
+
+
+            # Create and configure the SSSD configuration file for LDAP integration
+            cat <<EOF > /etc/sssd/sssd.conf
+[sssd]
+config_file_version = 2
+services = nss, pam, autofs
+domains = default
+
+[nss]
+homedir_substring = /home
+
+[pam]
+
+[domain/default]
+id_provider = ldap
+autofs_provider = ldap
+auth_provider = ldap
+chpass_provider = ldap
+ldap_uri = ldap://${ldap_server}
+ldap_search_base = dc=${ldap_basedns%%.*},dc=${ldap_basedns#*.}
+ldap_id_use_start_tls = True
+ldap_tls_cacertdir = /etc/openldap/certs
+cache_credentials = True
+ldap_tls_reqcert = allow
+EOF
+
+            # Secure the SSSD configuration file by setting appropriate permissions
+            chmod 600 /etc/sssd/sssd.conf
+            chown root:root /etc/sssd/sssd.conf
+
+            # Create and configure the OpenLDAP configuration file for TLS
+            cat <<EOF > /etc/openldap/ldap.conf
+BASE dc=${ldap_basedns%%.*},dc=${ldap_basedns#*.}
+URI ldap://${ldap_server}
+TLS_CACERT /etc/openldap/certs/ldap_cacert.pem
+TLS_CACERTDIR /etc/openldap/certs
+EOF
+
+            # Rehash certificates in the OpenLDAP directory to ensure proper recognition
+            openssl rehash /etc/openldap/certs
+
+            # Apply the SSSD and home directory creation configuration using authselect
+            authselect select sssd with-mkhomedir --force
+
+            # Enable and start the SSSD and oddjobd services for user authentication and home directory management
+            systemctl enable --now sssd oddjobd
+
+            # Restart both services to apply the configuration
+            systemctl restart sssd oddjobd
+
+            # Validate the LDAP configuration by performing a test search using ldapsearch
+            if ldapsearch -x -H ldap://"${ldap_server}"/ -b "dc=${ldap_basedns%%.*},dc=${ldap_basedns#*.}" > /dev/null; then
+                echo "LDAP configuration completed successfully!" >> $logfile
+            else
+                echo "LDAP configuration failed! Exiting." >> $logfile
+                exit 1
+            fi
+
+            # Ensure LSF commands are available to all users by adding the profile to bashrc
+            echo ". ${LSF_CONF}/profile.lsf" >> /etc/bashrc
+            source /etc/bashrc
+
+        else
+            echo "This script is intended for RHEL and Rocky Linux 8 or 9. Detected version: $version. Exiting." >> $logfile
+            exit 1
+        fi
+    fi
+fi
 
 # Setting up the Cloud Monitoring Agent
 if [ "$cloud_monitoring_access_key" != "" ] && [ "$cloud_monitoring_ingestion_url" != "" ]; then

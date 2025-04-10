@@ -34,7 +34,7 @@ variable "observability_playbook_path" {
   default     = "ssh.yaml"
 }
 
-variable "playbooks_root_path" {
+variable "lsf_mgmt_playbooks_path" {
   description = "Playbook root path"
   type        = string
   default     = ""
@@ -50,6 +50,24 @@ variable "observability_provision" {
   description = "Set true to provision observability instances"
   type        = bool
   default     = false
+}
+
+variable "enable_ldap" {
+  type        = bool
+  default     = false
+  description = "Set this option to true to enable LDAP for IBM Spectrum LSF, with the default value set to false."
+}
+
+variable "ldap_server" {
+  type        = string
+  default     = "null"
+  description = "Provide the IP address for the LDAP server."
+}
+
+variable "playbooks_path" {
+  description = "Playbooks path"
+  type        = string
+  default     = ""
 }
 
 variable "cloudlogs_provision" {

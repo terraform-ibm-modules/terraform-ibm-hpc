@@ -84,7 +84,17 @@ locals {
     skip_kms_s2s_auth_policy                         = var.skip_kms_s2s_auth_policy
     ibmcloud_api_key                                 = var.ibmcloud_api_key
     enable_hyperthreading                            = var.enable_hyperthreading
-    # scc_profile_version = var.scc_profile_version
+    enable_ldap                                      = var.enable_ldap
+    ldap_basedns                                     = var.ldap_basedns
+    ldap_vsi_profile                                 = var.ldap_vsi_profile
+    ldap_admin_password                              = var.ldap_admin_password
+    ldap_user_name                                   = var.ldap_user_name
+    ldap_user_password                               = var.ldap_user_password
+    ldap_server                                      = var.ldap_server
+    ldap_server_cert                                 = var.ldap_server_cert
+    ldap_vsi_osimage_name                            = var.ldap_vsi_osimage_name
+    # scc_profile_version                            = var.scc_profile_version
+
   }
 }
 
@@ -157,6 +167,15 @@ locals {
     skip_kms_s2s_auth_policy                         = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
     ibmcloud_api_key                                 = lookup(local.override[local.override_type], "ibmcloud_api_key", local.config.ibmcloud_api_key)
     enable_hyperthreading                            = lookup(local.override[local.override_type], "enable_hyperthreading", local.config.enable_hyperthreading)
-    # scc_profile_version = lookup(local.override[local.override_type], "scc_profile_version", local.config.scc_profile_version)
+    enable_ldap                                      = lookup(local.override[local.override_type], "enable_ldap", local.config.enable_ldap)
+    ldap_basedns                                     = lookup(local.override[local.override_type], "ldap_basedns", local.config.ldap_basedns)
+    ldap_vsi_profile                                 = lookup(local.override[local.override_type], "ldap_vsi_profile", local.config.ldap_vsi_profile)
+    ldap_admin_password                              = lookup(local.override[local.override_type], "ldap_admin_password", local.config.ldap_admin_password)
+    ldap_user_name                                   = lookup(local.override[local.override_type], "ldap_user_name", local.config.ldap_user_name)
+    ldap_user_password                               = lookup(local.override[local.override_type], "ldap_user_password", local.config.ldap_user_password)
+    ldap_server                                      = lookup(local.override[local.override_type], "ldap_server", local.config.ldap_server)
+    ldap_server_cert                                 = lookup(local.override[local.override_type], "ldap_server_cert", local.config.ldap_server_cert)
+    ldap_vsi_osimage_name                            = lookup(local.override[local.override_type], "ldap_vsi_osimage_name", local.config.ldap_vsi_osimage_name)
+    # scc_profile_version                            = lookup(local.override[local.override_type], "scc_profile_version", local.config.scc_profile_version)
   }
 }

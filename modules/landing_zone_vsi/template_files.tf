@@ -1,3 +1,14 @@
+data "template_file" "ldap_user_data" {
+  template = file("${path.module}/templates/ldap_user_data.tpl")
+  vars = {
+    bastion_public_key_content  = var.bastion_public_key_content != null ? var.bastion_public_key_content : ""
+    compute_public_key_content  = local.enable_compute ? local.compute_public_key_content != null ? local.compute_public_key_content : "" : ""
+    compute_private_key_content = local.enable_compute ? local.compute_private_key_content != null ? local.compute_private_key_content : "" : ""
+    compute_interfaces          = var.storage_type == "scratch" ? local.vsi_interfaces[0] : local.bms_interfaces[0]
+    compute_dns_domain          = var.dns_domain_names["compute"]
+  }
+}
+
 data "template_file" "client_user_data" {
   template = file("${path.module}/templates/client_user_data.tpl")
   vars = {

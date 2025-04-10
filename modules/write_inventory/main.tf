@@ -13,7 +13,7 @@ resource "local_sensitive_file" "infra_details_to_json" {
   "lsf_clients": ${jsonencode(var.lsf_clients)},
   "gui_hosts": ${jsonencode(var.gui_hosts)},
   "db_hosts": ${jsonencode(var.db_hosts)},
-  "my_cluster_name": ${jsonencode(var.my_cluster_name)},
+  "prefix": ${jsonencode(var.prefix)},
   "HA_shared_dir": ${jsonencode(var.ha_shared_dir)},
   "NFS_install_dir": ${jsonencode(var.nfs_install_dir)},
   "Enable_Monitoring": ${jsonencode(var.enable_monitoring)},

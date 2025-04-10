@@ -34,7 +34,7 @@ variable "db_hosts" {
   description = "list of lsf gui db nodes"
 }
 
-variable "my_cluster_name" {
+variable "prefix" {
   type        = string
   default     = null
   description = "Name of lsf cluster"

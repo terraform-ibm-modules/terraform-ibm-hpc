@@ -1,3 +1,7 @@
+locals {
+  ldap_server_inventory = format("%s/ldap_server_inventory.ini", var.playbooks_path)
+}
+
 resource "local_sensitive_file" "mount_path_file" {
   content  = <<EOT
 [all_nodes]
@@ -19,6 +23,36 @@ cloud_monitoring_ingestion_url = ${var.cloud_monitoring_ingestion_url}
 cloud_monitoring_prws_key = ${var.cloud_monitoring_prws_key}
 cloud_monitoring_prws_url = ${var.cloud_monitoring_prws_url}
 cloud_logs_ingress_private_endpoint = ${var.cloud_logs_ingress_private_endpoint}
+ha_shared_dir            = ${var.ha_shared_dir}
+prefix                   = ${var.prefix}
+enable_ldap              = ${var.enable_ldap}
+ldap_server              = ${var.ldap_server}
+ldap_basedns             = ${var.ldap_basedns}
+ldap_admin_password      = ${var.ldap_admin_password}
+ldap_server_cert         = ${replace(var.ldap_server_cert, "\n", "\\n")}
+ldap_user_name           = ${var.ldap_user_name}
+ldap_user_password       = ${var.ldap_user_password}
 EOT
   filename = var.inventory_path
+}
+
+resource "local_sensitive_file" "ldap_ini" {
+  count    = var.enable_ldap ? 1 : 0
+  content  = <<EOT
+[ldap_server_node]
+${var.ldap_server}
+
+[all:vars]
+name_mount_path_map      = {}
+ha_shared_dir            = ${var.ha_shared_dir}
+prefix                   = ${var.prefix}
+enable_ldap              = ${var.enable_ldap}
+ldap_server              = ${var.ldap_server}
+ldap_basedns             = ${var.ldap_basedns}
+ldap_admin_password      = ${var.ldap_admin_password}
+ldap_server_cert         = ${replace(var.ldap_server_cert, "\n", "\\n")}
+ldap_user_name           = ${var.ldap_user_name}
+ldap_user_password       = ${var.ldap_user_password}
+EOT
+  filename = local.ldap_server_inventory
 }

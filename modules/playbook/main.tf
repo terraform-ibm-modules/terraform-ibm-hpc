@@ -1,6 +1,8 @@
 locals {
-  proxyjump       = var.enable_bastion ? "-o ProxyJump=ubuntu@${var.bastion_fip}" : ""
-  lsf_mgmt_config = format("%s/lsf_mgmt_config.yml", var.playbooks_root_path)
+  proxyjump             = var.enable_bastion ? "-o ProxyJump=ubuntu@${var.bastion_fip}" : ""
+  ldap_server_inventory = format("%s/ldap_server_inventory.ini", var.playbooks_path)
+  configure_ldap_client = format("%s/configure_ldap_client.yml", var.playbooks_path)
+  prepare_ldap_server   = format("%s/prepare_ldap_server.yml", var.playbooks_path)
 }
 
 resource "local_file" "create_playbook" {
@@ -48,7 +50,7 @@ resource "local_file" "create_playbook" {
   roles:
      - vpc_fileshare_configure
      - lsf
-     - lsf_server_config
+     # - lsf_server_config
 EOT
   filename = var.playbook_path
 }
@@ -129,7 +131,7 @@ resource "local_file" "create_playbook_for_mgmt_config" {
   roles:
      - lsf_mgmt_config
 EOT
-  filename = local.lsf_mgmt_config
+  filename = var.lsf_mgmt_playbooks_path
 }
 
 
@@ -137,12 +139,82 @@ resource "null_resource" "run_playbook_for_mgmt_config" {
   count = var.inventory_path != null ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -i ${var.inventory_path} ${local.lsf_mgmt_config}"
+    command     = "ansible-playbook -i ${var.inventory_path} ${var.lsf_mgmt_playbooks_path}"
   }
   triggers = {
     build = timestamp()
   }
   depends_on = [local_file.create_playbook_for_mgmt_config, null_resource.run_lsf_playbooks]
+}
+
+resource "local_file" "prepare_ldap_server_playbook" {
+  count    = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" ? 1 : 0
+  content  = <<EOT
+- name: LDAP Server Configuration
+  hosts: [ldap_server_node]
+  any_errors_fatal: true
+  gather_facts: true
+  vars:
+    ansible_ssh_common_args: >
+      ${local.proxyjump}
+      -o ControlMaster=auto
+      -o ControlPersist=30m
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+    ansible_user: root
+    ansible_ssh_private_key_file: ${var.private_key_path}
+  roles:
+    - { role: ldap_server_prepare }
+EOT
+  filename = local.prepare_ldap_server
+}
+
+resource "null_resource" "configure_ldap_server_playbook" {
+  count = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" ? 1 : 0
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "ansible-playbook -i ${local.ldap_server_inventory} ${local.prepare_ldap_server}"
+  }
+  triggers = {
+    build = timestamp()
+  }
+  depends_on = [local_file.prepare_ldap_server_playbook]
+}
+
+resource "local_file" "prepare_ldap_client_playbook" {
+  count    = var.inventory_path != null && var.enable_ldap ? 1 : 0
+  content  = <<EOT
+- name: LDAP Server Configuration
+  hosts: [all_nodes]
+  any_errors_fatal: true
+  gather_facts: true
+  vars:
+    ansible_ssh_common_args: >
+      ${local.proxyjump}
+      -o ControlMaster=auto
+      -o ControlPersist=30m
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+    ansible_user: root
+    ansible_ssh_private_key_file: ${var.private_key_path}
+  roles:
+    - { role: ldap_client_config }
+EOT
+  filename = local.configure_ldap_client
+}
+
+resource "null_resource" "run_ldap_client_playbooks" {
+  count = var.inventory_path != null && var.enable_ldap ? 1 : 0
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "ansible-playbook -f 50 -i ${var.inventory_path} ${local.configure_ldap_client}"
+  }
+  triggers = {
+    build = timestamp()
+  }
+  depends_on = [local_file.prepare_ldap_client_playbook, null_resource.configure_ldap_server_playbook, null_resource.run_playbook_for_mgmt_config]
 }
 
 resource "null_resource" "export_api" {

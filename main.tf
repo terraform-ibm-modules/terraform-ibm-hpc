@@ -85,6 +85,10 @@ module "landing_zone_vsi" {
   kms_encryption_enabled     = local.kms_encryption_enabled
   boot_volume_encryption_key = local.boot_volume_encryption_key
   enable_bastion             = var.enable_bastion
+  enable_ldap                = var.enable_ldap
+  ldap_vsi_profile           = var.ldap_vsi_profile
+  ldap_vsi_osimage_name      = var.ldap_vsi_osimage_name
+  ldap_server                = var.ldap_server
 }
 
 module "prepare_tf_input" {
@@ -118,6 +122,15 @@ module "prepare_tf_input" {
   bastion_security_group_id                        = local.bastion_security_group_id
   deployer_hostname                                = local.deployer_hostname
   enable_hyperthreading                            = var.enable_hyperthreading
+  enable_ldap                                      = var.enable_ldap
+  ldap_vsi_profile                                 = var.ldap_vsi_profile
+  ldap_vsi_osimage_name                            = var.ldap_vsi_osimage_name
+  ldap_basedns                                     = var.ldap_basedns
+  ldap_admin_password                              = var.ldap_admin_password
+  ldap_user_name                                   = var.ldap_user_name
+  ldap_user_password                               = var.ldap_user_password
+  ldap_server                                      = var.ldap_server
+  ldap_server_cert                                 = var.ldap_server_cert
   scc_enable                                       = var.scc_enable
   scc_profile                                      = var.scc_profile
   scc_location                                     = var.scc_location
@@ -139,6 +152,16 @@ module "prepare_tf_input" {
   depends_on                                       = [module.deployer]
 }
 
+module "validate_ldap_server_connection" {
+  count                       = var.enable_deployer && var.enable_ldap && var.ldap_server != "null" ? 1 : 0
+  source                      = "./modules/ldap_remote_exec"
+  ldap_server                 = var.ldap_server
+  bastion_fip                 = local.bastion_fip
+  bastion_private_key_content = local.bastion_private_key_content
+  deployer_ip                 = local.deployer_ip
+  depends_on                  = [module.deployer]
+}
+
 module "resource_provisioner" {
   source                      = "./modules/resource_provisioner"
   ibmcloud_api_key            = var.ibmcloud_api_key
@@ -146,7 +169,7 @@ module "resource_provisioner" {
   bastion_fip                 = local.bastion_fip
   bastion_private_key_content = local.bastion_private_key_content
   deployer_ip                 = local.deployer_ip
-  depends_on                  = [module.deployer, module.prepare_tf_input]
+  depends_on                  = [module.deployer, module.prepare_tf_input, module.validate_ldap_server_connection]
 }
 
 module "file_storage" {
@@ -213,7 +236,7 @@ module "write_compute_cluster_inventory" {
   lsf_clients                 = local.client_nodes
   gui_hosts                   = local.gui_hosts
   db_hosts                    = local.db_hosts
-  my_cluster_name             = var.prefix
+  prefix                      = var.prefix
   ha_shared_dir               = local.ha_shared_dir
   nfs_install_dir             = local.nfs_install_dir
   enable_monitoring           = local.enable_monitoring
@@ -245,7 +268,7 @@ module "write_storage_cluster_inventory" {
   lsf_clients           = local.client_nodes
   gui_hosts             = local.gui_hosts
   db_hosts              = local.db_hosts
-  my_cluster_name       = var.prefix
+  prefix                = var.prefix
   ha_shared_dir         = local.ha_shared_dir
   nfs_install_dir       = local.nfs_install_dir
   enable_monitoring     = local.enable_monitoring
@@ -268,6 +291,16 @@ module "compute_inventory" {
   cloud_monitoring_prws_url           = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_prws_url : ""
   logs_enable_for_compute             = var.observability_logs_enable_for_compute
   cloud_logs_ingress_private_endpoint = local.cloud_logs_ingress_private_endpoint
+  ha_shared_dir                       = local.ha_shared_dir
+  prefix                              = var.prefix
+  enable_ldap                         = var.enable_ldap
+  ldap_server                         = var.ldap_server != "null" ? var.ldap_server : join(",", local.ldap_hosts)
+  playbooks_path                      = local.playbooks_path
+  ldap_basedns                        = var.ldap_basedns
+  ldap_admin_password                 = var.ldap_admin_password
+  ldap_user_name                      = var.ldap_user_name
+  ldap_user_password                  = var.ldap_user_password
+  ldap_server_cert                    = var.ldap_server_cert
   depends_on                          = [module.write_compute_cluster_inventory]
 }
 
@@ -278,6 +311,22 @@ module "storage_inventory" {
   inventory_path      = local.storage_inventory_path
   name_mount_path_map = local.fileshare_name_mount_path_map
   depends_on          = [module.write_storage_cluster_inventory]
+}
+
+module "ldap_inventory" {
+  count               = var.enable_deployer == false && var.enable_ldap && var.ldap_server == "null" ? 1 : 0
+  source              = "./modules/inventory"
+  prefix              = var.prefix
+  name_mount_path_map = local.fileshare_name_mount_path_map
+  enable_ldap         = var.enable_ldap
+  ldap_server         = var.ldap_server != "null" ? var.ldap_server : join(",", local.ldap_hosts)
+  playbooks_path      = local.playbooks_path
+  ldap_basedns        = var.ldap_basedns
+  ldap_admin_password = var.ldap_admin_password
+  ldap_user_name      = var.ldap_user_name
+  ldap_user_password  = var.ldap_user_password
+  ldap_server_cert    = var.ldap_server_cert
+  depends_on          = [module.write_compute_cluster_inventory]
 }
 
 module "compute_playbook" {
@@ -292,7 +341,10 @@ module "compute_playbook" {
   observability_provision     = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || var.observability_monitoring_enable ? true : false
   cloudlogs_provision         = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute ? true : false
   observability_playbook_path = local.observability_playbook_path
-  playbooks_root_path         = local.playbooks_root_path
+  lsf_mgmt_playbooks_path     = local.lsf_mgmt_playbooks_path
+  enable_ldap                 = var.enable_ldap
+  ldap_server                 = var.ldap_server
+  playbooks_path              = local.playbooks_path
   depends_on                  = [module.compute_inventory]
 }
 
