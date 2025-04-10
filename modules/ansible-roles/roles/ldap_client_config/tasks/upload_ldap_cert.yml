@@ -17,7 +17,7 @@
 
     - name: Copy ldap_cacert.pem to Bootstrap
       copy:
-        content: "{{ LDAP_SERVER_CERT }}"
+        content: "{{ LDAP_SERVER_CERT | replace('\\n', '\n') }}"
         dest: "{{ LDAP_CERT_FILES_DIR }}/ldap_cacert.pem"
         mode: '0644'
       when: not ldap_cert_status.stat.exists
