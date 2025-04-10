@@ -58,16 +58,10 @@ variable "enable_ldap" {
   description = "Set this option to true to enable LDAP for IBM Spectrum LSF, with the default value set to false."
 }
 
-variable "ldap_inventory_path" {
-  description = "LDAP Inventory file path"
+variable "ldap_server" {
   type        = string
-  default     = "ldap.ini"
-}
-
-variable "ldap_playbook_path" {
-  description = "LDAP Playbook path"
-  type        = string
-  default     = "ldap.yml"
+  default     = "null"
+  description = "Provide the IP address for the LDAP server."
 }
 
 variable "playbooks_path" {

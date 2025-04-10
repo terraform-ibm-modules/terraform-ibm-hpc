@@ -217,7 +217,6 @@ locals {
   ldap_hosts             = try([for instance in local.ldap_instances : instance["ipv4_address"]], [])
   compute_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute.ini" : "${path.root}/modules/ansible-roles/compute.ini"
   storage_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage.ini" : "${path.root}/modules/ansible-roles/storage.ini"
-  ldap_inventory_path    = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/ldap.ini" : "${path.root}/modules/ansible-roles/ldap.ini"
 }
 
 # locals needed for playbook
@@ -228,7 +227,6 @@ locals {
   compute_playbook_path       = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute_ssh.yaml" : "${path.root}/modules/ansible-roles/compute_ssh.yaml"
   observability_playbook_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/observability.yaml" : "${path.root}/modules/ansible-roles/observability.yaml"
   lsf_mgmt_playbooks_path     = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/lsf_mgmt_config.yml" : "${path.root}/modules/ansible-roles/lsf_mgmt_config.yml"
-  ldap_playbook_path          = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/ldap.yml" : "${path.root}/modules/ansible-roles/ldap.yml"
   playbooks_path              = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/" : "${path.root}/modules/ansible-roles/"
   # storage_playbook_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage_ssh.yaml" : "${path.root}/modules/ansible-roles/storage_ssh.yaml"
 }

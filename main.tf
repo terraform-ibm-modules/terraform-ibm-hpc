@@ -345,8 +345,7 @@ module "compute_playbook" {
   observability_playbook_path = local.observability_playbook_path
   lsf_mgmt_playbooks_path     = local.lsf_mgmt_playbooks_path
   enable_ldap                 = var.enable_ldap
-  ldap_inventory_path         = local.ldap_inventory_path
-  ldap_playbook_path          = local.ldap_playbook_path
+  ldap_server                 = var.ldap_server
   playbooks_path              = local.playbooks_path
   depends_on                  = [module.compute_inventory]
 }
