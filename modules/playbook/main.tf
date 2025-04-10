@@ -151,7 +151,7 @@ resource "local_file" "prepare_ldap_server_playbook" {
   count    = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" ? 1 : 0
   content  = <<EOT
 - name: LDAP Server Configuration
-  hosts: [all_nodes]
+  hosts: [ldap_server_node]
   any_errors_fatal: true
   gather_facts: true
   vars:
