@@ -148,7 +148,7 @@ resource "null_resource" "run_playbook_for_mgmt_config" {
 }
 
 resource "local_file" "prepare_ldap_server_playbook" {
-  count    = var.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" ? 1 : 0
+  count    = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" ? 1 : 0
   content  = <<EOT
 - name: LDAP Server Configuration
   hosts: [all_nodes]
@@ -170,11 +170,11 @@ EOT
 }
 
 resource "null_resource" "configure_ldap_server_playbook" {
-  count = var.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" ? 1 : 0
+  count = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -i ${var.ldap_server_inventory} ${var.prepare_ldap_server}"
+    command     = "ansible-playbook -i ${local.ldap_server_inventory} ${local.prepare_ldap_server}"
   }
   triggers = {
     build = timestamp()

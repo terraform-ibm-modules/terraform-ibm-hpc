@@ -171,6 +171,8 @@ module "validate_ldap_server_connection" {
   count                       = var.enable_ldap && var.ldap_server != "null" ? 1 : 0
   source                      = "./modules/ldap_remote_exec"
   ldap_server                 = var.ldap_server
+  enable_deployer             = var.enable_deployer
+  bastion_fip                 = local.bastion_fip
   bastion_private_key_content = local.bastion_private_key_content
   deployer_ip                 = local.deployer_ip
   depends_on                  = [module.deployer]
@@ -298,7 +300,7 @@ module "compute_inventory" {
   prefix                              = var.prefix
   enable_ldap                         = var.enable_ldap
   ldap_server                         = var.ldap_server != "null" ? var.ldap_server : join(",", local.ldap_hosts)
-  ldap_inventory_path                 = local.ldap_inventory_path
+  playbooks_path                      = local.playbooks_path
   ldap_basedns                        = var.ldap_basedns
   ldap_admin_password                 = var.ldap_admin_password
   ldap_user_name                      = var.ldap_user_name

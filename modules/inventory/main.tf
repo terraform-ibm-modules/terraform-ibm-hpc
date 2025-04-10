@@ -52,5 +52,5 @@ ldap_server_cert         = ${var.ldap_server_cert}
 ldap_user_name           = ${var.ldap_user_name}
 ldap_user_password       = ${var.ldap_user_password}
 EOT
-  filename = var.ldap_server_inventory
+  filename = local.ldap_server_inventory
 }
