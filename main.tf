@@ -344,6 +344,7 @@ module "compute_playbook" {
   enable_bastion              = var.enable_bastion
   ibmcloud_api_key            = var.ibmcloud_api_key
   observability_provision     = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || var.observability_monitoring_enable ? true : false
+  cloudlogs_provision         = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute ? true : false
   observability_playbook_path = local.observability_playbook_path
   lsf_mgmt_playbooks_path     = local.lsf_mgmt_playbooks_path
   enable_ldap                 = var.enable_ldap

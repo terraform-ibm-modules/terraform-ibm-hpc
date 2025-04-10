@@ -126,6 +126,9 @@
     path: /opt/ibm/temp_file.txt
     state: absent
   delegate_to: localhost
+  when:
+    - logs_enable_for_management | bool
+    - not logs_enable_for_compute | bool
 
 - name: Run post-config.sh script
   ansible.builtin.command: >

@@ -69,3 +69,9 @@ variable "playbooks_path" {
   type        = string
   default     = ""
 }
+
+variable "cloudlogs_provision" {
+  description = "Set true to provision cloud logs instances"
+  type        = bool
+  default     = false
+}
