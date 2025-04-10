@@ -1,6 +1,6 @@
 locals {
   proxyjump       = var.enable_bastion ? "-o ProxyJump=ubuntu@${var.bastion_fip}" : ""
-  prepare_ldap_server_inventory = format("%s/prepare_ldap_server_inventory.ini", var.playbooks_path)
+  ldap_server_inventory = format("%s/ldap_server_inventory.ini", var.playbooks_path)
   configure_ldap_client = format("%s/configure_ldap_client.yml", var.playbooks_path)
   prepare_ldap_server = format("%s/prepare_ldap_server.yml", var.playbooks_path)
 }
@@ -148,7 +148,7 @@ resource "null_resource" "run_playbook_for_mgmt_config" {
 }
 
 resource "local_file" "prepare_ldap_server_playbook" {
-  count    = var.prepare_ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" ? 1 : 0
+  count    = var.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" ? 1 : 0
   content  = <<EOT
 - name: LDAP Server Configuration
   hosts: [all_nodes]
@@ -170,11 +170,11 @@ EOT
 }
 
 resource "null_resource" "configure_ldap_server_playbook" {
-  count = var.prepare_ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" ? 1 : 0
+  count = var.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -i ${var.prepare_ldap_server_inventory} ${var.prepare_ldap_server}"
+    command     = "ansible-playbook -i ${var.ldap_server_inventory} ${var.prepare_ldap_server}"
   }
   triggers = {
     build = timestamp()

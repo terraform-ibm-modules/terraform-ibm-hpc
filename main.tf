@@ -323,7 +323,7 @@ module "ldap_inventory" {
   name_mount_path_map      = local.fileshare_name_mount_path_map
   enable_ldap              = var.enable_ldap
   ldap_server              = var.ldap_server != "null" ? var.ldap_server : join(",", local.ldap_hosts)
-  ldap_inventory_path      = local.ldap_inventory_path
+  playbooks_path           = local.playbooks_path
   ldap_basedns             = var.ldap_basedns
   ldap_admin_password      = var.ldap_admin_password
   ldap_user_name           = var.ldap_user_name

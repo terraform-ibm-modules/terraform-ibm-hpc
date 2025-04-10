@@ -1,3 +1,7 @@
+locals {
+  ldap_server_inventory = format("%s/ldap_server_inventory.ini", var.playbooks_path)
+}
+
 resource "local_sensitive_file" "mount_path_file" {
   content  = <<EOT
 [all_nodes]
@@ -48,5 +52,5 @@ ldap_server_cert         = ${var.ldap_server_cert}
 ldap_user_name           = ${var.ldap_user_name}
 ldap_user_password       = ${var.ldap_user_password}
 EOT
-  filename = var.ldap_inventory_path
+  filename = var.ldap_server_inventory
 }

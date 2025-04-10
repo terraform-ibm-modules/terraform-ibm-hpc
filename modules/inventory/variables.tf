@@ -74,7 +74,7 @@ variable "cloud_monitoring_prws_url" {
 }
 
 # LDAP
-variable "ldap_inventory_path" {
+variable "playbooks_path" {
   description = "Inventory file path"
   type        = string
   default     = "ldap.ini"
