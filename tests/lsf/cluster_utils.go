@@ -209,7 +209,7 @@ func LSFRestartDaemons(t *testing.T, sClient *ssh.Client, logger *utils.Aggregat
 	time.Sleep(defaultSleepDuration)
 
 	// Check if the restart was successful
-	if !(utils.VerifyDataContains(t, string(out), "Stopping", logger) && utils.VerifyDataContains(t, string(out), "Starting", logger)) {
+	if !utils.VerifyDataContains(t, string(out), "Stopping", logger) || !utils.VerifyDataContains(t, string(out), "Starting", logger) {
 		return fmt.Errorf("lsf_daemons restart failed")
 	}
 
@@ -683,7 +683,7 @@ func LSFDaemonsStatus(t *testing.T, sClient *ssh.Client, logger *utils.Aggregate
 	for scanner.Scan() {
 		line := scanner.Text()
 		if utils.VerifyDataContains(t, line, "pid", logger) {
-			if !(utils.VerifyDataContains(t, line, processes[i], logger) && utils.VerifyDataContains(t, line, expectedStatus, logger)) {
+			if !utils.VerifyDataContains(t, line, processes[i], logger) || !utils.VerifyDataContains(t, line, expectedStatus, logger) {
 				return fmt.Errorf("%s is not running", processes[i])
 			}
 			i++
@@ -801,7 +801,12 @@ func LSFCheckSSHKeyForManagementNodes(t *testing.T, publicHostName, publicHostIP
 		if err != nil {
 			return fmt.Errorf("failed to connect to the management node %s via SSH: %w", mgmtIP, err)
 		}
-		defer mgmtSshClient.Close()
+
+		defer func() {
+			if err := mgmtSshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close mgmtSshClient: %v", err))
+			}
+		}()
 
 		logger.Info(t, fmt.Sprintf("SSH connection to the management node %s successful", mgmtIP))
 
@@ -1732,7 +1737,12 @@ func verifyPTRRecords(t *testing.T, sClient *ssh.Client, publicHostName, publicH
 		if connectionErr != nil {
 			return fmt.Errorf("failed to connect to the management node %s via SSH: %v", mgmtIP, connectionErr)
 		}
-		defer mgmtSshClient.Close()
+
+		defer func() {
+			if err := mgmtSshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close mgmtSshClient: %v", err))
+			}
+		}()
 
 		// Verify PTR records on management node
 		if err := verifyPTR(mgmtSshClient, fmt.Sprintf("management node %s", mgmtIP)); err != nil {
@@ -1747,7 +1757,12 @@ func verifyPTRRecords(t *testing.T, sClient *ssh.Client, publicHostName, publicH
 		if connectionErr != nil {
 			return fmt.Errorf("failed to connect to the login node %s via SSH: %v", loginNodeIP, connectionErr)
 		}
-		defer loginSshClient.Close()
+
+		defer func() {
+			if err := loginSshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close loginSshClient: %v", err))
+			}
+		}()
 
 		// Verify PTR records on login node
 		if err := verifyPTR(loginSshClient, fmt.Sprintf("login node %s", loginNodeIP)); err != nil {
@@ -2135,14 +2150,21 @@ func CheckSSSDServiceStatus(t *testing.T, sClient *ssh.Client, logger *utils.Agg
 
 // GetLDAPServerCert retrieves the LDAP server certificate by connecting to the LDAP server via SSH.
 // It requires the public host name, bastion IP, LDAP host name, and LDAP server IP as inputs.
-// Returns the certificate as a string if successful or an error otherwise.
+// Returns the certificate as a string if successful, or an error otherwise.
 func GetLDAPServerCert(publicHostName, bastionIP, ldapHostName, ldapServerIP string) (string, error) {
 	// Establish SSH connection to LDAP server via bastion host
 	sshClient, connectionErr := utils.ConnectToHost(publicHostName, bastionIP, ldapHostName, ldapServerIP)
 	if connectionErr != nil {
 		return "", fmt.Errorf("failed to connect to LDAP server via SSH: %w", connectionErr)
 	}
-	defer sshClient.Close()
+
+	// Ensure SSH client is closed, log any close errors
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			// Log the error instead of returning
+			fmt.Printf("warning: failed to close sshClient: %v\n", err)
+		}
+	}()
 
 	// Command to retrieve LDAP server certificate
 	const ldapServerCertCmd = `cat /etc/ssl/certs/ldap_cacert.pem`
@@ -2153,7 +2175,6 @@ func GetLDAPServerCert(publicHostName, bastionIP, ldapHostName, ldapServerIP str
 		return "", fmt.Errorf("failed to execute command '%s' via SSH: %w", ldapServerCertCmd, execErr)
 	}
 
-	// Return the retrieved certificate
 	return ldapServerCert, nil
 }
 
@@ -2343,7 +2364,8 @@ func validateNodeLogFiles(t *testing.T, sClient *ssh.Client, node, sharedLogDir,
 	}
 
 	var logFiles []string
-	if nodeType == "management" {
+	switch nodeType {
+	case "management":
 		logFiles = []string{
 			fmt.Sprintf("%s/sbatchd.log.%s", dirPath, node),
 			fmt.Sprintf("%s/lim.log.%s", dirPath, node),
@@ -2351,7 +2373,7 @@ func validateNodeLogFiles(t *testing.T, sClient *ssh.Client, node, sharedLogDir,
 			fmt.Sprintf("%s/pim.log.%s", dirPath, node),
 			fmt.Sprintf("%s/Install.log", dirPath),
 		}
-	} else if nodeType == "master" {
+	case "master":
 		logFiles = []string{
 			fmt.Sprintf("%s/mbatchd.log.%s", dirPath, node),
 			fmt.Sprintf("%s/ebrokerd.log.%s", dirPath, node),
@@ -2471,7 +2493,12 @@ func LogFilesAfterMasterReboot(t *testing.T, sClient *ssh.Client, bastionIP, man
 		logger.Error(t, fmt.Sprintf("Failed to reconnect to the master via SSH after Management node Reboot: %s", connectionErr))
 		return fmt.Errorf("failed to reconnect to the master via SSH after Management node Reboot : %s", connectionErr)
 	}
-	defer sClient.Close()
+
+	defer func() {
+		if err := sClient.Close(); err != nil {
+			logger.Info(t, fmt.Sprintf("failed to close sClient: %v", err))
+		}
+	}()
 
 	// Validate the log files after reboot
 	for _, node := range managementNodes {
@@ -2535,7 +2562,12 @@ func LogFilesAfterMasterShutdown(t *testing.T, sshClient *ssh.Client, apiKey, re
 		logger.Error(t, errorMessage)
 		return fmt.Errorf("%s", errorMessage)
 	}
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	// Retrieve the new master node name after shutdown
 	newMasterNodeName, err := utils.GetMasterNodeName(t, sshClient, logger)
@@ -2609,7 +2641,12 @@ func LogFilesAfterMasterShutdown(t *testing.T, sshClient *ssh.Client, apiKey, re
 		logger.Error(t, errorMessage)
 		return fmt.Errorf("%s", errorMessage)
 	}
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	logger.Info(t, "Successfully switched back to the original master node after instance start")
 	return nil
@@ -2872,8 +2909,7 @@ func CheckAppCenterSetup(t *testing.T, sshClient *ssh.Client, logger *utils.Aggr
 	}
 
 	// Check for required configuration statuses in the output
-	if !(utils.VerifyDataContains(t, commandOutput, webguiStatus, logger) &&
-		utils.VerifyDataContains(t, commandOutput, pncStatus, logger)) {
+	if !utils.VerifyDataContains(t, commandOutput, webguiStatus, logger) || !utils.VerifyDataContains(t, commandOutput, pncStatus, logger) {
 		return fmt.Errorf("APP Center GUI or PNC configuration mismatch: %s", commandOutput)
 	}
 
@@ -3761,9 +3797,10 @@ func ValidateAtrackerRouteTarget(t *testing.T, apiKey, region, resourceGroup, cl
 
 	// Normalize targetType before validation
 	expectedTargetType := targetType
-	if targetType == "cloudlogs" {
+	switch targetType {
+	case "cloudlogs":
 		expectedTargetType = "cloud_logs"
-	} else if targetType == "cos" {
+	case "cos":
 		expectedTargetType = "cloud_object_storage"
 	}
 

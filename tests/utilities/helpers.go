@@ -162,7 +162,13 @@ func FindImageNamesByCriteria(name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer readFile.Close()
+
+	var returnErr error
+	defer func() {
+		if cerr := readFile.Close(); cerr != nil && returnErr == nil {
+			returnErr = fmt.Errorf("failed to close file: %w", cerr)
+		}
+	}()
 
 	// Create a scanner to read lines from the file
 	fileScanner := bufio.NewScanner(readFile)

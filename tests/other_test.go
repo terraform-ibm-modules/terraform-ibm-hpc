@@ -332,12 +332,13 @@ func TestRunInUsEastRegion(t *testing.T) {
 	require.NoError(t, err, "Failed to set up Terraform options.")
 
 	// Assign solution-specific Terraform variables.
-	if envVars.Solution == "HPC" {
+	switch envVars.Solution {
+	case "HPC":
 		options.TerraformVars["zones"] = usEastZone
 		options.TerraformVars["reservation_id"] = usEastReservationID
 		options.TerraformVars["cluster_name"] = usEastClusterName
 		testLogger.Info(t, "Terraform variables configured for HPC solution.")
-	} else if envVars.Solution == "lsf" {
+	case "lsf":
 		options.TerraformVars["zones"] = usEastZone
 		options.TerraformVars["worker_node_instance_type"] = []map[string]interface{}{
 			{
@@ -397,12 +398,13 @@ func TestRunInEuDeRegion(t *testing.T) {
 	require.NoError(t, err, "Failed to set up Terraform options.")
 
 	// Assign solution-specific Terraform variables.
-	if envVars.Solution == "HPC" {
+	switch envVars.Solution {
+	case "HPC":
 		options.TerraformVars["zones"] = euDeZone
 		options.TerraformVars["reservation_id"] = euDeReservationID
 		options.TerraformVars["cluster_name"] = euDeClusterName
 		testLogger.Info(t, "Terraform variables configured for HPC in Frankfurt.")
-	} else if envVars.Solution == "lsf" {
+	case "lsf":
 		options.TerraformVars["zones"] = euDeZone
 		options.TerraformVars["worker_node_instance_type"] = []map[string]interface{}{
 			{
@@ -463,12 +465,13 @@ func TestRunInUSSouthRegion(t *testing.T) {
 	require.NoError(t, err, "Failed to set up Terraform options.")
 
 	// Assign solution-specific Terraform variables.
-	if envVars.Solution == "HPC" {
+	switch envVars.Solution {
+	case "HPC":
 		options.TerraformVars["zones"] = usSouthZone
 		options.TerraformVars["reservation_id"] = usSouthReservationID
 		options.TerraformVars["cluster_name"] = usSouthClusterName
 		testLogger.Info(t, "Terraform variables configured for HPC in US South.")
-	} else if envVars.Solution == "lsf" {
+	case "lsf":
 		options.TerraformVars["zones"] = usSouthZone
 		options.TerraformVars["worker_node_instance_type"] = []map[string]interface{}{
 			{
@@ -528,12 +531,13 @@ func TestRunInJPTokyoRegion(t *testing.T) {
 	require.NoError(t, err, "Failed to set up Terraform options.")
 
 	// Assign solution-specific Terraform variables.
-	if envVars.Solution == "HPC" {
+	switch envVars.Solution {
+	case "HPC":
 		options.TerraformVars["zones"] = jpTokyoZone
 		options.TerraformVars["cluster_name"] = jpTokyoClusterName
 		options.TerraformVars["reservation_id"] = jpTokyoReservationID
 		testLogger.Info(t, "Terraform variables configured for HPC in JP Tokyo.")
-	} else if envVars.Solution == "lsf" {
+	case "lsf":
 		options.TerraformVars["zones"] = jpTokyoZone
 		options.TerraformVars["worker_node_instance_type"] = []map[string]interface{}{
 			{

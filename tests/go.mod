@@ -16,7 +16,7 @@ require (
 
 require (
 	dario.cat/mergo v1.0.1 // indirect
-	github.com/IBM-Cloud/bluemix-go v0.0.0-20250409011132-bdd4531aaa04 // indirect
+	github.com/IBM-Cloud/bluemix-go v0.0.0-20240719075425-078fcb3a55be // indirect
 	github.com/IBM-Cloud/power-go-client v1.11.0 // indirect
 	github.com/IBM/cloud-databases-go-sdk v0.7.1 // indirect
 	github.com/IBM/platform-services-go-sdk v0.79.0 // indirect
