@@ -246,9 +246,10 @@ locals {
   gui_hosts             = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA
   db_hosts              = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA
   ha_shared_dir         = "/mnt/lsf/shared"
+  region_1              = "region_1"
   nfs_install_dir       = "none"
-  region_1              = var.enable_deployer ? "" : "jayesh"
-  vpc_id_1              = var.enable_deployer ? "" : "anand"
+  # region_1              = var.enable_deployer ? "" : "jayesh"
+  # vpc_id_1              = var.enable_deployer ? "" : "anand"
   enable_monitoring     = false
   lsf_deployer_hostname = var.deployer_hostname #data.external.get_hostname.result.name  #var.enable_bastion ? "" : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
 
