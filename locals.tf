@@ -247,6 +247,8 @@ locals {
   db_hosts              = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA
   ha_shared_dir         = "/mnt/lsf/shared"
   nfs_install_dir       = "none"
+  region_1              = var.enable_deployer ? "" : "jayesh"
+  vpc_id_1              = var.enable_deployer ? "" : "anand"
   enable_monitoring     = false
   lsf_deployer_hostname = var.deployer_hostname #data.external.get_hostname.result.name  #var.enable_bastion ? "" : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
 
@@ -275,10 +277,8 @@ locals {
   compute_private_key_content = var.enable_deployer ? "" : jsonencode(base64encode(join("", flatten([module.landing_zone_vsi[0].compute_private_key_content]))))
   enable_hyperthreading       = var.enable_deployer ? false : var.enable_hyperthreading
   compute_subnet_id_1         = var.enable_deployer ? "" : local.compute_subnet_id
-  region_1                    = var.enable_deployer ? "" : "jayesh"
   resource_group_id           = var.enable_deployer ? "" : local.resource_group_ids["service_rg"]
   zones                       = var.enable_deployer ? [] : var.zones
-  vpc_id_1                    = var.enable_deployer ? "" : "anand"
   compute_subnets_cidr        = var.enable_deployer ? [] : var.compute_subnets_cidr
   dynamic_compute_instances   = var.enable_deployer ? [] : var.dynamic_compute_instances
   compute_security_group_id_1 = var.enable_deployer ? [] : local.compute_security_group_id
