@@ -270,7 +270,7 @@ locals {
 
   #Other variables
   ibmcloud_api_key            = var.enable_deployer ? "" : var.ibmcloud_api_key
-  dns_domain_names            = var.enable_deployer ? "" : var.dns_domain_names
+  dns_domain_names            = var.enable_deployer ? {} : var.dns_domain_names
   compute_public_key_content  = var.enable_deployer ? "" : jsonencode(base64encode(join("", flatten([module.landing_zone_vsi[0].compute_public_key_content]))))
   compute_private_key_content = var.enable_deployer ? "" : jsonencode(base64encode(join("", flatten([module.landing_zone_vsi[0].compute_private_key_content]))))
   enable_hyperthreading       = var.enable_deployer ? false : var.enable_hyperthreading
@@ -279,7 +279,7 @@ locals {
   resource_group_id           = var.enable_deployer ? "" : local.resource_group_ids["service_rg"]
   zones                       = var.enable_deployer ? [] : var.zones
   vpc_id_1                    = var.enable_deployer ? "" : local.vpc_id
-  compute_subnets_cidr        = var.enable_deployer ? "" : var.compute_subnets_cidr
+  compute_subnets_cidr        = var.enable_deployer ? [] : var.compute_subnets_cidr
   dynamic_compute_instances   = var.enable_deployer ? [] : var.dynamic_compute_instances
   compute_security_group_id_1 = var.enable_deployer ? [] : local.compute_security_group_id
   compute_ssh_keys_ids        = var.enable_deployer ? [] : [for name in local.compute_ssh_keys : data.ibm_is_ssh_key.compute_ssh_keys[name].id]
