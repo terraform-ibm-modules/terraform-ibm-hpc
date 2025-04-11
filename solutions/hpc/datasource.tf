@@ -84,3 +84,13 @@ resource "ibm_is_subnet_public_gateway_attachment" "zone_1_attachment" {
 data "ibm_is_dedicated_host_profiles" "worker" {
   count = var.enable_dedicated_host ? 1 : 0
 }
+
+data "ibm_is_ssh_key" "bastion" {
+  for_each = toset(var.bastion_ssh_keys)
+  name     = each.key
+}
+
+data "ibm_is_ssh_key" "compute" {
+  for_each = toset(var.compute_ssh_keys)
+  name     = each.key
+}

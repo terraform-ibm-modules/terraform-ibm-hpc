@@ -261,7 +261,7 @@ variable "bastion_subnets" {
   description = "Subnets to launch the bastion host."
 }
 
-variable "ssh_keys" {
+variable "bastion_ssh_keys" {
   type        = list(string)
   description = "The key pair to use to access the host."
 }

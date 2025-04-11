@@ -1,6 +1,6 @@
 module "landing_zone" {
   source                                 = "terraform-ibm-modules/landing-zone/ibm"
-  version                                = "6.6.3"
+  version                                = "7.4.3"
   prefix                                 = local.prefix
   region                                 = local.region
   tags                                   = local.tags
@@ -48,11 +48,15 @@ resource "ibm_is_subnet_public_gateway_attachment" "zone_1_attachment" {
 resource "null_resource" "compress_and_encode_folder" {
   provisioner "local-exec" {
     command = <<EOT
-    # Compress the folder
-    tar -czf ${path.module}/packer/hpcaas/compressed_compute.tar.gz ${path.module}/packer/hpcaas/compute
+      # Compress the compute folder into a .tar.gz archive
+      tar -czf ./packer/hpcaas/compressed_compute.tar.gz ./packer/hpcaas/compute
 
-    # Encode the compressed file to base64
-    base64 -i ${path.module}/packer/hpcaas/compressed_compute.tar.gz -o ${path.module}/packer/hpcaas/encoded_compute.txt
+      # Encode the archive to base64 format (macOS vs Linux handling)
+      if [[ "$(uname)" == "Darwin" ]]; then
+        base64 -i ./packer/hpcaas/compressed_compute.tar.gz -o ./packer/hpcaas/encoded_compute.txt
+      else
+        base64 ./packer/hpcaas/compressed_compute.tar.gz > ./packer/hpcaas/encoded_compute.txt
+      fi
     EOT
   }
 }
@@ -75,7 +79,7 @@ data "local_file" "encoded_compute_content" {
 
 module "packer_vsi" {
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.5.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = 1
   image_id                      = local.packer_image_id
   machine_type                  = local.packer_machine_type

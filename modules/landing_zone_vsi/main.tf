@@ -57,7 +57,7 @@ module "nfs_storage_sg" {
 module "management_vsi" {
   count                         = 1
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.5.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -67,7 +67,7 @@ module "management_vsi" {
   resource_group_id             = var.resource_group
   enable_floating_ip            = false
   security_group_ids            = module.compute_sg[*].security_group_id
-  ssh_key_ids                   = local.management_ssh_keys
+  ssh_key_ids                   = var.compute_ssh_keys
   subnets                       = [local.compute_subnets[0]]
   tags                          = local.tags
   user_data                     = "${data.template_file.management_user_data.rendered} ${file("${path.module}/templates/lsf_management.sh")}"
@@ -80,12 +80,12 @@ module "management_vsi" {
 module "management_candidate_vsi" {
   count                         = var.management_node_count - 1
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.5.0"
+  version                       = "5.0.0"
   create_security_group         = false
   security_group                = null
   security_group_ids            = module.compute_sg[*].security_group_id
   vpc_id                        = var.vpc_id
-  ssh_key_ids                   = local.management_ssh_keys
+  ssh_key_ids                   = var.compute_ssh_keys
   subnets                       = [local.compute_subnets[0]]
   resource_group_id             = var.resource_group
   enable_floating_ip            = false
@@ -103,7 +103,7 @@ module "management_candidate_vsi" {
 module "worker_vsi" {
   count                         = length(local.flattened_worker_nodes)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.5.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -113,7 +113,7 @@ module "worker_vsi" {
   resource_group_id             = var.resource_group
   enable_floating_ip            = false
   security_group_ids            = module.compute_sg[*].security_group_id
-  ssh_key_ids                   = local.management_ssh_keys
+  ssh_key_ids                   = var.compute_ssh_keys
   subnets                       = [local.compute_subnets[0]]
   tags                          = local.tags
   user_data                     = "${data.template_file.worker_user_data.rendered} ${file("${path.module}/templates/static_worker_vsi.sh")}"
@@ -129,7 +129,7 @@ module "worker_vsi" {
 module "login_vsi" {
   #  count                         = 1
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.5.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -139,7 +139,7 @@ module "login_vsi" {
   resource_group_id             = var.resource_group
   enable_floating_ip            = false
   security_group_ids            = [var.bastion_security_group_id]
-  ssh_key_ids                   = local.bastion_ssh_keys
+  ssh_key_ids                   = var.bastion_ssh_keys
   subnets                       = length(var.bastion_subnets) == 2 ? [local.bastion_subnets[1]] : [local.bastion_subnets[0]]
   tags                          = local.tags
   user_data                     = "${data.template_file.login_user_data.rendered} ${file("${path.module}/templates/login_vsi.sh")}"
@@ -153,7 +153,7 @@ module "login_vsi" {
 module "ldap_vsi" {
   count                         = local.ldap_enable
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.5.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -163,7 +163,7 @@ module "ldap_vsi" {
   resource_group_id             = var.resource_group
   enable_floating_ip            = false
   security_group_ids            = module.compute_sg[*].security_group_id
-  ssh_key_ids                   = local.management_ssh_keys
+  ssh_key_ids                   = var.compute_ssh_keys
   subnets                       = [local.compute_subnets[0]]
   tags                          = local.tags
   user_data                     = var.enable_ldap == true && var.ldap_server == "null" ? "${data.template_file.ldap_user_data[0].rendered} ${file("${path.module}/templates/ldap_user_data.sh")}" : ""
