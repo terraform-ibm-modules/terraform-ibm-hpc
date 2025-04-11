@@ -420,3 +420,9 @@ variable "existing_kms_instance_guid" {
   default     = null
   description = "The existing KMS instance guid."
 }
+
+variable "skip_iam_share_authorization_policy" {
+  type        = bool
+  default     = false
+  description = "When using an existing KMS instance name, set this value to true if authorization is already enabled between KMS instance and the VPC file share. Otherwise, default is set to false. Ensuring proper authorization avoids access issues during deployment.For more information on how to create authorization policy manually, see [creating authorization policies for VPC file share](https://cloud.ibm.com/docs/vpc?topic=vpc-file-s2s-auth&interface=ui)."
+}

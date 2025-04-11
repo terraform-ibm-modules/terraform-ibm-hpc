@@ -121,6 +121,7 @@ module "prepare_tf_input" {
   kms_key_name                                     = var.kms_key_name
   boot_volume_encryption_key                       = local.boot_volume_encryption_key
   existing_kms_instance_guid                       = local.existing_kms_instance_guid
+  skip_iam_share_authorization_policy              = var.skip_iam_share_authorization_policy
   bastion_security_group_id                        = local.bastion_security_group_id
   deployer_hostname                                = local.deployer_hostname
   enable_hyperthreading                            = var.enable_hyperthreading
