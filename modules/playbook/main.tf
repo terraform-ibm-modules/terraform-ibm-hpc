@@ -56,7 +56,7 @@ EOT
 }
 
 resource "null_resource" "run_playbook" {
-  count = var.inventory_path != null ? 1 : 0
+  count = var.inventory_path != null ? 0 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook -f 50 -i ${var.inventory_path} ${var.playbook_path}"
@@ -68,7 +68,7 @@ resource "null_resource" "run_playbook" {
 }
 
 resource "null_resource" "run_lsf_playbooks" {
-  count = var.inventory_path != null ? 1 : 0
+  count = var.inventory_path != null ? 0 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -136,7 +136,7 @@ EOT
 
 
 resource "null_resource" "run_playbook_for_mgmt_config" {
-  count = var.inventory_path != null ? 1 : 0
+  count = var.inventory_path != null ? 0 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook -i ${var.inventory_path} ${var.lsf_mgmt_playbooks_path}"
@@ -170,7 +170,7 @@ EOT
 }
 
 resource "null_resource" "configure_ldap_server_playbook" {
-  count = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" ? 1 : 0
+  count = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" ? 0 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -205,7 +205,7 @@ EOT
 }
 
 resource "null_resource" "run_ldap_client_playbooks" {
-  count = var.inventory_path != null && var.enable_ldap ? 1 : 0
+  count = var.inventory_path != null && var.enable_ldap ? 0 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
