@@ -71,11 +71,12 @@ variable "dns_domain_names" {
     storage  = string
     protocol = string
   })
-  default = {
-    compute  = "comp.com"
-    storage  = "strg.com"
-    protocol = "ces.com"
-  }
+  default    = null
+  # default = {
+  #   compute  = "comp.com"
+  #   storage  = "strg.com"
+  #   protocol = "ces.com"
+  # }
   description = "IBM Cloud HPC DNS domain names."
 }
 
@@ -168,10 +169,11 @@ variable "dynamic_compute_instances" {
       image   = string
     })
   )
-  default = [{
-    profile = "cx2-2x4"
-    count   = 1024
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
-  }]
+  default     = null
+  # default = [{
+  #   profile = "cx2-2x4"
+  #   count   = 1024
+  #   image   = "ibm-redhat-8-10-minimal-amd64-2"
+  # }]
   description = "MaxNumber of instances to be launched for compute cluster."
 }
