@@ -295,6 +295,12 @@ variable "boot_volume_encryption_key" {
   description = "CRN of boot volume encryption key"
 }
 
+variable "existing_kms_instance_guid" {
+  type        = string
+  default     = null
+  description = "The existing KMS instance guid."
+}
+
 ##############################################################################
 # TODO: Auth Server (LDAP/AD) Variables
 ##############################################################################

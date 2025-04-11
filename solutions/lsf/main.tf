@@ -44,6 +44,7 @@ module "lsf" {
   vpn_preshared_key                                = local.env.vpn_preshared_key
   kms_instance_name                                = local.env.kms_instance_name
   kms_key_name                                     = local.env.kms_key_name
+  skip_iam_share_authorization_policy              = local.env.skip_iam_share_authorization_policy
   observability_atracker_enable                    = local.env.observability_atracker_enable
   observability_atracker_target_type               = local.env.observability_atracker_target_type
   observability_monitoring_enable                  = local.env.observability_monitoring_enable

@@ -84,6 +84,7 @@ module "landing_zone_vsi" {
   dns_domain_names           = var.dns_domain_names
   kms_encryption_enabled     = local.kms_encryption_enabled
   boot_volume_encryption_key = var.boot_volume_encryption_key
+  existing_kms_instance_guid = var.existing_kms_instance_guid
   enable_bastion             = var.enable_bastion
 }
 
@@ -118,6 +119,8 @@ module "prepare_tf_input" {
   key_management                                   = var.key_management
   kms_instance_name                                = var.kms_instance_name
   kms_key_name                                     = var.kms_key_name
+  boot_volume_encryption_key                       = local.boot_volume_encryption_key
+  existing_kms_instance_guid                       = local.existing_kms_instance_guid
   bastion_security_group_id                        = local.bastion_security_group_id
   deployer_hostname                                = local.deployer_hostname
   enable_hyperthreading                            = var.enable_hyperthreading
@@ -139,7 +142,6 @@ module "prepare_tf_input" {
   observability_enable_metrics_routing             = var.observability_enable_metrics_routing
   observability_atracker_enable                    = var.observability_atracker_enable
   observability_atracker_target_type               = var.observability_atracker_target_type
-  boot_volume_encryption_key                       = local.boot_volume_encryption_key
   depends_on                                       = [module.deployer]
 }
 
@@ -154,14 +156,17 @@ module "resource_provisioner" {
 }
 
 module "file_storage" {
-  count              = var.enable_deployer == false ? 1 : 0
-  source             = "./modules/file_storage"
-  zone               = var.zones[0] # always the first zone
-  resource_group_id  = local.resource_group_ids["service_rg"]
-  file_shares        = local.file_shares
-  encryption_key_crn = local.boot_volume_encryption_key
-  security_group_ids = local.compute_security_group_id
-  subnet_id          = local.compute_subnet_id
+  count                               = var.enable_deployer == false ? 1 : 0
+  source                              = "./modules/file_storage"
+  zone                                = var.zones[0] # always the first zone
+  resource_group_id                   = local.resource_group_ids["service_rg"]
+  file_shares                         = local.file_shares
+  encryption_key_crn                  = local.boot_volume_encryption_key
+  security_group_ids                  = local.compute_security_group_id
+  subnet_id                           = local.compute_subnet_id
+  existing_kms_instance_guid          = var.existing_kms_instance_guid
+  skip_iam_share_authorization_policy = var.skip_iam_share_authorization_policy
+  kms_encryption_enabled              = local.kms_encryption_enabled
 }
 
 module "dns" {

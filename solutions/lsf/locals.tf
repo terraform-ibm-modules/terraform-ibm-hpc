@@ -65,6 +65,7 @@ locals {
     vpn_preshared_key                                = var.vpn_preshared_key
     kms_instance_name                                = var.kms_instance_name
     kms_key_name                                     = var.kms_key_name
+    skip_iam_share_authorization_policy              = var.skip_iam_share_authorization_policy
     observability_atracker_enable                    = var.observability_atracker_enable
     observability_atracker_target_type               = var.observability_atracker_target_type
     observability_monitoring_enable                  = var.observability_monitoring_enable
@@ -138,6 +139,7 @@ locals {
     vpn_preshared_key                                = lookup(local.override[local.override_type], "vpn_preshared_key", local.config.vpn_preshared_key)
     kms_instance_name                                = lookup(local.override[local.override_type], "kms_instance_name", local.config.kms_instance_name)
     kms_key_name                                     = lookup(local.override[local.override_type], "kms_key_name", local.config.kms_key_name)
+    skip_iam_share_authorization_policy              = lookup(local.override[local.override_type], "skip_iam_share_authorization_policy", local.config.skip_iam_share_authorization_policy)
     observability_atracker_enable                    = lookup(local.override[local.override_type], "observability_atracker_enable", local.config.observability_atracker_enable)
     observability_atracker_target_type               = lookup(local.override[local.override_type], "observability_atracker_target_type", local.config.observability_atracker_target_type)
     observability_monitoring_enable                  = lookup(local.override[local.override_type], "observability_monitoring_enable", local.config.observability_monitoring_enable)

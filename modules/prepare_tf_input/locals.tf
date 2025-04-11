@@ -20,4 +20,5 @@ locals {
   kms_instance_name          = jsonencode(var.kms_instance_name)
   key_management             = jsonencode(var.key_management)
   boot_volume_encryption_key = jsonencode(var.boot_volume_encryption_key)
+  existing_kms_instance_guid = jsonencode(var.existing_kms_instance_guid)
 }

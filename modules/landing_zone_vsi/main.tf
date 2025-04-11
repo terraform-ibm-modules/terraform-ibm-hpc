@@ -106,6 +106,7 @@ module "client_vsi" {
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
+  existing_kms_instance_guid    = var.existing_kms_instance_guid
 }
 
 module "management_vsi" {
@@ -129,6 +130,7 @@ module "management_vsi" {
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
+  existing_kms_instance_guid    = var.existing_kms_instance_guid
   placement_group_id            = var.placement_group_ids
   #placement_group_id = var.placement_group_ids[(var.management_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
@@ -154,6 +156,7 @@ module "compute_vsi" {
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
+  existing_kms_instance_guid    = var.existing_kms_instance_guid
   placement_group_id            = var.placement_group_ids
   #placement_group_id = var.placement_group_ids[(var.static_compute_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
@@ -180,6 +183,7 @@ module "storage_vsi" {
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
+  existing_kms_instance_guid    = var.existing_kms_instance_guid
   placement_group_id            = var.placement_group_ids
   #placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
@@ -205,6 +209,7 @@ module "protocol_vsi" {
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
+  existing_kms_instance_guid    = var.existing_kms_instance_guid
   # Bug: 5847 - LB profile & subnets are not configurable
   # load_balancers        = local.enable_load_balancer ? local.load_balancers : []
   secondary_allow_ip_spoofing = true

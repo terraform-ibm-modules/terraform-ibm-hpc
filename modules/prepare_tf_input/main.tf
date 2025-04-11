@@ -33,6 +33,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "kms_instance_name" : ${local.kms_instance_name},
   "kms_key_name": ${local.kms_key_name},
   "boot_volume_encryption_key": ${local.boot_volume_encryption_key},
+  "existing_kms_instance_guid": ${local.existing_kms_instance_guid},
   "bastion_security_group_id": "${var.bastion_security_group_id}",
   "deployer_hostname": "${var.deployer_hostname}",
   "deployer_ip": "${var.deployer_ip}",

@@ -10,6 +10,20 @@ resource "ibm_is_share" "share" {
   encryption_key      = var.encryption_key_crn
 }
 
+resource "ibm_iam_authorization_policy" "policy" {
+  count                       = var.kms_encryption_enabled == false || var.skip_iam_share_authorization_policy ? 0 : 1
+  source_service_name         = "is"
+  source_resource_type        = "share"
+  target_service_name         = "kms"
+  target_resource_instance_id = var.existing_kms_instance_guid
+  roles                       = ["Reader"]
+}
+
+resource "time_sleep" "wait_for_authorization_policy" {
+  depends_on      = [ibm_iam_authorization_policy.policy[0]]
+  create_duration = "30s"
+}
+
 resource "ibm_is_share_mount_target" "share_target_vpc" {
   count = var.file_shares != null && var.security_group_ids == null ? length(var.file_shares) : 0
   share = ibm_is_share.share[count.index].id
