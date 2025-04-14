@@ -1,9 +1,3 @@
-# resource "null_resource" "cleanup_json_file" {
-#   provisioner "local-exec" {
-#     command = "if [ -f ${var.json_inventory_path} ]; then rm -f ${var.json_inventory_path}; fi"
-#   }
-# }
-
 # Write provisioned infrastructure details to JSON.
 resource "local_sensitive_file" "infra_details_to_json" {
   content  = <<EOT

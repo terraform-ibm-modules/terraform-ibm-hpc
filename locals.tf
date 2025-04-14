@@ -246,10 +246,7 @@ locals {
   gui_hosts             = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA
   db_hosts              = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA
   ha_shared_dir         = "/mnt/lsf/shared"
-  region_1              = "region_1"
   nfs_install_dir       = "none"
-  # region_1              = var.enable_deployer ? "" : "jayesh"
-  vpc_id_1              = var.enable_deployer ? "" : "anand"
   enable_monitoring     = false
   lsf_deployer_hostname = var.deployer_hostname #data.external.get_hostname.result.name  #var.enable_bastion ? "" : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
 
@@ -266,39 +263,10 @@ locals {
   scc_cos_bucket       = length(module.landing_zone.cos_buckets_names) > 0 && var.scc_enable ? [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0] : ""
   scc_cos_instance_crn = length(module.landing_zone.cos_instance_crns) > 0 && var.scc_enable ? module.landing_zone.cos_instance_crns[0] : ""
 
-  # compute_subnet_crn          = data.ibm_is_subnet.compute_subnet_crn.crn
-  # compute_ssh_keys_ids        = [for name in local.compute_ssh_keys : data.ibm_is_ssh_key.compute_ssh_keys[name].id]
-  # compute_public_key_content  = var.enable_deployer ? "" : jsonencode(base64encode(join("", flatten([module.landing_zone_vsi[0].compute_public_key_content]))))
-  # compute_private_key_content = var.enable_deployer ? "" : jsonencode(base64encode(join("", flatten([module.landing_zone_vsi[0].compute_private_key_content]))))
-
-  # Other variables
-  ibmcloud_api_key            = var.enable_deployer ? "" : var.ibmcloud_api_key
-  dns_domain_names            = var.enable_deployer ? {} : var.dns_domain_names
   compute_public_key_content  = var.enable_deployer ? "" : jsonencode(base64encode(join("", flatten([module.landing_zone_vsi[0].compute_public_key_content]))))
   compute_private_key_content = var.enable_deployer ? "" : jsonencode(base64encode(join("", flatten([module.landing_zone_vsi[0].compute_private_key_content]))))
-  enable_hyperthreading       = var.enable_deployer ? false : var.enable_hyperthreading
   compute_subnet_id_1         = var.enable_deployer ? "" : local.compute_subnet_id
   resource_group_id           = var.enable_deployer ? "" : local.resource_group_ids["service_rg"]
-  zones                       = var.enable_deployer ? [] : var.zones
-  compute_subnets_cidr        = var.enable_deployer ? [] : var.compute_subnets_cidr
-  dynamic_compute_instances   = var.enable_deployer ? [] : var.dynamic_compute_instances
-  compute_security_group_id_1 = var.enable_deployer ? [] : local.compute_security_group_id
   compute_ssh_keys_ids        = var.enable_deployer ? [] : [for name in local.compute_ssh_keys : data.ibm_is_ssh_key.compute_ssh_keys[name].id]
   compute_subnet_crn          = var.enable_deployer ? "" : data.ibm_is_subnet.compute_subnet_crn.crn
-
-  # ibmcloud_api_key             = var.enable_deployer ? ""  : try(var.ibmcloud_api_key, "")
-  # dns_domain_names             = var.enable_deployer ? {}  : try(var.dns_domain_names, {})
-  # compute_public_key_content   = var.enable_deployer ? ""  : try(jsonencode(base64encode(join("", flatten([module.landing_zone_vsi[0].compute_public_key_content])))), "")
-  # compute_private_key_content  = var.enable_deployer ? ""  : try(jsonencode(base64encode(join("", flatten([module.landing_zone_vsi[0].compute_private_key_content])))), "")
-  # compute_subnet_id_1          = var.enable_deployer ? ""  : try(local.compute_subnet_id, "")
-  # region_1                     = var.enable_deployer ? ""  : try(local.region, "")
-  # resource_group_id            = var.enable_deployer ? ""  : try(local.resource_group_ids["service_rg"], "")
-  # vpc_id_1                     = var.enable_deployer ? ""  : try(local.vpc_id, "")
-  # compute_subnets_cidr         = var.enable_deployer ? []  : try(var.compute_subnets_cidr, [])
-  # compute_security_group_id_1  = var.enable_deployer ? []  : try(local.compute_security_group_id, [])
-  # compute_ssh_keys_ids         = var.enable_deployer ? []  : try([for name in local.compute_ssh_keys : data.ibm_is_ssh_key.compute_ssh_keys[name].id], [])
-  # compute_subnet_crn           = var.enable_deployer ? ""  : try(data.ibm_is_subnet.compute_subnet_crn.crn, "")
-  # enable_hyperthreading        = var.enable_deployer ? false : try(var.enable_hyperthreading, false)
-  # zones                        = var.enable_deployer ? []    : try(var.zones, [])
-  # dynamic_compute_instances    = var.enable_deployer ? []    : try(var.dynamic_compute_instances, [])
 }
