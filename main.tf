@@ -256,7 +256,7 @@ module "write_compute_cluster_inventory" {
   compute_security_group_id   = local.compute_security_group_id_1
   compute_ssh_keys_ids        = local.compute_ssh_keys_ids
   compute_subnet_crn          = local.compute_subnet_crn
-  depends_on                  = [time_sleep.wait_60_seconds]
+  depends_on                  = [time_sleep.wait_60_seconds, module.landing_zone_vsi]
 }
 
 module "write_storage_cluster_inventory" {
