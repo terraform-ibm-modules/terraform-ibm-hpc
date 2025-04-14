@@ -75,3 +75,9 @@ variable "cloudlogs_provision" {
   type        = bool
   default     = false
 }
+
+variable "scheduler" {
+  default     = null
+  type        = string
+  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+}

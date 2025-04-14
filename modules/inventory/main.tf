@@ -5,6 +5,7 @@ locals {
 resource "local_sensitive_file" "mount_path_file" {
   content  = <<EOT
 [all_nodes]
+scheduler = ${jsonencode(var.scheduler)}
 ${join("\n", var.hosts)}
 
 [management_nodes]

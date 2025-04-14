@@ -157,7 +157,7 @@ variable "enable_deployer" {
 
 variable "deployer_image" {
   type        = string
-  default     = "ibm-redhat-8-10-minimal-amd64-2"
+  default     = "ibm-redhat-8-10-minimal-amd64-4"
   description = "The image to use to deploy the deployer host."
 }
 
@@ -176,11 +176,11 @@ variable "client_subnets" {
   description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
 }
 
-# variable "client_subnets_cidr" {
-#   type        = list(string)
-#   default     = ["10.10.10.0/24", "10.20.10.0/24", "10.30.10.0/24"]
-#   description = "Subnet CIDR block to launch the client host."
-# }
+variable "client_subnets_cidr" {
+  type        = list(string)
+  default     = ["10.10.10.0/24", "10.20.10.0/24", "10.30.10.0/24"]
+  description = "Subnet CIDR block to launch the client host."
+}
 
 variable "client_ssh_keys" {
   type        = list(string)
@@ -199,7 +199,7 @@ variable "client_instances" {
   default = [{
     profile = "cx2-2x4"
     count   = 0
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "Number of instances to be launched for client."
 }
@@ -233,7 +233,7 @@ variable "management_instances" {
   default = [{
     profile = "cx2-2x4"
     count   = 0
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "Number of instances to be launched for management."
 }
@@ -241,15 +241,17 @@ variable "management_instances" {
 variable "static_compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = string
     })
   )
   default = [{
-    profile = "cx2-2x4"
-    count   = 0
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    profile    = "cx2-2x4"
+    count      = 0
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "/gpfs/fs1"
   }]
   description = "Min Number of instances to be launched for compute cluster."
 }
@@ -265,24 +267,24 @@ variable "dynamic_compute_instances" {
   default = [{
     profile = "cx2-2x4"
     count   = 1024
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "MaxNumber of instances to be launched for compute cluster."
 }
 
-# variable "compute_gui_username" {
-#   type        = string
-#   default     = "admin"
-#   sensitive   = true
-#   description = "GUI user to perform system management and monitoring tasks on compute cluster."
-# }
+variable "compute_gui_username" {
+  type        = string
+  default     = "admin"
+  sensitive   = true
+  description = "GUI user to perform system management and monitoring tasks on compute cluster."
+}
 
-# variable "compute_gui_password" {
-#   type        = string
-#   default     = "hpc@IBMCloud"
-#   sensitive   = true
-#   description = "Password for compute cluster GUI"
-# }
+variable "compute_gui_password" {
+  type        = string
+  default     = "hpc@IBMCloud"
+  sensitive   = true
+  description = "Password for compute cluster GUI"
+}
 
 ##############################################################################
 # Storage Variables
@@ -311,14 +313,14 @@ variable "storage_instances" {
       profile    = string
       count      = number
       image      = string
-      filesystem = optional(string)
+      filesystem = string
     })
   )
   default = [{
     profile    = "bx2-2x8"
     count      = 0
-    image      = "ibm-redhat-8-10-minimal-amd64-2"
-    filesystem = "fs1"
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "/ibm/fs1"
   }]
   description = "Number of instances to be launched for storage cluster."
 }
@@ -346,30 +348,30 @@ variable "protocol_instances" {
   default = [{
     profile = "bx2-2x8"
     count   = 0
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "Number of instances to be launched for protocol hosts."
 }
 
-# variable "colocate_protocol_instances" {
-#   type        = bool
-#   default     = true
-#   description = "Enable it to use storage instances as protocol instances"
-# }
+variable "colocate_protocol_instances" {
+  type        = bool
+  default     = true
+  description = "Enable it to use storage instances as protocol instances"
+}
 
-# variable "storage_gui_username" {
-#   type        = string
-#   default     = "admin"
-#   sensitive   = true
-#   description = "GUI user to perform system management and monitoring tasks on storage cluster."
-# }
+variable "storage_gui_username" {
+  type        = string
+  default     = "admin"
+  sensitive   = true
+  description = "GUI user to perform system management and monitoring tasks on storage cluster."
+}
 
-# variable "storage_gui_password" {
-#   type        = string
-#   default     = "hpc@IBMCloud"
-#   sensitive   = true
-#   description = "Password for storage cluster GUI"
-# }
+variable "storage_gui_password" {
+  type        = string
+  default     = "hpc@IBMCloud"
+  sensitive   = true
+  description = "Password for storage cluster GUI"
+}
 
 variable "nsd_details" {
   type = list(
@@ -423,11 +425,15 @@ variable "dns_domain_names" {
     compute  = string
     storage  = string
     protocol = string
+    client   = string
+    gklm     = string
   })
   default = {
     compute  = "comp.com"
     storage  = "strg.com"
     protocol = "ces.com"
+    client   = "clnt.com"
+    gklm     = "gklm.com"
   }
   description = "IBM Cloud HPC DNS domain names."
 }
@@ -457,11 +463,11 @@ variable "kms_key_name" {
   description = "Provide the existing kms key name that you want to use for the IBM Cloud HPC cluster. Note: kms_key_name to be considered only if key_management value is set as key_protect.(for example kms_key_name: my-encryption-key)."
 }
 
-# variable "hpcs_instance_name" {
-#   type        = string
-#   default     = null
-#   description = "Hyper Protect Crypto Service instance"
-# }
+variable "hpcs_instance_name" {
+  type        = string
+  default     = null
+  description = "Hyper Protect Crypto Service instance"
+}
 
 variable "skip_flowlogs_s2s_auth_policy" {
   type        = bool
@@ -505,68 +511,68 @@ variable "enable_vpc_flow_logs" {
 ##############################################################################
 # Scale specific Variables
 ##############################################################################
-# variable "filesystem_config" {
-#   type = list(
-#     object({
-#       filesystem               = string
-#       block_size               = string
-#       default_data_replica     = number
-#       default_metadata_replica = number
-#       max_data_replica         = number
-#       max_metadata_replica     = number
-#       mount_point              = string
-#     })
-#   )
-#   default     = null
-#   description = "File system configurations."
-# }
+variable "filesystem_config" {
+  type = list(
+    object({
+      filesystem               = string
+      block_size               = string
+      default_data_replica     = number
+      default_metadata_replica = number
+      max_data_replica         = number
+      max_metadata_replica     = number
+      mount_point              = string
+    })
+  )
+  default     = null
+  description = "File system configurations."
+}
 
-# variable "filesets_config" {
-#   type = list(
-#     object({
-#       fileset           = string
-#       filesystem        = string
-#       junction_path     = string
-#       client_mount_path = string
-#       quota             = number
-#     })
-#   )
-#   default     = null
-#   description = "Fileset configurations."
-# }
+variable "filesets_config" {
+  type = list(
+    object({
+      fileset           = string
+      filesystem        = string
+      junction_path     = string
+      client_mount_path = string
+      quota             = number
+    })
+  )
+  default     = null
+  description = "Fileset configurations."
+}
 
-# variable "afm_instances" {
-#   type = list(
-#     object({
-#       profile = string
-#       count   = number
-#       image   = string
-#     })
-#   )
-#   default = [{
-#     profile = "bx2-2x8"
-#     count   = 0
-#     image   = "ibm-redhat-8-10-minimal-amd64-2"
-#   }]
-#   description = "Number of instances to be launched for afm hosts."
-# }
+variable "afm_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  default = [{
+    profile = "bx2-2x8"
+    count   = 0
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
+  }]
+  description = "Number of instances to be launched for afm hosts."
+}
 
-# variable "afm_cos_config" {
-#   type = list(
-#     object({
-#       afm_fileset          = string,
-#       mode                 = string,
-#       cos_instance         = string,
-#       bucket_name          = string,
-#       bucket_region        = string,
-#       cos_service_cred_key = string,
-#       bucket_type          = string,
-#       bucket_storage_class = string
-#     })
-#   )
-#   default     = null
-#   description = "AFM configurations."
-# }
+variable "afm_cos_config" {
+  type = list(
+    object({
+      afm_fileset          = string,
+      mode                 = string,
+      cos_instance         = string,
+      bucket_name          = string,
+      bucket_region        = string,
+      cos_service_cred_key = string,
+      bucket_type          = string,
+      bucket_storage_class = string
+    })
+  )
+  default     = null
+  description = "AFM configurations."
+}
 
 ##############################################################################
 # LSF specific Variables
@@ -630,67 +636,6 @@ variable "enable_hyperthreading" {
 ##############################################################################
 # Slurm  specific Variables
 ##############################################################################
-
-##############################################################################
-# Open LDAP Variables
-##############################################################################
-
-variable "enable_ldap" {
-  type        = bool
-  default     = false
-  description = "Set this option to true to enable LDAP for IBM Spectrum LSF, with the default value set to false."
-}
-
-variable "ldap_basedns" {
-  type        = string
-  default     = "lsf.com"
-  description = "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."
-}
-
-variable "ldap_server" {
-  type        = string
-  default     = "null"
-  description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
-}
-
-variable "ldap_server_cert" {
-  type        = string
-  sensitive   = true
-  default     = "null"
-  description = "Provide the existing LDAP server certificate. This value is required if the 'ldap_server' variable is not set to null. If the certificate is not provided or is invalid, the LDAP configuration may fail. For more information on how to create or obtain the certificate, please refer [existing LDAP server certificate](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-integrating-openldap)."
-}
-
-variable "ldap_admin_password" {
-  type        = string
-  sensitive   = true
-  default     = ""
-  description = "The LDAP administrative password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required. It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
-}
-
-variable "ldap_user_name" {
-  type        = string
-  default     = ""
-  description = "Custom LDAP User for performing cluster operations. Note: Username should be between 4 to 32 characters, (any combination of lowercase and uppercase letters).[This value is ignored for an existing LDAP server]"
-}
-
-variable "ldap_user_password" {
-  type        = string
-  sensitive   = true
-  default     = ""
-  description = "The LDAP user password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required.It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
-}
-
-variable "ldap_vsi_profile" {
-  type        = string
-  default     = "cx2-2x4"
-  description = "Specify the virtual server instance profile type to be used to create the ldap node for the IBM Spectrum LSF cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
-}
-
-variable "ldap_vsi_osimage_name" {
-  type        = string
-  default     = "ibm-ubuntu-22-04-4-minimal-amd64-3"
-  description = "Image name to be used for provisioning the LDAP instances. By default ldap server are created on Ubuntu based OS flavour."
-}
 
 ##############################################################################
 # Observability Variables
@@ -860,4 +805,222 @@ variable "scc_cos_instance_crn" {
   type        = string
   default     = null
   description = "scc cos instance crn"
+}
+
+#############################################################################
+# VARIABLES TO BE CHECKED
+##############################################################################
+
+
+
+
+
+
+
+
+#############################################################################
+# LDAP variables
+##############################################################################
+variable "enable_ldap" {
+  type        = bool
+  default     = false
+  description = "Set this option to true to enable LDAP for IBM Cloud HPC, with the default value set to false."
+}
+
+variable "ldap_basedns" {
+  type        = string
+  default     = "ldapscale.com"
+  description = "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."
+}
+
+variable "ldap_server" {
+  type        = string
+  default     = null
+  description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
+}
+
+variable "ldap_server_cert" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Provide the existing LDAP server certificate. This value is required if the 'ldap_server' variable is not set to null. If the certificate is not provided or is invalid, the LDAP configuration may fail."
+}
+
+variable "ldap_admin_password" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "The LDAP administrative password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required. It is important to avoid including the username in the password for enhanced security."
+}
+
+variable "ldap_user_name" {
+  type        = string
+  default     = ""
+  description = "Custom LDAP User for performing cluster operations. Note: Username should be between 4 to 32 characters, (any combination of lowercase and uppercase letters).[This value is ignored for an existing LDAP server]"
+}
+
+variable "ldap_user_password" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "The LDAP user password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required.It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
+}
+
+variable "ldap_instance_key_pair" {
+  type        = list(string)
+  default     = null
+  description = "Name of the SSH key configured in your IBM Cloud account that is used to establish a connection to the LDAP Server. Make sure that the SSH key is present in the same resource group and region where the LDAP Servers are provisioned. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
+}
+
+variable "ldap_instances" {
+  type = list(
+    object({
+      profile = string
+      image   = string
+    })
+  )
+  default = [{
+    profile = "cx2-2x4"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-1"
+  }]
+  description = "Profile and Image name to be used for provisioning the LDAP instances. Note: Debian based OS are only supported for the LDAP feature"
+}
+
+##############################################################################
+# GKLM variables
+##############################################################################
+variable "scale_encryption_enabled" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the filesystem. Select true or false"
+}
+
+variable "scale_encryption_type" {
+  type        = string
+  default     = null
+  description = "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled"
+}
+
+variable "gklm_instance_key_pair" {
+  type        = list(string)
+  default     = null
+  description = "The key pair to use to launch the GKLM host."
+}
+
+variable "gklm_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  default = [{
+    profile = "bx2-2x8"
+    count   = 2
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
+  }]
+  description = "Number of instances to be launched for client."
+}
+
+variable "scale_encryption_admin_default_password" {
+  type        = string
+  default     = null
+  description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
+}
+
+variable "scale_encryption_admin_username" {
+  type        = string
+  default     = null
+  description = "The default Admin username for Security Key Lifecycle Manager(GKLM)."
+}
+
+variable "scale_encryption_admin_password" {
+  type        = string
+  default     = null
+  description = "Password that is used for performing administrative operations for the GKLM.The password must contain at least 8 characters and at most 20 characters. For a strong password, at least three alphabetic characters are required, with at least one uppercase and one lowercase letter.  Two numbers, and at least one special character from this(~@_+:). Make sure that the password doesn't include the username. Visit this [page](https://www.ibm.com/docs/en/gklm/3.0.1?topic=roles-password-policy) to know more about password policy of GKLM. "
+}
+
+variable "scale_ansible_repo_clone_path" {
+  type        = string
+  default     = "/opt/ibm/ibm-spectrumscale-cloud-deploy"
+  description = "Path to clone github.com/IBM/ibm-spectrum-scale-install-infra."
+}
+
+variable "spectrumscale_rpms_path" {
+  type        = string
+  default     = "/opt/ibm/gpfs_cloud_rpms"
+  description = "Path that contains IBM Spectrum Scale product cloud rpms."
+}
+
+variable "storage_type" {
+  type        = string
+  default     = "scratch"
+  description = "Select the required storage type(scratch/persistent/eval)."
+}
+
+variable "colocate_protocol_cluster_instances" {
+  type        = bool
+  default     = true
+  description = "Enable it to use storage instances as protocol instances"
+}
+
+variable "using_packer_image" {
+  type        = bool
+  default     = false
+  description = "If true, gpfs rpm copy step will be skipped during the configuration."
+}
+
+variable "using_jumphost_connection" {
+  type        = bool
+  default     = false
+  description = "If true, will skip the jump/bastion host configuration."
+}
+
+variable "bastion_user" {
+  type        = string
+  default     = "ubuntu"
+  description = "Provide the username for Bastion login."
+}
+
+variable "inventory_format" {
+  type        = string
+  default     = "ini"
+  description = "Specify inventory format suited for ansible playbooks."
+}
+
+variable "bastion_instance_id" {
+  type        = string
+  default     = null
+  description = "Bastion instance id."
+}
+
+variable "bastion_ssh_private_key" {
+  type        = string
+  default     = "None"
+  description = "Bastion SSH private key path, which will be used to login to bastion host."
+}
+
+variable "create_separate_namespaces" {
+  type        = bool
+  default     = true
+  description = "Flag to select if separate namespace needs to be created for compute instances."
+}
+
+variable "create_scale_cluster" {
+  type        = bool
+  default     = true
+  description = "Flag to represent whether to create scale cluster or not."
+}
+
+variable "using_rest_api_remote_mount" {
+  type        = string
+  default     = true
+  description = "If false, skips GUI initialization on compute cluster for remote mount configuration."
+}
+
+variable "bastion_fip" {
+  type        = string
+  default     = null
+  description = "bastion fip"
 }

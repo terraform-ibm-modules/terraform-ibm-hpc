@@ -24,7 +24,8 @@ echo "StrictHostKeyChecking no" >> ~/.ssh/config
 echo "${storage_private_key_content}" > ~/.ssh/id_rsa
 chmod 600 ~/.ssh/id_rsa
 
-if grep -q "Red Hat" /etc/os-release
+# if grep -q "Red Hat" /etc/os-release
+if grep -q "CentOS|Red Hat" /etc/os-release
 then
     USER=vpcuser
     REQ_PKG_INSTALLED=0
@@ -79,11 +80,10 @@ then
 fi
 
 yum update --security -y
-yum versionlock add $package_list
+yum versionlock $package_list
 yum versionlock list
 echo 'export PATH=$PATH:/usr/lpp/mmfs/bin' >> /root/.bashrc
 
-# network setup
 echo "DOMAIN=${storage_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${storage_interfaces}"
 echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${storage_interfaces}"
 chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
@@ -108,15 +108,3 @@ firewall-offline-cmd --zone=public --add-port=30000-61000/tcp
 firewall-offline-cmd --zone=public --add-port=30000-61000/udp
 systemctl start firewalld
 systemctl enable firewalld
-
-sec_interface=$(nmcli -t con show --active | grep eth1 | cut -d ':' -f 1)
-nmcli conn del "$sec_interface"
-nmcli con add type ethernet con-name eth1 ifname eth1
-echo "DOMAIN=${protocol_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${protocol_interfaces}"
-echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${protocol_interfaces}"
-systemctl restart NetworkManager
-
-###### TODO: Fix Me ######
-echo 'export IC_REGION=${vpc_region}' >> /root/.bashrc
-echo 'export IC_SUBNET=${protocol_subnets}' >> /root/.bashrc
-echo 'export IC_RG=${resource_group_id}' >> /root/.bashrc
