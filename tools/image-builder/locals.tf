@@ -8,8 +8,8 @@ locals {
   vpc_id = var.vpc_name == null ? module.landing_zone.vpc_data[0].vpc_id : data.ibm_is_vpc.existing_vpc[0].id
   # Resource group calculation
   # If user defined then use existing else create new
-  create_resource_group = var.resource_group == "null" ? true : false
-  resource_groups = var.resource_group == "null" ? [
+  create_resource_group = var.existing_resource_group == "null" ? true : false
+  resource_groups = var.existing_resource_group == "null" ? [
     {
       name   = "${local.prefix}-service-rg",
       create = local.create_resource_group,
@@ -22,12 +22,12 @@ locals {
     }
     ] : [
     {
-      name   = var.resource_group,
+      name   = var.existing_resource_group,
       create = local.create_resource_group
     }
   ]
   # For the variables looking for resource group names only (transit_gateway, key_management, atracker)
-  resource_group = var.resource_group == "null" ? "${local.prefix}-service-rg" : var.resource_group
+  resource_group = var.existing_resource_group == "null" ? "${local.prefix}-service-rg" : var.existing_resource_group
   region         = join("-", slice(split("-", var.zones[0]), 0, 2))
   zones          = ["zone-1", "zone-2", "zone-3"]
   active_zones = [
@@ -93,7 +93,7 @@ locals {
         }
       ] : null
       prefix                       = local.name
-      resource_group               = var.resource_group == "null" ? "${local.prefix}-workload-rg" : var.resource_group
+      resource_group               = var.existing_resource_group == "null" ? "${local.prefix}-workload-rg" : var.existing_resource_group
       clean_default_security_group = true
       clean_default_acl            = true
       #   flow_logs_bucket_name        = var.enable_vpc_flow_logs ? "vpc-flow-logs-bucket" : null
@@ -150,8 +150,8 @@ locals {
   packer_floating_ip = var.enable_fip ? local.packer_vsi_data[0]["floating_ip"] : null
 
   packer_resource_groups = {
-    service_rg  = var.resource_group == "null" ? module.landing_zone.resource_group_data["${var.prefix}-service-rg"] : one(values(module.landing_zone.resource_group_data))
-    workload_rg = var.resource_group == "null" ? module.landing_zone.resource_group_data["${var.prefix}-workload-rg"] : one(values(module.landing_zone.resource_group_data))
+    service_rg  = var.existing_resource_group == "null" ? module.landing_zone.resource_group_data["${var.prefix}-service-rg"] : one(values(module.landing_zone.resource_group_data))
+    workload_rg = var.existing_resource_group == "null" ? module.landing_zone.resource_group_data["${var.prefix}-workload-rg"] : one(values(module.landing_zone.resource_group_data))
   }
 
   vsi = []
@@ -163,7 +163,7 @@ locals {
       vpc_name       = local.name
       subnet_name    = (var.vpc_name != null && var.subnet_id != null) ? data.ibm_is_subnet.existing_subnet[0].name : "subnet"
       mode           = "policy"
-      resource_group = var.resource_group == "null" ? "${local.prefix}-service-rg" : var.resource_group
+      resource_group = var.existing_resource_group == "null" ? "${local.prefix}-service-rg" : var.existing_resource_group
     }
   ] : []
 

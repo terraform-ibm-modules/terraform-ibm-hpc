@@ -88,7 +88,12 @@ func GetConfigFromYAML(filePath string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open YAML file %s: %v", filePath, err)
 	}
-	defer file.Close()
+
+	defer func() {
+		if err := file.Close(); err != nil {
+			fmt.Printf("warning: failed to close file: %v\n", err)
+		}
+	}()
 
 	// Decode the YAML file into the config struct
 	if err := yaml.NewDecoder(file).Decode(&config); err != nil {
@@ -217,50 +222,78 @@ func setEnvFromConfig(config *Config) error {
 		val, ok := os.LookupEnv(key)
 		switch {
 		case strings.Contains(key, "KEY_MANAGEMENT") && val == "null" && ok:
-			os.Setenv(key, "null")
+			if err := os.Setenv(key, "null"); err != nil {
+				return fmt.Errorf("failed to set %s to 'null': %v", key, err)
+			}
 		case strings.Contains(key, "REMOTE_ALLOWED_IPS") && !ok && value == "":
-			os.Setenv(key, ip)
+			if err := os.Setenv(key, ip); err != nil {
+				return fmt.Errorf("failed to set %s to %s: %v", key, ip, err)
+			}
 		case value != "" && !ok:
 			switch v := value.(type) {
 			case string:
-				os.Setenv(key, v)
+				if err := os.Setenv(key, v); err != nil {
+					return fmt.Errorf("failed to set %s to %s: %v", key, v, err)
+				}
 			case bool:
-				os.Setenv(key, fmt.Sprintf("%t", v))
+				if err := os.Setenv(key, fmt.Sprintf("%t", v)); err != nil {
+					return fmt.Errorf("failed to set %s to %t: %v", key, v, err)
+				}
 			case int:
-				os.Setenv(key, fmt.Sprintf("%d", v))
+				if err := os.Setenv(key, fmt.Sprintf("%d", v)); err != nil {
+					return fmt.Errorf("failed to set %s to %d: %v", key, v, err)
+				}
 			case float64:
-				// Optionally handle float values
-				os.Setenv(key, fmt.Sprintf("%f", v))
+				if err := os.Setenv(key, fmt.Sprintf("%f", v)); err != nil {
+					return fmt.Errorf("failed to set %s to %f: %v", key, v, err)
+				}
 			case []string:
-				// If the value is a slice of strings, you can join them into a comma-separated string
-				os.Setenv(key, strings.Join(v, ","))
+				if err := os.Setenv(key, strings.Join(v, ",")); err != nil {
+					return fmt.Errorf("failed to set %s to joined string: %v", key, err)
+				}
 			case []WorkerNode:
-				// If the value is a slice of WorkerNode, marshal it to JSON string
 				workerNodeInstanceTypeJSON, err := json.Marshal(v)
 				if err != nil {
 					return fmt.Errorf("failed to marshal %s: %v", key, err)
 				}
-				os.Setenv(key, string(workerNodeInstanceTypeJSON))
+				if err := os.Setenv(key, string(workerNodeInstanceTypeJSON)); err != nil {
+					return fmt.Errorf("failed to set %s to JSON: %v", key, err)
+				}
 			default:
 				return fmt.Errorf("unsupported type for key %s", key)
 			}
 		}
 	}
 
-	// Handle missing reservations IDs if necessary
+	// Handle missing reservation IDs if necessary
 	for key, value := range envVars {
 		_, ok := os.LookupEnv(key)
 		switch {
 		case key == "RESERVATION_ID" && !ok && value == "":
-			os.Setenv("RESERVATION_ID", GetValueForKey(map[string]string{"us-south": reservationIDSouth, "us-east": reservationIDEast}, strings.ToLower(GetRegion(os.Getenv("ZONE")))))
+			val := GetValueForKey(
+				map[string]string{
+					"us-south": reservationIDSouth,
+					"us-east":  reservationIDEast,
+				},
+				strings.ToLower(GetRegion(os.Getenv("ZONE"))),
+			)
+			if err := os.Setenv("RESERVATION_ID", val); err != nil {
+				return fmt.Errorf("failed to set RESERVATION_ID: %v", err)
+			}
 		case key == "US_EAST_RESERVATION_ID" && !ok && value == "":
-			os.Setenv("US_EAST_RESERVATION_ID", reservationIDEast)
+			if err := os.Setenv("US_EAST_RESERVATION_ID", reservationIDEast); err != nil {
+				return fmt.Errorf("failed to set US_EAST_RESERVATION_ID: %v", err)
+			}
 		case key == "EU_DE_RESERVATION_ID" && !ok && value == "":
-			os.Setenv("EU_DE_RESERVATION_ID", reservationIDEast)
+			if err := os.Setenv("EU_DE_RESERVATION_ID", reservationIDEast); err != nil {
+				return fmt.Errorf("failed to set EU_DE_RESERVATION_ID: %v", err)
+			}
 		case key == "US_SOUTH_RESERVATION_ID" && !ok && value == "":
-			os.Setenv("US_SOUTH_RESERVATION_ID", reservationIDSouth)
-
+			if err := os.Setenv("US_SOUTH_RESERVATION_ID", reservationIDSouth); err != nil {
+				return fmt.Errorf("failed to set US_SOUTH_RESERVATION_ID: %v", err)
+			}
 		}
 	}
+
 	return nil
 }

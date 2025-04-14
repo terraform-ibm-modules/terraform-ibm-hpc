@@ -70,7 +70,8 @@ locals {
 
 # locals needed for file-storage
 locals {
-
+  compute_ssh_keys = [for name in var.compute_ssh_keys : data.ibm_is_ssh_key.compute[name].id]
+  bastion_ssh_keys = [for name in var.bastion_ssh_keys : data.ibm_is_ssh_key.bastion[name].id]
   # dependency: landing_zone_vsi -> file-share
   compute_subnet_id         = local.compute_subnets[0].id
   compute_security_group_id = module.landing_zone_vsi[0].compute_sg_id

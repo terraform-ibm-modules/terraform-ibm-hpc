@@ -30,8 +30,6 @@ locals {
 
   bastion_image_id = data.ibm_is_image.bastion.id
 
-  bastion_ssh_keys = [for name in var.ssh_keys : data.ibm_is_ssh_key.bastion[name].id]
-
   bastion_sg_variable_cidr_list = var.network_cidr
   # Security group rules
   # TODO: Fix SG rules

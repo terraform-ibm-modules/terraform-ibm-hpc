@@ -13,11 +13,6 @@ data "ibm_is_image" "login" {
   count = local.login_image_mapping_entry_found ? 0 : 1
 }
 
-data "ibm_is_ssh_key" "compute" {
-  for_each = toset(var.compute_ssh_keys)
-  name     = each.key
-}
-
 data "ibm_is_region" "region" {
   name = local.region
 }
@@ -28,11 +23,6 @@ data "ibm_is_instance_profile" "management_node" {
 
 data "ibm_is_instance_profile" "worker_node" {
   name = var.worker_node_instance_type[0].instance_type
-}
-
-data "ibm_is_ssh_key" "bastion" {
-  for_each = toset(var.ssh_keys)
-  name     = each.key
 }
 
 data "ibm_is_image" "ldap_vsi_image" {
