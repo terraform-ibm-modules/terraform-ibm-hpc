@@ -265,3 +265,9 @@ locals {
   compute_public_key_content  = var.enable_deployer ? "" : jsonencode(base64encode(join("", flatten([module.landing_zone_vsi[0].compute_public_key_content]))))
   compute_private_key_content = var.enable_deployer ? "" : jsonencode(base64encode(join("", flatten([module.landing_zone_vsi[0].compute_private_key_content]))))
 }
+
+locals {
+  mysql_version        = "8.0"
+  db_service_endpoints = "private"
+  db_template          = [3, 12288, 122880, 3, "multitenant"]
+}

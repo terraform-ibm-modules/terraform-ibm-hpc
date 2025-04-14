@@ -383,3 +383,9 @@ variable "enable_hyperthreading" {
   type        = bool
   default     = null
 }
+
+variable "app_center_high_availability" {
+  type        = bool
+  default     = false
+  description = "Set to false to disable the IBM Spectrum LSF Application Center GUI High Availability (default: true). If the value is set as true, provide a certificate instance crn under existing_certificate_instance value for the VPC load balancer to enable HTTPS connections.For more information see [certificate instance requirements](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-before-deploy-application-center)."
+}

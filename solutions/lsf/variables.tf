@@ -638,11 +638,16 @@ variable "override" {
   type        = bool
   default     = false
   description = "Override default values with custom JSON template. This uses the file `override.json` to allow users to create a fully customized environment."
-
 }
 
 variable "override_json_string" {
   type        = string
   default     = null
   description = "Override default values with a JSON object. Any JSON other than an empty string overrides other configuration changes."
+}
+
+variable "app_center_high_availability" {
+  type        = bool
+  default     = true
+  description = "Set to false to disable the IBM Spectrum LSF Application Center GUI High Availability (default: true). If the value is set as true, provide a certificate instance crn under existing_certificate_instance value for the VPC load balancer to enable HTTPS connections.For more information see [certificate instance requirements](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-before-deploy-application-center)."
 }

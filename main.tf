@@ -136,6 +136,7 @@ module "prepare_tf_input" {
   observability_enable_metrics_routing             = var.observability_enable_metrics_routing
   observability_atracker_enable                    = var.observability_atracker_enable
   observability_atracker_target_type               = var.observability_atracker_target_type
+  app_center_high_availability                     = var.app_center_high_availability
   depends_on                                       = [module.deployer]
 }
 
@@ -202,6 +203,31 @@ module "protocol_dns_records" {
 resource "time_sleep" "wait_60_seconds" {
   create_duration = "60s"
   depends_on      = [module.storage_dns_records, module.protocol_dns_records, module.compute_dns_records]
+}
+
+module "generate_db_adminpassword" {
+  count            = var.enable_deployer == false && var.app_center_high_availability ? 1 : 0
+  source           = "./modules/security/password"
+  length           = 15
+  special          = true
+  override_special = "-_"
+  min_numeric      = 1
+}
+
+module "db" {
+  count             = var.enable_deployer == false && var.app_center_high_availability ? 1 : 0
+  source            = "./modules/databases/mysql"
+  resource_group_id = local.resource_group_ids["service_rg"]
+  name              = "${var.prefix}-database"
+  region            = local.region
+  mysql_version     = local.mysql_version
+  service_endpoints = local.db_service_endpoints
+  admin_password    = "db-${module.generate_db_adminpassword[0].password}" # with a prefix so we start with a letter
+  members           = local.db_template[0]
+  memory            = local.db_template[1]
+  disks             = local.db_template[2]
+  vcpu              = local.db_template[3]
+  host_flavour      = local.db_template[4]
 }
 
 module "write_compute_cluster_inventory" {
