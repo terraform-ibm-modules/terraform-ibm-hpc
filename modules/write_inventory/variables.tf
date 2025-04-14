@@ -102,19 +102,19 @@ variable "enable_hyperthreading" {
 variable "compute_subnet_id" {
   description = "Compute subnet ID"
   type        = string
-  default     = null
+  default     = ""
 }
 
 variable "region" {
   description = "Deployment region"
   type        = string
-  default     = null
+  default     = ""
 }
 
 variable "resource_group_id" {
   description = "Resource group ID"
   type        = string
-  default     = null
+  default     = ""
 }
 
 variable "compute_subnets_cidr" {
@@ -156,7 +156,7 @@ variable "vpc_id" {
 
 variable "compute_subnet_crn" {
   type        = string
-  default     = null
+  default     = ""
   description = "ID of an existing VPC in which the cluster resources will be deployed."
 }
 

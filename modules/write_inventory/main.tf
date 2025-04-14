@@ -28,7 +28,7 @@ resource "local_sensitive_file" "infra_details_to_json" {
   "compute_subnet_id": "${var.compute_subnet_id}",
   "region_name": "${var.region}",
   "resource_group_id": "${var.resource_group_id}",
-  "zone_name": "${var.zones}",
+  "zone_name": ${jsonencode(var.zones)},
   "compute_ssh_keys_ids": ${jsonencode(var.compute_ssh_keys_ids)},
   "dynamic_compute_instances": ${jsonencode(var.dynamic_compute_instances)},
   "compute_subnets_cidr": ${jsonencode(var.compute_subnets_cidr)},
