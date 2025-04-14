@@ -75,7 +75,8 @@ resource "null_resource" "run_lsf_playbooks" {
     command     = <<EOT
       systemctl restart NetworkManager && sleep 20s &&
       sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml &&
-      sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml
+      sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml &&
+      sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml
     EOT
   }
 
