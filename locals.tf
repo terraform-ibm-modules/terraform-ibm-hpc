@@ -265,8 +265,6 @@ locals {
 
   compute_public_key_content  = var.enable_deployer ? "" : jsonencode(base64encode(join("", flatten([module.landing_zone_vsi[0].compute_public_key_content]))))
   compute_private_key_content = var.enable_deployer ? "" : jsonencode(base64encode(join("", flatten([module.landing_zone_vsi[0].compute_private_key_content]))))
-  compute_subnet_id_1         = var.enable_deployer ? "" : local.compute_subnet_id
-  resource_group_id           = var.enable_deployer ? "" : local.resource_group_ids["service_rg"]
   compute_ssh_keys_ids        = var.enable_deployer ? [] : [for name in local.compute_ssh_keys : data.ibm_is_ssh_key.compute_ssh_keys[name].id]
   compute_subnet_crn          = var.enable_deployer ? "" : data.ibm_is_subnet.compute_subnet_crn.crn
 }
