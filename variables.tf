@@ -570,7 +570,26 @@ variable "afm_cos_config" {
       bucket_storage_class = string
     })
   )
-  default     = null
+  default = [{
+    afm_fileset          = "afm_fileset"
+    mode                 = "iw"
+    cos_instance         = ""
+    bucket_name          = ""
+    bucket_region        = "us-south"
+    cos_service_cred_key = ""
+    bucket_storage_class = "smart"
+    bucket_type          = "region_location"
+  }]
+  # default = [{
+  #   afm_fileset          = "afm_fileset"
+  #   mode                 = "iw"
+  #   cos_instance         = null
+  #   bucket_name          = null
+  #   bucket_region        = "us-south"
+  #   cos_service_cred_key = ""
+  #   bucket_storage_class = "smart"
+  #   bucket_type          = "region_location"
+  # }]
   description = "AFM configurations."
 }
 

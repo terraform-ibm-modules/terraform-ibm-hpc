@@ -428,6 +428,8 @@ variable "dns_domain_names" {
     compute  = string
     storage  = string
     protocol = string
+    client   = string
+    gklm     = string
   })
   default = {
     compute  = "comp.com"
@@ -518,16 +520,18 @@ variable "ldap_user_password" {
   description = "The LDAP user password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required.It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
 }
 
-variable "ldap_vsi_profile" {
-  type        = string
-  default     = "cx2-2x4"
-  description = "Specify the virtual server instance profile type to be used to create the ldap node for the IBM Spectrum LSF cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
-}
-
-variable "ldap_vsi_osimage_name" {
-  type        = string
-  default     = "ibm-ubuntu-22-04-4-minimal-amd64-3"
-  description = "Image name to be used for provisioning the LDAP instances. By default ldap server are created on Ubuntu based OS flavour."
+variable "ldap_instances" {
+  type = list(
+    object({
+      profile = string
+      image   = string
+    })
+  )
+  default = [{
+    profile = "cx2-2x4"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-1"
+  }]
+  description = "Profile and Image name to be used for provisioning the LDAP instances. Note: Debian based OS are only supported for the LDAP feature"
 }
 
 ##############################################################################
