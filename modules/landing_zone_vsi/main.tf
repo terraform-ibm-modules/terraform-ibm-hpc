@@ -88,7 +88,7 @@ resource "ibm_is_security_group_rule" "add_comp_sg_comp" {
 module "ldap_vsi" {
   count                         = var.enable_ldap == true && var.ldap_server == "null" ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.6.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -111,7 +111,7 @@ module "ldap_vsi" {
 module "client_vsi" {
   count                         = length(var.client_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.6.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = var.client_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -134,7 +134,7 @@ module "client_vsi" {
 module "management_vsi" {
   count                         = length(var.management_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.6.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = var.management_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -159,7 +159,7 @@ module "management_vsi" {
 module "compute_vsi" {
   count                         = length(var.static_compute_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.6.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = var.static_compute_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -184,7 +184,7 @@ module "compute_vsi" {
 module "storage_vsi" {
   count                         = length(var.storage_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.6.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = var.storage_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -210,7 +210,7 @@ module "storage_vsi" {
 module "protocol_vsi" {
   count                         = length(var.protocol_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.6.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = var.protocol_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
