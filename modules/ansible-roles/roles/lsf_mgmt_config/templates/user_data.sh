@@ -107,6 +107,7 @@ if [ -n "${nfs_server_with_mount_path}" ]; then
 fi
 echo "Setting LSF share is completed." >> $logfile
 
+# shellcheck disable=SC1009,SC1054,SC1083
 {% raw %}
 # Setup Custom file shares
 echo "Setting custom file shares." >> $logfile
@@ -122,6 +123,7 @@ if [ -n "${custom_file_shares}" ]; then
 fi
 echo "Setting custom file shares is completed." >> $logfile
 {% endraw %}
+# shellcheck enable=SC1009,SC1054,SC1083
 
 # Setup SSH
 SSH_DIR="/home/lsfadmin/.ssh"
@@ -399,7 +401,6 @@ if [ "$observability_logs_enable_for_compute" = true ]; then
 
 @INCLUDE output-logs-router-agent.conf
 EOL
-
   sudo chmod +x post-config.sh
   sudo ./post-config.sh -h "$cloud_logs_ingress_private_endpoint" -p "3443" -t "/logs/v1/singles" -a IAMAPIKey -k "$VPC_APIKEY_VALUE" --send-directly-to-icl -s true -i Production
   echo "INFO Testing IBM Cloud LSF Logs from compute: $hostname" | sudo tee -a /opt/ibm/lsf_worker/log/test.log.com > /dev/null
