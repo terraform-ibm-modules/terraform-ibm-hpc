@@ -134,6 +134,18 @@ variable "compute_subnets_cidr" {
   description = "Subnet CIDR block to launch the compute cluster host."
 }
 
+variable "bastion_subnet_id" {
+  type        = string
+  description = "Name of an existing bastion subnet_id in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+  default     = null
+}
+
+variable "compute_subnet_id" {
+  type        = string
+  description = "Name of an existing compute subnet_id in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+  default     = null
+}
+
 variable "management_instances" {
   type = list(
     object({

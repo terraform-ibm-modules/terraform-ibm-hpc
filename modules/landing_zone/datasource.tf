@@ -9,3 +9,8 @@ data "ibm_kms_key" "kms_key" {
   instance_id = data.ibm_resource_instance.kms_instance[0].id
   key_name    = var.kms_key_name
 }
+
+data "ibm_is_vpc" "existing_vpc" {
+  count = var.vpc_name != null ? 1 : 0
+  name  = var.vpc_name
+}

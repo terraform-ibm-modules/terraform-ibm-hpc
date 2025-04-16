@@ -169,6 +169,18 @@ variable "vpc_name" {
 ##############################################################################
 # DNS Variables
 ##############################################################################
+variable "dns_instance_id" {
+  type        = string
+  default     = null
+  description = "IBM Cloud HPC DNS service instance id."
+}
+
+variable "dns_custom_resolver_id" {
+  type        = string
+  default     = null
+  description = "IBM Cloud DNS custom resolver id."
+}
+
 variable "dns_domain_names" {
   type = object({
     compute  = string
