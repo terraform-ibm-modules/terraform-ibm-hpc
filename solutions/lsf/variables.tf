@@ -651,3 +651,9 @@ variable "app_center_high_availability" {
   default     = true
   description = "Set to false to disable the IBM Spectrum LSF Application Center GUI High Availability (default: true). If the value is set as true, provide a certificate instance crn under existing_certificate_instance value for the VPC load balancer to enable HTTPS connections.For more information see [certificate instance requirements](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-before-deploy-application-center)."
 }
+
+variable "app_center_existing_certificate_instance" {
+  description = "When app_center_high_availability is enable/set as true, The Application Center will be configured for high availability and requires a Application Load Balancer Front End listener to use a certificate CRN value stored in the Secret Manager. Provide the valid 'existing_certificate_instance' to configure the Application load balancer."
+  type        = string
+  default     = ""
+}

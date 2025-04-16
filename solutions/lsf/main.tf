@@ -62,6 +62,7 @@ module "lsf" {
   skip_iam_authorization_policy                    = local.env.skip_iam_authorization_policy
   skip_kms_s2s_auth_policy                         = local.env.skip_kms_s2s_auth_policy
   app_center_high_availability                     = local.env.app_center_high_availability
+  app_center_existing_certificate_instance         = local.env.app_center_existing_certificate_instance
 
   # New Variables
   ibmcloud_api_key      = local.env.ibmcloud_api_key

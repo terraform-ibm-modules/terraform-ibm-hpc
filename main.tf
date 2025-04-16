@@ -137,6 +137,7 @@ module "prepare_tf_input" {
   observability_atracker_enable                    = var.observability_atracker_enable
   observability_atracker_target_type               = var.observability_atracker_target_type
   app_center_high_availability                     = var.app_center_high_availability
+  app_center_existing_certificate_instance         = var.app_center_existing_certificate_instance
   depends_on                                       = [module.deployer]
 }
 
@@ -228,6 +229,31 @@ module "db" {
   disks             = local.db_template[2]
   vcpu              = local.db_template[3]
   host_flavour      = local.db_template[4]
+}
+
+module "alb" {
+  count             = var.enable_deployer == false && var.app_center_high_availability ? 1 : 0
+  source               = "./modules/alb"
+  bastion_subnets      = local.bastion_subnets
+  resource_group_id    = local.resource_group_ids["workload_rg"]
+  prefix               = var.prefix
+  security_group_ids   = concat(local.compute_security_group_id, [local.bastion_security_group_id])
+  vsi_ids              = local.vsi_management_ids
+  certificate_instance = var.app_center_high_availability ? var.app_center_existing_certificate_instance : ""
+  create_load_balancer = var.enable_deployer == false && !local.alb_created_by_api && var.app_center_high_availability
+}
+
+module "alb_api" {
+  source               = "./modules/alb_api"
+  ibmcloud_api_key     = var.ibmcloud_api_key
+  region               = data.ibm_is_region.region.name
+  bastion_subnets      = local.bastion_subnets
+  resource_group_id    = local.resource_group_ids["workload_rg"]
+  prefix               = var.prefix
+  security_group_ids   = concat(local.compute_security_group_id, [local.bastion_security_group_id])
+  vsi_ips              = local.management_private_ip
+  certificate_instance = var.app_center_high_availability ? var.app_center_existing_certificate_instance : ""
+  create_load_balancer = var.enable_deployer == false && local.alb_created_by_api && var.app_center_high_availability
 }
 
 module "write_compute_cluster_inventory" {

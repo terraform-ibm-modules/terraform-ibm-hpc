@@ -51,7 +51,9 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "observability_enable_metrics_routing": ${var.observability_enable_metrics_routing},
   "observability_atracker_enable": ${var.observability_atracker_enable},
   "observability_atracker_target_type": "${var.observability_atracker_target_type}",
-  "app_center_high_availability": ${var.app_center_high_availability}
+  "app_center_high_availability": ${var.app_center_high_availability},
+  "app_center_existing_certificate_instance": "${var.app_center_existing_certificate_instance}",
+
 }
 EOT
   filename = local.schematics_inputs_path
