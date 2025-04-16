@@ -57,6 +57,7 @@ locals {
     storage_gui_password                             = var.storage_gui_password
     storage_gui_username                             = var.storage_gui_username
     storage_instances                                = var.storage_instances
+    storage_servers                                  = var.storage_servers
     storage_ssh_keys                                 = var.storage_ssh_keys
     storage_subnets_cidr                             = var.storage_subnets_cidr
     vpc_name                                         = var.vpc_name
@@ -130,7 +131,7 @@ locals {
     static_compute_instances                         = lookup(local.override[local.override_type], "static_compute_instances", local.config.static_compute_instances)
     storage_gui_password                             = lookup(local.override[local.override_type], "storage_gui_password", local.config.storage_gui_password)
     storage_gui_username                             = lookup(local.override[local.override_type], "storage_gui_username", local.config.storage_gui_username)
-    storage_instances                                = lookup(local.override[local.override_type], "storage_instances", local.config.storage_instances)
+    storage_servers                                  = lookup(local.override[local.override_type], "storage_servers", local.config.storage_servers)
     storage_ssh_keys                                 = lookup(local.override[local.override_type], "storage_ssh_keys", local.config.storage_ssh_keys)
     storage_subnets_cidr                             = lookup(local.override[local.override_type], "storage_subnets_cidr", local.config.storage_subnets_cidr)
     vpc_name                                         = lookup(local.override[local.override_type], "vpc_name", local.config.vpc_name)
