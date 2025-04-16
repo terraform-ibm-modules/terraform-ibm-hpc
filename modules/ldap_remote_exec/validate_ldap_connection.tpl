@@ -6,15 +6,12 @@
 # shellcheck disable=SC2154
 # Suppress warning for undefined variable (handled externally by templating engine)
 
-LDAP_HOST="${ldap_server}"
-LDAP_PORT=389
+echo "Attempting to connect to LDAP server at ${ldap_server}:389..."
 
-echo "Attempting to connect to LDAP server at ${LDAP_HOST}:${LDAP_PORT}..."
-
-if openssl s_client -connect "${LDAP_HOST}:${LDAP_PORT}" </dev/null 2>/dev/null | grep -q 'CONNECTED'; then
-    echo "✅ Successfully connected to LDAP server at ${LDAP_HOST}:${LDAP_PORT}."
+if openssl s_client -connect "${ldap_server}:389" </dev/null 2>/dev/null | grep -q 'CONNECTED'; then
+    echo "✅ Successfully connected to LDAP server at ${ldap_server}:389."
 else
-    echo "❌ Failed to connect to LDAP server at ${LDAP_HOST}:${LDAP_PORT}."
+    echo "❌ Failed to connect to LDAP server at ${ldap_server}:389."
     echo "Please ensure the server is reachable and listening on the expected port."
     exit 1
 fi
