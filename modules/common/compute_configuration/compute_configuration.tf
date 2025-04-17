@@ -2,39 +2,6 @@
     Excutes ansible playbook to install IBM Spectrum Scale compute cluster.
 */
 
-variable "turn_on" {}
-variable "write_inventory_complete" {}
-variable "create_scale_cluster" {}
-variable "clone_path" {}
-variable "inventory_path" {}
-variable "inventory_format" {}
-variable "using_packer_image" {}
-variable "using_jumphost_connection" {}
-variable "using_rest_initialization" {}
-variable "compute_cluster_gui_username" {}
-variable "compute_cluster_gui_password" {}
-variable "comp_memory" {}
-variable "comp_vcpus_count" {}
-variable "comp_bandwidth" {}
-variable "bastion_user" {}
-variable "bastion_instance_public_ip" {}
-variable "bastion_ssh_private_key" {}
-variable "meta_private_key" {}
-variable "scale_version" {}
-variable "spectrumscale_rpms_path" {}
-variable "enable_mrot_conf" {}
-variable "scale_encryption_enabled" {}
-variable "scale_encryption_admin_password" {}
-variable "scale_encryption_servers" {}
-variable "enable_ces" {}
-variable "enable_ldap" {}
-variable "ldap_basedns" {}
-variable "ldap_server" {}
-variable "ldap_admin_password" {}
-variable "enable_afm" {}
-variable "enable_key_protect" {}
-
-
 locals {
   scripts_path             = replace(path.module, "compute_configuration", "scripts")
   ansible_inv_script_path  = var.inventory_format == "ini" ? format("%s/prepare_scale_inv_ini.py", local.scripts_path) : format("%s/prepare_scale_inv_json.py", local.scripts_path)
@@ -146,9 +113,4 @@ resource "null_resource" "perform_scale_deployment" {
   triggers = {
     build = timestamp()
   }
-}
-
-output "compute_cluster_create_complete" {
-  value      = true
-  depends_on = [time_sleep.wait_60_seconds, null_resource.wait_for_ssh_availability, null_resource.prepare_ansible_inventory, null_resource.prepare_ansible_inventory_using_jumphost_connection, null_resource.prepare_ansible_inventory_encryption, null_resource.prepare_ansible_inventory_using_jumphost_connection_encryption, null_resource.perform_scale_deployment]
 }

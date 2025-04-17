@@ -289,11 +289,11 @@ variable "protocol_instances" {
   description = "Number of instances to be launched for protocol hosts."
 }
 
-variable "colocate_protocol_instances" {
-  type        = bool
-  default     = true
-  description = "Enable it to use storage instances as protocol instances"
-}
+# variable "colocate_protocol_instances" {
+#   type        = bool
+#   default     = true
+#   description = "Enable it to use storage instances as protocol instances"
+# }
 
 variable "storage_gui_username" {
   type        = string
@@ -331,23 +331,23 @@ variable "filesystem_config" {
   description = "File system configurations."
 }
 
-variable "filesets_config" {
-  type = list(object({
-    fileset           = string
-    filesystem        = string
-    junction_path     = string
-    client_mount_path = string
-    quota             = number
-  }))
-  default = [{
-    fileset           = "fileset1"
-    filesystem        = "fs1"
-    junction_path     = "/ibm/fs1/fileset1"
-    client_mount_path = "/mnt"
-    quota             = 100
-  }]
-  description = "Fileset configurations."
-}
+# variable "filesets_config" {
+#   type = list(object({
+#     fileset           = string
+#     filesystem        = string
+#     junction_path     = string
+#     client_mount_path = string
+#     quota             = number
+#   }))
+#   default = [{
+#     fileset           = "fileset1"
+#     filesystem        = "fs1"
+#     junction_path     = "/ibm/fs1/fileset1"
+#     client_mount_path = "/mnt"
+#     quota             = 100
+#   }]
+#   description = "Fileset configurations."
+# }
 
 variable "afm_instances" {
   type = list(
@@ -543,11 +543,11 @@ variable "ldap_user_password" {
   description = "The LDAP user password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required.It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
 }
 
-variable "ldap_instance_key_pair" {
-  type        = list(string)
-  default     = null
-  description = "Name of the SSH key configured in your IBM Cloud account that is used to establish a connection to the LDAP Server. Make sure that the SSH key is present in the same resource group and region where the LDAP Servers are provisioned. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
-}
+# variable "ldap_instance_key_pair" {
+#   type        = list(string)
+#   default     = null
+#   description = "Name of the SSH key configured in your IBM Cloud account that is used to establish a connection to the LDAP Server. Make sure that the SSH key is present in the same resource group and region where the LDAP Servers are provisioned. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
+# }
 
 variable "ldap_instances" {
   type = list(
@@ -630,25 +630,25 @@ variable "colocate_protocol_cluster_instances" {
   description = "Enable it to use storage instances as protocol instances"
 }
 
-variable "file_shares" {
-  type = list(
-    object({
-      mount_path = string,
-      size       = number,
-      iops       = number
-    })
-  )
-  default = [{
-    mount_path = "/mnt/binaries"
-    size       = 100
-    iops       = 1000
-    }, {
-    mount_path = "/mnt/data"
-    size       = 100
-    iops       = 1000
-  }]
-  description = "Custom file shares to access shared storage"
-}
+# variable "file_shares" {
+#   type = list(
+#     object({
+#       mount_path = string,
+#       size       = number,
+#       iops       = number
+#     })
+#   )
+#   default = [{
+#     mount_path = "/mnt/binaries"
+#     size       = 100
+#     iops       = 1000
+#     }, {
+#     mount_path = "/mnt/data"
+#     size       = 100
+#     iops       = 1000
+#   }]
+#   description = "Custom file shares to access shared storage"
+# }
 
 ##############################################################################
 # Observability Variables

@@ -1,6 +1,6 @@
 module "compute_key" {
-  count            = local.enable_compute ? 1 : 0
-  source           = "./../key"
+  count  = local.enable_compute ? 1 : 0
+  source = "./../key"
   # private_key_path = "./../../modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
 }
 
@@ -35,8 +35,8 @@ resource "null_resource" "copy_compute_public_key_content" {
 }
 
 module "storage_key" {
-  count            = local.enable_storage ? 1 : 0
-  source           = "./../key"
+  count  = local.enable_storage ? 1 : 0
+  source = "./../key"
   # private_key_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage_id_rsa" : "${path.root}/modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
 }
 
@@ -310,10 +310,10 @@ module "protocol_vsi" {
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   # Bug: 5847 - LB profile & subnets are not configurable
   # load_balancers        = local.enable_load_balancer ? local.load_balancers : []
-  secondary_allow_ip_spoofing = true
-  secondary_security_groups   = local.protocol_secondary_security_group
-  secondary_subnets           = local.protocol_subnets
-  placement_group_id          = var.placement_group_ids
+  secondary_allow_ip_spoofing     = true
+  secondary_security_groups       = local.protocol_secondary_security_group
+  secondary_subnets               = local.protocol_subnets
+  placement_group_id              = var.placement_group_ids
   manage_reserved_ips             = true
   primary_vni_additional_ip_count = var.protocol_instances[count.index]["count"]
   # placement_group_id = var.placement_group_ids[(var.protocol_instances[count.index]["count"])%(length(var.placement_group_ids))]
@@ -383,7 +383,7 @@ module "ldap_vsi" {
   ssh_key_ids                   = local.ldap_ssh_keys
   subnets                       = [local.storage_subnets[0]]
   tags                          = local.tags
-  user_data                     = data.template_file.storage_user_data.rendered
+  user_data                     = data.template_file.ldap_user_data.rendered
   vpc_id                        = var.vpc_id
   block_storage_volumes         = local.enable_block_storage ? local.block_storage_volumes : []
   kms_encryption_enabled        = var.kms_encryption_enabled

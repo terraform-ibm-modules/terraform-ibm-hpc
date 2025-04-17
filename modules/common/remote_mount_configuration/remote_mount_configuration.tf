@@ -2,25 +2,6 @@
     Excutes ansible playbook to configure remote mount between IBM Spectrum Scale compute and storage cluster.
 */
 
-variable "turn_on" {}
-variable "create_scale_cluster" {}
-variable "clone_path" {}
-variable "compute_inventory_path" {}
-variable "compute_gui_inventory_path" {}
-variable "storage_inventory_path" {}
-variable "storage_gui_inventory_path" {}
-variable "compute_cluster_gui_username" {}
-variable "compute_cluster_gui_password" {}
-variable "storage_cluster_gui_username" {}
-variable "storage_cluster_gui_password" {}
-variable "using_rest_initialization" {}
-variable "bastion_user" {}
-variable "bastion_instance_public_ip" {}
-variable "bastion_ssh_private_key" {}
-variable "using_jumphost_connection" {}
-variable "compute_cluster_create_complete" {}
-variable "storage_cluster_create_complete" {}
-
 locals {
   scripts_path              = replace(path.module, "remote_mount_configuration", "scripts")
   ansible_inv_script_path   = format("%s/prepare_remote_mount_inv.py", local.scripts_path)
@@ -67,9 +48,4 @@ resource "null_resource" "perform_scale_deployment" {
   triggers = {
     build = timestamp()
   }
-}
-
-output "remote_mount_create_complete" {
-  value      = true
-  depends_on = [time_sleep.wait_for_gui_db_initializion, null_resource.prepare_remote_mnt_inventory, null_resource.prepare_remote_mnt_inventory_using_jumphost_connection, null_resource.perform_scale_deployment]
 }

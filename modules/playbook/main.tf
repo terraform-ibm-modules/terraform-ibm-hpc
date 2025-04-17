@@ -6,7 +6,7 @@ locals {
 }
 
 resource "local_file" "create_playbook" {
-  count    = var.inventory_path != null ? 1 : 0
+  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 

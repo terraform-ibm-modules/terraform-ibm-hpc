@@ -42,8 +42,6 @@ module "scale" {
   vpn_preshared_key                                = local.env.vpn_preshared_key
   compute_gui_password                             = local.env.compute_gui_password
   compute_gui_username                             = local.env.compute_gui_username
-  hpcs_instance_name                               = local.env.hpcs_instance_name
-  client_subnets_cidr                              = [local.env.client_subnets_cidr]
   storage_gui_password                             = local.env.storage_gui_password
   storage_gui_username                             = local.env.storage_gui_username
   observability_atracker_enable                    = local.env.observability_atracker_enable
@@ -58,7 +56,6 @@ module "scale" {
   observability_monitoring_plan                    = local.env.observability_monitoring_plan
   scc_enable                                       = local.env.scc_enable
   scc_profile                                      = local.env.scc_profile
-  # scc_profile_version                              = local.env.scc_profile_version
   scc_location                                     = local.env.scc_location
   scc_event_notification_plan                      = local.env.scc_event_notification_plan
   skip_flowlogs_s2s_auth_policy                    = local.env.skip_flowlogs_s2s_auth_policy
@@ -81,8 +78,11 @@ module "scale" {
   gklm_instances                                   = local.env.gklm_instances
   storage_type                                     = local.env.storage_type
   colocate_protocol_cluster_instances              = local.env.colocate_protocol_cluster_instances
-  scale_encryption_admin_default_password          = local.env.scale_encryption_admin_default_password
   scale_encryption_admin_password                  = local.env.scale_encryption_admin_password
-  scale_encryption_admin_username                  = local.env.scale_encryption_admin_username
   filesystem_config                                = local.env.filesystem_config
+  # hpcs_instance_name                               = local.env.hpcs_instance_name
+  # client_subnets_cidr                              = [local.env.client_subnets_cidr]
+  # scale_encryption_admin_username         = local.env.scale_encryption_admin_username
+  # scale_encryption_admin_default_password = local.env.scale_encryption_admin_default_password
+  # scc_profile_version                              = local.env.scc_profile_version
 }

@@ -176,11 +176,11 @@ variable "client_subnets" {
   description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
 }
 
-variable "client_subnets_cidr" {
-  type        = list(string)
-  default     = ["10.10.10.0/24", "10.20.10.0/24", "10.30.10.0/24"]
-  description = "Subnet CIDR block to launch the client host."
-}
+# variable "client_subnets_cidr" {
+#   type        = list(string)
+#   default     = ["10.10.10.0/24", "10.20.10.0/24", "10.30.10.0/24"]
+#   description = "Subnet CIDR block to launch the client host."
+# }
 
 variable "client_ssh_keys" {
   type        = list(string)
@@ -353,11 +353,11 @@ variable "protocol_instances" {
   description = "Number of instances to be launched for protocol hosts."
 }
 
-variable "colocate_protocol_instances" {
-  type        = bool
-  default     = true
-  description = "Enable it to use storage instances as protocol instances"
-}
+# variable "colocate_protocol_instances" {
+#   type        = bool
+#   default     = true
+#   description = "Enable it to use storage instances as protocol instances"
+# }
 
 variable "storage_gui_username" {
   type        = string
@@ -463,11 +463,11 @@ variable "kms_key_name" {
   description = "Provide the existing kms key name that you want to use for the IBM Cloud HPC cluster. Note: kms_key_name to be considered only if key_management value is set as key_protect.(for example kms_key_name: my-encryption-key)."
 }
 
-variable "hpcs_instance_name" {
-  type        = string
-  default     = null
-  description = "Hyper Protect Crypto Service instance"
-}
+# variable "hpcs_instance_name" {
+#   type        = string
+#   default     = null
+#   description = "Hyper Protect Crypto Service instance"
+# }
 
 variable "skip_flowlogs_s2s_auth_policy" {
   type        = bool
@@ -527,19 +527,19 @@ variable "filesystem_config" {
   description = "File system configurations."
 }
 
-variable "filesets_config" {
-  type = list(
-    object({
-      fileset           = string
-      filesystem        = string
-      junction_path     = string
-      client_mount_path = string
-      quota             = number
-    })
-  )
-  default     = null
-  description = "Fileset configurations."
-}
+# variable "filesets_config" {
+#   type = list(
+#     object({
+#       fileset           = string
+#       filesystem        = string
+#       junction_path     = string
+#       client_mount_path = string
+#       quota             = number
+#     })
+#   )
+#   default     = null
+#   description = "Fileset configurations."
+# }
 
 variable "afm_instances" {
   type = list(
@@ -942,17 +942,17 @@ variable "gklm_instances" {
   description = "Number of instances to be launched for client."
 }
 
-variable "scale_encryption_admin_default_password" {
-  type        = string
-  default     = null
-  description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
-}
+# variable "scale_encryption_admin_default_password" {
+#   type        = string
+#   default     = null
+#   description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
+# }
 
-variable "scale_encryption_admin_username" {
-  type        = string
-  default     = null
-  description = "The default Admin username for Security Key Lifecycle Manager(GKLM)."
-}
+# variable "scale_encryption_admin_username" {
+#   type        = string
+#   default     = null
+#   description = "The default Admin username for Security Key Lifecycle Manager(GKLM)."
+# }
 
 variable "scale_encryption_admin_password" {
   type        = string

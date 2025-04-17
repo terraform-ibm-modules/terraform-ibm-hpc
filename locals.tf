@@ -28,7 +28,7 @@ locals {
   # When we implement the existing bastion concept we need the changes to implemented like below. Which is already there on our LSF DA
   # skip_iam_authorization_policy = true
   # skip_iam_authorization_policy = var.bastion_instance_name != null ? false : local.skip_iam_authorization_policy
-  # Cluster node details: 
+  # Cluster node details:
   compute_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data, module.landing_zone_vsi[0].compute_vsi_data])
   comp_mgmt_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_management_vsi_data])
   storage_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_vsi_data])
@@ -40,12 +40,12 @@ locals {
   tie_brkr_instances  = var.enable_deployer ? [] : flatten(module.landing_zone_vsi[0].storage_cluster_tie_breaker_vsi_data)
   strg_mgmt_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_cluster_management_vsi])
 
-  management_instance_count     = sum(var.management_instances[*]["count"])
-  storage_instance_count        = sum(var.storage_instances[*]["count"])
-  client_instance_count         = sum(var.client_instances[*]["count"])
+  management_instance_count = sum(var.management_instances[*]["count"])
+  storage_instance_count    = sum(var.storage_instances[*]["count"])
+  # client_instance_count         = sum(var.client_instances[*]["count"])
   protocol_instance_count       = sum(var.protocol_instances[*]["count"])
   static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
-  afm_instance_count            = sum(var.afm_instances[*]["count"])
+  # afm_instance_count            = sum(var.afm_instances[*]["count"])
 }
 
 # locals needed for landing_zone_vsi
@@ -137,7 +137,7 @@ locals {
       iops       = 1000
     }
   ] : []
-  total_shares           = local.storage_instance_count > 0 ? [] : concat(local.default_share, var.file_shares)
+  total_shares = local.storage_instance_count > 0 ? [] : concat(local.default_share, var.file_shares)
   file_shares = [
     for count in range(length(local.total_shares)) :
     {
@@ -214,19 +214,19 @@ locals {
     }
   ]
   storage_dns_records = [
-    for instance in concat(local.storage_instances,local.protocol_instances, local.afm_instances, local.tie_brkr_instances, local.strg_mgmt_instances) :
+    for instance in concat(local.storage_instances, local.protocol_instances, local.afm_instances, local.tie_brkr_instances, local.strg_mgmt_instances) :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
     }
   ]
-  protocol_dns_records = [
-    for instance in local.protocol_instances :
-    {
-      name  = instance["name"]
-      rdata = instance["ipv4_address"]
-    }
-  ]
+  # protocol_dns_records = [
+  #   for instance in local.protocol_instances :
+  #   {
+  #     name  = instance["name"]
+  #     rdata = instance["ipv4_address"]
+  #   }
+  # ]
   client_dns_records = [
     for instance in local.client_instances :
     {
@@ -245,11 +245,11 @@ locals {
 
 # locals needed for inventory
 locals {
-  compute_hosts          = try([for name in local.compute_instances[*]["name"] : "${name}.${var.dns_domain_names["compute"]}"], [])
-  storage_hosts          = try([for name in local.storage_instances[*]["name"] : "${name}.${var.dns_domain_names["storage"]}"], [])
+  compute_hosts = try([for name in local.compute_instances[*]["name"] : "${name}.${var.dns_domain_names["compute"]}"], [])
+  # storage_hosts          = try([for name in local.storage_instances[*]["name"] : "${name}.${var.dns_domain_names["storage"]}"], [])
   ldap_hosts             = try([for instance in local.ldap_instances : instance["ipv4_address"]], [])
   compute_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute.ini" : "${path.root}/modules/ansible-roles/compute.ini"
-  storage_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage.ini" : "${path.root}/modules/ansible-roles/storage.ini"
+  # storage_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage.ini" : "${path.root}/modules/ansible-roles/storage.ini"
 }
 
 # locals needed for playbook
@@ -306,7 +306,7 @@ locals {
 locals {
   # gpfs_base_rpm_path  = fileset(var.spectrumscale_rpms_path, "gpfs.base-*")
   # scale_org_version   = regex("gpfs.base-(.*).x86_64.rpm", tolist(local.gpfs_base_rpm_path)[0])[0]
-  scale_version       = "5221" #replace(local.scale_org_version, "-", ".")
+  scale_version = "5221" #replace(local.scale_org_version, "-", ".")
 
   compute_vsi_profile    = var.static_compute_instances[*]["profile"]
   storage_vsi_profile    = var.storage_instances[*]["profile"]
@@ -325,48 +325,48 @@ locals {
 
   compute_instance_private_ips = flatten(local.compute_instances[*]["ipv4_address"])
   compute_instance_ids         = flatten(local.compute_instances[*]["id"])
-  compute_instance_names       = try(tolist([for name_details in flatten(local.compute_instances[*]["name"]): "${name_details}.${var.dns_domain_names["compute"]}"]), [])
+  compute_instance_names       = try(tolist([for name_details in flatten(local.compute_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["compute"]}"]), [])
 
   compute_mgmt_instance_private_ips = flatten(local.comp_mgmt_instances[*]["ipv4_address"])
   compute_mgmt_instance_ids         = flatten(local.comp_mgmt_instances[*]["id"])
-  compute_mgmt_instance_names       = try(tolist([for name_details in flatten(local.comp_mgmt_instances[*]["name"]): "${name_details}.${var.dns_domain_names["compute"]}"]), [])
+  compute_mgmt_instance_names       = try(tolist([for name_details in flatten(local.comp_mgmt_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["compute"]}"]), [])
 
   strg_instance_private_ips = flatten(local.storage_instances[*]["ipv4_address"])
   strg_instance_ids         = flatten(local.storage_instances[*]["id"])
-  strg_instance_names       = try(tolist([for name_details in flatten(local.storage_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+  strg_instance_names       = try(tolist([for name_details in flatten(local.storage_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
   strg_mgmt_instance_private_ips = flatten(local.strg_mgmt_instances[*]["ipv4_address"])
   strg_mgmtt_instance_ids        = flatten(local.strg_mgmt_instances[*]["id"])
-  strg_mgmt_instance_names       = try(tolist([for name_details in flatten(local.strg_mgmt_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+  strg_mgmt_instance_names       = try(tolist([for name_details in flatten(local.strg_mgmt_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
-  strg_tie_breaker_private_ips     = flatten(local.tie_brkr_instances[*]["ipv4_address"])
-  strg_tie_breaker_instance_ids    = flatten(local.tie_brkr_instances[*]["id"])
-  strg_tie_breaker_instance_names  = try(tolist([for name_details in flatten(local.tie_brkr_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+  strg_tie_breaker_private_ips    = flatten(local.tie_brkr_instances[*]["ipv4_address"])
+  strg_tie_breaker_instance_ids   = flatten(local.tie_brkr_instances[*]["id"])
+  strg_tie_breaker_instance_names = try(tolist([for name_details in flatten(local.tie_brkr_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
   secondary_compute_instance_private_ips = flatten(local.compute_instances[*]["secondary_ipv4_address"])
-  secondary_storage_instance_private_ips = flatten(local.storage_instances[*]["secondary_ipv4_address"])
+  # secondary_storage_instance_private_ips = flatten(local.storage_instances[*]["secondary_ipv4_address"])
 
   protocol_instance_private_ips = flatten(local.protocol_instances[*]["ipv4_address"])
   protocol_instance_ids         = flatten(local.protocol_instances[*]["id"])
-  protocol_instance_names       = try(tolist([for name_details in flatten(local.protocol_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+  protocol_instance_names       = try(tolist([for name_details in flatten(local.protocol_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
-  client_instance_private_ips = flatten(local.client_instances[*]["ipv4_address"])
-  client_instance_ids         = flatten(local.client_instances[*]["id"])
-  client_instance_names       = try(tolist([for name_details in flatten(local.client_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+  # client_instance_private_ips = flatten(local.client_instances[*]["ipv4_address"])
+  # client_instance_ids         = flatten(local.client_instances[*]["id"])
+  client_instance_names = try(tolist([for name_details in flatten(local.client_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
   gklm_instance_private_ips = flatten(local.gklm_instances[*]["ipv4_address"])
-  gklm_instance_ids         = flatten(local.gklm_instances[*]["id"])
-  gklm_instance_names       = try(tolist([for name_details in flatten(local.gklm_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+  # gklm_instance_ids         = flatten(local.gklm_instances[*]["id"])
+  # gklm_instance_names       = try(tolist([for name_details in flatten(local.gklm_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
   ldap_instance_private_ips = flatten(local.ldap_instances[*]["ipv4_address"])
-  ldap_instance_ids         = flatten(local.ldap_instances[*]["id"])
-  ldap_instance_names       = flatten(local.ldap_instances[*]["name"])
+  # ldap_instance_ids         = flatten(local.ldap_instances[*]["id"])
+  # ldap_instance_names       = flatten(local.ldap_instances[*]["name"])
 }
 
 locals {
   afm_instance_private_ips = flatten(local.afm_instances[*]["ipv4_address"])
   afm_instance_ids         = flatten(local.afm_instances[*]["id"])
-  afm_instance_names       = try(tolist([for name_details in flatten(local.afm_instances[*]["name"]): "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+  afm_instance_names       = try(tolist([for name_details in flatten(local.afm_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
   new_instance_bucket_hmac        = [for details in var.afm_cos_config : details if(details.cos_instance == "" && details.bucket_name == "" && details.cos_service_cred_key == "")]
   exstng_instance_new_bucket_hmac = [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name == "" && details.cos_service_cred_key == "")]
@@ -395,13 +395,13 @@ locals {
   baremetal_instance_names       = var.storage_type == "persistent" ? local.enable_afm == true ? concat(["bm_value"], local.afm_instance_names) : ["bm_value"] : []
 
   baremetal_cluster_instance_private_ips = var.storage_type == "persistent" && local.scale_ces_enabled == false ? local.baremetal_instance_private_ips : concat(local.baremetal_instance_private_ips, local.protocol_instance_private_ips)
-  baremetal_cluster_instance_ids         = var.storage_type == "persistent" && local.scale_ces_enabled == false ? local.baremetal_instance_ids : concat(local.baremetal_instance_ids,  local.protocol_instance_ids)
+  baremetal_cluster_instance_ids         = var.storage_type == "persistent" && local.scale_ces_enabled == false ? local.baremetal_instance_ids : concat(local.baremetal_instance_ids, local.protocol_instance_ids)
   baremetal_cluster_instance_names       = var.storage_type == "persistent" && local.scale_ces_enabled == false ? local.baremetal_instance_names : concat(local.baremetal_instance_names, local.protocol_instance_names)
 
   tie_breaker_storage_instance_private_ips = var.storage_type != "persistent" ? local.strg_tie_breaker_private_ips : ["bm_value"]
   tie_breaker_storage_instance_ids         = var.storage_type != "persistent" ? local.strg_tie_breaker_instance_ids : ["bm_value"]
   tie_breaker_storage_instance_names       = var.storage_type != "persistent" ? local.strg_tie_breaker_instance_names : ["bm_value"]
-  tie_breaker_ips_with_vol_mapping = module.landing_zone_vsi[*].instance_ips_with_vol_mapping_tie_breaker
+  tie_breaker_ips_with_vol_mapping         = module.landing_zone_vsi[*].instance_ips_with_vol_mapping_tie_breaker
 
   fileset_size_map = try({ for details in var.file_shares : details.mount_path => details.size }, {})
 }

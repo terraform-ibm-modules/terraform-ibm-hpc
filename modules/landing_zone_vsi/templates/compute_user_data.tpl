@@ -13,7 +13,7 @@ if [ "${scheduler}" == "null" ]; then
     #!/usr/bin/env bash
 
     exec > >(tee /var/log/ibm_spectrumscale_user-data.log)
-    
+
     if grep -E -q "CentOS|Red Hat" /etc/os-release
     then
         USER=vpcuser

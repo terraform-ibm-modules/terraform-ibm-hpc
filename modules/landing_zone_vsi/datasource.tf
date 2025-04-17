@@ -60,12 +60,12 @@ data "ibm_is_ssh_key" "storage" {
 
 data "ibm_is_instance_profile" "storage" {
   count = length(var.storage_instances)
-  name = var.storage_instances[count.index]["profile"]
+  name  = var.storage_instances[count.index]["profile"]
 }
 
 data "ibm_is_instance_profile" "storage_tie_instance" {
   count = length(var.storage_instances)
-  name = var.storage_instances[count.index]["profile"]
+  name  = var.storage_instances[count.index]["profile"]
 }
 
 data "ibm_is_ssh_key" "gklm" {

@@ -44,7 +44,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "ldap_admin_password": "${var.ldap_admin_password}",
   "ldap_user_name": "${var.ldap_user_name}",
   "ldap_user_password": "${var.ldap_user_password}",
-  "ldap_server_cert": "${var.ldap_server_cert}",
+  "ldap_server_cert": "${local.ldap_server_cert}",
   "afm_instances": ${local.list_afm_instances},
   "afm_cos_config": ${local.afm_cos_config_details},
   "scale_encryption_enabled": ${var.scale_encryption_enabled},

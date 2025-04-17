@@ -90,7 +90,7 @@ variable "management_instances" {
 
 variable "static_compute_instances" {
   type = list(
-    object({   
+    object({
       profile    = string
       count      = number
       image      = string
@@ -514,17 +514,17 @@ variable "gklm_instances" {
   description = "Number of instances to be launched for client."
 }
 
-variable "scale_encryption_admin_default_password" {
-  type        = string
-  default     = null
-  description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
-}
+# variable "scale_encryption_admin_default_password" {
+#   type        = string
+#   default     = null
+#   description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
+# }
 
-variable "scale_encryption_admin_username" {
-  type        = string
-  default     = null
-  description = "The default Admin username for Security Key Lifecycle Manager(GKLM)."
-}
+# variable "scale_encryption_admin_username" {
+#   type        = string
+#   default     = null
+#   description = "The default Admin username for Security Key Lifecycle Manager(GKLM)."
+# }
 
 variable "scale_encryption_admin_password" {
   type        = string

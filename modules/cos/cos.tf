@@ -1,24 +1,3 @@
-terraform {
-  required_providers {
-    ibm = {
-      source = "IBM-Cloud/ibm"
-    }
-  }
-}
-
-variable "prefix" {}
-variable "resource_group_id" {}
-variable "cos_instance_plan" {}
-variable "cos_instance_location" {}
-variable "cos_instance_service" {}
-variable "cos_hmac_role" {}
-variable "new_instance_bucket_hmac" {}
-variable "exstng_instance_new_bucket_hmac" {}
-variable "exstng_instance_bucket_new_hmac" {}
-variable "exstng_instance_hmac_new_bucket" {}
-variable "exstng_instance_bucket_hmac" {}
-variable "filesystem" {}
-
 #############################################################################################################
 # 1. It creates new COS instance, Bucket and Hmac Key
 #############################################################################################################
@@ -571,12 +550,4 @@ locals {
     mode       = ([for mode in var.exstng_instance_bucket_hmac : mode.mode])[idx]
     endpoint   = "https://${(flatten([for endpoint in data.ibm_cos_bucket.exstng_cos_instance_bucket : endpoint[*].s3_endpoint_direct]))[idx]}"
   }]
-}
-
-output "afm_cos_bucket_details" {
-  value = concat(local.afm_cos_bucket_details_1, local.afm_cos_bucket_details_2, local.afm_cos_bucket_details_3, local.afm_cos_bucket_details_4, local.afm_cos_bucket_details_5)
-}
-
-output "afm_config_details" {
-  value = concat(local.afm_config_details_1, local.afm_config_details_2, local.afm_config_details_3, local.afm_config_details_4, local.afm_config_details_5)
 }

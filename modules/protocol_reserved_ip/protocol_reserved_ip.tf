@@ -1,22 +1,6 @@
 /*
     Creates IBM Cloud reserved ip for protocol nodes.
 */
-
-terraform {
-  required_providers {
-    ibm = {
-      source = "IBM-Cloud/ibm"
-    }
-  }
-}
-
-variable "total_reserved_ips" {}
-variable "subnet_id" {}
-variable "name" {}
-variable "protocol_domain" {}
-variable "protocol_dns_service_id" {}
-variable "protocol_dns_zone_id" {}
-
 # Subnet ID with address, name and auto_delete
 resource "ibm_is_subnet_reserved_ip" "itself" {
   for_each = {
@@ -81,18 +65,4 @@ resource "ibm_dns_resource_record" "ptr_itself" {
   rdata       = format("%s.%s", each.value.name, var.protocol_domain)
   ttl         = 300
   depends_on  = [ibm_dns_resource_record.a_itself]
-}
-
-output "reserved_ips_details" {
-  value = try(toset([for instance_details in ibm_is_subnet_reserved_ip.itself : instance_details]), [])
-}
-
-output "instance_name_ip_map" {
-  value      = try({ for instance_details in ibm_is_subnet_reserved_ip.itself : "${instance_details.name}.${var.protocol_domain}" => instance_details.address }, {})
-  depends_on = [ibm_dns_resource_record.a_itself, ibm_dns_resource_record.ptr_itself]
-}
-
-output "reserved_ip_id_ip_map" {
-  value      = try({ for reserved_ip_details in ibm_is_subnet_reserved_ip.itself : reserved_ip_details.name => reserved_ip_details.reserved_ip }, {})
-  depends_on = [ibm_dns_resource_record.a_itself, ibm_dns_resource_record.ptr_itself]
 }

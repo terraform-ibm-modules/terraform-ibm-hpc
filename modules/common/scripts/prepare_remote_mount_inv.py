@@ -19,8 +19,8 @@ limitations under the License.
 import argparse
 import configparser
 import json
-import pathlib
 import os
+import pathlib
 import sys
 
 
@@ -118,7 +118,7 @@ def initialize_node_details(storage_gui_ip, user, key_file):
         "user": user,
         "key_file": key_file,
         "class": "storagenodegrp",
-        "daemon_nodename": storage_gui_ip.split('.')[0]
+        "daemon_nodename": storage_gui_ip.split(".")[0],
     }
     node_details.append(get_host_format(node))
     return node_details
@@ -159,8 +159,7 @@ if __name__ == "__main__":
         required=True,
         help="Spectrum Scale instances SSH private key path",
     )
-    PARSER.add_argument("--using_rest_initialization",
-                        help="skips gui configuration")
+    PARSER.add_argument("--using_rest_initialization", help="skips gui configuration")
     PARSER.add_argument("--bastion_user", help="Bastion OS Login username")
     PARSER.add_argument("--bastion_ip", help="Bastion SSH public ip address")
     PARSER.add_argument(
@@ -186,29 +185,24 @@ if __name__ == "__main__":
         required=True,
         help="Spectrum Scale storage cluster GUI password",
     )
-    PARSER.add_argument("--verbose", action="store_true",
-                        help="print log messages")
+    PARSER.add_argument("--verbose", action="store_true", help="print log messages")
     ARGUMENTS = PARSER.parse_args()
 
     # Step-1: Read the inventory file
     COMP_TF = read_json_file(ARGUMENTS.compute_tf_inv_path)
     if ARGUMENTS.verbose:
-        print("Parsed compute terraform output: %s" %
-              json.dumps(COMP_TF, indent=4))
+        print("Parsed compute terraform output: %s" % json.dumps(COMP_TF, indent=4))
     STRG_TF = read_json_file(ARGUMENTS.storage_tf_inv_path)
     if ARGUMENTS.verbose:
-        print("Parsed storage terraform output: %s" %
-              json.dumps(STRG_TF, indent=4))
+        print("Parsed storage terraform output: %s" % json.dumps(STRG_TF, indent=4))
 
     # Step-2: Read the GUI inventory file
     COMP_GUI = read_json_file(ARGUMENTS.compute_gui_inv_path)
     if ARGUMENTS.verbose:
-        print("Parsed compute terraform output: %s" %
-              json.dumps(COMP_GUI, indent=4))
+        print("Parsed compute terraform output: %s" % json.dumps(COMP_GUI, indent=4))
     STRG_GUI = read_json_file(ARGUMENTS.storage_gui_inv_path)
     if ARGUMENTS.verbose:
-        print("Parsed storage terraform output: %s" %
-              json.dumps(STRG_GUI, indent=4))
+        print("Parsed storage terraform output: %s" % json.dumps(STRG_GUI, indent=4))
 
     # Step-3: Create playbook
     remote_mount = {}
@@ -226,8 +220,7 @@ if __name__ == "__main__":
         pathlib.PurePath(STRG_TF["storage_cluster_filesystem_mountpoint"]).stem
     )
 
-    playbook_content = prepare_remote_mount_playbook(
-        "scale_nodes", remote_mount)
+    playbook_content = prepare_remote_mount_playbook("scale_nodes", remote_mount)
     write_to_file(
         "%s/%s/remote_mount_cloud_playbook.yaml"
         % (ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"),

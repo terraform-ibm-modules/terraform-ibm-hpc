@@ -5,7 +5,6 @@ locals {
 resource "local_sensitive_file" "mount_path_file" {
   content  = <<EOT
 [all_nodes]
-scheduler = ${jsonencode(var.scheduler)}
 ${join("\n", var.hosts)}
 
 [management_nodes]
@@ -14,6 +13,7 @@ ${join("\n", [for host in var.hosts : host if can(regex(".*-mgmt-.*", host))])}
 ${join("\n", [for host in var.hosts : host if can(regex(".*-comp-.*", host))])}
 
 [all:vars]
+scheduler = ${jsonencode(var.scheduler)}
 name_mount_path_map = {${join(",", [for k, v in var.name_mount_path_map : "\"${k}\": \"${v}\""])}}
 logs_enable_for_management = ${var.logs_enable_for_management}
 logs_enable_for_compute = ${var.logs_enable_for_compute}

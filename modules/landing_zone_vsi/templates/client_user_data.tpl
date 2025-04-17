@@ -16,7 +16,7 @@ elif grep -q "Ubuntu" /etc/os-release
 then
     USER=ubuntu
 fi
-    
+
 if grep -q "Red Hat" /etc/os-release
 then
     USER=vpcuser

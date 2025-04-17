@@ -40,8 +40,8 @@ data "template_file" "compute_user_data" {
     compute_interfaces          = var.storage_type == "scratch" ? local.vsi_interfaces[0] : local.bms_interfaces[0]
     compute_dns_domain          = var.dns_domain_names["compute"]
     # TODO: Fix me
-    dynamic_compute_instances   = var.dynamic_compute_instances == null ? "" : ""
-    scheduler                   = var.scheduler
+    dynamic_compute_instances = var.dynamic_compute_instances == null ? "" : ""
+    scheduler                 = var.scheduler
   }
 }
 

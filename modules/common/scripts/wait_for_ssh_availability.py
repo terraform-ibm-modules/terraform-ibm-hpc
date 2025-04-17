@@ -23,7 +23,7 @@ import sys
 
 
 def read_json_file(json_path):
-    """ Read inventory as json file """
+    """Read inventory as json file"""
     tf_inv = {}
     try:
         with open(json_path) as json_handler:
@@ -31,7 +31,9 @@ def read_json_file(json_path):
                 tf_inv = json.load(json_handler)
             except json.decoder.JSONDecodeError:
                 print(
-                    "Provided terraform inventory file (%s) is not a valid json." % json_path)
+                    "Provided terraform inventory file (%s) is not a valid json."
+                    % json_path
+                )
                 sys.exit(1)
     except OSError:
         print("Provided terraform inventory file (%s) does not exist." % json_path)
@@ -46,9 +48,12 @@ def local_execution(command_list):
     :arg: command_list (list)
     :return: (out, err, command_pipe.returncode)
     """
-    sub_command = subprocess.Popen(command_list, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE,
-                                   universal_newlines=True)
+    sub_command = subprocess.Popen(
+        command_list,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+    )
     out, err = sub_command.communicate()
     return out, err, sub_command.returncode
 
@@ -59,8 +64,15 @@ def aws_ec2_wait_running(instance_ids, region):
     :args: region(string), instance_ids(list)
     """
     print("Waiting for instance's (%s) to obtain running-ok state." % instance_ids)
-    command = ["aws", "ec2", "wait", "instance-status-ok",
-               "--region", region, "--instance-ids"] + instance_ids
+    command = [
+        "aws",
+        "ec2",
+        "wait",
+        "instance-status-ok",
+        "--region",
+        region,
+        "--instance-ids",
+    ] + instance_ids
     out, err, code = local_execution(command)
 
     if code:
@@ -71,13 +83,17 @@ def aws_ec2_wait_running(instance_ids, region):
 
 if __name__ == "__main__":
     PARSER = argparse.ArgumentParser(
-        description='Wait for instances to achieve okay state.')
-    PARSER.add_argument('--tf_inv_path', required=True,
-                        help='Terraform inventory file path')
-    PARSER.add_argument('--cluster_type', required=True,
-                        help='Cluster type (Ex: compute, storage, combined')
-    PARSER.add_argument('--verbose', action='store_true',
-                        help='print log messages')
+        description="Wait for instances to achieve okay state."
+    )
+    PARSER.add_argument(
+        "--tf_inv_path", required=True, help="Terraform inventory file path"
+    )
+    PARSER.add_argument(
+        "--cluster_type",
+        required=True,
+        help="Cluster type (Ex: compute, storage, combined",
+    )
+    PARSER.add_argument("--verbose", action="store_true", help="print log messages")
     ARGUMENTS = PARSER.parse_args()
 
     # Step-1: Read the inventory file
@@ -87,20 +103,24 @@ if __name__ == "__main__":
 
     # Step-2: Identify instance id's based cluster_type
     target_instance_ids = []
-    if TF['cloud_platform'].upper() == 'AWS':
-        if ARGUMENTS.cluster_type == 'compute':
-            target_instance_ids = TF['compute_cluster_instance_ids']
-            if TF['bastion_instance_id'] != 'None':
-                target_instance_ids.append(TF['bastion_instance_id'])
-        elif ARGUMENTS.cluster_type == 'storage':
-            target_instance_ids = TF['storage_cluster_instance_ids'] + \
-                TF['storage_cluster_desc_instance_ids']
-            if TF['bastion_instance_id'] != 'None':
-                target_instance_ids.append(TF['bastion_instance_id'])
-        elif ARGUMENTS.cluster_type == 'combined':
-            target_instance_ids = TF['compute_cluster_instance_ids'] + \
-                TF['storage_cluster_instance_ids'] + \
-                TF['storage_cluster_desc_instance_ids']
-            if TF['bastion_instance_id'] != 'None':
-                target_instance_ids.append(TF['bastion_instance_id'])
-        aws_ec2_wait_running(target_instance_ids, TF['vpc_region'])
+    if TF["cloud_platform"].upper() == "AWS":
+        if ARGUMENTS.cluster_type == "compute":
+            target_instance_ids = TF["compute_cluster_instance_ids"]
+            if TF["bastion_instance_id"] != "None":
+                target_instance_ids.append(TF["bastion_instance_id"])
+        elif ARGUMENTS.cluster_type == "storage":
+            target_instance_ids = (
+                TF["storage_cluster_instance_ids"]
+                + TF["storage_cluster_desc_instance_ids"]
+            )
+            if TF["bastion_instance_id"] != "None":
+                target_instance_ids.append(TF["bastion_instance_id"])
+        elif ARGUMENTS.cluster_type == "combined":
+            target_instance_ids = (
+                TF["compute_cluster_instance_ids"]
+                + TF["storage_cluster_instance_ids"]
+                + TF["storage_cluster_desc_instance_ids"]
+            )
+            if TF["bastion_instance_id"] != "None":
+                target_instance_ids.append(TF["bastion_instance_id"])
+        aws_ec2_wait_running(target_instance_ids, TF["vpc_region"])
