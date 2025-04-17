@@ -4,7 +4,9 @@ resource "ibm_is_lb" "alb" {
   resource_group  = var.resource_group_id
   type            = var.alb_type
   security_groups = var.security_group_ids
-  subnets         = [var.bastion_subnets[0].id]
+#  subnets         = [var.bastion_subnets[0].id]
+#  subnets         = [var.bastion_subnets[0].id]
+  subnets = [var.bastion_subnets[0]]
 }
 
 resource "ibm_is_lb_pool" "alb_backend_pools" {

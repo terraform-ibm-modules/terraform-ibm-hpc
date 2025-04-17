@@ -100,6 +100,7 @@ locals {
   compute_subnet  = [for subnet in local.compute_subnets : subnet.name]
   client_subnet   = [for subnet in local.client_subnets : subnet.name]
   bastion_subnet  = [for subnet in local.bastion_subnets : subnet.name]
+  bastion_subnet_id = [for subnet in local.bastion_subnets : subnet.id]
 
   #boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   #skip_iam_authorization_policy = true
@@ -274,11 +275,22 @@ locals {
   db_template          = [3, 12288, 122880, 3, "multitenant"]
 }
 
+#locals {
+#  vsi_management_ids = [
+#    for instance in local.management_vsi_data: instance.id
+#  ]
+#}
+
 locals {
   vsi_management_ids = [
-    for instance in local.management_vsi_data: instance.id
+    for instance in local.management_vsi_data :
+    {
+      id = instance["id"]
+    }
   ]
 }
+
+
 
 locals {
   # alb_created_by_api:

@@ -22,7 +22,8 @@ resource "shell_script" "alb_api" {
     region               = var.region
     resource_group_id    = var.resource_group_id
     prefix               = var.prefix
-    bastion_subnet_id    = var.bastion_subnets[0].id
+#    bastion_subnet_id    = var.bastion_subnets[0].id
+    bastion_subnet_id = var.bastion_subnets[0]
     certificate_instance = var.certificate_instance
     firstip              = var.vsi_ips[0]
     pool_ips             = join(",", var.vsi_ips[*])

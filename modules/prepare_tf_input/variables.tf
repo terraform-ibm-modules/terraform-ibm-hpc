@@ -395,3 +395,9 @@ variable "app_center_existing_certificate_instance" {
   type        = string
   default     = ""
 }
+
+variable "bastion_subnet_id" {
+  description = "When app_center_high_availability is enable/set as true, The Application Center will be configured for high availability and requires a Application Load Balancer Front End listener to use a certificate CRN value stored in the Secret Manager. Provide the valid 'existing_certificate_instance' to configure the Application load balancer."
+  type        = list(string)
+  default     = []
+}

@@ -138,6 +138,7 @@ module "prepare_tf_input" {
   observability_atracker_target_type               = var.observability_atracker_target_type
   app_center_high_availability                     = var.app_center_high_availability
   app_center_existing_certificate_instance         = var.app_center_existing_certificate_instance
+  bastion_subnet_id                                = local.bastion_subnet_id
   depends_on                                       = [module.deployer]
 }
 
@@ -232,9 +233,9 @@ module "db" {
 }
 
 module "alb" {
-  count             = var.enable_deployer == false && var.app_center_high_availability ? 1 : 0
+  count                = var.enable_deployer == false && var.app_center_high_availability ? 1 : 0
   source               = "./modules/alb"
-  bastion_subnets      = local.bastion_subnets
+  bastion_subnets      = var.bastion_subnet_id
   resource_group_id    = local.resource_group_ids["workload_rg"]
   prefix               = var.prefix
   security_group_ids   = concat(local.compute_security_group_id, [local.bastion_security_group_id])
@@ -247,7 +248,7 @@ module "alb_api" {
   source               = "./modules/alb_api"
   ibmcloud_api_key     = var.ibmcloud_api_key
   region               = data.ibm_is_region.region.name
-  bastion_subnets      = local.bastion_subnets
+  bastion_subnets      = var.bastion_subnet_id
   resource_group_id    = local.resource_group_ids["workload_rg"]
   prefix               = var.prefix
   security_group_ids   = concat(local.compute_security_group_id, [local.bastion_security_group_id])

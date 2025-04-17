@@ -27,15 +27,21 @@ variable "security_group_ids" {
   default     = null
 }
 
+#variable "bastion_subnets" {
+#  type = list(object({
+#    name = string
+#    id   = string
+#    zone = string
+#    cidr = string
+#  }))
+#  default     = []
+#  description = "Subnets to launch the bastion host."
+#}
+
 variable "bastion_subnets" {
-  type = list(object({
-    name = string
-    id   = string
-    zone = string
-    cidr = string
-  }))
-  default     = []
-  description = "Subnets to launch the bastion host."
+  type = list(string)
+  description = "Subnet IDs to launch the bastion host."
+  default = []
 }
 
 variable "create_load_balancer" {
