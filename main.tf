@@ -517,8 +517,8 @@ module "storage_cluster_configuration" {
   using_rest_initialization           = true
   storage_cluster_gui_username        = var.storage_gui_username
   storage_cluster_gui_password        = var.storage_gui_password
-  colocate_protocol_cluster_instances = var.colocate_protocol_cluster_instances == true ? true : false
-  is_colocate_protocol_subset         = local.is_colocate_protocol_subset == true ? true : false
+  colocate_protocol_cluster_instances = var.colocate_protocol_cluster_instances
+  is_colocate_protocol_subset         = local.is_colocate_protocol_subset
   mgmt_memory                         = data.ibm_is_instance_profile.management_profile.memory[0].value
   mgmt_vcpus_count                    = data.ibm_is_instance_profile.management_profile.vcpu_count[0].value
   mgmt_bandwidth                      = data.ibm_is_instance_profile.management_profile.bandwidth[0].value
@@ -547,9 +547,9 @@ module "storage_cluster_configuration" {
   meta_private_key                    = module.landing_zone_vsi[0].storage_private_key_content
   scale_version                       = local.scale_version
   spectrumscale_rpms_path             = var.spectrumscale_rpms_path
-  enable_mrot_conf                    = local.enable_mrot_conf ? true : false
-  enable_ces                          = local.scale_ces_enabled == true ? true : false
-  enable_afm                          = local.enable_afm == true ? true : false
+  enable_mrot_conf                    = local.enable_mrot_conf
+  enable_ces                          = local.scale_ces_enabled
+  enable_afm                          = local.enable_afm
   scale_encryption_enabled            = var.scale_encryption_enabled
   scale_encryption_type               = var.scale_encryption_type != null ? var.scale_encryption_type : null
   scale_encryption_admin_password     = var.scale_encryption_admin_password
@@ -559,7 +559,7 @@ module "storage_cluster_configuration" {
   ldap_server                         = var.enable_ldap ? local.ldap_instance_private_ips[0] : null
   ldap_admin_password                 = var.ldap_admin_password
   ldap_server_cert                    = var.ldap_server_cert
-  enable_key_protect                  = var.scale_encryption_type == "key_protect" ? true : false
+  enable_key_protect                  = var.scale_encryption_type
   depends_on                          = [module.write_storage_scale_cluster_inventory]
 }
 
