@@ -306,7 +306,7 @@ locals {
 locals {
   # gpfs_base_rpm_path  = fileset(var.spectrumscale_rpms_path, "gpfs.base-*")
   # scale_org_version   = regex("gpfs.base-(.*).x86_64.rpm", tolist(local.gpfs_base_rpm_path)[0])[0]
-  scale_version = "5221" #replace(local.scale_org_version, "-", ".")
+  scale_version = "5.2.2.1" #replace(local.scale_org_version, "-", ".")
 
   compute_vsi_profile    = var.static_compute_instances[*]["profile"]
   storage_vsi_profile    = var.storage_instances[*]["profile"]

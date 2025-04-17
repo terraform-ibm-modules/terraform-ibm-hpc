@@ -488,7 +488,7 @@ module "compute_cluster_configuration" {
   meta_private_key                = module.landing_zone_vsi[0].compute_private_key_content
   scale_version                   = local.scale_version
   spectrumscale_rpms_path         = var.spectrumscale_rpms_path
-  enable_mrot_conf                = local.enable_mrot_conf ? true : false
+  enable_mrot_conf                = local.enable_mrot_conf
   enable_ces                      = false
   enable_afm                      = false
   scale_encryption_enabled        = var.scale_encryption_enabled
@@ -498,7 +498,7 @@ module "compute_cluster_configuration" {
   ldap_basedns                    = var.ldap_basedns
   ldap_server                     = var.enable_ldap ? local.ldap_instance_private_ips[0] : jsonencode("")
   ldap_admin_password             = var.ldap_admin_password
-  enable_key_protect              = var.scale_encryption_type == "key_protect" ? true : false
+  enable_key_protect              = var.scale_encryption_type
   depends_on                      = [module.write_compute_scale_cluster_inventory]
 }
 

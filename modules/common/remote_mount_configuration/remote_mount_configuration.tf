@@ -2,14 +2,6 @@
     Excutes ansible playbook to configure remote mount between IBM Spectrum Scale compute and storage cluster.
 */
 
-locals {
-  scripts_path              = replace(path.module, "remote_mount_configuration", "scripts")
-  ansible_inv_script_path   = format("%s/prepare_remote_mount_inv.py", local.scripts_path)
-  compute_private_key       = format("%s/compute_key/id_rsa", var.clone_path) #tfsec:ignore:GEN002
-  remote_mnt_inventory_path = format("%s/%s/remote_mount_inventory.ini", var.clone_path, "ibm-spectrum-scale-install-infra")
-  remote_mnt_playbook_path  = format("%s/%s/remote_mount_cloud_playbook.yaml", var.clone_path, "ibm-spectrum-scale-install-infra")
-}
-
 resource "null_resource" "prepare_remote_mnt_inventory_using_jumphost_connection" {
   count = (tobool(var.turn_on) == true && tobool(var.compute_cluster_create_complete) == true && tobool(var.storage_cluster_create_complete) == true && tobool(var.using_jumphost_connection) == true && tobool(var.create_scale_cluster) == true) ? 1 : 0
   provisioner "local-exec" {
