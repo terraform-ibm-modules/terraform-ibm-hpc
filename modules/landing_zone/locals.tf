@@ -63,15 +63,20 @@ locals {
   #zone_count = length(local.active_zones)
 
   # Address Prefixes calculation
+  # address_prefixes = {
+  #   for zone in local.zones : zone => contains(local.active_zones, zone) ? distinct(compact([
+  #     local.client_instance_count != 0 && local.management_instance_count != 0 ? var.client_subnets_cidr[index(local.active_zones, zone)] : null,
+  #     var.compute_subnets_cidr[index(local.active_zones, zone)],
+  #     local.storage_instance_count != 0 ? var.storage_subnets_cidr[index(local.active_zones, zone)] : null,
+  #     local.storage_instance_count != 0 && local.protocol_instance_count != 0 ? var.protocol_subnets_cidr[index(local.active_zones, zone)] : null,
+  #     # bastion subnet and instance will always be in first active zone
+  #     zone == local.active_zones[0] ? var.bastion_subnets_cidr[0] : null
+  #   ])) : []
+  # }
+
+  bastion_sg_variable_cidr_list = split(",", var.network_cidr)
   address_prefixes = {
-    for zone in local.zones : zone => contains(local.active_zones, zone) ? distinct(compact([
-      local.client_instance_count != 0 && local.management_instance_count != 0 ? var.client_subnets_cidr[index(local.active_zones, zone)] : null,
-      var.compute_subnets_cidr[index(local.active_zones, zone)],
-      local.storage_instance_count != 0 ? var.storage_subnets_cidr[index(local.active_zones, zone)] : null,
-      local.storage_instance_count != 0 && local.protocol_instance_count != 0 ? var.protocol_subnets_cidr[index(local.active_zones, zone)] : null,
-      # bastion subnet and instance will always be in first active zone
-      zone == local.active_zones[0] ? var.bastion_subnets_cidr[0] : null
-    ])) : []
+    "zone-${element(split("-", var.zones[0]), 2)}" = [local.bastion_sg_variable_cidr_list[0]]
   }
 
   # Subnet calculation

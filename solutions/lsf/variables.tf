@@ -71,7 +71,7 @@ variable "vpc_name" {
 
 variable "network_cidr" {
   type        = string
-  default     = "10.0.0.0/8"
+  default     = "10.241.0.0/18"
   description = "Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning."
 }
 
@@ -110,7 +110,7 @@ variable "bastion_ssh_keys" {
 
 variable "bastion_subnets_cidr" {
   type        = string
-  default     = "10.0.0.0/24"
+  default     = "10.241.16.0/28"
   description = "Subnet CIDR block to launch the bastion host."
 }
 
@@ -170,7 +170,7 @@ variable "deployer_instance_profile" {
 ##############################################################################
 variable "client_subnets_cidr" {
   type        = string
-  default     = "10.10.10.0/24"
+  default     = "10.241.0.0/21"
   description = "Subnet CIDR block to launch the client host."
 }
 
@@ -198,7 +198,7 @@ variable "client_instances" {
 
 variable "compute_subnets_cidr" {
   type        = string
-  default     = "10.10.20.0/24"
+  default     = "10.241.0.0/20"
   description = "Subnet CIDR block to launch the compute cluster host."
 }
 
@@ -333,7 +333,7 @@ variable "enable_hyperthreading" {
 ##############################################################################
 variable "storage_subnets_cidr" {
   type        = string
-  default     = "10.10.30.0/24"
+  default     = "10.241.8.0/22"
   description = "Subnet CIDR block to launch the storage cluster host."
 }
 
@@ -363,7 +363,7 @@ variable "storage_instances" {
 
 variable "protocol_subnets_cidr" {
   type        = string
-  default     = "10.10.40.0/24"
+  default     = "10.241.12.0/22"
   description = "Subnet CIDR block to launch the storage cluster host."
 }
 

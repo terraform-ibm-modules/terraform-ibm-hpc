@@ -73,7 +73,7 @@ variable "vpc_name" {
 
 variable "network_cidr" {
   type        = string
-  default     = "10.0.0.0/8"
+  default     = "10.241.0.0/18"
   description = "Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning."
 }
 
@@ -118,7 +118,7 @@ variable "bastion_subnets" {
 
 variable "bastion_subnets_cidr" {
   type        = list(string)
-  default     = ["10.0.0.0/24"]
+  default     = ["10.241.16.0/28"]
   description = "Subnet CIDR block to launch the bastion host."
 }
 
@@ -178,7 +178,7 @@ variable "client_subnets" {
 
 # variable "client_subnets_cidr" {
 #   type        = list(string)
-#   default     = ["10.10.10.0/24", "10.20.10.0/24", "10.30.10.0/24"]
+#   default     = ["10.241.0.0/21"]
 #   description = "Subnet CIDR block to launch the client host."
 # }
 
@@ -212,7 +212,7 @@ variable "compute_subnets" {
 
 variable "compute_subnets_cidr" {
   type        = list(string)
-  default     = ["10.10.20.0/24", "10.20.20.0/24", "10.30.20.0/24"]
+  default     = ["10.241.0.0/20"]
   description = "Subnet CIDR block to launch the compute cluster host."
 }
 
@@ -295,7 +295,7 @@ variable "storage_subnets" {
 
 variable "storage_subnets_cidr" {
   type        = list(string)
-  default     = ["10.10.30.0/24", "10.20.30.0/24", "10.30.30.0/24"]
+  default     = ["10.241.8.0/22"]
   description = "Subnet CIDR block to launch the storage cluster host."
 }
 
@@ -331,7 +331,7 @@ variable "protocol_subnets" {
 
 variable "protocol_subnets_cidr" {
   type        = list(string)
-  default     = ["10.10.40.0/24", "10.20.40.0/24", "10.30.40.0/24"]
+  default     = ["10.241.12.0/22"]
   description = "Subnet CIDR block to launch the storage cluster host."
 }
 
