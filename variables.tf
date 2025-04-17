@@ -457,6 +457,24 @@ variable "kms_key_name" {
   description = "Provide the existing kms key name that you want to use for the IBM Cloud HPC cluster. Note: kms_key_name to be considered only if key_management value is set as key_protect.(for example kms_key_name: my-encryption-key)."
 }
 
+variable "skip_iam_share_authorization_policy" {
+  type        = bool
+  default     = false
+  description = "When using an existing KMS instance name, set this value to true if authorization is already enabled between KMS instance and the VPC file share. Otherwise, default is set to false. Ensuring proper authorization avoids access issues during deployment.For more information on how to create authorization policy manually, see [creating authorization policies for VPC file share](https://cloud.ibm.com/docs/vpc?topic=vpc-file-s2s-auth&interface=ui)."
+}
+
+variable "boot_volume_encryption_key" {
+  type        = string
+  default     = null
+  description = "The kms_key crn."
+}
+
+variable "existing_kms_instance_guid" {
+  type        = string
+  default     = null
+  description = "The existing KMS instance guid."
+}
+
 # variable "hpcs_instance_name" {
 #   type        = string
 #   default     = null
@@ -475,11 +493,11 @@ variable "skip_kms_s2s_auth_policy" {
   description = "Skip auth policy between KMS service and COS instance, set to true if this policy is already in place on account."
 }
 
-variable "skip_iam_authorization_policy" {
-  type        = bool
-  default     = false
-  description = "Set to false if authorization policy is required for VPC block storage volumes to access kms. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for block storage volume](https://cloud.ibm.com/docs/vpc?topic=vpc-block-s2s-auth&interface=ui)."
-}
+# variable "skip_iam_authorization_policy" {
+#   type        = bool
+#   default     = false
+#   description = "Set to false if authorization policy is required for VPC block storage volumes to access kms. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for block storage volume](https://cloud.ibm.com/docs/vpc?topic=vpc-block-s2s-auth&interface=ui)."
+# }
 
 ##############################################################################
 # Observability Variables

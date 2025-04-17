@@ -456,3 +456,46 @@ variable "ldap_vsi_osimage_name" {
   default     = "ibm-ubuntu-22-04-4-minimal-amd64-3"
   description = "Image name to be used for provisioning the LDAP instances. By default ldap server are created on Ubuntu based OS flavour."
 }
+
+##############################################################################
+# Encryption Variables
+##############################################################################
+variable "key_management" {
+  type        = string
+  default     = null
+  description = "Set the value as key_protect to enable customer managed encryption for boot volume and file share. If the key_management is set as null, IBM Cloud resources will be always be encrypted through provider managed."
+  validation {
+    condition     = var.key_management == "null" || var.key_management == null || var.key_management == "key_protect"
+    error_message = "key_management must be either 'null' or 'key_protect'."
+  }
+}
+
+variable "kms_instance_name" {
+  type        = string
+  default     = null
+  description = "Provide the name of the existing Key Protect instance associated with the Key Management Service. Note: To use existing kms_instance_name set key_management as key_protect. The name can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
+}
+
+variable "kms_key_name" {
+  type        = string
+  default     = null
+  description = "Provide the existing kms key name that you want to use for the IBM Cloud HPC cluster. Note: kms_key_name to be considered only if key_management value is set as key_protect.(for example kms_key_name: my-encryption-key)."
+}
+
+variable "boot_volume_encryption_key" {
+  type        = string
+  default     = null
+  description = "The kms_key crn."
+}
+
+variable "existing_kms_instance_guid" {
+  type        = string
+  default     = null
+  description = "The existing KMS instance guid."
+}
+
+variable "skip_iam_share_authorization_policy" {
+  type        = bool
+  default     = false
+  description = "When using an existing KMS instance name, set this value to true if authorization is already enabled between KMS instance and the VPC file share. Otherwise, default is set to false. Ensuring proper authorization avoids access issues during deployment.For more information on how to create authorization policy manually, see [creating authorization policies for VPC file share](https://cloud.ibm.com/docs/vpc?topic=vpc-file-s2s-auth&interface=ui)."
+}

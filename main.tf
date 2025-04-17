@@ -40,26 +40,25 @@ module "landing_zone" {
 }
 
 module "deployer" {
-  source                        = "./modules/deployer"
-  scheduler                     = var.scheduler
-  existing_resource_group       = var.existing_resource_group
-  prefix                        = var.prefix
-  vpc_id                        = local.vpc_id
-  network_cidr                  = var.network_cidr
-  enable_bastion                = var.enable_bastion
-  bastion_subnets               = local.bastion_subnets
-  bastion_image                 = var.bastion_image
-  bastion_instance_profile      = var.bastion_instance_profile
-  enable_deployer               = var.enable_deployer
-  deployer_image                = var.deployer_image
-  deployer_instance_profile     = var.deployer_instance_profile
-  ssh_keys                      = local.bastion_ssh_keys
-  allowed_cidr                  = var.allowed_cidr
-  kms_encryption_enabled        = local.kms_encryption_enabled
-  boot_volume_encryption_key    = local.boot_volume_encryption_key
-  existing_kms_instance_guid    = local.existing_kms_instance_guid
-  skip_iam_authorization_policy = var.skip_iam_authorization_policy
-  dns_domain_names              = var.dns_domain_names
+  source                     = "./modules/deployer"
+  scheduler                  = var.scheduler
+  existing_resource_group    = var.existing_resource_group
+  prefix                     = var.prefix
+  vpc_id                     = local.vpc_id
+  network_cidr               = var.network_cidr
+  enable_bastion             = var.enable_bastion
+  bastion_subnets            = local.bastion_subnets
+  bastion_image              = var.bastion_image
+  bastion_instance_profile   = var.bastion_instance_profile
+  enable_deployer            = var.enable_deployer
+  deployer_image             = var.deployer_image
+  deployer_instance_profile  = var.deployer_instance_profile
+  ssh_keys                   = local.bastion_ssh_keys
+  allowed_cidr               = var.allowed_cidr
+  kms_encryption_enabled     = local.kms_encryption_enabled
+  boot_volume_encryption_key = local.boot_volume_encryption_key
+  existing_kms_instance_guid = local.existing_kms_instance_guid
+  dns_domain_names           = var.dns_domain_names
 }
 
 module "landing_zone_vsi" {
@@ -86,7 +85,8 @@ module "landing_zone_vsi" {
   nsd_details                = var.nsd_details
   dns_domain_names           = var.dns_domain_names
   kms_encryption_enabled     = local.kms_encryption_enabled
-  boot_volume_encryption_key = local.boot_volume_encryption_key
+  boot_volume_encryption_key = var.boot_volume_encryption_key
+  existing_kms_instance_guid = var.existing_kms_instance_guid
   enable_bastion             = var.enable_bastion
   enable_ldap                = var.enable_ldap
   ldap_vsi_profile           = var.ldap_vsi_profile
@@ -122,6 +122,12 @@ module "prepare_tf_input" {
   client_subnets                                   = local.client_subnet
   bastion_subnets                                  = local.bastion_subnet
   dns_domain_names                                 = var.dns_domain_names
+  key_management                                   = var.key_management
+  kms_instance_name                                = var.kms_instance_name
+  kms_key_name                                     = var.kms_key_name
+  boot_volume_encryption_key                       = local.boot_volume_encryption_key
+  existing_kms_instance_guid                       = local.existing_kms_instance_guid
+  skip_iam_share_authorization_policy              = var.skip_iam_share_authorization_policy
   dns_custom_resolver_id                           = var.dns_custom_resolver_id
   dns_instance_id                                  = var.dns_instance_id
   bastion_security_group_id                        = local.bastion_security_group_id
@@ -178,14 +184,17 @@ module "resource_provisioner" {
 }
 
 module "file_storage" {
-  count              = var.enable_deployer == false ? 1 : 0
-  source             = "./modules/file_storage"
-  zone               = var.zones[0] # always the first zone
-  resource_group_id  = local.resource_group_ids["service_rg"]
-  file_shares        = local.file_shares
-  encryption_key_crn = local.boot_volume_encryption_key
-  security_group_ids = local.compute_security_group_id
-  subnet_id          = local.compute_subnet_id
+  count                               = var.enable_deployer == false ? 1 : 0
+  source                              = "./modules/file_storage"
+  zone                                = var.zones[0] # always the first zone
+  resource_group_id                   = local.resource_group_ids["service_rg"]
+  file_shares                         = local.file_shares
+  encryption_key_crn                  = local.boot_volume_encryption_key
+  security_group_ids                  = local.compute_security_group_id
+  subnet_id                           = local.compute_subnet_id
+  existing_kms_instance_guid          = var.existing_kms_instance_guid
+  skip_iam_share_authorization_policy = var.skip_iam_share_authorization_policy
+  kms_encryption_enabled              = local.kms_encryption_enabled
 }
 
 module "dns" {

@@ -46,6 +46,7 @@ module "lsf" {
   vpn_preshared_key                                = local.env.vpn_preshared_key
   kms_instance_name                                = local.env.kms_instance_name
   kms_key_name                                     = local.env.kms_key_name
+  skip_iam_share_authorization_policy              = local.env.skip_iam_share_authorization_policy
   observability_atracker_enable                    = local.env.observability_atracker_enable
   observability_atracker_target_type               = local.env.observability_atracker_target_type
   observability_monitoring_enable                  = local.env.observability_monitoring_enable
@@ -61,7 +62,6 @@ module "lsf" {
   scc_location                                     = local.env.scc_location
   scc_event_notification_plan                      = local.env.scc_event_notification_plan
   skip_flowlogs_s2s_auth_policy                    = local.env.skip_flowlogs_s2s_auth_policy
-  skip_iam_authorization_policy                    = local.env.skip_iam_authorization_policy
   skip_kms_s2s_auth_policy                         = local.env.skip_kms_s2s_auth_policy
   ibmcloud_api_key                                 = local.env.ibmcloud_api_key
   enable_hyperthreading                            = local.env.enable_hyperthreading
@@ -82,4 +82,6 @@ module "lsf" {
   # storage_gui_password                             = local.env.storage_gui_password
   # storage_gui_username                             = local.env.storage_gui_username
   # scc_profile_version                              = local.env.scc_profile_version
+  # skip_iam_authorization_policy                    = local.env.skip_iam_authorization_policy
+
 }

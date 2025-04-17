@@ -67,6 +67,7 @@ locals {
     vpn_preshared_key                                = var.vpn_preshared_key
     kms_instance_name                                = var.kms_instance_name
     kms_key_name                                     = var.kms_key_name
+    skip_iam_share_authorization_policy              = var.skip_iam_share_authorization_policy
     observability_atracker_enable                    = var.observability_atracker_enable
     observability_atracker_target_type               = var.observability_atracker_target_type
     observability_monitoring_enable                  = var.observability_monitoring_enable
@@ -82,7 +83,6 @@ locals {
     scc_location                                     = var.scc_location
     scc_event_notification_plan                      = var.scc_event_notification_plan
     skip_flowlogs_s2s_auth_policy                    = var.skip_flowlogs_s2s_auth_policy
-    skip_iam_authorization_policy                    = var.skip_iam_authorization_policy
     skip_kms_s2s_auth_policy                         = var.skip_kms_s2s_auth_policy
     ibmcloud_api_key                                 = var.ibmcloud_api_key
     enable_hyperthreading                            = var.enable_hyperthreading
@@ -96,6 +96,7 @@ locals {
     ldap_server_cert                                 = var.ldap_server_cert
     ldap_vsi_osimage_name                            = var.ldap_vsi_osimage_name
     # scc_profile_version                            = var.scc_profile_version
+    # skip_iam_authorization_policy                    = var.skip_iam_authorization_policy
 
   }
 }
@@ -152,6 +153,7 @@ locals {
     vpn_preshared_key                                = lookup(local.override[local.override_type], "vpn_preshared_key", local.config.vpn_preshared_key)
     kms_instance_name                                = lookup(local.override[local.override_type], "kms_instance_name", local.config.kms_instance_name)
     kms_key_name                                     = lookup(local.override[local.override_type], "kms_key_name", local.config.kms_key_name)
+    skip_iam_share_authorization_policy              = lookup(local.override[local.override_type], "skip_iam_share_authorization_policy", local.config.skip_iam_share_authorization_policy)
     observability_atracker_enable                    = lookup(local.override[local.override_type], "observability_atracker_enable", local.config.observability_atracker_enable)
     observability_atracker_target_type               = lookup(local.override[local.override_type], "observability_atracker_target_type", local.config.observability_atracker_target_type)
     observability_monitoring_enable                  = lookup(local.override[local.override_type], "observability_monitoring_enable", local.config.observability_monitoring_enable)
@@ -167,7 +169,6 @@ locals {
     scc_location                                     = lookup(local.override[local.override_type], "scc_location", local.config.scc_location)
     scc_event_notification_plan                      = lookup(local.override[local.override_type], "scc_event_notification_plan", local.config.scc_event_notification_plan)
     skip_flowlogs_s2s_auth_policy                    = lookup(local.override[local.override_type], "skip_flowlogs_s2s_auth_policy", local.config.skip_flowlogs_s2s_auth_policy)
-    skip_iam_authorization_policy                    = lookup(local.override[local.override_type], "skip_iam_authorization_policy", local.config.skip_iam_authorization_policy)
     skip_kms_s2s_auth_policy                         = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
     ibmcloud_api_key                                 = lookup(local.override[local.override_type], "ibmcloud_api_key", local.config.ibmcloud_api_key)
     enable_hyperthreading                            = lookup(local.override[local.override_type], "enable_hyperthreading", local.config.enable_hyperthreading)
@@ -180,6 +181,7 @@ locals {
     ldap_server                                      = lookup(local.override[local.override_type], "ldap_server", local.config.ldap_server)
     ldap_server_cert                                 = lookup(local.override[local.override_type], "ldap_server_cert", local.config.ldap_server_cert)
     ldap_vsi_osimage_name                            = lookup(local.override[local.override_type], "ldap_vsi_osimage_name", local.config.ldap_vsi_osimage_name)
-    # scc_profile_version                            = lookup(local.override[local.override_type], "scc_profile_version", local.config.scc_profile_version)
+    # scc_profile_version                              = lookup(local.override[local.override_type], "scc_profile_version", local.config.scc_profile_version)
+    # skip_iam_authorization_policy                    = lookup(local.override[local.override_type], "skip_iam_authorization_policy", local.config.skip_iam_authorization_policy)
   }
 }

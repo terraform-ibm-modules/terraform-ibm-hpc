@@ -478,6 +478,12 @@ variable "hpcs_instance_name" {
   description = "Hyper Protect Crypto Service instance"
 }
 
+variable "skip_iam_share_authorization_policy" {
+  type        = bool
+  default     = false
+  description = "When using an existing KMS instance name, set this value to true if authorization is already enabled between KMS instance and the VPC file share. Otherwise, default is set to false. Ensuring proper authorization avoids access issues during deployment.For more information on how to create authorization policy manually, see [creating authorization policies for VPC file share](https://cloud.ibm.com/docs/vpc?topic=vpc-file-s2s-auth&interface=ui)."
+}
+
 ##############################################################################
 # LDAP Variables
 ##############################################################################
@@ -697,11 +703,11 @@ variable "skip_kms_s2s_auth_policy" {
   description = "Skip auth policy between KMS service and COS instance, set to true if this policy is already in place on account."
 }
 
-variable "skip_iam_authorization_policy" {
-  type        = bool
-  default     = false
-  description = "Set to false if authorization policy is required for VPC block storage volumes to access kms. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for block storage volume](https://cloud.ibm.com/docs/vpc?topic=vpc-block-s2s-auth&interface=ui)."
-}
+# variable "skip_iam_authorization_policy" {
+#   type        = bool
+#   default     = false
+#   description = "Set to false if authorization policy is required for VPC block storage volumes to access kms. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for block storage volume](https://cloud.ibm.com/docs/vpc?topic=vpc-block-s2s-auth&interface=ui)."
+# }
 
 ##############################################################################
 # Override JSON
