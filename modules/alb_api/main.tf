@@ -27,7 +27,8 @@ resource "shell_script" "alb_api" {
     certificate_instance = var.certificate_instance
     firstip              = var.vsi_ips[0]
     pool_ips             = join(",", var.vsi_ips[*])
-    security_group_ids   = join(",", var.security_group_ids[*])
+    security_group_ids = join(",", compact(var.security_group_ids))
+#    security_group_ids   = join(",", var.security_group_ids[*])
   }
   triggers = {
     # We actually always do delete/create, since "update" is not implemented.

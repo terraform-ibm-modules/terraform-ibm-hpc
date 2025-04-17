@@ -233,7 +233,6 @@ module "db" {
 }
 
 module "alb" {
-  count                = var.enable_deployer == false && var.app_center_high_availability ? 1 : 0
   source               = "./modules/alb"
   bastion_subnets      = var.bastion_subnet_id
   resource_group_id    = local.resource_group_ids["workload_rg"]
