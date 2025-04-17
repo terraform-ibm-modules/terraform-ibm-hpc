@@ -262,10 +262,11 @@ variable "protocol_gateway_ip" {
 }
 
 variable "filesets" {
-  type = list(object({
-    mount_path = string,
-    size       = number
-  }))
+  type = map(number)
+  # type = object({
+  #   mount_path = string,
+  #   size       = number,
+  # })
   description = "filesets"
 }
 

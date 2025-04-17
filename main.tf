@@ -126,6 +126,7 @@ module "prepare_tf_input" {
   protocol_subnets                                 = local.protocol_subnet
   compute_subnets                                  = local.compute_subnet
   client_subnets                                   = local.client_subnet
+  client_ssh_keys                                  = local.client_ssh_keys
   bastion_subnets                                  = local.bastion_subnet
   dns_domain_names                                 = var.dns_domain_names
   bastion_security_group_id                        = local.bastion_security_group_id
@@ -357,7 +358,7 @@ module "write_compute_scale_cluster_inventory" {
   filesystem                                       = jsonencode("")
   mountpoint                                       = jsonencode("")
   protocol_gateway_ip                              = jsonencode("")
-  filesets                                         = []
+  filesets                                         = local.fileset_size_map #{}
   afm_cos_bucket_details                           = []
   afm_config_details                               = []
   afm_cluster_instance_names                       = []
@@ -487,7 +488,7 @@ module "compute_cluster_configuration" {
   meta_private_key                = module.landing_zone_vsi[0].compute_private_key_content
   scale_version                   = local.scale_version
   spectrumscale_rpms_path         = var.spectrumscale_rpms_path
-  enable_mrot_conf                = local.enable_mrot_conf ? "True" : "False"
+  enable_mrot_conf                = local.enable_mrot_conf ? true : false
   enable_ces                      = false
   enable_afm                      = false
   scale_encryption_enabled        = var.scale_encryption_enabled
@@ -497,7 +498,7 @@ module "compute_cluster_configuration" {
   ldap_basedns                    = var.ldap_basedns
   ldap_server                     = var.enable_ldap ? local.ldap_instance_private_ips[0] : jsonencode("")
   ldap_admin_password             = var.ldap_admin_password
-  enable_key_protect              = var.scale_encryption_type == "key_protect" ? "True" : "False"
+  enable_key_protect              = var.scale_encryption_type == "key_protect" ? true : false
   depends_on                      = [module.write_compute_scale_cluster_inventory]
 }
 
@@ -516,8 +517,8 @@ module "storage_cluster_configuration" {
   using_rest_initialization           = true
   storage_cluster_gui_username        = var.storage_gui_username
   storage_cluster_gui_password        = var.storage_gui_password
-  colocate_protocol_cluster_instances = var.colocate_protocol_cluster_instances == true ? "True" : "False"
-  is_colocate_protocol_subset         = local.is_colocate_protocol_subset == true ? "True" : "False"
+  colocate_protocol_cluster_instances = var.colocate_protocol_cluster_instances == true ? true : false
+  is_colocate_protocol_subset         = local.is_colocate_protocol_subset == true ? true : false
   mgmt_memory                         = data.ibm_is_instance_profile.management_profile.memory[0].value
   mgmt_vcpus_count                    = data.ibm_is_instance_profile.management_profile.vcpu_count[0].value
   mgmt_bandwidth                      = data.ibm_is_instance_profile.management_profile.bandwidth[0].value
@@ -546,9 +547,9 @@ module "storage_cluster_configuration" {
   meta_private_key                    = module.landing_zone_vsi[0].storage_private_key_content
   scale_version                       = local.scale_version
   spectrumscale_rpms_path             = var.spectrumscale_rpms_path
-  enable_mrot_conf                    = local.enable_mrot_conf ? "True" : "False"
-  enable_ces                          = local.scale_ces_enabled == true ? "True" : "False"
-  enable_afm                          = local.enable_afm == true ? "True" : "False"
+  enable_mrot_conf                    = local.enable_mrot_conf ? true : false
+  enable_ces                          = local.scale_ces_enabled == true ? true : false
+  enable_afm                          = local.enable_afm == true ? true : false
   scale_encryption_enabled            = var.scale_encryption_enabled
   scale_encryption_type               = var.scale_encryption_type != null ? var.scale_encryption_type : null
   scale_encryption_admin_password     = var.scale_encryption_admin_password
@@ -558,7 +559,7 @@ module "storage_cluster_configuration" {
   ldap_server                         = var.enable_ldap ? local.ldap_instance_private_ips[0] : jsonencode("")
   ldap_admin_password                 = var.ldap_admin_password
   ldap_server_cert                    = var.ldap_server_cert
-  enable_key_protect                  = var.scale_encryption_type == "key_protect" ? "True" : "False"
+  enable_key_protect                  = var.scale_encryption_type == "key_protect" ? true : false
   depends_on                          = [module.write_storage_scale_cluster_inventory]
 }
 

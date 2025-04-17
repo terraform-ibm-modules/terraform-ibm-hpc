@@ -80,8 +80,8 @@ module "scale" {
   colocate_protocol_cluster_instances              = local.env.colocate_protocol_cluster_instances
   scale_encryption_admin_password                  = local.env.scale_encryption_admin_password
   filesystem_config                                = local.env.filesystem_config
+  client_subnets_cidr                              = [local.env.client_subnets_cidr]
   # hpcs_instance_name                               = local.env.hpcs_instance_name
-  # client_subnets_cidr                              = [local.env.client_subnets_cidr]
   # scale_encryption_admin_username         = local.env.scale_encryption_admin_username
   # scale_encryption_admin_default_password = local.env.scale_encryption_admin_default_password
   # scc_profile_version                              = local.env.scc_profile_version
