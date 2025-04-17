@@ -218,7 +218,7 @@ variable "client_cluster_instance_names" {
 }
 
 variable "protocol_cluster_reserved_names" {
-  type        = list(string)
+  type        = string
   description = "Protocol cluster reserved ips names."
 }
 
@@ -266,7 +266,7 @@ variable "filesets" {
     mount_path = string,
     size       = number
   }))
-  description = "Protocol gateway ip"
+  description = "filesets"
 }
 
 variable "afm_cos_bucket_details" {

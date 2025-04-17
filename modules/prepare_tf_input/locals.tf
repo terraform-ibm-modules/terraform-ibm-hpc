@@ -22,6 +22,7 @@ locals {
   ldap_server                     = jsonencode(var.ldap_server)
   ldap_basedns                    = jsonencode(var.ldap_basedns)
   ldap_server_cert                = jsonencode(var.ldap_server_cert)
+  ldap_admin_password             = jsonencode(var.ldap_admin_password)
   list_ldap_ssh_keys              = jsonencode(var.ldap_instance_key_pair)
   list_afm_instances              = jsonencode(var.afm_instances)
   afm_cos_config_details          = jsonencode(var.afm_cos_config)
