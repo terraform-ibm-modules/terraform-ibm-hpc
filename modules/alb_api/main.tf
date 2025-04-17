@@ -8,10 +8,10 @@ provider "shell" {
 resource "shell_script" "alb_api" {
   count = var.create_load_balancer ? 1 : 0
   lifecycle_commands {
-    create = "scripts/alb-create.sh"
+    create = "chmod +x scripts/alb-create.sh && scripts/alb-create.sh"
     # read   = "scripts/alb-read.sh"
     # update = "scripts/alb-update.sh"
-    delete = "scripts/alb-delete.sh"
+    delete = "chmod +x scripts/alb-delete.sh && scripts/alb-delete.sh"
   }
   working_directory = path.module
   # interpreter = ["/bin/bash", "-c"]
