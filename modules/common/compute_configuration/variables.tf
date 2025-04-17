@@ -152,6 +152,6 @@ variable "enable_afm" {
 }
 
 variable "enable_key_protect" {
-  type        = bool
+  type        = string
   description = "Enable Key Protect."
 }
