@@ -72,6 +72,7 @@ module "lsf" {
   ldap_server                                      = local.env.ldap_server
   ldap_server_cert                                 = local.env.ldap_server_cert
   ldap_vsi_osimage_name                            = local.env.ldap_vsi_osimage_name
+  enable_dedicated_host                            = var.enable_dedicated_host
 
   # compute_gui_password                             = local.env.compute_gui_password
   # compute_gui_username                             = local.env.compute_gui_username

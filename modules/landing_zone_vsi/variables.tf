@@ -45,6 +45,11 @@ variable "vpc_id" {
   description = "ID of an existing VPC in which the cluster resources will be deployed."
 }
 
+variable "zones" {
+  description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
+  type        = list(string)
+}
+
 variable "placement_group_ids" {
   type        = string
   default     = null
@@ -345,4 +350,14 @@ variable "ldap_vsi_osimage_name" {
   type        = string
   default     = "ibm-ubuntu-22-04-4-minimal-amd64-3"
   description = "Image name to be used for provisioning the LDAP instances. By default ldap server are created on Ubuntu based OS flavour."
+}
+
+##############################################################################
+# Dedicatedhost Variables
+##############################################################################
+
+variable "enable_dedicated_host" {
+  type        = bool
+  default     = false
+  description = "Enables dedicated host to the compute instances"
 }

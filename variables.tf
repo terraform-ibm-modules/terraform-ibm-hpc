@@ -861,3 +861,13 @@ variable "scc_cos_instance_crn" {
   default     = null
   description = "scc cos instance crn"
 }
+
+##############################################################################
+# Dedicatedhost Variables
+##############################################################################
+
+variable "enable_dedicated_host" {
+  type        = bool
+  default     = false
+  description = "Enables dedicated host to the compute instances"
+}

@@ -93,6 +93,7 @@ locals {
     ldap_server                                      = var.ldap_server
     ldap_server_cert                                 = var.ldap_server_cert
     ldap_vsi_osimage_name                            = var.ldap_vsi_osimage_name
+    enable_dedicated_host                            = var.enable_dedicated_host
     # scc_profile_version                            = var.scc_profile_version
 
   }
@@ -176,6 +177,7 @@ locals {
     ldap_server                                      = lookup(local.override[local.override_type], "ldap_server", local.config.ldap_server)
     ldap_server_cert                                 = lookup(local.override[local.override_type], "ldap_server_cert", local.config.ldap_server_cert)
     ldap_vsi_osimage_name                            = lookup(local.override[local.override_type], "ldap_vsi_osimage_name", local.config.ldap_vsi_osimage_name)
+    enable_dedicated_host                            = lookup(local.override[local.override_type], "enable_dedicated_host", local.config.enable_dedicated_host)
     # scc_profile_version                            = lookup(local.override[local.override_type], "scc_profile_version", local.config.scc_profile_version)
   }
 }
