@@ -9,6 +9,19 @@
 # - resource_group_id
 # - security_group_ids (comma separated)
 
+# Ensure jq is installed on the remote host
+if ! command -v jq &>/dev/null; then
+  echo "[INFO] jq not found, installing..."
+  if [ -f /etc/debian_version ]; then
+    sudo apt-get update && sudo apt-get install -y jq || { echo "Failed to install jq"; exit 1; }
+  elif [ -f /etc/redhat-release ]; then
+    sudo yum install -y jq || sudo dnf install -y jq || { echo "Failed to install jq"; exit 1; }
+  else
+    echo "[ERROR] Unsupported OS for jq install. Please install manually."
+    exit 1
+  fi
+fi
+
 debug=true # "true" or "false"
 
 exec 111>&1 >&2 # use fd 111 later to emit json, other output goes to stderr
