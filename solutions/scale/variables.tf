@@ -255,14 +255,14 @@ variable "storage_instances" {
       profile    = string
       count      = number
       image      = string
-      filesystem = optional(string)
+      filesystem = string
     })
   )
   default = [{
     profile    = "bx2-2x8"
-    count      = 2
+    count      = 0
     image      = "ibm-redhat-8-10-minimal-amd64-4"
-    filesystem = "fs1"
+    filesystem = "/ibm/fs1"
   }]
   description = "Number of instances to be launched for storage cluster."
 }

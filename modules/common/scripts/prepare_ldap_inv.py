@@ -18,9 +18,6 @@ limitations under the License.
 
 import argparse
 import configparser
-import json
-import os
-import sys
 
 
 def write_to_file(filepath, filecontent):

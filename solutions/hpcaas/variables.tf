@@ -200,15 +200,17 @@ variable "management_instances" {
 variable "static_compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = string
     })
   )
   default = [{
-    profile = "cx2-2x4"
-    count   = 1
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    profile    = "cx2-2x4"
+    count      = 0
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "/gpfs/fs1"
   }]
   description = "Min Number of instances to be launched for compute cluster."
 }
@@ -261,17 +263,17 @@ variable "storage_ssh_keys" {
 variable "storage_instances" {
   type = list(
     object({
-      profile         = string
-      count           = number
-      image           = string
-      filesystem_name = optional(string)
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = string
     })
   )
   default = [{
-    profile         = "bx2-2x8"
-    count           = 2
-    image           = "ibm-redhat-8-10-minimal-amd64-2"
-    filesystem_name = "fs1"
+    profile    = "bx2-2x8"
+    count      = 0
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "/ibm/fs1"
   }]
   description = "Number of instances to be launched for storage cluster."
 }
@@ -353,11 +355,15 @@ variable "dns_domain_names" {
     compute  = string
     storage  = string
     protocol = string
+    client   = string
+    gklm     = string
   })
   default = {
     compute  = "comp.com"
     storage  = "strg.com"
     protocol = "ces.com"
+    client   = "clnt.com"
+    gklm     = "gklm.com"
   }
   description = "IBM Cloud HPC DNS domain names."
 }
