@@ -157,7 +157,7 @@ module "compute_vsi" {
 }
 
 module "compute_cluster_management_vsi" {
-  count                         = var.scheduler == "null" && local.enable_compute ? 1 : 0
+  count                         = var.scheduler == "Scale" && local.enable_compute ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
   version                       = "4.2.0"
   vsi_per_subnet                = 1
