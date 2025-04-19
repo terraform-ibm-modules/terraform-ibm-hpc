@@ -9,7 +9,7 @@
 # Scale Compute Cluter User Data
 ##################################################################################################################
 
-if [ "${scheduler}" == "null" ]; then
+if [ "${scheduler}" == "Scale" ]; then
     #!/usr/bin/env bash
 
     exec > >(tee /var/log/ibm_spectrumscale_user-data.log)

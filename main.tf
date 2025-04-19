@@ -587,23 +587,6 @@ module "remote_mount_configuration" {
   depends_on                      = [module.compute_cluster_configuration, module.storage_cluster_configuration]
 }
 
-# module "write_storage_cluster_inventory" {
-#   count                 = var.enable_deployer == false ? 1 : 0
-#   source                = "./modules/write_inventory"
-#   json_inventory_path   = local.json_inventory_path
-#   lsf_masters           = local.management_nodes
-#   lsf_servers           = local.compute_nodes_list
-#   lsf_clients           = local.client_nodes
-#   gui_hosts             = local.gui_hosts
-#   db_hosts              = local.db_hosts
-#   my_cluster_name       = var.prefix
-#   ha_shared_dir         = local.ha_shared_dir
-#   nfs_install_dir       = local.nfs_install_dir
-#   enable_monitoring     = local.enable_monitoring
-#   lsf_deployer_hostname = local.lsf_deployer_hostname
-#   depends_on            = [time_sleep.wait_60_seconds]
-# }
-
 module "compute_inventory" {
   count                               = var.enable_deployer == false ? 1 : 0
   source                              = "./modules/inventory"
@@ -632,15 +615,6 @@ module "compute_inventory" {
   ldap_server_cert                    = var.ldap_server_cert
   depends_on                          = [module.write_compute_cluster_inventory]
 }
-
-# module "storage_inventory" {
-#   count               = var.enable_deployer == false ? 1 : 0
-#   source              = "./modules/inventory"
-#   hosts               = local.storage_hosts
-#   inventory_path      = local.storage_inventory_path
-#   name_mount_path_map = local.fileshare_name_mount_path_map
-#   depends_on          = [module.write_storage_cluster_inventory]
-# }
 
 module "ldap_inventory" {
   count               = var.enable_deployer == false && var.enable_ldap && var.ldap_server == "null" ? 1 : 0
@@ -677,17 +651,6 @@ module "compute_playbook" {
   playbooks_path              = local.playbooks_path
   depends_on                  = [module.compute_inventory]
 }
-
-# module "storage_playbook" {
-#   count            = var.enable_deployer == false ? 1 : 0
-#   source           = "./modules/playbook"
-#   bastion_fip      = local.bastion_fip
-#   private_key_path = local.storage_private_key_path
-#   inventory_path   = local.storage_inventory_path
-#   playbook_path    = local.storage_playbook_path
-#   enable_bastion   = var.enable_bastion
-#   depends_on       = [ module.storage_inventory ]
-# }
 
 ###################################################
 # Observability Modules

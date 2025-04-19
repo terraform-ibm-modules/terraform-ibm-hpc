@@ -220,13 +220,6 @@ locals {
       rdata = instance["ipv4_address"]
     }
   ]
-  # protocol_dns_records = [
-  #   for instance in local.protocol_instances :
-  #   {
-  #     name  = instance["name"]
-  #     rdata = instance["ipv4_address"]
-  #   }
-  # ]
   client_dns_records = [
     for instance in local.client_instances :
     {
