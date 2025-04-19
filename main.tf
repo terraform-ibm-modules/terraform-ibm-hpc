@@ -344,8 +344,8 @@ module "write_compute_scale_cluster_inventory" {
   storage_cluster_desc_data_volume_mapping         = {}
   storage_cluster_desc_instance_private_dns_ip_map = {}
   storage_cluster_instance_names                   = []
-  storage_subnet_cidr                              = local.enable_mrot_conf ? jsonencode(data.ibm_is_subnet.existing_storage_subnets[*].ipv4_cidr_block) : jsonencode("")
-  compute_subnet_cidr                              = local.enable_mrot_conf ? jsonencode(data.ibm_is_subnet.existing_compute_subnets[*].ipv4_cidr_block) : jsonencode("")
+  storage_subnet_cidr                              = local.enable_mrot_conf ? local.storage_subnet_cidr : jsonencode("")
+  compute_subnet_cidr                              = local.enable_mrot_conf ? local.compute_subnet_cidr : jsonencode("")
   scale_remote_cluster_clustername                 = local.enable_mrot_conf ? jsonencode(format("%s.%s", var.prefix, var.prefix, var.dns_domain_names["storage"])) : jsonencode("")
   protocol_cluster_instance_names                  = []
   client_cluster_instance_names                    = []
@@ -394,8 +394,8 @@ module "write_storage_scale_cluster_inventory" {
   storage_cluster_desc_instance_ids                = local.strg_tie_breaker_instance_ids
   storage_cluster_desc_data_volume_mapping         = local.tie_breaker_ips_with_vol_mapping[0]
   storage_cluster_desc_instance_private_dns_ip_map = {}
-  storage_subnet_cidr                              = local.enable_mrot_conf ? jsonencode(data.ibm_is_subnet.existing_storage_subnets[*].ipv4_cidr_block) : jsonencode("")
-  compute_subnet_cidr                              = local.enable_mrot_conf || local.scale_ces_enabled == true ? jsonencode(data.ibm_is_subnet.existing_compute_subnets[*].ipv4_cidr_block) : jsonencode("")
+  storage_subnet_cidr                              = local.enable_mrot_conf ? local.storage_subnet_cidr : jsonencode("")
+  compute_subnet_cidr                              = local.enable_mrot_conf || local.scale_ces_enabled == true ? local.compute_subnet_cidr : jsonencode("")
   scale_remote_cluster_clustername                 = local.enable_mrot_conf ? jsonencode(format("%s.%s", var.prefix, var.dns_domain_names["compute"])) : jsonencode("")
   protocol_cluster_instance_names                  = local.scale_ces_enabled == true ? local.protocol_instance_names : []
   client_cluster_instance_names                    = []
@@ -480,9 +480,9 @@ module "compute_cluster_configuration" {
   using_rest_initialization       = var.using_rest_api_remote_mount
   compute_cluster_gui_username    = var.compute_gui_username
   compute_cluster_gui_password    = var.compute_gui_password
-  comp_memory                     = data.ibm_is_instance_profile.compute_profile.memory[0].value
-  comp_vcpus_count                = data.ibm_is_instance_profile.compute_profile.vcpu_count[0].value
-  comp_bandwidth                  = data.ibm_is_instance_profile.compute_profile.bandwidth[0].value
+  comp_memory                     = local.comp_memory
+  comp_vcpus_count                = local.comp_vcpus_count
+  comp_bandwidth                  = local.comp_bandwidth
   bastion_instance_public_ip      = jsonencode(local.bastion_fip)
   bastion_ssh_private_key         = var.bastion_ssh_private_key
   meta_private_key                = module.landing_zone_vsi[0].compute_private_key_content
@@ -519,24 +519,24 @@ module "storage_cluster_configuration" {
   storage_cluster_gui_password        = var.storage_gui_password
   colocate_protocol_cluster_instances = var.colocate_protocol_cluster_instances
   is_colocate_protocol_subset         = local.is_colocate_protocol_subset
-  mgmt_memory                         = data.ibm_is_instance_profile.management_profile.memory[0].value
-  mgmt_vcpus_count                    = data.ibm_is_instance_profile.management_profile.vcpu_count[0].value
-  mgmt_bandwidth                      = data.ibm_is_instance_profile.management_profile.bandwidth[0].value
-  strg_desc_memory                    = data.ibm_is_instance_profile.storage_profile.memory[0].value
-  strg_desc_vcpus_count               = data.ibm_is_instance_profile.storage_profile.vcpu_count[0].value
-  strg_desc_bandwidth                 = data.ibm_is_instance_profile.storage_profile.bandwidth[0].value
-  strg_memory                         = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.memory[0].value
-  strg_vcpus_count                    = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.vcpu_count[0].value
-  strg_bandwidth                      = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.bandwidth[0].value
-  proto_memory                        = (local.scale_ces_enabled == true && var.colocate_protocol_cluster_instances == false) ? local.ces_server_type == false ? data.ibm_is_instance_profile.protocol_profile[0].memory[0].value : jsonencode(0) : jsonencode(0)
-  proto_vcpus_count                   = (local.scale_ces_enabled == true && var.colocate_protocol_cluster_instances == false) ? local.ces_server_type == false ? data.ibm_is_instance_profile.protocol_profile[0].vcpu_count[0].value : jsonencode(0) : jsonencode(0)
-  proto_bandwidth                     = (local.scale_ces_enabled == true && var.colocate_protocol_cluster_instances == false) ? local.ces_server_type == false ? data.ibm_is_instance_profile.protocol_profile[0].bandwidth[0].value : jsonencode(0) : jsonencode(0)
-  strg_proto_memory                   = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.memory[0].value
-  strg_proto_vcpus_count              = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.vcpu_count[0].value
-  strg_proto_bandwidth                = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.bandwidth[0].value
-  afm_memory                          = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].memory[0].value
-  afm_vcpus_count                     = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].vcpu_count[0].value
-  afm_bandwidth                       = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].bandwidth[0].value
+  mgmt_memory                         = local.mgmt_memory
+  mgmt_vcpus_count                    = local.mgmt_vcpus_count
+  mgmt_bandwidth                      = local.mgmt_bandwidth
+  strg_desc_memory                    = local.strg_desc_memory
+  strg_desc_vcpus_count               = local.strg_desc_vcpus_count
+  strg_desc_bandwidth                 = local.strg_desc_bandwidth
+  strg_memory                         = local.strg_memory
+  strg_vcpus_count                    = local.strg_vcpus_count
+  strg_bandwidth                      = local.strg_bandwidth
+  proto_memory                        = local.proto_memory
+  proto_vcpus_count                   = local.proto_vcpus_count
+  proto_bandwidth                     = local.proto_bandwidth
+  strg_proto_memory                   = local.strg_proto_memory
+  strg_proto_vcpus_count              = local.strg_proto_vcpus_count
+  strg_proto_bandwidth                = local.strg_proto_bandwidth
+  afm_memory                          = local.afm_memory
+  afm_vcpus_count                     = local.afm_vcpus_count
+  afm_bandwidth                       = local.afm_bandwidth
   disk_type                           = "network-attached"
   max_data_replicas                   = var.filesystem_config[0]["max_data_replica"]
   max_metadata_replicas               = var.filesystem_config[0]["max_metadata_replica"]
