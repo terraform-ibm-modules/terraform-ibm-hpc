@@ -519,14 +519,14 @@ variable "ldap_server" {
 variable "ldap_server_cert" {
   type        = string
   sensitive   = true
-  default     = null
+  default     = "null"
   description = "Provide the existing LDAP server certificate. This value is required if the 'ldap_server' variable is not set to null. If the certificate is not provided or is invalid, the LDAP configuration may fail."
 }
 
 variable "ldap_admin_password" {
   type        = string
   sensitive   = true
-  default     = null
+  default     = ""
   description = "The LDAP administrative password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required. It is important to avoid including the username in the password for enhanced security."
 }
 

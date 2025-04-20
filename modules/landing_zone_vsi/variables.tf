@@ -7,9 +7,16 @@ variable "storage_type" {
   description = "Select the required storage type(scratch/persistent/eval)."
 }
 
-variable "solution" {
+# variable "solution" {
+#   type        = string
+#   description = "Provide the value for the solution."
+# }
+
+variable "ibm_customer_number" {
   type        = string
-  description = "Provide the value for the solution."
+  sensitive   = true
+  default     = null
+  description = "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
 }
 
 ##############################################################################

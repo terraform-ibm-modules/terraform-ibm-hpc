@@ -131,6 +131,38 @@ module "management_vsi" {
   #placement_group_id = var.placement_group_ids[(var.management_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
+# module "lsf_entitlement" {
+#   count               = var.solution == "Scale" ? 1 : 0
+#   source              = "./../../modules/null/remote_exec"
+#   cluster_host        = concat([local.management_private_ip])
+#   cluster_user        = var.cluster_user #"root"            #"root"
+#   cluster_private_key = var.compute_private_key_content
+#   login_host          = var.bastion_fip
+#   login_user          = "ubuntu"
+#   login_private_key   = var.bastion_private_key_content
+#   command             = ["sudo python3.8 /opt/IBM/cloud_entitlement/entitlement_check.py --products ${local.products} --icns ${var.ibm_customer_number != null ? var.ibm_customer_number : ""}"]
+#   depends_on = [
+#     module.management_vsi,
+#     module.wait_management_vsi_booted # this implies vsi have been configured too
+#   ]
+# }
+
+resource "null_resource" "lsf_entitlement" {
+  count = var.scheduler == "Scale" ? 1 : 0
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "sudo python3 /opt/IBM/cloud_entitlement/entitlement_check.py --products ${local.products} --icns ${var.ibm_customer_number}"
+  }
+
+  triggers = {
+    build = timestamp()
+  }
+  depends_on = [
+    module.management_vsi
+  ]  
+}
+
 module "compute_vsi" {
   count                         = length(var.static_compute_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
@@ -204,6 +236,7 @@ module "storage_vsi" {
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
+  depends_on = [ resource.null_resource.lsf_entitlement ]  
   # manage_reserved_ips             = true
   # primary_vni_additional_ip_count = var.storage_instances[count.index]["count"]
   # placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
@@ -233,6 +266,7 @@ module "storage_cluster_management_vsi" {
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
+  depends_on = [ resource.null_resource.lsf_entitlement ]    
   #placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
@@ -285,6 +319,7 @@ module "client_vsi" {
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
+  depends_on = [ resource.null_resource.lsf_entitlement ]    
 }
 
 module "protocol_vsi" {
@@ -316,6 +351,7 @@ module "protocol_vsi" {
   placement_group_id          = var.placement_group_ids
   manage_reserved_ips             = true
   primary_vni_additional_ip_count = var.protocol_instances[count.index]["count"]
+  depends_on = [ resource.null_resource.lsf_entitlement ]    
   # placement_group_id = var.placement_group_ids[(var.protocol_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 

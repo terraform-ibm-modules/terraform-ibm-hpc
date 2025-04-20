@@ -590,6 +590,5 @@ variable "filesystem_config" {
 
 variable "scheduler" {
   type        = string
-  default     = null
   description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
 }
