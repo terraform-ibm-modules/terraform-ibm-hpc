@@ -7,11 +7,6 @@ variable "storage_type" {
   description = "Select the required storage type(scratch/persistent/eval)."
 }
 
-# variable "solution" {
-#   type        = string
-#   description = "Provide the value for the solution."
-# }
-
 variable "ibm_customer_number" {
   type        = string
   sensitive   = true

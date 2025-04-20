@@ -131,22 +131,6 @@ module "management_vsi" {
   #placement_group_id = var.placement_group_ids[(var.management_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
-# module "lsf_entitlement" {
-#   count               = var.solution == "Scale" ? 1 : 0
-#   source              = "./../../modules/null/remote_exec"
-#   cluster_host        = concat([local.management_private_ip])
-#   cluster_user        = var.cluster_user #"root"            #"root"
-#   cluster_private_key = var.compute_private_key_content
-#   login_host          = var.bastion_fip
-#   login_user          = "ubuntu"
-#   login_private_key   = var.bastion_private_key_content
-#   command             = ["sudo python3.8 /opt/IBM/cloud_entitlement/entitlement_check.py --products ${local.products} --icns ${var.ibm_customer_number != null ? var.ibm_customer_number : ""}"]
-#   depends_on = [
-#     module.management_vsi,
-#     module.wait_management_vsi_booted # this implies vsi have been configured too
-#   ]
-# }
-
 resource "null_resource" "lsf_entitlement" {
   count = var.scheduler == "Scale" ? 1 : 0
 
