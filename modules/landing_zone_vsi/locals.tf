@@ -9,7 +9,7 @@ locals {
   bms_interfaces = ["ens1", "ens2"]
   # TODO: explore (DA always keep it true)
   skip_iam_authorization_policy = true
-  products = var.scheduler == "Scale" ? "scale" : "lsf"
+  products                      = var.scheduler == "Scale" ? "scale" : "lsf"
   block_storage_volumes = [for volume in coalesce(var.nsd_details, []) : {
     name           = format("nsd-%s", index(var.nsd_details, volume) + 1)
     profile        = volume["profile"]

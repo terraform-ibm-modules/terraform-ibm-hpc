@@ -8,5 +8,6 @@
 locals {
   icn_cnd = (var.storage_type != "evaluation" && var.ibm_customer_number == null) ? false : true
   icn_msg = "The IBM customer number input value can't be empty when storage_type is not evaluation."
+  # tflint-ignore: terraform_unused_declarations
   icn_chk = regex("^${local.icn_msg}$", (local.icn_cnd ? local.icn_msg : ""))
 }
