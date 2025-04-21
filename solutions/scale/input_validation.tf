@@ -6,15 +6,7 @@
 # Validations are performed to make sure, the appropriate error messages are displayed to user in-order to provide required input parameter
 
 locals {
-  validate_ibm_customer_number = var.storage_type == "evaluation" || (
-    var.ibm_customer_number != null && trim(var.ibm_customer_number, " ") != ""
-  )
-
-  validate_ibm_customer_number_error_msg = "IBM customer number cannot be null or empty (required unless storage_type is 'evaluation')."
-
-  # tflint-ignore: terraform_unused_declarations
-  validate_ibm_customer_number_chk = regex(
-    "^${local.validate_ibm_customer_number_error_msg}$",
-    local.validate_ibm_customer_number ? local.validate_ibm_customer_number_error_msg : ""
-  )
+  icn_cnd = (var.storage_type != "evaluation" && var.ibm_customer_number == null) ? false : true
+  icn_msg = "The IBM customer number input value can't be empty when storage_type is not evaluation."
+  icn_chk = regex("^${local.icn_msg}$", (local.icn_cnd ? local.icn_msg : ""))
 }
