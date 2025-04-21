@@ -2,6 +2,11 @@ data "ibm_resource_group" "existing_resource_group" {
   name = var.existing_resource_group
 }
 
+data "ibm_is_image" "management" {
+  name  = var.management_image_name
+  count = local.image_mapping_entry_found ? 0 : 1
+}
+
 # TODO: Verify distinct profiles
 /*
 data "ibm_is_instance_profile" "management" {

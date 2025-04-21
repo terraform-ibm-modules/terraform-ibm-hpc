@@ -9,6 +9,11 @@ locals {
   bms_interfaces = ["ens1", "ens2"]
   # TODO: explore (DA always keep it true)
   skip_iam_authorization_policy = true
+  # Region and Zone calculations
+  region = join("-", slice(split("-", var.zones[0]), 0, 2))
+  # Check whether an entry is found in the mapping file for the given management node image
+  image_mapping_entry_found = contains(keys(local.image_region_map), var.management_instances[0]["image"])
+  new_image_id              = local.image_mapping_entry_found ? local.image_region_map[var.management_instances[0]["image"]][local.region] : "Image not found with the given name"
 
   block_storage_volumes = [for volume in coalesce(var.nsd_details, []) : {
     name           = format("nsd-%s", index(var.nsd_details, volume) + 1)

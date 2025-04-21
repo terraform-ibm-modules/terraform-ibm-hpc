@@ -65,6 +65,7 @@ module "landing_zone_vsi" {
   existing_resource_group    = var.existing_resource_group
   prefix                     = var.prefix
   vpc_id                     = local.vpc_id
+  zones                      = var.zones
   bastion_security_group_id  = var.bastion_security_group_id
   bastion_public_key_content = local.bastion_public_key_content
   client_subnets             = local.client_subnets
