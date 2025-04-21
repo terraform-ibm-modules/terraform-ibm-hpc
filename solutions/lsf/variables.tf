@@ -221,15 +221,17 @@ variable "management_instances" {
 variable "static_compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = string
     })
   )
   default = [{
-    profile = "cx2-2x4"
-    count   = 1
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    profile    = "cx2-2x4"
+    count      = 1
+    image      = "ibm-redhat-8-10-minimal-amd64-2"
+    filesystem = "/gpfs/fs1"
   }]
   description = "Min Number of instances to be launched for compute cluster."
 }
@@ -334,17 +336,17 @@ variable "storage_ssh_keys" {
 variable "storage_instances" {
   type = list(
     object({
-      profile         = string
-      count           = number
-      image           = string
-      filesystem_name = optional(string)
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = string
     })
   )
   default = [{
-    profile         = "bx2-2x8"
-    count           = 2
-    image           = "ibm-redhat-8-10-minimal-amd64-2"
-    filesystem_name = "fs1"
+    profile    = "bx2-2x8"
+    count      = 2
+    image      = "ibm-redhat-8-10-minimal-amd64-2"
+    filesystem = "fs1"
   }]
   description = "Number of instances to be launched for storage cluster."
 }
@@ -426,11 +428,15 @@ variable "dns_domain_names" {
     compute  = string
     storage  = string
     protocol = string
+    client   = string
+    gklm     = string
   })
   default = {
     compute  = "comp.com"
     storage  = "strg.com"
     protocol = "ces.com"
+    client   = "clnt.com"
+    gklm     = "gklm.com"
   }
   description = "IBM Cloud HPC DNS domain names."
 }
@@ -483,21 +489,21 @@ variable "ldap_basedns" {
 
 variable "ldap_server" {
   type        = string
-  default     = "null"
+  default     = null
   description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
 }
 
 variable "ldap_server_cert" {
   type        = string
   sensitive   = true
-  default     = "null"
+  default     = null
   description = "Provide the existing LDAP server certificate. This value is required if the 'ldap_server' variable is not set to null. If the certificate is not provided or is invalid, the LDAP configuration may fail. For more information on how to create or obtain the certificate, please refer [existing LDAP server certificate](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-integrating-openldap)."
 }
 
 variable "ldap_admin_password" {
   type        = string
   sensitive   = true
-  default     = ""
+  default     = null
   description = "The LDAP administrative password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required. It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
 }
 
@@ -514,16 +520,18 @@ variable "ldap_user_password" {
   description = "The LDAP user password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required.It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
 }
 
-variable "ldap_vsi_profile" {
-  type        = string
-  default     = "cx2-2x4"
-  description = "Specify the virtual server instance profile type to be used to create the ldap node for the IBM Spectrum LSF cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
-}
-
-variable "ldap_vsi_osimage_name" {
-  type        = string
-  default     = "ibm-ubuntu-22-04-4-minimal-amd64-3"
-  description = "Image name to be used for provisioning the LDAP instances. By default ldap server are created on Ubuntu based OS flavour."
+variable "ldap_instances" {
+  type = list(
+    object({
+      profile = string
+      image   = string
+    })
+  )
+  default = [{
+    profile = "cx2-2x4"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-1"
+  }]
+  description = "Profile and Image name to be used for provisioning the LDAP instances. Note: Debian based OS are only supported for the LDAP feature"
 }
 
 ##############################################################################

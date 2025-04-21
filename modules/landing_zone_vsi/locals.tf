@@ -56,12 +56,16 @@ locals {
   # TODO: Fix the logic
   # enable_load_balancer = false
 
-  client_node_name     = format("%s-%s", local.prefix, "client")
-  management_node_name = format("%s-%s", local.prefix, "mgmt")
-  compute_node_name    = format("%s-%s", local.prefix, "comp")
-  storage_node_name    = format("%s-%s", local.prefix, "strg")
-  protocol_node_name   = format("%s-%s", local.prefix, "proto")
-  ldap_node_name       = format("%s-%s", local.prefix, "ldap")
+  client_node_name             = format("%s-%s", local.prefix, "client")
+  management_node_name         = format("%s-%s", local.prefix, "mgmt")
+  compute_node_name            = format("%s-%s", local.prefix, "comp")
+  storage_node_name            = format("%s-%s", local.prefix, "strg")
+  protocol_node_name           = format("%s-%s", local.prefix, "proto")
+  storage_management_node_name = format("%s-%s", local.prefix, "strg-mgmt")
+  ldap_node_name               = format("%s-%s", local.prefix, "ldap")
+  afm_node_name                = format("%s-%s", local.prefix, "afm")
+  gklm_node_name               = format("%s-%s", local.prefix, "gklm")
+  cpmoute_management_node_name = format("%s-%s", local.prefix, "comp-mgmt")
 
   # Future use
   /*
@@ -88,10 +92,15 @@ locals {
   compute_image_id    = data.ibm_is_image.compute[*].id
   storage_image_id    = data.ibm_is_image.storage[*].id
   protocol_image_id   = data.ibm_is_image.storage[*].id
+  ldap_image_id       = data.ibm_is_image.ldap_vsi_image[*].id
+  afm_image_id        = data.ibm_is_image.afm[*].id
+  gklm_image_id       = data.ibm_is_image.gklm[*].id
 
   storage_ssh_keys    = [for name in var.storage_ssh_keys : data.ibm_is_ssh_key.storage[name].id]
   compute_ssh_keys    = [for name in var.compute_ssh_keys : data.ibm_is_ssh_key.compute[name].id]
   client_ssh_keys     = [for name in var.client_ssh_keys : data.ibm_is_ssh_key.client[name].id]
+  ldap_ssh_keys       = [for name in var.ldap_instance_key_pair : data.ibm_is_ssh_key.ldap[name].id]
+  gklm_ssh_keys       = [for name in var.gklm_instance_key_pair : data.ibm_is_ssh_key.gklm[name].id]
   management_ssh_keys = local.compute_ssh_keys
   protocol_ssh_keys   = local.storage_ssh_keys
 
@@ -246,6 +255,11 @@ locals {
       direction = "outbound"
       remote    = var.bastion_security_group_id
     },
+    {
+      name      = "allow-all-storage-out"
+      direction = "outbound"
+      remote    = "0.0.0.0/0"
+    }
     /*
     {
       name      = "allow-all-compute-out"
@@ -279,5 +293,5 @@ locals {
     }
   ]
 
-  ldap_instance_image_id = var.enable_ldap == true && var.ldap_server == "null" ? data.ibm_is_image.ldap_vsi_image[0].id : "null"
+  # ldap_instance_image_id = var.enable_ldap == true && var.ldap_server == "null" ? data.ibm_is_image.ldap_vsi_image[0].id : "null"
 }

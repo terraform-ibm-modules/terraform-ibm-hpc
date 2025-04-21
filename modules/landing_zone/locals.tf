@@ -65,7 +65,7 @@ locals {
   # Address Prefixes calculation
   address_prefixes = {
     for zone in local.zones : zone => contains(local.active_zones, zone) ? distinct(compact([
-      local.client_instance_count != 0 && local.management_instance_count != 0 ? var.client_subnets_cidr[index(local.active_zones, zone)] : null,
+      local.client_instance_count != 0 ? var.client_subnets_cidr[index(local.active_zones, zone)] : null,
       var.compute_subnets_cidr[index(local.active_zones, zone)],
       local.storage_instance_count != 0 ? var.storage_subnets_cidr[index(local.active_zones, zone)] : null,
       local.storage_instance_count != 0 && local.protocol_instance_count != 0 ? var.protocol_subnets_cidr[index(local.active_zones, zone)] : null,
@@ -77,7 +77,7 @@ locals {
   # Subnet calculation
   active_subnets = {
     for zone in local.zones : zone => contains(local.active_zones, zone) ? [
-      local.client_instance_count != 0 && local.management_instance_count != 0 ? {
+      local.client_instance_count != 0 ? {
         name           = "client-subnet-${zone}"
         acl_name       = "hpc-acl"
         cidr           = var.client_subnets_cidr[index(local.active_zones, zone)]
