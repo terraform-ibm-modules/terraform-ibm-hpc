@@ -153,13 +153,18 @@ module "compute_vsi" {
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
+  # secondary_allow_ip_spoofing     = true
+  secondary_security_groups       = module.storage_sg[*].security_group_id
+  secondary_subnets               = local.storage_subnets
+  manage_reserved_ips             = var.enable_mrot_conf ? true : false
+  primary_vni_additional_ip_count = var.static_compute_instances[count.index]["count"]
   #placement_group_id = var.placement_group_ids[(var.static_compute_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
 module "compute_cluster_management_vsi" {
   count                         = var.scheduler == "Scale" && local.enable_compute ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "4.6.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -178,6 +183,11 @@ module "compute_cluster_management_vsi" {
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
+  # secondary_allow_ip_spoofing     = true
+  secondary_security_groups       = module.storage_sg[*].security_group_id
+  secondary_subnets               = local.storage_subnets
+  manage_reserved_ips             = var.enable_mrot_conf ? true : false
+  primary_vni_additional_ip_count = var.static_compute_instances[count.index]["count"]
   #placement_group_id = var.placement_group_ids[(var.static_compute_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
@@ -204,8 +214,11 @@ module "storage_vsi" {
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
-  # manage_reserved_ips             = true
-  # primary_vni_additional_ip_count = var.storage_instances[count.index]["count"]
+  # secondary_allow_ip_spoofing     = true
+  secondary_security_groups       = module.storage_sg[*].security_group_id
+  secondary_subnets               = local.storage_subnets
+  manage_reserved_ips             = var.enable_mrot_conf ? true : false
+  primary_vni_additional_ip_count = var.storage_instances[count.index]["count"]
   # placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
@@ -213,7 +226,7 @@ module "storage_vsi" {
 module "storage_cluster_management_vsi" {
   count                         = length(var.storage_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "4.6.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -233,13 +246,18 @@ module "storage_cluster_management_vsi" {
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
-  #placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
+  # secondary_allow_ip_spoofing     = true
+  secondary_security_groups       = module.storage_sg[*].security_group_id
+  secondary_subnets               = local.storage_subnets
+  manage_reserved_ips             = var.enable_mrot_conf ? true : false
+  primary_vni_additional_ip_count = var.storage_instances[count.index]["count"]
+  # placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
 module "storage_cluster_tie_breaker_vsi" {
   count                         = var.storage_type != "persistent" ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.5.0"
+  version                       = "4.6.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -259,8 +277,11 @@ module "storage_cluster_tie_breaker_vsi" {
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
-  # manage_reserved_ips             = true
-  # primary_vni_additional_ip_count = var.storage_instances[count.index]["count"]
+  # secondary_allow_ip_spoofing     = true
+  secondary_security_groups       = module.storage_sg[*].security_group_id
+  secondary_subnets               = local.storage_subnets
+  manage_reserved_ips             = var.enable_mrot_conf ? true : false
+  primary_vni_additional_ip_count = var.storage_instances[count.index]["count"]
   # placement_group_id              = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
@@ -322,7 +343,7 @@ module "protocol_vsi" {
 module "afm_vsi" {
   count                         = length(var.afm_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.5.0"
+  version                       = "4.6.0"
   vsi_per_subnet                = var.afm_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -347,7 +368,7 @@ module "afm_vsi" {
 module "gklm_vsi" {
   count                         = var.scale_encryption_enabled == true && var.scale_encryption_type == "gklm" ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "4.6.0"
   vsi_per_subnet                = var.gklm_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -370,7 +391,7 @@ module "gklm_vsi" {
 module "ldap_vsi" {
   count                         = var.enable_ldap == true && var.ldap_server == null ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "4.6.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null

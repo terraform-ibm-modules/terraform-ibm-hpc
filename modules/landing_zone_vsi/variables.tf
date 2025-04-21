@@ -416,5 +416,11 @@ variable "vpc_region" {
 variable "scheduler" {
   type        = string
   default     = null
-  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+  description = "Select one of the scheduler (LSF/Symphony/Slurm/Scale)"
+}
+
+variable "enable_mrot_conf" {
+  type        = string
+  default     = false
+  description = "Enable MROT configuration."
 }
