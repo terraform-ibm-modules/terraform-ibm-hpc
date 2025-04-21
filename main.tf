@@ -96,6 +96,7 @@ module "landing_zone_vsi" {
   gklm_instances             = var.gklm_instances
   vpc_region                 = local.region
   scheduler                  = var.scheduler
+  ibm_customer_number        = var.ibm_customer_number  
 }
 
 module "prepare_tf_input" {
