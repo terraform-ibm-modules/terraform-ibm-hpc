@@ -1,6 +1,6 @@
 # define variables
 locals {
-  name   = var.scheduler == "LSF" ? "LSF" : (var.scheduler == null ? "Scale" : (var.scheduler == "HPCaaS" ? "HPCaaS" : (var.scheduler == "Symphony" ? "Symphony" : (var.scheduler == "Slurm" ? "Slurm" : ""))))
+  name   = var.scheduler == "LSF" ? "LSF" : (var.scheduler == "Scale" ? "Scale" : (var.scheduler == "HPCaaS" ? "HPCaaS" : (var.scheduler == "Symphony" ? "Symphony" : (var.scheduler == "Slurm" ? "Slurm" : ""))))
   prefix = var.prefix
   tags   = [local.prefix, local.name]
 

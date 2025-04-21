@@ -65,6 +65,12 @@ variable "client_instances" {
   description = "Number of instances to be launched for client."
 }
 
+variable "client_ssh_keys" {
+  type        = list(string)
+  default     = null
+  description = "The key pair to use to launch the client host."
+}
+
 variable "compute_subnets" {
   type        = list(string)
   default     = null
@@ -85,9 +91,10 @@ variable "management_instances" {
 variable "static_compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = string
     })
   )
   description = "Min Number of instances to be launched for compute cluster."
@@ -174,6 +181,8 @@ variable "dns_domain_names" {
     compute  = string
     storage  = string
     protocol = string
+    client   = string
+    gklm     = string
   })
   description = "IBM Cloud HPC DNS domain names."
 }
@@ -384,40 +393,55 @@ variable "enable_hyperthreading" {
   default     = null
 }
 
-##############################################################################
-# LDAP Variables
+
+
+
+
+
+#############################################################################
+# VARIABLES TO BE CHECKED
 ##############################################################################
 
+
+
+
+
+
+
+
+#############################################################################
+# LDAP variables
+##############################################################################
 variable "enable_ldap" {
   type        = bool
   default     = false
-  description = "Set this option to true to enable LDAP for IBM Spectrum LSF, with the default value set to false."
+  description = "Set this option to true to enable LDAP for IBM Cloud HPC, with the default value set to false."
 }
 
 variable "ldap_basedns" {
   type        = string
-  default     = "lsf.com"
+  default     = "ldapscale.com"
   description = "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."
 }
 
 variable "ldap_server" {
   type        = string
-  default     = "null"
+  default     = null
   description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
 }
 
 variable "ldap_server_cert" {
   type        = string
   sensitive   = true
-  default     = "null"
-  description = "Provide the existing LDAP server certificate. This value is required if the 'ldap_server' variable is not set to null. If the certificate is not provided or is invalid, the LDAP configuration may fail. For more information on how to create or obtain the certificate, please refer [existing LDAP server certificate](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-integrating-openldap)."
+  default     = null
+  description = "Provide the existing LDAP server certificate. This value is required if the 'ldap_server' variable is not set to null. If the certificate is not provided or is invalid, the LDAP configuration may fail."
 }
 
 variable "ldap_admin_password" {
   type        = string
   sensitive   = true
-  default     = ""
-  description = "The LDAP administrative password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required. It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
+  default     = null
+  description = "The LDAP administrative password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required. It is important to avoid including the username in the password for enhanced security."
 }
 
 variable "ldap_user_name" {
@@ -433,14 +457,139 @@ variable "ldap_user_password" {
   description = "The LDAP user password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required.It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
 }
 
-variable "ldap_vsi_profile" {
-  type        = string
-  default     = "cx2-2x4"
-  description = "Specify the virtual server instance profile type to be used to create the ldap node for the IBM Spectrum LSF cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
+variable "ldap_instance_key_pair" {
+  type        = list(string)
+  default     = null
+  description = "Name of the SSH key configured in your IBM Cloud account that is used to establish a connection to the LDAP Server. Make sure that the SSH key is present in the same resource group and region where the LDAP Servers are provisioned. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
 }
 
-variable "ldap_vsi_osimage_name" {
+variable "ldap_instances" {
+  type = list(
+    object({
+      profile = string
+      image   = string
+    })
+  )
+  default = [{
+    profile = "cx2-2x4"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-1"
+  }]
+  description = "Profile and Image name to be used for provisioning the LDAP instances. Note: Debian based OS are only supported for the LDAP feature"
+}
+
+##############################################################################
+# GKLM variables
+##############################################################################
+variable "scale_encryption_enabled" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the filesystem. Select true or false"
+}
+
+variable "scale_encryption_type" {
   type        = string
-  default     = "ibm-ubuntu-22-04-4-minimal-amd64-3"
-  description = "Image name to be used for provisioning the LDAP instances. By default ldap server are created on Ubuntu based OS flavour."
+  default     = null
+  description = "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled"
+}
+
+variable "gklm_instance_key_pair" {
+  type        = list(string)
+  default     = null
+  description = "The key pair to use to launch the GKLM host."
+}
+
+variable "gklm_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  default = [{
+    profile = "bx2-2x8"
+    count   = 2
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
+  }]
+  description = "Number of instances to be launched for client."
+}
+
+# variable "scale_encryption_admin_default_password" {
+#   type        = string
+#   default     = null
+#   description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
+# }
+
+# variable "scale_encryption_admin_username" {
+#   type        = string
+#   default     = null
+#   description = "The default Admin username for Security Key Lifecycle Manager(GKLM)."
+# }
+
+variable "scale_encryption_admin_password" {
+  type        = string
+  default     = null
+  description = "Password that is used for performing administrative operations for the GKLM.The password must contain at least 8 characters and at most 20 characters. For a strong password, at least three alphabetic characters are required, with at least one uppercase and one lowercase letter.  Two numbers, and at least one special character from this(~@_+:). Make sure that the password doesn't include the username. Visit this [page](https://www.ibm.com/docs/en/gklm/3.0.1?topic=roles-password-policy) to know more about password policy of GKLM. "
+}
+
+variable "storage_type" {
+  type        = string
+  default     = "scratch"
+  description = "Select the required storage type(scratch/persistent/eval)."
+}
+
+variable "colocate_protocol_cluster_instances" {
+  type        = bool
+  default     = true
+  description = "Enable it to use storage instances as protocol instances"
+}
+
+variable "afm_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  description = "Number of instances to be launched for afm hosts."
+}
+
+variable "afm_cos_config" {
+  type = list(
+    object({
+      afm_fileset          = string,
+      mode                 = string,
+      cos_instance         = string,
+      bucket_name          = string,
+      bucket_region        = string,
+      cos_service_cred_key = string,
+      bucket_type          = string,
+      bucket_storage_class = string
+    })
+  )
+  default     = null
+  description = "AFM configurations."
+}
+
+variable "filesystem_config" {
+  type = list(
+    object({
+      filesystem               = string
+      block_size               = string
+      default_data_replica     = number
+      default_metadata_replica = number
+      max_data_replica         = number
+      max_metadata_replica     = number
+      mount_point              = string
+    })
+  )
+  default     = null
+  description = "File system configurations."
+}
+
+variable "scheduler" {
+  type        = string
+  default     = null
+  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
 }

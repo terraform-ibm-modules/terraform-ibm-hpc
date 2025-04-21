@@ -5,10 +5,12 @@ locals {
 
   # SSH key calculations
   # Combining the common ssh keys with host specific ssh keys
-  bastion_ssh_keys = distinct(concat(coalesce(var.bastion_ssh_keys, []), coalesce(var.ssh_keys, [])))
-  storage_ssh_keys = distinct(concat(coalesce(var.storage_ssh_keys, []), coalesce(var.ssh_keys, [])))
-  compute_ssh_keys = distinct(concat(coalesce(var.compute_ssh_keys, []), coalesce(var.ssh_keys, [])))
-  client_ssh_keys  = distinct(concat(coalesce(var.client_ssh_keys, []), coalesce(var.ssh_keys, [])))
+  bastion_ssh_keys       = distinct(concat(coalesce(var.bastion_ssh_keys, []), coalesce(var.ssh_keys, [])))
+  storage_ssh_keys       = distinct(concat(coalesce(var.storage_ssh_keys, []), coalesce(var.ssh_keys, [])))
+  compute_ssh_keys       = distinct(concat(coalesce(var.compute_ssh_keys, []), coalesce(var.ssh_keys, [])))
+  client_ssh_keys        = distinct(concat(coalesce(var.client_ssh_keys, []), coalesce(var.ssh_keys, [])))
+  gklm_instance_key_pair = distinct(concat(coalesce(var.gklm_instance_key_pair, []), coalesce(var.ssh_keys, [])))
+  ldap_instance_key_pair = distinct(concat(coalesce(var.ldap_instance_key_pair, []), coalesce(var.ssh_keys, [])))
 }
 
 
@@ -26,6 +28,24 @@ locals {
   # When we implement the existing bastion concept we need the changes to implemented like below. Which is already there on our LSF DA
   # skip_iam_authorization_policy = true
   # skip_iam_authorization_policy = var.bastion_instance_name != null ? false : local.skip_iam_authorization_policy
+  # Cluster node details:
+  compute_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data, module.landing_zone_vsi[0].compute_vsi_data])
+  comp_mgmt_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_management_vsi_data])
+  storage_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_vsi_data])
+  protocol_instances  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].protocol_vsi_data])
+  gklm_instances      = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].gklm_vsi_data])
+  client_instances    = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].client_vsi_data])
+  afm_instances       = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].afm_vsi_data])
+  ldap_instances      = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].ldap_vsi_data])
+  tie_brkr_instances  = var.enable_deployer ? [] : flatten(module.landing_zone_vsi[0].storage_cluster_tie_breaker_vsi_data)
+  strg_mgmt_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_cluster_management_vsi])
+
+  management_instance_count = sum(var.management_instances[*]["count"])
+  storage_instance_count    = sum(var.storage_instances[*]["count"])
+  # client_instance_count         = sum(var.client_instances[*]["count"])
+  protocol_instance_count       = sum(var.protocol_instances[*]["count"])
+  static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
+  # afm_instance_count            = sum(var.afm_instances[*]["count"])
 }
 
 # locals needed for landing_zone_vsi
@@ -110,7 +130,6 @@ locals {
   # dependency: landing_zone_vsi -> file-share
   compute_subnet_id         = var.vpc_name == null && var.compute_subnets == null ? local.compute_subnets[0].id : [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.id][0]
   compute_security_group_id = var.enable_deployer ? [] : module.landing_zone_vsi[0].compute_sg_id
-  management_instance_count = sum(var.management_instances[*]["count"])
   default_share = local.management_instance_count > 0 ? [
     {
       mount_path = "/mnt/lsf"
@@ -118,8 +137,7 @@ locals {
       iops       = 1000
     }
   ] : []
-  storage_instance_count = sum(var.storage_instances[*]["count"])
-  total_shares           = local.storage_instance_count > 0 ? [] : concat(local.default_share, var.file_shares)
+  total_shares = local.storage_instance_count > 0 ? [] : concat(local.default_share, var.file_shares)
   file_shares = [
     for count in range(length(local.total_shares)) :
     {
@@ -173,12 +191,14 @@ locals {
   protocol_dns_zone_id = one(flatten([
     for dns_zone in local.dns_zone_map_list : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["protocol"]
   ]))
+  client_dns_zone_id = one(flatten([
+    for dns_zone in local.dns_zone_map_list : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["client"]
+  ]))
+  gklm_dns_zone_id = one(flatten([
+    for dns_zone in local.dns_zone_map_list : values(dns_zone) if one(keys(dns_zone)) == var.dns_domain_names["gklm"]
+  ]))
 
   # dependency: landing_zone_vsi -> dns-records
-  compute_instances  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data, module.landing_zone_vsi[0].compute_vsi_data])
-  storage_instances  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_vsi_data, module.landing_zone_vsi[0].protocol_vsi_data])
-  protocol_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].protocol_vsi_data])
-  ldap_instances     = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].ldap_vsi_data])
   deployer_instances = [
     {
       name         = var.deployer_hostname
@@ -187,21 +207,28 @@ locals {
   ]
 
   compute_dns_records = [
-    for instance in concat(local.compute_instances, local.deployer_instances) :
+    for instance in concat(local.compute_instances, local.comp_mgmt_instances, local.deployer_instances) :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
     }
   ]
   storage_dns_records = [
-    for instance in local.storage_instances :
+    for instance in concat(local.storage_instances, local.protocol_instances, local.afm_instances, local.tie_brkr_instances, local.strg_mgmt_instances) :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
     }
   ]
-  protocol_dns_records = [
-    for instance in local.protocol_instances :
+  client_dns_records = [
+    for instance in local.client_instances :
+    {
+      name  = instance["name"]
+      rdata = instance["ipv4_address"]
+    }
+  ]
+  gklm_dns_records = [
+    for instance in local.gklm_instances :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
@@ -211,11 +238,11 @@ locals {
 
 # locals needed for inventory
 locals {
-  compute_hosts          = try([for name in local.compute_instances[*]["name"] : "${name}.${var.dns_domain_names["compute"]}"], []) #concat(["${data.external.get_hostname.result["name"]}.${var.dns_domain_names["compute"]}"], try([for name in local.compute_instances[*]["name"] : "${name}.${var.dns_domain_names["compute"]}"], []))
-  storage_hosts          = try([for name in local.storage_instances[*]["name"] : "${name}.${var.dns_domain_names["storage"]}"], [])
+  compute_hosts = try([for name in local.compute_instances[*]["name"] : "${name}.${var.dns_domain_names["compute"]}"], [])
+  # storage_hosts          = try([for name in local.storage_instances[*]["name"] : "${name}.${var.dns_domain_names["storage"]}"], [])
   ldap_hosts             = try([for instance in local.ldap_instances : instance["ipv4_address"]], [])
   compute_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute.ini" : "${path.root}/modules/ansible-roles/compute.ini"
-  storage_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage.ini" : "${path.root}/modules/ansible-roles/storage.ini"
+  # storage_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage.ini" : "${path.root}/modules/ansible-roles/storage.ini"
 }
 
 # locals needed for playbook
@@ -239,16 +266,16 @@ locals {
 # details needed for json file
 locals {
   json_inventory_path   = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json"
-  management_nodes      = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"]
-  compute_nodes         = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].compute_vsi_data]))[*]["name"]
-  compute_nodes_list    = var.enable_deployer ? [] : (length(local.compute_nodes) > 0 ? [format("%s-[001:%s]", join("-", slice(split("-", local.compute_nodes[0]), 0, length(split("-", local.compute_nodes[0])) - 1)), split("-", local.compute_nodes[length(local.compute_nodes) - 1])[length(split("-", local.compute_nodes[length(local.compute_nodes) - 1])) - 1])] : local.compute_nodes) #(length(local.compute_nodes) >= 10 ? [format("%s-00[%d:%d]", regex("^(.*?)-\\d+$", local.compute_nodes[0])[0], 1, length(local.compute_nodes))] : local.compute_nodes)
-  client_nodes          = var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].client_vsi_data]))[*]["name"]
-  gui_hosts             = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA
-  db_hosts              = var.enable_deployer ? [] : [local.management_nodes[0]] # Without Pac HA
-  ha_shared_dir         = "/mnt/lsf/shared"
-  nfs_install_dir       = "none"
-  enable_monitoring     = false
-  lsf_deployer_hostname = var.deployer_hostname #data.external.get_hostname.result.name  #var.enable_bastion ? "" : flatten(module.deployer.deployer_vsi_data[*].list)[0].name
+  management_nodes      = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"] : []
+  compute_nodes         = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].compute_vsi_data]))[*]["name"] : []
+  compute_nodes_list    = var.scheduler == "LSF" ? var.enable_deployer ? [] : (length(local.compute_nodes) > 0 ? [format("%s-[001:%s]", join("-", slice(split("-", local.compute_nodes[0]), 0, length(split("-", local.compute_nodes[0])) - 1)), split("-", local.compute_nodes[length(local.compute_nodes) - 1])[length(split("-", local.compute_nodes[length(local.compute_nodes) - 1])) - 1])] : local.compute_nodes) : [] #(length(local.compute_nodes) >= 10 ? [format("%s-00[%d:%d]", regex("^(.*?)-\\d+$", local.compute_nodes[0])[0], 1, length(local.compute_nodes))] : local.compute_nodes)
+  client_nodes          = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].client_vsi_data]))[*]["name"] : []
+  gui_hosts             = var.scheduler == "LSF" ? var.enable_deployer ? [] : [local.management_nodes[0]] : [] # Without Pac HA
+  db_hosts              = var.scheduler == "LSF" ? var.enable_deployer ? [] : [local.management_nodes[0]] : [] # Without Pac HA
+  ha_shared_dir         = var.scheduler == "LSF" ? "/mnt/lsf/shared" : ""
+  nfs_install_dir       = var.scheduler == "LSF" ? "none" : ""
+  enable_monitoring     = var.scheduler == "LSF" ? false : false
+  lsf_deployer_hostname = var.scheduler == "LSF" ? var.deployer_hostname : ""
 
   cloud_logs_bucket    = length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "logs-data-bucket")][0] : null
   cloud_metrics_bucket = length([for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")]) > 0 ? [for bucket in local.cos_data : bucket if strcontains(bucket.bucket_name, "metrics-data-bucket")][0] : null
@@ -267,4 +294,133 @@ locals {
   compute_ssh_keys_ids        = [for name in local.compute_ssh_keys : data.ibm_is_ssh_key.compute_ssh_keys[name].id]
   compute_public_key_content  = var.enable_deployer ? "" : jsonencode(base64encode(join("", flatten([module.landing_zone_vsi[0].compute_public_key_content]))))
   compute_private_key_content = var.enable_deployer ? "" : jsonencode(base64encode(join("", flatten([module.landing_zone_vsi[0].compute_private_key_content]))))
+}
+
+locals {
+  # gpfs_base_rpm_path  = fileset(var.spectrumscale_rpms_path, "gpfs.base-*")
+  # scale_org_version   = regex("gpfs.base-(.*).x86_64.rpm", tolist(local.gpfs_base_rpm_path)[0])[0]
+  scale_version = "5.2.2.1" #replace(local.scale_org_version, "-", ".")
+
+  compute_vsi_profile    = var.static_compute_instances[*]["profile"]
+  storage_vsi_profile    = var.storage_instances[*]["profile"]
+  management_vsi_profile = var.management_instances[*]["profile"]
+  afm_vsi_profile        = var.afm_instances[*]["profile"]
+  protocol_vsi_profile   = var.protocol_instances[*]["profile"]
+  afm_server_type        = strcontains(local.afm_vsi_profile[0], "metal")
+  ces_server_type        = strcontains(local.protocol_vsi_profile[0], "metal")
+
+  scale_ces_enabled            = local.protocol_instance_count > 0 ? true : false
+  is_colocate_protocol_subset  = local.scale_ces_enabled && var.colocate_protocol_cluster_instances ? local.protocol_instance_count < local.storage_instance_count ? true : false : false
+  enable_sec_interface_compute = local.scale_ces_enabled == false && data.ibm_is_instance_profile.compute_profile.bandwidth[0].value >= 64000 ? true : false
+  enable_sec_interface_storage = local.scale_ces_enabled == false && var.storage_type != "persistent" && data.ibm_is_instance_profile.storage_profile.bandwidth[0].value >= 64000 ? true : false
+  enable_mrot_conf             = local.enable_sec_interface_compute && local.enable_sec_interface_storage ? true : false
+  enable_afm                   = sum(var.afm_instances[*]["count"]) > 0 ? true : false
+
+  compute_instance_private_ips = flatten(local.compute_instances[*]["ipv4_address"])
+  compute_instance_ids         = flatten(local.compute_instances[*]["id"])
+  compute_instance_names       = try(tolist([for name_details in flatten(local.compute_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["compute"]}"]), [])
+
+  compute_mgmt_instance_private_ips = flatten(local.comp_mgmt_instances[*]["ipv4_address"])
+  compute_mgmt_instance_ids         = flatten(local.comp_mgmt_instances[*]["id"])
+  compute_mgmt_instance_names       = try(tolist([for name_details in flatten(local.comp_mgmt_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["compute"]}"]), [])
+
+  strg_instance_private_ips = flatten(local.storage_instances[*]["ipv4_address"])
+  strg_instance_ids         = flatten(local.storage_instances[*]["id"])
+  strg_instance_names       = try(tolist([for name_details in flatten(local.storage_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+
+  strg_mgmt_instance_private_ips = flatten(local.strg_mgmt_instances[*]["ipv4_address"])
+  strg_mgmtt_instance_ids        = flatten(local.strg_mgmt_instances[*]["id"])
+  strg_mgmt_instance_names       = try(tolist([for name_details in flatten(local.strg_mgmt_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+
+  strg_tie_breaker_private_ips    = flatten(local.tie_brkr_instances[*]["ipv4_address"])
+  strg_tie_breaker_instance_ids   = flatten(local.tie_brkr_instances[*]["id"])
+  strg_tie_breaker_instance_names = try(tolist([for name_details in flatten(local.tie_brkr_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+
+  secondary_compute_instance_private_ips = flatten(local.compute_instances[*]["secondary_ipv4_address"])
+  # secondary_storage_instance_private_ips = flatten(local.storage_instances[*]["secondary_ipv4_address"])
+
+  protocol_instance_private_ips = flatten(local.protocol_instances[*]["ipv4_address"])
+  protocol_instance_ids         = flatten(local.protocol_instances[*]["id"])
+  protocol_instance_names       = try(tolist([for name_details in flatten(local.protocol_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+
+  # client_instance_private_ips = flatten(local.client_instances[*]["ipv4_address"])
+  # client_instance_ids         = flatten(local.client_instances[*]["id"])
+  client_instance_names = try(tolist([for name_details in flatten(local.client_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+
+  gklm_instance_private_ips = flatten(local.gklm_instances[*]["ipv4_address"])
+  # gklm_instance_ids         = flatten(local.gklm_instances[*]["id"])
+  # gklm_instance_names       = try(tolist([for name_details in flatten(local.gklm_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+
+  ldap_instance_private_ips = flatten(local.ldap_instances[*]["ipv4_address"])
+  # ldap_instance_ids         = flatten(local.ldap_instances[*]["id"])
+  # ldap_instance_names       = flatten(local.ldap_instances[*]["name"])
+}
+
+locals {
+  afm_instance_private_ips = flatten(local.afm_instances[*]["ipv4_address"])
+  afm_instance_ids         = flatten(local.afm_instances[*]["id"])
+  afm_instance_names       = try(tolist([for name_details in flatten(local.afm_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+
+  new_instance_bucket_hmac        = [for details in var.afm_cos_config : details if(details.cos_instance == "" && details.bucket_name == "" && details.cos_service_cred_key == "")]
+  exstng_instance_new_bucket_hmac = [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name == "" && details.cos_service_cred_key == "")]
+  exstng_instance_bucket_new_hmac = [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name != "" && details.cos_service_cred_key == "")]
+  exstng_instance_hmac_new_bucket = [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name == "" && details.cos_service_cred_key != "")]
+  exstng_instance_bucket_hmac     = [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name != "" && details.cos_service_cred_key != "")]
+
+  afm_cos_bucket_details = local.enable_afm == true ? flatten(module.cos[*].afm_cos_bucket_details) : []
+  afm_cos_config         = local.enable_afm == true ? flatten(module.cos[*].afm_config_details) : []
+}
+
+
+locals {
+
+  storage_instance_private_ips = var.storage_type != "persistent" ? local.enable_afm == true ? concat(local.strg_instance_private_ips, local.afm_instance_private_ips) : local.strg_instance_private_ips : []
+  storage_instance_ids         = var.storage_type != "persistent" ? local.enable_afm == true ? concat(local.strg_instance_ids, local.afm_instance_ids) : local.strg_instance_ids : []
+  storage_instance_names       = var.storage_type != "persistent" ? local.enable_afm == true ? concat(local.strg_instance_names, local.afm_instance_names) : local.strg_instance_names : []
+  storage_ips_with_vol_mapping = module.landing_zone_vsi[*].instance_ips_with_vol_mapping
+
+  storage_cluster_instance_private_ips = local.scale_ces_enabled == false ? local.storage_instance_private_ips : concat(local.storage_instance_private_ips, local.protocol_instance_private_ips)
+  storage_cluster_instance_ids         = local.scale_ces_enabled == false ? local.storage_instance_ids : concat(local.storage_instance_ids, local.protocol_instance_ids)
+  storage_cluster_instance_names       = local.scale_ces_enabled == false ? local.storage_instance_names : concat(local.storage_instance_names, local.protocol_instance_names)
+
+  baremetal_instance_private_ips = var.storage_type == "persistent" ? local.enable_afm == true ? concat(["bm_value"], local.afm_instance_private_ips) : ["bm_value"] : []
+  baremetal_instance_ids         = var.storage_type == "persistent" ? local.enable_afm == true ? concat(["bm_value"], local.afm_instance_ids) : ["bm_value"] : []
+  baremetal_instance_names       = var.storage_type == "persistent" ? local.enable_afm == true ? concat(["bm_value"], local.afm_instance_names) : ["bm_value"] : []
+
+  baremetal_cluster_instance_private_ips = var.storage_type == "persistent" && local.scale_ces_enabled == false ? local.baremetal_instance_private_ips : concat(local.baremetal_instance_private_ips, local.protocol_instance_private_ips)
+  baremetal_cluster_instance_ids         = var.storage_type == "persistent" && local.scale_ces_enabled == false ? local.baremetal_instance_ids : concat(local.baremetal_instance_ids, local.protocol_instance_ids)
+  baremetal_cluster_instance_names       = var.storage_type == "persistent" && local.scale_ces_enabled == false ? local.baremetal_instance_names : concat(local.baremetal_instance_names, local.protocol_instance_names)
+
+  tie_breaker_storage_instance_private_ips = var.storage_type != "persistent" ? local.strg_tie_breaker_private_ips : ["bm_value"]
+  tie_breaker_storage_instance_ids         = var.storage_type != "persistent" ? local.strg_tie_breaker_instance_ids : ["bm_value"]
+  tie_breaker_storage_instance_names       = var.storage_type != "persistent" ? local.strg_tie_breaker_instance_names : ["bm_value"]
+  tie_breaker_ips_with_vol_mapping         = module.landing_zone_vsi[*].instance_ips_with_vol_mapping_tie_breaker
+
+  fileset_size_map = try({ for details in var.file_shares : details.mount_path => details.size }, {})
+
+  storage_subnet_cidr = jsonencode(data.ibm_is_subnet.existing_storage_subnets[*].ipv4_cidr_block)
+  compute_subnet_cidr = jsonencode(data.ibm_is_subnet.existing_compute_subnets[*].ipv4_cidr_block)
+
+  comp_memory      = data.ibm_is_instance_profile.compute_profile.memory[0].value
+  comp_vcpus_count = data.ibm_is_instance_profile.compute_profile.vcpu_count[0].value
+  comp_bandwidth   = data.ibm_is_instance_profile.compute_profile.bandwidth[0].value
+
+  mgmt_memory            = data.ibm_is_instance_profile.management_profile.memory[0].value
+  mgmt_vcpus_count       = data.ibm_is_instance_profile.management_profile.vcpu_count[0].value
+  mgmt_bandwidth         = data.ibm_is_instance_profile.management_profile.bandwidth[0].value
+  strg_desc_memory       = data.ibm_is_instance_profile.storage_profile.memory[0].value
+  strg_desc_vcpus_count  = data.ibm_is_instance_profile.storage_profile.vcpu_count[0].value
+  strg_desc_bandwidth    = data.ibm_is_instance_profile.storage_profile.bandwidth[0].value
+  strg_memory            = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.memory[0].value
+  strg_vcpus_count       = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.vcpu_count[0].value
+  strg_bandwidth         = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.bandwidth[0].value
+  proto_memory           = (local.scale_ces_enabled == true && var.colocate_protocol_cluster_instances == false) ? local.ces_server_type == false ? data.ibm_is_instance_profile.protocol_profile[0].memory[0].value : jsonencode(0) : jsonencode(0)
+  proto_vcpus_count      = (local.scale_ces_enabled == true && var.colocate_protocol_cluster_instances == false) ? local.ces_server_type == false ? data.ibm_is_instance_profile.protocol_profile[0].vcpu_count[0].value : jsonencode(0) : jsonencode(0)
+  proto_bandwidth        = (local.scale_ces_enabled == true && var.colocate_protocol_cluster_instances == false) ? local.ces_server_type == false ? data.ibm_is_instance_profile.protocol_profile[0].bandwidth[0].value : jsonencode(0) : jsonencode(0)
+  strg_proto_memory      = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.memory[0].value
+  strg_proto_vcpus_count = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.vcpu_count[0].value
+  strg_proto_bandwidth   = var.storage_type == "persistent" ? jsonencode("") : data.ibm_is_instance_profile.storage_profile.bandwidth[0].value
+  afm_memory             = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].memory[0].value
+  afm_vcpus_count        = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].vcpu_count[0].value
+  afm_bandwidth          = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].bandwidth[0].value
 }

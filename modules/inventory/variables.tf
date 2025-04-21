@@ -136,3 +136,9 @@ variable "ha_shared_dir" {
   default     = "null"
   description = "Path for lsf shared dir"
 }
+
+variable "scheduler" {
+  default     = null
+  type        = string
+  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+}

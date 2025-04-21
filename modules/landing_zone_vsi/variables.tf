@@ -99,7 +99,7 @@ variable "client_instances" {
   default = [{
     profile = "cx2-2x4"
     count   = 2
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "Number of instances to be launched for client."
 }
@@ -132,7 +132,7 @@ variable "management_instances" {
   default = [{
     profile = "cx2-2x4"
     count   = 2
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "Number of instances to be launched for management."
 }
@@ -148,7 +148,7 @@ variable "static_compute_instances" {
   default = [{
     profile = "cx2-2x4"
     count   = 1
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "Min Number of instances to be launched for compute cluster."
 }
@@ -164,7 +164,7 @@ variable "dynamic_compute_instances" {
   default = [{
     profile = "cx2-2x4"
     count   = 250
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "MaxNumber of instances to be launched for compute cluster."
 }
@@ -215,7 +215,7 @@ variable "storage_instances" {
   default = [{
     profile         = "bx2-2x8"
     count           = 2
-    image           = "ibm-redhat-8-10-minimal-amd64-2"
+    image           = "ibm-redhat-8-10-minimal-amd64-4"
     filesystem_name = "fs1"
   }]
   description = "Number of instances to be launched for storage cluster."
@@ -243,7 +243,7 @@ variable "protocol_instances" {
   default = [{
     profile = "bx2-2x8"
     count   = 2
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "Number of instances to be launched for protocol hosts."
 }
@@ -319,30 +319,109 @@ variable "enable_bastion" {
   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
 }
 
+#############################################################################
+# LDAP variables
 ##############################################################################
-# LDAP Variables
-##############################################################################
-
 variable "enable_ldap" {
   type        = bool
   default     = false
-  description = "Set this option to true to enable LDAP for IBM Spectrum LSF, with the default value set to false."
+  description = "Set this option to true to enable LDAP for IBM Cloud HPC, with the default value set to false."
 }
 
 variable "ldap_server" {
   type        = string
-  default     = "null"
+  default     = null
   description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
 }
 
-variable "ldap_vsi_profile" {
-  type        = string
-  default     = "cx2-2x4"
-  description = "Specify the virtual server instance profile type to be used to create the ldap node for the IBM Spectrum LSF cluster. For choices on profile types, see [Instance profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
+variable "ldap_instance_key_pair" {
+  type        = list(string)
+  default     = null
+  description = "Name of the SSH key configured in your IBM Cloud account that is used to establish a connection to the LDAP Server. Make sure that the SSH key is present in the same resource group and region where the LDAP Servers are provisioned. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
 }
 
-variable "ldap_vsi_osimage_name" {
+variable "ldap_instances" {
+  type = list(
+    object({
+      profile = string
+      image   = string
+    })
+  )
+  default = [{
+    profile = "cx2-2x4"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-1"
+  }]
+  description = "Profile and Image name to be used for provisioning the LDAP instances. Note: Debian based OS are only supported for the LDAP feature"
+}
+
+variable "afm_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  default = [{
+    profile = "bx2-32x128"
+    count   = 1
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
+  }]
+  description = "Number of instances to be launched for afm hosts."
+}
+
+##############################################################################
+# GKLM variables
+##############################################################################
+variable "scale_encryption_enabled" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the filesystem. Select true or false"
+}
+
+variable "scale_encryption_type" {
   type        = string
-  default     = "ibm-ubuntu-22-04-4-minimal-amd64-3"
-  description = "Image name to be used for provisioning the LDAP instances. By default ldap server are created on Ubuntu based OS flavour."
+  default     = null
+  description = "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled"
+}
+
+variable "gklm_instance_key_pair" {
+  type        = list(string)
+  default     = null
+  description = "The key pair to use to launch the GKLM host."
+}
+
+variable "gklm_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  default = [{
+    profile = "bx2-2x8"
+    count   = 2
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
+  }]
+  description = "Number of instances to be launched for client."
+}
+
+variable "vpc_region" {
+  type        = string
+  default     = null
+  description = "vpc region"
+}
+
+variable "scheduler" {
+  type        = string
+  default     = null
+  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+}
+
+variable "ibm_customer_number" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
 }

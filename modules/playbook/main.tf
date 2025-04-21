@@ -6,7 +6,7 @@ locals {
 }
 
 resource "local_file" "create_playbook" {
-  count    = var.inventory_path != null ? 1 : 0
+  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
@@ -48,15 +48,15 @@ resource "local_file" "create_playbook" {
     - name: Load cluster-specific variables
       include_vars: all.json
   roles:
-     - vpc_fileshare_configure
-     - lsf
-     # - lsf_server_config
+     - { role: vpc_fileshare_configure, when: scheduler == 'LSF' }
+     - { role: lsf, when: scheduler == 'LSF' }
+    #  - { role: lsf_server_config, when: scheduler == 'LSF' }
 EOT
   filename = var.playbook_path
 }
 
 resource "null_resource" "run_playbook" {
-  count = var.inventory_path != null ? 1 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook -f 50 -i ${var.inventory_path} ${var.playbook_path}"
@@ -68,7 +68,7 @@ resource "null_resource" "run_playbook" {
 }
 
 resource "null_resource" "run_lsf_playbooks" {
-  count = var.inventory_path != null ? 1 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -87,7 +87,7 @@ resource "null_resource" "run_lsf_playbooks" {
 }
 
 resource "local_file" "create_playbook_for_mgmt_config" {
-  count    = var.inventory_path != null ? 1 : 0
+  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
@@ -136,7 +136,7 @@ EOT
 
 
 resource "null_resource" "run_playbook_for_mgmt_config" {
-  count = var.inventory_path != null ? 1 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook -i ${var.inventory_path} ${var.lsf_mgmt_playbooks_path}"
@@ -148,7 +148,7 @@ resource "null_resource" "run_playbook_for_mgmt_config" {
 }
 
 resource "local_file" "prepare_ldap_server_playbook" {
-  count    = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" ? 1 : 0
+  count    = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" && var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
 - name: LDAP Server Configuration
   hosts: [ldap_server_node]
@@ -170,7 +170,7 @@ EOT
 }
 
 resource "null_resource" "configure_ldap_server_playbook" {
-  count = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" ? 1 : 0
+  count = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" && var.scheduler == "LSF" ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -183,7 +183,7 @@ resource "null_resource" "configure_ldap_server_playbook" {
 }
 
 resource "local_file" "prepare_ldap_client_playbook" {
-  count    = var.inventory_path != null && var.enable_ldap ? 1 : 0
+  count    = var.inventory_path != null && var.enable_ldap && var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
 - name: LDAP Server Configuration
   hosts: [all_nodes]
@@ -205,7 +205,7 @@ EOT
 }
 
 resource "null_resource" "run_ldap_client_playbooks" {
-  count = var.inventory_path != null && var.enable_ldap ? 1 : 0
+  count = var.inventory_path != null && var.enable_ldap && var.scheduler == "LSF" ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -218,7 +218,7 @@ resource "null_resource" "run_ldap_client_playbooks" {
 }
 
 resource "null_resource" "export_api" {
-  count = var.inventory_path != null && var.cloudlogs_provision ? 1 : 0
+  count = var.inventory_path != null && var.cloudlogs_provision && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<EOT
@@ -233,7 +233,7 @@ resource "null_resource" "export_api" {
 }
 
 resource "local_file" "create_observability_playbook" {
-  count    = var.inventory_path != null && var.observability_provision ? 1 : 0
+  count    = var.inventory_path != null && var.observability_provision && var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
 - name: Cloud Logs Configuration
   hosts: [all_nodes]
@@ -271,7 +271,7 @@ EOT
 }
 
 resource "null_resource" "run_observability_playbooks" {
-  count = var.inventory_path != null && var.observability_provision ? 1 : 0
+  count = var.inventory_path != null && var.observability_provision && var.scheduler == "LSF" ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]

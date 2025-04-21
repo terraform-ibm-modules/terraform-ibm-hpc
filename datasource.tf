@@ -60,3 +60,25 @@ data "ibm_is_ssh_key" "compute_ssh_keys" {
 data "ibm_is_subnet" "compute_subnet_crn" {
   identifier = local.compute_subnet_id
 }
+
+data "ibm_is_instance_profile" "compute_profile" {
+  name = local.compute_vsi_profile[0]
+}
+
+data "ibm_is_instance_profile" "storage_profile" {
+  name = local.storage_vsi_profile[0]
+}
+
+data "ibm_is_instance_profile" "management_profile" {
+  name = local.management_vsi_profile[0]
+}
+
+data "ibm_is_instance_profile" "protocol_profile" {
+  count = local.ces_server_type == false && (local.scale_ces_enabled == true && var.colocate_protocol_cluster_instances == false) ? 1 : 0
+  name  = local.protocol_vsi_profile[0]
+}
+
+data "ibm_is_instance_profile" "afm_server_profile" {
+  count = local.afm_server_type == false ? 1 : 0
+  name  = local.afm_vsi_profile[0]
+}
