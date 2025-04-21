@@ -4,6 +4,17 @@ module "compute_key" {
   # private_key_path = "./../../modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
 }
 
+resource "null_resource" "entitlement_check" {
+  count = var.scheduler == "Scale" && var.storage_type != "evaluation" ? 1 : 0
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "sudo python3 /opt/IBM/cloud_entitlement/entitlement_check.py --products ${local.products} --icns ${var.ibm_customer_number}"
+  }
+  triggers = {
+    build = timestamp()
+  }
+}
+
 resource "local_sensitive_file" "write_meta_private_key" {
   count           = local.enable_compute ? 1 : 0
   content         = (local.compute_private_key_content)
@@ -109,7 +120,7 @@ resource "ibm_is_security_group_rule" "add_strg_sg_strg" {
 module "management_vsi" {
   count                         = length(var.management_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.6.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = var.management_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -134,7 +145,7 @@ module "management_vsi" {
 module "compute_vsi" {
   count                         = length(var.static_compute_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.6.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = var.static_compute_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -184,7 +195,7 @@ module "compute_cluster_management_vsi" {
 module "storage_vsi" {
   count                         = length(var.storage_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.6.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = var.storage_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -204,6 +215,7 @@ module "storage_vsi" {
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
+  depends_on                    = [resource.null_resource.entitlement_check]
   # manage_reserved_ips             = true
   # primary_vni_additional_ip_count = var.storage_instances[count.index]["count"]
   # placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
@@ -233,6 +245,7 @@ module "storage_cluster_management_vsi" {
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
+  depends_on                    = [resource.null_resource.entitlement_check]
   #placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
@@ -267,7 +280,7 @@ module "storage_cluster_tie_breaker_vsi" {
 module "client_vsi" {
   count                         = length(var.client_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.6.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = var.client_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -285,12 +298,13 @@ module "client_vsi" {
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
+  depends_on                    = [resource.null_resource.entitlement_check]
 }
 
 module "protocol_vsi" {
   count                         = length(var.protocol_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.6.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = var.protocol_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -316,6 +330,7 @@ module "protocol_vsi" {
   placement_group_id              = var.placement_group_ids
   manage_reserved_ips             = true
   primary_vni_additional_ip_count = var.protocol_instances[count.index]["count"]
+  depends_on                      = [resource.null_resource.entitlement_check]
   # placement_group_id = var.placement_group_ids[(var.protocol_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 

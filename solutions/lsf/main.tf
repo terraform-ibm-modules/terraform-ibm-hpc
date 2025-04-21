@@ -1,7 +1,6 @@
 module "lsf" {
   source                                           = "./../.."
   scheduler                                        = "LSF"
-  ibm_customer_number                              = var.ibm_customer_number
   zones                                            = var.zones
   allowed_cidr                                     = var.allowed_cidr
   prefix                                           = local.env.prefix
