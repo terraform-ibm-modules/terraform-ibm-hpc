@@ -12,8 +12,8 @@ locals {
   bms_interfaces = ["ens1", "ens2"]
   # TODO: explore (DA always keep it true)
   skip_iam_authorization_policy = true
-  storage_instance_count        = sum(var.storage_servers[*]["count"])
-  enable_storage                = local.storage_instance_count > 0
+  storage_server_count        = sum(var.storage_servers[*]["count"])
+  enable_storage                = local.storage_server_count > 0
 
   storage_security_group_rules = [
     {

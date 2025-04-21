@@ -690,7 +690,7 @@ module "scc_instance_and_profile" {
 
 # Baremetal Module
 module "storage_baremetal" {
-  count                      = length(var.storage_instances) && var.enable_deployer == false && storage_type == "persistent" ? 1 : 0
+  count                      = length(var.storage_servers) > 0 && var.enable_deployer == false && var.storage_type == "persistent" ? 1 : 0
   source                     = "./modules/baremetal"
   existing_resource_group    = var.existing_resource_group
   prefix                     = var.prefix
