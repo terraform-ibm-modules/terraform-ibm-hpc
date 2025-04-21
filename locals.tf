@@ -401,9 +401,9 @@ locals {
   storage_subnet_cidr = jsonencode(data.ibm_is_subnet.existing_storage_subnets[*].ipv4_cidr_block)
   compute_subnet_cidr = jsonencode(data.ibm_is_subnet.existing_compute_subnets[*].ipv4_cidr_block)
 
-  comp_memory         = data.ibm_is_instance_profile.compute_profile.memory[0].value
-  comp_vcpus_count    = data.ibm_is_instance_profile.compute_profile.vcpu_count[0].value
-  comp_bandwidth      = data.ibm_is_instance_profile.compute_profile.bandwidth[0].value
+  comp_memory      = data.ibm_is_instance_profile.compute_profile.memory[0].value
+  comp_vcpus_count = data.ibm_is_instance_profile.compute_profile.vcpu_count[0].value
+  comp_bandwidth   = data.ibm_is_instance_profile.compute_profile.bandwidth[0].value
 
   mgmt_memory            = data.ibm_is_instance_profile.management_profile.memory[0].value
   mgmt_vcpus_count       = data.ibm_is_instance_profile.management_profile.vcpu_count[0].value
