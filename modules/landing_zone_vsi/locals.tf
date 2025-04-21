@@ -288,10 +288,23 @@ locals {
   # Security Groups
   protocol_secondary_security_group = [for subnet in local.protocol_subnets :
     {
-      security_group_id = one(module.compute_sg[*].security_group_id)
+      security_group_id = one(module.storage_sg[*].security_group_id)
       interface_name    = subnet["name"]
     }
   ]
 
+  storage_secondary_security_group = [for subnet in local.storage_subnets :
+    {
+      security_group_id = one(module.storage_sg[*].security_group_id)
+      interface_name    = subnet["name"]
+    }
+  ]
+
+  # compute_secondary_security_group = [for subnet in local.compute_subnets :
+  #   {
+  #     security_group_id = one(module.compute_sg[*].security_group_id)
+  #     interface_name    = subnet["name"]
+  #   }
+  # ]
   # ldap_instance_image_id = var.enable_ldap == true && var.ldap_server == "null" ? data.ibm_is_image.ldap_vsi_image[0].id : "null"
 }

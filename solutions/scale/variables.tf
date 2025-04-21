@@ -358,7 +358,7 @@ variable "afm_instances" {
     })
   )
   default = [{
-    profile = "bx2-2x8"
+    profile = "bx2-32x128"
     count   = 0
     image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]

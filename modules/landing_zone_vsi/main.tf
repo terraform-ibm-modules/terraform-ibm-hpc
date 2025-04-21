@@ -154,7 +154,7 @@ module "compute_vsi" {
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
   # secondary_allow_ip_spoofing     = true
-  secondary_security_groups       = module.storage_sg[*].security_group_id
+  secondary_security_groups       = local.storage_secondary_security_group
   secondary_subnets               = local.storage_subnets
   manage_reserved_ips             = var.enable_mrot_conf ? true : false
   primary_vni_additional_ip_count = var.static_compute_instances[count.index]["count"]
@@ -184,7 +184,7 @@ module "compute_cluster_management_vsi" {
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
   # secondary_allow_ip_spoofing     = true
-  secondary_security_groups       = module.storage_sg[*].security_group_id
+  secondary_security_groups       = local.storage_secondary_security_group
   secondary_subnets               = local.storage_subnets
   manage_reserved_ips             = var.enable_mrot_conf ? true : false
   primary_vni_additional_ip_count = var.static_compute_instances[count.index]["count"]
@@ -215,7 +215,7 @@ module "storage_vsi" {
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
   # secondary_allow_ip_spoofing     = true
-  secondary_security_groups       = module.storage_sg[*].security_group_id
+  secondary_security_groups       = local.storage_secondary_security_group
   secondary_subnets               = local.storage_subnets
   manage_reserved_ips             = var.enable_mrot_conf ? true : false
   primary_vni_additional_ip_count = var.storage_instances[count.index]["count"]
@@ -247,7 +247,7 @@ module "storage_cluster_management_vsi" {
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
   # secondary_allow_ip_spoofing     = true
-  secondary_security_groups       = module.storage_sg[*].security_group_id
+  secondary_security_groups       = local.storage_secondary_security_group
   secondary_subnets               = local.storage_subnets
   manage_reserved_ips             = var.enable_mrot_conf ? true : false
   primary_vni_additional_ip_count = var.storage_instances[count.index]["count"]
@@ -278,7 +278,7 @@ module "storage_cluster_tie_breaker_vsi" {
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
   # secondary_allow_ip_spoofing     = true
-  secondary_security_groups       = module.storage_sg[*].security_group_id
+  secondary_security_groups       = local.storage_secondary_security_group
   secondary_subnets               = local.storage_subnets
   manage_reserved_ips             = var.enable_mrot_conf ? true : false
   primary_vni_additional_ip_count = var.storage_instances[count.index]["count"]
