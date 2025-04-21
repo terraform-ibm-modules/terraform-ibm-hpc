@@ -4,7 +4,7 @@ module "compute_key" {
   # private_key_path = "./../../modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
 }
 
-resource "null_resource" "lsf_entitlement" {
+resource "null_resource" "entitlement_check" {
   count = var.scheduler == "Scale" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -215,7 +215,7 @@ module "storage_vsi" {
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
-  depends_on = [ resource.null_resource.lsf_entitlement ] 
+  depends_on = [ resource.null_resource.entitlement_check ]
   # manage_reserved_ips             = true
   # primary_vni_additional_ip_count = var.storage_instances[count.index]["count"]
   # placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
@@ -245,7 +245,7 @@ module "storage_cluster_management_vsi" {
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
-  depends_on = [ resource.null_resource.lsf_entitlement ] 
+  depends_on = [ resource.null_resource.entitlement_check ]
   #placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
@@ -298,7 +298,7 @@ module "client_vsi" {
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
-  depends_on = [ resource.null_resource.lsf_entitlement ] 
+  depends_on = [ resource.null_resource.entitlement_check ]
 }
 
 module "protocol_vsi" {
@@ -330,7 +330,7 @@ module "protocol_vsi" {
   placement_group_id              = var.placement_group_ids
   manage_reserved_ips             = true
   primary_vni_additional_ip_count = var.protocol_instances[count.index]["count"]
-  depends_on = [ resource.null_resource.lsf_entitlement ]
+  depends_on = [ resource.null_resource.entitlement_check ]
   # placement_group_id = var.placement_group_ids[(var.protocol_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
