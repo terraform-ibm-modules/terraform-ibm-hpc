@@ -621,7 +621,7 @@ variable "scale_encryption_admin_password" {
 variable "storage_type" {
   type        = string
   default     = "scratch"
-  description = "Select the required storage type(scratch/persistent/eval)."
+  description = "Select the required storage type(scratch/persistent/evaluation)."
 }
 
 variable "colocate_protocol_cluster_instances" {

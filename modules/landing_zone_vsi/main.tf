@@ -5,7 +5,7 @@ module "compute_key" {
 }
 
 resource "null_resource" "entitlement_check" {
-  count = var.scheduler == "Scale" ? 1 : 0
+  count = var.scheduler == "Scale" && var.storage_type != "evaluation" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo python3 /opt/IBM/cloud_entitlement/entitlement_check.py --products ${local.products} --icns ${var.ibm_customer_number}"

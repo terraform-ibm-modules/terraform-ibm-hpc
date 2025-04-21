@@ -17,7 +17,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "management_instances": ${local.list_management_instances},
   "protocol_instances": ${local.list_protocol_instances},
   "colocate_protocol_cluster_instances": ${var.colocate_protocol_cluster_instances},
-  "ibm_customer_number": "${var.ibm_customer_number}",
+  "ibm_customer_number": "${local.ibm_customer_number}",
   "static_compute_instances": ${local.list_compute_instances},
   "dynamic_compute_instances": ${local.dynamic_compute_instances},
   "client_instances": ${local.list_client_instances},
