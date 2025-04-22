@@ -11,9 +11,15 @@ locals {
   skip_iam_authorization_policy = true
   # Region and Zone calculations
   region = join("-", slice(split("-", var.zones[0]), 0, 2))
+
   # Check whether an entry is found in the mapping file for the given management node image
   image_mapping_entry_found = contains(keys(local.image_region_map), var.management_instances[0]["image"])
   new_image_id              = local.image_mapping_entry_found ? local.image_region_map[var.management_instances[0]["image"]][local.region] : "Image not found with the given name"
+
+  # Check whether an entry is found in the mapping file for the given compute node image
+  compute_image_found_in_map = contains(keys(local.image_region_map), var.static_compute_instances[0]["image"])
+  # If not found, assume the name is the id already (customer provided image)
+  new_compute_image_id    = local.compute_image_found_in_map ? local.image_region_map[var.static_compute_instances[0]["image"]][local.region] : "Image not found with the given name"
 
   products                      = var.scheduler == "Scale" ? "scale" : "lsf"
   block_storage_volumes = [for volume in coalesce(var.nsd_details, []) : {
@@ -93,9 +99,9 @@ locals {
   protocol_image_name   = var.storage_image_name
   */
 
-  management_image_id = data.ibm_is_image.management[*].id
+  management_image_id = data.ibm_is_image.management_stock_image[*].id
   client_image_id     = data.ibm_is_image.client[*].id
-  compute_image_id    = data.ibm_is_image.compute[*].id
+  compute_image_id    = data.ibm_is_image.compute_stock_image[*].id
   storage_image_id    = data.ibm_is_image.storage[*].id
   protocol_image_id   = data.ibm_is_image.storage[*].id
   ldap_image_id       = data.ibm_is_image.ldap_vsi_image[*].id

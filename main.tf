@@ -315,6 +315,8 @@ module "write_compute_cluster_inventory" {
   compute_security_group_id   = local.compute_security_group_id
   compute_ssh_keys_ids        = local.compute_ssh_keys_ids
   compute_subnet_crn          = local.compute_subnet_crn
+  hosts                       = local.compute_hosts_ips
+  inventory_path              = local.compute_inventory_path
   depends_on                  = [time_sleep.wait_60_seconds]
 }
 

@@ -265,6 +265,8 @@ locals {
 
 # details needed for json file
 locals {
+  compute_instances_data = var.scheduler == "LSF" ? var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data, module.landing_zone_vsi[0].compute_vsi_data]) : []
+  compute_hosts_ips       = var.scheduler == "LSF" ? var.enable_deployer ? [] : local.compute_instances_data[*]["ipv4_address"] : []
   json_inventory_path   = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json"
   management_nodes      = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"] : []
   compute_nodes         = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].compute_vsi_data]))[*]["name"] : []
