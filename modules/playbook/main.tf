@@ -117,7 +117,7 @@ resource "null_resource" "run_playbook_for_mgmt_config" {
   count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -i ${var.inventory_path} ${var.lsf_mgmt_playbooks_path}"
+    command     = "systemctl restart NetworkManager && sleep 5s && ansible-playbook -i ${var.inventory_path} ${var.lsf_mgmt_playbooks_path}"
   }
   triggers = {
     build = timestamp()
