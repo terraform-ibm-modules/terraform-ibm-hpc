@@ -102,19 +102,19 @@ variable "enable_hyperthreading" {
 variable "compute_subnet_id" {
   description = "Compute subnet ID"
   type        = string
-  default     = null
+  default     = ""
 }
 
 variable "region" {
   description = "Deployment region"
   type        = string
-  default     = null
+  default     = ""
 }
 
 variable "resource_group_id" {
   description = "Resource group ID"
   type        = string
-  default     = null
+  default     = ""
 }
 
 variable "compute_subnets_cidr" {
@@ -133,7 +133,7 @@ variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
   type        = string
   sensitive   = true
-  default     = null
+  default     = ""
 }
 
 variable "zones" {
@@ -150,13 +150,13 @@ variable "compute_security_group_id" {
 
 variable "vpc_id" {
   type        = string
-  default     = null
+  default     = ""
   description = "ID of an existing VPC in which the cluster resources will be deployed."
 }
 
 variable "compute_subnet_crn" {
   type        = string
-  default     = null
+  default     = ""
   description = "ID of an existing VPC in which the cluster resources will be deployed."
 }
 
