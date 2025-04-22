@@ -108,6 +108,7 @@ if [ -n "${nfs_server_with_mount_path}" ]; then
 fi
 echo "Setting LSF share is completed." >> $logfile
 
+# shellcheck disable=SC1009,SC1054,SC1073,SC1083
 {% raw %}
 # Setup Custom file shares
 echo "Setting custom file shares." >> $logfile
