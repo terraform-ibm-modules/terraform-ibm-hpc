@@ -22,7 +22,7 @@ variable "prefix" {
 # Scale Storage Variables
 ##############################################################################
 
-variable "storage_subnets" {
+/*variable "storage_subnets" {
   type = list(object({
     name = string
     id   = string
@@ -31,6 +31,10 @@ variable "storage_subnets" {
   }))
   default     = []
   description = "Subnets to launch the storage host."
+}*/
+
+variable "storage_subnets" {
+  type = list(string)
 }
 
 variable "storage_ssh_keys" {

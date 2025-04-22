@@ -78,6 +78,7 @@ module "landing_zone_vsi" {
   storage_subnets            = local.storage_subnets
   storage_ssh_keys           = local.storage_ssh_keys
   storage_instances          = var.storage_instances
+  storage_servers            = var.storage_type == "persistent" ? var.storage_servers : [] 
   protocol_subnets           = local.protocol_subnets
   protocol_instances         = var.protocol_instances
   nsd_details                = var.nsd_details
@@ -686,17 +687,4 @@ module "scc_instance_and_profile" {
   prefix                  = var.prefix
   cos_bucket              = var.scc_cos_bucket
   cos_instance_crn        = var.scc_cos_instance_crn
-}
-
-# Baremetal Module
-module "storage_baremetal" {
-  count                      = length(var.storage_servers) > 0 && var.enable_deployer == false && var.storage_type == "persistent" ? 1 : 0
-  source                     = "./modules/baremetal"
-  existing_resource_group    = var.existing_resource_group
-  prefix                     = var.prefix
-  storage_subnets            = local.storage_subnets
-  storage_ssh_keys           = local.storage_ssh_keys
-  storage_servers            = var.storage_servers 
-  bastion_public_key_content = local.bastion_private_key_content
-  bastion_security_group_id  = local.bastion_security_group_id
 }
