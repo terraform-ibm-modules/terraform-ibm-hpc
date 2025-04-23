@@ -145,12 +145,6 @@ variable "vpn_preshared_key" {
 ##############################################################################
 # Deployer Variables
 ##############################################################################
-variable "enable_deployer" {
-  type        = bool
-  default     = false
-  description = "Deployer should be only used for better deployment performance"
-}
-
 variable "deployer_image" {
   type        = string
   default     = "jay-lsf-new-image"

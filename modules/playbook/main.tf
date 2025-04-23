@@ -196,7 +196,7 @@ resource "null_resource" "run_ldap_client_playbooks" {
 }
 
 resource "null_resource" "export_api" {
-  count = var.inventory_path != null && var.cloudlogs_provision && var.scheduler == "LSF" ? 1 : 0
+  count = (var.cloudlogs_provision && var.scheduler == "LSF") || var.scheduler == "Scale" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<EOT

@@ -89,12 +89,6 @@ variable "placement_strategy" {
 ##############################################################################
 # Access Variables
 ##############################################################################
-variable "enable_deployer" {
-  type        = bool
-  default     = false
-  description = "Deployer should be only used for better deployment performance"
-}
-
 variable "deployer_instance_profile" {
   type        = string
   default     = "mx2-4x32"

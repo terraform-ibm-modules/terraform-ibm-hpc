@@ -35,7 +35,6 @@ locals {
     enable_bastion                                   = var.enable_bastion
     bastion_image                                    = var.bastion_image
     bastion_instance_profile                         = var.bastion_instance_profile
-    enable_deployer                                  = var.enable_deployer
     deployer_image                                   = var.deployer_image
     deployer_instance_profile                        = var.deployer_instance_profile
     enable_cos_integration                           = var.enable_cos_integration
@@ -117,7 +116,6 @@ locals {
     enable_bastion                                   = lookup(local.override[local.override_type], "enable_bastion", local.config.enable_bastion)
     bastion_image                                    = lookup(local.override[local.override_type], "bastion_image", local.config.bastion_image)
     bastion_instance_profile                         = lookup(local.override[local.override_type], "bastion_instance_profile", local.config.bastion_instance_profile)
-    enable_deployer                                  = lookup(local.override[local.override_type], "enable_deployer", local.config.enable_deployer)
     deployer_image                                   = lookup(local.override[local.override_type], "deployer_image", local.config.deployer_image)
     deployer_instance_profile                        = lookup(local.override[local.override_type], "deployer_instance_profile", local.config.deployer_instance_profile)
     enable_cos_integration                           = lookup(local.override[local.override_type], "enable_cos_integration", local.config.enable_cos_integration)

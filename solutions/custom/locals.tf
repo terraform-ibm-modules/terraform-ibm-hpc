@@ -35,7 +35,6 @@ locals {
     dynamic_compute_instances = var.dynamic_compute_instances
     enable_atracker           = var.enable_atracker
     enable_bastion            = var.enable_bastion
-    enable_deployer           = var.enable_deployer
     enable_cos_integration    = var.enable_cos_integration
     enable_vpc_flow_logs      = var.enable_vpc_flow_logs
     enable_vpn                = var.enable_vpn
@@ -85,7 +84,6 @@ locals {
     dynamic_compute_instances = lookup(local.override[local.override_type], "dynamic_compute_instances", local.config.dynamic_compute_instances)
     enable_atracker           = lookup(local.override[local.override_type], "enable_atracker", local.config.enable_atracker)
     enable_bastion            = lookup(local.override[local.override_type], "enable_bastion", local.config.enable_bastion)
-    enable_deployer           = lookup(local.override[local.override_type], "enable_deployer", local.config.enable_deployer)
     enable_cos_integration    = lookup(local.override[local.override_type], "enable_cos_integration", local.config.enable_cos_integration)
     enable_vpc_flow_logs      = lookup(local.override[local.override_type], "enable_vpc_flow_logs", local.config.enable_vpc_flow_logs)
     enable_vpn                = lookup(local.override[local.override_type], "enable_vpn", local.config.enable_vpn)

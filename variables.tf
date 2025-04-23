@@ -151,7 +151,7 @@ variable "vpn_preshared_key" {
 ##############################################################################
 variable "enable_deployer" {
   type        = bool
-  default     = false
+  default     = true
   description = "Deployer should be only used for better deployment performance"
 }
 
