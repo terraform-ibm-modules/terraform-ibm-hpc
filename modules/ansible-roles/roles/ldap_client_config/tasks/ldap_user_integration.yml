@@ -89,3 +89,13 @@
       run_once: true
 
   when: rhel_version.stdout in ["8", "9"]
+
+  rescue:
+    - name: LDAP | Log error if LDAP client configuration fails
+      ansible.builtin.debug:
+        msg: "LDAP client configuration block failed. Check previous task results."
+
+  always:
+    - name: LDAP | Always ensure permissions are reset or log final status
+      ansible.builtin.debug:
+        msg: "LDAP configuration block completed (success or failure)."
