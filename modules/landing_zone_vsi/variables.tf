@@ -234,7 +234,7 @@ variable "storage_servers" {
     profile    = "cx2d-metal-96x192"
     count      = 0
     image      = "ibm-redhat-8-10-minimal-amd64-4"
-    filesystem = "/gpfs/fs1"
+    filesystem = "fs1"
   }]
   description = "Number of BareMetal Servers to be launched for storage cluster."
 }

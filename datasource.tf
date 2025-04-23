@@ -69,6 +69,10 @@ data "ibm_is_instance_profile" "storage_profile" {
   name = local.storage_vsi_profile[0]
 }
 
+data "ibm_is_bare_metal_server_profile" "storage_bms_profile" {
+  name = local.storage_bms_profile[0]
+}
+
 data "ibm_is_instance_profile" "management_profile" {
   name = local.management_vsi_profile[0]
 }

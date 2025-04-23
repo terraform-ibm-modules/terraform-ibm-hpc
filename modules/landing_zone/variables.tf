@@ -9,6 +9,15 @@ variable "enable_landing_zone" {
 }
 
 ##############################################################################
+# Offering Variations
+##############################################################################
+variable "storage_type" {
+  type        = string
+  default     = "scratch"
+  description = "Select the required storage type(scratch/persistent/eval)."
+}
+
+##############################################################################
 # Resource Groups Variables
 ##############################################################################
 
@@ -184,6 +193,20 @@ variable "storage_instances" {
     count   = 3
   }]
   description = "Number of instances to be launched for storage cluster."
+}
+
+variable "storage_servers" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+    })
+  )
+  default = [{
+    profile = "cx2d-metal-96x192"
+    count   = 3
+  }]
+  description = "Number of Bareemetal servers to be launched for storage cluster."
 }
 
 variable "protocol_subnets_cidr" {
