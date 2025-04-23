@@ -7,10 +7,10 @@ data "ibm_is_image" "storage" {
   name  = var.storage_servers[count.index]["image"]
 }
 
-data "ibm_is_ssh_key" "storage" {
+/*data "ibm_is_ssh_key" "storage" {
   for_each = toset(var.storage_ssh_keys)
   name     = each.key
-}
+}*/
 
 data "ibm_is_instance_profile" "storage" {
   count = length(var.storage_servers)

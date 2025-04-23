@@ -7,8 +7,8 @@ locals {
   storage_subnets   = var.storage_subnets
   resource_group_id = data.ibm_resource_group.existing_resource_group.id
   tags              = [local.prefix, local.name]
-  storage_ssh_keys  = [for name in var.storage_ssh_keys : data.ibm_is_ssh_key.storage[name].id]
-
+  #storage_ssh_keys  = [for name in var.storage_ssh_keys : data.ibm_is_ssh_key.storage[name].id]
+ 
   bms_interfaces = ["ens1", "ens2"]
   # TODO: explore (DA always keep it true)
   skip_iam_authorization_policy = true
