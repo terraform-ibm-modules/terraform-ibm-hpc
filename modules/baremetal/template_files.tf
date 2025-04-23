@@ -6,6 +6,5 @@ data "template_file" "storage_user_data" {
     storage_private_key_content = local.enable_storage ? module.storage_key[0].private_key_content : ""
     storage_interfaces          = local.bms_interfaces[0]
     storage_dns_domain          = var.dns_domain_names["storage"]
-    storage_disk_type           = data.ibm_is_instance_profile.storage[0].disks[0].quantity[0].type
   }
 }
