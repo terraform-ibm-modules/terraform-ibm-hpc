@@ -31,6 +31,8 @@ resource "null_resource" "tf_resource_provisioner" {
   }
 }
 
+#add scp null resource here
+
 resource "null_resource" "cluster_destroyer" {
   count = var.enable_deployer == true ? 1 : 0
   triggers = {

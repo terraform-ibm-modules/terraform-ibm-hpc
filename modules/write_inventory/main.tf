@@ -4,10 +4,10 @@ resource "null_resource" "cleanup_json_file" {
   }
 }
 
-# resource "local_sensitive_file" "itself" {
-#   content  = join("\n", var.hosts)
-#   filename = var.inventory_path
-# }
+resource "local_sensitive_file" "itself" {
+  content  = join("\n", var.hosts)
+  filename = var.inventory_path
+}
 
 # Write provisioned infrastructure details to JSON.
 resource "local_sensitive_file" "infra_details_to_json" {

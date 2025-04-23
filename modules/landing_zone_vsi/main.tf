@@ -151,7 +151,7 @@ module "compute_vsi" {
   create_security_group         = false
   security_group                = null
   # image_id                      = local.compute_image_id[count.index]
-  image_id                      = local.compute_image_found_in_map ? local.new_compute_image_id : data.ibm_is_image.compute[0].id
+  image_id                      = local.compute_image_found_in_map ? local.new_compute_image_id : local.compute_image_id[count.index]
   machine_type                  = var.static_compute_instances[count.index]["profile"]
   prefix                        = count.index == 0 ? local.compute_node_name : format("%s-%s", local.compute_node_name, count.index)
   resource_group_id             = local.resource_group_id

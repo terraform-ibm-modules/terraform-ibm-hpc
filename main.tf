@@ -636,6 +636,19 @@ module "ldap_inventory" {
   depends_on          = [module.write_compute_cluster_inventory]
 }
 
+module "compute_inventory_hosts" {
+  count          = var.enable_deployer == false ? 1 : 0
+  source         = "./modules/inventory_hosts"
+  hosts          = local.compute_hosts
+  inventory_path = local.compute_inventory_path
+}
+
+# module "storage_inventory_hosts" {
+#   source         = "./modules/inventory_hosts"
+#   hosts          = local.storage_hosts
+#   inventory_path = local.storage_inventory_path
+# }
+
 module "compute_playbook" {
   count                       = var.enable_deployer == false ? 1 : 0
   source                      = "./modules/playbook"
