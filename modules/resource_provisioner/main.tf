@@ -45,6 +45,7 @@ resource "null_resource" "fetch_host_details_from_deployer" {
   triggers = {
     always_run = timestamp()
   }
+  depends_on = [ resource.null_resource.tf_resource_provisioner ]
 }
 
 resource "null_resource" "cluster_destroyer" {
