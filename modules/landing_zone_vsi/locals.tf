@@ -285,13 +285,14 @@ locals {
   compute_public_key_content  = one(module.compute_key[*].public_key_content)
   compute_private_key_content = one(module.compute_key[*].private_key_content)
 
-  # Security Groups
-  protocol_secondary_security_group = [for subnet in local.protocol_subnets :
-    {
-      security_group_id = one(module.compute_sg[*].security_group_id)
-      interface_name    = subnet["name"]
-    }
-  ]
+  protocol_secondary_security_group = flatten([
+    for subnet_index, subnet in local.protocol_subnets : [
+      for i in range(var.protocol_instances[subnet_index]["count"]) : {
+        security_group_id = one(module.storage_sg[*].security_group_id)
+        interface_name    = "${subnet["name"]}-${i}"
+      }
+    ]
+  ])
 
   # ldap_instance_image_id = var.enable_ldap == true && var.ldap_server == "null" ? data.ibm_is_image.ldap_vsi_image[0].id : "null"
 }
