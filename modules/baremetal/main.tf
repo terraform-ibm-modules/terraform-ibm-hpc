@@ -6,8 +6,9 @@ module "storage_key" {
 module "storage_baremetal" {
   source       = "terraform-ibm-modules/bare-metal-vpc/ibm"
   version      = "1.0.0"
+  count        = length(var.storage_servers)
   server_count = var.storage_servers[count.index]["count"]
-  prefix       = var.storage_servers[count.index] == 0 ? local.storage_node_name : format("%s-%s", local.storage_node_name, var.storage_servers[count.index].index)
+  prefix       = count.index == 0 ? local.storage_node_name : format("%s-%s", local.storage_node_name, count.index)
   profile      = var.storage_servers[count.index]["profile"]
   image_id     = local.storage_image_id[count.index]
   #  create_security_group = false
