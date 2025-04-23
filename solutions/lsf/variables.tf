@@ -476,21 +476,21 @@ variable "ldap_basedns" {
 
 variable "ldap_server" {
   type        = string
-  default     = null
+  default     = "null"
   description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
 }
 
 variable "ldap_server_cert" {
   type        = string
   sensitive   = true
-  default     = null
+  default     = "null"
   description = "Provide the existing LDAP server certificate. This value is required if the 'ldap_server' variable is not set to null. If the certificate is not provided or is invalid, the LDAP configuration may fail. For more information on how to create or obtain the certificate, please refer [existing LDAP server certificate](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-integrating-openldap)."
 }
 
 variable "ldap_admin_password" {
   type        = string
   sensitive   = true
-  default     = null
+  default     = ""
   description = "The LDAP administrative password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required. It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
 }
 
