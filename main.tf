@@ -640,7 +640,7 @@ module "compute_inventory_hosts" {
   count          = var.enable_deployer == false ? 1 : 0
   source         = "./modules/inventory_hosts"
   hosts          = local.compute_hosts
-  inventory_path = local.compute_inventory_path
+  inventory_path = local.compute_hosts_inventory_path
 }
 
 # module "storage_inventory_hosts" {
