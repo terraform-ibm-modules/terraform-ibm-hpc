@@ -242,7 +242,8 @@ locals {
   # storage_hosts          = try([for name in local.storage_instances[*]["name"] : "${name}.${var.dns_domain_names["storage"]}"], [])
   ldap_hosts             = try([for instance in local.ldap_instances : instance["ipv4_address"]], [])
   compute_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute.ini" : "${path.root}/modules/ansible-roles/compute.ini"
-  compute_hosts_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/host_details/compute_hosts.ini" : "${path.root}/modules/ansible-roles/compute_hosts.ini"
+  compute_hosts_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/host_details/compute_hosts.ini" : "${path.root}/modules/ansible-roles/host_details/compute_hosts.ini"
+  mgmt_hosts_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/host_details/mgmt_hosts.ini" : "${path.root}/modules/ansible-roles/host_details/mgmt_hosts.ini"
   # storage_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage.ini" : "${path.root}/modules/ansible-roles/storage.ini"
 }
 
@@ -266,8 +267,10 @@ locals {
 
 # details needed for json file
 locals {
-  compute_instances_data = var.scheduler == "LSF" ? var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data, module.landing_zone_vsi[0].compute_vsi_data]) : []
+  compute_instances_data = var.scheduler == "LSF" ? var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_vsi_data]) : []
   compute_hosts_ips       = var.scheduler == "LSF" ? var.enable_deployer ? [] : local.compute_instances_data[*]["ipv4_address"] : []
+  mgmt_instances_data = var.scheduler == "LSF" ? var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data]) : []
+  mgmt_hosts_ips       = var.scheduler == "LSF" ? var.enable_deployer ? [] : local.mgmt_instances_data[*]["ipv4_address"] : []
   json_inventory_path   = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json"
   management_nodes      = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"] : []
   compute_nodes         = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].compute_vsi_data]))[*]["name"] : []

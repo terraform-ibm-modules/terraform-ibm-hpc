@@ -315,8 +315,6 @@ module "write_compute_cluster_inventory" {
   compute_security_group_id   = local.compute_security_group_id
   compute_ssh_keys_ids        = local.compute_ssh_keys_ids
   compute_subnet_crn          = local.compute_subnet_crn
-  hosts                       = local.compute_hosts_ips
-  inventory_path              = local.compute_inventory_path
   depends_on                  = [time_sleep.wait_60_seconds]
 }
 
@@ -636,18 +634,19 @@ module "ldap_inventory" {
   depends_on          = [module.write_compute_cluster_inventory]
 }
 
+module "mgmt_inventory_hosts" {
+  count          = var.enable_deployer == false ? 1 : 0
+  source         = "./modules/inventory_hosts"
+  hosts          = local.mgmt_hosts_ips
+  inventory_path = local.mgmt_hosts_inventory_path
+}
+
 module "compute_inventory_hosts" {
   count          = var.enable_deployer == false ? 1 : 0
   source         = "./modules/inventory_hosts"
-  hosts          = local.compute_hosts
+  hosts          = local.compute_hosts_ips
   inventory_path = local.compute_hosts_inventory_path
 }
-
-# module "storage_inventory_hosts" {
-#   source         = "./modules/inventory_hosts"
-#   hosts          = local.storage_hosts
-#   inventory_path = local.storage_inventory_path
-# }
 
 module "compute_playbook" {
   count                       = var.enable_deployer == false ? 1 : 0

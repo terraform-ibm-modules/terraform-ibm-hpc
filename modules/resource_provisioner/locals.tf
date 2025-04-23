@@ -9,4 +9,5 @@ locals {
   scale_cloud_infra_repo_url  = "https://github.com/IBM/ibm-spectrum-scale-install-infra"
   scale_cloud_infra_repo_name = "ibm-spectrum-scale-install-infra"
   scale_cloud_infra_repo_tag  = "scale_hpc"
+  ssh_key_file                = "${path.module}/bastion_id_rsa"
 }

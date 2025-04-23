@@ -330,7 +330,7 @@ variable "storage_instances" {
     })
   )
   default = [{
-    profile    = "bx2-2x8"
+    profile    = "bx2d-2x8"
     count      = 2
     image      = "ibm-redhat-8-10-minimal-amd64-2"
     filesystem = "fs1"

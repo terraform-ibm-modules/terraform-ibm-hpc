@@ -31,7 +31,21 @@ resource "null_resource" "tf_resource_provisioner" {
   }
 }
 
-#add scp null resource here
+resource "null_resource" "fetch_host_details_from_deployer" {
+  count = var.enable_deployer == true ? 1 : 0
+
+  provisioner "local-exec" {
+    command = <<EOT
+      scp -o StrictHostKeyChecking=no -o ProxyJump=ubuntu@${var.bastion_fip} \
+          -i ${local.ssh_key_file} \
+          -r vpcuser@${var.deployer_ip}:/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/host_details/* "${path.root}/../../modules/ansible-roles/host_details/"
+    EOT
+  }
+
+  triggers = {
+    always_run = timestamp()
+  }
+}
 
 resource "null_resource" "cluster_destroyer" {
   count = var.enable_deployer == true ? 1 : 0
