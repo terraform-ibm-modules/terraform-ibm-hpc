@@ -193,7 +193,7 @@ module "compute_cluster_management_vsi" {
 }
 
 module "storage_vsi" {
-  count                         = length(var.storage_instances)
+  count                         = length(var.storage_instances) > 0 && var.storage_type != "persistent" ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
   version                       = "5.0.0"
   vsi_per_subnet                = var.storage_instances[count.index]["count"]
@@ -406,4 +406,18 @@ module "ldap_vsi" {
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
   #placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
+}
+
+# Baremetal Module
+module "storage_baremetal" {
+
+  count                      = length(var.storage_servers) > 0 && var.storage_type == "persistent" ? 1 : 0
+  source                     = "../baremetal"
+  existing_resource_group    = var.existing_resource_group
+  prefix                     = var.prefix
+  storage_subnets            = [for subnet in local.storage_subnets : subnet.id]
+  storage_ssh_keys           = local.storage_ssh_keys
+  storage_servers            = var.storage_servers 
+  bastion_public_key_content = var.bastion_public_key_content
+  bastion_security_group_id  = var.bastion_security_group_id
 }

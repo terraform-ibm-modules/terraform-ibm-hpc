@@ -6,6 +6,7 @@ locals {
   list_compute_ssh_keys           = jsonencode(var.compute_ssh_keys)
   list_storage_ssh_keys           = jsonencode(var.storage_ssh_keys)
   list_storage_instances          = jsonencode(var.storage_instances)
+  list_storage_servers            = jsonencode(var.storage_servers) 
   list_management_instances       = jsonencode(var.management_instances)
   list_protocol_instances         = jsonencode(var.protocol_instances)
   list_compute_instances          = jsonencode(var.static_compute_instances)

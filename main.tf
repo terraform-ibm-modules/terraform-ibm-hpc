@@ -78,6 +78,8 @@ module "landing_zone_vsi" {
   storage_subnets            = local.storage_subnets
   storage_ssh_keys           = local.storage_ssh_keys
   storage_instances          = var.storage_instances
+  storage_servers            = var.storage_servers
+  storage_type               = var.storage_type 
   protocol_subnets           = local.protocol_subnets
   protocol_instances         = var.protocol_instances
   nsd_details                = var.nsd_details
@@ -111,6 +113,8 @@ module "prepare_tf_input" {
   compute_ssh_keys                                 = local.compute_ssh_keys
   storage_ssh_keys                                 = local.storage_ssh_keys
   storage_instances                                = var.storage_instances
+  storage_servers                                  = var.storage_servers
+  storage_type                                     = var.storage_type 
   management_instances                             = var.management_instances
   protocol_instances                               = var.protocol_instances
   colocate_protocol_cluster_instances              = var.colocate_protocol_cluster_instances
