@@ -56,7 +56,7 @@
          "count": 2,
          "image": "ibm-redhat-8-10-minimal-amd64-2"
       }
-   ],    
+   ],
    "protocol_subnets_cidr": "10.10.40.0/24",
    "protocol_instances": [
       {

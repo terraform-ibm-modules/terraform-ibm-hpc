@@ -57,7 +57,7 @@ locals {
     storage_gui_password                             = var.storage_gui_password
     storage_gui_username                             = var.storage_gui_username
     storage_instances                                = var.storage_instances
-    storage_servers                                  = var.storage_servers    
+    storage_servers                                  = var.storage_servers
     storage_ssh_keys                                 = var.storage_ssh_keys
     storage_subnets_cidr                             = var.storage_subnets_cidr
     vpc_name                                         = var.vpc_name
@@ -93,6 +93,7 @@ locals {
     ldap_server                                      = var.ldap_server
     ldap_server_cert                                 = var.ldap_server_cert
     ldap_instances                                   = var.ldap_instances
+    enable_dedicated_host                            = var.enable_dedicated_host
     # scc_profile_version                            = var.scc_profile_version
 
   }
@@ -140,7 +141,7 @@ locals {
     storage_gui_password                             = lookup(local.override[local.override_type], "storage_gui_password", local.config.storage_gui_password)
     storage_gui_username                             = lookup(local.override[local.override_type], "storage_gui_username", local.config.storage_gui_username)
     storage_instances                                = lookup(local.override[local.override_type], "storage_instances", local.config.storage_instances)
-    storage_servers                                  = lookup(local.override[local.override_type], "storage_servers", local.config.storage_servers)    
+    storage_servers                                  = lookup(local.override[local.override_type], "storage_servers", local.config.storage_servers)
     storage_ssh_keys                                 = lookup(local.override[local.override_type], "storage_ssh_keys", local.config.storage_ssh_keys)
     storage_subnets_cidr                             = lookup(local.override[local.override_type], "storage_subnets_cidr", local.config.storage_subnets_cidr)
     vpc_name                                         = lookup(local.override[local.override_type], "vpc_name", local.config.vpc_name)
@@ -176,6 +177,7 @@ locals {
     ldap_server                                      = lookup(local.override[local.override_type], "ldap_server", local.config.ldap_server)
     ldap_server_cert                                 = lookup(local.override[local.override_type], "ldap_server_cert", local.config.ldap_server_cert)
     ldap_instances                                   = lookup(local.override[local.override_type], "ldap_instances", local.config.ldap_instances)
+    enable_dedicated_host                            = lookup(local.override[local.override_type], "enable_dedicated_host", local.config.enable_dedicated_host)
     # scc_profile_version                            = lookup(local.override[local.override_type], "scc_profile_version", local.config.scc_profile_version)
   }
 }

@@ -13,7 +13,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "compute_ssh_keys": ${local.list_compute_ssh_keys},
   "storage_ssh_keys": ${local.list_storage_ssh_keys},
   "storage_instances": ${local.list_storage_instances},
-  "storage_servers": ${local.list_storage_servers},  
+  "storage_servers": ${local.list_storage_servers},
   "storage_type": "${var.storage_type}",
   "management_instances": ${local.list_management_instances},
   "protocol_instances": ${local.list_protocol_instances},
@@ -72,7 +72,9 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "observability_monitoring_on_compute_nodes_enable": ${var.observability_monitoring_on_compute_nodes_enable},
   "observability_enable_metrics_routing": ${var.observability_enable_metrics_routing},
   "observability_atracker_enable": ${var.observability_atracker_enable},
-  "observability_atracker_target_type": "${var.observability_atracker_target_type}"
+  "observability_atracker_target_type": "${var.observability_atracker_target_type}",
+  "enable_dedicated_host": "${var.enable_dedicated_host}"
+
 }
 EOT
   filename = local.schematics_inputs_path

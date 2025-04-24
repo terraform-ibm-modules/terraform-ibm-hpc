@@ -611,3 +611,13 @@ variable "scheduler" {
   default     = null
   description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
 }
+
+##############################################################################
+# Dedicatedhost Variables
+##############################################################################
+
+variable "enable_dedicated_host" {
+  type        = bool
+  default     = false
+  description = "Enables dedicated host to the compute instances"
+}

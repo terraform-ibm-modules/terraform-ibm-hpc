@@ -24,7 +24,7 @@ module "landing_zone" {
   storage_instances             = var.storage_instances
   storage_servers               = var.storage_servers
   storage_subnets_cidr          = var.storage_subnets_cidr
-  storage_type                  = var.storage_type   
+  storage_type                  = var.storage_type
   vpc_name                      = var.vpc_name
   vpn_peer_address              = var.vpn_peer_address
   vpn_peer_cidr                 = var.vpn_peer_cidr
@@ -67,6 +67,7 @@ module "landing_zone_vsi" {
   existing_resource_group    = var.existing_resource_group
   prefix                     = var.prefix
   vpc_id                     = local.vpc_id
+  zones                      = var.zones
   bastion_security_group_id  = var.bastion_security_group_id
   bastion_public_key_content = local.bastion_public_key_content
   client_subnets             = local.client_subnets
@@ -81,7 +82,7 @@ module "landing_zone_vsi" {
   storage_ssh_keys           = local.storage_ssh_keys
   storage_instances          = var.storage_instances
   storage_servers            = var.storage_servers
-  storage_type               = var.storage_type 
+  storage_type               = var.storage_type
   protocol_subnets           = local.protocol_subnets
   protocol_instances         = var.protocol_instances
   nsd_details                = var.nsd_details
@@ -101,6 +102,7 @@ module "landing_zone_vsi" {
   vpc_region                 = local.region
   scheduler                  = var.scheduler
   ibm_customer_number        = var.ibm_customer_number
+  enable_dedicated_host      = var.enable_dedicated_host
 }
 
 module "prepare_tf_input" {
@@ -116,7 +118,7 @@ module "prepare_tf_input" {
   storage_ssh_keys                                 = local.storage_ssh_keys
   storage_instances                                = var.storage_instances
   storage_servers                                  = var.storage_servers
-  storage_type                                     = var.storage_type 
+  storage_type                                     = var.storage_type
   management_instances                             = var.management_instances
   protocol_instances                               = var.protocol_instances
   colocate_protocol_cluster_instances              = var.colocate_protocol_cluster_instances
@@ -174,6 +176,7 @@ module "prepare_tf_input" {
   filesystem_config                                = var.filesystem_config
   scale_encryption_admin_password                  = var.scale_encryption_admin_password
   scale_encryption_enabled                         = var.scale_encryption_enabled
+  enable_dedicated_host                            = var.enable_dedicated_host
   depends_on                                       = [module.deployer]
 }
 

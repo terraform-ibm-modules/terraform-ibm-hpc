@@ -1061,3 +1061,13 @@ variable "bastion_fip" {
   default     = null
   description = "bastion fip"
 }
+
+##############################################################################
+# Dedicatedhost Variables
+##############################################################################
+
+variable "enable_dedicated_host" {
+  type        = bool
+  default     = false
+  description = "Enables dedicated host to the compute instances"
+}
