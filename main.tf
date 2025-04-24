@@ -257,7 +257,7 @@ module "storage_dns_records" {
 }
 
 module "protocol_reserved_ip" {
-  count                   = var.scheduler == "Scale" && var.enable_deployer == false ? 1 : 0
+  count                   = var.scheduler == "Scale" && var.enable_deployer == false && var.protocol_subnets != null ? 1 : 0
   source                  = "./modules/protocol_reserved_ip"
   total_reserved_ips      = local.protocol_instance_count
   subnet_id               = [local.protocol_subnets[0].id]
