@@ -415,7 +415,7 @@ module "storage_baremetal" {
   source                     = "../baremetal"
   existing_resource_group    = var.existing_resource_group
   prefix                     = var.prefix
-  storage_subnets            = local.storage_subnets
+  storage_subnets            = [for subnet in local.storage_subnets : subnet.id]
   storage_ssh_keys           = local.storage_ssh_keys
   storage_servers            = var.storage_servers 
   bastion_public_key_content = var.bastion_public_key_content
