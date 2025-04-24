@@ -2,6 +2,21 @@ data "ibm_resource_group" "existing_resource_group" {
   name = var.existing_resource_group
 }
 
+data "ibm_is_image" "management_stock_image" {
+  count = length(var.management_instances)
+  name  = var.management_instances[count.index]["image"]
+}
+
+# data "ibm_is_image" "management" {
+#   name  = var.management_instances[0]["image"]
+#   count = local.image_mapping_entry_found ? 0 : 1
+# }
+
+# data "ibm_is_image" "compute" {
+#   name  = var.static_compute_instances[0]["image"]
+#   count = local.compute_image_found_in_map ? 1 : 0
+# }
+
 # TODO: Verify distinct profiles
 /*
 data "ibm_is_instance_profile" "management" {
@@ -22,12 +37,7 @@ data "ibm_is_image" "client" {
   name  = var.client_instances[count.index]["image"]
 }
 
-data "ibm_is_image" "management" {
-  count = length(var.management_instances)
-  name  = var.management_instances[count.index]["image"]
-}
-
-data "ibm_is_image" "compute" {
+data "ibm_is_image" "compute_stock_image" {
   count = length(var.static_compute_instances)
   name  = var.static_compute_instances[count.index]["image"]
 }

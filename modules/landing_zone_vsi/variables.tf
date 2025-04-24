@@ -31,10 +31,10 @@ variable "prefix" {
   }
 }
 
-# variable "zones" {
-#   description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
-#   type        = list(string)
-# }
+variable "zones" {
+  description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
+  type        = list(string)
+}
 
 ##############################################################################
 # VPC Variables
