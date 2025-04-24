@@ -7,15 +7,15 @@ data "ibm_is_image" "management_stock_image" {
   name  = var.management_instances[count.index]["image"]
 }
 
-data "ibm_is_image" "management" {
-  name  = var.management_instances[0]["image"]
-  count = local.image_mapping_entry_found ? 0 : 1
-}
+# data "ibm_is_image" "management" {
+#   name  = var.management_instances[0]["image"]
+#   count = local.image_mapping_entry_found ? 0 : 1
+# }
 
-data "ibm_is_image" "compute" {
-  name  = var.static_compute_instances[0]["image"]
-  count = local.compute_image_found_in_map ? 1 : 0
-}
+# data "ibm_is_image" "compute" {
+#   name  = var.static_compute_instances[0]["image"]
+#   count = local.compute_image_found_in_map ? 1 : 0
+# }
 
 # TODO: Verify distinct profiles
 /*

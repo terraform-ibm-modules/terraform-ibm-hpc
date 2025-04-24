@@ -242,8 +242,8 @@ locals {
 locals {
   compute_hosts = try([for name in local.compute_instances[*]["name"] : "${name}.${var.dns_domain_names["compute"]}"], [])
   # storage_hosts          = try([for name in local.storage_instances[*]["name"] : "${name}.${var.dns_domain_names["storage"]}"], [])
-  ldap_hosts             = try([for instance in local.ldap_instances : instance["ipv4_address"]], [])
-  compute_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute.ini" : "${path.root}/modules/ansible-roles/compute.ini"
+  ldap_hosts                   = try([for instance in local.ldap_instances : instance["ipv4_address"]], [])
+  compute_inventory_path       = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute.ini" : "${path.root}/modules/ansible-roles/compute.ini"
   compute_hosts_inventory_path = var.enable_bastion ? "${path.root}/../../solutions/lsf/compute_hosts.ini" : "${path.root}/solutions/lsf/compute_hosts.ini"
   mgmt_hosts_inventory_path    = var.enable_bastion ? "${path.root}/../../solutions/lsf/mgmt_hosts.ini" : "${path.root}/solutions/lsf/mgmt_hosts.ini"
   bastion_hosts_inventory_path = var.enable_bastion ? "${path.root}/../../solutions/lsf/bastion_hosts.ini" : "${path.root}/solutions/lsf/bastion_hosts.ini"
@@ -272,11 +272,11 @@ locals {
 # details needed for json file
 locals {
   compute_instances_data = var.scheduler == "LSF" ? var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_vsi_data]) : []
-  compute_hosts_ips       = var.scheduler == "LSF" ? var.enable_deployer ? [] : local.compute_instances_data[*]["ipv4_address"] : []
+  compute_hosts_ips      = var.scheduler == "LSF" ? var.enable_deployer ? [] : local.compute_instances_data[*]["ipv4_address"] : []
   # bastion_instances_data = var.scheduler == "LSF" ? var.enable_deployer ? flatten([module.deployer.bastion_vsi_data]) : [] : []
-  bastion_hosts_ips    = var.scheduler == "LSF" ? var.enable_deployer ? [module.deployer.bastion_fip] : [] : []
-  mgmt_instances_data = var.scheduler == "LSF" ? var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data]) : []
-  mgmt_hosts_ips       = var.scheduler == "LSF" ? var.enable_deployer ? [] : local.mgmt_instances_data[*]["ipv4_address"] : []
+  bastion_hosts_ips     = var.scheduler == "LSF" ? var.enable_deployer ? [module.deployer.bastion_fip] : [] : []
+  mgmt_instances_data   = var.scheduler == "LSF" ? var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data]) : []
+  mgmt_hosts_ips        = var.scheduler == "LSF" ? var.enable_deployer ? [] : local.mgmt_instances_data[*]["ipv4_address"] : []
   json_inventory_path   = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json"
   management_nodes      = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"] : []
   compute_nodes         = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].compute_vsi_data]))[*]["name"] : []

@@ -118,13 +118,13 @@ resource "ibm_is_security_group_rule" "add_strg_sg_strg" {
 }
 
 module "management_vsi" {
-  count                         = length(var.management_instances)
-  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.0.0"
-  vsi_per_subnet                = var.management_instances[count.index]["count"]
-  create_security_group         = false
-  security_group                = null
-  image_id                      = local.image_mapping_entry_found ? local.new_image_id : local.management_image_id[count.index]
+  count                 = length(var.management_instances)
+  source                = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version               = "5.0.0"
+  vsi_per_subnet        = var.management_instances[count.index]["count"]
+  create_security_group = false
+  security_group        = null
+  image_id              = local.image_mapping_entry_found ? local.new_image_id : local.management_image_id[count.index]
   # image_id                      = local.management_image_id[count.index]
   machine_type                  = var.management_instances[count.index]["profile"]
   prefix                        = count.index == 0 ? local.management_node_name : format("%s-%s", local.management_node_name, count.index)
@@ -144,12 +144,12 @@ module "management_vsi" {
 }
 
 module "compute_vsi" {
-  count                         = length(var.static_compute_instances)
-  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.0.0"
-  vsi_per_subnet                = var.static_compute_instances[count.index]["count"]
-  create_security_group         = false
-  security_group                = null
+  count                 = length(var.static_compute_instances)
+  source                = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version               = "5.0.0"
+  vsi_per_subnet        = var.static_compute_instances[count.index]["count"]
+  create_security_group = false
+  security_group        = null
   # image_id                      = local.compute_image_id[count.index]
   image_id                      = local.compute_image_found_in_map ? local.new_compute_image_id : local.compute_image_id[count.index]
   machine_type                  = var.static_compute_instances[count.index]["profile"]

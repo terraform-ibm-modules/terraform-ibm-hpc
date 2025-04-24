@@ -46,7 +46,20 @@ resource "null_resource" "fetch_host_details_from_deployer" {
           "${path.root}/../../solutions/lsf/"
     EOT
   }
-  depends_on = [ resource.null_resource.tf_resource_provisioner ]
+  depends_on = [resource.null_resource.tf_resource_provisioner]
+}
+
+resource "null_resource" "cleanup_ini_files" {
+  count = var.enable_deployer == true ? 1 : 0
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<EOT
+      echo "Cleaning up local .ini files..."
+      rm -f "${path.root}/../../solutions/lsf/"*.ini
+    EOT
+  }
+  depends_on = [null_resource.fetch_host_details_from_deployer]
 }
 
 resource "null_resource" "cluster_destroyer" {
