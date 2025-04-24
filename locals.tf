@@ -345,7 +345,7 @@ locals {
 
   # client_instance_private_ips = flatten(local.client_instances[*]["ipv4_address"])
   # client_instance_ids         = flatten(local.client_instances[*]["id"])
-  client_instance_names = try(tolist([for name_details in flatten(local.client_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+  client_instance_names = try(tolist([for name_details in flatten(local.client_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["client"]}"]), [])
 
   gklm_instance_private_ips = flatten(local.gklm_instances[*]["ipv4_address"])
   # gklm_instance_ids         = flatten(local.gklm_instances[*]["id"])
@@ -400,6 +400,7 @@ locals {
 
   storage_subnet_cidr = jsonencode(data.ibm_is_subnet.existing_storage_subnets[*].ipv4_cidr_block)
   compute_subnet_cidr = jsonencode(data.ibm_is_subnet.existing_compute_subnets[*].ipv4_cidr_block)
+  client_subnet_cidr  = jsonencode(data.ibm_is_subnet.existing_client_subnets[*].ipv4_cidr_block)
 
   comp_memory      = data.ibm_is_instance_profile.compute_profile.memory[0].value
   comp_vcpus_count = data.ibm_is_instance_profile.compute_profile.vcpu_count[0].value
