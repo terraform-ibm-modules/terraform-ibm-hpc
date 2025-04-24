@@ -24,6 +24,7 @@ module "landing_zone" {
   storage_instances             = var.storage_instances
   storage_servers               = var.storage_servers
   storage_subnets_cidr          = var.storage_subnets_cidr
+  storage_type                  = var.storage_type   
   vpc_name                      = var.vpc_name
   vpn_peer_address              = var.vpn_peer_address
   vpn_peer_cidr                 = var.vpn_peer_cidr
