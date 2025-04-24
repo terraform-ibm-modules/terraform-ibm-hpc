@@ -38,7 +38,8 @@ resource "null_resource" "fetch_host_details_from_deployer" {
     command = <<EOT
       scp -o StrictHostKeyChecking=no -o ProxyJump=ubuntu@${var.bastion_fip} \
           -i ${local.ssh_key_file} \
-          -r vpcuser@${var.deployer_ip}:/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/host_details/* "${path.root}/../../modules/ansible-roles/host_details/"
+          "vpcuser@${var.deployer_ip}:/opt/ibm/terraform-ibm-hpc/solutions/lsf/*.ini" \
+          "${path.root}/../../solutions/lsf/"
     EOT
   }
 

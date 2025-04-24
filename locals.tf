@@ -242,8 +242,8 @@ locals {
   # storage_hosts          = try([for name in local.storage_instances[*]["name"] : "${name}.${var.dns_domain_names["storage"]}"], [])
   ldap_hosts             = try([for instance in local.ldap_instances : instance["ipv4_address"]], [])
   compute_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute.ini" : "${path.root}/modules/ansible-roles/compute.ini"
-  compute_hosts_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/host_details/compute_hosts.ini" : "${path.root}/modules/ansible-roles/host_details/compute_hosts.ini"
-  mgmt_hosts_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/host_details/mgmt_hosts.ini" : "${path.root}/modules/ansible-roles/host_details/mgmt_hosts.ini"
+  compute_hosts_inventory_path = "${path.root}/compute_hosts.ini"
+  mgmt_hosts_inventory_path    = "${path.root}/mgmt_hosts.ini"
   # storage_inventory_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage.ini" : "${path.root}/modules/ansible-roles/storage.ini"
 }
 
