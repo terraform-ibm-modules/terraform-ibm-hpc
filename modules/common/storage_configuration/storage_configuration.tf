@@ -35,7 +35,7 @@ resource "local_sensitive_file" "write_meta_private_key" {
 }
 
 resource "local_sensitive_file" "write_existing_ldap_cert" {
-  count           = (tobool(var.turn_on) == true && var.ldap_server_cert != null) ? 1 : 0
+  count           = (tobool(var.turn_on) == true && var.ldap_server_cert != "null") ? 1 : 0
   content         = var.ldap_server_cert
   filename        = local.ldap_server_cert_path
   file_permission = "0600"
