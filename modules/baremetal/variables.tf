@@ -35,6 +35,7 @@ variable "prefix" {
 
 variable "storage_subnets" {
   type = list(string)
+  description = "Subnets to launch the storage host."
 }
 
 variable "storage_ssh_keys" {
@@ -66,11 +67,11 @@ variable "bandwidth" {
   default     = 100000
 }
 
-variable "allowed_vlan_ids" {
+/*variable "allowed_vlan_ids" {
   description = "A list of VLAN IDs that are permitted for the bare metal server, ensuring network isolation and control. Example: [100, 102]"
   type        = list(number)
   default     = ["100", "102"]
-}
+}*/
 
 ##############################################################################
 # Access Variables

@@ -16,7 +16,7 @@ module "storage_baremetal" {
   subnet_ids  = var.storage_subnets
   ssh_key_ids = var.storage_ssh_keys
   bandwidth   = var.bandwidth
-  #  allowed_vlans_ids     = var.allowed_vlans_ids
+#  allowed_vlans_ids     = var.allowed_vlans_ids
   access_tags       = null
   resource_group_id = local.resource_group_id
   #  security_group_ids    = module.storage_sg[*].security_group_id
