@@ -34,7 +34,7 @@ variable "prefix" {
 }*/
 
 variable "storage_subnets" {
-  type = string
+  type = list(string)
 }
 
 variable "storage_ssh_keys" {
