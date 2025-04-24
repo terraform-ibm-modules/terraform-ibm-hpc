@@ -580,7 +580,7 @@ module "client_configuration" {
   write_inventory_complete        = module.write_storage_scale_cluster_inventory[0].write_scale_inventory_complete
   enable_ldap                     = var.enable_ldap
   ldap_basedns                    = var.ldap_basedns
-  ldap_server                     = var.enable_ldap ? local.ldap_instance_private_ips[0] : null
+  ldap_server                     = var.enable_ldap ? jsonencode(local.ldap_instance_private_ips[0]) : jsonencode(null)
   ldap_admin_password             = var.ldap_admin_password
   depends_on                      = [module.compute_cluster_configuration, module.storage_cluster_configuration]
 }
