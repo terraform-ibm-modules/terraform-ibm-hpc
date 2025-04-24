@@ -41,9 +41,9 @@ resource "null_resource" "fetch_host_details_from_deployer" {
           "${path.root}/../../solutions/lsf/"
     EOT
   }
-  triggers = {
-    always_run = timestamp()
-  }
+  # triggers = {
+  #   always_run = timestamp()
+  # }
   depends_on = [ resource.null_resource.tf_resource_provisioner ]
 }
 
