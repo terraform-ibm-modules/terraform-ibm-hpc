@@ -84,18 +84,15 @@ yum versionlock $package_list
 yum versionlock list
 echo 'export PATH=$PATH:/usr/lpp/mmfs/bin' >> /root/.bashrc
 
-if [[ "${storage_disk_type}" == "fixed" ]]
-then
-    echo "###########################################################################################" >> /etc/motd
-    echo "# You have logged in to Instance storage virtual server.                                  #" >> /etc/motd
-    echo "#   - Instance storage is temporary storage that's available only while your virtual      #" >> /etc/motd
-    echo "#     server is running.                                                                  #" >> /etc/motd
-    echo "#   - Data on the drive is unrecoverable after instance shutdown, disruptive maintenance, #" >> /etc/motd
-    echo "#     or hardware failure.                                                                #" >> /etc/motd
-    echo "#                                                                                         #" >> /etc/motd
-    echo "# Refer: https://cloud.ibm.com/docs/vpc?topic=vpc-instance-storage                        #" >> /etc/motd
-    echo "###########################################################################################" >> /etc/motd
-fi
+echo "###########################################################################################" >> /etc/motd
+echo "# You have logged in to Instance storage virtual server.                                  #" >> /etc/motd
+echo "#   - Instance storage is temporary storage that's available only while your virtual      #" >> /etc/motd
+echo "#     server is running.                                                                  #" >> /etc/motd
+echo "#   - Data on the drive is unrecoverable after instance shutdown, disruptive maintenance, #" >> /etc/motd
+echo "#     or hardware failure.                                                                #" >> /etc/motd
+echo "#                                                                                         #" >> /etc/motd
+echo "# Refer: https://cloud.ibm.com/docs/vpc?topic=vpc-instance-storage                        #" >> /etc/motd
+echo "###########################################################################################" >> /etc/motd
 
 echo "DOMAIN=${storage_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${storage_interfaces}"
 echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${storage_interfaces}"

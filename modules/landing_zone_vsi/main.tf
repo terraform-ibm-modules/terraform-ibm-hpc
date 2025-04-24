@@ -423,6 +423,7 @@ module "storage_baremetal" {
   storage_subnets            = [for subnet in local.storage_subnets : subnet.id]
   storage_ssh_keys           = local.storage_ssh_keys
   storage_servers            = var.storage_servers
+  security_group_ids         = module.storage_sg[*].security_group_id
   bastion_public_key_content = var.bastion_public_key_content
   bastion_security_group_id  = var.bastion_security_group_id
 }

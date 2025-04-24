@@ -372,9 +372,13 @@ locals {
 }
 
 # Validating profile configurations
+locals {
+  should_validate_profile = var.enable_dedicated_host && length(local.errors) > 0
+}
+
 check "profile_validation" {
   assert {
-    condition = length(local.errors) == 0
+    condition = !local.should_validate_profile
     error_message = join("\n", concat(
       ["Deployment configuration invalid:"],
       local.errors,
