@@ -204,7 +204,7 @@ variable "storage_servers" {
   )
   default = [{
     profile = "cx2d-metal-96x192"
-    count   = 3
+    count   = 2
   }]
   description = "Number of Bareemetal servers to be launched for storage cluster."
 }

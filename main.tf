@@ -22,6 +22,7 @@ module "landing_zone" {
   protocol_subnets_cidr         = var.protocol_subnets_cidr
   existing_resource_group       = var.existing_resource_group
   storage_instances             = var.storage_instances
+  storage_servers               = var.storage_servers
   storage_subnets_cidr          = var.storage_subnets_cidr
   vpc_name                      = var.vpc_name
   vpn_peer_address              = var.vpn_peer_address
