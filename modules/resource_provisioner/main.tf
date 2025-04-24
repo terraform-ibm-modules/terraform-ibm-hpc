@@ -33,7 +33,6 @@ resource "null_resource" "tf_resource_provisioner" {
 
 resource "null_resource" "fetch_host_details_from_deployer" {
   count = var.enable_deployer == true ? 1 : 0
-
   provisioner "local-exec" {
     command = <<EOT
       scp -o StrictHostKeyChecking=no -o ProxyJump=ubuntu@${var.bastion_fip} \
@@ -42,7 +41,6 @@ resource "null_resource" "fetch_host_details_from_deployer" {
           "${path.root}/../../solutions/lsf/"
     EOT
   }
-
   triggers = {
     always_run = timestamp()
   }

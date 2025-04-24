@@ -648,6 +648,13 @@ module "compute_inventory_hosts" {
   inventory_path = local.compute_hosts_inventory_path
 }
 
+module "bastion_inventory_hosts" {
+  count          = var.enable_deployer == true ? 1 : 0
+  source         = "./modules/inventory_hosts"
+  hosts          = local.bastion_hosts_ips
+  inventory_path = local.bastion_hosts_inventory_path
+}
+
 module "compute_playbook" {
   count                       = var.enable_deployer == false ? 1 : 0
   source                      = "./modules/playbook"
