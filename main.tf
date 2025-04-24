@@ -568,22 +568,21 @@ module "client_configuration" {
   count                           = var.scheduler == "Scale" && var.enable_deployer == false ? 1 : 0
   source                          = "./modules/common//client_configuration"
   turn_on                         = (local.client_instance_count > 0 && var.create_separate_namespaces == true && local.scale_ces_enabled == true) ? true : false
-  clone_complete                  = module.prepare_ansible_configuration.clone_complete
   create_scale_cluster            = var.create_scale_cluster
-  storage_cluster_create_complete = module.storage_cluster_configuration.storage_cluster_create_complete
+  storage_cluster_create_complete = module.storage_cluster_configuration[0].storage_cluster_create_complete
   clone_path                      = var.scale_ansible_repo_clone_path
   using_jumphost_connection       = var.using_jumphost_connection
   client_inventory_path           = format("%s/client_cluster_inventory.json", var.scale_ansible_repo_clone_path)
   bastion_user                    = jsonencode(var.bastion_user)
   bastion_instance_public_ip      = jsonencode(local.bastion_fip)
   bastion_ssh_private_key         = var.bastion_ssh_private_key
-  client_meta_private_key         = module.generate_client_cluster_keys.private_key_content
-  write_inventory_complete        = module.write_storage_cluster_inventory.write_inventory_complete
+  client_meta_private_key         = module.landing_zone_vsi[0].compute_private_key_content
+  write_inventory_complete        = module.write_storage_scale_cluster_inventory[0].write_scale_inventory_complete
   enable_ldap                     = var.enable_ldap
   ldap_basedns                    = var.ldap_basedns
   ldap_server                     = var.enable_ldap ? local.ldap_instance_private_ips[0] : null
   ldap_admin_password             = var.ldap_admin_password
-  depends_on                      = [module.compute_cluster_configuration, module.storage_cluster_configuration, module.combined_cluster_configuration, module.ldap_configuration]
+  depends_on                      = [module.compute_cluster_configuration, module.storage_cluster_configuration]
 }
 
 module "remote_mount_configuration" {
