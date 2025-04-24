@@ -92,3 +92,7 @@ data "ibm_is_image" "gklm" {
   count = length(var.gklm_instances)
   name  = var.gklm_instances[count.index]["image"]
 }
+
+data "ibm_is_dedicated_host_profiles" "profiles" {
+  count = var.enable_dedicated_host ? 1 : 0
+}

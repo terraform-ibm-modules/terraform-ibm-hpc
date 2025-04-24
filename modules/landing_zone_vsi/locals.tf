@@ -295,3 +295,91 @@ locals {
 
   # ldap_instance_image_id = var.enable_ldap == true && var.ldap_server == "null" ? data.ibm_is_image.ldap_vsi_image[0].id : "null"
 }
+
+locals {
+
+  # Getting current/available dedicated host profiles
+  current_dh_profiles = var.enable_dedicated_host ? [for p in data.ibm_is_dedicated_host_profiles.profiles[0].profiles : p if p.status == "current"] : []
+
+  # Get valid instance profiles from available dedicated hosts
+  valid_instance_profiles = toset(distinct(flatten([
+    for p in local.current_dh_profiles : p.supported_instance_profiles[*].name
+  ])))
+
+  # Extract profile family prefix (e.g., "bx2" from "bx2-16x64")
+  instance_profile_prefixes = distinct([
+    for inst in var.static_compute_instances :
+    regex("^([a-z]+[0-9]+)", inst.profile)[0]
+  ])
+
+  # Map instance profile prefixes to available dedicated host profiles
+  profile_mappings = {
+    for prefix in local.instance_profile_prefixes :
+    prefix => {
+      dh_profiles = [
+        for p in local.current_dh_profiles :
+        p if startswith(p.name, "${prefix}-host")
+      ]
+    }
+  }
+
+  # Validate each instance configuration
+  validation_results = [
+    for inst in var.static_compute_instances : {
+      profile              = inst.profile
+      profile_prefix       = regex("^([a-z]+[0-9]+)", inst.profile)[0]
+      count                = inst.count
+      instance_valid       = contains(local.valid_instance_profiles, inst.profile)
+      dh_profile_available = length(local.profile_mappings[regex("^([a-z]+[0-9]+)", inst.profile)[0]].dh_profiles) > 0
+    } if inst.count > 0
+  ]
+
+  # Error messages for invalid configurations
+  errors = concat(
+    [
+      for vr in local.validation_results :
+      "ERROR: Instance profile '${vr.profile}' is not available in this region"
+      if !vr.instance_valid
+    ],
+    [
+      for vr in local.validation_results :
+      "ERROR: No CURRENT dedicated host profile available for '${vr.profile_prefix}-host-*' (required for '${vr.profile}')"
+      if vr.instance_valid && !vr.dh_profile_available
+    ]
+  )
+
+  # Create one dedicated host config per instance profile (not per count)
+  dedicated_host_config = {
+    for vr in local.validation_results :
+    vr.profile => {
+      class   = vr.profile_prefix
+      profile = local.profile_mappings[vr.profile_prefix].dh_profiles[0].name
+      family  = local.profile_mappings[vr.profile_prefix].dh_profiles[0].family
+      count   = vr.count
+    }
+    if vr.instance_valid && vr.dh_profile_available
+  }
+
+  dedicated_host_ids = [
+    for instance in var.static_compute_instances : {
+      profile = instance.profile
+      id      = try(one(module.dedicated_host[instance.profile].dedicated_host_id), "")
+    }
+  ]
+
+  dedicated_host_map = { for instance in local.dedicated_host_ids : instance.profile => instance.id }
+
+}
+
+# Validating profile configurations
+check "profile_validation" {
+  assert {
+    condition = length(local.errors) == 0
+    error_message = join("\n", concat(
+      ["Deployment configuration invalid:"],
+      local.errors,
+      ["", "Available CURRENT dedicated host profiles:"],
+      [for p in local.current_dh_profiles : " - ${p.name} (${p.family})"]
+    ))
+  }
+}

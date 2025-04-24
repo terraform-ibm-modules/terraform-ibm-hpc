@@ -65,6 +65,7 @@ module "landing_zone_vsi" {
   existing_resource_group    = var.existing_resource_group
   prefix                     = var.prefix
   vpc_id                     = local.vpc_id
+  zones                      = var.zones
   bastion_security_group_id  = var.bastion_security_group_id
   bastion_public_key_content = local.bastion_public_key_content
   client_subnets             = local.client_subnets
@@ -86,6 +87,7 @@ module "landing_zone_vsi" {
   boot_volume_encryption_key = local.boot_volume_encryption_key
   enable_bastion             = var.enable_bastion
   afm_instances              = var.afm_instances
+  enable_dedicated_host      = var.enable_dedicated_host
   enable_ldap                = var.enable_ldap
   ldap_instances             = var.ldap_instances
   ldap_server                = var.ldap_server
@@ -121,6 +123,7 @@ module "prepare_tf_input" {
   enable_cos_integration                           = var.enable_cos_integration
   enable_atracker                                  = var.enable_atracker
   enable_vpc_flow_logs                             = var.enable_vpc_flow_logs
+  enable_dedicated_host                            = var.enable_dedicated_host
   allowed_cidr                                     = var.allowed_cidr
   vpc_name                                         = local.vpc_name
   storage_subnets                                  = local.storage_subnet
