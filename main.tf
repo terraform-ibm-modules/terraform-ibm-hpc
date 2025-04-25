@@ -396,7 +396,7 @@ module "write_storage_scale_cluster_inventory" {
   storage_cluster_desc_data_volume_mapping         = local.tie_breaker_ips_with_vol_mapping[0]
   storage_cluster_desc_instance_private_dns_ip_map = {}
   storage_subnet_cidr                              = local.enable_mrot_conf ? local.storage_subnet_cidr : jsonencode("")
-  compute_subnet_cidr                              = local.enable_mrot_conf ? local.compute_subnet_cidr : local.scale_ces_enabled == true ? local.compute_subnet_cidr : jsonencode("")
+  compute_subnet_cidr                              = local.enable_mrot_conf ? local.compute_subnet_cidr : local.scale_ces_enabled == true ? local.client_subnet_cidr : jsonencode("")
   scale_remote_cluster_clustername                 = local.enable_mrot_conf ? jsonencode(format("%s.%s", var.prefix, var.dns_domain_names["compute"])) : jsonencode("")
   protocol_cluster_instance_names                  = local.scale_ces_enabled == true ? local.protocol_instance_names : []
   client_cluster_instance_names                    = []
