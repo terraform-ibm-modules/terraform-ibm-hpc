@@ -166,6 +166,7 @@ module "compute_vsi" {
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
+  dedicated_host_id             = var.enable_dedicated_host ? local.dedicated_host_map[var.static_compute_instances[count.index]["profile"]] : null
   #placement_group_id = var.placement_group_ids[(var.static_compute_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
@@ -408,4 +409,19 @@ module "ldap_vsi" {
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
   #placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
+}
+
+########################################################################
+###                        Dedicated Host                            ###
+########################################################################
+module "dedicated_host" {
+  for_each            = var.enable_dedicated_host ? local.dedicated_host_config : {}
+  source              = "../dedicated_host"
+  prefix              = var.prefix
+  zone                = var.zones
+  existing_host_group = false
+  class               = each.value.class
+  profile             = each.value.profile
+  family              = each.value.family
+  resource_group_id   = local.resource_group_id
 }

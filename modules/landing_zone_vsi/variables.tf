@@ -425,3 +425,13 @@ variable "ibm_customer_number" {
   default     = null
   description = "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
 }
+
+##############################################################################
+# Dedicatedhost Variables
+##############################################################################
+
+variable "enable_dedicated_host" {
+  type        = bool
+  default     = false
+  description = "Enables dedicated host to the compute instances"
+}
