@@ -196,7 +196,7 @@ module "compute_cluster_management_vsi" {
 }
 
 module "storage_vsi" {
-  count                         = length(var.storage_instances)
+  count                         = length(var.storage_instances) > 0 && var.storage_type != "persistent" ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
   version                       = "5.0.0"
   vsi_per_subnet                = var.storage_instances[count.index]["count"]
@@ -424,4 +424,21 @@ module "dedicated_host" {
   profile             = each.value.profile
   family              = each.value.family
   resource_group_id   = local.resource_group_id
+}
+
+########################################################################
+###                        Baremetal Module                          ###
+########################################################################
+
+module "storage_baremetal" {
+
+  count                      = length(var.storage_servers) > 0 && var.storage_type == "persistent" ? 1 : 0
+  source                     = "../baremetal"
+  existing_resource_group    = var.existing_resource_group
+  prefix                     = var.prefix
+  storage_subnets            = [for subnet in local.storage_subnets : subnet.id]
+  storage_ssh_keys           = local.storage_ssh_keys
+  storage_servers            = var.storage_servers
+  security_group_ids         = module.storage_sg[*].security_group_id
+  bastion_public_key_content = var.bastion_public_key_content
 }

@@ -22,7 +22,9 @@ module "landing_zone" {
   protocol_subnets_cidr         = var.protocol_subnets_cidr
   existing_resource_group       = var.existing_resource_group
   storage_instances             = var.storage_instances
+  storage_servers               = var.storage_servers
   storage_subnets_cidr          = var.storage_subnets_cidr
+  storage_type                  = var.storage_type
   vpc_name                      = var.vpc_name
   vpn_peer_address              = var.vpn_peer_address
   vpn_peer_cidr                 = var.vpn_peer_cidr
@@ -79,6 +81,8 @@ module "landing_zone_vsi" {
   storage_subnets            = local.storage_subnets
   storage_ssh_keys           = local.storage_ssh_keys
   storage_instances          = var.storage_instances
+  storage_servers            = var.storage_servers
+  storage_type               = var.storage_type
   protocol_subnets           = local.protocol_subnets
   protocol_instances         = var.protocol_instances
   nsd_details                = var.nsd_details
@@ -113,6 +117,8 @@ module "prepare_tf_input" {
   compute_ssh_keys                                 = local.compute_ssh_keys
   storage_ssh_keys                                 = local.storage_ssh_keys
   storage_instances                                = var.storage_instances
+  storage_servers                                  = var.storage_servers
+  storage_type                                     = var.storage_type
   management_instances                             = var.management_instances
   protocol_instances                               = var.protocol_instances
   colocate_protocol_cluster_instances              = var.colocate_protocol_cluster_instances
@@ -254,7 +260,7 @@ module "storage_dns_records" {
 }
 
 module "protocol_reserved_ip" {
-  count                   = var.scheduler == "Scale" && var.enable_deployer == false ? 1 : 0
+  count                   = var.scheduler == "Scale" && var.enable_deployer == false && var.protocol_subnets != null ? 1 : 0
   source                  = "./modules/protocol_reserved_ip"
   total_reserved_ips      = local.protocol_instance_count
   subnet_id               = [local.protocol_subnets[0].id]

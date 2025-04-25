@@ -34,6 +34,7 @@ module "scale" {
   protocol_subnets_cidr                            = [local.env.protocol_subnets_cidr]
   static_compute_instances                         = local.env.compute_instances
   storage_instances                                = local.env.storage_instances
+  storage_servers                                  = local.env.storage_servers
   storage_ssh_keys                                 = local.env.storage_ssh_keys
   storage_subnets_cidr                             = [local.env.storage_subnets_cidr]
   vpc_name                                         = local.env.vpc_name
