@@ -118,13 +118,14 @@ resource "ibm_is_security_group_rule" "add_strg_sg_strg" {
 }
 
 module "management_vsi" {
-  count                         = length(var.management_instances)
-  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.0.0"
-  vsi_per_subnet                = var.management_instances[count.index]["count"]
-  create_security_group         = false
-  security_group                = null
-  image_id                      = local.management_image_id[count.index]
+  count                 = length(var.management_instances)
+  source                = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version               = "5.0.0"
+  vsi_per_subnet        = var.management_instances[count.index]["count"]
+  create_security_group = false
+  security_group        = null
+  image_id              = local.image_mapping_entry_found ? local.new_image_id : local.management_image_id[count.index]
+  # image_id                      = local.management_image_id[count.index]
   machine_type                  = var.management_instances[count.index]["profile"]
   prefix                        = count.index == 0 ? local.management_node_name : format("%s-%s", local.management_node_name, count.index)
   resource_group_id             = local.resource_group_id
@@ -143,13 +144,14 @@ module "management_vsi" {
 }
 
 module "compute_vsi" {
-  count                         = length(var.static_compute_instances)
-  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.0.0"
-  vsi_per_subnet                = var.static_compute_instances[count.index]["count"]
-  create_security_group         = false
-  security_group                = null
-  image_id                      = local.compute_image_id[count.index]
+  count                 = length(var.static_compute_instances)
+  source                = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version               = "5.0.0"
+  vsi_per_subnet        = var.static_compute_instances[count.index]["count"]
+  create_security_group = false
+  security_group        = null
+  # image_id                      = local.compute_image_id[count.index]
+  image_id                      = local.compute_image_found_in_map ? local.new_compute_image_id : local.compute_image_id[count.index]
   machine_type                  = var.static_compute_instances[count.index]["profile"]
   prefix                        = count.index == 0 ? local.compute_node_name : format("%s-%s", local.compute_node_name, count.index)
   resource_group_id             = local.resource_group_id
@@ -171,7 +173,7 @@ module "compute_vsi" {
 module "compute_cluster_management_vsi" {
   count                         = var.scheduler == "Scale" && local.enable_compute ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -226,7 +228,7 @@ module "storage_vsi" {
 module "storage_cluster_management_vsi" {
   count                         = length(var.storage_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -253,7 +255,7 @@ module "storage_cluster_management_vsi" {
 module "storage_cluster_tie_breaker_vsi" {
   count                         = var.storage_type != "persistent" ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.5.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -338,7 +340,7 @@ module "protocol_vsi" {
 module "afm_vsi" {
   count                         = length(var.afm_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.5.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = var.afm_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -363,7 +365,7 @@ module "afm_vsi" {
 module "gklm_vsi" {
   count                         = var.scale_encryption_enabled == true && var.scale_encryption_type == "gklm" ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = var.gklm_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -386,7 +388,7 @@ module "gklm_vsi" {
 module "ldap_vsi" {
   count                         = var.enable_ldap == true && var.ldap_server == null ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.2.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
