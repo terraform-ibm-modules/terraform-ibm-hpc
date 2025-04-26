@@ -1059,7 +1059,7 @@ if __name__ == "__main__":
         "--ldap_admin_password", help="LDAP Admin Password", default="null"
     )
     PARSER.add_argument(
-        "--colocate_protocol_cluster_instances",
+        "--colocate_protocol_instances",
         help="It checks if colocation is enabled",
         default=False,
     )
@@ -1265,7 +1265,7 @@ if __name__ == "__main__":
 
         nodeclassgrp = [storagedescnodegrp, managementnodegrp]
         if ARGUMENTS.enable_ces == "True":
-            if ARGUMENTS.colocate_protocol_cluster_instances == "True":
+            if ARGUMENTS.colocate_protocol_instances == "True":
                 if ARGUMENTS.is_colocate_protocol_subset == "True":
                     nodeclassgrp.append(storagenodegrp)
                 nodeclassgrp.append(storageprotocolnodegrp)
@@ -1360,7 +1360,7 @@ if __name__ == "__main__":
 
         nodeclassgrp = [storagedescnodegrp, managementnodegrp]
         if ARGUMENTS.enable_ces == "True":
-            if ARGUMENTS.colocate_protocol_cluster_instances == "True":
+            if ARGUMENTS.colocate_protocol_instances == "True":
                 if ARGUMENTS.is_colocate_protocol_subset == "True":
                     nodeclassgrp.append(storagenodegrp)
                 nodeclassgrp.append(storageprotocolnodegrp)
@@ -1452,7 +1452,7 @@ if __name__ == "__main__":
         if len(TF["vpc_availability_zones"]) == 1:
             nodeclassgrp = [storagedescnodegrp, managementnodegrp, computenodegrp]
             if ARGUMENTS.enable_ces == "True":
-                if ARGUMENTS.colocate_protocol_cluster_instances == "True":
+                if ARGUMENTS.colocate_protocol_instances == "True":
                     if ARGUMENTS.is_colocate_protocol_subset == "True":
                         nodeclassgrp.append(storagenodegrp)
                     nodeclassgrp.append(storageprotocolnodegrp)
@@ -1467,7 +1467,7 @@ if __name__ == "__main__":
         else:
             nodeclassgrp = [storagedescnodegrp, managementnodegrp, computenodegrp]
             if ARGUMENTS.enable_ces == "True":
-                if ARGUMENTS.colocate_protocol_cluster_instances == "True":
+                if ARGUMENTS.colocate_protocol_instances == "True":
                     if ARGUMENTS.is_colocate_protocol_subset == "True":
                         nodeclassgrp.append(storagenodegrp)
                     nodeclassgrp.append(storageprotocolnodegrp)

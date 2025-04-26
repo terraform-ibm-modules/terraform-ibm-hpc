@@ -538,7 +538,7 @@ variable "storage_type" {
   description = "Select the required storage type(scratch/persistent/eval)."
 }
 
-variable "colocate_protocol_cluster_instances" {
+variable "colocate_protocol_instances" {
   type        = bool
   default     = true
   description = "Enable it to use storage instances as protocol instances"

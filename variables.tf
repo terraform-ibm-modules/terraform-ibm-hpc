@@ -353,11 +353,11 @@ variable "protocol_instances" {
   description = "Number of instances to be launched for protocol hosts."
 }
 
-# variable "colocate_protocol_instances" {
-#   type        = bool
-#   default     = true
-#   description = "Enable it to use storage instances as protocol instances"
-# }
+variable "colocate_protocol_instances" {
+  type        = bool
+  default     = true
+  description = "Enable it to use storage instances as protocol instances"
+}
 
 variable "storage_gui_username" {
   type        = string
@@ -976,12 +976,6 @@ variable "storage_type" {
   type        = string
   default     = "scratch"
   description = "Select the required storage type(scratch/persistent/eval)."
-}
-
-variable "colocate_protocol_cluster_instances" {
-  type        = bool
-  default     = true
-  description = "Enable it to use storage instances as protocol instances"
 }
 
 variable "using_packer_image" {

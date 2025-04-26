@@ -113,7 +113,7 @@ module "prepare_tf_input" {
   storage_instances                                = var.storage_instances
   management_instances                             = var.management_instances
   protocol_instances                               = var.protocol_instances
-  colocate_protocol_cluster_instances              = var.colocate_protocol_cluster_instances
+  colocate_protocol_instances                      = var.colocate_protocol_instances
   ibm_customer_number                              = var.ibm_customer_number
   static_compute_instances                         = var.static_compute_instances
   dynamic_compute_instances                        = var.dynamic_compute_instances
@@ -504,64 +504,64 @@ module "compute_cluster_configuration" {
 }
 
 module "storage_cluster_configuration" {
-  count                               = var.scheduler == "Scale" && var.enable_deployer == false ? 1 : 0
-  source                              = "./modules/common/storage_configuration"
-  turn_on                             = (var.create_separate_namespaces == true && local.storage_instance_count > 0) ? true : false
-  bastion_user                        = jsonencode(var.bastion_user)
-  write_inventory_complete            = module.write_storage_scale_cluster_inventory[0].write_scale_inventory_complete
-  inventory_format                    = var.inventory_format
-  create_scale_cluster                = var.create_scale_cluster
-  clone_path                          = var.scale_ansible_repo_clone_path
-  inventory_path                      = format("%s/storage_cluster_inventory.json", var.scale_ansible_repo_clone_path)
-  using_packer_image                  = var.using_packer_image
-  using_jumphost_connection           = var.using_jumphost_connection
-  using_rest_initialization           = true
-  storage_cluster_gui_username        = var.storage_gui_username
-  storage_cluster_gui_password        = var.storage_gui_password
-  colocate_protocol_cluster_instances = var.colocate_protocol_cluster_instances
-  is_colocate_protocol_subset         = local.is_colocate_protocol_subset
-  mgmt_memory                         = local.mgmt_memory
-  mgmt_vcpus_count                    = local.mgmt_vcpus_count
-  mgmt_bandwidth                      = local.mgmt_bandwidth
-  strg_desc_memory                    = local.strg_desc_memory
-  strg_desc_vcpus_count               = local.strg_desc_vcpus_count
-  strg_desc_bandwidth                 = local.strg_desc_bandwidth
-  strg_memory                         = local.strg_memory
-  strg_vcpus_count                    = local.strg_vcpus_count
-  strg_bandwidth                      = local.strg_bandwidth
-  proto_memory                        = local.proto_memory
-  proto_vcpus_count                   = local.proto_vcpus_count
-  proto_bandwidth                     = local.proto_bandwidth
-  strg_proto_memory                   = local.strg_proto_memory
-  strg_proto_vcpus_count              = local.strg_proto_vcpus_count
-  strg_proto_bandwidth                = local.strg_proto_bandwidth
-  afm_memory                          = local.afm_memory
-  afm_vcpus_count                     = local.afm_vcpus_count
-  afm_bandwidth                       = local.afm_bandwidth
-  disk_type                           = "network-attached"
-  max_data_replicas                   = var.filesystem_config[0]["max_data_replica"]
-  max_metadata_replicas               = var.filesystem_config[0]["max_metadata_replica"]
-  default_metadata_replicas           = var.filesystem_config[0]["default_metadata_replica"]
-  default_data_replicas               = var.filesystem_config[0]["default_data_replica"]
-  bastion_instance_public_ip          = jsonencode(local.bastion_fip)
-  bastion_ssh_private_key             = var.bastion_ssh_private_key
-  meta_private_key                    = module.landing_zone_vsi[0].storage_private_key_content
-  scale_version                       = local.scale_version
-  spectrumscale_rpms_path             = var.spectrumscale_rpms_path
-  enable_mrot_conf                    = local.enable_mrot_conf
-  enable_ces                          = local.scale_ces_enabled
-  enable_afm                          = local.enable_afm
-  scale_encryption_enabled            = var.scale_encryption_enabled
-  scale_encryption_type               = var.scale_encryption_type != null ? var.scale_encryption_type : null
-  scale_encryption_admin_password     = var.scale_encryption_admin_password
-  scale_encryption_servers            = var.scale_encryption_enabled && var.scale_encryption_type == "gklm" ? local.gklm_instance_private_ips : []
-  enable_ldap                         = var.enable_ldap
-  ldap_basedns                        = var.ldap_basedns
-  ldap_server                         = var.enable_ldap ? local.ldap_instance_private_ips[0] : null
-  ldap_admin_password                 = var.ldap_admin_password
-  ldap_server_cert                    = var.ldap_server_cert
-  enable_key_protect                  = var.scale_encryption_type
-  depends_on                          = [module.write_storage_scale_cluster_inventory]
+  count                           = var.scheduler == "Scale" && var.enable_deployer == false ? 1 : 0
+  source                          = "./modules/common/storage_configuration"
+  turn_on                         = (var.create_separate_namespaces == true && local.storage_instance_count > 0) ? true : false
+  bastion_user                    = jsonencode(var.bastion_user)
+  write_inventory_complete        = module.write_storage_scale_cluster_inventory[0].write_scale_inventory_complete
+  inventory_format                = var.inventory_format
+  create_scale_cluster            = var.create_scale_cluster
+  clone_path                      = var.scale_ansible_repo_clone_path
+  inventory_path                  = format("%s/storage_cluster_inventory.json", var.scale_ansible_repo_clone_path)
+  using_packer_image              = var.using_packer_image
+  using_jumphost_connection       = var.using_jumphost_connection
+  using_rest_initialization       = true
+  storage_cluster_gui_username    = var.storage_gui_username
+  storage_cluster_gui_password    = var.storage_gui_password
+  colocate_protocol_instances     = var.colocate_protocol_instances
+  is_colocate_protocol_subset     = local.is_colocate_protocol_subset
+  mgmt_memory                     = local.mgmt_memory
+  mgmt_vcpus_count                = local.mgmt_vcpus_count
+  mgmt_bandwidth                  = local.mgmt_bandwidth
+  strg_desc_memory                = local.strg_desc_memory
+  strg_desc_vcpus_count           = local.strg_desc_vcpus_count
+  strg_desc_bandwidth             = local.strg_desc_bandwidth
+  strg_memory                     = local.strg_memory
+  strg_vcpus_count                = local.strg_vcpus_count
+  strg_bandwidth                  = local.strg_bandwidth
+  proto_memory                    = local.proto_memory
+  proto_vcpus_count               = local.proto_vcpus_count
+  proto_bandwidth                 = local.proto_bandwidth
+  strg_proto_memory               = local.strg_proto_memory
+  strg_proto_vcpus_count          = local.strg_proto_vcpus_count
+  strg_proto_bandwidth            = local.strg_proto_bandwidth
+  afm_memory                      = local.afm_memory
+  afm_vcpus_count                 = local.afm_vcpus_count
+  afm_bandwidth                   = local.afm_bandwidth
+  disk_type                       = "network-attached"
+  max_data_replicas               = var.filesystem_config[0]["max_data_replica"]
+  max_metadata_replicas           = var.filesystem_config[0]["max_metadata_replica"]
+  default_metadata_replicas       = var.filesystem_config[0]["default_metadata_replica"]
+  default_data_replicas           = var.filesystem_config[0]["default_data_replica"]
+  bastion_instance_public_ip      = jsonencode(local.bastion_fip)
+  bastion_ssh_private_key         = var.bastion_ssh_private_key
+  meta_private_key                = module.landing_zone_vsi[0].storage_private_key_content
+  scale_version                   = local.scale_version
+  spectrumscale_rpms_path         = var.spectrumscale_rpms_path
+  enable_mrot_conf                = local.enable_mrot_conf
+  enable_ces                      = local.scale_ces_enabled
+  enable_afm                      = local.enable_afm
+  scale_encryption_enabled        = var.scale_encryption_enabled
+  scale_encryption_type           = var.scale_encryption_type != null ? var.scale_encryption_type : null
+  scale_encryption_admin_password = var.scale_encryption_admin_password
+  scale_encryption_servers        = var.scale_encryption_enabled && var.scale_encryption_type == "gklm" ? local.gklm_instance_private_ips : []
+  enable_ldap                     = var.enable_ldap
+  ldap_basedns                    = var.ldap_basedns
+  ldap_server                     = var.enable_ldap ? local.ldap_instance_private_ips[0] : null
+  ldap_admin_password             = var.ldap_admin_password
+  ldap_server_cert                = var.ldap_server_cert
+  enable_key_protect              = var.scale_encryption_type
+  depends_on                      = [module.write_storage_scale_cluster_inventory]
 }
 
 module "client_configuration" {

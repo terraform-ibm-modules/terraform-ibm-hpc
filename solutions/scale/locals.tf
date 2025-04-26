@@ -94,7 +94,7 @@ locals {
     gklm_instance_key_pair                  = var.gklm_instance_key_pair
     gklm_instances                          = var.gklm_instances
     storage_type                            = var.storage_type
-    colocate_protocol_cluster_instances     = var.colocate_protocol_cluster_instances
+    colocate_protocol_instances             = var.colocate_protocol_instances
     scale_encryption_admin_default_password = var.scale_encryption_admin_default_password
     scale_encryption_admin_password         = var.scale_encryption_admin_password
     scale_encryption_admin_username         = var.scale_encryption_admin_username
@@ -182,7 +182,7 @@ locals {
     gklm_instance_key_pair                  = lookup(local.override[local.override_type], "gklm_instance_key_pair", local.config.gklm_instance_key_pair)
     gklm_instances                          = lookup(local.override[local.override_type], "gklm_instances", local.config.gklm_instances)
     storage_type                            = lookup(local.override[local.override_type], "storage_type", local.config.storage_type)
-    colocate_protocol_cluster_instances     = lookup(local.override[local.override_type], "colocate_protocol_cluster_instances", local.config.colocate_protocol_cluster_instances)
+    colocate_protocol_instances             = lookup(local.override[local.override_type], "colocate_protocol_instances", local.config.colocate_protocol_instances)
     scale_encryption_admin_default_password = lookup(local.override[local.override_type], "scale_encryption_admin_default_password", local.config.scale_encryption_admin_default_password)
     scale_encryption_admin_password         = lookup(local.override[local.override_type], "scale_encryption_admin_password", local.config.scale_encryption_admin_password)
     scale_encryption_admin_username         = lookup(local.override[local.override_type], "scale_encryption_admin_username", local.config.scale_encryption_admin_username)

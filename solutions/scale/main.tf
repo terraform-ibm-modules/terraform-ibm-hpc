@@ -31,6 +31,7 @@ module "scale" {
   placement_strategy                               = local.env.placement_strategy
   protocol_instances                               = local.env.protocol_instances
   protocol_subnets_cidr                            = [local.env.protocol_subnets_cidr]
+  colocate_protocol_instances                      = local.env.colocate_protocol_instances
   static_compute_instances                         = local.env.compute_instances
   storage_instances                                = local.env.storage_instances
   storage_ssh_keys                                 = local.env.storage_ssh_keys
@@ -76,7 +77,6 @@ module "scale" {
   gklm_instance_key_pair                           = local.env.gklm_instance_key_pair
   gklm_instances                                   = local.env.gklm_instances
   storage_type                                     = local.env.storage_type
-  colocate_protocol_cluster_instances              = local.env.colocate_protocol_cluster_instances
   scale_encryption_admin_password                  = local.env.scale_encryption_admin_password
   filesystem_config                                = local.env.filesystem_config
   # client_subnets_cidr                              = [local.env.client_subnets_cidr]
