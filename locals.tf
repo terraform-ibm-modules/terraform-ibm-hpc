@@ -344,6 +344,8 @@ locals {
   protocol_instance_ids         = flatten(local.protocol_instances[*]["id"])
   protocol_instance_names       = try(tolist([for name_details in flatten(local.protocol_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
+  protocol_cluster_instance_names = slice((concat(local.protocol_instance_names, (var.storage_type == "persistent" ? [] : local.strg_instance_names))), 0, local.protocol_instance_count)
+
   # client_instance_private_ips = flatten(local.client_instances[*]["ipv4_address"])
   # client_instance_ids         = flatten(local.client_instances[*]["id"])
   client_instance_names = try(tolist([for name_details in flatten(local.client_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["client"]}"]), [])
