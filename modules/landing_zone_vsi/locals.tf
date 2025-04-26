@@ -187,6 +187,11 @@ locals {
       direction = "outbound"
       remote    = var.bastion_security_group_id
     },
+    {
+      name      = "allow-all-client-out"
+      direction = "outbound"
+      remote    = "0.0.0.0/0"
+    }
     /*
     {
       name      = "allow-all-compute"

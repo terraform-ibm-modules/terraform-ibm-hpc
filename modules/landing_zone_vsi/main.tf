@@ -117,6 +117,27 @@ resource "ibm_is_security_group_rule" "add_strg_sg_strg" {
   remote    = module.storage_sg[0].security_group_id
 }
 
+resource "ibm_is_security_group_rule" "add_clnt_sg_strg" {
+  count     = local.enable_client ? 1 : 0
+  group     = module.storage_sg[0].security_group_id
+  direction = "inbound"
+  remote    = module.client_sg[0].security_group_id
+}
+
+resource "ibm_is_security_group_rule" "add_strg_sg_clnt" {
+  count     = local.enable_client ? 1 : 0
+  group     = module.client_sg[0].security_group_id
+  direction = "inbound"
+  remote    = module.storage_sg[0].security_group_id
+}
+
+resource "ibm_is_security_group_rule" "add_clnt_sg_clnt" {
+  count     = local.enable_client ? 1 : 0
+  group     = module.client_sg[0].security_group_id
+  direction = "inbound"
+  remote    = module.client_sg[0].security_group_id
+}
+
 module "management_vsi" {
   count                         = length(var.management_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"

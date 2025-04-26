@@ -42,6 +42,11 @@ data "ibm_is_subnet" "existing_protocol_subnets" {
   name  = var.protocol_subnets[count.index]
 }
 
+data "ibm_is_subnet_reserved_ips" "protocol_subnet_reserved_ips" {
+  count  = local.scale_ces_enabled == true ? 1 : 0
+  subnet = local.protocol_subnet_id
+}
+
 data "ibm_is_subnet" "existing_client_subnets" {
   count = var.vpc_name != null && var.client_subnets != null ? 1 : 0
   name  = var.client_subnets[count.index]

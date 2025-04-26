@@ -115,11 +115,12 @@ locals {
   storage_subnets  = var.vpc_name != null && var.storage_subnets != null ? local.existing_storage_subnets : module.landing_zone.storage_subnets
   protocol_subnets = var.vpc_name != null && var.protocol_subnets != null ? local.existing_protocol_subnets : module.landing_zone.protocol_subnets
 
-  storage_subnet  = [for subnet in local.storage_subnets : subnet.name]
-  protocol_subnet = [for subnet in local.protocol_subnets : subnet.name]
-  compute_subnet  = [for subnet in local.compute_subnets : subnet.name]
-  client_subnet   = [for subnet in local.client_subnets : subnet.name]
-  bastion_subnet  = [for subnet in local.bastion_subnets : subnet.name]
+  storage_subnet     = [for subnet in local.storage_subnets : subnet.name]
+  protocol_subnet    = [for subnet in local.protocol_subnets : subnet.name]
+  protocol_subnet_id = [for subnet in local.protocol_subnets : subnet.id][0]
+  compute_subnet     = [for subnet in local.compute_subnets : subnet.name]
+  client_subnet      = [for subnet in local.client_subnets : subnet.name]
+  bastion_subnet     = [for subnet in local.bastion_subnets : subnet.name]
 
   #boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   #skip_iam_authorization_policy = true
@@ -398,9 +399,9 @@ locals {
 
   fileset_size_map = try({ for details in var.file_shares : details.mount_path => details.size }, {})
 
-  storage_subnet_cidr = jsonencode(data.ibm_is_subnet.existing_storage_subnets[*].ipv4_cidr_block)
-  compute_subnet_cidr = jsonencode(data.ibm_is_subnet.existing_compute_subnets[*].ipv4_cidr_block)
-  client_subnet_cidr  = jsonencode(data.ibm_is_subnet.existing_client_subnets[*].ipv4_cidr_block)
+  storage_subnet_cidr = jsonencode((data.ibm_is_subnet.existing_storage_subnets[*].ipv4_cidr_block)[0])
+  compute_subnet_cidr = jsonencode((data.ibm_is_subnet.existing_compute_subnets[*].ipv4_cidr_block)[0])
+  client_subnet_cidr  = jsonencode((data.ibm_is_subnet.existing_client_subnets[*].ipv4_cidr_block)[0])
 
   comp_memory      = data.ibm_is_instance_profile.compute_profile.memory[0].value
   comp_vcpus_count = data.ibm_is_instance_profile.compute_profile.vcpu_count[0].value
@@ -424,4 +425,8 @@ locals {
   afm_memory             = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].memory[0].value
   afm_vcpus_count        = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].vcpu_count[0].value
   afm_bandwidth          = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].bandwidth[0].value
+
+  protocol_reserved_name_ips_map = try({ for details in data.ibm_is_subnet_reserved_ips.protocol_subnet_reserved_ips[0].reserved_ips : details.name => details.address }, {})
+  protocol_subnet_gateway_ip     = local.scale_ces_enabled == true ? local.protocol_reserved_name_ips_map.ibm-default-gateway : ""
+
 }
