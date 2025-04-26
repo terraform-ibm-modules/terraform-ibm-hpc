@@ -236,9 +236,13 @@ module "storage_vsi" {
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   placement_group_id            = var.placement_group_ids
-  depends_on                    = [resource.null_resource.entitlement_check]
-  # manage_reserved_ips             = true
-  # primary_vni_additional_ip_count = var.storage_instances[count.index]["count"]
+
+  secondary_allow_ip_spoofing     = local.enable_protocol && var.colocate_protocol_instances ? true : false
+  secondary_security_groups       = local.protocol_secondary_security_group
+  secondary_subnets               = local.enable_protocol && var.colocate_protocol_instances ? local.protocol_subnets : []
+  manage_reserved_ips             = local.enable_protocol && var.colocate_protocol_instances ? true : false
+  primary_vni_additional_ip_count = local.enable_protocol && var.colocate_protocol_instances ? var.protocol_instances[count.index]["count"] : 0
+  depends_on                      = [resource.null_resource.entitlement_check]
   # placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
@@ -323,7 +327,7 @@ module "client_vsi" {
 }
 
 module "protocol_vsi" {
-  count                         = length(var.protocol_instances)
+  count                         = var.colocate_protocol_instances == true ? 0 : length(var.protocol_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
   version                       = "5.0.0"
   vsi_per_subnet                = var.protocol_instances[count.index]["count"]
