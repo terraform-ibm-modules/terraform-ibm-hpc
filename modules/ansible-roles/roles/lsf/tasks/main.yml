@@ -1,5 +1,12 @@
 ---
 
+# setup dns resolution
+- import_tasks: dns_resolution.yml
+
+# setup dns resolution (delegating to lsf_deployer_hostname)
+- import_tasks: dns_resolution.yml
+  delegate_to: "{{ lsf_deployer_hostname }}.comp.com"
+
 # install required prerequisite packages for the LSF cluster creation.
 - import_tasks: lsf_prepare.yml
 
