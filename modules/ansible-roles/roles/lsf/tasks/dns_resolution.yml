@@ -1,6 +1,6 @@
 ---
 - name: Check if domain exists in /etc/resolv.conf
-  ansible.builtin.shell: grep -Fxq "search {{ dns_domain }}" /etc/resolv.conf
+  ansible.builtin.shell: grep -Fxq "search {{ dns_domain_names }}" /etc/resolv.conf
   register: search_check
   ignore_errors: yes
 
@@ -23,7 +23,7 @@
         path: /etc/resolv.conf
         state: present
         create: yes
-        line: "search {{ dns_domain }}"
+        line: "search {{ dns_domain_names }}"
 
     - name: Make /etc/resolv.conf immutable again
       ansible.builtin.command: chattr +i /etc/resolv.conf
