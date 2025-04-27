@@ -150,6 +150,7 @@ LSF_CONF_FILE=$LSF_CONF/lsf.conf
 echo "source ${LSF_CONF}/profile.lsf" >> ~/.bashrc
 echo "source ${LSF_CONF}/profile.lsf" >> "$LDAP_DIR"/.bashrc
 source "$HOME/.bashrc"
+source "$LDAP_DIR"/.bashrc
 
 # DNS Setup
 echo "search ${dns_domain}" >> /etc/resolv.conf
