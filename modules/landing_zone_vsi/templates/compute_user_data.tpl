@@ -143,4 +143,54 @@ else
     sleep 120
     systemctl restart NetworkManager
 
+    RESOLV_CONF="/etc/resolv.conf"
+    BACKUP_FILE="/etc/resolv.conf.bkp"
+
+    # Helper function to safely modify /etc/resolv.conf
+    make_editable() {
+        if lsattr "$RESOLV_CONF" 2>/dev/null | grep -q 'i'; then
+            chattr -i "$RESOLV_CONF"
+        fi
+    }
+
+    make_immutable() {
+        chattr +i "$RESOLV_CONF"
+    }
+
+    # Main logic
+    echo "Checking if 'search ${compute_dns_domain}' exists in $RESOLV_CONF..."
+    if ! grep -Fxq "search ${compute_dns_domain}" "$RESOLV_CONF"; then
+        echo "Domain not found, applying fix..."
+
+        # Backup only once if backup doesn't exist
+        if [ ! -f "$BACKUP_FILE" ]; then
+            cp "$RESOLV_CONF" "$BACKUP_FILE"
+            echo "Backup created at $BACKUP_FILE"
+        fi
+
+        make_editable
+
+        if grep -q '^search ' "$RESOLV_CONF"; then
+            # Replace existing search line
+            sed -i "s|^search .*|search ${compute_dns_domain}|" "$RESOLV_CONF"
+        else
+            # Insert search line at the top
+            sed -i "1i search ${compute_dns_domain}" "$RESOLV_CONF"
+        fi
+
+        make_immutable
+        echo "Updated $RESOLV_CONF with search domain."
+
+        # Restart NetworkManager only if change was made
+        if systemctl is-active --quiet NetworkManager; then
+            systemctl restart NetworkManager
+            echo "NetworkManager restarted."
+        else
+            echo "NetworkManager is not running."
+        fi
+
+    else
+        echo "Search domain already present, no changes made."
+    fi
+
 fi
