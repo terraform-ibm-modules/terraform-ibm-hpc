@@ -9,16 +9,67 @@ locals {
 resource "local_file" "create_playbook_for_dns_resolver" {
   count    = var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
-- name: Configuring DNS resolver on Deployer node
+- name: Fix DNS resolver
   hosts: localhost
-  any_errors_fatal: true
   gather_facts: false
+  any_errors_fatal: true
 
   pre_tasks:
     - name: Load cluster-specific variables
-      include_vars: all.json
+      ansible.builtin.include_vars:
+        file: all.json
 
-- import_playbook: "/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/roles/lsf/tasks/dns_resolution.yml"
+  tasks:
+    - name: restart NetworkManager
+      ansible.builtin.systemd:
+        name: NetworkManager
+        state: restarted
+
+    - name: Sleep for 120 seconds
+      ansible.builtin.pause:
+        seconds: 120
+
+    - name: Check if domain exists in /etc/resolv.conf
+      ansible.builtin.shell: grep -Fxq "search {{ dns_domain_names }}" /etc/resolv.conf
+      register: search_check
+      ignore_errors: yes
+
+    - name: When line not found, fix /etc/resolv.conf
+      block:
+        - name: Backup original /etc/resolv.conf
+          ansible.builtin.copy:
+            src: /etc/resolv.conf
+            dest: /etc/resolv.conf.bkp
+            remote_src: yes
+            owner: root
+            group: root
+            mode: '0644'
+
+        - name: Make /etc/resolv.conf editable
+          ansible.builtin.command:
+            cmd: chattr -i /etc/resolv.conf
+
+        - name: Update /etc/resolv.conf with search line
+          ansible.builtin.lineinfile:
+            path: /etc/resolv.conf
+            state: present
+            create: yes
+            line: "search {{ dns_domain_names }}"
+
+        - name: Make /etc/resolv.conf immutable again
+          ansible.builtin.command:
+            cmd: chattr +i /etc/resolv.conf
+
+        - name: restart NetworkManager
+          ansible.builtin.systemd:
+            name: NetworkManager
+            state: restarted
+      when: search_check.rc != 0
+
+    - name: Make /etc/resolv.conf immutable again
+      ansible.builtin.command:
+        cmd: chattr +i /etc/resolv.conf
+      when: search_check.rc == 0
 EOT
   filename = local.dns_resolver_playbook
 }
