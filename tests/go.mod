@@ -1,4 +1,4 @@
-module github.com/terraform-ibm-modules/
+module github.com/terraform-ibm-modules/terraform-ibm-hpc
 
 go 1.22.0
 
