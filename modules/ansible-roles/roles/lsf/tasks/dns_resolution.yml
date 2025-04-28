@@ -1,13 +1,13 @@
 ---
 
-- name: Sleep for 120 seconds
-  ansible.builtin.pause:
-    seconds: 120
-
 - name: restart NetworkManager
   ansible.builtin.systemd:
     name: NetworkManager
     state: restarted
+    
+- name: Sleep for 120 seconds
+  ansible.builtin.pause:
+    seconds: 120
 
 - name: Check if domain exists in /etc/resolv.conf
   ansible.builtin.shell: grep -Fxq "search {{ dns_domain_names }}" /etc/resolv.conf
