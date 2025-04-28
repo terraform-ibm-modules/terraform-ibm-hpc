@@ -25,7 +25,7 @@ output "storage_vsi_data" {
 
 output "storage_bms_data" {
   description = "Storage BareMetal Server data"
-  value       = module.storage_baremetal.storage_baremetal[*]["list"]
+  value = flatten(module.storage_baremetal[*].list)
 }
 
 output "storage_cluster_management_vsi" {
