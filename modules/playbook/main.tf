@@ -17,10 +17,8 @@ resource "local_file" "create_playbook_for_dns_resolver" {
   pre_tasks:
     - name: Load cluster-specific variables
       include_vars: all.json
-  
-  tasks:
-    - name: Include Anand DNS resolver playbook
-      ansible.builtin.import_playbook: "${var.playbooks_path}/roles/lsf/tasks/dns_resolution.yml"
+
+- import_playbook: "${var.playbooks_path}/roles/lsf/tasks/dns_resolution.yml"
 EOT
   filename = local.dns_resolver_playbook
 }
