@@ -151,7 +151,7 @@ variable "vpn_preshared_key" {
 ##############################################################################
 variable "enable_deployer" {
   type        = bool
-  default     = false
+  default     = true
   description = "Deployer should be only used for better deployment performance"
 }
 
@@ -176,11 +176,11 @@ variable "client_subnets" {
   description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
 }
 
-# variable "client_subnets_cidr" {
-#   type        = list(string)
-#   default     = ["10.10.10.0/24", "10.20.10.0/24", "10.30.10.0/24"]
-#   description = "Subnet CIDR block to launch the client host."
-# }
+variable "client_subnets_cidr" {
+  type        = list(string)
+  default     = ["10.10.10.0/24", "10.20.10.0/24", "10.30.10.0/24"]
+  description = "Subnet CIDR block to launch the client host."
+}
 
 variable "client_ssh_keys" {
   type        = list(string)
@@ -371,11 +371,11 @@ variable "protocol_instances" {
   description = "Number of instances to be launched for protocol hosts."
 }
 
-# variable "colocate_protocol_instances" {
-#   type        = bool
-#   default     = true
-#   description = "Enable it to use storage instances as protocol instances"
-# }
+variable "colocate_protocol_instances" {
+  type        = bool
+  default     = true
+  description = "Enable it to use storage instances as protocol instances"
+}
 
 variable "storage_gui_username" {
   type        = string
@@ -994,12 +994,6 @@ variable "storage_type" {
   type        = string
   default     = "scratch"
   description = "Select the required storage type(scratch/persistent/eval)."
-}
-
-variable "colocate_protocol_cluster_instances" {
-  type        = bool
-  default     = true
-  description = "Enable it to use storage instances as protocol instances"
 }
 
 variable "using_packer_image" {

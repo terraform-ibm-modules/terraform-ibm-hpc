@@ -54,6 +54,11 @@ data "template_file" "storage_user_data" {
     storage_interfaces          = var.storage_type == "scratch" ? local.vsi_interfaces[0] : local.bms_interfaces[0]
     storage_dns_domain          = var.dns_domain_names["storage"]
     storage_disk_type           = var.storage_type == "scratch" ? data.ibm_is_instance_profile.storage[0].disks[0].quantity[0].type : ""
+    protocol_dns_domain         = var.dns_domain_names["protocol"]
+    enable_protocol             = local.enable_protocol
+    vpc_region                  = var.vpc_region
+    resource_group_id           = data.ibm_resource_group.existing_resource_group.id
+    protocol_subnets            = local.enable_protocol ? local.protocol_subnets[0].id : ""
   }
 }
 

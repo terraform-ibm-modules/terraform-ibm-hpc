@@ -81,7 +81,7 @@ locals {
         name           = "client-subnet-${zone}"
         acl_name       = "hpc-acl"
         cidr           = var.client_subnets_cidr[index(local.active_zones, zone)]
-        public_gateway = false
+        public_gateway = true
       } : null,
       {
         name           = "compute-subnet-${zone}"
@@ -99,7 +99,7 @@ locals {
         name           = "protocol-subnet-${zone}"
         acl_name       = "hpc-acl"
         cidr           = var.protocol_subnets_cidr[index(local.active_zones, zone)]
-        public_gateway = false
+        public_gateway = true
       } : null,
       zone == local.active_zones[0] ? {
         name           = "bastion-subnet"

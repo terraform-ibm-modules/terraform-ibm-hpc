@@ -19,7 +19,6 @@ module "scale" {
   enable_bastion                                   = local.env.enable_bastion
   bastion_image                                    = local.env.bastion_image
   bastion_instance_profile                         = local.env.bastion_instance_profile
-  enable_deployer                                  = local.env.enable_deployer
   deployer_image                                   = local.env.deployer_image
   deployer_instance_profile                        = local.env.deployer_instance_profile
   enable_cos_integration                           = local.env.enable_cos_integration
@@ -32,6 +31,7 @@ module "scale" {
   placement_strategy                               = local.env.placement_strategy
   protocol_instances                               = local.env.protocol_instances
   protocol_subnets_cidr                            = [local.env.protocol_subnets_cidr]
+  colocate_protocol_instances                      = local.env.colocate_protocol_instances
   static_compute_instances                         = local.env.compute_instances
   storage_instances                                = local.env.storage_instances
   storage_servers                                  = local.env.storage_servers
@@ -78,7 +78,6 @@ module "scale" {
   gklm_instance_key_pair                           = local.env.gklm_instance_key_pair
   gklm_instances                                   = local.env.gklm_instances
   storage_type                                     = local.env.storage_type
-  colocate_protocol_cluster_instances              = local.env.colocate_protocol_cluster_instances
   scale_encryption_admin_password                  = local.env.scale_encryption_admin_password
   filesystem_config                                = local.env.filesystem_config
   # client_subnets_cidr                              = [local.env.client_subnets_cidr]

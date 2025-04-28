@@ -18,7 +18,6 @@ module "lsf" {
   enable_bastion                                   = local.env.enable_bastion
   bastion_image                                    = local.env.bastion_image
   bastion_instance_profile                         = local.env.bastion_instance_profile
-  enable_deployer                                  = local.env.enable_deployer
   deployer_image                                   = local.env.deployer_image
   deployer_instance_profile                        = local.env.deployer_instance_profile
   enable_cos_integration                           = local.env.enable_cos_integration

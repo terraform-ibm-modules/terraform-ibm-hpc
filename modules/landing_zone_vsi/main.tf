@@ -117,6 +117,27 @@ resource "ibm_is_security_group_rule" "add_strg_sg_strg" {
   remote    = module.storage_sg[0].security_group_id
 }
 
+resource "ibm_is_security_group_rule" "add_clnt_sg_strg" {
+  count     = local.enable_client ? 1 : 0
+  group     = module.storage_sg[0].security_group_id
+  direction = "inbound"
+  remote    = module.client_sg[0].security_group_id
+}
+
+resource "ibm_is_security_group_rule" "add_strg_sg_clnt" {
+  count     = local.enable_client ? 1 : 0
+  group     = module.client_sg[0].security_group_id
+  direction = "inbound"
+  remote    = module.storage_sg[0].security_group_id
+}
+
+resource "ibm_is_security_group_rule" "add_clnt_sg_clnt" {
+  count     = local.enable_client ? 1 : 0
+  group     = module.client_sg[0].security_group_id
+  direction = "inbound"
+  remote    = module.client_sg[0].security_group_id
+}
+
 module "management_vsi" {
   count                 = length(var.management_instances)
   source                = "terraform-ibm-modules/landing-zone-vsi/ibm"
@@ -196,29 +217,34 @@ module "compute_cluster_management_vsi" {
 }
 
 module "storage_vsi" {
-  count                         = length(var.storage_instances) > 0 && var.storage_type != "persistent" ? 1 : 0
-  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.0.0"
-  vsi_per_subnet                = var.storage_instances[count.index]["count"]
-  create_security_group         = false
-  security_group                = null
-  image_id                      = local.storage_image_id[count.index]
-  machine_type                  = var.storage_instances[count.index]["profile"]
-  prefix                        = count.index == 0 ? local.storage_node_name : format("%s-%s", local.storage_node_name, count.index)
-  resource_group_id             = local.resource_group_id
-  enable_floating_ip            = false
-  security_group_ids            = module.storage_sg[*].security_group_id
-  ssh_key_ids                   = local.storage_ssh_keys
-  subnets                       = local.storage_subnets
-  tags                          = local.tags
-  user_data                     = data.template_file.storage_user_data.rendered
-  vpc_id                        = var.vpc_id
-  block_storage_volumes         = local.enable_block_storage ? local.block_storage_volumes : []
-  kms_encryption_enabled        = var.kms_encryption_enabled
-  skip_iam_authorization_policy = local.skip_iam_authorization_policy
-  boot_volume_encryption_key    = var.boot_volume_encryption_key
-  placement_group_id            = var.placement_group_ids
-  depends_on                    = [resource.null_resource.entitlement_check]
+  count                           = length(var.storage_instances) > 0 && var.storage_type != "persistent" ? 1 : 0
+  source                          = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version                         = "5.0.0"
+  vsi_per_subnet                  = var.storage_instances[count.index]["count"]
+  create_security_group           = false
+  security_group                  = null
+  image_id                        = local.storage_image_id[count.index]
+  machine_type                    = var.storage_instances[count.index]["profile"]
+  prefix                          = count.index == 0 ? local.storage_node_name : format("%s-%s", local.storage_node_name, count.index)
+  resource_group_id               = local.resource_group_id
+  enable_floating_ip              = false
+  security_group_ids              = module.storage_sg[*].security_group_id
+  ssh_key_ids                     = local.storage_ssh_keys
+  subnets                         = local.storage_subnets
+  tags                            = local.tags
+  user_data                       = data.template_file.storage_user_data.rendered
+  vpc_id                          = var.vpc_id
+  block_storage_volumes           = local.enable_block_storage ? local.block_storage_volumes : []
+  kms_encryption_enabled          = var.kms_encryption_enabled
+  skip_iam_authorization_policy   = local.skip_iam_authorization_policy
+  boot_volume_encryption_key      = var.boot_volume_encryption_key
+  placement_group_id              = var.placement_group_ids
+  secondary_allow_ip_spoofing     = local.enable_protocol && var.colocate_protocol_instances ? true : false
+  secondary_security_groups       = local.protocol_secondary_security_group
+  secondary_subnets               = local.enable_protocol && var.colocate_protocol_instances ? local.protocol_subnets : []
+  manage_reserved_ips             = local.enable_protocol && var.colocate_protocol_instances ? true : false
+  primary_vni_additional_ip_count = local.enable_protocol && var.colocate_protocol_instances ? var.protocol_instances[count.index]["count"] : 0
+  depends_on                      = [resource.null_resource.entitlement_check]
   # manage_reserved_ips             = true
   # primary_vni_additional_ip_count = var.storage_instances[count.index]["count"]
   # placement_group_id = var.placement_group_ids[(var.storage_instances[count.index]["count"])%(length(var.placement_group_ids))]
@@ -305,7 +331,7 @@ module "client_vsi" {
 }
 
 module "protocol_vsi" {
-  count                         = length(var.protocol_instances)
+  count                         = var.colocate_protocol_instances == true ? 0 : length(var.protocol_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
   version                       = "5.0.0"
   vsi_per_subnet                = var.protocol_instances[count.index]["count"]

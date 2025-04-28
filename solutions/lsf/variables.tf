@@ -128,12 +128,6 @@ variable "vpn_preshared_key" {
 ##############################################################################
 # Deployer Variables
 ##############################################################################
-variable "enable_deployer" {
-  type        = bool
-  default     = false
-  description = "Deployer should be only used for better deployment performance"
-}
-
 variable "deployer_image" {
   type        = string
   default     = "jay-lsf-new-image"
@@ -376,6 +370,12 @@ variable "protocol_instances" {
     image   = "ibm-redhat-8-10-minimal-amd64-2"
   }]
   description = "Number of instances to be launched for protocol hosts."
+}
+
+variable "colocate_protocol_instances" {
+  type        = bool
+  default     = true
+  description = "Enable it to use storage instances as protocol instances"
 }
 
 variable "storage_gui_username" {
