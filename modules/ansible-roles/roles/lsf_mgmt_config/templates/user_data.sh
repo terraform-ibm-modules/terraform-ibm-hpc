@@ -125,7 +125,8 @@ echo "Setting custom file shares is completed." >> "$logfile"
 echo '{% endraw %}'
 
 # Setup SSH
-SSH_DIR="/home/lsfadmin/.ssh"
+LDAP_DIR="/home/lsfadmin"
+SSH_DIR="$LDAP_DIR/.ssh"
 mkdir -p "$SSH_DIR"
 cp /home/vpcuser/.ssh/authorized_keys "$SSH_DIR/authorized_keys"
 cat /mnt/lsf/shared/ssh/id_rsa.pub >> "$SSH_DIR/authorized_keys"
@@ -147,7 +148,9 @@ LSF_CONF_FILE=$LSF_CONF/lsf.conf
   env
 } >> "$logfile"
 echo "source ${LSF_CONF}/profile.lsf" >> ~/.bashrc
+echo "source ${LSF_CONF}/profile.lsf" >> "$LDAP_DIR"/.bashrc
 source "$HOME/.bashrc"
+source "$LDAP_DIR/.bashrc"
 
 # DNS Setup
 echo "search ${dns_domain}" >> /etc/resolv.conf
