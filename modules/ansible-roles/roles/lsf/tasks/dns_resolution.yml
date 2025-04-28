@@ -1,4 +1,14 @@
 ---
+
+- name: Sleep for 120 seconds
+  ansible.builtin.pause:
+    seconds: 120
+
+- name: restart NetworkManager
+  ansible.builtin.systemd:
+    name: NetworkManager
+    state: restarted
+
 - name: Check if domain exists in /etc/resolv.conf
   ansible.builtin.shell: grep -Fxq "search {{ dns_domain_names }}" /etc/resolv.conf
   register: search_check
@@ -27,9 +37,13 @@
 
     - name: Make /etc/resolv.conf immutable again
       ansible.builtin.command: chattr +i /etc/resolv.conf
+
+    - name: restart NetworkManager
+      ansible.builtin.systemd:
+        name: NetworkManager
+        state: restarted
   when: search_check.rc != 0
 
-- name: restart NetworkManager
-  ansible.builtin.systemd:
-    name: NetworkManager
-    state: restarted
+- name: Make /etc/resolv.conf immutable again
+  ansible.builtin.command: chattr +i /etc/resolv.conf
+  when: search_check.rc == 0

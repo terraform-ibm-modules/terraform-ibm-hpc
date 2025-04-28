@@ -3,6 +3,38 @@ locals {
   ldap_server_inventory = format("%s/ldap_server_inventory.ini", var.playbooks_path)
   configure_ldap_client = format("%s/configure_ldap_client.yml", var.playbooks_path)
   prepare_ldap_server   = format("%s/prepare_ldap_server.yml", var.playbooks_path)
+  dns_resolver_playbook = format("%s/dns_resolver.yml", var.playbooks_path)
+}
+
+resource "local_file" "create_playbook_for_dns_resolver" {
+  count    = var.scheduler == "LSF" ? 1 : 0
+  content  = <<EOT
+- name: Configuring DNS resolver on Deployer node
+  hosts: localhost
+  any_errors_fatal: true
+  gather_facts: false
+
+  pre_tasks:
+    - name: Load cluster-specific variables
+      include_vars: all.json
+  
+  tasks:
+    - name: Include Anand DNS resolver playbook
+      ansible.builtin.import_playbook: "${var.playbooks_path}/roles/lsf/tasks/dns_resolution.yml"
+EOT
+  filename = local.dns_resolver_playbook
+}
+
+resource "null_resource" "configure_dns_resolver" {
+  count = var.scheduler == "LSF" ? 1 : 0
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "ansible-playbook ${local.dns_resolver_playbook}"
+  }
+  triggers = {
+    build = timestamp()
+  }
+  depends_on = [local_file.create_playbook]
 }
 
 resource "local_file" "create_playbook" {
