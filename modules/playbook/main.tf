@@ -32,7 +32,6 @@ resource "null_resource" "configure_dns_resolver" {
   triggers = {
     build = timestamp()
   }
-  depends_on = [local_file.create_playbook]
 }
 
 resource "local_file" "create_playbook" {
@@ -98,7 +97,7 @@ resource "null_resource" "run_playbook" {
   triggers = {
     build = timestamp()
   }
-  depends_on = [local_file.create_playbook]
+  depends_on = [local_file.create_playbook, null_resource.configure_dns_resolver]
 }
 
 resource "null_resource" "run_lsf_playbooks" {
