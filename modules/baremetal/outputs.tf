@@ -6,7 +6,7 @@ output "list" {
       {
         id           = server_details.bms_server_id
         name         = server_details.bms_server_name
-        ipv4_address = server_details.bms_server_ip
+        ipv4_address = try(server_details.bms_server_ip, "")
         vni_id       = server_details.bms_vni_id
       }
     ]
