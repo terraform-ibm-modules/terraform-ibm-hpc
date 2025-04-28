@@ -104,10 +104,6 @@ resource "local_file" "create_playbook" {
     ansible_user: root
     ansible_ssh_private_key_file: ${var.private_key_path}
   tasks:
-    - name: Sleep for 120 seconds
-      ansible.builtin.pause:
-        seconds: 120
-
     - name: Check passwordless SSH on all scale inventory hosts
       shell: echo PASSWDLESS_SSH_ENABLED
       register: result
