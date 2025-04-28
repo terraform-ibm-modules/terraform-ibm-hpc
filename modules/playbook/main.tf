@@ -25,9 +25,9 @@ resource "local_file" "create_playbook_for_dns_resolver" {
         name: NetworkManager
         state: restarted
 
-    - name: Sleep for 120 seconds
+    - name: Sleep for 60 seconds
       ansible.builtin.pause:
-        seconds: 120
+        seconds: 60
 
     - name: Check if domain exists in /etc/resolv.conf
       ansible.builtin.shell: grep -Fxq "search {{ dns_domain_names }}" /etc/resolv.conf
@@ -104,6 +104,10 @@ resource "local_file" "create_playbook" {
     ansible_user: root
     ansible_ssh_private_key_file: ${var.private_key_path}
   tasks:
+    - name: Sleep for 240 seconds
+      ansible.builtin.pause:
+        seconds: 240
+
     - name: Check passwordless SSH on all scale inventory hosts
       shell: echo PASSWDLESS_SSH_ENABLED
       register: result
