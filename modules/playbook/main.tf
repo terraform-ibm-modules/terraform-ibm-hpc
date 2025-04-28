@@ -193,7 +193,7 @@ EOT
 
 
 resource "null_resource" "run_playbook_for_mgmt_config" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook -i ${var.inventory_path} ${var.lsf_mgmt_playbooks_path}"
