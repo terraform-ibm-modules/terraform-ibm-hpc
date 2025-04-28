@@ -78,7 +78,7 @@ resource "null_resource" "configure_dns_resolver" {
   count = var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook ${local.dns_resolver_playbook}"
+    command     = "ansible-playbook -i localhost ${local.dns_resolver_playbook}"
   }
   triggers = {
     build = timestamp()
@@ -111,26 +111,26 @@ resource "local_file" "create_playbook" {
       retries: 60
       delay: 10
 
-# - name: Prerequisite Configuration
-#   hosts: [all_nodes]
-#   any_errors_fatal: true
-#   gather_facts: false
-#   vars:
-#     ansible_ssh_common_args: >
-#       ${local.proxyjump}
-#       -o ControlMaster=auto
-#       -o ControlPersist=30m
-#       -o UserKnownHostsFile=/dev/null
-#       -o StrictHostKeyChecking=no
-#     ansible_user: root
-#     ansible_ssh_private_key_file: ${var.private_key_path}
-#   pre_tasks:
-#     - name: Load cluster-specific variables
-#       include_vars: all.json
-#   roles:
-#      - { role: vpc_fileshare_configure, when: scheduler == 'LSF' }
-#      - { role: lsf, when: scheduler == 'LSF' }
-#      - { role: lsf_server_config, when: scheduler == 'LSF' }
+- name: Prerequisite Configuration
+  hosts: [all_nodes]
+  any_errors_fatal: true
+  gather_facts: false
+  vars:
+    ansible_ssh_common_args: >
+      ${local.proxyjump}
+      -o ControlMaster=auto
+      -o ControlPersist=30m
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+    ansible_user: root
+    ansible_ssh_private_key_file: ${var.private_key_path}
+  pre_tasks:
+    - name: Load cluster-specific variables
+      include_vars: all.json
+  roles:
+     - { role: vpc_fileshare_configure, when: scheduler == 'LSF' }
+     - { role: lsf, when: scheduler == 'LSF' }
+     - { role: lsf_server_config, when: scheduler == 'LSF' }
 EOT
   filename = var.playbook_path
 }
@@ -154,7 +154,8 @@ resource "null_resource" "run_lsf_playbooks" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<EOT
       sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml &&
-      sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml
+      sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml &&
+      sudo ansible-playbook -f 50 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml
     EOT
   }
 
@@ -192,7 +193,7 @@ EOT
 
 
 resource "null_resource" "run_playbook_for_mgmt_config" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "ansible-playbook -i ${var.inventory_path} ${var.lsf_mgmt_playbooks_path}"
