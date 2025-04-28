@@ -9,7 +9,7 @@ locals {
 resource "local_file" "create_playbook_for_dns_resolver" {
   count    = var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
-- name: Fix DNS resolver
+- name: Configure DNS resolver
   hosts: localhost
   gather_facts: false
   any_errors_fatal: true
