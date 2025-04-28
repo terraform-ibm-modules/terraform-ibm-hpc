@@ -31,36 +31,36 @@ resource "null_resource" "tf_resource_provisioner" {
   }
 }
 
-resource "null_resource" "fetch_host_details_from_deployer" {
-  count = var.enable_deployer == true ? 1 : 0
-  provisioner "local-exec" {
-    command = <<EOT
-      ssh -o StrictHostKeyChecking=no -o ProxyJump=ubuntu@${var.bastion_fip} \
-          -i ${local.ssh_key_file} \
-          vpcuser@${var.deployer_ip} \
-          "sudo chmod 644 /opt/ibm/terraform-ibm-hpc/solutions/lsf/*.ini && sudo chown vpcuser:vpcuser /opt/ibm/terraform-ibm-hpc/solutions/lsf/*.ini"
+# resource "null_resource" "fetch_host_details_from_deployer" {
+#   count = var.enable_deployer == true ? 1 : 0
+#   provisioner "local-exec" {
+#     command = <<EOT
+#       ssh -o StrictHostKeyChecking=no -o ProxyJump=ubuntu@${var.bastion_fip} \
+#           -i ${local.ssh_key_file} \
+#           vpcuser@${var.deployer_ip} \
+#           "sudo chmod 644 /opt/ibm/terraform-ibm-hpc/solutions/lsf/*.ini && sudo chown vpcuser:vpcuser /opt/ibm/terraform-ibm-hpc/solutions/lsf/*.ini"
 
-      scp -o StrictHostKeyChecking=no -o ProxyJump=ubuntu@${var.bastion_fip} \
-          -i ${local.ssh_key_file} \
-          vpcuser@${var.deployer_ip}:/opt/ibm/terraform-ibm-hpc/solutions/lsf/*.ini \
-          "${path.root}/../../solutions/lsf/"
-    EOT
-  }
-  depends_on = [resource.null_resource.tf_resource_provisioner]
-}
+#       scp -o StrictHostKeyChecking=no -o ProxyJump=ubuntu@${var.bastion_fip} \
+#           -i ${local.ssh_key_file} \
+#           vpcuser@${var.deployer_ip}:/opt/ibm/terraform-ibm-hpc/solutions/lsf/*.ini \
+#           "${path.root}/../../solutions/lsf/"
+#     EOT
+#   }
+#   depends_on = [resource.null_resource.tf_resource_provisioner]
+# }
 
-resource "null_resource" "cleanup_ini_files" {
-  count = var.enable_deployer == true ? 1 : 0
+# resource "null_resource" "cleanup_ini_files" {
+#   count = var.enable_deployer == true ? 1 : 0
 
-  provisioner "local-exec" {
-    when    = destroy
-    command = <<EOT
-      echo "Cleaning up local .ini files..."
-      rm -f "${path.root}/../../solutions/lsf/"*.ini
-    EOT
-  }
-  depends_on = [null_resource.fetch_host_details_from_deployer]
-}
+#   provisioner "local-exec" {
+#     when    = destroy
+#     command = <<EOT
+#       echo "Cleaning up local .ini files..."
+#       rm -f "${path.root}/../../solutions/lsf/"*.ini
+#     EOT
+#   }
+#   depends_on = [null_resource.fetch_host_details_from_deployer]
+# }
 
 resource "null_resource" "cluster_destroyer" {
   count = var.enable_deployer == true ? 1 : 0
