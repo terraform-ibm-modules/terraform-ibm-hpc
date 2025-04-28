@@ -24,6 +24,15 @@ variable "deployer_ip" {
 }
 
 ##############################################################################
+# Offering Variations
+##############################################################################
+variable "scheduler" {
+  type        = string
+  default     = null
+  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+}
+
+##############################################################################
 # Bastion Variables
 ##############################################################################
 variable "bastion_fip" {

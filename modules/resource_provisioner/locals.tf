@@ -10,4 +10,5 @@ locals {
   scale_cloud_infra_repo_name = "ibm-spectrum-scale-install-infra"
   scale_cloud_infra_repo_tag  = "scale_hpc"
   ssh_key_file                = "${path.root}/../../solutions/lsf/bastion_id_rsa"
+  products                    = var.scheduler == "Scale" ? "scale" : "lsf"
 }
