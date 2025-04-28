@@ -26,7 +26,7 @@ chmod 600 ~/.ssh/id_rsa
 echo "DOMAIN=${management_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${management_interfaces}"
 echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${management_interfaces}"
 chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
-sleep 10
+sleep 20
 systemctl restart NetworkManager
 
 RESOLV_CONF="/etc/resolv.conf"
@@ -47,6 +47,8 @@ make_immutable() {
 echo "Checking if 'search ${management_dns_domain}' exists in $RESOLV_CONF..."
 if ! grep -Fxq "search ${management_dns_domain}" "$RESOLV_CONF"; then
     echo "Domain not found, applying fix..."
+
+    sleep 60
 
     # Backup only once if backup doesn't exist
     if [ ! -f "$BACKUP_FILE" ]; then
@@ -76,5 +78,6 @@ if ! grep -Fxq "search ${management_dns_domain}" "$RESOLV_CONF"; then
     fi
 
 else
-    echo "Search domain already present, no changes made."
+    echo "Search domain already present, Updating $RESOLV_CONF has immutable."
+    make_immutable
 fi

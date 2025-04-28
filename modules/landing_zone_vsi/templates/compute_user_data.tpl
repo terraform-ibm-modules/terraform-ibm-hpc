@@ -140,7 +140,7 @@ else
     echo "DOMAIN=${compute_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
     echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
     chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
-    sleep 120
+    sleep 20
     systemctl restart NetworkManager
 
     RESOLV_CONF="/etc/resolv.conf"
@@ -161,6 +161,8 @@ else
     echo "Checking if 'search ${compute_dns_domain}' exists in $RESOLV_CONF..."
     if ! grep -Fxq "search ${compute_dns_domain}" "$RESOLV_CONF"; then
         echo "Domain not found, applying fix..."
+
+        sleep 60
 
         # Backup only once if backup doesn't exist
         if [ ! -f "$BACKUP_FILE" ]; then
@@ -190,7 +192,8 @@ else
         fi
 
     else
-        echo "Search domain already present, no changes made."
+        echo "Search domain already present, Updating $RESOLV_CONF has immutable."
+        make_immutable
     fi
 
 fi
