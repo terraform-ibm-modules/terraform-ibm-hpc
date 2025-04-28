@@ -1,5 +1,8 @@
 ---
 
+# setup dns resolution
+- import_tasks: dns_resolution.yml
+
 # install required prerequisite packages for the LSF cluster creation.
 - import_tasks: lsf_prepare.yml
 
