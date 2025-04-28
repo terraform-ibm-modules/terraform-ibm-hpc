@@ -166,6 +166,12 @@ variable "compute_instances" {
 # Scale Storage Variables
 ##############################################################################
 
+variable "storage_type" {
+  type        = string
+  default     = "scratch"
+  description = "Select the required storage type(scratch/persistent/eval)."
+}
+
 variable "storage_subnets_cidr" {
   type        = list(string)
   default     = ["10.10.30.0/24", "10.20.30.0/24", "10.30.30.0/24"]
@@ -184,6 +190,20 @@ variable "storage_instances" {
     count   = 3
   }]
   description = "Number of instances to be launched for storage cluster."
+}
+
+variable "storage_servers" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+    })
+  )
+  default = [{
+    profile = "cx2d-metal-96x192"
+    count   = 2
+  }]
+  description = "Number of Bareemetal servers to be launched for storage cluster."
 }
 
 variable "protocol_subnets_cidr" {

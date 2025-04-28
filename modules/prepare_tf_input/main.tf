@@ -13,6 +13,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "compute_ssh_keys": ${local.list_compute_ssh_keys},
   "storage_ssh_keys": ${local.list_storage_ssh_keys},
   "storage_instances": ${local.list_storage_instances},
+  "storage_servers": ${local.list_storage_servers},
   "storage_type": "${var.storage_type}",
   "management_instances": ${local.list_management_instances},
   "protocol_instances": ${local.list_protocol_instances},

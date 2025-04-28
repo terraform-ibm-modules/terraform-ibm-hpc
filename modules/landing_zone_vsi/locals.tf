@@ -54,7 +54,7 @@ locals {
 
   client_instance_count         = sum(var.client_instances[*]["count"])
   management_instance_count     = sum(var.management_instances[*]["count"])
-  storage_instance_count        = sum(var.storage_instances[*]["count"])
+  storage_instance_count        = var.storage_type == "persistent" ? sum(var.storage_servers[*]["count"]) : sum(var.storage_instances[*]["count"])
   protocol_instance_count       = sum(var.protocol_instances[*]["count"])
   static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
 

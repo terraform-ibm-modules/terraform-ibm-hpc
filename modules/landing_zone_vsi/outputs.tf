@@ -23,6 +23,11 @@ output "storage_vsi_data" {
   value       = module.storage_vsi[*]["list"]
 }
 
+output "storage_bms_data" {
+  description = "Storage BareMetal Server data"
+  value       = flatten(module.storage_baremetal[*].list)
+}
+
 output "storage_cluster_management_vsi" {
   description = "Storage Management VSI data"
   value       = module.storage_cluster_management_vsi[*]["list"]
