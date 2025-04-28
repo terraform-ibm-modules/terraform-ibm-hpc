@@ -18,7 +18,7 @@ resource "local_file" "create_playbook_for_dns_resolver" {
     - name: Load cluster-specific variables
       include_vars: all.json
 
-- import_playbook: "${var.playbooks_path}/roles/lsf/tasks/dns_resolution.yml"
+- import_playbook: "/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/roles/lsf/tasks/dns_resolution.yml"
 EOT
   filename = local.dns_resolver_playbook
 }
