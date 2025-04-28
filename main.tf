@@ -60,43 +60,44 @@ module "deployer" {
 }
 
 module "landing_zone_vsi" {
-  count                      = var.enable_deployer == false ? 1 : 0
-  source                     = "./modules/landing_zone_vsi"
-  existing_resource_group    = var.existing_resource_group
-  prefix                     = var.prefix
-  vpc_id                     = local.vpc_id
-  bastion_security_group_id  = var.bastion_security_group_id
-  bastion_public_key_content = local.bastion_public_key_content
-  client_subnets             = local.client_subnets
-  client_ssh_keys            = local.client_ssh_keys
-  client_instances           = var.client_instances
-  compute_subnets            = local.compute_subnets
-  compute_ssh_keys           = local.compute_ssh_keys
-  management_instances       = var.management_instances
-  static_compute_instances   = var.static_compute_instances
-  dynamic_compute_instances  = var.dynamic_compute_instances
-  storage_subnets            = local.storage_subnets
-  storage_ssh_keys           = local.storage_ssh_keys
-  storage_instances          = var.storage_instances
-  protocol_subnets           = local.protocol_subnets
-  protocol_instances         = var.protocol_instances
-  nsd_details                = var.nsd_details
-  dns_domain_names           = var.dns_domain_names
-  kms_encryption_enabled     = local.kms_encryption_enabled
-  boot_volume_encryption_key = local.boot_volume_encryption_key
-  enable_bastion             = var.enable_bastion
-  afm_instances              = var.afm_instances
-  enable_ldap                = var.enable_ldap
-  ldap_instances             = var.ldap_instances
-  ldap_server                = var.ldap_server
-  ldap_instance_key_pair     = local.ldap_instance_key_pair
-  scale_encryption_enabled   = var.scale_encryption_enabled
-  scale_encryption_type      = var.scale_encryption_type
-  gklm_instance_key_pair     = local.gklm_instance_key_pair
-  gklm_instances             = var.gklm_instances
-  vpc_region                 = local.region
-  scheduler                  = var.scheduler
-  ibm_customer_number        = var.ibm_customer_number
+  count                       = var.enable_deployer == false ? 1 : 0
+  source                      = "./modules/landing_zone_vsi"
+  existing_resource_group     = var.existing_resource_group
+  prefix                      = var.prefix
+  vpc_id                      = local.vpc_id
+  bastion_security_group_id   = var.bastion_security_group_id
+  bastion_public_key_content  = local.bastion_public_key_content
+  client_subnets              = local.client_subnets
+  client_ssh_keys             = local.client_ssh_keys
+  client_instances            = var.client_instances
+  compute_subnets             = local.compute_subnets
+  compute_ssh_keys            = local.compute_ssh_keys
+  management_instances        = var.management_instances
+  static_compute_instances    = var.static_compute_instances
+  dynamic_compute_instances   = var.dynamic_compute_instances
+  storage_subnets             = local.storage_subnets
+  storage_ssh_keys            = local.storage_ssh_keys
+  storage_instances           = var.storage_instances
+  protocol_subnets            = local.protocol_subnets
+  protocol_instances          = var.protocol_instances
+  nsd_details                 = var.nsd_details
+  dns_domain_names            = var.dns_domain_names
+  kms_encryption_enabled      = local.kms_encryption_enabled
+  boot_volume_encryption_key  = local.boot_volume_encryption_key
+  enable_bastion              = var.enable_bastion
+  afm_instances               = var.afm_instances
+  enable_ldap                 = var.enable_ldap
+  ldap_instances              = var.ldap_instances
+  ldap_server                 = var.ldap_server
+  ldap_instance_key_pair      = local.ldap_instance_key_pair
+  scale_encryption_enabled    = var.scale_encryption_enabled
+  scale_encryption_type       = var.scale_encryption_type
+  gklm_instance_key_pair      = local.gklm_instance_key_pair
+  gklm_instances              = var.gklm_instances
+  vpc_region                  = local.region
+  scheduler                   = var.scheduler
+  ibm_customer_number         = var.ibm_customer_number
+  colocate_protocol_instances = var.colocate_protocol_instances
 }
 
 module "prepare_tf_input" {
