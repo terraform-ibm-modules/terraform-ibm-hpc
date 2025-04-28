@@ -197,6 +197,7 @@ module "resource_provisioner" {
   bastion_fip                 = local.bastion_fip
   bastion_private_key_content = local.bastion_private_key_content
   deployer_ip                 = local.deployer_ip
+  scheduler                   = var.scheduler
   depends_on                  = [module.deployer, module.prepare_tf_input, module.validate_ldap_server_connection]
 }
 

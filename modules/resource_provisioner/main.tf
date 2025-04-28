@@ -33,17 +33,20 @@ resource "null_resource" "tf_resource_provisioner" {
 
 resource "null_resource" "fetch_host_details_from_deployer" {
   count = var.enable_deployer == true ? 1 : 0
+
   provisioner "local-exec" {
     command = <<EOT
-      ssh -o StrictHostKeyChecking=no -o ProxyJump=ubuntu@${var.bastion_fip} \
+      ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+          -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${local.ssh_key_file} ubuntu@${var.bastion_fip} -W %h:%p" \
           -i ${local.ssh_key_file} \
           vpcuser@${var.deployer_ip} \
-          "sudo chmod 644 /opt/ibm/terraform-ibm-hpc/solutions/lsf/*.ini && sudo chown vpcuser:vpcuser /opt/ibm/terraform-ibm-hpc/solutions/lsf/*.ini"
+          "sudo chmod 644 /opt/ibm/terraform-ibm-hpc/solutions/${local.products}/*.ini && sudo chown vpcuser:vpcuser /opt/ibm/terraform-ibm-hpc/solutions/${local.products}/*.ini"
 
-      scp -o StrictHostKeyChecking=no -o ProxyJump=ubuntu@${var.bastion_fip} \
+      scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+          -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${local.ssh_key_file} ubuntu@${var.bastion_fip} -W %h:%p" \
           -i ${local.ssh_key_file} \
-          vpcuser@${var.deployer_ip}:/opt/ibm/terraform-ibm-hpc/solutions/lsf/*.ini \
-          "${path.root}/../../solutions/lsf/"
+          vpcuser@${var.deployer_ip}:/opt/ibm/terraform-ibm-hpc/solutions/${local.products}/*.ini \
+          "${path.root}/../../solutions/${local.products}/"
     EOT
   }
   depends_on = [resource.null_resource.tf_resource_provisioner]
@@ -56,7 +59,7 @@ resource "null_resource" "cleanup_ini_files" {
     when    = destroy
     command = <<EOT
       echo "Cleaning up local .ini files..."
-      rm -f "${path.root}/../../solutions/lsf/"*.ini
+      rm -f "${path.root}/../../solutions/${local.products}/"*.ini
     EOT
   }
   depends_on = [null_resource.fetch_host_details_from_deployer]
