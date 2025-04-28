@@ -121,3 +121,16 @@ firewall-offline-cmd --zone=public --add-port=30000-61000/tcp
 firewall-offline-cmd --zone=public --add-port=30000-61000/udp
 systemctl start firewalld
 systemctl enable firewalld
+
+if [ "${enable_protocol}" == true ]; then
+    sec_interface=$(nmcli -t con show --active | grep eth1 | cut -d ':' -f 1)
+    nmcli conn del "$sec_interface"
+    nmcli con add type ethernet con-name eth1 ifname eth1
+    echo "DOMAIN=\"${protocol_dns_domain}\"" >> "/etc/sysconfig/network-scripts/ifcfg-eth1"
+    echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-eth1"
+    systemctl restart NetworkManager
+    ###### TODO: Fix Me ######
+    echo 'export IC_REGION=${vpc_region}' >> /root/.bashrc
+    echo 'export IC_SUBNET=${protocol_subnets}' >> /root/.bashrc
+    echo 'export IC_RG=${resource_group_id}' >> /root/.bashrc
+fi
