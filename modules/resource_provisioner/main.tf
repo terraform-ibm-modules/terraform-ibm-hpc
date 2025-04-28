@@ -55,11 +55,15 @@ resource "null_resource" "fetch_host_details_from_deployer" {
 resource "null_resource" "cleanup_ini_files" {
   count = var.enable_deployer == true ? 1 : 0
 
+  triggers = {
+    products = local.products
+  }
+
   provisioner "local-exec" {
     when    = destroy
     command = <<EOT
       echo "Cleaning up local .ini files..."
-      rm -f "${path.root}/../../solutions/${local.products}/"*.ini
+      rm -f "${path.root}/../../solutions/${self.triggers.products}/*.ini"
     EOT
   }
   depends_on = [null_resource.fetch_host_details_from_deployer]
