@@ -1,14 +1,11 @@
 output "list" {
-  description = "A list of VSI with name, id, zone, and primary ipv4 address"
-  value = flatten([
-    for module_instance in module.storage_baremetal : [
-      for server_key, server_details in module_instance.baremetal_servers :
-      {
-        id           = server_details.bms_server_id
-        name         = server_details.bms_server_name
-        ipv4_address = try(server_details.bms_server_ip, "")
-        vni_id       = server_details.bms_vni_id
-      }
-    ]
-  ])
+  description = "A list of Bare Metal servers with id, name, IP, and VNI ID"
+  value = [
+    for key, server in module.storage_baremetal : {
+      id           = server.bms_server_id
+      name         = server.bms_server_name
+      ipv4_address = server.bms_server_ip
+      vni_id       = server.bms_vni_id
+    }
+  ]
 }
