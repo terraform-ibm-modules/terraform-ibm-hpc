@@ -65,4 +65,13 @@ locals {
     "^${local.observability_monitoring_enable_compute_nodes_msg}$",
   (local.validate_observability_monitoring_enable_compute_nodes ? local.observability_monitoring_enable_compute_nodes_msg : ""))
 
+
+  # Existing Storage security group validation
+  validate_existing_storage_sg     = length([for share in var.custom_file_shares : { mount_path = share.mount_path, nfs_share = share.nfs_share } if share.nfs_share != null && share.nfs_share != ""]) > 0 ? var.storage_security_group_id != null ? true : false : true
+  validate_existing_storage_sg_msg = "Storage security group ID cannot be null when NFS share mount path is provided under cluster_file_shares variable."
+  # tflint-ignore: terraform_unused_declarations
+  validate_existing_storage_sg_chk = regex(
+    "^${local.validate_existing_storage_sg_msg}$",
+  (local.validate_existing_storage_sg ? local.validate_existing_storage_sg_msg : ""))
+
 }

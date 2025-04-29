@@ -431,6 +431,12 @@ variable "vpc_region" {
   description = "vpc region"
 }
 
+variable "storage_security_group_id" {
+  type        = string
+  default     = null
+  description = "Existing Scale storage security group id"
+}
+
 variable "scheduler" {
   type        = string
   default     = null

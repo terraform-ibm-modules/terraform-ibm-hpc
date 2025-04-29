@@ -103,6 +103,7 @@ module "landing_zone_vsi" {
   vpc_region                 = local.region
   scheduler                  = var.scheduler
   ibm_customer_number        = var.ibm_customer_number
+  storage_security_group_id  = var.storage_security_group_id
 }
 
 module "prepare_tf_input" {
@@ -130,6 +131,7 @@ module "prepare_tf_input" {
   enable_atracker                                  = var.enable_atracker
   enable_vpc_flow_logs                             = var.enable_vpc_flow_logs
   enable_dedicated_host                            = var.enable_dedicated_host
+  storage_security_group_id                        = var.storage_security_group_id
   allowed_cidr                                     = var.allowed_cidr
   vpc_name                                         = local.vpc_name
   storage_subnets                                  = local.storage_subnet

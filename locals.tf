@@ -133,14 +133,46 @@ locals {
   # dependency: landing_zone_vsi -> file-share
   compute_subnet_id         = var.vpc_name == null && var.compute_subnets == null ? local.compute_subnets[0].id : [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.id][0]
   compute_security_group_id = var.enable_deployer ? [] : module.landing_zone_vsi[0].compute_sg_id
-  default_share = local.management_instance_count > 0 ? [
+
+  valid_lsf_shares = [
+    for share in var.custom_file_shares :
+    {
+      mount_path = "/mnt/lsf"
+      nfs_share  = share.nfs_share
+    }
+    if share.mount_path == "/mnt/lsf" && share.nfs_share != "" && share.nfs_share != null
+  ]
+
+  valid_default_vpc_share = [
+    for share in var.custom_file_shares :
+    {
+      mount_path = "/mnt/lsf"
+      size       = share.size
+      iops       = share.size
+    }
+    if share.mount_path == "/mnt/lsf" && share.size != null && share.iops != null
+  ]  
+  default_share = local.management_instance_count > 0 && length(local.valid_lsf_shares) == 0 && length(local.valid_default_vpc_share) == 0 ? [
     {
       mount_path = "/mnt/lsf"
       size       = 100
       iops       = 1000
     }
   ] : []
-  total_shares = local.storage_instance_count > 0 ? [] : concat(local.default_share, var.file_shares)
+
+  vpc_file_share = [
+    for share in var.custom_file_shares :
+    {
+      mount_path = share.mount_path
+      size       = share.size
+      iops       = share.iops
+    }
+    if share.size != null && share.iops != null && share.mount_path != "/mnt/lsf"
+  ]
+
+  total_shares = concat(length(local.valid_default_vpc_share) == 1 ? local.valid_default_vpc_share : local.default_share, local.vpc_file_share)
+
+  # total_shares = 10
   file_shares = [
     for count in range(length(local.total_shares)) :
     {
@@ -414,7 +446,7 @@ locals {
   tie_breaker_storage_instance_names       = var.storage_type != "persistent" ? local.strg_tie_breaker_instance_names : local.baremetal_instance_names
   tie_breaker_ips_with_vol_mapping         = module.landing_zone_vsi[*].instance_ips_with_vol_mapping_tie_breaker
 
-  fileset_size_map = try({ for details in var.file_shares : details.mount_path => details.size }, {})
+  fileset_size_map = try({ for details in var.custom_file_shares : details.mount_path => details.size }, {})
 
   storage_subnet_cidr = jsonencode(data.ibm_is_subnet.existing_storage_subnets[*].ipv4_cidr_block)
   compute_subnet_cidr = jsonencode(data.ibm_is_subnet.existing_compute_subnets[*].ipv4_cidr_block)
