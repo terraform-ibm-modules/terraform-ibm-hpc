@@ -419,7 +419,7 @@ module "write_storage_scale_cluster_inventory" {
   export_ip_pool                                   = local.scale_ces_enabled == true ? values(one(module.protocol_reserved_ip[*].instance_name_ip_map)) : []
   filesystem                                       = local.scale_ces_enabled == true ? jsonencode("cesSharedRoot") : jsonencode("")
   mountpoint                                       = local.scale_ces_enabled == true ? jsonencode(var.filesystem_config[0]["mount_point"]) : jsonencode("")
-  protocol_gateway_ip                              = jsonencode("")
+  protocol_gateway_ip                              = jsonencode(local.protocol_subnet_gateway_ip)
   filesets                                         = local.fileset_size_map
   afm_cos_bucket_details                           = local.enable_afm == true ? local.afm_cos_bucket_details : []
   afm_config_details                               = local.enable_afm == true ? local.afm_cos_config : []
