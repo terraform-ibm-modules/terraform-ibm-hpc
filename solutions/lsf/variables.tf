@@ -372,11 +372,11 @@ variable "protocol_instances" {
   description = "Number of instances to be launched for protocol hosts."
 }
 
-variable "colocate_protocol_instances" {
-  type        = bool
-  default     = true
-  description = "Enable it to use storage instances as protocol instances"
-}
+# variable "colocate_protocol_instances" {
+#   type        = bool
+#   default     = true
+#   description = "Enable it to use storage instances as protocol instances"
+# }
 
 variable "storage_gui_username" {
   type        = string

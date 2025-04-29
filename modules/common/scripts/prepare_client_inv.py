@@ -56,7 +56,7 @@ def write_to_file(filepath, filecontent):
 
 
 def prepare_ansible_playbook_mount_fileset_client(hosts_config):
-    """ Write to playbook """
+    """Write to playbook"""
     content = """---
 # Mounting mount filesets on client nodes
 - hosts: {hosts_config}
@@ -68,27 +68,39 @@ def prepare_ansible_playbook_mount_fileset_client(hosts_config):
      - nfs_client_prepare
      - nfs_client_configure
      - {{ role: auth_configure, when: enable_ldap }}
-""".format(hosts_config=hosts_config)
+""".format(
+        hosts_config=hosts_config
+    )
     return content
 
 
-def initialize_cluster_details(protocol_cluster_reserved_names, storage_cluster_filesystem_mountpoint, filesets, enable_ldap, ldap_basedns, ldap_server, ldap_admin_password):
-    """ Initialize cluster details.
+def initialize_cluster_details(
+    protocol_cluster_reserved_names,
+    storage_cluster_filesystem_mountpoint,
+    filesets,
+    enable_ldap,
+    ldap_basedns,
+    ldap_server,
+    ldap_admin_password,
+):
+    """Initialize cluster details.
     :args: protocol_cluster_reserved_names (string), filesets (string)
     """
     filesets_list = []
     for mount_path in filesets.keys():
-        name = mount_path.split('/')[-1]
-        filesets_list.append({'name': name, 'mount_path': mount_path})
+        name = mount_path.split("/")[-1]
+        filesets_list.append({"name": name, "mount_path": mount_path})
 
     cluster_details = {}
-    cluster_details['protocol_cluster_reserved_names'] = protocol_cluster_reserved_names
-    cluster_details['storage_cluster_filesystem_mountpoint'] = storage_cluster_filesystem_mountpoint
-    cluster_details['filesets'] = filesets_list
-    cluster_details['enable_ldap'] = enable_ldap
-    cluster_details['ldap_basedns'] = ldap_basedns
-    cluster_details['ldap_server'] = ldap_server
-    cluster_details['ldap_admin_password'] = ldap_admin_password
+    cluster_details["protocol_cluster_reserved_names"] = protocol_cluster_reserved_names
+    cluster_details["storage_cluster_filesystem_mountpoint"] = (
+        storage_cluster_filesystem_mountpoint
+    )
+    cluster_details["filesets"] = filesets_list
+    cluster_details["enable_ldap"] = enable_ldap
+    cluster_details["ldap_basedns"] = ldap_basedns
+    cluster_details["ldap_server"] = ldap_server
+    cluster_details["ldap_admin_password"] = ldap_admin_password
     return cluster_details
 
 
@@ -144,32 +156,33 @@ if __name__ == "__main__":
         "--bastion_ssh_private_key",
         help="Bastion SSH private key path",
     )
-    PARSER.add_argument("--verbose", action="store_true",
-                        help="print log messages")
-    PARSER.add_argument("--enable_ldap", help="Enabling the LDAP",  default="false")
+    PARSER.add_argument("--verbose", action="store_true", help="print log messages")
+    PARSER.add_argument("--enable_ldap", help="Enabling the LDAP", default="false")
     PARSER.add_argument("--ldap_basedns", help="Base domain of LDAP", default="null")
     PARSER.add_argument("--ldap_server", help="LDAP Server IP", default="null")
-    PARSER.add_argument("--ldap_admin_password", help="LDAP Admin Password", default="null")
+    PARSER.add_argument(
+        "--ldap_admin_password", help="LDAP Admin Password", default="null"
+    )
     ARGUMENTS = PARSER.parse_args()
 
     # Step-1: Read the inventory file
     STRG_TF = read_json_file(ARGUMENTS.client_tf_inv_path)
     if ARGUMENTS.verbose:
-        print("Parsed storage terraform output: %s" %
-              json.dumps(STRG_TF, indent=4))
+        print("Parsed storage terraform output: %s" % json.dumps(STRG_TF, indent=4))
 
     # Step-2: Cleanup the Client Playbook file
-    cleanup("%s/%s/%s_mount_cloud_playbook.yaml" % (ARGUMENTS.install_infra_path,
-                                                    "ibm-spectrum-scale-install-infra",
-                                                    "client"))
+    cleanup(
+        "%s/%s/%s_mount_cloud_playbook.yaml"
+        % (ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra", "client")
+    )
     # Step-3: Cleanup the Clinet inventory file
-    cleanup("%s/%s/%s_mount_inventory.ini" % (ARGUMENTS.install_infra_path,
-                                              "ibm-spectrum-scale-install-infra",
-                                              "client"))
+    cleanup(
+        "%s/%s/%s_mount_inventory.ini"
+        % (ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra", "client")
+    )
 
     # Step-4: Create playbook
-    playbook_content = prepare_ansible_playbook_mount_fileset_client(
-        "client_nodes")
+    playbook_content = prepare_ansible_playbook_mount_fileset_client("client_nodes")
     write_to_file(
         "%s/%s/client_cloud_playbook.yaml"
         % (ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"),
@@ -179,7 +192,7 @@ if __name__ == "__main__":
     # Step-5: Create hosts
     config = configparser.ConfigParser(allow_no_value=True)
     node_details = initialize_node_details(
-        STRG_TF['client_cluster_instance_names'],
+        STRG_TF["client_cluster_instance_names"],
         ARGUMENTS.instance_private_key,
     )
     node_template = ""
@@ -205,18 +218,20 @@ if __name__ == "__main__":
         configfile.write("[client_nodes]" + "\n")
         configfile.write(node_template)
 
-    config['all:vars'] = initialize_cluster_details(STRG_TF['protocol_cluster_reserved_names'],
-                                                    STRG_TF['storage_cluster_filesystem_mountpoint'],
-                                                    STRG_TF['filesets'],
-                                                    ARGUMENTS.enable_ldap,
-                                                    ARGUMENTS.ldap_basedns,
-                                                    ARGUMENTS.ldap_server,
-                                                    ARGUMENTS.ldap_admin_password)
+    config["all:vars"] = initialize_cluster_details(
+        STRG_TF["protocol_cluster_reserved_names"],
+        STRG_TF["storage_cluster_filesystem_mountpoint"],
+        STRG_TF["filesets"],
+        ARGUMENTS.enable_ldap,
+        ARGUMENTS.ldap_basedns,
+        ARGUMENTS.ldap_server,
+        ARGUMENTS.ldap_admin_password,
+    )
     with open(
         "%s/%s/client_inventory.ini"
         % (ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"),
         "w",
     ) as configfile:
-        configfile.write('[client_nodes]' + "\n")
+        configfile.write("[client_nodes]" + "\n")
         configfile.write(node_template)
         config.write(configfile)

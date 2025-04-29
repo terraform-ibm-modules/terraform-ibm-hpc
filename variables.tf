@@ -176,11 +176,11 @@ variable "client_subnets" {
   description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
 }
 
-variable "client_subnets_cidr" {
-  type        = list(string)
-  default     = ["10.10.10.0/24", "10.20.10.0/24", "10.30.10.0/24"]
-  description = "Subnet CIDR block to launch the client host."
-}
+# variable "client_subnets_cidr" {
+#   type        = list(string)
+#   default     = ["10.10.10.0/24", "10.20.10.0/24", "10.30.10.0/24"]
+#   description = "Subnet CIDR block to launch the client host."
+# }
 
 variable "client_ssh_keys" {
   type        = list(string)
