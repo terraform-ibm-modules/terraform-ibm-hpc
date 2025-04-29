@@ -1,39 +1,3 @@
-/*
-    Creates IBM Cloud routing table route for protocol nodes.
-*/
-
-terraform {
-  required_providers {
-    ibm = {
-      source = "IBM-Cloud/ibm"
-    }
-  }
-}
-
-variable "turn_on" {}
-variable "storage_cluster_create_complete" {}
-variable "create_scale_cluster" {}
-variable "clone_path" {}
-variable "using_jumphost_connection" {}
-variable "client_inventory_path" {}
-variable "bastion_user" {}
-variable "bastion_instance_public_ip" {}
-variable "bastion_ssh_private_key" {}
-variable "client_meta_private_key" {}
-variable "write_inventory_complete" {}
-variable "enable_ldap" {}
-variable "ldap_basedns" {}
-variable "ldap_server" {}
-variable "ldap_admin_password" {}
-
-locals {
-  client_inventory_path   = format("%s/%s/client_inventory.ini", var.clone_path, "ibm-spectrum-scale-install-infra")
-  client_playbook         = format("%s/%s/client_cloud_playbook.yaml", var.clone_path, "ibm-spectrum-scale-install-infra")
-  scripts_path            = replace(path.module, "client_configuration", "scripts")
-  ansible_inv_script_path = format("%s/prepare_client_inv.py", local.scripts_path)
-  client_private_key      = format("%s/client_key/id_rsa", var.clone_path)
-}
-
 resource "local_sensitive_file" "write_client_meta_private_key" {
   count           = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true) ? 1 : 0
   content         = var.client_meta_private_key
@@ -75,9 +39,4 @@ resource "null_resource" "perform_client_configuration" {
     build = timestamp()
   }
   depends_on = [resource.local_sensitive_file.write_client_meta_private_key, resource.null_resource.prepare_client_inventory_using_jumphost_connection, resource.null_resource.prepare_client_inventory]
-}
-
-output "client_create_complete" {
-  value      = true
-  depends_on = [resource.local_sensitive_file.write_client_meta_private_key, resource.null_resource.prepare_client_inventory_using_jumphost_connection, resource.null_resource.prepare_client_inventory, resource.null_resource.perform_client_configuration]
 }
