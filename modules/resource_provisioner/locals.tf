@@ -9,6 +9,6 @@ locals {
   scale_cloud_infra_repo_url  = "https://github.com/jayeshh123/ibm-spectrum-scale-install-infra"
   scale_cloud_infra_repo_name = "ibm-spectrum-scale-install-infra"
   scale_cloud_infra_repo_tag  = "jay_scale_da_api"
-  ssh_key_file                = "${path.root}/../../solutions/lsf/bastion_id_rsa"
   products                    = var.scheduler == "Scale" ? "scale" : "lsf"
+  ssh_key_file                = "${path.root}/../../solutions/${local.products}/bastion_id_rsa"
 }
