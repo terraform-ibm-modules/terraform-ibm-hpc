@@ -41,7 +41,7 @@ locals {
     enable_cos_integration                           = var.enable_cos_integration
     enable_vpc_flow_logs                             = var.enable_vpc_flow_logs
     enable_vpn                                       = var.enable_vpn
-    file_shares                                      = var.file_shares
+    custom_file_shares                                      = var.custom_file_shares
     hpcs_instance_name                               = var.hpcs_instance_name
     key_management                                   = var.key_management
     client_instances                                 = var.client_instances
@@ -125,7 +125,7 @@ locals {
     enable_cos_integration                           = lookup(local.override[local.override_type], "enable_cos_integration", local.config.enable_cos_integration)
     enable_vpc_flow_logs                             = lookup(local.override[local.override_type], "enable_vpc_flow_logs", local.config.enable_vpc_flow_logs)
     enable_vpn                                       = lookup(local.override[local.override_type], "enable_vpn", local.config.enable_vpn)
-    file_shares                                      = lookup(local.override[local.override_type], "file_shares", local.config.file_shares)
+    custom_file_shares                               = lookup(local.override[local.override_type], "custom_file_shares", local.config.custom_file_shares)
     hpcs_instance_name                               = lookup(local.override[local.override_type], "hpcs_instance_name", local.config.hpcs_instance_name)
     key_management                                   = lookup(local.override[local.override_type], "key_management", local.config.key_management)
     client_instances                                 = lookup(local.override[local.override_type], "client_instances", local.config.client_instances)

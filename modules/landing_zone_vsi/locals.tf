@@ -247,8 +247,22 @@ locals {
       name      = "allow-all-compute-out"
       direction = "outbound"
       remote    = "0.0.0.0/0"
+    },
+    {
+      name      = "allow-all-storage-inbound"
+      direction = "inbound"
+      remote    = var.storage_security_group_id != null ? var.storage_security_group_id : module.compute_sg[0].security_group_id_for_ref
+    }    
+  ]
+
+  storage_nfs_security_group_rules = [
+    {
+      name      = "allow-all-hpcaas-compute-sg"
+      direction = "inbound"
+      remote    = module.compute_sg[0].security_group_id
     }
   ]
+
   storage_security_group_rules = [
     {
       name      = "allow-all-bastion-in"

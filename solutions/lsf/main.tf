@@ -24,7 +24,7 @@ module "lsf" {
   enable_cos_integration                           = local.env.enable_cos_integration
   enable_vpc_flow_logs                             = local.env.enable_vpc_flow_logs
   enable_vpn                                       = local.env.enable_vpn
-  file_shares                                      = local.env.file_shares
+  custom_file_shares                               = local.env.custom_file_shares
   key_management                                   = local.env.key_management
   client_instances                                 = local.env.client_instances
   client_ssh_keys                                  = local.env.client_ssh_keys

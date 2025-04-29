@@ -73,6 +73,18 @@ module "compute_sg" {
   vpc_id                       = var.vpc_id
 }
 
+module "nfs_storage_sg" {
+  count                          = var.storage_security_group_id != null ? 1 : 0
+  source                         = "terraform-ibm-modules/security-group/ibm"
+  version                        = "2.6.2"
+  resource_group                 = local.resource_group_id
+  add_ibm_cloud_internal_rules   = true
+  use_existing_security_group_id = true
+  existing_security_group_id     = var.storage_security_group_id
+  security_group_rules           = local.storage_nfs_security_group_rules
+  vpc_id                         = var.vpc_id
+}
+
 module "storage_sg" {
   count                        = local.enable_storage ? 1 : 0
   source                       = "terraform-ibm-modules/security-group/ibm"

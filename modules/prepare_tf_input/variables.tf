@@ -556,6 +556,12 @@ variable "storage_type" {
   description = "Select the required storage type(scratch/persistent/eval)."
 }
 
+variable "storage_security_group_id" {
+  type        = string
+  default     = null
+  description = "Provide the storage security group ID from the Spectrum Scale storage cluster if the mount_path in the cluster_file_share variable is set to use Scale fileset mount points. This security group is essential for establishing connections between the Spectrum LSF cluster nodes and NFS mount points, ensuring the nodes can access the specified mount points."
+}
+
 variable "colocate_protocol_cluster_instances" {
   type        = bool
   default     = true
