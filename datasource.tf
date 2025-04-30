@@ -78,8 +78,13 @@ data "ibm_is_instance_profile" "management_profile" {
 }
 
 data "ibm_is_instance_profile" "protocol_profile" {
-  count = local.ces_server_type == false && (local.scale_ces_enabled == true && var.colocate_protocol_cluster_instances == false) ? 1 : 0
+  count = local.ces_server_type == false && (local.scale_ces_enabled == true && var.colocate_protocol_instances == false) ? 1 : 0
   name  = local.protocol_vsi_profile[0]
+}
+
+data "ibm_is_subnet_reserved_ips" "protocol_subnet_reserved_ips" {
+  count  = local.scale_ces_enabled == true ? 1 : 0
+  subnet = local.protocol_subnet_id
 }
 
 data "ibm_is_instance_profile" "afm_server_profile" {

@@ -56,7 +56,7 @@ variable "storage_cluster_gui_password" {
   description = "Password for storage cluster GUI"
 }
 
-variable "colocate_protocol_cluster_instances" {
+variable "colocate_protocol_instances" {
   type        = bool
   description = "Enable it to use storage instances as protocol instances"
 }

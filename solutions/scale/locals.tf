@@ -35,7 +35,6 @@ locals {
     enable_bastion                                   = var.enable_bastion
     bastion_image                                    = var.bastion_image
     bastion_instance_profile                         = var.bastion_instance_profile
-    enable_deployer                                  = var.enable_deployer
     deployer_image                                   = var.deployer_image
     deployer_instance_profile                        = var.deployer_instance_profile
     enable_cos_integration                           = var.enable_cos_integration
@@ -96,7 +95,7 @@ locals {
     gklm_instance_key_pair                  = var.gklm_instance_key_pair
     gklm_instances                          = var.gklm_instances
     storage_type                            = var.storage_type
-    colocate_protocol_cluster_instances     = var.colocate_protocol_cluster_instances
+    colocate_protocol_instances             = var.colocate_protocol_instances
     scale_encryption_admin_default_password = var.scale_encryption_admin_default_password
     scale_encryption_admin_password         = var.scale_encryption_admin_password
     scale_encryption_admin_username         = var.scale_encryption_admin_username
@@ -125,7 +124,6 @@ locals {
     enable_bastion                                   = lookup(local.override[local.override_type], "enable_bastion", local.config.enable_bastion)
     bastion_image                                    = lookup(local.override[local.override_type], "bastion_image", local.config.bastion_image)
     bastion_instance_profile                         = lookup(local.override[local.override_type], "bastion_instance_profile", local.config.bastion_instance_profile)
-    enable_deployer                                  = lookup(local.override[local.override_type], "enable_deployer", local.config.enable_deployer)
     deployer_image                                   = lookup(local.override[local.override_type], "deployer_image", local.config.deployer_image)
     deployer_instance_profile                        = lookup(local.override[local.override_type], "deployer_instance_profile", local.config.deployer_instance_profile)
     enable_cos_integration                           = lookup(local.override[local.override_type], "enable_cos_integration", local.config.enable_cos_integration)
@@ -186,7 +184,7 @@ locals {
     gklm_instance_key_pair                  = lookup(local.override[local.override_type], "gklm_instance_key_pair", local.config.gklm_instance_key_pair)
     gklm_instances                          = lookup(local.override[local.override_type], "gklm_instances", local.config.gklm_instances)
     storage_type                            = lookup(local.override[local.override_type], "storage_type", local.config.storage_type)
-    colocate_protocol_cluster_instances     = lookup(local.override[local.override_type], "colocate_protocol_cluster_instances", local.config.colocate_protocol_cluster_instances)
+    colocate_protocol_instances             = lookup(local.override[local.override_type], "colocate_protocol_instances", local.config.colocate_protocol_instances)
     scale_encryption_admin_default_password = lookup(local.override[local.override_type], "scale_encryption_admin_default_password", local.config.scale_encryption_admin_default_password)
     scale_encryption_admin_password         = lookup(local.override[local.override_type], "scale_encryption_admin_password", local.config.scale_encryption_admin_password)
     scale_encryption_admin_username         = lookup(local.override[local.override_type], "scale_encryption_admin_username", local.config.scale_encryption_admin_username)

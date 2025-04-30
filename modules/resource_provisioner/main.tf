@@ -32,7 +32,7 @@ resource "null_resource" "tf_resource_provisioner" {
 }
 
 resource "null_resource" "fetch_host_details_from_deployer" {
-  count = var.enable_deployer == true ? 1 : 0
+  count = var.enable_deployer == true && var.scheduler == "LSF" ? 1 : 0
 
   provisioner "local-exec" {
     command = <<EOT
@@ -53,7 +53,7 @@ resource "null_resource" "fetch_host_details_from_deployer" {
 }
 
 resource "null_resource" "cleanup_ini_files" {
-  count = var.enable_deployer == true ? 1 : 0
+  count = var.enable_deployer == true && var.scheduler == "LSF" ? 1 : 0
 
   triggers = {
     products = local.products

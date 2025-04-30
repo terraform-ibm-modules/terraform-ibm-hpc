@@ -19,7 +19,6 @@ module "custom" {
   dynamic_compute_instances = local.env.dynamic_compute_instances
   enable_atracker           = local.env.enable_atracker
   enable_bastion            = local.env.enable_bastion
-  enable_deployer           = local.env.enable_deployer
   enable_cos_integration    = local.env.enable_cos_integration
   enable_vpc_flow_logs      = local.env.enable_vpc_flow_logs
   enable_vpn                = local.env.enable_vpn
