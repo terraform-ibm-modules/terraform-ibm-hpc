@@ -235,7 +235,7 @@ resource "null_resource" "configure_ldap_server_playbook" {
   triggers = {
     build = timestamp()
   }
-  depends_on = [local_file.prepare_ldap_server_playbook]
+  depends_on = [local_file.prepare_ldap_server_playbook, null_resource.run_playbook]
 }
 
 resource "local_file" "prepare_ldap_client_playbook" {
