@@ -419,9 +419,9 @@ locals {
 
   fileset_size_map = try({ for details in var.file_shares : details.mount_path => details.size }, {})
 
-  storage_subnet_cidr = var.enable_deployer ? "" : jsonencode((data.ibm_is_subnet.existing_storage_subnets[*].ipv4_cidr_block)[0])
+  storage_subnet_cidr = var.enable_deployer ? "" : local.storage_instance_count > 0 ? jsonencode((data.ibm_is_subnet.existing_storage_subnets[*].ipv4_cidr_block)[0]) : ""
   compute_subnet_cidr = var.enable_deployer ? "" : jsonencode((data.ibm_is_subnet.existing_compute_subnets[*].ipv4_cidr_block)[0])
-  client_subnet_cidr  = var.enable_deployer ? "" : jsonencode((data.ibm_is_subnet.existing_client_subnets[*].ipv4_cidr_block)[0])
+  client_subnet_cidr  = var.enable_deployer ? "" : local.client_instance_count > 0 ? jsonencode((data.ibm_is_subnet.existing_client_subnets[*].ipv4_cidr_block)[0]) : ""
 
   compute_memory               = data.ibm_is_instance_profile.compute_profile.memory[0].value
   compute_vcpus_count          = data.ibm_is_instance_profile.compute_profile.vcpu_count[0].value

@@ -425,7 +425,7 @@ module "ldap_vsi" {
   enable_floating_ip            = false
   security_group_ids            = module.storage_sg[*].security_group_id
   ssh_key_ids                   = local.ldap_ssh_keys
-  subnets                       = [local.storage_subnets[0]]
+  subnets                       = local.products == "lsf" ? local.compute_subnets : [local.storage_subnets[0]]
   tags                          = local.tags
   user_data                     = data.template_file.ldap_user_data.rendered
   vpc_id                        = var.vpc_id
