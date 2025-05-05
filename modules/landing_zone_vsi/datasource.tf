@@ -89,7 +89,7 @@ data "ibm_is_ssh_key" "ldap" {
 }
 
 data "ibm_is_image" "ldap_vsi_image" {
-  count = var.enable_ldap != null && var.ldap_server == null ? 1 : 0
+  count = var.enable_ldap != null && var.ldap_server == "null" ? 1 : 0
   name  = var.ldap_instances[count.index]["image"]
 }
 

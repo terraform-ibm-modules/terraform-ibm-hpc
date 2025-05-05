@@ -412,7 +412,7 @@ module "gklm_vsi" {
 }
 
 module "ldap_vsi" {
-  count                         = var.enable_ldap == true && var.ldap_server == null ? 1 : 0
+  count                         = var.enable_ldap == true && var.ldap_server == "null" ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
   version                       = "5.0.0"
   vsi_per_subnet                = 1
