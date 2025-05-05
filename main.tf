@@ -94,7 +94,7 @@ module "landing_zone_vsi" {
   enable_dedicated_host       = var.enable_dedicated_host
   enable_ldap                 = var.enable_ldap
   ldap_instances              = var.ldap_instances
-  ldap_server                 = var.ldap_server
+  ldap_server                 = local.ldap_server
   ldap_instance_key_pair      = local.ldap_instance_key_pair
   scale_encryption_enabled    = var.scale_encryption_enabled
   scale_encryption_type       = var.scale_encryption_type
@@ -163,7 +163,7 @@ module "prepare_tf_input" {
   observability_atracker_target_type               = var.observability_atracker_target_type
   enable_ldap                                      = var.enable_ldap
   ldap_instances                                   = var.ldap_instances
-  ldap_server                                      = var.ldap_server
+  ldap_server                                      = local.ldap_server
   ldap_basedns                                     = var.ldap_basedns
   ldap_server_cert                                 = local.ldap_server_cert
   ldap_admin_password                              = local.ldap_admin_password
@@ -184,7 +184,7 @@ module "prepare_tf_input" {
 module "validate_ldap_server_connection" {
   count                       = var.enable_deployer && var.enable_ldap && local.ldap_server != "null" ? 1 : 0
   source                      = "./modules/ldap_remote_exec"
-  ldap_server                 = var.ldap_server
+  ldap_server                 = local.ldap_server
   bastion_fip                 = local.bastion_fip
   bastion_private_key_content = local.bastion_private_key_content
   deployer_ip                 = local.deployer_ip
@@ -509,7 +509,7 @@ module "compute_cluster_configuration" {
   enable_ldap                     = var.enable_ldap
   ldap_basedns                    = var.ldap_basedns
   ldap_server                     = var.enable_ldap ? local.ldap_instance_private_ips[0] : null
-  ldap_admin_password             = var.ldap_admin_password == "" ? jsonencode(null) : var.ldap_admin_password
+  ldap_admin_password             = local.ldap_admin_password == "" ? jsonencode(null) : local.ldap_admin_password
   enable_key_protect              = var.scale_encryption_type
   depends_on                      = [module.write_compute_scale_cluster_inventory]
 }
@@ -569,8 +569,8 @@ module "storage_cluster_configuration" {
   enable_ldap                     = var.enable_ldap
   ldap_basedns                    = var.ldap_basedns
   ldap_server                     = var.enable_ldap ? local.ldap_instance_private_ips[0] : null
-  ldap_admin_password             = var.ldap_admin_password == "" ? jsonencode(null) : var.ldap_admin_password
-  ldap_server_cert                = var.ldap_server_cert
+  ldap_admin_password             = local.ldap_admin_password == "" ? jsonencode(null) : local.ldap_admin_password
+  ldap_server_cert                = local.ldap_server_cert
   enable_key_protect              = var.scale_encryption_type
   depends_on                      = [module.write_storage_scale_cluster_inventory]
 }
@@ -592,7 +592,7 @@ module "client_configuration" {
   enable_ldap                     = var.enable_ldap
   ldap_basedns                    = var.ldap_basedns
   ldap_server                     = var.enable_ldap ? jsonencode(local.ldap_instance_private_ips[0]) : jsonencode(null)
-  ldap_admin_password             = var.ldap_admin_password == "" ? jsonencode(null) : var.ldap_admin_password
+  ldap_admin_password             = local.ldap_admin_password == "" ? jsonencode(null) : local.ldap_admin_password
   depends_on                      = [module.compute_cluster_configuration, module.storage_cluster_configuration]
 }
 
