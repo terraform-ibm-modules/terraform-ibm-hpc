@@ -24,6 +24,7 @@ cloud_monitoring_ingestion_url = ${var.cloud_monitoring_ingestion_url}
 cloud_monitoring_prws_key = ${var.cloud_monitoring_prws_key}
 cloud_monitoring_prws_url = ${var.cloud_monitoring_prws_url}
 cloud_logs_ingress_private_endpoint = ${var.cloud_logs_ingress_private_endpoint}
+nfs_server_with_mount_path = ${var.share_path}
 ha_shared_dir            = ${var.ha_shared_dir}
 prefix                   = ${var.prefix}
 enable_ldap              = ${var.enable_ldap}

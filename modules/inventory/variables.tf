@@ -142,3 +142,8 @@ variable "scheduler" {
   type        = string
   description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
 }
+
+variable "share_path" {
+  type        = string
+  description = "Provide the exact path to where the VPC file share needs to be mounted"
+}

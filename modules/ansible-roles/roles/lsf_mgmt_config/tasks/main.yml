@@ -7,3 +7,5 @@
 - import_tasks: hosts_file_update.yml
 
 - import_tasks: configure_dynamic_nodes_templates.yml
+
+- import_tasks: nfs_mount_and_fileshare_setup.yml

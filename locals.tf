@@ -181,6 +181,8 @@ locals {
       iops = local.total_shares[count]["iops"]
     }
   ]
+
+  share_path = length(local.valid_lsf_shares) > 0 ? join(", ", local.valid_lsf_shares[*].nfs_share) : module.file_storage.mount_path_1
 }
 
 # locals needed for DNS
