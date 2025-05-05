@@ -204,7 +204,7 @@ resource "null_resource" "run_playbook_for_mgmt_config" {
 }
 
 resource "local_file" "prepare_ldap_server_playbook" {
-  count    = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" && var.scheduler == "LSF" ? 1 : 0
+  count    = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == null && var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
 - name: LDAP Server Configuration
   hosts: [ldap_server_node]
@@ -226,7 +226,7 @@ EOT
 }
 
 resource "null_resource" "configure_ldap_server_playbook" {
-  count = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" && var.scheduler == "LSF" ? 1 : 0
+  count = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == null && var.scheduler == "LSF" ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
