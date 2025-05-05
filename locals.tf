@@ -120,7 +120,7 @@ locals {
 
   storage_subnet     = [for subnet in local.storage_subnets : subnet.name]
   protocol_subnet    = [for subnet in local.protocol_subnets : subnet.name]
-  protocol_subnet_id = [for subnet in local.protocol_subnets : subnet.id][0]
+  protocol_subnet_id = local.protocol_instance_count > 0 ? [for subnet in local.protocol_subnets : subnet.id][0] : ""
   compute_subnet     = [for subnet in local.compute_subnets : subnet.name]
   client_subnet      = [for subnet in local.client_subnets : subnet.name]
   bastion_subnet     = [for subnet in local.bastion_subnets : subnet.name]
