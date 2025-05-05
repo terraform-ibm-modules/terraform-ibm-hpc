@@ -423,8 +423,8 @@ module "ldap_vsi" {
   prefix                        = local.ldap_node_name
   resource_group_id             = local.resource_group_id
   enable_floating_ip            = false
-  security_group_ids            = module.storage_sg[*].security_group_id
-  ssh_key_ids                   = local.ldap_ssh_keys
+  security_group_ids            = local.products == "lsf" ? module.compute_sg[*].security_group_id : module.storage_sg[*].security_group_id
+  ssh_key_ids                   = local.products == "lsf" ? local.management_ssh_keys : local.ldap_ssh_keys
   subnets                       = local.products == "lsf" ? local.compute_subnets : [local.storage_subnets[0]]
   tags                          = local.tags
   user_data                     = data.template_file.ldap_user_data.rendered
