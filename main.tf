@@ -34,6 +34,8 @@ module "landing_zone" {
   skip_flowlogs_s2s_auth_policy = var.skip_flowlogs_s2s_auth_policy
   skip_kms_s2s_auth_policy      = var.skip_kms_s2s_auth_policy
   observability_logs_enable     = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || (var.observability_atracker_enable && var.observability_atracker_target_type == "cloudlogs") ? true : false
+  bastion_subnet_id             = local.bastion_subnet_id
+  compute_subnet_id             = local.subnet_id
   # hpcs_instance_name            = var.hpcs_instance_name
   # clusters                      = var.clusters
 }

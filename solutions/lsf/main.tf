@@ -72,7 +72,8 @@ module "lsf" {
   ldap_server_cert                                 = local.env.ldap_server_cert
   ldap_instances                                   = local.env.ldap_instances
   enable_dedicated_host                            = local.env.enable_dedicated_host
-
+  bastion_subnets                                  = local.env.bastion_subnets
+  compute_subnets                                  = local.env.compute_subnets
   # compute_gui_password                             = local.env.compute_gui_password
   # compute_gui_username                             = local.env.compute_gui_username
   # hpcs_instance_name                               = local.env.hpcs_instance_name

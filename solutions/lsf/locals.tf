@@ -94,6 +94,8 @@ locals {
     ldap_server_cert                                 = var.ldap_server_cert
     ldap_instances                                   = var.ldap_instances
     enable_dedicated_host                            = var.enable_dedicated_host
+    compute_subnets                                  = var.compute_subnets
+    bastion_subnets                                  = var.bastion_subnets
     # scc_profile_version                            = var.scc_profile_version
 
   }
@@ -102,6 +104,8 @@ locals {
 # Compile Environment for Config output
 locals {
   env = {
+    bastion_subnets                                  = lookup(local.override[local.override_type], "bastion_subnets", local.config.bastion_subnets)
+    compute_subnets                                  = lookup(local.override[local.override_type], "compute_subnets", local.config.compute_subnets)
     existing_resource_group                          = lookup(local.override[local.override_type], "existing_resource_group", local.config.existing_resource_group)
     allowed_cidr                                     = lookup(local.override[local.override_type], "allowed_cidr", local.config.allowed_cidr)
     ssh_keys                                         = lookup(local.override[local.override_type], "ssh_keys", local.config.ssh_keys)

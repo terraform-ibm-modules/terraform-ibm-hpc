@@ -141,8 +141,45 @@ locals {
   ]
   network_acl_rules = flatten([local.network_acl_inbound_rules, local.network_acl_outbound_rules])
 
-  vpcs = var.vpc_name == null ? [
+  use_public_gateways_existing_vpc = {
+    "zone-1" = false
+    "zone-2" = false
+    "zone-3" = false
+  }
+
+  # vpcs = var.vpc_name == null ? [
+  #   {
+  #     prefix                       = local.name
+  #     resource_group               = var.existing_resource_group == null ? "workload-rg" : var.existing_resource_group
+  #     clean_default_security_group = true
+  #     clean_default_acl            = true
+  #     flow_logs_bucket_name        = var.enable_vpc_flow_logs ? "vpc-flow-logs-bucket" : null
+  #     network_acls = [
+  #       {
+  #         name              = "hpc-acl"
+  #         add_cluster_rules = false
+  #         rules             = local.network_acl_rules
+  #       }
+  #     ],
+  #     subnets             = local.subnets
+  #     use_public_gateways = local.use_public_gateways
+  #     address_prefixes    = local.address_prefixes
+  #   }
+  # ] : []
+
+  vpcs = [
     {
+      existing_vpc_id = var.vpc_name == null ? null : data.ibm_is_vpc.existing_vpc[0].id
+      existing_subnets = (var.vpc_name != null && length(var.compute_subnet_id) > 0) ? [
+        {
+          id             = var.compute_subnet_id
+          public_gateway = false
+        },
+        {
+          id             = var.bastion_subnet_id
+          public_gateway = false
+        }
+      ] : null
       prefix                       = local.name
       resource_group               = var.existing_resource_group == null ? "workload-rg" : var.existing_resource_group
       clean_default_security_group = true
@@ -155,11 +192,11 @@ locals {
           rules             = local.network_acl_rules
         }
       ],
-      subnets             = local.subnets
-      use_public_gateways = local.use_public_gateways
-      address_prefixes    = local.address_prefixes
+      subnets             = (var.vpc_name != null && length(var.compute_subnet_id) > 0) ? null : local.subnets
+      use_public_gateways = var.vpc_name == null ? local.use_public_gateways : local.use_public_gateways_existing_vpc
+      address_prefixes    = var.vpc_name == null ? local.address_prefixes : null
     }
-  ] : []
+  ]
 
   # Define SSH key
   ssh_keys = [

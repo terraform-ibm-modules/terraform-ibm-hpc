@@ -8,6 +8,18 @@ variable "enable_landing_zone" {
   description = "Run landing zone module."
 }
 
+variable "bastion_subnet_id" {
+  type        = string
+  description = "Name of an existing bastion subnet_id in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+  default     = null
+}
+
+variable "compute_subnet_id" {
+  type        = string
+  description = "Name of an existing compute subnet_id in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+  default     = null
+}
+
 ##############################################################################
 # Resource Groups Variables
 ##############################################################################
