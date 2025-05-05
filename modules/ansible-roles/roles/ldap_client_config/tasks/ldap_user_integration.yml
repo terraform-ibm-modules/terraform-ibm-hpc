@@ -76,7 +76,7 @@
     # Upload certificate to shared directory
     - name: LDAP | Ensure shared OpenLDAP certificate directory exists
       ansible.builtin.file:
-        path: "/mnt/lsf/shared/openldap"
+        path: "{{ ha_shared_dir }}/openldap"
         state: directory
         mode: '0755'
       run_once: true
@@ -84,7 +84,7 @@
     - name: LDAP | Upload ldap_cacert.pem to shared directory
       ansible.builtin.copy:
         src: "{{ LDAP_CERT_FILES_DIR }}/ldap_cacert.pem"
-        dest: "/mnt/lsf/shared/openldap/ldap_cacert.pem"
+        dest: "{{ ha_shared_dir }}/openldap/ldap_cacert.pem"
         mode: '0644'
       run_once: true
 

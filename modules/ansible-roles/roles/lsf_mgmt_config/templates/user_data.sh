@@ -98,7 +98,7 @@ if [ -n "${nfs_server_with_mount_path}" ]; then
   if mount_nfs_with_retries "${nfs_server_with_mount_path}" "${nfs_client_mount_path}"; then
     for dir in conf work; do
       rm -rf "${LSF_TOP:?}/$dir"
-      ln -fs "${nfs_client_mount_path}/shared/lsf/$dir" "${LSF_TOP}/$dir"
+      ln -fs "${nfs_client_mount_path}/lsf/$dir" "${LSF_TOP}/$dir"
     done
     chown -R lsfadmin:root "${LSF_TOP}"
   else
@@ -129,8 +129,8 @@ LDAP_DIR="/home/lsfadmin"
 SSH_DIR="$LDAP_DIR/.ssh"
 mkdir -p "$SSH_DIR"
 cp /home/vpcuser/.ssh/authorized_keys "$SSH_DIR/authorized_keys"
-cat /mnt/lsf/shared/ssh/id_rsa.pub >> "$SSH_DIR/authorized_keys"
-cp /mnt/lsf/shared/ssh/id_rsa "$SSH_DIR/id_rsa"
+cat {{ ha_shared_dir }}/ssh/id_rsa.pub >> "$SSH_DIR/authorized_keys"
+cp {{ ha_shared_dir }}/ssh/id_rsa "$SSH_DIR/id_rsa"
 echo "StrictHostKeyChecking no" >> "$SSH_DIR/config"
 chmod 600 "$SSH_DIR/authorized_keys"
 chmod 400 "$SSH_DIR/id_rsa"
@@ -241,10 +241,10 @@ if [ "$enable_ldap" = "true" ]; then
             # Check if the SSL certificate file exists, then copy it to the correct location
             # Retry finding SSL certificate with a maximum of 5 attempts and 5 seconds sleep between retries
             for attempt in {1..5}; do
-                if [ -f "/mnt/lsf/shared/openldap/ldap_cacert.pem" ]; then
-                    echo "LDAP SSL cert found under /mnt/lsf/shared/openldap/ldap_cacert.pem path" >> $logfile
+                if [ -f "{{ ha_shared_dir }}/openldap/ldap_cacert.pem" ]; then
+                    echo "LDAP SSL cert found under {{ ha_shared_dir }}/openldap/ldap_cacert.pem path" >> $logfile
                     mkdir -p /etc/openldap/certs/
-                    cp -pr /mnt/lsf/shared/openldap/ldap_cacert.pem /etc/openldap/certs/ldap_cacert.pem
+                    cp -pr {{ ha_shared_dir }}/openldap/ldap_cacert.pem /etc/openldap/certs/ldap_cacert.pem
                     break
                 else
                     echo "SSL cert not found on attempt $attempt. Retrying in 5 seconds..." >> $logfile
@@ -252,8 +252,7 @@ if [ "$enable_ldap" = "true" ]; then
                 fi
             done
             # Exit if the SSL certificate is still not found after 5 attempts
-            [ -f "/mnt/lsf/shared/openldap/ldap_cacert.pem" ] || { echo "SSL cert not found after 5 attempts. Exiting." >> $logfile; exit 1; }
-
+            [ -f "{{ ha_shared_dir }}/openldap/ldap_cacert.pem" ] || { echo "SSL cert not found after 5 attempts. Exiting." >> $logfile; exit 1; }
 
             # Create and configure the SSSD configuration file for LDAP integration
             cat <<EOF > /etc/sssd/sssd.conf
