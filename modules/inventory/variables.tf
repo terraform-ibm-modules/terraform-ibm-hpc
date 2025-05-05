@@ -144,6 +144,7 @@ variable "scheduler" {
 }
 
 variable "share_path" {
+  default     = null
   type        = string
   description = "Provide the exact path to where the VPC file share needs to be mounted"
 }

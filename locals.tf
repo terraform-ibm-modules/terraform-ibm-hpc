@@ -21,7 +21,7 @@ locals {
   # dependency: landing_zone -> deployer
   vpc_id                     = var.vpc_name == null ? one(module.landing_zone.vpc_id) : data.ibm_is_vpc.existing_vpc[0].id
   vpc_name                   = var.vpc_name == null ? one(module.landing_zone.vpc_name) : var.vpc_name
-  bastion_subnets            = module.landing_zone.bastion_subnets
+  # bastion_subnets            = module.landing_zone.bastion_subnets
   kms_encryption_enabled     = var.key_management != null ? true : false
   boot_volume_encryption_key = var.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   existing_kms_instance_guid = var.key_management != null ? module.landing_zone.key_management_guid : null
@@ -182,6 +182,19 @@ locals {
     }
   ]
 
+  existing_bastion_subnets = [
+    for subnet in data.ibm_is_subnet.existing_bastion_subnets :
+    {
+      cidr = subnet.ipv4_cidr_block
+      id   = subnet.id
+      name = subnet.name
+      zone = subnet.zone
+    }
+  ]
+
+  bastion_subnets  = var.vpc_name != null && var.bastion_subnets != null ? local.existing_bastion_subnets : module.landing_zone.bastion_subnets  
+  bastion_subnet_id         = (var.enable_deployer && var.vpc_name != null && var.bastion_subnets != null) ? local.existing_bastion_subnets[0].id : ""
+  subnet_id                 = (var.enable_deployer && var.vpc_name != null && var.compute_subnets != null) ? local.existing_compute_subnets[0].id : ""
   share_path = length(local.valid_lsf_shares) > 0 ? join(", ", local.valid_lsf_shares[*].nfs_share) : module.file_storage.mount_path_1
 }
 
