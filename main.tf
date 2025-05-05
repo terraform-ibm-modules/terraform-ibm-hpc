@@ -100,6 +100,8 @@ module "landing_zone_vsi" {
   scale_encryption_type       = var.scale_encryption_type
   gklm_instance_key_pair      = local.gklm_instance_key_pair
   gklm_instances              = var.gklm_instances
+  key_protect_instance_id     = var.key_protect_instance_id
+  key_protect_path            = format("%s/key_protect", var.scale_ansible_repo_clone_path)  
   vpc_region                  = local.region
   scheduler                   = var.scheduler
   ibm_customer_number         = var.ibm_customer_number
@@ -174,6 +176,7 @@ module "prepare_tf_input" {
   afm_cos_config                                   = var.afm_cos_config
   gklm_instance_key_pair                           = local.gklm_instance_key_pair
   gklm_instances                                   = var.gklm_instances
+  key_protect_instance_id                          = var.key_protect_instance_id
   scale_encryption_type                            = var.scale_encryption_type
   filesystem_config                                = var.filesystem_config
   scale_encryption_admin_password                  = var.scale_encryption_admin_password
@@ -510,7 +513,7 @@ module "compute_cluster_configuration" {
   ldap_basedns                    = var.ldap_basedns
   ldap_server                     = var.enable_ldap ? local.ldap_instance_private_ips[0] : null
   ldap_admin_password             = var.ldap_admin_password == "" ? jsonencode(null) : var.ldap_admin_password
-  enable_key_protect              = var.scale_encryption_type
+  enable_key_protect              = var.scale_encryption_type == "key_protect" ? "True" : "False"
   depends_on                      = [module.write_compute_scale_cluster_inventory]
 }
 
@@ -571,7 +574,7 @@ module "storage_cluster_configuration" {
   ldap_server                     = var.enable_ldap ? local.ldap_instance_private_ips[0] : null
   ldap_admin_password             = var.ldap_admin_password == "" ? jsonencode(null) : var.ldap_admin_password
   ldap_server_cert                = var.ldap_server_cert
-  enable_key_protect              = var.scale_encryption_type
+  enable_key_protect              = var.scale_encryption_type == "key_protect" ? "True" : "False"
   depends_on                      = [module.write_storage_scale_cluster_inventory]
 }
 

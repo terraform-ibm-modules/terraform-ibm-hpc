@@ -590,8 +590,13 @@ variable "scale_encryption_enabled" {
 
 variable "scale_encryption_type" {
   type        = string
-  default     = null
+  default     = "null"
   description = "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled"
+
+  validation {
+    condition     = var.scale_encryption_type == "key_protect" || var.scale_encryption_type == "gklm" || var.scale_encryption_type == "null"
+    error_message = "Invalid value: scale_encryption_type must be 'key_protect', 'gklm', or 'null'"
+  }
 }
 
 variable "gklm_instance_key_pair" {
@@ -632,6 +637,14 @@ variable "scale_encryption_admin_password" {
   type        = string
   default     = null
   description = "Password that is used for performing administrative operations for the GKLM.The password must contain at least 8 characters and at most 20 characters. For a strong password, at least three alphabetic characters are required, with at least one uppercase and one lowercase letter.  Two numbers, and at least one special character from this(~@_+:). Make sure that the password doesn't include the username. Visit this [page](https://www.ibm.com/docs/en/gklm/3.0.1?topic=roles-password-policy) to know more about password policy of GKLM. "
+}
+
+# Existing Key Protect Instance Details
+
+variable "key_protect_instance_id" {
+  type        = string
+  default     = null
+  description = "An existing Key Protect instance used for filesystem encryption"
 }
 
 variable "storage_type" {

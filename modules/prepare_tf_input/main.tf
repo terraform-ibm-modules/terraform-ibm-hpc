@@ -52,6 +52,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "scale_encryption_type": ${local.scale_encryption_type},
   "gklm_instance_key_pair": ${local.list_gklm_ssh_keys},
   "gklm_instances": ${local.list_gklm_instances},
+  "key_protect_instance_id:" ${local.key_protect_instance_id}",
   "scale_encryption_admin_password": "${local.scale_encryption_admin_password}",
   "filesystem_config": ${local.filesystem_config},
   "enable_hyperthreading": ${var.enable_hyperthreading},

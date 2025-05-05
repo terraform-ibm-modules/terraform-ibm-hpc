@@ -31,4 +31,5 @@ locals {
   scale_encryption_type           = jsonencode(var.scale_encryption_type)
   filesystem_config               = jsonencode(var.filesystem_config)
   scale_encryption_admin_password = jsonencode(var.scale_encryption_admin_password)
+  key_protect_instance_id         = jsonencode(var.key_protect_instance_id)
 }

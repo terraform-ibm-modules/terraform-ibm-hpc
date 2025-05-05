@@ -94,6 +94,7 @@ locals {
     scale_encryption_type                   = var.scale_encryption_type
     gklm_instance_key_pair                  = var.gklm_instance_key_pair
     gklm_instances                          = var.gklm_instances
+    key_protect_instance_id                 = var.key_protect_instance_id
     storage_type                            = var.storage_type
     colocate_protocol_instances             = var.colocate_protocol_instances
     scale_encryption_admin_default_password = var.scale_encryption_admin_default_password
@@ -183,6 +184,7 @@ locals {
     scale_encryption_type                   = lookup(local.override[local.override_type], "scale_encryption_type", local.config.scale_encryption_type)
     gklm_instance_key_pair                  = lookup(local.override[local.override_type], "gklm_instance_key_pair", local.config.gklm_instance_key_pair)
     gklm_instances                          = lookup(local.override[local.override_type], "gklm_instances", local.config.gklm_instances)
+    key_protect_instance_id                 = lookup(local.override[local.override_type], "key_protect_instance_id", local.config.key_protect_instance_id)
     storage_type                            = lookup(local.override[local.override_type], "storage_type", local.config.storage_type)
     colocate_protocol_instances             = lookup(local.override[local.override_type], "colocate_protocol_instances", local.config.colocate_protocol_instances)
     scale_encryption_admin_default_password = lookup(local.override[local.override_type], "scale_encryption_admin_default_password", local.config.scale_encryption_admin_default_password)
