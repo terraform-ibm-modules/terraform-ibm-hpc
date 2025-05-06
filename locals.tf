@@ -120,7 +120,7 @@ locals {
 
   storage_subnet     = [for subnet in local.storage_subnets : subnet.name]
   protocol_subnet    = [for subnet in local.protocol_subnets : subnet.name]
-  protocol_subnet_id = [for subnet in local.protocol_subnets : subnet.id][0]
+  protocol_subnet_id = var.enable_deployer ? "" : local.protocol_instance_count > 0 ? [for subnet in local.protocol_subnets : subnet.id][0] : ""
   compute_subnet     = [for subnet in local.compute_subnets : subnet.name]
   client_subnet      = [for subnet in local.client_subnets : subnet.name]
   bastion_subnet     = [for subnet in local.bastion_subnets : subnet.name]
@@ -446,5 +446,5 @@ locals {
   afm_bandwidth                = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].bandwidth[0].value
 
   protocol_reserved_name_ips_map = try({ for details in data.ibm_is_subnet_reserved_ips.protocol_subnet_reserved_ips[0].reserved_ips : details.name => details.address }, {})
-  protocol_subnet_gateway_ip     = local.scale_ces_enabled == true ? local.protocol_reserved_name_ips_map.ibm-default-gateway : ""
+  protocol_subnet_gateway_ip     = var.enable_deployer ? "" : local.scale_ces_enabled == true ? local.protocol_reserved_name_ips_map.ibm-default-gateway : ""
 }

@@ -83,7 +83,7 @@ data "ibm_is_instance_profile" "protocol_profile" {
 }
 
 data "ibm_is_subnet_reserved_ips" "protocol_subnet_reserved_ips" {
-  count  = local.scale_ces_enabled == true ? 1 : 0
+  count  = var.enable_deployer == false && local.scale_ces_enabled == true ? 1 : 0
   subnet = local.protocol_subnet_id
 }
 
