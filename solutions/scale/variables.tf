@@ -616,14 +616,14 @@ variable "gklm_instances" {
   default = [{
     profile = "bx2-2x8"
     count   = 2
-    image   = "ibm-redhat-8-10-minimal-amd64-4"
+    image   = "hpcc-scale-gklm4202-v2-5-2"
   }]
   description = "Number of instances to be launched for client."
 }
 
 variable "scale_encryption_admin_default_password" {
   type        = string
-  default     = null
+  default     = "SKLM@dmin123"
   description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
 }
 
