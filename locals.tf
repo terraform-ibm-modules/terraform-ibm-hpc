@@ -255,7 +255,7 @@ locals {
       ipv4_address = var.deployer_ip
     }
   ]
-
+  compute_dns_name = var.dns_domain_names["compute"]
   compute_dns_records = [
     for instance in concat(local.compute_instances, local.comp_mgmt_instances, local.deployer_instances) :
     {

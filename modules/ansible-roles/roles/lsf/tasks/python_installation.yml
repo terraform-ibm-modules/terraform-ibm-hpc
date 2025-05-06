@@ -5,7 +5,7 @@
 - name: Python Installation | Verify if Python 3.11 is installed
   ansible.builtin.shell: "python3.11 --version"
   register: python_check
-  ignore_errors: yes
+  ignore_errors: true
   changed_when: false
 
 # Install required packages if Python 3.11 is missing
@@ -58,7 +58,7 @@
 - name: Python Installation | Adjust permissions for Python 3.11 library directories
   ansible.builtin.file:
     path: "{{ item }}"
-    mode: '0755'
+    mode: "0755"
     recurse: yes
   loop:
     - /usr/local/lib/python3.11

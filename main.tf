@@ -182,6 +182,8 @@ module "prepare_tf_input" {
   filesystem_config                                = var.filesystem_config
   scale_encryption_admin_password                  = var.scale_encryption_admin_password
   scale_encryption_enabled                         = var.scale_encryption_enabled
+  dns_custom_resolver_id                           = var.dns_custom_resolver_id
+  dns_instance_id                                  = var.dns_instance_id
   depends_on                                       = [module.deployer]
 }
 
@@ -315,7 +317,7 @@ module "write_compute_cluster_inventory" {
   enable_monitoring           = local.enable_monitoring
   lsf_deployer_hostname       = local.lsf_deployer_hostname
   ibmcloud_api_key            = var.ibmcloud_api_key
-  dns_domain_names            = var.dns_domain_names
+  dns_domain_names            = local.compute_dns_name
   compute_public_key_content  = local.compute_public_key_content
   compute_private_key_content = local.compute_private_key_content
   enable_hyperthreading       = var.enable_hyperthreading

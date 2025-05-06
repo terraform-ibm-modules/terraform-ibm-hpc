@@ -5,7 +5,7 @@
     database: passwd #pragma: allowlist secret
     key: lsfadmin
   register: user_info
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: lsfadmin | Create lsfadmin user if not present
   ansible.builtin.user:

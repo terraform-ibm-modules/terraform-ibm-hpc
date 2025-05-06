@@ -8,6 +8,18 @@ variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
 }
 
+variable "dns_instance_id" {
+  type        = string
+  default     = null
+  description = "IBM Cloud HPC DNS service instance id."
+}
+
+variable "dns_custom_resolver_id" {
+  type        = string
+  default     = null
+  description = "IBM Cloud DNS custom resolver id."
+}
+
 ##############################################################################
 # Cluster Level Variables
 ##############################################################################

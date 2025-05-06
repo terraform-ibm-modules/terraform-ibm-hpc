@@ -33,4 +33,6 @@ locals {
   filesystem_config               = jsonencode(var.filesystem_config)
   scale_encryption_admin_password = jsonencode(var.scale_encryption_admin_password)
   custom_file_shares              = jsonencode(var.custom_file_shares)
+  dns_custom_resolver_id          = jsonencode(var.dns_custom_resolver_id != null ? (length(var.dns_custom_resolver_id) > 0 ? var.dns_custom_resolver_id : null) : var.dns_custom_resolver_id)
+  dns_instance_id                 = jsonencode(var.dns_instance_id != null ? (length(var.dns_instance_id) > 0 ? var.dns_instance_id : null) : var.dns_instance_id)  
 }

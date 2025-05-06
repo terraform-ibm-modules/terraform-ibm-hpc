@@ -1,5 +1,5 @@
 locals {
-  dns_domain_names = flatten([setsubtract(var.dns_domain_names == null ? [] : var.dns_domain_names, flatten(data.ibm_dns_zones.conditional[*].dns_zones[*]["name"]))])
+  # dns_domain_names = flatten([setsubtract(var.dns_domain_names == null ? [] : var.dns_domain_names, flatten(data.ibm_dns_zones.conditional[*].dns_zones[*]["name"]))])
 
   dns_zone_maps = [for zone in data.ibm_dns_zones.dns_zones.dns_zones : {
     (zone["name"]) = zone["zone_id"]

@@ -75,7 +75,9 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "observability_atracker_target_type": "${var.observability_atracker_target_type}",
   "enable_dedicated_host": "${var.enable_dedicated_host}",
   "storage_security_group_id": "${local.storage_security_group_id}",
-  "custom_file_shares": ${local.custom_file_shares}
+  "custom_file_shares": ${local.custom_file_shares},
+  "dns_custom_resolver_id": ${local.dns_custom_resolver_id},
+  "dns_instance_id": ${local.dns_instance_id}  
 }
 EOT
   filename = local.schematics_inputs_path
