@@ -74,6 +74,7 @@ module "lsf" {
   enable_dedicated_host                            = local.env.enable_dedicated_host
   bastion_subnets                                  = local.env.bastion_subnets
   compute_subnets                                  = local.env.compute_subnets
+  storage_security_group_id                        = local.env.storage_security_group_id
   # compute_gui_password                             = local.env.compute_gui_password
   # compute_gui_username                             = local.env.compute_gui_username
   # hpcs_instance_name                               = local.env.hpcs_instance_name

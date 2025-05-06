@@ -41,7 +41,7 @@ locals {
     enable_cos_integration                           = var.enable_cos_integration
     enable_vpc_flow_logs                             = var.enable_vpc_flow_logs
     enable_vpn                                       = var.enable_vpn
-    custom_file_shares                                      = var.custom_file_shares
+    custom_file_shares                               = var.custom_file_shares
     hpcs_instance_name                               = var.hpcs_instance_name
     key_management                                   = var.key_management
     client_instances                                 = var.client_instances
@@ -96,6 +96,7 @@ locals {
     enable_dedicated_host                            = var.enable_dedicated_host
     compute_subnets                                  = var.compute_subnets
     bastion_subnets                                  = var.bastion_subnets
+    storage_security_group_id                        = var.storage_security_group_id
     # scc_profile_version                            = var.scc_profile_version
 
   }
@@ -182,6 +183,7 @@ locals {
     ldap_server_cert                                 = lookup(local.override[local.override_type], "ldap_server_cert", local.config.ldap_server_cert)
     ldap_instances                                   = lookup(local.override[local.override_type], "ldap_instances", local.config.ldap_instances)
     enable_dedicated_host                            = lookup(local.override[local.override_type], "enable_dedicated_host", local.config.enable_dedicated_host)
+    storage_security_group_id                        = lookup(local.override[local.override_type], "storage_security_group_id", local.config.storage_security_group_id)
     # scc_profile_version                            = lookup(local.override[local.override_type], "scc_profile_version", local.config.scc_profile_version)
   }
 }

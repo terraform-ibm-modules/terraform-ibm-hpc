@@ -134,6 +134,7 @@ module "prepare_tf_input" {
   enable_vpc_flow_logs                             = var.enable_vpc_flow_logs
   enable_dedicated_host                            = var.enable_dedicated_host
   storage_security_group_id                        = var.storage_security_group_id
+  custom_file_shares                               = var.custom_file_shares
   allowed_cidr                                     = var.allowed_cidr
   vpc_name                                         = local.vpc_name
   storage_subnets                                  = local.storage_subnet

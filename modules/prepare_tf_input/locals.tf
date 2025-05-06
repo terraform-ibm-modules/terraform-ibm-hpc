@@ -32,4 +32,5 @@ locals {
   scale_encryption_type           = jsonencode(var.scale_encryption_type)
   filesystem_config               = jsonencode(var.filesystem_config)
   scale_encryption_admin_password = jsonencode(var.scale_encryption_admin_password)
+  custom_file_shares              = jsonencode(var.custom_file_shares)
 }
