@@ -730,9 +730,9 @@ module "encryption_configuration" {
   scale_cluster_clustername               = var.prefix
   scale_encryption_admin_default_password = var.scale_encryption_admin_default_password
   scale_encryption_admin_username         = var.scale_encryption_admin_username
-  compute_cluster_create_complete         = module.compute_cluster_configuration.compute_cluster_create_complete
-  storage_cluster_create_complete         = module.storage_cluster_configuration.storage_cluster_create_complete
-  remote_mount_create_complete            = module.remote_mount_configuration.remote_mount_create_complete
+  compute_cluster_create_complete         = module.compute_cluster_configuration[0].compute_cluster_create_complete
+  storage_cluster_create_complete         = module.storage_cluster_configuration[0].storage_cluster_create_complete
+  remote_mount_create_complete            = module.remote_mount_configuration[0].remote_mount_create_complete
   compute_cluster_encryption              = (var.create_separate_namespaces == true && local.static_compute_instance_count > 0) ? true : false
   storage_cluster_encryption              = (var.create_separate_namespaces == true && local.storage_instance_count > 0) ? true : false
   depends_on                              = [module.client_configuration, module.compute_cluster_configuration, module.storage_cluster_configuration]
