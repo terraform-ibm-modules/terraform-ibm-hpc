@@ -81,6 +81,14 @@ locals {
   gklm_node_name               = format("%s-%s", local.prefix, "gklm")
   cpmoute_management_node_name = format("%s-%s", local.prefix, "comp-mgmt")
 
+
+  tie_breaker_bm_servers = [{
+    profile    = "bx2d-metal-96x384"
+    count      = 1
+    image      = "hpcc-scale5221-rhel810"
+    filesystem = "fs1"
+  }]
+
   # Future use
   /*
   management_instance_count     = sum(var.management_instances[*]["count"])

@@ -35,6 +35,7 @@ locals {
   comp_mgmt_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_management_vsi_data])
   storage_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_vsi_data])
   storage_servers     = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_bms_data])
+  storage_tie_brkr_bm = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_tie_breaker_bms_data])
   protocol_instances  = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].protocol_vsi_data])
   gklm_instances      = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].gklm_vsi_data])
   client_instances    = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].client_vsi_data])
@@ -210,6 +211,24 @@ locals {
     }
   ]
 
+  raw_bm_storage_servers_dns_record_details = [
+    for server in local.storage_servers : {
+      id           = server.id
+      ipv4_address = server.ipv4_address[0]
+      name         = server.name
+      vni_id       = server.vni_id
+    }
+  ]
+
+  raw_bm_tie_breaker_dns_record_details = [
+    for server in local.storage_tie_brkr_bm : {
+      id           = server.id
+      ipv4_address = server.ipv4_address[0]
+      name         = server.name
+      vni_id       = server.vni_id
+    }
+  ]
+
   compute_dns_records = [
     for instance in concat(local.compute_instances, local.comp_mgmt_instances, local.deployer_instances) :
     {
@@ -218,7 +237,7 @@ locals {
     }
   ]
   storage_dns_records = [
-    for instance in concat(local.storage_instances, local.protocol_instances, local.afm_instances, local.tie_brkr_instances, local.strg_mgmt_instances, local.storage_servers) :
+    for instance in concat(local.storage_instances, local.protocol_instances, local.afm_instances, local.tie_brkr_instances, local.strg_mgmt_instances, local.raw_bm_storage_servers_dns_record_details, local.raw_bm_tie_breaker_dns_record_details) :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
@@ -346,6 +365,10 @@ locals {
   strg_servers_private_ips = flatten(local.storage_servers[*]["ipv4_address"])
   strg_servers_ids         = flatten(local.storage_servers[*]["id"])
   strg_servers_names       = try(tolist([for name_details in flatten(local.storage_servers[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
+
+  bm_tie_breaker_private_ips = flatten(local.storage_tie_brkr_bm[*]["ipv4_address"])
+  bm_tie_breaker_ids         = flatten(local.storage_tie_brkr_bm[*]["id"])
+  bm_tie_breaker_names       = try(tolist([for name_details in flatten(local.storage_tie_brkr_bm[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
   strg_mgmt_instance_private_ips = flatten(local.strg_mgmt_instances[*]["ipv4_address"])
   strg_mgmtt_instance_ids        = flatten(local.strg_mgmt_instances[*]["id"])
