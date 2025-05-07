@@ -80,6 +80,8 @@ module "scale" {
   key_protect_instance_id                          = local.env.key_protect_instance_id
   storage_type                                     = local.env.storage_type
   scale_encryption_admin_password                  = local.env.scale_encryption_admin_password
+  scale_encryption_admin_default_password          = local.env.scale_encryption_admin_default_password
+  scale_encryption_admin_username                  = local.env.scale_encryption_admin_username
   filesystem_config                                = local.env.filesystem_config
   # client_subnets_cidr                              = [local.env.client_subnets_cidr]
   # hpcs_instance_name                               = local.env.hpcs_instance_name

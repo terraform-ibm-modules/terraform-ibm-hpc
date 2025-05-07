@@ -716,6 +716,28 @@ module "compute_playbook" {
   depends_on                  = [module.compute_inventory]
 }
 
+module "encryption_configuration" {
+  source                          = "./modules/common/encryption_configuration"
+  count                           = var.scheduler == "Scale" && var.enable_deployer == false ? 1 : 0
+  turn_on                         = (var.create_separate_namespaces == true && local.storage_instance_count > 0) ? true : false
+  clone_path                      = var.scale_ansible_repo_clone_path
+  create_scale_cluster            = var.create_scale_cluster
+  meta_private_key                = module.landing_zone_vsi[0].storage_private_key_content  
+  scale_encryption_type           = var.scale_encryption_type != null ? var.scale_encryption_type : null
+  scale_encryption_admin_password = var.scale_encryption_admin_password
+  scale_encryption_servers        = var.scale_encryption_enabled && var.scale_encryption_type == "gklm" ? local.gklm_instance_private_ips : []
+  scale_encryption_servers_dns = var.scale_encryption_type == "gklm" ? jsonencode([ for instance in local.gklm_instances : instance.name ]) : jsonencode([])
+  scale_cluster_clustername = var.prefix
+  scale_encryption_admin_default_password = var.scale_encryption_admin_default_password
+  scale_encryption_admin_username = var.scale_encryption_admin_username
+  compute_cluster_create_complete = module.compute_cluster_configuration.compute_cluster_create_complete
+  storage_cluster_create_complete = module.storage_cluster_configuration.storage_cluster_create_complete
+  remote_mount_create_complete = module.remote_mount_configuration.remote_mount_create_complete
+  compute_cluster_encryption = (var.create_separate_namespaces == true && local.static_compute_instance_count > 0) ? true : false
+  storage_cluster_encryption = (var.create_separate_namespaces == true && local.storage_instance_count > 0) ? true : false
+  depends_on = [ module.client_configuration, module.compute_cluster_configuration, module.storage_cluster_configuration ]
+}  
+
 ###################################################
 # Observability Modules
 ###################################################
