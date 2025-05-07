@@ -90,6 +90,21 @@ variable "bastion_public_key_content" {
   description = "Bastion security group id."
 }
 
+variable "storage_public_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Storage nodes public key content."
+}
+
+variable "storage_private_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Storage nodes private key content."
+}
+
+
 ##############################################################################
 # DNS Template Variables
 ##############################################################################

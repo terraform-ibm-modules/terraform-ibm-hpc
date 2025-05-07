@@ -458,26 +458,30 @@ module "dedicated_host" {
 
 module "storage_baremetal" {
 
-  count                      = length(var.storage_servers) > 0 && var.storage_type == "persistent" ? 1 : 0
-  source                     = "../baremetal"
-  existing_resource_group    = var.existing_resource_group
-  prefix                     = var.prefix
-  storage_subnets            = [for subnet in local.storage_subnets : subnet.id]
-  storage_ssh_keys           = local.storage_ssh_keys
-  storage_servers            = var.storage_servers
-  security_group_ids         = module.storage_sg[*].security_group_id
-  bastion_public_key_content = var.bastion_public_key_content
+  count                       = length(var.storage_servers) > 0 && var.storage_type == "persistent" ? 1 : 0
+  source                      = "../baremetal"
+  existing_resource_group     = var.existing_resource_group
+  prefix                      = var.prefix
+  storage_subnets             = [for subnet in local.storage_subnets : subnet.id]
+  storage_ssh_keys            = local.storage_ssh_keys
+  storage_servers             = var.storage_servers
+  security_group_ids          = module.storage_sg[*].security_group_id
+  bastion_public_key_content  = var.bastion_public_key_content
+  storage_public_key_content  = local.enable_storage ? module.storage_key[0].public_key_content : ""
+  storage_private_key_content = local.enable_storage ? module.storage_key[0].private_key_content : ""
 }
 
 module "storage_baremetal_tie_breaker" {
 
-  count                      = length(var.storage_servers) > 0 && var.storage_type == "persistent" ? 1 : 0
-  source                     = "../baremetal"
-  existing_resource_group    = var.existing_resource_group
-  prefix                     = format("%s-strg-tie", var.prefix)
-  storage_subnets            = [for subnet in local.storage_subnets : subnet.id]
-  storage_ssh_keys           = local.storage_ssh_keys
-  storage_servers            = local.tie_breaker_bm_servers
-  security_group_ids         = module.storage_sg[*].security_group_id
-  bastion_public_key_content = var.bastion_public_key_content
+  count                       = length(var.storage_servers) > 0 && var.storage_type == "persistent" ? 1 : 0
+  source                      = "../baremetal"
+  existing_resource_group     = var.existing_resource_group
+  prefix                      = format("%s-strg-tie", var.prefix)
+  storage_subnets             = [for subnet in local.storage_subnets : subnet.id]
+  storage_ssh_keys            = local.storage_ssh_keys
+  storage_servers             = local.tie_breaker_bm_servers
+  security_group_ids          = module.storage_sg[*].security_group_id
+  bastion_public_key_content  = var.bastion_public_key_content
+  storage_public_key_content  = local.enable_storage ? module.storage_key[0].public_key_content : ""
+  storage_private_key_content = local.enable_storage ? module.storage_key[0].private_key_content : ""
 }

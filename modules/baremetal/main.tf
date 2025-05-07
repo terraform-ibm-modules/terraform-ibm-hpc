@@ -1,8 +1,3 @@
-module "storage_key" {
-  count  = local.enable_storage ? 1 : 0
-  source = "./../key"
-}
-
 module "storage_baremetal" {
   source                = "terraform-ibm-modules/bare-metal-vpc/ibm"
   version               = "1.1.0"
