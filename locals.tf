@@ -133,7 +133,6 @@ locals {
   # dependency: landing_zone_vsi -> file-share
   compute_subnet_id         = var.vpc_name == null && var.compute_subnets == null ? local.compute_subnets[0].id : [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.id][0]
   compute_security_group_id = var.enable_deployer ? [] : module.landing_zone_vsi[0].compute_sg_id
-
   valid_lsf_shares = [
     for share in var.custom_file_shares :
     {
@@ -142,6 +141,9 @@ locals {
     }
     if share.mount_path == "/mnt/lsf" && share.nfs_share != "" && share.nfs_share != null
   ]
+  share_path = length(local.valid_lsf_shares) > 0 ? join(", ", local.valid_lsf_shares[*].nfs_share) : module.file_storage[0].mount_path_1
+  fileset_size_map = try({ for details in var.custom_file_shares : details.mount_path => details.size }, {})
+  fileshare_name_mount_path_map       = var.enable_deployer ? {} : module.file_storage[0].name_mount_path_map
 
   valid_default_vpc_share = [
     for share in var.custom_file_shares :
@@ -195,7 +197,6 @@ locals {
   bastion_subnets  = var.vpc_name != null && var.bastion_subnets != null ? local.existing_bastion_subnets : module.landing_zone.bastion_subnets  
   bastion_subnet_id         = (var.enable_deployer && var.vpc_name != null && var.bastion_subnets != null) ? local.existing_bastion_subnets[0].id : ""
   subnet_id                 = (var.enable_deployer && var.vpc_name != null && var.compute_subnets != null) ? local.existing_compute_subnets[0].id : ""
-  share_path = length(local.valid_lsf_shares) > 0 ? join(", ", local.valid_lsf_shares[*].nfs_share) : module.file_storage[0].mount_path_1
 }
 
 # locals needed for DNS
@@ -311,9 +312,7 @@ locals {
   # storage_playbook_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage_ssh.yaml" : "${path.root}/modules/ansible-roles/storage_ssh.yaml"
 }
 
-# file Share OutPut
 locals {
-  fileshare_name_mount_path_map       = var.enable_deployer ? {} : module.file_storage[0].name_mount_path_map
   cloud_logs_ingress_private_endpoint = module.cloud_monitoring_instance_creation.cloud_logs_ingress_private_endpoint
 }
 
@@ -460,8 +459,6 @@ locals {
   tie_breaker_storage_instance_ids         = var.storage_type != "persistent" ? local.strg_tie_breaker_instance_ids : local.baremetal_instance_ids
   tie_breaker_storage_instance_names       = var.storage_type != "persistent" ? local.strg_tie_breaker_instance_names : local.baremetal_instance_names
   tie_breaker_ips_with_vol_mapping         = module.landing_zone_vsi[*].instance_ips_with_vol_mapping_tie_breaker
-
-  fileset_size_map = try({ for details in var.custom_file_shares : details.mount_path => details.size }, {})
 
   storage_subnet_cidr = jsonencode(data.ibm_is_subnet.existing_storage_subnets[*].ipv4_cidr_block)
   compute_subnet_cidr = jsonencode(data.ibm_is_subnet.existing_compute_subnets[*].ipv4_cidr_block)
