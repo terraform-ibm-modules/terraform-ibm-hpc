@@ -457,17 +457,22 @@ locals {
   storage_desc_bandwidth       = data.ibm_is_instance_profile.storage_profile.bandwidth[0].value
   storage_memory               = var.storage_type == "persistent" ? data.ibm_is_bare_metal_server_profile.storage_bms_profile.memory[0].value : data.ibm_is_instance_profile.storage_profile.memory[0].value
   storage_vcpus_count          = var.storage_type == "persistent" ? data.ibm_is_bare_metal_server_profile.storage_bms_profile.cpu_core_count[0].value : data.ibm_is_instance_profile.storage_profile.vcpu_count[0].value
-  storage_bandwidth            = var.storage_type == "persistent" ? data.ibm_is_bare_metal_server_profile.storage_bms_profile.bandwidth[0].value : data.ibm_is_instance_profile.storage_profile.bandwidth[0].value
+  storage_bandwidth            = var.storage_type == "persistent" ? local.sapphire_rapids_profile_check == true ? 200000 : 100000 : data.ibm_is_instance_profile.storage_profile.bandwidth[0].value
   protocol_memory              = (local.scale_ces_enabled == true && var.colocate_protocol_instances == false) ? local.ces_server_type == false ? data.ibm_is_instance_profile.protocol_profile[0].memory[0].value : jsonencode(0) : jsonencode(0)
   protocol_vcpus_count         = (local.scale_ces_enabled == true && var.colocate_protocol_instances == false) ? local.ces_server_type == false ? data.ibm_is_instance_profile.protocol_profile[0].vcpu_count[0].value : jsonencode(0) : jsonencode(0)
   protocol_bandwidth           = (local.scale_ces_enabled == true && var.colocate_protocol_instances == false) ? local.ces_server_type == false ? data.ibm_is_instance_profile.protocol_profile[0].bandwidth[0].value : jsonencode(0) : jsonencode(0)
   storage_protocol_memory      = var.storage_type == "persistent" ? data.ibm_is_bare_metal_server_profile.storage_bms_profile.memory[0].value : data.ibm_is_instance_profile.storage_profile.memory[0].value
   storage_protocol_vcpus_count = var.storage_type == "persistent" ? data.ibm_is_bare_metal_server_profile.storage_bms_profile.cpu_core_count[0].value : data.ibm_is_instance_profile.storage_profile.vcpu_count[0].value
-  storage_protocol_bandwidth   = var.storage_type == "persistent" ? data.ibm_is_bare_metal_server_profile.storage_bms_profile.bandwidth[0].value : data.ibm_is_instance_profile.storage_profile.bandwidth[0].value
+  storage_protocol_bandwidth   = var.storage_type == "persistent" ? local.sapphire_rapids_profile_check == true ? 200000 : 100000 : data.ibm_is_instance_profile.storage_profile.bandwidth[0].value
   afm_memory                   = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].memory[0].value
   afm_vcpus_count              = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].vcpu_count[0].value
   afm_bandwidth                = local.afm_server_type == true ? jsonencode("") : data.ibm_is_instance_profile.afm_server_profile[0].bandwidth[0].value
 
   protocol_reserved_name_ips_map = try({ for details in data.ibm_is_subnet_reserved_ips.protocol_subnet_reserved_ips[0].reserved_ips : details.name => details.address }, {})
   protocol_subnet_gateway_ip     = var.enable_deployer ? "" : local.scale_ces_enabled == true ? local.protocol_reserved_name_ips_map.ibm-default-gateway : ""
+  # sapphire_rapids_profile_check  = strcontains(var.storage_servers[count.index]["profile"], "3-metal") || strcontains(var.storage_servers[count.index]["profile"], "3d-metal")
+  sapphire_rapids_profile_check = [
+    for server in var.storage_servers :
+    strcontains(server.profile, "3-metal") || strcontains(server.profile, "3d-metal")
+  ]
 }
