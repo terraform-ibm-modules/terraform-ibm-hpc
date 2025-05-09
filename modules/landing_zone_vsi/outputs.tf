@@ -28,9 +28,19 @@ output "storage_bms_data" {
   value       = flatten(module.storage_baremetal[*].list)
 }
 
+output "storage_bm_name_with_vol_mapping" {
+  description = "Storage BareMetal Server data"
+  value       = flatten(module.storage_baremetal[*].instance_ips_with_vol_mapping)
+}
+
 output "storage_tie_breaker_bms_data" {
   description = "Storage BareMetal Server data"
   value       = flatten(module.storage_baremetal_tie_breaker[*].list)
+}
+
+output "storage_tie_breaker_bms_name_with_vol_mapping" {
+  description = "Storage BareMetal Server data"
+  value       = flatten(module.storage_baremetal_tie_breaker[*].instance_ips_with_vol_mapping)
 }
 
 output "storage_cluster_management_vsi" {

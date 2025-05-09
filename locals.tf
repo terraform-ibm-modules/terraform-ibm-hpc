@@ -44,6 +44,9 @@ locals {
   tie_brkr_instances  = var.enable_deployer ? [] : flatten(module.landing_zone_vsi[0].storage_cluster_tie_breaker_vsi_data)
   strg_mgmt_instances = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_cluster_management_vsi])
 
+  storage_bm_name_with_vol_mapping              = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_bm_name_with_vol_mapping])
+  storage_tie_breaker_bms_name_with_vol_mapping = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_tie_breaker_bms_name_with_vol_mapping])
+
   management_instance_count     = sum(var.management_instances[*]["count"])
   storage_instance_count        = var.storage_type == "persistent" ? sum(var.storage_servers[*]["count"]) : sum(var.storage_instances[*]["count"])
   client_instance_count         = sum(var.client_instances[*]["count"])
@@ -421,7 +424,7 @@ locals {
   storage_instance_private_ips = var.storage_type != "persistent" ? local.enable_afm == true ? concat(local.strg_instance_private_ips, local.afm_instance_private_ips) : local.strg_instance_private_ips : []
   storage_instance_ids         = var.storage_type != "persistent" ? local.enable_afm == true ? concat(local.strg_instance_ids, local.afm_instance_ids) : local.strg_instance_ids : []
   storage_instance_names       = var.storage_type != "persistent" ? local.enable_afm == true ? concat(local.strg_instance_names, local.afm_instance_names) : local.strg_instance_names : []
-  storage_ips_with_vol_mapping = module.landing_zone_vsi[*].instance_ips_with_vol_mapping
+  storage_ips_with_vol_mapping = var.storage_type != "persistent" ? module.landing_zone_vsi[*].instance_ips_with_vol_mapping : local.storage_bm_name_with_vol_mapping
 
   storage_cluster_instance_private_ips = local.scale_ces_enabled == false ? local.storage_instance_private_ips : concat(local.storage_instance_private_ips, local.protocol_instance_private_ips)
   storage_cluster_instance_ids         = local.scale_ces_enabled == false ? local.storage_instance_ids : concat(local.storage_instance_ids, local.protocol_instance_ids)
@@ -435,10 +438,10 @@ locals {
   baremetal_cluster_instance_ids         = var.storage_type == "persistent" && local.scale_ces_enabled == false ? local.baremetal_instance_ids : concat(local.baremetal_instance_ids, local.protocol_instance_ids)
   baremetal_cluster_instance_names       = var.storage_type == "persistent" && local.scale_ces_enabled == false ? local.baremetal_instance_names : concat(local.baremetal_instance_names, local.protocol_instance_names)
 
-  tie_breaker_storage_instance_private_ips = var.storage_type != "persistent" ? local.strg_tie_breaker_private_ips : local.baremetal_instance_private_ips
-  tie_breaker_storage_instance_ids         = var.storage_type != "persistent" ? local.strg_tie_breaker_instance_ids : local.baremetal_instance_ids
-  tie_breaker_storage_instance_names       = var.storage_type != "persistent" ? local.strg_tie_breaker_instance_names : local.baremetal_instance_names
-  tie_breaker_ips_with_vol_mapping         = module.landing_zone_vsi[*].instance_ips_with_vol_mapping_tie_breaker
+  tie_breaker_storage_instance_private_ips = var.storage_type != "persistent" ? local.strg_tie_breaker_private_ips : local.bm_tie_breaker_private_ips
+  tie_breaker_storage_instance_ids         = var.storage_type != "persistent" ? local.strg_tie_breaker_instance_ids : local.bm_tie_breaker_ids
+  tie_breaker_storage_instance_names       = var.storage_type != "persistent" ? local.strg_tie_breaker_instance_names : local.bm_tie_breaker_names
+  tie_breaker_ips_with_vol_mapping         = var.storage_type != "persistent" ? module.landing_zone_vsi[*].instance_ips_with_vol_mapping_tie_breaker : local.storage_tie_breaker_bms_name_with_vol_mapping
 
   fileset_size_map = try({ for details in var.file_shares : details.mount_path => details.size }, {})
 
