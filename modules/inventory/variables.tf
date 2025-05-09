@@ -148,3 +148,9 @@ variable "share_path" {
   type        = string
   description = "Provide the exact path to where the VPC file share needs to be mounted"
 }
+
+variable "all_nfs_shares_list" {
+  default     = null
+  type        = string
+  description = "Provide the exact path to where the VPC file share needs to be mounted"
+}

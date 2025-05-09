@@ -141,6 +141,12 @@ locals {
     }
     if share.mount_path == "/mnt/lsf" && share.nfs_share != "" && share.nfs_share != null
   ]
+
+  all_nfs_shares_list = [
+    for share in var.custom_file_shares : share.nfs_share
+    if share.nfs_share != "" && share.nfs_share != null
+  ]
+
   share_path = length(local.valid_lsf_shares) > 0 ? join(", ", local.valid_lsf_shares[*].nfs_share) : module.file_storage[0].mount_path_1
   fileset_size_map = try({ for details in var.custom_file_shares : details.mount_path => details.size }, {})
   fileshare_name_mount_path_map       = var.enable_deployer ? {} : module.file_storage[0].name_mount_path_map

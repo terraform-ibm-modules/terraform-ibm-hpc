@@ -8,4 +8,4 @@
 
 - import_tasks: configure_dynamic_nodes_templates.yml
 
-- import_tasks: nfs_mount_and_fileshare_setup.yml
+# - import_tasks: nfs_mount_and_fileshare_setup.yml

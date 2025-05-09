@@ -62,149 +62,149 @@
         - work
         - das_staging_area
 
-    - name: Set LSF ownership
-      file:
-        path: "{{ LSF_SUITE_TOP }}"
-        recurse: yes
-        owner: lsfadmin
-        group: root
+    # - name: Set LSF ownership
+    #   file:
+    #     path: "{{ LSF_SUITE_TOP }}"
+    #     recurse: yes
+    #     owner: lsfadmin
+    #     group: root
 
-- name: Configure LDAP certificate if enabled and primary
-  block:
-    - name: Create openldap directory
-      file:
-        path: /mnt/lsf/openldap
-        state: directory
-        mode: '0755'
+# - name: Configure LDAP certificate if enabled and primary
+#   block:
+#     - name: Create openldap directory
+#       file:
+#         path: /mnt/lsf/openldap
+#         state: directory
+#         mode: '0755'
 
-    - name: Write LDAP certificate to shared path
-      copy:
-        content: "{{ ldap_server_cert }}"
-        dest: /mnt/lsf/openldap/ldap_cacert.pem
-        mode: '0755'
+#     - name: Write LDAP certificate to shared path
+#       copy:
+#         content: "{{ ldap_server_cert }}"
+#         dest: /mnt/lsf/openldap/ldap_cacert.pem
+#         mode: '0755'
 
-    - name: Copy LDAP cert to system path
-      copy:
-        src: /mnt/lsf/openldap/ldap_cacert.pem
-        dest: /etc/openldap/certs/ldap_cacert.pem
-        remote_src: yes
-  when: on_primary | bool and enable_ldap | bool and ldap_server_cert != 'null'
+#     - name: Copy LDAP cert to system path
+#       copy:
+#         src: /mnt/lsf/openldap/ldap_cacert.pem
+#         dest: /etc/openldap/certs/ldap_cacert.pem
+#         remote_src: yes
+#   when: on_primary | bool and enable_ldap | bool and ldap_server_cert != 'null'
 
-- name: Configure PAC shared folders (primary + app center HA enabled)
-  block:
-    - name: Ensure PAC folder exists
-      file:
-        path: "{{ nfs_client_mount_pac_path }}"
-        state: directory
+# - name: Configure PAC shared folders (primary + app center HA enabled)
+#   block:
+#     - name: Ensure PAC folder exists
+#       file:
+#         path: "{{ nfs_client_mount_pac_path }}"
+#         state: directory
 
-    - name: Move gui-conf and create symlink
-      block:
-        - name: Remove existing gui-conf
-          file:
-            path: "{{ nfs_client_mount_pac_path }}/gui-conf"
-            state: absent
+#     - name: Move gui-conf and create symlink
+#       block:
+#         - name: Remove existing gui-conf
+#           file:
+#             path: "{{ nfs_client_mount_pac_path }}/gui-conf"
+#             state: absent
 
-        - name: Move and link gui-conf
-          command: mv {{ LSF_SUITE_GUI_CONF }} {{ nfs_client_mount_pac_path }}/gui-conf
+#         - name: Move and link gui-conf
+#           command: mv {{ LSF_SUITE_GUI_CONF }} {{ nfs_client_mount_pac_path }}/gui-conf
 
-        - name: Create symlink to gui-conf
-          file:
-            src: "{{ nfs_client_mount_pac_path }}/gui-conf"
-            dest: "{{ LSF_SUITE_GUI_CONF }}"
-            state: link
-      when: on_primary | bool
+#         - name: Create symlink to gui-conf
+#           file:
+#             src: "{{ nfs_client_mount_pac_path }}/gui-conf"
+#             dest: "{{ LSF_SUITE_GUI_CONF }}"
+#             state: link
+#       when: on_primary | bool
 
-    - name: Move gui-work and create symlink
-      block:
-        - name: Remove existing gui-work
-          file:
-            path: "{{ nfs_client_mount_pac_path }}/gui-work"
-            state: absent
+#     - name: Move gui-work and create symlink
+#       block:
+#         - name: Remove existing gui-work
+#           file:
+#             path: "{{ nfs_client_mount_pac_path }}/gui-work"
+#             state: absent
 
-        - name: Move and link gui-work
-          command: mv {{ LSF_SUITE_GUI_WORK }} {{ nfs_client_mount_pac_path }}/gui-work
+#         - name: Move and link gui-work
+#           command: mv {{ LSF_SUITE_GUI_WORK }} {{ nfs_client_mount_pac_path }}/gui-work
 
-        - name: Create symlink to gui-work
-          file:
-            src: "{{ nfs_client_mount_pac_path }}/gui-work"
-            dest: "{{ LSF_SUITE_GUI_WORK }}"
-            state: link
-      when: on_primary | bool
+#         - name: Create symlink to gui-work
+#           file:
+#             src: "{{ nfs_client_mount_pac_path }}/gui-work"
+#             dest: "{{ LSF_SUITE_GUI_WORK }}"
+#             state: link
+#       when: on_primary | bool
 
-- name: Create data and VNC directories in shared FS (primary only)
-  block:
-    - name: Create and link LSF data dir
-      file:
-        path: "{{ nfs_client_mount_path }}/data"
-        state: directory
-        owner: lsfadmin
-        group: root
+# - name: Create data and VNC directories in shared FS (primary only)
+#   block:
+#     - name: Create and link LSF data dir
+#       file:
+#         path: "{{ nfs_client_mount_path }}/data"
+#         state: directory
+#         owner: lsfadmin
+#         group: root
 
-    - name: Create symlink to work/data
-      file:
-        src: "{{ nfs_client_mount_path }}/data"
-        dest: "{{ LSF_SUITE_TOP }}/work/data"
-        state: link
+#     - name: Create symlink to work/data
+#       file:
+#         src: "{{ nfs_client_mount_path }}/data"
+#         dest: "{{ LSF_SUITE_TOP }}/work/data"
+#         state: link
 
-    - name: Create repository path dir
-      file:
-        path: "{{ nfs_client_mount_path }}/repository-path"
-        state: directory
-        mode: '0777'
-        owner: lsfadmin
-        group: root
-  when: on_primary | bool
+#     - name: Create repository path dir
+#       file:
+#         path: "{{ nfs_client_mount_path }}/repository-path"
+#         state: directory
+#         mode: '0777'
+#         owner: lsfadmin
+#         group: root
+#   when: on_primary | bool
 
-- name: Setup LSF logs in shared FS
-  block:
-    - name: Create shared log dir
-      file:
-        path: "{{ nfs_client_mount_path }}/log/{{ ansible_hostname }}"
-        state: directory
-        owner: lsfadmin
-        group: root
+# - name: Setup LSF logs in shared FS ----- discussion needed
+#   block:
+#     - name: Create shared log dir
+#       file:
+#         path: "{{ nfs_client_mount_path }}/log/{{ ansible_hostname }}"
+#         state: directory
+#         owner: lsfadmin
+#         group: root
 
-    - name: Move existing logs if present
-      shell: |
-        if [ -d "{{ LSF_SUITE_TOP }}/log" ] && [ "$(ls -A {{ LSF_SUITE_TOP }}/log)" ]; then
-          mv {{ LSF_SUITE_TOP }}/log/* {{ nfs_client_mount_path }}/log/{{ ansible_hostname }}
-        fi
-      args:
-        executable: /bin/bash
+#     - name: Move existing logs if present
+#       shell: |
+#         if [ -d "{{ LSF_SUITE_TOP }}/log" ] && [ "$(ls -A {{ LSF_SUITE_TOP }}/log)" ]; then
+#           mv {{ LSF_SUITE_TOP }}/log/* {{ nfs_client_mount_path }}/log/{{ ansible_hostname }}
+#         fi
+#       args:
+#         executable: /bin/bash
 
-    - name: Replace log dir with symlink
-      file:
-        path: "{{ LSF_SUITE_TOP }}/log"
-        state: absent
+#     - name: Replace log dir with symlink
+#       file:
+#         path: "{{ LSF_SUITE_TOP }}/log"
+#         state: absent
 
-    - name: Create log symlink
-      file:
-        src: "{{ nfs_client_mount_path }}/log/{{ ansible_hostname }}"
-        dest: "{{ LSF_SUITE_TOP }}/log"
-        state: link
+#     - name: Create log symlink
+#       file:
+#         src: "{{ nfs_client_mount_path }}/log/{{ ansible_hostname }}"
+#         dest: "{{ LSF_SUITE_TOP }}/log"
+#         state: link
 
-- name: Setup PAC log directory
-  block:
-    - name: Ensure PAC log base exists
-      file:
-        path: "{{ nfs_client_mount_path }}/gui-logs/{{ ansible_hostname }}"
-        state: directory
-        owner: lsfadmin
-        group: root
+# - name: Setup PAC log directory
+#   block:
+#     - name: Ensure PAC log base exists
+#       file:
+#         path: "{{ nfs_client_mount_path }}/gui-logs/{{ ansible_hostname }}"
+#         state: directory
+#         owner: lsfadmin
+#         group: root
 
-    - name: Move PAC logs if present
-      shell: |
-        if [ -d "{{ LSF_SUITE_GUI }}/logs/{{ ansible_hostname }}" ] && [ "$(ls -A {{ LSF_SUITE_GUI }}/logs/{{ ansible_hostname }})" ]; then
-          mv {{ LSF_SUITE_GUI }}/logs/{{ ansible_hostname }}/* {{ nfs_client_mount_path }}/gui-logs/{{ ansible_hostname }}
-        fi
-      args:
-        executable: /bin/bash
+#     - name: Move PAC logs if present
+#       shell: |
+#         if [ -d "{{ LSF_SUITE_GUI }}/logs/{{ ansible_hostname }}" ] && [ "$(ls -A {{ LSF_SUITE_GUI }}/logs/{{ ansible_hostname }})" ]; then
+#           mv {{ LSF_SUITE_GUI }}/logs/{{ ansible_hostname }}/* {{ nfs_client_mount_path }}/gui-logs/{{ ansible_hostname }}
+#         fi
+#       args:
+#         executable: /bin/bash
 
-    - name: Create symlink for PAC logs
-      file:
-        src: "{{ nfs_client_mount_path }}/gui-logs/{{ ansible_hostname }}"
-        dest: "{{ LSF_SUITE_GUI }}/logs/{{ ansible_hostname }}"
-        state: link
+#     - name: Create symlink for PAC logs
+#       file:
+#         src: "{{ nfs_client_mount_path }}/gui-logs/{{ ansible_hostname }}"
+#         dest: "{{ LSF_SUITE_GUI }}/logs/{{ ansible_hostname }}"
+#         state: link
 
 - name: Mount custom NFS shares
   block:

@@ -632,6 +632,7 @@ module "compute_inventory" {
   ldap_user_password                  = var.ldap_user_password
   ldap_server_cert                    = local.ldap_server_cert
   share_path                          = local.share_path
+  all_nfs_shares_list                 = local.all_nfs_shares_list
   depends_on                          = [module.write_compute_cluster_inventory]
 }
 
