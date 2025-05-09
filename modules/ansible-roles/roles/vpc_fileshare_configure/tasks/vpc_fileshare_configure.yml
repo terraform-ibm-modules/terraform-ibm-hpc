@@ -20,6 +20,22 @@
   with_dict: "{{ name_mount_path_map }}"
   notify: Mount NFS
 
+- name: Create base directories for all NFS mount points in all_nfs_shares_map
+  file:
+    path: "/mnt/{{ item.key }}"
+    state: directory
+    mode: '0777'
+  with_dict: "{{ all_nfs_shares_map }}"
+
+- name: Mount NFS shares from all_nfs_shares_map
+  ansible.builtin.mount:
+    path: "/mnt/{{ item.key }}"
+    src: "{{ item.value }}"
+    fstype: nfs
+    opts: rw,sec=sys,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,_netdev
+    state: mounted
+  with_dict: "{{ all_nfs_shares_map }}"
+
 - name: Flush handlers immediately
   meta: flush_handlers
 
