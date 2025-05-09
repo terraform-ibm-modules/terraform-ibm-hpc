@@ -27,7 +27,7 @@ locals {
 
   bm_server_name = flatten(local.raw_bm_details[*].name)
 
-  disk0_interface_type = data.ibm_is_bare_metal_server_profile.itself[*].disks[0].supported_interface_types[0].default
+  disk0_interface_type = (data.ibm_is_bare_metal_server_profile.itself[*].disks[0].supported_interface_types[0].default)[0]
   disk_count           = (data.ibm_is_bare_metal_server_profile.itself[*].disks[1].quantity[0].value)[0]
 
   # Determine starting disk based on disk0 interface type
