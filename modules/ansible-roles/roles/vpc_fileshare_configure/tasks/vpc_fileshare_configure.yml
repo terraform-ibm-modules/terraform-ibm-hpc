@@ -1,17 +1,22 @@
 ---
-- name: show dictionary
+- name: Show VPC File Share mappings
   ansible.builtin.debug:
-    msg: "{{item.key}}: {{item.value}}"
+    msg: "{{ item.key }}: {{ item.value }}"
   with_dict: "{{ name_mount_path_map }}"
 
-- name: Create base directories for NFS mount points
+- name: Show NFS Share mappings
+  ansible.builtin.debug:
+    msg: "{{ item.key }}: {{ item.value }}"
+  with_dict: "{{ all_nfs_shares_map }}"
+
+- name: Create base directories for VPC File shares
   file:
     path: "/mnt/{{ item.key }}"
     state: directory
     mode: '0777'
   with_dict: "{{ name_mount_path_map }}"
 
-- name: Add NFS entries to /etc/fstab
+- name: Add NFS entries to /etc/fstab for VPC File shares
   lineinfile:
     path: /etc/fstab
     line: "{{ item.value }} /mnt/{{ item.key }} nfs rw,sec=sys,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,_netdev 0 0"
@@ -20,14 +25,14 @@
   with_dict: "{{ name_mount_path_map }}"
   notify: Mount NFS
 
-- name: Create base directories for all NFS mount points in all_nfs_shares_map
+- name: Create base directories for all NFS mount points
   file:
     path: "/mnt/{{ item.key }}"
     state: directory
     mode: '0777'
   with_dict: "{{ all_nfs_shares_map }}"
 
-- name: Mount NFS shares from all_nfs_shares_map
+- name: Mount NFS shares
   ansible.builtin.mount:
     path: "/mnt/{{ item.key }}"
     src: "{{ item.value }}"

@@ -133,14 +133,6 @@ locals {
   # dependency: landing_zone_vsi -> file-share
   compute_subnet_id         = var.vpc_name == null && var.compute_subnets == null ? local.compute_subnets[0].id : [for subnet in data.ibm_is_subnet.existing_compute_subnets : subnet.id][0]
   compute_security_group_id = var.enable_deployer ? [] : module.landing_zone_vsi[0].compute_sg_id
-  valid_lsf_shares = [
-    for share in var.custom_file_shares :
-    {
-      mount_path = "/mnt/lsf"
-      nfs_share  = share.nfs_share
-    }
-    if share.mount_path == "/mnt/lsf" && share.nfs_share != "" && share.nfs_share != null
-  ]
 
   all_nfs_shares_map = {
     for share in var.custom_file_shares :
@@ -149,8 +141,18 @@ locals {
   }
 
   share_path = length(local.valid_lsf_shares) > 0 ? join(", ", local.valid_lsf_shares[*].nfs_share) : module.file_storage[0].mount_path_1
+  
   fileset_size_map = try({ for details in var.custom_file_shares : details.mount_path => details.size }, {})
   fileshare_name_mount_path_map       = var.enable_deployer ? {} : module.file_storage[0].name_mount_path_map
+
+  valid_lsf_shares = [
+    for share in var.custom_file_shares :
+    {
+      mount_path = "/mnt/lsf"
+      nfs_share  = share.nfs_share
+    }
+    if share.mount_path == "/mnt/lsf" && share.nfs_share != "" && share.nfs_share != null
+  ]
 
   valid_default_vpc_share = [
     for share in var.custom_file_shares :
