@@ -5,15 +5,15 @@ echo "START $(date '+%Y-%m-%d %H:%M:%S')" >> $logfile
 
 # Initialize variables
 cluster_prefix="{{ prefix }}"
-nfs_server_with_mount_path="{{ name_mount_path_map.lsf }}"
+nfs_server_with_mount_path="{{ mounts_map.lsf }}"
 cloud_monitoring_access_key="{{ cloud_monitoring_access_key }}"
 cloud_monitoring_ingestion_url="{{ cloud_monitoring_ingestion_url }}"
 observability_monitoring_on_compute_nodes_enable="{{ monitoring_enable_for_compute }}"
 observability_logs_enable_for_compute="{{ logs_enable_for_compute }}"
 cloud_logs_ingress_private_endpoint="{{ cloud_logs_ingress_private_endpoint }}"
 VPC_APIKEY_VALUE="{{ ibmcloud_api_key }}"
-custom_file_shares="{% for key, value in name_mount_path_map.items() if key != 'lsf' %}{{ value }}{% if not loop.last %} {% endif %}{% endfor %}"
-custom_mount_paths="{% for key in name_mount_path_map.keys() if key != 'lsf' %}{{ key }}{% if not loop.last %} {% endif %}{% endfor %}"
+custom_file_shares="{% for key, value in mounts_map.items() if key != 'lsf' %}{{ value }}{% if not loop.last %} {% endif %}{% endfor %}"
+custom_mount_paths="{% for key in mounts_map.keys() if key != 'lsf' %}{{ key }}{% if not loop.last %} {% endif %}{% endfor %}"
 hyperthreading="{{ enable_hyperthreading }}"
 ManagementHostNames="{{ lsf_masters | join(' ') }}"
 # rc_cidr_block="{{ compute_subnets_cidr | first }}"
@@ -98,7 +98,7 @@ if [ -n "${nfs_server_with_mount_path}" ]; then
   if mount_nfs_with_retries "${nfs_server_with_mount_path}" "${nfs_client_mount_path}"; then
     for dir in conf work; do
       rm -rf "${LSF_TOP:?}/$dir"
-      ln -fs "${nfs_client_mount_path}/shared/lsf/$dir" "${LSF_TOP}/$dir"
+      ln -fs "${nfs_client_mount_path}/lsf/$dir" "${LSF_TOP}/$dir"
     done
     chown -R lsfadmin:root "${LSF_TOP}"
   else
