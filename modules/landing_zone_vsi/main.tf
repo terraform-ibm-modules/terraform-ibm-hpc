@@ -192,7 +192,7 @@ module "compute_vsi" {
 }
 
 module "compute_cluster_management_vsi" {
-  count                         = var.scheduler == "Scale" && local.enable_compute ? 1 : 0
+  count                         = var.scheduler == "Scale" && local.enable_compute ? 0 : 1
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
   version                       = "5.0.0"
   vsi_per_subnet                = 1
@@ -467,4 +467,20 @@ module "storage_baremetal" {
   storage_servers            = var.storage_servers
   security_group_ids         = module.storage_sg[*].security_group_id
   bastion_public_key_content = var.bastion_public_key_content
+}
+
+########################################################################
+###                        Key Protect Module                        ###
+########################################################################
+
+module "key_protect_instance" {
+  count                          = var.scale_encryption_enabled == true && var.scale_encryption_type == "key_protect" && var.key_protect_instance_id != null ? 1 : 0
+  source                         = "../key_protect"
+  key_protect_instance_id        = var.key_protect_instance_id
+  resource_prefix                = var.prefix
+  vpc_region                     = local.region
+  resource_group_id              = local.resource_group_id
+  key_protect_path               = format("%s/key_protect", var.key_protect_path)
+  resource_tags                  = ["hpc", var.prefix]
+  vpc_storage_cluster_dns_domain = var.dns_domain_names["storage"]
 }

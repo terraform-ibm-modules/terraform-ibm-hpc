@@ -459,3 +459,19 @@ variable "enable_dedicated_host" {
   default     = false
   description = "Enables dedicated host to the compute instances"
 }
+
+##############################################################################
+# Key Protect Variables
+##############################################################################
+
+variable "key_protect_instance_id" {
+  type        = string
+  default     = null
+  description = "An existing Key Protect instance used for filesystem encryption"
+}
+
+variable "key_protect_path" {
+  type        = string
+  default     = null
+  description = "Path to store the Key protect certificates."
+}
