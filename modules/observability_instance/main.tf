@@ -7,7 +7,7 @@ locals {
 module "observability_instance" {
   # Replace "master" with a GIT release version to lock into a specific release
   source            = "terraform-ibm-modules/observability-instances/ibm"
-  version           = "3.3.1"
+  version           = "3.5.3"
   region            = var.location
   resource_group_id = var.rg
 
