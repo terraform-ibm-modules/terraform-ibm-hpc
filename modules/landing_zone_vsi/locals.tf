@@ -1,212 +1,360 @@
 # define variables
 locals {
-  name           = "lsf"
+  # Future use
+  # products       = "scale"
+  name           = "hpc"
   prefix         = var.prefix
   tags           = [local.prefix, local.name]
   vsi_interfaces = ["eth0", "eth1"]
+  bms_interfaces = ["ens1", "ens2"]
   # TODO: explore (DA always keep it true)
   skip_iam_authorization_policy = true
-  enable_compute                = true
-  enable_management             = true
-  ldap_node_name                = format("%s-%s", local.prefix, "ldap")
-  login_node_name               = format("%s-%s", local.prefix, "login")
-  management_node_name          = format("%s-%s", local.prefix, "mgmt")
-  worker_node_name              = format("%s-%s", local.prefix, "worker")
-  ldap_enable                   = var.enable_ldap == true && var.ldap_server == "null" ? 1 : 0
-  #  enable_worker_vsi             = var.solution == "lsf" && var.worker_node_min_count >= 0 ? var.worker_node_min_count : 0
-  # products = var.solution == "lsf" && var.enable_app_center ? "lsf,lsf-app-center" : "lsf"
-
   # Region and Zone calculations
   region = join("-", slice(split("-", var.zones[0]), 0, 2))
-  # # TODO: Compute & storage can't be added due to SG rule limitation
-  /* [ERROR] Error while creating Security Group Rule Exceeded limit of remote rules per security group
-  (the limit is 5 remote rules per security group)*/
 
-  compute_security_group_rules = [
-    {
-      name      = "allow-all-bastion-inbound"
-      direction = "inbound"
-      remote    = var.bastion_security_group_id
-    },
-    {
-      name      = "allow-port-22-inbound"
-      direction = "inbound"
-      remote    = var.bastion_security_group_id
-      tcp = {
-        port_min = 22
-        port_max = 22
-      }
-    },
-    {
-      name      = "allow-all-compute-inbound"
-      direction = "inbound"
-      remote    = module.compute_sg[0].security_group_id_for_ref
-    },
-    {
-      name      = "allow-all-compute-0-inbound"
-      direction = "inbound"
-      remote    = local.compute_subnets[0].cidr
-      tcp = {
-        port_min = 2049
-        port_max = 2049
-      }
-    },
-    {
-      name      = "allow-all-storage-inbound"
-      direction = "inbound"
-      remote    = var.storage_security_group_id != null ? var.storage_security_group_id : module.compute_sg[0].security_group_id_for_ref
-    },
-    {
-      name      = "allow-all-bastion-outbound"
-      direction = "outbound"
-      remote    = var.bastion_security_group_id
-    },
-    {
-      name      = "allow-all-compute-0-outbound"
-      direction = "outbound"
-      remote    = local.compute_subnets[0].cidr
-      tcp = {
-        port_min = 2049
-        port_max = 2049
-      }
-    },
-    {
-      name      = "allow-all-outbound-outbound"
-      direction = "outbound"
-      remote    = "0.0.0.0/0"
-    },
-  ]
+  management_image_id = data.ibm_is_image.management_stock_image[*].id
+  # Check whether an entry is found in the mapping file for the given management node image
+  image_mapping_entry_found = contains(keys(local.image_region_map), var.management_instances[0]["image"])
+  new_image_id              = local.image_mapping_entry_found ? local.image_region_map[var.management_instances[0]["image"]][local.region] : "Image not found with the given name"
 
-  storage_nfs_security_group_rules = [
-    {
-      name      = "allow-all-hpcaas-compute-sg"
-      direction = "inbound"
-      remote    = module.compute_sg[0].security_group_id
-    }
-  ]
+  compute_image_id = data.ibm_is_image.compute_stock_image[*].id
+  # Check whether an entry is found in the mapping file for the given compute node image
+  compute_image_found_in_map = contains(keys(local.image_region_map), var.static_compute_instances[0]["image"])
+  # If not found, assume the name is the id already (customer provided image)
+  new_compute_image_id = local.compute_image_found_in_map ? local.image_region_map[var.static_compute_instances[0]["image"]][local.region] : "Image not found with the given name"
 
-  # LDAP security group rule for Cluster
-  ldap_security_group_rule_for_cluster = [
-    {
-      name      = "inbound-rule-for-ldap-node-connection"
-      direction = "inbound"
-      remote    = var.ldap_server
-      tcp = {
-        port_min = 389
-        port_max = 389
-      }
-    }
-  ]
+  products = var.scheduler == "Scale" ? "scale" : "lsf"
+  block_storage_volumes = [for volume in coalesce(var.nsd_details, []) : {
+    name           = format("nsd-%s", index(var.nsd_details, volume) + 1)
+    profile        = volume["profile"]
+    capacity       = volume["capacity"]
+    iops           = volume["iops"]
+    resource_group = var.resource_group
+    # TODO: Encryption
+    # encryption_key =
+  }]
+  # TODO: Update the LB configurable
+  # Bug: 5847 - LB profile & subnets are not configurable
+  /*
+  load_balancers = [{
+    name              = "hpc"
+    type              = "private"
+    listener_port     = 80
+    listener_protocol = "http"
+    connection_limit  = 10
+    algorithm         = "round_robin"
+    protocol          = "http"
+    health_delay      = 60
+    health_retries    = 5
+    health_timeout    = 30
+    health_type       = "http"
+    pool_member_port  = 80
+  }]
+  */
 
-  # SSH connection to the Login node via Cluster nodes.
-  ssh_connection_to_login_node_via_cluster_nodes = [
-    {
-      name      = "inbound-rule-for-login-node-ssh-connection"
-      direction = "inbound"
-      remote    = module.compute_sg[0].security_group_id
-      tcp = {
-        port_min = 22
-        port_max = 22
-      }
-    }
-  ]
+  client_instance_count         = sum(var.client_instances[*]["count"])
+  management_instance_count     = sum(var.management_instances[*]["count"])
+  storage_instance_count        = var.storage_type == "persistent" ? sum(var.storage_servers[*]["count"]) : sum(var.storage_instances[*]["count"])
+  protocol_instance_count       = sum(var.protocol_instances[*]["count"])
+  static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
+
+  enable_client     = local.client_instance_count > 0
+  enable_management = local.management_instance_count > 0
+  enable_compute    = local.management_instance_count > 0 || local.static_compute_instance_count > 0
+  enable_storage    = local.storage_instance_count > 0
+  enable_protocol   = local.storage_instance_count > 0 && local.protocol_instance_count > 0
+  # TODO: Fix the logic
+  enable_block_storage = var.storage_type == "scratch" ? true : false
+
+  # Future use
+  # TODO: Fix the logic
+  # enable_load_balancer = false
+
+  client_node_name             = format("%s-%s", local.prefix, "client")
+  management_node_name         = format("%s-%s", local.prefix, "mgmt")
+  compute_node_name            = format("%s-%s", local.prefix, "comp")
+  storage_node_name            = format("%s-%s", local.prefix, "strg")
+  protocol_node_name           = format("%s-%s", local.prefix, "proto")
+  storage_management_node_name = format("%s-%s", local.prefix, "strg-mgmt")
+  ldap_node_name               = format("%s-%s", local.prefix, "ldap")
+  afm_node_name                = format("%s-%s", local.prefix, "afm")
+  gklm_node_name               = format("%s-%s", local.prefix, "gklm")
+  cpmoute_management_node_name = format("%s-%s", local.prefix, "comp-mgmt")
+
+  # Future use
+  /*
+  management_instance_count     = sum(var.management_instances[*]["count"])
+  management_instance_profile   = flatten([for item in var.management_instances: [
+    for count in range(item["count"]) : var.management_instances[index(var.management_instances, item)]["profile"]
+  ]])
+  static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
+  storage_instance_count        = sum(var.storage_instances[*]["count"])
+  protocol_instance_count       = sum(var.protocol_instances[*]["count"])
+  */
+
+  # Future use
+  /*
+  client_image_name     = var.client_image_name
+  management_image_name = var.management_image_name
+  compute_image_name    = var.compute_image_name
+  storage_image_name    = var.storage_image_name
+  protocol_image_name   = var.storage_image_name
+  */
+
+  client_image_id   = data.ibm_is_image.client[*].id
+  storage_image_id  = data.ibm_is_image.storage[*].id
+  protocol_image_id = data.ibm_is_image.storage[*].id
+  ldap_image_id     = data.ibm_is_image.ldap_vsi_image[*].id
+  afm_image_id      = data.ibm_is_image.afm[*].id
+  gklm_image_id     = data.ibm_is_image.gklm[*].id
+
+  ssh_keys      = [for name in var.ssh_keys : data.ibm_is_ssh_key.ssh_keys[name].id]
+  ldap_ssh_keys = [for name in var.ldap_instance_key_pair : data.ibm_is_ssh_key.ldap[name].id]
+  gklm_ssh_keys = [for name in var.gklm_instance_key_pair : data.ibm_is_ssh_key.gklm[name].id]
+
+  # Future use
+  /*
+  # Scale static configs
+  scale_cloud_deployer_path     = "/opt/IBM/ibm-spectrumscale-cloud-deploy"
+  scale_cloud_install_repo_url  = "https://github.com/IBM/ibm-spectrum-scale-cloud-install"
+  scale_cloud_install_repo_name = "ibm-spectrum-scale-cloud-install"
+  scale_cloud_install_branch    = "5.1.8.1"
+  scale_cloud_infra_repo_url    = "https://github.com/IBM/ibm-spectrum-scale-install-infra"
+  scale_cloud_infra_repo_name   = "ibm-spectrum-scale-install-infra"
+  scale_cloud_infra_repo_tag    = "v2.7.0"
+  */
+
+  # Region and Zone calculations
+  # region = join("-", slice(split("-", var.zones[0]), 0, 2))
+
+  # TODO: DNS configs
+  # Security group rules
+  # client_security_group = local.enable_client ? module.client_sg[0].security_group_id : null
+  # compute_security_group = local.enable_compute ? module.compute_sg[0].security_group_id : null
+  # storage_security_group = local.enable_storage ? module.storage_sg[0].security_group_id : null
+
+  # client_security_group_remote  = compact([var.bastion_security_group_id])
+  # compute_security_group_remote = compact([var.bastion_security_group_id])
+  # storage_security_group_remote = compact([var.bastion_security_group_id])
+
+  # Derived configs
+  # VPC
+  # resource_group_id = data.ibm_resource_group.existing_resource_group.id
 
   # Subnets
   # TODO: Multi-zone multi-vNIC VSIs deployment support (bug #https://github.ibm.com/GoldenEye/issues/issues/5830)
   # Findings: Singe zone multi-vNICs VSIs deployment & multi-zone single vNIC VSIs deployment are supported.
-  compute_subnets = var.compute_subnets
+  client_subnets     = var.client_subnets
+  cluster_subnet_ids = var.cluster_subnet_ids
+  storage_subnets    = var.storage_subnets
+  protocol_subnets   = var.protocol_subnets
 
-  # Check whether an entry is found in the mapping file for the given management node image
-  image_mapping_entry_found = contains(keys(local.image_region_map), var.management_image_name)
-  new_image_id              = local.image_mapping_entry_found ? local.image_region_map[var.management_image_name][local.region] : "Image not found with the given name"
+  compute_public_key_content  = one(module.compute_key[*].public_key_content)
+  compute_private_key_content = one(module.compute_key[*].private_key_content)
 
-  # Check whether an entry is found in the mapping file for the given compute node image
-  compute_image_found_in_map = contains(keys(local.image_region_map), var.compute_image_name)
-  # If not found, assume the name is the id already (customer provided image)
-  new_compute_image_id    = local.compute_image_found_in_map ? local.image_region_map[var.compute_image_name][local.region] : var.compute_image_name
-  compute_image_from_data = !local.compute_image_found_in_map && !startswith(local.new_compute_image_id, "crn:")
-
-  # Check whether an entry is found in the mapping file for the given login node image
-  login_image_mapping_entry_found = contains(keys(local.image_region_map), var.login_image_name)
-  new_login_image_id              = local.login_image_mapping_entry_found ? local.image_region_map[var.login_image_name][local.region] : "Image not found with the given name"
-
-  compute_node_max_count = 500
-  rc_max_num             = var.solution == "hpc" ? local.compute_node_max_count : var.worker_node_max_count
-  vcpus                  = tonumber(data.ibm_is_instance_profile.worker_node.vcpu_count[0].value)
-  ncores                 = local.vcpus / 2
-  ncpus                  = var.hyperthreading_enabled ? local.vcpus : local.ncores
-  mem_in_mb              = tonumber(data.ibm_is_instance_profile.worker_node.memory[0].value) * 1024
-  rc_profile             = data.ibm_is_instance_profile.worker_node.name
-
-  bastion_subnets        = var.bastion_subnets
-  ldap_server            = var.enable_ldap == true && var.ldap_server == "null" ? length(module.ldap_vsi) > 0 ? var.ldap_primary_ip[0] : null : var.ldap_server
-  ldap_server_cert       = var.enable_ldap == true && var.ldap_server_cert != "null" ? var.ldap_server_cert : "null"
-  ldap_instance_image_id = var.enable_ldap == true && var.ldap_server == "null" ? data.ibm_is_image.ldap_vsi_image[0].id : "null"
-
-  # The below logic is needed to point the API endpoints for the dynanic host creation
-  us_east  = "https://api.us-east.codeengine.cloud.ibm.com/v2beta"
-  eu_de    = "https://api.eu-de.codeengine.cloud.ibm.com/v2beta"
-  us_south = "https://api.us-south.codeengine.cloud.ibm.com/v2beta"
-
-  # ip/names of vsis
-  management_vsi_data   = flatten(module.management_vsi[*]["list"])
-  management_private_ip = local.management_vsi_data[0]["ipv4_address"]
-  management_hostname   = local.management_vsi_data[0]["name"]
-
-  management_candidate_vsi_data    = flatten(module.management_candidate_vsi[*]["list"])
-  management_candidate_private_ips = local.management_candidate_vsi_data[*]["ipv4_address"]
-  management_candidate_hostnames   = local.management_candidate_vsi_data[*]["name"]
-
-  worker_vsi_data   = flatten(module.worker_vsi[*]["list"])
-  worker_private_ip = local.worker_vsi_data[*]["ipv4_address"]
-
-  login_vsi_data    = flatten(module.login_vsi[*]["list"])
-  login_private_ips = local.login_vsi_data[*]["ipv4_address"]
-  login_hostnames   = local.login_vsi_data[*]["name"]
-
-  ldap_vsi_data = flatten(module.ldap_vsi[*]["list"])
-  #ldap_private_ips  = local.ldap_vsi_data[*]["ipv4_address"]
-  ldap_hostnames = local.ldap_vsi_data[*]["name"]
-
-}
-
-###########################################################################
-# IBM Cloud Dababase for MySQL database local variables
-###########################################################################
-locals {
-  db_name = "pac"
-  db_user = "pacuser"
-}
-
-## Differentiating VPC File Share and NFS share
-locals {
-  nfs_file_share = [
-    for share in var.mount_path :
-    {
-      mount_path = share.mount_path
-      nfs_share  = share.nfs_share
-    }
-    if share.mount_path != "/mnt/lsf" && share.nfs_share != null && share.nfs_share != ""
-  ]
-
-  vpc_file_share = [
-    for share in var.mount_path :
-    {
-      mount_path = share.mount_path
-      size       = share.size
-      iops       = share.iops
-    }
-    if share.mount_path != "/mnt/lsf" && share.size != null && share.iops != null
-  ]
-}
-
-locals {
-  flattened_worker_nodes = flatten([
-    for key, value in var.worker_node_instance_type : [
-      for idx in range(value.count) : {
-        instance_type = value.instance_type
-        prefix        = format("%s-%s-%d", local.worker_node_name, key, idx + 1)
+  # Security Groups
+  protocol_secondary_security_group = flatten([
+    for subnet_index, subnet in local.protocol_subnets : [
+      for i in range(var.protocol_instances[subnet_index]["count"]) : {
+        security_group_id = one(module.storage_sg[*].security_group_id)
+        interface_name    = "${subnet["name"]}-${i}"
       }
     ]
   ])
+
+  # ldap_instance_image_id = var.enable_ldap == true && var.ldap_server == "null" ? data.ibm_is_image.ldap_vsi_image[0].id : "null"
+}
+
+locals {
+
+  # Getting current/available dedicated host profiles
+  current_dh_profiles = var.enable_dedicated_host ? [for p in data.ibm_is_dedicated_host_profiles.profiles[0].profiles : p if p.status == "current"] : []
+
+  # Get valid instance profiles from available dedicated hosts
+  valid_instance_profiles = toset(distinct(flatten([
+    for p in local.current_dh_profiles : p.supported_instance_profiles[*].name
+  ])))
+
+  # Extract profile family prefix (e.g., "bx2" from "bx2-16x64")
+  instance_profile_prefixes = distinct([
+    for inst in var.static_compute_instances :
+    regex("^([a-z]+[0-9]+)", inst.profile)[0]
+  ])
+
+  # Map instance profile prefixes to available dedicated host profiles
+  profile_mappings = {
+    for prefix in local.instance_profile_prefixes :
+    prefix => {
+      dh_profiles = [
+        for p in local.current_dh_profiles :
+        p if startswith(p.name, "${prefix}-host")
+      ]
+    }
+  }
+
+  # Validate each instance configuration
+  validation_results = [
+    for inst in var.static_compute_instances : {
+      profile              = inst.profile
+      profile_prefix       = regex("^([a-z]+[0-9]+)", inst.profile)[0]
+      count                = inst.count
+      instance_valid       = contains(local.valid_instance_profiles, inst.profile)
+      dh_profile_available = length(local.profile_mappings[regex("^([a-z]+[0-9]+)", inst.profile)[0]].dh_profiles) > 0
+    } if inst.count > 0
+  ]
+
+  # Error messages for invalid configurations
+  errors = concat(
+    [
+      for vr in local.validation_results :
+      "ERROR: Instance profile '${vr.profile}' is not available in this region"
+      if !vr.instance_valid
+    ],
+    [
+      for vr in local.validation_results :
+      "ERROR: No CURRENT dedicated host profile available for '${vr.profile_prefix}-host-*' (required for '${vr.profile}')"
+      if vr.instance_valid && !vr.dh_profile_available
+    ]
+  )
+
+  # Create one dedicated host config per instance profile (not per count)
+  dedicated_host_config = {
+    for vr in local.validation_results :
+    vr.profile => {
+      class   = vr.profile_prefix
+      profile = local.profile_mappings[vr.profile_prefix].dh_profiles[0].name
+      family  = local.profile_mappings[vr.profile_prefix].dh_profiles[0].family
+      count   = vr.count
+    }
+    if vr.instance_valid && vr.dh_profile_available
+  }
+
+  dedicated_host_ids = [
+    for instance in var.static_compute_instances : {
+      profile = instance.profile
+      id      = try(one(module.dedicated_host[instance.profile].dedicated_host_id), "")
+    }
+  ]
+
+  dedicated_host_map = { for instance in local.dedicated_host_ids : instance.profile => instance.id }
+
+}
+
+# Validating profile configurations
+locals {
+  should_validate_profile = var.enable_dedicated_host && length(local.errors) > 0
+}
+
+check "profile_validation" {
+  assert {
+    condition = !local.should_validate_profile
+    error_message = join("\n", concat(
+      ["Deployment configuration invalid:"],
+      local.errors,
+      ["", "Available CURRENT dedicated host profiles:"],
+      [for p in local.current_dh_profiles : " - ${p.name} (${p.family})"]
+    ))
+  }
+}
+
+locals {
+
+  bastion_security_group = var.bastion_security_group_id_for_ref
+  # Security group id
+  client_security_group  = local.enable_client ? module.client_sg[0].security_group_id_for_ref : null
+  compute_security_group = local.enable_compute ? module.compute_sg[0].security_group_id_for_ref : null
+  storage_security_group = local.enable_storage ? module.storage_sg[0].security_group_id_for_ref : null
+
+  client_security_group_rules = local.enable_client ? (local.enable_compute ?
+    [
+      { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
+      { name = "client-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
+      { name = "client-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group }
+    ] :
+    [
+      { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
+      { name = "client-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group }
+    ]
+    ) : (local.enable_compute ?
+    [
+      { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
+      { name = "client-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group }
+    ]
+    :
+    [
+      { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group }
+    ]
+  )
+
+  compute_security_group_rules = local.enable_client ? (local.enable_compute ? (local.enable_storage ?
+    [
+      { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
+      { name = "compute-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
+      { name = "compute-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+      { name = "compute-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
+      { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+    ] :
+    [
+      { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
+      { name = "compute-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
+      { name = "compute-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+      { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+    ]
+    ) : (local.enable_storage ?
+    [
+      { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
+      { name = "compute-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
+      { name = "compute-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
+      { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+    ] :
+    [
+      { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
+      { name = "compute-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
+      { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+    ]
+    )
+    ) : (local.enable_compute ? (local.enable_storage ?
+      [
+        { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
+        { name = "compute-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+        { name = "compute-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
+        { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+      ] :
+      [
+        { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
+        { name = "compute-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+        { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+      ]
+      ) : (local.enable_storage ?
+      [
+        { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
+        { name = "compute-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
+        { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+      ] :
+      [
+        { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
+        { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+      ]
+    )
+  )
+
+  storage_security_group_rules = local.enable_compute ? (local.enable_storage ?
+    [
+      { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
+      { name = "storage-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+      { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group }
+    ] :
+    [
+      { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
+      { name = "storage-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+    ]
+    ) : (local.enable_storage ?
+    [
+      { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
+      { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group }
+    ] :
+    [
+      { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group }
+    ]
+  )
 }

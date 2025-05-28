@@ -1,5 +1,5 @@
 
-# IBM Cloud HPC - Tekton
+# IBM Cloud HPC - OnePipeline(Tekton)
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ https://cloud.ibm.com/devops/getting-started?env_id=ibm:yp:eu-de
 6. On Build your own toolchain page, provide Toolchain name, Resource Group, Region
 7. Click Create it will create pipeline.
 
-## Actions on the Tekton
+## Actions on the OnePipeline
 
 1. When PR raised to the develop branch from feature branch, pipeline with trigger and it will run PR_TEST related testcases on top of feature branch
 2. When Commit/Push happens to develop branch, pipeline will trigger and it will run all the PR_TEST and OTHER_TEST testcases
@@ -36,7 +36,7 @@ https://cloud.ibm.com/devops/getting-started?env_id=ibm:yp:eu-de
 3. cluster_prefix
 4. zone
 5. resource_group
-6. cluster_name
+6. cluster_id
 7. reservation_id
 
 For additional assistance, contact the project maintainers.

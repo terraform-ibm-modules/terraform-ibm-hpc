@@ -1,0 +1,75 @@
+---
+
+# Update the /etc/hosts file for Dynamic node Support
+
+- name: Management Config | Check if IP-to-host mapping already exists
+  shell: "grep -q '# ANSIBLE MANAGED: IP mapping added' '{{ LSF_HOSTS_FILE }}'"
+  register: ip_mapping_check
+  changed_when: false
+  failed_when: false
+  run_once: true
+
+- name: Management Config | Generate and append IP-to-host mapping to LSF hosts file
+  shell: |
+    echo "# ANSIBLE MANAGED: IP mapping added" >> '{{ LSF_HOSTS_FILE }}'
+    python3 -c "import ipaddress; \
+    print('\\n'.join([str(ip) + ' {{ prefix }}-' + str(ip).replace('.', '-') \
+    for ip in ipaddress.IPv4Network('{{ compute_subnets_cidr | first }}')]))" >> '{{ LSF_HOSTS_FILE }}'
+  args:
+    executable: /bin/bash
+  run_once: true
+  when: ip_mapping_check.rc != 0
+
+- name:  Management Config | Get IP addresses using getent
+  shell: "getent hosts {{ inventory_hostname }} | awk '{ print $1 }'"
+  register: dns_ip
+  changed_when: false
+
+- name:  Management Config | Store IPs for each host
+  set_fact:
+    host_ip: "{{ dns_ip.stdout }}"
+
+- name:  Management Config | Aggregate all IPs from all hosts
+  set_fact:
+    all_ips: "{{ groups['all'] | map('extract', hostvars, 'host_ip') | list }}"
+  run_once: true
+
+- name:  Management Config | Display all resolved IP addresses
+  debug:
+    msg: "Resolved IPs: {{ all_ips }}"
+  run_once: true
+
+- name:  Management Config | Check if each IP exists in LSF hosts file
+  shell: "grep -w '{{ item }}' {{ LSF_HOSTS_FILE }} || true"
+  register: ip_check
+  loop: "{{ all_ips }}"
+  changed_when: false
+  run_once: true
+
+- name:  Management Config | Remove matched IPs from LSF hosts file if they exist
+  lineinfile:
+    path: "{{ LSF_HOSTS_FILE }}"
+    state: absent
+    regexp: "^{{ item.item }}\\s"
+  loop: "{{ ip_check.results }}"
+  when: item.stdout | length > 0
+  run_once: true
+
+- name: Management Config | Ensure LSF hosts file exists
+  stat:
+    path: "{{ LSF_HOSTS_FILE }}"
+  register: lsf_hosts_stat
+
+- name: Management Config | Restore LSF hosts file if missing
+  copy:
+    src: "{{ HA_shared_dir }}/lsf/conf/hosts"
+    dest: "{{ LSF_HOSTS_FILE }}"
+    remote_src: yes
+  when: not lsf_hosts_stat.stat.exists
+
+- name: Management Config | Copy the Hosts file to /etc/hosts
+  copy:
+    src: "{{ LSF_HOSTS_FILE }}"
+    dest: /etc/hosts
+    remote_src: yes
+  ignore_errors: yes

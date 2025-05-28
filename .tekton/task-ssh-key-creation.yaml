@@ -28,9 +28,6 @@ spec:
     - name: resource_group
       description: Resource group name from your IBM Cloud account where the VPC resources should be deployed. Note. If the resource group value is set as null, automation creates two different RG with the name (workload-rg and service-rg). For additional information on resource groups, see [Managing resource groups](https://cloud.ibm.com/docs/account?topic=account-rgs).
       default: Default
-    - name: solution
-      description: Provide the value for the solution that is needed for the support of lsf and HPC.
-      default: ""
   workspaces:
     - name: workspace
       mountPath: /artifacts
@@ -50,8 +47,6 @@ spec:
         value: $(params.revision)
       - name: resource_group
         value: $(params.resource_group)
-      - name: solution
-        value: $(params.solution)
   steps:
     - name: ssh-key-creation
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
@@ -70,5 +65,4 @@ spec:
           fi
 
           source .tekton/scripts/ssh_create_delete.sh
-          echo "${solution}"
-          ssh_key_create "${solution}"
+          ssh_key_create

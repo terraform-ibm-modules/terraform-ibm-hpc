@@ -1,0 +1,105 @@
+---
+- name: Management Config | Append LSF configuration settings
+  lineinfile:
+    path: "{{ LSF_CONF_FILE }}"
+    line: "{{ item }}"
+    create: yes
+  loop:
+    - "LSB_RC_EXTERNAL_HOST_IDLE_TIME=10"
+    - "LSF_DYNAMIC_HOST_WAIT_TIME=60"
+    - "LSF_DYNAMIC_HOST_TIMEOUT=\"EXPIRY[10m] THRESHOLD[250] INTERVAL[60m]\""
+    - "LSB_RC_EXTERNAL_HOST_FLAG=\"icgen2host\""
+    - "LSB_RC_UPDATE_INTERVAL=15"
+    - "LSB_RC_MAX_NEWDEMAND=50"
+    - "LSF_UDP_TO_TCP_THRESHOLD=9000"
+    - "LSF_CALL_LIM_WITH_TCP=Y"
+    - "LSF_ANNOUNCE_MASTER_TCP_WAITTIME=600"
+    - "LSF_RSH=\"ssh -o 'PasswordAuthentication no' -o 'StrictHostKeyChecking no'\""
+  run_once: true
+
+- name: Management Config | Check if queue configuration already exists
+  shell: "grep -q '# ANSIBLE MANAGED: QUEUE_NAME added' '{{ LSF_LSBATCH_CONF }}/lsb.queues'"
+  register: queue_check
+  changed_when: false
+  failed_when: false
+  run_once: true
+
+- name: Management Config | Append LSF queue configuration to lsb.queues
+  blockinfile:
+    path: "{{ LSF_LSBATCH_CONF }}/lsb.queues"
+    insertafter: EOF
+    block: |
+      # ANSIBLE MANAGED: QUEUE_NAME added
+      Begin Queue
+      QUEUE_NAME=das_q
+      DATA_TRANSFER=Y
+      RC_HOSTS=all
+      HOSTS=all
+      RES_REQ=type==any
+      End Queue
+    marker: ""
+  when: queue_check.rc != 0
+  run_once: true
+
+- name: Management Config | Uncomment "icgen2host" in lsf.shared
+  replace:
+    path: "{{ LSF_CONF_FILE_PATH }}/lsf.shared"
+    regexp: '^#\s*(icgen2host)'
+    replace: '   \1'
+  run_once: true
+
+- name: Management Config | Uncomment "schmod_demand" in lsb.modules
+  replace:
+    path: "{{ LSF_LSBATCH_CONF }}/lsb.modules"
+    regexp: '^#\s*(schmod_demand)'
+    replace: '\1'
+  run_once: true
+
+- name: Management Config | Check if RC_HOSTS modification was already done
+  stat:
+    path: "/tmp/rc_hosts_added"
+  register: rc_hosts_marker
+  run_once: true
+
+- name: Management Config | Add "RC_HOSTS = all" after QUEUE_NAME in lsb.queues using sed
+  shell: |
+    sed -i '/^Begin Queue$/,/^End Queue$/{/QUEUE_NAME/{N;s/\(QUEUE_NAME\s*=[^\n]*\)\n/\1\nRC_HOSTS     = all\n/}}' "{{ LSF_LSBATCH_CONF }}/lsb.queues"
+    touch /tmp/rc_hosts_added
+  when: not rc_hosts_marker.stat.exists
+  run_once: true
+
+- name: Management Config | Append management hostnames to lsb.hosts
+  vars:
+    management_hostnames: "{{ lsf_masters_list.split() }}"
+  lineinfile:
+    path: "{{ LSF_LSBATCH_CONF }}/lsb.hosts"
+    insertafter: "^default    !.*"
+    line: "{{ item }}  0 () () () () () (Y)"
+    state: present
+  loop: "{{ lsf_masters }}"
+  run_once: true
+
+- name: Management Config | Check if LSF_HOST_ADDR_RANGE is already set
+  shell: "grep -q '# ANSIBLE MANAGED: LSF_HOST_ADDR_RANGE added' '{{ LSF_CONF_FILE_PATH }}/lsf.cluster.{{ prefix }}'"
+  register: lsf_host_addr_range_marker_check
+  changed_when: false
+  failed_when: false
+  run_once: true
+
+- name: Management Config | Append LSF_HOST_ADDR_RANGE to lsf.cluster
+  blockinfile:
+    path: "{{ LSF_CONF_FILE_PATH }}/lsf.cluster.{{ prefix }}"
+    block: |
+      # ANSIBLE MANAGED: LSF_HOST_ADDR_RANGE added
+      Begin Parameters
+      LSF_HOST_ADDR_RANGE=10.*.*.*
+      End Parameters
+    marker: ""
+  when: lsf_host_addr_range_marker_check.rc != 0
+  run_once: true
+
+- name: Management Config | Remove line containing 'lsfservers'
+  ansible.builtin.lineinfile:
+    path: "{{ LSF_CLUSTER_FILE }}"
+    regexp: '^lsfservers'
+    state: absent

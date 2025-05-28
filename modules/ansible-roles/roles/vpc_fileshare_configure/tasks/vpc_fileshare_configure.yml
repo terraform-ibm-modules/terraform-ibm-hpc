@@ -1,0 +1,64 @@
+---
+- name: Show VPC File Share mappings
+  ansible.builtin.debug:
+    msg: "{{ item.key }}: {{ item.value }}"
+  with_dict: "{{ name_mount_path_map }}"
+
+- name: Show NFS Share mappings
+  ansible.builtin.debug:
+    msg: "{{ item.key }}: {{ item.value }}"
+  with_dict: "{{ nfs_shares_map }}"
+
+- name: Create base directories for VPC File shares
+  file:
+    path: "{{ item.key }}"
+    state: directory
+    mode: '0777'
+  with_dict: "{{ name_mount_path_map }}"
+
+- name: Add entries to /etc/fstab for VPC File shares
+  lineinfile:
+    path: /etc/fstab
+    line: "{{ item.value }} {{ item.key }} nfs rw,sec=sys,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,_netdev 0 0"
+    state: present
+    create: yes
+  with_dict: "{{ name_mount_path_map }}"
+  notify: Mount NFS
+
+- name: Create base directories for all NFS mount points
+  file:
+    path: "{{ item.key }}"
+    state: directory
+    mode: '0777'
+  with_dict: "{{ nfs_shares_map }}"
+
+- name: Mount NFS shares
+  ansible.builtin.mount:
+    path: "{{ item.key }}"
+    src: "{{ item.value }}"
+    fstype: nfs
+    opts: rw,sec=sys,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,_netdev
+    state: mounted
+  with_dict: "{{ nfs_shares_map }}"
+
+- name: Validate that NFS shares were mounted successfully
+  shell: mount | grep "on {{ item.key }} type nfs"
+  register: mount_check_nfs
+  with_dict: "{{ nfs_shares_map }}"
+  changed_when: false
+  failed_when: mount_check_nfs is failed
+
+- name: Flush handlers immediately
+  meta: flush_handlers
+
+- name: Verify mounted filesystems
+  command: df -h
+  register: df_output
+  changed_when: false
+  failed_when: df_output.rc != 0
+
+- name: Check directory listing
+  command: ls -ltr /mnt/lsf
+  register: ls_output
+  changed_when: false
+  failed_when: ls_output.rc != 0

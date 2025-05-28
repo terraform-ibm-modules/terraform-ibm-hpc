@@ -1,80 +1,39 @@
 #!/bin/bash
-error_check_on_all_file() {
-    DIRECTORY=$1
-    pattern=$2
-    infra_or_validation=$3
-    results=()
-    for file in "$DIRECTORY"/$pattern; do
-        if [ -f "$file" ]; then
-            if [[ "${file}" == *"negative"* ]]; then
-                infra_validation_negative_log_fail_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' "$file" | grep -E -w 'FAIL')
-                if [[ "$infra_validation_negative_log_fail_check" ]]; then
-                    results+=("true")
-                    if [[ "${infra_or_validation}" == "infra" ]]; then
-                        echo "FAIL found in the ${infra_or_validation} log file  : $file"
-                    elif [[ "${infra_or_validation}" == "validation" ]]; then
-                        echo "FAIL found in the ${infra_or_validation} log file  : $file"
-                    fi
-                fi
-            else
-                infra_validation_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' "$file" | grep -E -w 'FAIL|Error|ERROR')
-                if [[ "$infra_validation_log_error_check" ]]; then
-                    results+=("true")
-                    if [[ "${infra_or_validation}" == "infra" ]]; then
-                        echo "ERROR found in the ${infra_or_validation} log file : $file"
-                    elif [[ "${infra_or_validation}" == "validation" ]]; then
-                        echo "ERROR found in the ${infra_or_validation} log file : $file"
-                    fi
-                fi
-            fi
-        else
-            echo "No file found with ${pattern} the extension"
-            exit 1
-        fi
-    done
-    # Check the log has ERROR/FAIL by checking length of the array with true
-    arraylength=${#results[@]}
-    if [[ "$arraylength" != 0 ]]; then
-        exit 1
-    fi
-}
-
 issue_track() {
-    LOG_FILE_NAME=$1
-    CHECK_PR_OR_TASK=$2
+    LOG_FILE=$1
+    CHECK_PR_OR_NEAGTIVE=$2
+    CHECK_TASK=$3
     DIRECTORY="/artifacts/tests"
     if [ -d "$DIRECTORY" ]; then
-        if [[ "${LOG_FILE_NAME}" == *"negative"* ]]; then
-            negative_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' $DIRECTORY/"$LOG_FILE_NAME" | grep 'FAIL')
-            if [[ "$negative_log_error_check" ]]; then
-                echo "${negative_log_error_check}"
-                echo "Found FAIL in plan/apply log. Please check log : ${LOG_FILE_NAME}"
-                exit 1
-            fi
-        else
+        if [[ "${CHECK_PR_OR_NEAGTIVE}" != "negative_suite" ]]; then
             # Track error/fail from the suites log file
-            log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' $DIRECTORY/"$LOG_FILE_NAME" | grep -E -w 'FAIL|Error|ERROR')
+            log_error_check=$(eval "grep -E -w 'FAIL|Error|ERROR' $DIRECTORY/$LOG_FILE")
             if [[ "$log_error_check" ]]; then
-                echo "${log_error_check}"
-                echo "Found Error/FAIL/ERROR in plan/apply log. Please check log : ${LOG_FILE_NAME}"
-                exit 1
+                # Skip printing error/fail suites logs on task window
+                if [[ "${CHECK_TASK}" != "TASK" ]]; then
+                    echo "$log_error_check"
+                    echo "Found Error/FAIL/ERROR in plan/apply log. Please check log."
+                    exit 1
+                else
+                    echo "Found Error/FAIL/ERROR in plan/apply log. Please check log."
+                    exit 1
+                fi
             fi
         fi
 
-        if [[ "${CHECK_PR_OR_TASK}" != "PR" ]]; then
-            VALIDATION_LOG_FILE=$(echo "$LOG_FILE_NAME" | cut -f 1 -d '.').log
+        if [[ "${CHECK_PR_OR_NEAGTIVE}" != "PR" ]]; then
             # Track test_output log file initiated or not
-            test_output_file_check=$(find $DIRECTORY/logs/"$VALIDATION_LOG_FILE" 2>/dev/null)
+            test_output_file_check=$(find $DIRECTORY/test_output/log* 2>/dev/null)
             if [[ -z "$test_output_file_check" ]]; then
-                echo "Validation log file not initiated under ${DIRECTORY/logs/}"
+                echo "Test output log file not initiated."
                 exit 1
             fi
         fi
 
         # Track suites log file initiated or not
-        log_file_check=$(find $DIRECTORY/*.json 2>/dev/null)
+        log_file_check=$(find $DIRECTORY/*.cicd  2>/dev/null)
         if [[ -z "$log_file_check" ]]; then
-            echo "Infra log not initiated under ${DIRECTORY}"
+            echo "Test Suite have not initated and log file not created, check with packages or binaries installation"
             exit 1
         fi
     else
@@ -83,40 +42,37 @@ issue_track() {
     fi
 }
 
-display_validation_log() {
-    LOG_FILE_NAME=$1
+display_test_output() {
     DIRECTORY="/artifacts/tests"
     if [ -d "$DIRECTORY" ]; then
         # Display test_output log file
-        validation_log_file_check=$(find $DIRECTORY/logs/"$LOG_FILE_NAME" 2>/dev/null)
-        if [[ -z "$validation_log_file_check" ]]; then
+        test_output_file_check=$(find $DIRECTORY/test_output/log* 2>/dev/null)
+        if [[ -z "$test_output_file_check" ]]; then
             echo "Test output log file not initiated."
             exit 1
         else
-            echo "********************** DISPLAY ${LOG_FILE_NAME} VALIDATION OUTPUT LOG ********************"
-            cat $DIRECTORY/logs/"$LOG_FILE_NAME"
-            echo "********************** DISPLAY ${LOG_FILE_NAME} VALIDATION OUTPUT LOG **********************"
+            echo "********************** Display Test Output Log Start ********************"
+            cat $DIRECTORY/test_output/log*
+            echo "********************** Display Test Output Log End **********************"
+        fi
+    else
+        echo "$DIRECTORY does not exits"
+        exit 1
+    fi
+}
 
-            echo "##################################################################################"
-            echo "##################################################################################"
-            echo "################################# DISPLAY ERROR ##################################"
-            echo "##################################################################################"
-            echo "##################################################################################"
-            if [[ "${LOG_FILE_NAME}" == *"negative"* ]]; then
-                validation_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' $DIRECTORY/logs/"$LOG_FILE_NAME" | grep -E -w 'FAIL')
-            else
-                validation_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' $DIRECTORY/logs/"$LOG_FILE_NAME" | grep -E -w 'FAIL|Error|ERROR')
-            fi
-
-            # Display if any error in validation log
-            if [[ "$validation_log_error_check" ]]; then
-                echo "********************** ERROR CHECK in  ${LOG_FILE_NAME} VALIDATION OUTPUT LOG **********************"
-                echo "$validation_log_error_check"
-                echo "********************** ERROR CHECK in  ${LOG_FILE_NAME} VALIDATION OUTPUT LOG **********************"
-                exit 1
-            else
-                echo "No Error found in $DIRECTORY/logs/$LOG_FILE_NAME"
-            fi
+check_error_test_output() {
+    DIRECTORY="/artifacts/tests"
+    if [ -d "$DIRECTORY" ]; then
+        # Check error in test_output log
+        log_error_check=$(eval "grep -E -w 'FAIL|Error|ERROR' ${DIRECTORY/test_output/log*}")
+        if [[ "$log_error_check" ]]; then
+            echo "********************** Check Error in Test Output Log Start *************"
+            echo "$log_error_check"
+            echo "********************** Check Error in Test Output Log End **********************"
+            echo "Found Error/FAIL/ERROR in the test run output log. Please check log."
+        else
+            echo "No Error found in ${DIRECTORY/test_output/log*}"
         fi
     else
         echo "$DIRECTORY does not exits"

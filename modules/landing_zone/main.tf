@@ -1,7 +1,7 @@
 module "landing_zone" {
   count                                  = var.enable_landing_zone ? 1 : 0
   source                                 = "terraform-ibm-modules/landing-zone/ibm"
-  version                                = "7.4.3"
+  version                                = "7.5.0"
   prefix                                 = local.prefix
   region                                 = local.region
   tags                                   = local.tags
@@ -10,6 +10,7 @@ module "landing_zone" {
   vpcs                                   = local.env.vpcs
   vpn_gateways                           = local.env.vpn_gateways
   enable_transit_gateway                 = local.env.enable_transit_gateway
+  transit_gateway_global                 = local.env.transit_gateway_global
   transit_gateway_resource_group         = local.env.transit_gateway_resource_group
   transit_gateway_connections            = local.env.transit_gateway_connections
   ssh_keys                               = local.env.ssh_keys
@@ -19,13 +20,14 @@ module "landing_zone" {
   cos                                    = local.env.cos
   service_endpoints                      = local.env.service_endpoints
   key_management                         = local.env.key_management
-  skip_kms_block_storage_s2s_auth_policy = local.env.skip_kms_block_storage_s2s_auth_policy
   atracker                               = local.env.atracker
   clusters                               = local.env.clusters
   wait_till                              = local.env.wait_till
-  f5_vsi                                 = local.env.f5_vsi
-  f5_template_data                       = local.env.f5_template_data
   appid                                  = local.env.appid
   teleport_config_data                   = local.env.teleport_config_data
   teleport_vsi                           = local.env.teleport_vsi
+  f5_vsi                                 = local.env.f5_vsi
+  f5_template_data                       = local.env.f5_template_data
+  vpc_placement_groups                   = local.env.vpc_placement_groups
+  skip_kms_block_storage_s2s_auth_policy = local.env.skip_kms_block_storage_s2s_auth_policy
 }

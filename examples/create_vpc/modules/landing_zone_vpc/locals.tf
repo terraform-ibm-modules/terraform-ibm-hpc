@@ -1,6 +1,6 @@
 locals {
   # Defined values
-  name   = "lsf"
+  name   = "hpc"
   prefix = var.prefix
   tags   = [local.prefix, local.name]
   schematics_reserved_cidrs = [
@@ -21,7 +21,7 @@ locals {
     var.allowed_cidr
     # var.network_cidr
   ])
-  resource_group_id = var.existing_resource_group != null ? data.ibm_resource_group.itself.id : ""
+  resource_group_id = var.existing_resource_group != null ? data.ibm_resource_group.existing_resource_group.id : ""
 
   # Region and Zone calculations
   region = join("-", slice(split("-", var.zones[0]), 0, 2))

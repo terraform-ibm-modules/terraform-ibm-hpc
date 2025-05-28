@@ -1,0 +1,13 @@
+---
+
+# Upload or update the LDAP server certificate if needed
+- name: LDAP Client Config | Upload LDAP server certificate
+  import_tasks: upload_ldap_cert.yml
+
+# Install prerequisite packages required for LDAP integration
+- name:  LDAP Client Config | Install LDAP prerequisite packages
+  import_tasks: ldap_prerequisites.yml
+
+# Configure the system as an LDAP client
+- name:  LDAP Client Config | Configure LDAP client integration
+  import_tasks: ldap_user_integration.yml

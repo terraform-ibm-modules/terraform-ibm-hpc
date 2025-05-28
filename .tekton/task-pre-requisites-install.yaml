@@ -88,11 +88,22 @@ spec:
           echo $'***** Python Installed *****\n'
 
           #######################################
+          # pip
+          #######################################
+          echo $'***** Upgrading/Installing PIP *****\n'
+          python3 -m pip install --upgrade pip
+          pip install --root-user-action=ignore requests
+          if ! ${PYTHON} -m pip &> /dev/null; then
+            echo "Unable to detect pip after running: ${PYTHON} -m pip. Please ensure pip is installed and try again."
+            exit 1
+          fi
+          echo $'***** Upgraded/Installed PIP *****\n'
+
+          #######################################
           # ansible
           #######################################
           echo $'***** Installing Ansible and Ansible core *****\n'
-          python3 -m pip install --upgrade --user ansible --quiet
-          python3 -m pip install --user ansible-core==2.12.3 --quiet
+          python3 -m pip install ansible==4.10.0 ansible-core==2.11.12
           ansible --version
           echo $'***** Ansible and Ansible core Installed *****\n'
 
@@ -104,6 +115,6 @@ spec:
             https://raw.githubusercontent.com/radekg/terraform-provisioner-ansible/master/bin/deploy-release.sh \
             --output /tmp/deploy-release.sh
           chmod +x /tmp/deploy-release.sh
-          /tmp/deploy-release.sh -v 2.5.0
+          /tmp/deploy-release.sh -v 2.3.3
           rm -rf /tmp/deploy-release.sh
           echo $'***** Terraform-Provisioner Installed *****\n'

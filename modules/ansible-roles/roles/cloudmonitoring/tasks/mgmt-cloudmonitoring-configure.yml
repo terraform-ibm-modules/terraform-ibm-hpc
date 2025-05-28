@@ -1,0 +1,284 @@
+---
+- name: Check if monitoring is enabled
+  ansible.builtin.debug:
+    msg: "Cloud Monitoring is enabled for management"
+  when: monitoring_enable_for_management | bool
+
+- name: Install required packages
+  ansible.builtin.yum:
+    name:
+      - git
+      - python3-pip
+      - wget
+    state: present
+  when: monitoring_enable_for_management | bool
+
+- name: Install Python 3.11
+  ansible.builtin.yum:
+    name: python3.11
+    state: present
+  when: monitoring_enable_for_management | bool
+
+- name: Ensure Python 3.11 is set as default
+  ansible.builtin.file:
+    src: /usr/bin/python3.11
+    dest: /usr/bin/python3
+    state: link
+  when: monitoring_enable_for_management | bool
+
+- name: Ensure pip is installed for Python 3.11
+  ansible.builtin.shell: |
+    /usr/bin/python3.11 -m ensurepip --default-pip
+    /usr/bin/python3.11 -m pip install --upgrade pip
+  args:
+    executable: /bin/bash
+  when: monitoring_enable_for_management | bool
+
+- name: Detect correct pip executable #pragma: allowlist secret
+  ansible.builtin.command: "/usr/bin/python3.11 -m pip --version"
+  register: pip_check
+  ignore_errors: true
+  changed_when: false
+
+- name: Set correct pip executable path
+  ansible.builtin.set_fact:
+    pip_executable: "{{ '/usr/bin/python3.11 -m pip' if 'pip' in pip_check.stdout else '/usr/bin/pip3' }}"
+
+- name: Check if Sysdig Agent binary exists
+  ansible.builtin.stat:
+    path: /opt/draios/bin/dragent
+  register: sysdig_binary
+  when: monitoring_enable_for_management | bool
+
+- name: Install Sysdig Agent if binary is missing
+  ansible.builtin.shell: |
+    echo "Installing Sysdig Agent..."
+    curl -sL https://ibm.biz/install-sysdig-agent | sudo bash -s -- \
+      --access_key {{ cloud_monitoring_access_key }} \
+      --collector {{ cloud_monitoring_ingestion_url }} \
+      --collector_port 6443 \
+      --secure true \
+      --check_certificate false \
+      --additional_conf 'sysdig_capture_enabled: false\nremotefs: true\nfeature:\n mode: monitor_light'
+  when:
+    - monitoring_enable_for_management | bool
+    - not sysdig_binary.stat.exists
+
+- name: Configure Sysdig
+  ansible.builtin.lineinfile:
+    path: "{{ sysdig_config_file }}"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    create: yes
+  loop:
+    - { regexp: "==ACCESSKEY==", line: "customerid: {{ cloud_monitoring_access_key }}" }
+    - { regexp: "==COLLECTOR==", line: "collector: {{ cloud_monitoring_ingestion_url }}" }
+    - { regexp: "^tags:", line: "tags: type:management,lsf:true" }
+  when: monitoring_enable_for_management | bool
+
+- name: Ensure Sysdig Agent is enabled and running
+  ansible.builtin.systemd:
+    name: dragent
+    enabled: yes
+    state: started
+  when: monitoring_enable_for_management | bool
+
+- name: Create Prometheus user
+  ansible.builtin.user:
+    name: prometheus
+    shell: /sbin/nologin
+    comment: "Prometheus user account"
+  when: monitoring_enable_for_management | bool
+
+- name: Download and extract Prometheus
+  ansible.builtin.shell: |
+    wget https://github.com/prometheus/prometheus/releases/download/v{{ PROMETHEUS_VERSION }}/prometheus-{{ PROMETHEUS_VERSION }}.linux-amd64.tar.gz
+    tar xzvf prometheus-{{ PROMETHEUS_VERSION }}.linux-amd64.tar.gz
+    mkdir -p /opt/prometheus/
+    cp -av prometheus-{{ PROMETHEUS_VERSION }}.linux-amd64/* /opt/prometheus/
+    chown -R prometheus:prometheus /opt/prometheus/
+  when: monitoring_enable_for_management | bool
+
+- name: Check if LSF Prometheus Exporter is already set up
+  ansible.builtin.stat:
+    path: /etc/systemd/system/lsf_prometheus_exporter.service
+  register: exporter_installed
+  when: monitoring_enable_for_management | bool
+
+- name: Ensure clean installation of Python dependencies
+  ansible.builtin.shell: |
+    /usr/bin/python3.11 -m pip uninstall -y prometheus_client || true
+    /usr/bin/python3.11 -m pip install --no-cache-dir --force-reinstall prometheus_client lsf_prometheus_exporter
+  args:
+    executable: /bin/bash
+  when: monitoring_enable_for_management | bool
+
+- name: Install LSF Prometheus Exporter if not already installed
+  ansible.builtin.shell: |
+    echo "Exporter not found. Cloning and installing...";
+    rm -rf /tmp/lsf_prometheus_exporter
+    git clone --branch wheel_pkg https://89088669eefb301f1aaa7046c9e567a372c51fe2@github.ibm.com/platformcomputing/lsf_prometheus_exporter /tmp/lsf_prometheus_exporter
+    {{ pip_executable }} install /tmp/lsf_prometheus_exporter/lsf_prometheus_exporter-1.0.0-py3-none-any.whl
+  args:
+    executable: /bin/bash
+  when:
+    - monitoring_enable_for_management | bool
+    - not exporter_installed.stat.exists
+
+- name: Fix LSF Prometheus Exporter permissions if already installed
+  ansible.builtin.shell: |
+    echo "Exporter already present. Fixing permissions...";
+    find /usr/local/lib/python3.11/site-packages/lsf_prometheus_exporter* -type d -exec chmod o+rx {} +
+    find /usr/local/lib/python3.11/site-packages/lsf_prometheus_exporter* -type f -exec chmod o+r {} +
+  args:
+    executable: /bin/bash
+  when:
+    - monitoring_enable_for_management | bool
+    - exporter_installed.stat.exists
+
+- name: Configure Prometheus
+  ansible.builtin.copy:
+    content: |
+      global:
+        scrape_interval: 60s
+        evaluation_interval: 15s
+
+      scrape_configs:
+        - job_name: "lsf_prometheus_exporter"
+          static_configs:
+            - targets: ["localhost:9405"]
+
+      remote_write:
+        - url: "{{ cloud_monitoring_prws_url }}"
+          authorization:
+            credentials: "{{ cloud_monitoring_prws_key }}"  # pragma: allowlist secret
+    dest: "{{ prometheus_config_file }}"
+  when: monitoring_enable_for_management | bool
+
+- name: Create start script for LSF Prometheus Exporter
+  ansible.builtin.copy:
+    dest: /opt/ibm/lsfsuite/lsf/start_lsf_prometheus_exporter.sh
+    content: |
+      #!/bin/bash
+      exec >> /var/log/lsf_prometheus_exporter.log 2>&1
+      source /opt/ibm/lsfsuite/lsf/conf/profile.lsf
+      exec /usr/bin/python3 -m lsf_prometheus_exporter
+    mode: '0755'
+    owner: lsfadmin
+    group: lsfadmin
+  when:
+    - monitoring_enable_for_management | bool
+
+- name: Create systemd service for Prometheus Agent
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/prometheus.service
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Prometheus Agent
+      After=network-online.target
+
+      [Service]
+      Type=simple
+      ExecStart=/opt/prometheus/prometheus \
+        --config.file=/opt/prometheus/prometheus.yml \
+        --enable-feature=agent \
+        --storage.agent.path="/opt/prometheus/data-agent"
+      TimeoutSec=0
+      RemainAfterExit=yes
+      GuessMainPID=no
+      Restart=on-failure
+      RestartSec=10
+      User=prometheus
+      Group=prometheus
+
+      [Install]
+      WantedBy=multi-user.target
+  when:
+    - monitoring_enable_for_management | bool
+    - not exporter_installed.stat.exists
+
+- name: Reload systemd and start Prometheus Agent
+  ansible.builtin.systemd:
+    daemon_reload: yes
+    name: prometheus
+    enabled: yes
+    state: restarted
+  when: monitoring_enable_for_management | bool
+
+- name: Create systemd service for Prometheus Agent
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/prometheus.service
+    content: |
+      [Unit]
+      Description=Prometheus Agent
+      After=network-online.target
+
+      [Service]
+      Type=simple
+      ExecStart=/opt/prometheus/prometheus --config.file=/opt/prometheus/prometheus.yml --enable-feature=agent --storage.agent.path="/opt/prometheus/data-agent"
+      TimeoutSec=0
+      RemainAfterExit=yes
+      GuessMainPID=no
+      RestartSec=10
+      User=prometheus
+      Group=prometheus
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: '0644'
+  when: monitoring_enable_for_management | bool
+
+- name: Reload systemd and start Prometheus Agent
+  ansible.builtin.systemd:
+    daemon_reload: yes
+    name: prometheus
+    enabled: yes
+    state: restarted
+  when: monitoring_enable_for_management | bool
+
+- name: Ensure start script has correct permissions
+  ansible.builtin.file:
+    path: /opt/ibm/lsfsuite/lsf/start_lsf_prometheus_exporter.sh
+    mode: '0755'
+    owner: lsfadmin
+    group: lsfadmin
+  when: monitoring_enable_for_management | bool
+
+- name: Create systemd service for LSF Prometheus Exporter
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/lsf_prometheus_exporter.service
+    content: |
+      [Unit]
+      Description=IBM LSF Prometheus Exporter Service
+      After=network-online.target
+
+      [Service]
+      Type=simple
+      ExecStart=/opt/ibm/lsfsuite/lsf/start_lsf_prometheus_exporter.sh
+      TimeoutSec=0
+      RemainAfterExit=yes
+      GuessMainPID=no
+      RestartSec=10
+      User=lsfadmin
+      Group=lsfadmin
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: '0644'
+  when: monitoring_enable_for_management | bool
+
+- name: Reload systemd and start LSF Prometheus Exporter
+  ansible.builtin.systemd:
+    daemon_reload: yes
+    name: lsf_prometheus_exporter
+    enabled: yes
+    state: restarted
+  when: monitoring_enable_for_management | bool
+
+- name: Enable and restart Sysdig Agent
+  ansible.builtin.systemd:
+    name: dragent
+    enabled: yes
+    state: restarted
+  when: monitoring_enable_for_management | bool

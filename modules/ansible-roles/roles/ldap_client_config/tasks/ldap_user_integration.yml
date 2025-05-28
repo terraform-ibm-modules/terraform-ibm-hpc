@@ -1,0 +1,101 @@
+---
+
+# Detect OS version (RHEL 8/9 check)
+- name: LDAP | Detect RHEL major version
+  ansible.builtin.shell: "grep -oE 'release [0-9]+' /etc/redhat-release | awk '{print $2}'"
+  register: rhel_version
+  changed_when: false
+
+# Proceed with LDAP client configuration only on supported RHEL versions
+- block:
+
+    # Copy LDAP certificate if not already present
+    - name: LDAP | Check if local ldap_cacert.pem exists
+      ansible.builtin.stat:
+        path: "{{ LDAP_CERT_FILES_DIR }}/ldap_cacert.pem"
+      register: ldap_cert_stat
+
+    - name: LDAP | Copy ldap_cacert.pem to remote OpenLDAP certs directory
+      ansible.builtin.copy:
+        src: "{{ LDAP_CERT_FILES_DIR }}/ldap_cacert.pem"
+        dest: /etc/openldap/certs/ldap_cacert.pem
+        owner: root
+        group: root
+        mode: '0600'
+      when: not ldap_cert_stat.stat.exists
+      register: ldap_cert_result
+
+    # Configure LDAP client
+    - name: LDAP | Update ldap.conf with server and certificate details
+      ansible.builtin.blockinfile:
+        path: /etc/openldap/ldap.conf
+        block: |
+          BASE   dc={{ BASE_DN.split('.')[0] }},dc={{ BASE_DN.split('.')[1] }}
+          URI    ldap://{{ LDAP_SERVER_IP }}/
+          TLS_CACERT /etc/openldap/certs/ldap_cacert.pem
+          TLS_CACERTDIR /etc/openldap/certs
+        create: yes
+
+    - name: LDAP | Rehash OpenLDAP certs directory
+      ansible.builtin.command:
+        cmd: openssl rehash /etc/openldap/certs
+
+    # Configure SSSD
+    - name: LDAP | Configure authselect to use SSSD with mkhomedir
+      ansible.builtin.command:
+        cmd: authselect select sssd with-mkhomedir --force
+
+    - name: LDAP | Remove existing SSSD config (if present)
+      ansible.builtin.file:
+        path: /etc/sssd/sssd.conf
+        state: absent
+
+    - name: LDAP | Generate new SSSD configuration file from template
+      ansible.builtin.template:
+        src: sssd.conf.j2
+        dest: /etc/sssd/sssd.conf
+        mode: '0600'
+        owner: root
+        group: root
+
+    - name: LDAP | Restart and enable SSSD and oddjobd services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: restarted
+        enabled: yes
+      loop:
+        - sssd
+        - oddjobd
+
+    # SSH Configuration
+    - name: LDAP | Enable SSH password authentication
+      ansible.builtin.command:
+        cmd: sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+      notify: Restart SSH Service
+
+    # Upload certificate to shared directory
+    - name: LDAP | Ensure shared OpenLDAP certificate directory exists
+      ansible.builtin.file:
+        path: "{{ ha_shared_dir }}/openldap"
+        state: directory
+        mode: '0755'
+      run_once: true
+
+    - name: LDAP | Upload ldap_cacert.pem to shared directory
+      ansible.builtin.copy:
+        src: "{{ LDAP_CERT_FILES_DIR }}/ldap_cacert.pem"
+        dest: "{{ ha_shared_dir }}/openldap/ldap_cacert.pem"
+        mode: '0644'
+      run_once: true
+
+  when: rhel_version.stdout in ["8", "9"]
+
+  rescue:
+    - name: LDAP | Log error if LDAP client configuration fails
+      ansible.builtin.debug:
+        msg: "LDAP client configuration block failed. Check previous task results."
+
+  always:
+    - name: LDAP | Always ensure permissions are reset or log final status
+      ansible.builtin.debug:
+        msg: "LDAP configuration block completed (success or failure)."
