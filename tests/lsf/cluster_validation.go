@@ -56,7 +56,12 @@ func ValidateClusterConfiguration(t *testing.T, options *testhelper.TestOptions,
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
@@ -82,7 +87,12 @@ func ValidateClusterConfiguration(t *testing.T, options *testhelper.TestOptions,
 	// Reconnect to the management node after reboot
 	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
@@ -112,7 +122,12 @@ func ValidateClusterConfiguration(t *testing.T, options *testhelper.TestOptions,
 	// Verify SSH connectivity from login node and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
+
+	defer func() {
+		if err := sshLoginNodeClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLoginNodeClient: %v", err))
+		}
+	}()
 
 	// Verify login node configuration
 	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterName, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
@@ -181,7 +196,12 @@ func ValidateClusterConfigurationWithAPPCenter(t *testing.T, options *testhelper
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
@@ -213,7 +233,12 @@ func ValidateClusterConfigurationWithAPPCenter(t *testing.T, options *testhelper
 	// Reconnect to the management node after reboot
 	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
@@ -243,7 +268,12 @@ func ValidateClusterConfigurationWithAPPCenter(t *testing.T, options *testhelper
 	// Verify SSH connectivity from login node and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
+
+	defer func() {
+		if err := sshLoginNodeClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLoginNodeClient: %v", err))
+		}
+	}()
 
 	// Verify login node configuration
 	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterName, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
@@ -325,7 +355,12 @@ func ValidateClusterConfigurationWithPACHA(t *testing.T, options *testhelper.Tes
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
@@ -360,7 +395,12 @@ func ValidateClusterConfigurationWithPACHA(t *testing.T, options *testhelper.Tes
 	// Reconnect to the management node after reboot
 	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
@@ -393,7 +433,12 @@ func ValidateClusterConfigurationWithPACHA(t *testing.T, options *testhelper.Tes
 	// Verify SSH connectivity from login node and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
+
+	defer func() {
+		if err := sshLoginNodeClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLoginNodeClient: %v", err))
+		}
+	}()
 
 	// Verify login node configuration
 	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterName, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
@@ -456,7 +501,12 @@ func ValidateBasicClusterConfiguration(t *testing.T, options *testhelper.TestOpt
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
@@ -486,7 +536,12 @@ func ValidateBasicClusterConfiguration(t *testing.T, options *testhelper.TestOpt
 	// Verify SSH connectivity from login node and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
+
+	defer func() {
+		if err := sshLoginNodeClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLoginNodeClient: %v", err))
+		}
+	}()
 
 	// Verify login node configuration
 	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterName, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
@@ -545,7 +600,12 @@ func ValidateBasicClusterConfigurationWithDynamicProfile(t *testing.T, options *
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
@@ -578,7 +638,12 @@ func ValidateBasicClusterConfigurationWithDynamicProfile(t *testing.T, options *
 	// Verify SSH connectivity from login node and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
+
+	defer func() {
+		if err := sshLoginNodeClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLoginNodeClient: %v", err))
+		}
+	}()
 
 	// Verify login node configuration
 	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterName, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
@@ -636,7 +701,12 @@ func ValidateLDAPClusterConfiguration(t *testing.T, options *testhelper.TestOpti
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
@@ -662,7 +732,12 @@ func ValidateLDAPClusterConfiguration(t *testing.T, options *testhelper.TestOpti
 	// Reconnect to the management node after reboot
 	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
@@ -692,7 +767,12 @@ func ValidateLDAPClusterConfiguration(t *testing.T, options *testhelper.TestOpti
 	// Verify SSH connectivity from login node and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
+
+	defer func() {
+		if err := sshLoginNodeClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLoginNodeClient: %v", err))
+		}
+	}()
 
 	// Verify login node configuration
 	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterName, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
@@ -706,7 +786,12 @@ func ValidateLDAPClusterConfiguration(t *testing.T, options *testhelper.TestOpti
 	// Connect to the LDAP server via SSH and handle connection errors
 	sshLdapClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_LDAP_HOST_NAME, ldapServerIP)
 	require.NoError(t, connectionErr, "Failed to connect to the LDAP server via SSH")
-	defer sshLdapClient.Close()
+
+	defer func() {
+		if err := sshLdapClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLdapClient: %v", err))
+		}
+	}()
 
 	// Check LDAP server status
 	CheckLDAPServerStatus(t, sshLdapClient, ldapAdminPassword, expectedLdapDomain, ldapUserName, testLogger)
@@ -770,7 +855,12 @@ func ValidatePACANDLDAPClusterConfiguration(t *testing.T, options *testhelper.Te
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
@@ -802,7 +892,12 @@ func ValidatePACANDLDAPClusterConfiguration(t *testing.T, options *testhelper.Te
 	// Reconnect to the management node after reboot
 	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
@@ -832,7 +927,12 @@ func ValidatePACANDLDAPClusterConfiguration(t *testing.T, options *testhelper.Te
 	// Verify SSH connectivity from login node and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
+
+	defer func() {
+		if err := sshLoginNodeClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLoginNodeClient: %v", err))
+		}
+	}()
 
 	// Verify login node configuration
 	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterName, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
@@ -846,7 +946,12 @@ func ValidatePACANDLDAPClusterConfiguration(t *testing.T, options *testhelper.Te
 	// Connect to the LDAP server via SSH and handle connection errors
 	sshLdapClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_LDAP_HOST_NAME, ldapServerIP)
 	require.NoError(t, connectionErr, "Failed to connect to the LDAP server via SSH")
-	defer sshLdapClient.Close()
+
+	defer func() {
+		if err := sshLdapClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLdapClient: %v", err))
+		}
+	}()
 
 	// Check LDAP server status
 	CheckLDAPServerStatus(t, sshLdapClient, ldapAdminPassword, expectedLdapDomain, ldapUserName, testLogger)
@@ -912,7 +1017,12 @@ func ValidateBasicClusterConfigurationWithVPCFlowLogsAndCos(t *testing.T, option
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
@@ -942,7 +1052,12 @@ func ValidateBasicClusterConfigurationWithVPCFlowLogsAndCos(t *testing.T, option
 	// Verify SSH connectivity from login node and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
+
+	defer func() {
+		if err := sshLoginNodeClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLoginNodeClient: %v", err))
+		}
+	}()
 
 	// Verify login node configuration
 	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterName, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
@@ -1004,8 +1119,18 @@ func ValidateClusterConfigurationWithMultipleKeys(t *testing.T, options *testhel
 	sshClientOne, sshClientTwo, connectionErrOne, connectionErrTwo := utils.ConnectToHostsWithMultipleUsers(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErrOne, "Failed to connect to the master via SSH")
 	require.NoError(t, connectionErrTwo, "Failed to connect to the master via SSH")
-	defer sshClientOne.Close()
-	defer sshClientTwo.Close()
+
+	defer func() {
+		if err := sshClientOne.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClientOne: %v", err))
+		}
+	}()
+
+	defer func() {
+		if err := sshClientTwo.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClientTwo: %v", err))
+		}
+	}()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
@@ -1029,7 +1154,12 @@ func ValidateClusterConfigurationWithMultipleKeys(t *testing.T, options *testhel
 	// Reconnect to the management node after reboot
 	sshClientOne, connectionErrOne = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErrOne, "Failed to reconnect to the master via SSH: %v", connectionErrOne)
-	defer sshClientOne.Close()
+
+	defer func() {
+		if err := sshClientOne.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClientOne: %v", err))
+		}
+	}()
 
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
@@ -1059,7 +1189,12 @@ func ValidateClusterConfigurationWithMultipleKeys(t *testing.T, options *testhel
 	// Verify SSH connectivity from login node
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
+
+	defer func() {
+		if err := sshLoginNodeClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLoginNodeClient: %v", err))
+		}
+	}()
 
 	// Verify login node configuration
 	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterName, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
@@ -1123,7 +1258,12 @@ func ValidateExistingLDAPClusterConfig(t *testing.T, ldapServerBastionIP, ldapSe
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
@@ -1149,7 +1289,12 @@ func ValidateExistingLDAPClusterConfig(t *testing.T, ldapServerBastionIP, ldapSe
 	// Reconnect to the management node after reboot
 	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
@@ -1178,7 +1323,12 @@ func ValidateExistingLDAPClusterConfig(t *testing.T, ldapServerBastionIP, ldapSe
 	// Verify SSH connectivity from login node and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
+
+	defer func() {
+		if err := sshLoginNodeClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLoginNodeClient: %v", err))
+		}
+	}()
 
 	// Verify login node configuration
 	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterName, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
@@ -1195,7 +1345,12 @@ func ValidateExistingLDAPClusterConfig(t *testing.T, ldapServerBastionIP, ldapSe
 	// Connect to the LDAP server via SSH
 	sshLdapClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, ldapServerBastionIP, LSF_LDAP_HOST_NAME, ldapServerIP)
 	require.NoError(t, connectionErr, "Failed to connect to the LDAP server via SSH")
-	defer sshLdapClient.Close()
+
+	defer func() {
+		if err := sshLdapClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLdapClient: %v", err))
+		}
+	}()
 
 	// Check LDAP server status
 	CheckLDAPServerStatus(t, sshLdapClient, ldapAdminPassword, expectedLdapDomain, ldapUserName, testLogger)
@@ -1256,7 +1411,12 @@ func ValidateBasicClusterConfigurationLSFLogs(t *testing.T, options *testhelper.
 	// Establish SSH connection to master node
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
@@ -1270,7 +1430,12 @@ func ValidateBasicClusterConfigurationLSFLogs(t *testing.T, options *testhelper.
 	// Reconnect to the master node via SSH after reboot
 	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	// Wait for dynamic node disappearance
 	defer func() {
@@ -1294,7 +1459,12 @@ func ValidateBasicClusterConfigurationLSFLogs(t *testing.T, options *testhelper.
 	// Verify SSH connectivity from login node
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
+
+	defer func() {
+		if err := sshLoginNodeClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLoginNodeClient: %v", err))
+		}
+	}()
 
 	// Validate login node configuration
 	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterName, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
@@ -1345,7 +1515,12 @@ func ValidateBasicClusterConfigurationWithDedicatedHost(t *testing.T, options *t
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
@@ -1378,7 +1553,12 @@ func ValidateBasicClusterConfigurationWithDedicatedHost(t *testing.T, options *t
 	// Verify SSH connectivity from login node and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
+
+	defer func() {
+		if err := sshLoginNodeClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLoginNodeClient: %v", err))
+		}
+	}()
 
 	// Verify login node configuration
 	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterName, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
@@ -1438,7 +1618,12 @@ func ValidateBasicClusterConfigurationWithSCC(t *testing.T, options *testhelper.
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
@@ -1471,7 +1656,12 @@ func ValidateBasicClusterConfigurationWithSCC(t *testing.T, options *testhelper.
 	// Verify SSH connectivity from login node and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
+
+	defer func() {
+		if err := sshLoginNodeClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLoginNodeClient: %v", err))
+		}
+	}()
 
 	// Verify login node configuration
 	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterName, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
@@ -1535,7 +1725,12 @@ func ValidateBasicClusterConfigurationWithCloudLogs(t *testing.T, options *testh
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
@@ -1568,7 +1763,12 @@ func ValidateBasicClusterConfigurationWithCloudLogs(t *testing.T, options *testh
 	// Verify SSH connectivity from login node and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
+
+	defer func() {
+		if err := sshLoginNodeClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLoginNodeClient: %v", err))
+		}
+	}()
 
 	// Verify login node configuration
 	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterName, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
@@ -1632,7 +1832,12 @@ func ValidateBasicClusterConfigurationWithCloudMonitoring(t *testing.T, options 
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
@@ -1665,7 +1870,12 @@ func ValidateBasicClusterConfigurationWithCloudMonitoring(t *testing.T, options 
 	// Verify SSH connectivity from login node and handle connection errors
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
+
+	defer func() {
+		if err := sshLoginNodeClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLoginNodeClient: %v", err))
+		}
+	}()
 
 	// Verify login node configuration
 	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterName, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
@@ -1722,7 +1932,13 @@ func ValidateBasicClusterConfigurationWithCloudAtracker(t *testing.T, options *t
 	// Establish SSH connection to master node
 	sshClient, err := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, err, "Failed to connect to the master node via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
+
 	testLogger.Info(t, "SSH connection to master node successful")
 
 	t.Log("Validation in progress. Please wait...")
@@ -1754,7 +1970,12 @@ func ValidateBasicClusterConfigurationWithCloudAtracker(t *testing.T, options *t
 	// Establish SSH connection to login node
 	sshLoginNodeClient, err := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, err, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
+
+	defer func() {
+		if err := sshLoginNodeClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLoginNodeClient: %v", err))
+		}
+	}()
 
 	// Verify login node configuration
 	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterName, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
@@ -1798,7 +2019,12 @@ func ValidateClusterConfigWithAPPCenterOnExistingEnvironment(
 	// Connect to the master node via SSH
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
@@ -1821,7 +2047,12 @@ func ValidateClusterConfigWithAPPCenterOnExistingEnvironment(
 	// Reconnect to the master node via SSH after reboot
 	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
@@ -1846,7 +2077,12 @@ func ValidateClusterConfigWithAPPCenterOnExistingEnvironment(
 	// Verify SSH connectivity from login node
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
+
+	defer func() {
+		if err := sshLoginNodeClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLoginNodeClient: %v", err))
+		}
+	}()
 
 	// Verify login node configuration
 	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterName, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
@@ -1903,7 +2139,12 @@ func ValidateClusterConfigWithAPPCenterAndLDAPOnExistingEnvironment(
 	// Connect to the master node via SSH
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to connect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	testLogger.Info(t, "SSH connection to the master successful")
 	t.Log("Validation in progress. Please wait...")
@@ -1926,7 +2167,12 @@ func ValidateClusterConfigWithAPPCenterAndLDAPOnExistingEnvironment(
 	// Reconnect to the master node via SSH after reboot
 	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	require.NoError(t, connectionErr, "Failed to reconnect to the master via SSH")
-	defer sshClient.Close()
+
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
@@ -1951,7 +2197,12 @@ func ValidateClusterConfigWithAPPCenterAndLDAPOnExistingEnvironment(
 	// Verify SSH connectivity from login node
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
-	defer sshLoginNodeClient.Close()
+
+	defer func() {
+		if err := sshLoginNodeClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLoginNodeClient: %v", err))
+		}
+	}()
 
 	// Verify login node configuration
 	VerifyLoginNodeConfig(t, sshLoginNodeClient, expectedClusterName, expectedMasterName, expectedReservationID, expectedHyperthreadingEnabled, loginNodeIP, jobCommandLow, EXPECTED_LSF_VERSION, testLogger)
@@ -1978,7 +2229,12 @@ func ValidateClusterConfigWithAPPCenterAndLDAPOnExistingEnvironment(
 	// Connect to the LDAP server via SSH and handle connection errors
 	sshLdapClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_LDAP_HOST_NAME, ldapServerIP)
 	require.NoError(t, connectionErr, "Failed to connect to the LDAP server via SSH")
-	defer sshLdapClient.Close()
+
+	defer func() {
+		if err := sshLdapClient.Close(); err != nil {
+			testLogger.Info(t, fmt.Sprintf("failed to close sshLdapClient: %v", err))
+		}
+	}()
 
 	// Check LDAP server status
 	CheckLDAPServerStatus(t, sshLdapClient, ldapAdminPassword, expectedLdapDomain, ldapUserName, testLogger)

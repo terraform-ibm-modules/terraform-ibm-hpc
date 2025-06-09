@@ -13,13 +13,12 @@ data "template_file" "packer_user_data" {
     encoded_compute          = data.local_file.encoded_compute_content.content
     target_dir               = "/var"
     prefix                   = var.prefix
-    cluster_id               = var.cluster_id
+    cluster_name             = var.cluster_name
     reservation_id           = var.reservation_id
     catalog_validate_ssh_key = var.ssh_keys[0]
     zones                    = join(",", var.zones)
-    resource_group           = var.resource_group
+    existing_resource_group  = var.existing_resource_group
     private_catalog_id       = var.private_catalog_id
     solution                 = var.solution
-    ibm_customer_number      = var.ibm_customer_number
   }
 }

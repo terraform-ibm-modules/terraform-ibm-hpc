@@ -1,13 +1,12 @@
 solution: lsf
 default_existing_resource_group: Default
 non_default_existing_resource_group: HPCC
-zone: us-east-3
+zone: us-east-2
 cluster_name: HPC-LSF-1
-ibm_customer_number:
 remote_allowed_ips:
 ssh_key: geretain-hpc
 login_node_instance_type: bx2-2x8
-management_image_name: "hpc-lsf10-rhel810-v1"
+management_image_name: "hpc-lsf10-rhel810-v2"
 compute_image_name: "hpcaas-lsf10-rhel810-compute-v8"
 login_image_name: "hpcaas-lsf10-rhel810-compute-v8"
 management_node_instance_type: bx2-2x8

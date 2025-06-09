@@ -11,10 +11,9 @@ import (
 )
 
 var (
-	ip                   string
-	reservationIDSouth   string
-	reservationIDEast    string
-	HPCIbmCustomerNumber string
+	ip                 string
+	reservationIDSouth string
+	reservationIDEast  string
 )
 
 // Define a struct with fields that match the structure of the YAML data
@@ -70,7 +69,6 @@ type Config struct {
 	SSHFilePath                                 string       `yaml:"ssh_file_path"`
 	SSHFilePathTwo                              string       `yaml:"ssh_file_path_two"`
 	Solution                                    string       `yaml:"solution"`
-	IBMCustomerNumber                           string       `yaml:"ibm_customer_number"`
 	WorkerNodeMaxCount                          int          `yaml:"worker_node_max_count"`
 	WorkerNodeInstanceType                      []WorkerNode `yaml:"worker_node_instance_type"`
 	SccEnabled                                  bool         `yaml:"scc_enable"`
@@ -90,7 +88,12 @@ func GetConfigFromYAML(filePath string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open YAML file %s: %v", filePath, err)
 	}
-	defer file.Close()
+
+	defer func() {
+		if err := file.Close(); err != nil {
+			fmt.Printf("warning: failed to close file: %v\n", err)
+		}
+	}()
 
 	// Decode the YAML file into the config struct
 	if err := yaml.NewDecoder(file).Decode(&config); err != nil {
@@ -125,24 +128,6 @@ func GetConfigFromYAML(filePath string) (*Config, error) {
 		fmt.Printf("Error retrieving reservation ID from secrets: %v\n", err) // pragma: allowlist secret
 	} else if reservationIDEastPtr != nil {
 		reservationIDEast = *reservationIDEastPtr
-	}
-
-	// Retrieve IBM customer number from Secret Manager                        // pragma: allowlist secret
-	val, ok := permanentResources["hpc_ibm_customer_number_secret_id"].(string)
-	if !ok {
-		fmt.Println("Invalid type or nil value")
-	}
-
-	IBMCustomerNumberPtr, err := GetSecretsManagerKey(
-		permanentResources["secretsManagerGuid"].(string),
-		permanentResources["secretsManagerRegion"].(string),
-		val, // Use `val` here after checking
-	)
-
-	if err != nil {
-		fmt.Printf("Retrieving IBM Customer Number from secrets: %v\n", err) // pragma: allowlist secret
-	} else if IBMCustomerNumberPtr != nil {
-		HPCIbmCustomerNumber = *IBMCustomerNumberPtr
 	}
 
 	// Set environment variables from config
@@ -197,7 +182,6 @@ func setEnvFromConfig(config *Config) error {
 		"SSH_FILE_PATH":                       config.SSHFilePath,
 		"SSH_FILE_PATH_TWO":                   config.SSHFilePathTwo,
 		"SOLUTION":                            config.Solution,
-		"IBM_CUSTOMER_NUMBER":                 config.IBMCustomerNumber,  //LSF specific parameter
 		"WORKER_NODE_MAX_COUNT":               config.WorkerNodeMaxCount, //LSF specific parameter
 		"SCC_ENABLED":                         config.SccEnabled,
 		"SCC_EVENT_NOTIFICATION_PLAN":         config.SccEventNotificationPlan,
@@ -238,51 +222,78 @@ func setEnvFromConfig(config *Config) error {
 		val, ok := os.LookupEnv(key)
 		switch {
 		case strings.Contains(key, "KEY_MANAGEMENT") && val == "null" && ok:
-			os.Setenv(key, "null")
+			if err := os.Setenv(key, "null"); err != nil {
+				return fmt.Errorf("failed to set %s to 'null': %v", key, err)
+			}
 		case strings.Contains(key, "REMOTE_ALLOWED_IPS") && !ok && value == "":
-			os.Setenv(key, ip)
+			if err := os.Setenv(key, ip); err != nil {
+				return fmt.Errorf("failed to set %s to %s: %v", key, ip, err)
+			}
 		case value != "" && !ok:
 			switch v := value.(type) {
 			case string:
-				os.Setenv(key, v)
+				if err := os.Setenv(key, v); err != nil {
+					return fmt.Errorf("failed to set %s to %s: %v", key, v, err)
+				}
 			case bool:
-				os.Setenv(key, fmt.Sprintf("%t", v))
+				if err := os.Setenv(key, fmt.Sprintf("%t", v)); err != nil {
+					return fmt.Errorf("failed to set %s to %t: %v", key, v, err)
+				}
 			case int:
-				os.Setenv(key, fmt.Sprintf("%d", v))
+				if err := os.Setenv(key, fmt.Sprintf("%d", v)); err != nil {
+					return fmt.Errorf("failed to set %s to %d: %v", key, v, err)
+				}
 			case float64:
-				// Optionally handle float values
-				os.Setenv(key, fmt.Sprintf("%f", v))
+				if err := os.Setenv(key, fmt.Sprintf("%f", v)); err != nil {
+					return fmt.Errorf("failed to set %s to %f: %v", key, v, err)
+				}
 			case []string:
-				// If the value is a slice of strings, you can join them into a comma-separated string
-				os.Setenv(key, strings.Join(v, ","))
+				if err := os.Setenv(key, strings.Join(v, ",")); err != nil {
+					return fmt.Errorf("failed to set %s to joined string: %v", key, err)
+				}
 			case []WorkerNode:
-				// If the value is a slice of WorkerNode, marshal it to JSON string
 				workerNodeInstanceTypeJSON, err := json.Marshal(v)
 				if err != nil {
 					return fmt.Errorf("failed to marshal %s: %v", key, err)
 				}
-				os.Setenv(key, string(workerNodeInstanceTypeJSON))
+				if err := os.Setenv(key, string(workerNodeInstanceTypeJSON)); err != nil {
+					return fmt.Errorf("failed to set %s to JSON: %v", key, err)
+				}
 			default:
 				return fmt.Errorf("unsupported type for key %s", key)
 			}
 		}
 	}
 
-	// Handle missing reservations IDs if necessary
+	// Handle missing reservation IDs if necessary
 	for key, value := range envVars {
 		_, ok := os.LookupEnv(key)
 		switch {
 		case key == "RESERVATION_ID" && !ok && value == "":
-			os.Setenv("RESERVATION_ID", GetValueForKey(map[string]string{"us-south": reservationIDSouth, "us-east": reservationIDEast}, strings.ToLower(GetRegion(os.Getenv("ZONE")))))
+			val := GetValueForKey(
+				map[string]string{
+					"us-south": reservationIDSouth,
+					"us-east":  reservationIDEast,
+				},
+				strings.ToLower(GetRegion(os.Getenv("ZONE"))),
+			)
+			if err := os.Setenv("RESERVATION_ID", val); err != nil {
+				return fmt.Errorf("failed to set RESERVATION_ID: %v", err)
+			}
 		case key == "US_EAST_RESERVATION_ID" && !ok && value == "":
-			os.Setenv("US_EAST_RESERVATION_ID", reservationIDEast)
+			if err := os.Setenv("US_EAST_RESERVATION_ID", reservationIDEast); err != nil {
+				return fmt.Errorf("failed to set US_EAST_RESERVATION_ID: %v", err)
+			}
 		case key == "EU_DE_RESERVATION_ID" && !ok && value == "":
-			os.Setenv("EU_DE_RESERVATION_ID", reservationIDEast)
+			if err := os.Setenv("EU_DE_RESERVATION_ID", reservationIDEast); err != nil {
+				return fmt.Errorf("failed to set EU_DE_RESERVATION_ID: %v", err)
+			}
 		case key == "US_SOUTH_RESERVATION_ID" && !ok && value == "":
-			os.Setenv("US_SOUTH_RESERVATION_ID", reservationIDSouth)
-		case key == "IBM_CUSTOMER_NUMBER" && !ok && value == "":
-			os.Setenv("IBM_CUSTOMER_NUMBER", HPCIbmCustomerNumber)
+			if err := os.Setenv("US_SOUTH_RESERVATION_ID", reservationIDSouth); err != nil {
+				return fmt.Errorf("failed to set US_SOUTH_RESERVATION_ID: %v", err)
+			}
 		}
 	}
+
 	return nil
 }

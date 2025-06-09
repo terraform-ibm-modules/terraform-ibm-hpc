@@ -16,12 +16,12 @@ variable "ibmcloud_api_key" {
 # Resource Groups Variables
 ##############################################################################
 
-variable "resource_group" {
+variable "existing_resource_group" {
   description = "Specify the existing resource group name from your IBM Cloud account where the VPC resources should be deployed. By default, the resource group name is set to 'Default.' Note that in some older accounts, the resource group name may be 'default,' so please validate the resource_group name before deployment. If the resource group value is set to the string \"null\", the automation will create two different resource groups named 'workload-rg' and 'service-rg.' For more information on resource groups, refer to Managing resource groups."
   type        = string
   default     = "Default"
   validation {
-    condition     = var.resource_group != null
+    condition     = var.existing_resource_group != null
     error_message = "If you want to provide null for resource_group variable, it should be within double quotes."
   }
 }
@@ -188,11 +188,11 @@ variable "enable_fip" {
 }
 
 # tflint-ignore: terraform_unused_declarations
-variable "cluster_id" {
+variable "cluster_name" {
   type        = string
   description = "Ensure that you have received the cluster ID from IBM technical sales. A unique identifer for HPC cluster used by IBM Cloud HPC to differentiate different HPC clusters within the same reservations. This can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. You cannot change the cluster ID after deployment."
   validation {
-    condition     = 0 < length(var.cluster_id) && length(var.cluster_id) < 40 && can(regex("^[a-zA-Z0-9_.-]+$", var.cluster_id))
+    condition     = 0 < length(var.cluster_name) && length(var.cluster_name) < 40 && can(regex("^[a-zA-Z0-9_.-]+$", var.cluster_name))
     error_message = "The Cluster ID can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. Other special characters and spaces are not allowed."
   }
 }
@@ -216,11 +216,4 @@ variable "solution" {
   type        = string
   default     = "lsf"
   description = "Provide the value for the solution that is needed for the support of lsf and HPC"
-}
-
-variable "ibm_customer_number" {
-  type        = string
-  sensitive   = true
-  default     = ""
-  description = "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
 }

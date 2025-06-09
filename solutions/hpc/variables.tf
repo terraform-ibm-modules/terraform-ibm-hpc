@@ -81,13 +81,6 @@ variable "reservation_id" {
   description = "Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_)."
 }
 
-variable "ibm_customer_number" {
-  type        = string
-  sensitive   = true
-  default     = null
-  description = "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
-}
-
 ##############################################################################
 # VPC Variables
 ##############################################################################
@@ -191,7 +184,7 @@ variable "login_node_instance_type" {
 
 variable "management_image_name" {
   type        = string
-  default     = "hpc-lsf10-rhel810-v1"
+  default     = "hpc-lsf10-rhel810-v2"
   description = "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud Spectrum LSF cluster management nodes. By default, the solution uses a RHEL810 base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the lsf cluster through this offering."
 }
 

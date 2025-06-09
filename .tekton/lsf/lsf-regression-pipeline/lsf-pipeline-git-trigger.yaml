@@ -71,9 +71,6 @@ spec:
     - name: solution
       description: Provide the value for the solution that is needed for the support of lsf and HPC.
       default: "lsf"
-    - name: ibm_customer_number
-      description: Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)..
-      default: ""
     - name: pac_ha_exist_certificate
       description: PAC HA Existing Certificate
       default: ""
@@ -177,8 +174,6 @@ spec:
           value: $(params.git_user_email)
         - name: solution
           value: $(params.solution)
-        - name: ibm_customer_number
-          value: $(params.ibm_customer_number)
     - name: wes-lsf-da-rhel-2
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
@@ -225,8 +220,6 @@ spec:
           value: $(params.git_user_email)
         - name: solution
           value: $(params.solution)
-        - name: ibm_customer_number
-          value: $(params.ibm_customer_number)
     - name: wes-lsf-da-rhel-3
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
@@ -273,8 +266,6 @@ spec:
           value: $(params.git_user_email)
         - name: solution
           value: $(params.solution)
-        - name: ibm_customer_number
-          value: $(params.ibm_customer_number)
     - name: wes-lsf-da-rhel-4
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
@@ -321,8 +312,6 @@ spec:
           value: $(params.git_user_email)
         - name: solution
           value: $(params.solution)
-        - name: ibm_customer_number
-          value: $(params.ibm_customer_number)
         - name: pac_ha_exist_certificate
           value: $(params.pac_ha_exist_certificate)
     # - name: wes-lsf-da-ubuntu
@@ -415,8 +404,6 @@ spec:
           value: $(params.git_user_email)
         - name: solution
           value: $(params.solution)
-        - name: ibm_customer_number
-          value: $(params.ibm_customer_number)
     - name: wes-lsf-da-negative
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
@@ -461,8 +448,6 @@ spec:
           value: $(params.git_user_name)
         - name: git_user_email
           value: $(params.git_user_email)
-        - name: ibm_customer_number
-          value: $(params.ibm_customer_number)
     - name: ssh-key-deletion
       runAfter:
         [

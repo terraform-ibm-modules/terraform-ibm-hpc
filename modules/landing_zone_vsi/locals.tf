@@ -12,11 +12,9 @@ locals {
   login_node_name               = format("%s-%s", local.prefix, "login")
   management_node_name          = format("%s-%s", local.prefix, "mgmt")
   worker_node_name              = format("%s-%s", local.prefix, "worker")
-  compute_ssh_keys              = [for name in var.compute_ssh_keys : data.ibm_is_ssh_key.compute[name].id]
-  management_ssh_keys           = local.compute_ssh_keys
   ldap_enable                   = var.enable_ldap == true && var.ldap_server == "null" ? 1 : 0
   #  enable_worker_vsi             = var.solution == "lsf" && var.worker_node_min_count >= 0 ? var.worker_node_min_count : 0
-  products = var.solution == "lsf" && var.enable_app_center ? "lsf,lsf-app-center" : "lsf"
+  # products = var.solution == "lsf" && var.enable_app_center ? "lsf,lsf-app-center" : "lsf"
 
   # Region and Zone calculations
   region = join("-", slice(split("-", var.zones[0]), 0, 2))
@@ -141,7 +139,6 @@ locals {
   rc_profile             = data.ibm_is_instance_profile.worker_node.name
 
   bastion_subnets        = var.bastion_subnets
-  bastion_ssh_keys       = [for name in var.ssh_keys : data.ibm_is_ssh_key.bastion[name].id]
   ldap_server            = var.enable_ldap == true && var.ldap_server == "null" ? length(module.ldap_vsi) > 0 ? var.ldap_primary_ip[0] : null : var.ldap_server
   ldap_server_cert       = var.enable_ldap == true && var.ldap_server_cert != "null" ? var.ldap_server_cert : "null"
   ldap_instance_image_id = var.enable_ldap == true && var.ldap_server == "null" ? data.ibm_is_image.ldap_vsi_image[0].id : "null"

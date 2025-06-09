@@ -51,8 +51,8 @@
                         "authority": "scc-v3",
                         "profiles": [
                             {
-                                "profile_name": "CIS IBM Cloud Foundations Benchmark",
-                                "profile_version": "1.0.0"
+                                "profile_name": "CIS IBM Cloud Foundations Benchmark v1.1.0",
+                                "profile_version": "1.1.0"
                             }
                         ]
                     },
@@ -76,10 +76,6 @@
                         },
                         {
                             "key": "remote_allowed_ips"
-                        },
-                        {
-                            "key": "ibm_customer_number",
-                            "required": true
                         },
                         {
                             "key": "zones",
@@ -376,7 +372,18 @@
                             "key": "worker_node_max_count"
                         },
                         {
-                            "key": "worker_node_instance_type"
+                            "key": "worker_node_instance_type",
+                            "type": "array",
+                            "default_value": "[\n  {\n    \"count\": 0,\n    \"instance_type\": \"bx2-4x16\"\n  },\n  {\n    \"count\": 0,\n    \"instance_type\": \"cx2-8x16\"\n  }\n]",
+                            "required": false,
+                            "custom_config": {
+                                "type": "json_editor",
+                                "grouping": "deployment",
+                                "original_grouping": "deployment",
+                                "config_constraints": {
+                                    "type": "mixed"
+                                }
+                            }
                         },
                         {
                             "key": "enable_dedicated_host"
@@ -400,7 +407,6 @@
                             "key": "custom_file_shares",
                             "type": "array",
                             "default_value": "[\n  {\n    \"mount_path\": \"/mnt/vpcstorage/tools\",\n    \"size\": 100,\n    \"iops\": 2000\n  },\n  {\n    \"mount_path\": \"/mnt/vpcstorage/data\",\n    \"size\": 100,\n    \"iops\": 6000\n  },\n  {\n    \"mount_path\": \"/mnt/scale/tools\",\n    \"nfs_share\": \"\"\n  }\n]\n",
-                            "display_name": "JSON",
                             "required": false,
                             "custom_config": {
                                 "type": "json_editor",
@@ -489,7 +495,6 @@
                         {
                             "key": "existing_bastion_ssh_private_key",
                             "type": "multiline_secure_value",
-                            "display_name": "Multiline secure value",
                             "required": false,
                             "custom_config": {
                                 "grouping": "deployment",
@@ -593,7 +598,6 @@
                         }
                     ],
                     "architecture": {
-                        "descriptions": "",
                         "features": [
                             {
                                 "title": "Separate VPC for HPC workloads",

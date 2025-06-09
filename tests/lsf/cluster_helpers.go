@@ -135,7 +135,11 @@ func RebootInstance(t *testing.T, sshMgmtClient *ssh.Client, publicHostIP, publi
 	bhostRespErr := LSFCheckBhostsResponse(t, sshClient, logger)
 	utils.LogVerificationResult(t, bhostRespErr, "bhosts response non-empty", logger)
 
-	defer sshClient.Close()
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		}
+	}()
 
 }
 
@@ -328,7 +332,12 @@ func VerifyManagementNodeLDAPConfig(
 		utils.LogVerificationResult(t, err, "Connection to management node via SSH as LDAP User failed", logger)
 		return
 	}
-	defer sshLdapClient.Close()
+
+	defer func() {
+		if err := sshLdapClient.Close(); err != nil {
+			logger.Info(t, fmt.Sprintf("failed to close sshLdapClient: %v", err))
+		}
+	}()
 
 	// Check file mount
 	if err := HPCCheckFileMountAsLDAPUser(t, sshLdapClient, "management", logger); err != nil {
@@ -353,7 +362,13 @@ func VerifyManagementNodeLDAPConfig(
 			continue
 		}
 		logger.Info(t, fmt.Sprintf("Connected to management node %s via SSH as LDAP user", ip))
-		sshLdapClientUser.Close() // Close connection immediately after usage
+		// Close connection immediately after usage
+		defer func() {
+			if err := sshLdapClientUser.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshLdapClientUser: %v", err))
+			}
+		}()
+
 	}
 }
 
@@ -384,7 +399,12 @@ func VerifyLoginNodeLDAPConfig(
 		utils.LogVerificationResult(t, err, "Connection to login node via SSH as LDAP User failed", logger)
 		return
 	}
-	defer sshLdapClient.Close()
+
+	defer func() {
+		if err := sshLdapClient.Close(); err != nil {
+			logger.Info(t, fmt.Sprintf("failed to close sshLdapClient: %v", err))
+		}
+	}()
 
 	// Check file mount
 	if err := HPCCheckFileMountAsLDAPUser(t, sshLdapClient, "login", logger); err != nil {
@@ -424,7 +444,12 @@ func VerifyComputeNodeLDAPConfig(
 		utils.LogVerificationResult(t, connectionErr, "connect to the compute node via SSH as LDAP User failed", logger)
 		return
 	}
-	defer sshLdapClient.Close()
+
+	defer func() {
+		if err := sshLdapClient.Close(); err != nil {
+			logger.Info(t, fmt.Sprintf("failed to close sshLdapClient: %v", err))
+		}
+	}()
 
 	// Verify LDAP configuration
 	ldapErr := VerifyLDAPConfig(t, sshLdapClient, "compute", ldapServerIP, ldapDomainName, ldapUserName, logger)
@@ -445,7 +470,12 @@ func VerifyComputeNodeLDAPConfig(
 			logger.Info(t, fmt.Sprintf("connect to the compute node %s via SSH as LDAP User", computeNodeIPList[i]))
 		}
 		utils.LogVerificationResult(t, connectionErr, "connect to the compute node via SSH as LDAP User", logger)
-		defer sshLdapClientUser.Close()
+
+		defer func() {
+			if err := sshLdapClientUser.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshLdapClientUser: %v", err))
+			}
+		}()
 	}
 }
 
@@ -541,7 +571,12 @@ func VerifyCreateNewLdapUserAndManagementNodeLDAPConfig(
 		utils.LogVerificationResult(t, err, "connect to the management node via SSH as the new LDAP user", logger)
 		return
 	}
-	defer sshLdapClientUser.Close()
+
+	defer func() {
+		if err := sshLdapClientUser.Close(); err != nil {
+			logger.Info(t, fmt.Sprintf("failed to close sshLdapClientUser: %v", err))
+		}
+	}()
 
 	// Run job as the new LDAP user
 	if err := LSFRunJobsAsLDAPUser(t, sshLdapClientUser, jobCommand, newLdapUserName, logger); err != nil {
@@ -700,8 +735,8 @@ func VerifyCloudMonitoring(
 	mgmtErr := LSFPrometheusAndDragentServiceForManagementNodes(t, sshClient, managementNodeIPList, isCloudMonitoringEnabledForManagement, logger)
 	utils.LogVerificationResult(t, mgmtErr, "Prometheus and Dragent service for management nodes", logger)
 
-	// Verify Prometheus Dragent service for compute nodes
-	compErr := LSFPrometheusAndDragentServiceForComputeNodes(t, sshClient, expectedSolution, staticWorkerNodeIPList, isCloudMonitoringEnabledForCompute, logger)
+	// Verify Dragent service for compute nodes
+	compErr := LSFDragentServiceForComputeNodes(t, sshClient, expectedSolution, staticWorkerNodeIPList, isCloudMonitoringEnabledForCompute, logger)
 	utils.LogVerificationResult(t, compErr, "Prometheus and Dragent service for compute nodes", logger)
 
 }

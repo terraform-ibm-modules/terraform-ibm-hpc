@@ -45,7 +45,7 @@ module "existing_bastion_sg_update" {
 module "bastion_vsi" {
   count                         = var.bastion_instance_name != null ? 0 : 1
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "4.5.0"
+  version                       = "5.0.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -55,7 +55,7 @@ module "bastion_vsi" {
   resource_group_id             = var.resource_group
   enable_floating_ip            = true
   security_group_ids            = module.bastion_sg[*].security_group_id
-  ssh_key_ids                   = local.bastion_ssh_keys
+  ssh_key_ids                   = var.ssh_keys
   subnets                       = length(var.bastion_subnets) == 2 ? [local.bastion_subnets[1]] : [local.bastion_subnets[0]]
   tags                          = local.tags
   user_data                     = data.template_file.bastion_user_data.rendered

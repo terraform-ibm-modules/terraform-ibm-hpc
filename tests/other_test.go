@@ -166,6 +166,7 @@ func TestRunSCCEnabled(t *testing.T) {
 	options.TerraformVars["scc_enable"] = envVars.sccEnabled
 	options.TerraformVars["scc_event_notification_plan"] = envVars.sccEventNotificationPlan
 	options.TerraformVars["scc_location"] = envVars.sccLocation
+	options.TerraformVars["existing_resource_group"] = envVars.NonDefaultExistingResourceGroup
 
 	// Skip test teardown; defer teardown to the end of the test
 	options.SkipTestTearDown = true
@@ -331,12 +332,13 @@ func TestRunInUsEastRegion(t *testing.T) {
 	require.NoError(t, err, "Failed to set up Terraform options.")
 
 	// Assign solution-specific Terraform variables.
-	if envVars.Solution == "HPC" {
+	switch envVars.Solution {
+	case "HPC":
 		options.TerraformVars["zones"] = usEastZone
 		options.TerraformVars["reservation_id"] = usEastReservationID
 		options.TerraformVars["cluster_name"] = usEastClusterName
 		testLogger.Info(t, "Terraform variables configured for HPC solution.")
-	} else if envVars.Solution == "lsf" {
+	case "lsf":
 		options.TerraformVars["zones"] = usEastZone
 		options.TerraformVars["worker_node_instance_type"] = []map[string]interface{}{
 			{
@@ -396,12 +398,13 @@ func TestRunInEuDeRegion(t *testing.T) {
 	require.NoError(t, err, "Failed to set up Terraform options.")
 
 	// Assign solution-specific Terraform variables.
-	if envVars.Solution == "HPC" {
+	switch envVars.Solution {
+	case "HPC":
 		options.TerraformVars["zones"] = euDeZone
 		options.TerraformVars["reservation_id"] = euDeReservationID
 		options.TerraformVars["cluster_name"] = euDeClusterName
 		testLogger.Info(t, "Terraform variables configured for HPC in Frankfurt.")
-	} else if envVars.Solution == "lsf" {
+	case "lsf":
 		options.TerraformVars["zones"] = euDeZone
 		options.TerraformVars["worker_node_instance_type"] = []map[string]interface{}{
 			{
@@ -462,12 +465,13 @@ func TestRunInUSSouthRegion(t *testing.T) {
 	require.NoError(t, err, "Failed to set up Terraform options.")
 
 	// Assign solution-specific Terraform variables.
-	if envVars.Solution == "HPC" {
+	switch envVars.Solution {
+	case "HPC":
 		options.TerraformVars["zones"] = usSouthZone
 		options.TerraformVars["reservation_id"] = usSouthReservationID
 		options.TerraformVars["cluster_name"] = usSouthClusterName
 		testLogger.Info(t, "Terraform variables configured for HPC in US South.")
-	} else if envVars.Solution == "lsf" {
+	case "lsf":
 		options.TerraformVars["zones"] = usSouthZone
 		options.TerraformVars["worker_node_instance_type"] = []map[string]interface{}{
 			{
@@ -527,12 +531,13 @@ func TestRunInJPTokyoRegion(t *testing.T) {
 	require.NoError(t, err, "Failed to set up Terraform options.")
 
 	// Assign solution-specific Terraform variables.
-	if envVars.Solution == "HPC" {
+	switch envVars.Solution {
+	case "HPC":
 		options.TerraformVars["zones"] = jpTokyoZone
 		options.TerraformVars["cluster_name"] = jpTokyoClusterName
 		options.TerraformVars["reservation_id"] = jpTokyoReservationID
 		testLogger.Info(t, "Terraform variables configured for HPC in JP Tokyo.")
-	} else if envVars.Solution == "lsf" {
+	case "lsf":
 		options.TerraformVars["zones"] = jpTokyoZone
 		options.TerraformVars["worker_node_instance_type"] = []map[string]interface{}{
 			{
@@ -1103,7 +1108,6 @@ func TestRunExistingLDAP(t *testing.T) {
 	options1.TerraformVars["ldap_user_name"] = envVars.LdapUserName
 	options1.TerraformVars["ldap_user_password"] = envVars.LdapUserPassword // pragma: allowlist secret
 	options1.TerraformVars["key_management"] = "null"
-	options1.TerraformVars["management_node_count"] = 1
 	options1.TerraformVars["enable_cos_integration"] = false
 	options1.TerraformVars["enable_vpc_flow_logs"] = false
 
@@ -1147,7 +1151,7 @@ func TestRunExistingLDAP(t *testing.T) {
 	require.NoError(t, err, "Error setting up test options for the second cluster: %v", err)
 
 	// Set Terraform variables for the second cluster
-	options2.TerraformVars["vpc_name"] = options1.TerraformVars["cluster_prefix"].(string) + "-hpc-vpc"
+	options2.TerraformVars["vpc_name"] = options1.TerraformVars["cluster_prefix"].(string) + "-lsf-vpc"
 	options2.TerraformVars["vpc_cluster_private_subnets_cidr_blocks"] = []string{CLUSTER_TWO_VPC_CLUSTER_PRIVATE_SUBNETS_CIDR_BLOCKS}
 	options2.TerraformVars["vpc_cluster_login_private_subnets_cidr_blocks"] = []string{CLUSTER_TWO_VPC_CLUSTER_LOGIN_PRIVATE_SUBNETS_CIDR_BLOCKS}
 	options2.TerraformVars["management_node_count"] = 2
@@ -1708,65 +1712,6 @@ func TestRunLSFWithoutMandatory(t *testing.T) {
 
 }
 
-// TestRunLSFInvalidIBMCustomerNumber verifies Terraform's behavior when mandatory variables are missing.
-// Specifically, it checks for appropriate error messages when "ibm_customer_number" is not set correctly.
-func TestRunLSFInvalidIBMCustomerNumber(t *testing.T) {
-	// Parallelize the test for concurrent execution
-	t.Parallel()
-
-	// Set up the test suite environment
-	setupTestSuite(t)
-
-	// Log the initiation of the cluster creation process
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Retrieve required environment variables
-	envVars := GetEnvVars()
-
-	// Determine the absolute path to the Terraform directory
-	absPath, err := filepath.Abs("solutions/hpc")
-	require.NoError(t, err, "Unable to get the absolute path for the solutions directory")
-
-	// Adjust the Terraform directory path to remove "tests/" if present
-	terraformDir := strings.ReplaceAll(absPath, "tests/", "")
-
-	// Define Terraform options with relevant variables
-	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir: terraformDir,
-		Vars: map[string]interface{}{
-			"bastion_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
-			"compute_ssh_keys":   utils.SplitAndTrim(envVars.SSHKey, ","),
-			"zones":              utils.SplitAndTrim(envVars.Zone, ","),
-			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
-			"solution":           "lsf",
-			"cluster_name":       envVars.ClusterName,
-		},
-	})
-
-	// Perform Terraform upgrade only once
-	UpgradeTerraformOnce(t, terraformOptions)
-
-	// Plan the Terraform deployment
-	_, err = terraform.PlanE(t, terraformOptions)
-
-	// Ensure an error is returned during the planning stage
-	assert.Error(t, err, "Expected an error during plan")
-
-	// Validate the error message if an error occurred
-	if err != nil {
-		// Verify the error message contains expected substrings
-		isErrorValid := utils.VerifyDataContains(t, err.Error(), "If the solution is set as LSF, then the ibm customer number cannot be set as null.", testLogger) &&
-			utils.VerifyDataContains(t, err.Error(), "The IBM customer number input value cannot have special characters.", testLogger)
-
-		// Assert that all required validations passed
-		assert.True(t, isErrorValid, "Error validation failed")
-	} else {
-		// Log failure if the expected error did not occur
-		t.Error("Expected error did not occur")
-		testLogger.FAIL(t, "Expected error did not occur for IBM Customer Number")
-	}
-}
-
 // TestRunHPCInvalidReservationID verifies Terraform's behavior when mandatory variables are missing.
 // Specifically, it checks for appropriate error messages when "reservation_id" is not set correctly.
 func TestRunHPCInvalidReservationID(t *testing.T) {
@@ -1822,7 +1767,7 @@ func TestRunHPCInvalidReservationID(t *testing.T) {
 	} else {
 		// Log failure if the expected error did not occur
 		t.Error("Expected error did not occur")
-		testLogger.FAIL(t, "Expected error did not occur for IBM Customer Number")
+		testLogger.FAIL(t, "Expected error did not occur for reservation ID")
 	}
 }
 
@@ -1867,9 +1812,6 @@ func TestRunInvalidSubnetCIDR(t *testing.T) {
 	if envVars.Solution == "HPC" {
 		// specific to HPC
 		vars["reservation_id"] = envVars.ReservationID
-	} else {
-		// // specific to LSF
-		vars["ibm_customer_number"] = envVars.IBMCustomerNumber
 	}
 
 	// Define Terraform options
@@ -1945,9 +1887,6 @@ func TestRunInvalidSshKeysAndRemoteAllowedIP(t *testing.T) {
 	if envVars.Solution == "HPC" {
 		// specific to HPC
 		vars["reservation_id"] = envVars.ReservationID
-	} else {
-		// // specific to LSF
-		vars["ibm_customer_number"] = envVars.IBMCustomerNumber
 	}
 
 	// Define Terraform options
@@ -2116,9 +2055,6 @@ func TestRunInvalidLDAPServerIP(t *testing.T) {
 	if envVars.Solution == "HPC" {
 		// specific to HPC
 		vars["reservation_id"] = envVars.ReservationID
-	} else {
-		// // specific to LSF
-		vars["ibm_customer_number"] = envVars.IBMCustomerNumber
 	}
 
 	// Define Terraform options
@@ -2208,9 +2144,6 @@ func TestRunInvalidLDAPServerCert(t *testing.T) {
 	if envVars.Solution == "HPC" {
 		// specific to HPC
 		vars["reservation_id"] = envVars.ReservationID
-	} else {
-		// // specific to LSF
-		vars["ibm_customer_number"] = envVars.IBMCustomerNumber
 	}
 
 	// Define Terraform options
@@ -2310,9 +2243,6 @@ func TestRunInvalidLDAPUsernamePassword(t *testing.T) {
 			if envVars.Solution == "HPC" {
 				// specific to HPC
 				vars["reservation_id"] = envVars.ReservationID
-			} else {
-				// // specific to LSF
-				vars["ibm_customer_number"] = envVars.IBMCustomerNumber
 			}
 
 			// Define Terraform options
@@ -2398,9 +2328,6 @@ func TestRunInvalidAPPCenterPassword(t *testing.T) {
 		if envVars.Solution == "HPC" {
 			// specific to HPC
 			vars["reservation_id"] = envVars.ReservationID
-		} else {
-			// // specific to LSF
-			vars["ibm_customer_number"] = envVars.IBMCustomerNumber
 		}
 
 		// Define Terraform options
@@ -2473,9 +2400,6 @@ func TestRunInvalidDomainName(t *testing.T) {
 	if envVars.Solution == "HPC" {
 		// specific to HPC
 		vars["reservation_id"] = envVars.ReservationID
-	} else {
-		// // specific to LSF
-		vars["ibm_customer_number"] = envVars.IBMCustomerNumber
 	}
 
 	// Define Terraform options
@@ -2569,9 +2493,6 @@ func TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue(t *testing.T) {
 	if envVars.Solution == "HPC" {
 		// specific to HPC
 		vars1["reservation_id"] = envVars.ReservationID
-	} else {
-		// // specific to LSF
-		vars1["ibm_customer_number"] = envVars.IBMCustomerNumber
 	}
 
 	// Test with valid instance ID and invalid key name
@@ -2616,9 +2537,6 @@ func TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue(t *testing.T) {
 	if envVars.Solution == "HPC" {
 		// specific to HPC
 		vars2["reservation_id"] = envVars.ReservationID
-	} else {
-		// // specific to LSF
-		vars2["ibm_customer_number"] = envVars.IBMCustomerNumber
 	}
 
 	// Test with invalid instance ID and valid key name
@@ -2658,9 +2576,6 @@ func TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue(t *testing.T) {
 	if envVars.Solution == "HPC" {
 		// specific to HPC
 		vars3["reservation_id"] = envVars.ReservationID
-	} else {
-		// // specific to LSF
-		vars3["ibm_customer_number"] = envVars.IBMCustomerNumber
 	}
 
 	// Test without instance ID and valid key name
@@ -2741,9 +2656,6 @@ func TestRunExistSubnetIDVpcNameAsNull(t *testing.T) {
 	if envVars.Solution == "HPC" {
 		// specific to HPC
 		vars["reservation_id"] = envVars.ReservationID
-	} else {
-		// // specific to LSF
-		vars["ibm_customer_number"] = envVars.IBMCustomerNumber
 	}
 
 	// Define Terraform options
@@ -2872,9 +2784,6 @@ func TestRunInvalidDedicatedHostProfile(t *testing.T) {
 	if envVars.Solution == "HPC" {
 		// specific to HPC
 		vars["reservation_id"] = envVars.ReservationID
-	} else {
-		// // specific to LSF
-		vars["ibm_customer_number"] = envVars.IBMCustomerNumber
 	}
 
 	// Define Terraform options
@@ -2966,7 +2875,6 @@ func TestRunInvalidMinWorkerNodeCountGreaterThanMax(t *testing.T) {
 			"enable_cos_integration":          false,
 			"enable_vpc_flow_logs":            false,
 			"key_management":                  "null",
-			"ibm_customer_number":             envVars.IBMCustomerNumber,
 		}
 
 		// Define Terraform options

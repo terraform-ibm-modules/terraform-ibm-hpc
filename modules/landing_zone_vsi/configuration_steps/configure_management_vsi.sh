@@ -327,7 +327,7 @@ cat <<EOT > "$LSF_RC_IC_CONF"/ibmcloudgen2_templates.json
 {
     "templates": [
         {
-            "templateId": "Template-1",
+            "templateId": "Template-${cluster_prefix}-1",
             "maxNumber": "$rc_max_num",
             "attributes": {
                 "type": ["String", "X86_64"],
@@ -1286,7 +1286,7 @@ if [ "$observability_logs_enable_for_management" = true ]; then
   Plugins_File            plugins.conf
   HTTP_Server             On
   HTTP_Listen             0.0.0.0
-  HTTP_Port               9090
+  HTTP_Port               9001
   Health_Check            On
   HC_Errors_Count         1
   HC_Retry_Failure_Count  1

@@ -81,21 +81,6 @@ locals {
     "^${local.validate_worker_error_msg}$",
   (local.validate_worker_count ? local.validate_worker_error_msg : ""))
 
-  validate_lsf_solution           = var.solution == "lsf" ? var.ibm_customer_number != null : true
-  validate_lsf_solution_error_msg = "If the solution is set as LSF, then the ibm customer number cannot be set as null."
-  # tflint-ignore: terraform_unused_declarations
-  validate_lsf_solution_chk = regex(
-    "^${local.validate_lsf_solution_error_msg}$",
-  (local.validate_lsf_solution ? local.validate_lsf_solution_error_msg : ""))
-
-  validate_icn_number       = var.solution == "lsf" ? can(regex("^[0-9A-Za-z]*([0-9A-Za-z]+,[0-9A-Za-z]+)*$", var.ibm_customer_number)) : true
-  validate_icn_number_error = "The IBM customer number input value cannot have special characters."
-  # tflint-ignore: terraform_unused_declarations
-  validate_icn_number_chk = regex(
-    "^${local.validate_icn_number_error}$",
-  (local.validate_icn_number ? local.validate_icn_number_error : ""))
-
-
   # Validate custom fileshare
   # Construct a list of Share size(GB) and IOPS range(IOPS)from values provided in https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=ui#dp2-profile
   # List values [[sharesize_start,sharesize_end,min_iops,max_iops], [..]....]

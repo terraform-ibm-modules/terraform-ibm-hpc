@@ -84,13 +84,6 @@
           "description": "Provide a unique cluster name that LSF uses to configure and group the cluster. Without this name, LSF cannot form a cluster, and the initial deployments will fail. The cluster name can be up to 39 alphanumeric characters and may include underscores (_), hyphens (-), and periods (.). Spaces and other special characters are not allowed. Avoid using the name of any host or user as the cluster name. Note that the cluster name cannot be changed after deployment."
         },
         {
-          "name": "ibm_customer_number",
-          "value": "__NULL__",
-          "type": "string",
-          "secure": true,
-          "description": "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
-        },
-        {
           "name": "bastion_ssh_keys",
           "value": "[\"Please fill here\"]",
           "type": "list(string)",
@@ -197,7 +190,7 @@
         },
         {
           "name": "management_image_name",
-          "value": "hpcaas-lsf10-rhel810-v1",
+          "value": "hpc-lsf10-rhel810-v2",
           "type": "string",
           "secure": false,
           "description": "Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud Spectrum LSF cluster management nodes. By default, the solution uses a RHEL810 base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the lsf cluster through this offering."

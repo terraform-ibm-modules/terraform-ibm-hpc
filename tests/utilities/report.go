@@ -35,7 +35,13 @@ func ParseJSONFile(fileName string) ([]TestResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error opening log file: %w", err)
 	}
-	defer file.Close()
+
+	var returnErr error
+	defer func() {
+		if cerr := file.Close(); cerr != nil && returnErr == nil {
+			returnErr = fmt.Errorf("failed to close file: %w", cerr)
+		}
+	}()
 
 	// Regular expression to capture results
 	reTestResult := regexp.MustCompile(`--- (PASS|FAIL): (\S+) \((\d+\.\d+)s\)`)
@@ -88,9 +94,10 @@ func GenerateHTMLReport(results []TestResult) error {
 	totalFail := 0
 	totalTime := 0.0
 	for _, result := range results {
-		if result.Action == "PASS" {
+		switch result.Action {
+		case "PASS":
 			totalPass++
-		} else if result.Action == "FAIL" {
+		case "FAIL":
 			totalFail++
 		}
 		totalTime += result.Elapsed
@@ -202,7 +209,13 @@ func GenerateHTMLReport(results []TestResult) error {
 		if err != nil {
 			return fmt.Errorf("error creating report file: %w", err)
 		}
-		defer reportFile.Close()
+
+		var returnErr error
+		defer func() {
+			if cerr := reportFile.Close(); cerr != nil && returnErr == nil {
+				returnErr = fmt.Errorf("failed to close report file: %w", cerr)
+			}
+		}()
 
 		// Execute the template with the data
 		err = tmpl.Execute(reportFile, reportData)

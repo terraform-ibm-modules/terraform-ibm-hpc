@@ -34,7 +34,7 @@ module "bootstrap" {
   vpc_id                        = local.vpc_id
   network_cidr                  = var.vpc_name != null && length(var.cluster_subnet_ids) > 0 ? local.existing_subnet_cidrs : split(",", var.vpc_cidr)
   bastion_subnets               = local.bastion_subnets
-  ssh_keys                      = var.bastion_ssh_keys
+  ssh_keys                      = local.bastion_ssh_keys
   allowed_cidr                  = local.allowed_cidr
   kms_encryption_enabled        = local.kms_encryption_enabled
   boot_volume_encryption_key    = local.boot_volume_encryption_key
@@ -95,7 +95,7 @@ module "landing_zone_vsi" {
   compute_private_key_content                      = local.compute_private_key_content
   bastion_private_key_content                      = local.bastion_ssh_private_key != null ? local.bastion_ssh_private_key : local.bastion_private_key_content
   compute_subnets                                  = local.compute_subnets
-  compute_ssh_keys                                 = var.compute_ssh_keys
+  compute_ssh_keys                                 = local.compute_ssh_keys
   management_image_name                            = var.management_image_name
   compute_image_name                               = var.compute_image_name
   login_image_name                                 = var.login_image_name
@@ -114,7 +114,7 @@ module "landing_zone_vsi" {
   mount_path                                       = var.custom_file_shares
   login_node_instance_type                         = var.login_node_instance_type
   bastion_subnets                                  = local.bastion_subnets
-  ssh_keys                                         = var.bastion_ssh_keys
+  bastion_ssh_keys                                 = local.bastion_ssh_keys
   enable_ldap                                      = var.enable_ldap
   ldap_basedns                                     = var.ldap_basedns
   login_private_ips                                = join("", local.login_private_ips)
@@ -144,7 +144,6 @@ module "landing_zone_vsi" {
   observability_logs_enable_for_compute            = var.observability_logs_enable_for_compute
   solution                                         = var.solution
   worker_node_max_count                            = var.worker_node_max_count
-  ibm_customer_number                              = var.ibm_customer_number
   worker_node_instance_type                        = var.worker_node_instance_type
   enable_dedicated_host                            = var.enable_dedicated_host
   dedicated_host_id                                = var.enable_dedicated_host && local.total_worker_node_count >= 1 ? module.dedicated_host[0].dedicated_host_id[0] : null

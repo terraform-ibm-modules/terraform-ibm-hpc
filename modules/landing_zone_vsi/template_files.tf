@@ -94,7 +94,7 @@ data "template_file" "management_values" {
     image_id                      = local.compute_image_from_data ? data.ibm_is_image.compute[0].id : local.new_compute_image_id
     subnet_id                     = local.compute_subnets[0].crn
     security_group_id             = module.compute_sg[0].security_group_id
-    sshkey_id                     = join(",", local.compute_ssh_keys)
+    sshkey_id                     = join(",", var.compute_ssh_keys)
     region_name                   = data.ibm_is_region.region.name
     zone_name                     = var.zones[0]
     vpc_id                        = var.vpc_id
