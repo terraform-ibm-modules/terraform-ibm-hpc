@@ -1,0 +1,4 @@
+---
+
+SHARED_PATH: "/mnt/lsf"
+LSF_SUITE: "/opt/ibm/lsfsuite"

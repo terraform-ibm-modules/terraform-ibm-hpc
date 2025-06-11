@@ -49,11 +49,6 @@ variable "scheduler" {
 ##############################################################################
 # Access Variables
 ##############################################################################
-variable "enable_bastion" {
-  type        = bool
-  default     = true
-  description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
-}
 
 variable "bastion_image" {
   type        = string
@@ -84,7 +79,7 @@ variable "bastion_subnets" {
 variable "enable_deployer" {
   type        = bool
   default     = false
-  description = "deployer should be only used for better deployment performance"
+  description = "Deployer should be only used for better deployment performance."
 }
 
 variable "deployer_image" {
@@ -164,4 +159,9 @@ variable "bastion_security_group_id" {
   type        = string
   default     = null
   description = "Bastion security group id."
+}
+
+variable "zones" {
+  description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
+  type        = list(string)
 }

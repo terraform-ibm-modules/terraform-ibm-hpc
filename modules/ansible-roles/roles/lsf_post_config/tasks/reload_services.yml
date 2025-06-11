@@ -1,0 +1,12 @@
+---
+
+- name: Restart lsfd service
+  service:
+    name: lsfd
+    state: restarted
+  when: inventory_hostname == groups['management_nodes'][0]
+
+- name: Restart NetworkManager
+  service:
+    name: NetworkManager
+    state: restarted

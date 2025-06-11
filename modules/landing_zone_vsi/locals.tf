@@ -2,7 +2,7 @@
 locals {
   # Future use
   # products       = "scale"
-  name           = "hpc"
+  name           = "lsf"
   prefix         = var.prefix
   tags           = [local.prefix, local.name]
   vsi_interfaces = ["eth0", "eth1"]
@@ -22,6 +22,12 @@ locals {
   compute_image_found_in_map = contains(keys(local.image_region_map), var.static_compute_instances[0]["image"])
   # If not found, assume the name is the id already (customer provided image)
   new_compute_image_id = local.compute_image_found_in_map ? local.image_region_map[var.static_compute_instances[0]["image"]][local.region] : "Image not found with the given name"
+
+  login_image_id = data.ibm_is_image.login_vsi_image[*].id
+  # Check whether an entry is found in the mapping file for the given login node image
+  login_image_found_in_map = contains(keys(local.image_region_map), var.login_instances[0]["image"])
+  # If not found, assume the name is the id already (customer provided image)
+  new_login_image_id = local.login_image_found_in_map ? local.image_region_map[var.login_instances[0]["image"]][local.region] : "Image not found with the given name"
 
   products = var.scheduler == "Scale" ? "scale" : "lsf"
   block_storage_volumes = [for volume in coalesce(var.nsd_details, []) : {
@@ -80,6 +86,7 @@ locals {
   afm_node_name                = format("%s-%s", local.prefix, "afm")
   gklm_node_name               = format("%s-%s", local.prefix, "gklm")
   cpmoute_management_node_name = format("%s-%s", local.prefix, "comp-mgmt")
+  login_node_name              = format("%s-%s", local.prefix, "login")
 
   # Future use
   /*

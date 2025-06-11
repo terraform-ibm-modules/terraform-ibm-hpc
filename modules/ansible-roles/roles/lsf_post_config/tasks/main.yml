@@ -1,0 +1,5 @@
+---
+
+- import_tasks: permissions_setup.yml
+
+- import_tasks: reload_services.yml

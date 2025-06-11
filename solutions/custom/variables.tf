@@ -116,11 +116,11 @@ variable "deployer_instance_profile" {
   description = "Deployer should be only used for better deployment performance"
 }
 
-variable "enable_bastion" {
-  type        = bool
-  default     = true
-  description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
-}
+# variable "enable_bastion" {
+#   type        = bool
+#   default     = true
+#   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
+# }
 
 variable "vpc_cluster_login_private_subnets_cidr_blocks" {
   type        = string

@@ -292,13 +292,17 @@ variable "nsd_details" {
 variable "dns_domain_names" {
   type = object({
     compute  = string
-    storage  = string
-    protocol = string
+    storage  = optional(string)
+    protocol = optional(string)
+    client   = optional(string)
+    gklm     = optional(string)
   })
   default = {
     compute  = "comp.com"
     storage  = "strg.com"
     protocol = "ces.com"
+    client   = "clnt.com"
+    gklm     = "gklm.com"
   }
   description = "IBM Cloud HPC DNS domain names."
 }
@@ -344,10 +348,10 @@ variable "existing_kms_instance_guid" {
 #   description = "Compute security key content."
 # }
 
-variable "enable_bastion" {
+variable "enable_deployer" {
   type        = bool
   default     = true
-  description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
+  description = "Deployer should be only used for better deployment performance"
 }
 
 #############################################################################
@@ -465,4 +469,32 @@ variable "enable_dedicated_host" {
   type        = bool
   default     = false
   description = "Enables dedicated host to the compute instances"
+}
+
+##############################################################################
+# Login Variables
+##############################################################################
+variable "login_instances" {
+  type = list(
+    object({
+      profile = string
+      image   = string
+    })
+  )
+  default = [{
+    profile = "bx2-2x8"
+    image   = "hpcaas-lsf10-rhel810-compute-v8"
+  }]
+  description = "Number of instances to be launched for login node."
+}
+
+variable "bastion_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the bastion host."
 }

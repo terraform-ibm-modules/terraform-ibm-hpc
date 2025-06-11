@@ -26,7 +26,7 @@ variable "lsf_version" {
 ##############################################################################
 variable "cluster_prefix" {
   type        = string
-  default     = "hpc"
+  default     = "lsf"
   description = "A unique identifier for resources. Must begin with a letter and end with a letter or number. This cluster_prefix will be prepended to any resources provisioned by this template. Prefixes must be 16 or fewer characters."
   validation {
     error_message = "Prefix must begin and end with a letter and contain only letters, numbers, and - characters."
@@ -714,4 +714,32 @@ variable "existing_bastion_instance_name" {
   type        = string
   default     = null
   description = "Bastion instance name."
+}
+
+###########################################################################
+# Application Center variables
+###########################################################################
+
+variable "app_center_gui_password" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Password for IBM Spectrum LSF Application Center GUI."
+}
+
+###########################################################################
+# Login Node variables
+###########################################################################
+variable "login_instances" {
+  type = list(
+    object({
+      profile = string
+      image   = string
+    })
+  )
+  default = [{
+    profile = "bx2-2x8"
+    image   = "hpcaas-lsf10-rhel810-compute-v8"
+  }]
+  description = "Number of instances to be launched for login node."
 }

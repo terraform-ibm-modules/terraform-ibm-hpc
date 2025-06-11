@@ -1,0 +1,15 @@
+---
+
+- name: Change permissions of lsfsuite to 0777
+  ansible.builtin.command: "chmod -R 0755 {{ LSF_SUITE }}"
+
+- name: Change ownership of lsfsuite to lsfadmin
+  ansible.builtin.command: "chown -R lsfadmin {{ LSF_SUITE }}"
+
+- name: Change permissions of {{ SHARED_PATH }} to 0777
+  ansible.builtin.command: "chmod -R 0755 {{ SHARED_PATH }}"
+  when: inventory_hostname == groups['management_nodes'][0]
+
+- name: Change ownership of {{ SHARED_PATH }} to lsfadmin
+  ansible.builtin.command: "chown -R lsfadmin {{ SHARED_PATH }}"
+  when: inventory_hostname == groups['management_nodes'][0]

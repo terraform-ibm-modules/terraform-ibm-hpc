@@ -31,7 +31,6 @@ locals {
     dns_instance_id                               = var.dns_instance_id
     dns_domain_names                              = var.dns_domain_names
     dynamic_compute_instances                     = var.dynamic_compute_instances
-    enable_bastion                                = var.enable_bastion
     bastion_image                                 = var.bastion_image
     bastion_instance_profile                      = var.bastion_instance_profile
     login_subnet_id                               = var.login_subnet_id
@@ -76,6 +75,7 @@ locals {
     skip_iam_authorization_policy                    = var.skip_iam_authorization_policy
     skip_kms_s2s_auth_policy                         = var.skip_kms_s2s_auth_policy
     ibmcloud_api_key                                 = var.ibmcloud_api_key
+    app_center_gui_password                          = var.app_center_gui_password
     lsf_version                                      = var.lsf_version
     enable_hyperthreading                            = var.enable_hyperthreading
     enable_ldap                                      = var.enable_ldap
@@ -91,6 +91,7 @@ locals {
     existing_bastion_instance_public_ip              = var.existing_bastion_instance_public_ip
     existing_bastion_security_group_id               = var.existing_bastion_security_group_id
     existing_bastion_ssh_private_key                 = var.existing_bastion_ssh_private_key
+    login_instances                                  = var.login_instances
     vpn_enabled                                      = var.vpn_enabled
     # client_instances                                 = var.client_instances
     # client_subnets_cidr                              = var.client_subnets_cidr
@@ -116,7 +117,6 @@ locals {
     dns_instance_id                               = lookup(local.override[local.override_type], "dns_instance_id", local.config.dns_instance_id)
     dns_domain_names                              = lookup(local.override[local.override_type], "dns_domain_names", local.config.dns_domain_names)
     dynamic_compute_instances                     = lookup(local.override[local.override_type], "dynamic_compute_instances", local.config.dynamic_compute_instances)
-    enable_bastion                                = lookup(local.override[local.override_type], "enable_bastion", local.config.enable_bastion)
     bastion_image                                 = lookup(local.override[local.override_type], "bastion_image", local.config.bastion_image)
     bastion_instance_profile                      = lookup(local.override[local.override_type], "bastion_instance_profile", local.config.bastion_instance_profile)
     deployer_image                                = lookup(local.override[local.override_type], "deployer_image", local.config.deployer_image)
@@ -160,6 +160,7 @@ locals {
     skip_iam_authorization_policy                    = lookup(local.override[local.override_type], "skip_iam_authorization_policy", local.config.skip_iam_authorization_policy)
     skip_kms_s2s_auth_policy                         = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
     ibmcloud_api_key                                 = lookup(local.override[local.override_type], "ibmcloud_api_key", local.config.ibmcloud_api_key)
+    app_center_gui_password                          = lookup(local.override[local.override_type], "app_center_gui_password", local.config.app_center_gui_password)
     lsf_version                                      = lookup(local.override[local.override_type], "lsf_version", local.config.lsf_version)
     enable_hyperthreading                            = lookup(local.override[local.override_type], "enable_hyperthreading", local.config.enable_hyperthreading)
     enable_ldap                                      = lookup(local.override[local.override_type], "enable_ldap", local.config.enable_ldap)
@@ -176,9 +177,24 @@ locals {
     existing_bastion_instance_public_ip              = lookup(local.override[local.override_type], "existing_bastion_instance_public_ip", local.config.existing_bastion_instance_public_ip)
     existing_bastion_security_group_id               = lookup(local.override[local.override_type], "existing_bastion_security_group_id", local.config.existing_bastion_security_group_id)
     existing_bastion_ssh_private_key                 = lookup(local.override[local.override_type], "existing_bastion_ssh_private_key", local.config.existing_bastion_ssh_private_key)
+    login_instances                                  = lookup(local.override[local.override_type], "login_instances", local.config.login_instances)
     # client_instances                                 = lookup(local.override[local.override_type], "client_instances", local.config.client_instances)
     # client_subnets_cidr                              = lookup(local.override[local.override_type], "client_subnets_cidr", local.config.client_subnets_cidr)
 
     github_token = lookup(local.override[local.override_type], "github_token", local.config.github_token) # Delete this variable before pushing to the public repository.
   }
+}
+locals {
+  custom_fileshare_iops_range = [
+    [10, 39, 100, 1000],
+    [40, 79, 100, 2000],
+    [80, 99, 100, 4000],
+    [100, 499, 100, 6000],
+    [500, 999, 100, 10000],
+    [1000, 1999, 100, 20000],
+    [2000, 3999, 200, 40000],
+    [4000, 7999, 300, 40000],
+    [8000, 15999, 500, 64000],
+    [16000, 32000, 2000, 96000]
+  ]
 }

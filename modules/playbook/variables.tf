@@ -16,16 +16,10 @@ variable "inventory_path" {
   default     = "inventory.ini"
 }
 
-variable "playbook_path" {
-  description = "Playbook path"
-  type        = string
-  default     = "ssh.yaml"
-}
-
-variable "enable_bastion" {
+variable "enable_deployer" {
   type        = bool
   default     = true
-  description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
+  description = "Deployer should be only used for better deployment performance."
 }
 
 variable "observability_playbook_path" {
@@ -80,4 +74,34 @@ variable "scheduler" {
   default     = null
   type        = string
   description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+}
+
+variable "mgmnt_hosts" {
+  type        = map(string)
+  default     = {}
+  description = "List of Management hosts and IP addresses"
+}
+
+variable "comp_hosts" {
+  type        = map(string)
+  default     = {}
+  description = "List of Compute hosts and IP addresses"
+}
+
+variable "login_hosts" {
+  type        = map(string)
+  default     = {}
+  description = "List of Login hosts and IP addresses"
+}
+
+variable "deployer_host" {
+  type        = map(string)
+  default     = {}
+  description = "Deployer host and IP addresses"
+}
+
+variable "domain_name" {
+  type        = string
+  description = "Domain name of the cluster"
+  default     = null
 }

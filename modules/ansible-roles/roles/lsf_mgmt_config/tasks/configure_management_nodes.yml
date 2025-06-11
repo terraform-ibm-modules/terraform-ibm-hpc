@@ -103,3 +103,4 @@
     path: "{{ LSF_CLUSTER_FILE }}"
     regexp: '^lsfservers'
     state: absent
+  run_once: true

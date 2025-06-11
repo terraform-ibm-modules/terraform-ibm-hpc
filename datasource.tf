@@ -58,6 +58,7 @@ data "ibm_is_ssh_key" "ssh_keys" {
 }
 
 data "ibm_is_subnet" "compute_subnet_crn" {
+  count      = var.vpc_name != null && var.cluster_subnet_ids != null ? 1 : 0
   identifier = local.compute_subnet_id
 }
 
@@ -90,4 +91,26 @@ data "ibm_is_subnet_reserved_ips" "protocol_subnet_reserved_ips" {
 data "ibm_is_instance_profile" "afm_server_profile" {
   count = local.afm_server_type == false ? 1 : 0
   name  = local.afm_vsi_profile[0]
+}
+
+# Code for Public Gateway attachment for the existing vpc and new subnets scenario
+
+data "ibm_is_public_gateways" "public_gateways" {
+}
+
+locals {
+  public_gateways_list = data.ibm_is_public_gateways.public_gateways.public_gateways
+  zone_1_pgw_ids       = var.vpc_name != null ? [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == local.vpc_id && gateway.zone == var.zones[0]] : []
+}
+
+resource "ibm_is_subnet_public_gateway_attachment" "zone_1_attachment" {
+  count          = (var.vpc_name != null && var.cluster_subnet_ids == null) ? 1 : 0
+  subnet         = local.cluster_subnets[0].id
+  public_gateway = length(local.zone_1_pgw_ids) > 0 ? local.zone_1_pgw_ids[0] : ""
+}
+
+resource "ibm_is_subnet_public_gateway_attachment" "bastion_attachment" {
+  count          = (var.vpc_name != null && var.cluster_subnet_ids == null) ? 1 : 0
+  subnet         = local.login_subnets[0].id
+  public_gateway = length(local.zone_1_pgw_ids) > 0 ? local.zone_1_pgw_ids[0] : ""
 }

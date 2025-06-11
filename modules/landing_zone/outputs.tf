@@ -30,7 +30,7 @@ output "bastion_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-hpc-bastion-subnet")
+    } if strcontains(subnet["name"], "-lsf-bastion-subnet")
   ]
 }
 
@@ -41,7 +41,7 @@ output "client_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-hpc-client-subnet")
+    } if strcontains(subnet["name"], "-lsf-client-subnet")
   ]
 }
 
@@ -52,7 +52,7 @@ output "compute_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-hpc-compute-subnet-zone-")
+    } if strcontains(subnet["name"], "-lsf-compute-subnet-zone-")
   ]
 }
 
@@ -63,7 +63,7 @@ output "storage_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-hpc-storage-subnet-zone-")
+    } if strcontains(subnet["name"], "-lsf-storage-subnet-zone-")
   ]
 }
 
@@ -74,7 +74,7 @@ output "protocol_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-hpc-protocol-subnet-zone-")
+    } if strcontains(subnet["name"], "-lsf-protocol-subnet-zone-")
   ]
 }
 
