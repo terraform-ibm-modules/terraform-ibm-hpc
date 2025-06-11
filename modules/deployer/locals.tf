@@ -17,11 +17,13 @@ locals {
     "150.238.230.128/27",
     "169.55.82.128/27"
   ]
-  bastion_sg_variable_cidr = var.enable_deployer == false ? distinct(flatten([
+
+  bastion_sg_variable_cidr = distinct(flatten([
     local.schematics_reserved_cidrs,
     var.allowed_cidr,
     var.network_cidr
-  ])) : distinct(flatten([var.allowed_cidr, var.network_cidr]))
+  ]))
+
 
   enable_deployer = var.enable_deployer
 
