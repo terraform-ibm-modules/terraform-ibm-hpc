@@ -93,6 +93,11 @@ data "ibm_is_image" "gklm" {
   name  = var.gklm_instances[count.index]["image"]
 }
 
+data "ibm_is_image" "login_vsi_image" {
+  count = var.scheduler == "LSF" ? 1 : 0
+  name  = var.login_instances[count.index]["image"]
+}
+
 data "ibm_is_dedicated_host_profiles" "profiles" {
   count = var.enable_dedicated_host ? 1 : 0
 }

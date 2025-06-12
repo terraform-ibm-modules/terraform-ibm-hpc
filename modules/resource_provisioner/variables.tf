@@ -16,6 +16,19 @@ variable "github_token" {
 }
 
 ##############################################################################
+# Cluster Level Variables
+##############################################################################
+variable "cluster_prefix" {
+  type        = string
+  default     = "hpc"
+  description = "A unique identifier for resources. Must begin with a letter and end with a letter or number. This cluster_prefix will be prepended to any resources provisioned by this template. Prefixes must be 16 or fewer characters."
+  validation {
+    error_message = "Prefix must begin and end with a letter and contain only letters, numbers, and - characters."
+    condition     = can(regex("^([A-z]|[a-z][-a-z0-9]*[a-z0-9])$", var.cluster_prefix))
+  }
+}
+
+##############################################################################
 # Deployer Variables
 ##############################################################################
 variable "enable_deployer" {

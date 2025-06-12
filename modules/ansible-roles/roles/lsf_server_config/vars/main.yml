@@ -1,4 +1,0 @@
-network_interface: "eth0"
-network_script_path: "/etc/sysconfig/network-scripts"
-sysctl_conf: "/etc/sysctl.conf"
-lsfadmin_ssh_path: "/home/lsfadmin/.ssh"

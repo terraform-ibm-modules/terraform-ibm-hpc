@@ -1,0 +1,11 @@
+---
+
+# Set correct ownership and permissions on shared directories
+- import_tasks: permissions_setup.yml
+
+# Configure shared folders and create necessary symlinks on management nodes
+- import_tasks: configure_shared_folders.yml
+  when: inventory_hostname in groups['management_nodes']
+
+# Reload or restart services to apply the new configurations
+- import_tasks: reload_services.yml

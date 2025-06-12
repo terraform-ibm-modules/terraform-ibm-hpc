@@ -42,7 +42,7 @@ variable "ibm_customer_number" {
 ##############################################################################
 variable "cluster_prefix" {
   type        = string
-  default     = "hpc"
+  default     = "lsf"
   description = "A unique identifier for resources. Must begin with a letter and end with a letter or number. This cluster_prefix will be prepended to any resources provisioned by this template. Prefixes must be 16 or fewer characters."
   validation {
     error_message = "cluster_prefix must begin and end with a letter and contain only letters, numbers, and - characters."
@@ -117,11 +117,11 @@ variable "placement_strategy" {
 ##############################################################################
 # Access Variables
 ##############################################################################
-variable "enable_bastion" {
-  type        = bool
-  default     = true
-  description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
-}
+# variable "enable_bastion" {
+#   type        = bool
+#   default     = true
+#   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
+# }
 
 variable "bastion_image" {
   type        = string
@@ -234,17 +234,15 @@ variable "management_instances" {
 variable "static_compute_instances" {
   type = list(
     object({
-      profile    = string
-      count      = number
-      image      = string
-      filesystem = string
+      profile = string
+      count   = number
+      image   = string
     })
   )
   default = [{
-    profile    = "cx2-2x4"
-    count      = 0
-    image      = "ibm-redhat-8-10-minimal-amd64-4"
-    filesystem = "/gpfs/fs1"
+    profile = "cx2-2x4"
+    count   = 0
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "Min Number of instances to be launched for compute cluster."
 }
@@ -437,10 +435,10 @@ variable "dns_custom_resolver_id" {
 variable "dns_domain_names" {
   type = object({
     compute  = string
-    storage  = string
-    protocol = string
-    client   = string
-    gklm     = string
+    storage  = optional(string)
+    protocol = optional(string)
+    client   = optional(string)
+    gklm     = optional(string)
   })
   default = {
     compute  = "comp.com"
@@ -666,25 +664,12 @@ variable "enable_hyperthreading" {
 #   }
 # }
 
-# variable "enable_app_center" {
-#   type        = bool
-#   default     = false
-#   description = "Set to true to install and enable use of the IBM Spectrum LSF Application Center GUI."
-# }
-
-# variable "app_center_gui_password" {
-#   type        = string
-#   default     = "hpc@IBMCloud"
-#   sensitive   = true
-#   description = "Password for IBM Spectrum LSF Application Center GUI."
-# }
-
-# variable "app_center_db_password" {
-#   type        = string
-#   default     = "hpc@IBMCloud"
-#   sensitive   = true
-#   description = "Password for IBM Spectrum LSF Application Center database GUI."
-# }
+variable "app_center_gui_password" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Password for IBM Spectrum LSF Application Center GUI."
+}
 
 ##############################################################################
 # Symphony specific Variables
@@ -1082,6 +1067,11 @@ variable "bastion_fip" {
   description = "bastion fip"
 }
 
+variable "scale_compute_cluster_filesystem_mountpoint" {
+  type        = string
+  default     = "/gpfs/fs1"
+  description = "Compute cluster (accessingCluster) Filesystem mount point."
+}
 ##############################################################################
 # Dedicatedhost Variables
 ##############################################################################
@@ -1125,4 +1115,21 @@ variable "resource_group_ids" {
   type        = any
   default     = null
   description = "Map describing resource groups to create or reference"
+}
+
+##############################################################################
+# Login Variables
+##############################################################################
+variable "login_instances" {
+  type = list(
+    object({
+      profile = string
+      image   = string
+    })
+  )
+  default = [{
+    profile = "bx2-2x8"
+    image   = "hpcaas-lsf10-rhel810-compute-v8"
+  }]
+  description = "Number of instances to be launched for login node."
 }

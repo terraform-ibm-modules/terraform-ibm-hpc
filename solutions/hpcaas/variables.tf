@@ -110,11 +110,11 @@ variable "deployer_instance_profile" {
   description = "Deployer should be only used for better deployment performance"
 }
 
-variable "enable_bastion" {
-  type        = bool
-  default     = true
-  description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
-}
+# variable "enable_bastion" {
+#   type        = bool
+#   default     = true
+#   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
+# }
 
 variable "vpc_cluster_login_private_subnets_cidr_blocks" {
   type        = string
@@ -176,17 +176,15 @@ variable "management_instances" {
 variable "static_compute_instances" {
   type = list(
     object({
-      profile    = string
-      count      = number
-      image      = string
-      filesystem = string
+      profile = string
+      count   = number
+      image   = string
     })
   )
   default = [{
-    profile    = "cx2-2x4"
-    count      = 0
-    image      = "ibm-redhat-8-10-minimal-amd64-4"
-    filesystem = "/gpfs/fs1"
+    profile = "cx2-2x4"
+    count   = 0
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "Min Number of instances to be launched for compute cluster."
 }

@@ -46,7 +46,13 @@ func RunCommandInSSHSession(sClient *ssh.Client, cmd string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to create SSH session: %w", err)
 	}
-	defer session.Close()
+
+	var returnErr error
+	defer func() {
+		if cerr := session.Close(); cerr != nil && returnErr == nil {
+			returnErr = fmt.Errorf("failed to close session: %w", cerr)
+		}
+	}()
 
 	var b bytes.Buffer
 	session.Stdout = &b

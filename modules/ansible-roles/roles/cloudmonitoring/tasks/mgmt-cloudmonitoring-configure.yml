@@ -71,8 +71,14 @@
     line: "{{ item.line }}"
     create: yes
   loop:
-    - { regexp: "==ACCESSKEY==", line: "customerid: {{ cloud_monitoring_access_key }}" }
-    - { regexp: "==COLLECTOR==", line: "collector: {{ cloud_monitoring_ingestion_url }}" }
+    - {
+        regexp: "==ACCESSKEY==",
+        line: "customerid: {{ cloud_monitoring_access_key }}",
+      }
+    - {
+        regexp: "==COLLECTOR==",
+        line: "collector: {{ cloud_monitoring_ingestion_url }}",
+      }
     - { regexp: "^tags:", line: "tags: type:management,lsf:true" }
   when: monitoring_enable_for_management | bool
 
@@ -113,14 +119,11 @@
     executable: /bin/bash
   when: monitoring_enable_for_management | bool
 
-- name: Install LSF Prometheus Exporter if not already installed
-  ansible.builtin.shell: |
-    echo "Exporter not found. Cloning and installing...";
-    rm -rf /tmp/lsf_prometheus_exporter
-    git clone --branch wheel_pkg https://89088669eefb301f1aaa7046c9e567a372c51fe2@github.ibm.com/platformcomputing/lsf_prometheus_exporter /tmp/lsf_prometheus_exporter
-    {{ pip_executable }} install /tmp/lsf_prometheus_exporter/lsf_prometheus_exporter-1.0.0-py3-none-any.whl
-  args:
-    executable: /bin/bash
+- name: Install LSF Prometheus Exporter using pip
+  ansible.builtin.pip:
+    name: lsf_prometheus_exporter
+    executable: /usr/local/bin/pip3.11
+    extra_args: --no-cache-dir --force-reinstall
   when:
     - monitoring_enable_for_management | bool
     - not exporter_installed.stat.exists
@@ -163,7 +166,7 @@
       exec >> /var/log/lsf_prometheus_exporter.log 2>&1
       source /opt/ibm/lsfsuite/lsf/conf/profile.lsf
       exec /usr/bin/python3 -m lsf_prometheus_exporter
-    mode: '0755'
+    mode: "0755"
     owner: lsfadmin
     group: lsfadmin
   when:
@@ -172,7 +175,7 @@
 - name: Create systemd service for Prometheus Agent
   ansible.builtin.copy:
     dest: /etc/systemd/system/prometheus.service
-    mode: '0644'
+    mode: "0644"
     content: |
       [Unit]
       Description=Prometheus Agent
@@ -197,6 +200,24 @@
   when:
     - monitoring_enable_for_management | bool
     - not exporter_installed.stat.exists
+
+- name: Enable LSF scheduler metrics for Prometheus
+  ansible.builtin.lineinfile:
+    path: "{{ LSF_CONF }}/lsbatch/{{ prefix }}/configdir/lsb.params"
+    insertbefore: "^End Parameters"
+    line: "SCHED_METRIC_ENABLE=Y"
+    state: present
+    backup: yes
+  when:
+    - monitoring_enable_for_management | bool
+
+- name: Restart lsfd service to apply scheduler metric changes
+  ansible.builtin.systemd:
+    name: lsfd
+    state: restarted
+    enabled: yes
+  when:
+    - monitoring_enable_for_management | bool
 
 - name: Reload systemd and start Prometheus Agent
   ansible.builtin.systemd:
@@ -226,7 +247,7 @@
 
       [Install]
       WantedBy=multi-user.target
-    mode: '0644'
+    mode: "0644"
   when: monitoring_enable_for_management | bool
 
 - name: Reload systemd and start Prometheus Agent
@@ -240,7 +261,7 @@
 - name: Ensure start script has correct permissions
   ansible.builtin.file:
     path: /opt/ibm/lsfsuite/lsf/start_lsf_prometheus_exporter.sh
-    mode: '0755'
+    mode: "0755"
     owner: lsfadmin
     group: lsfadmin
   when: monitoring_enable_for_management | bool
@@ -262,10 +283,11 @@
       RestartSec=10
       User=lsfadmin
       Group=lsfadmin
+      Restart=always
 
       [Install]
       WantedBy=multi-user.target
-    mode: '0644'
+    mode: "0644"
   when: monitoring_enable_for_management | bool
 
 - name: Reload systemd and start LSF Prometheus Exporter

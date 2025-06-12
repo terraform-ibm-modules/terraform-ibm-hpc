@@ -45,8 +45,8 @@ module "deployer" {
   resource_group                = local.resource_group_ids["workload_rg"]
   prefix                        = var.cluster_prefix
   vpc_id                        = local.vpc_id
+  zones                         = var.zones
   network_cidr                  = var.vpc_cidr
-  enable_bastion                = var.enable_bastion
   bastion_subnets               = local.login_subnets
   bastion_image                 = var.bastion_image
   bastion_instance_profile      = var.bastion_instance_profile
@@ -93,7 +93,7 @@ module "landing_zone_vsi" {
   kms_encryption_enabled            = local.kms_encryption_enabled
   boot_volume_encryption_key        = var.boot_volume_encryption_key
   existing_kms_instance_guid        = var.existing_kms_instance_guid
-  enable_bastion                    = var.enable_bastion
+  enable_deployer                   = var.enable_deployer
   afm_instances                     = var.afm_instances
   enable_dedicated_host             = var.enable_dedicated_host
   enable_ldap                       = var.enable_ldap
@@ -109,6 +109,8 @@ module "landing_zone_vsi" {
   ibm_customer_number               = var.ibm_customer_number
   colocate_protocol_instances       = var.colocate_protocol_instances
   storage_security_group_id         = var.storage_security_group_id
+  login_instances                   = var.login_instances
+  bastion_subnets                   = local.login_subnets
 }
 
 module "prepare_tf_input" {
@@ -118,6 +120,7 @@ module "prepare_tf_input" {
   deployer_ip                                      = local.deployer_ip
   bastion_fip                                      = local.bastion_fip
   ibmcloud_api_key                                 = var.ibmcloud_api_key
+  app_center_gui_password                          = var.app_center_gui_password
   lsf_version                                      = var.lsf_version
   resource_group_ids                               = local.resource_group_ids
   cluster_prefix                                   = var.cluster_prefix
@@ -144,6 +147,7 @@ module "prepare_tf_input" {
   cluster_subnet_ids                               = local.cluster_subnet
   client_subnets                                   = local.client_subnet
   login_subnet_id                                  = local.login_subnet
+  login_instances                                  = var.login_instances
   dns_domain_names                                 = var.dns_domain_names
   key_management                                   = local.key_management
   kms_instance_name                                = var.kms_instance_name
@@ -213,6 +217,7 @@ module "resource_provisioner" {
   source                      = "./modules/resource_provisioner"
   ibmcloud_api_key            = var.ibmcloud_api_key
   enable_deployer             = var.enable_deployer
+  cluster_prefix              = var.cluster_prefix
   bastion_fip                 = local.bastion_fip
   bastion_private_key_content = local.bastion_ssh_private_key != null ? local.bastion_ssh_private_key : local.bastion_private_key_content
   deployer_ip                 = local.deployer_ip
@@ -262,7 +267,7 @@ module "dns" {
   subnets_crn            = local.subnets_crn
   dns_instance_id        = var.dns_instance_id
   dns_custom_resolver_id = var.dns_custom_resolver_id
-  dns_domain_names       = values(var.dns_domain_names)
+  dns_domain_names       = compact(values(var.dns_domain_names))
 }
 
 module "compute_dns_records" {
@@ -275,7 +280,7 @@ module "compute_dns_records" {
 }
 
 module "storage_dns_records" {
-  count           = var.enable_deployer == false ? 1 : 0
+  count           = var.enable_deployer == false && length(var.storage_instances) > 0 ? 1 : 0
   source          = "./modules/dns_record"
   dns_instance_id = local.dns_instance_id
   dns_zone_id     = local.storage_dns_zone_id
@@ -296,7 +301,7 @@ module "protocol_reserved_ip" {
 }
 
 module "client_dns_records" {
-  count           = var.enable_deployer == false ? 1 : 0
+  count           = var.enable_deployer == false && length(var.client_instances) > 0 ? 1 : 0
   source          = "./modules/dns_record"
   dns_instance_id = local.dns_instance_id
   dns_zone_id     = local.client_dns_zone_id
@@ -305,7 +310,7 @@ module "client_dns_records" {
 }
 
 module "gklm_dns_records" {
-  count           = var.enable_deployer == false ? 1 : 0
+  count           = var.enable_deployer == false && length(var.gklm_instances) > 0 ? 1 : 0
   source          = "./modules/dns_record"
   dns_instance_id = local.dns_instance_id
   dns_zone_id     = local.gklm_dns_zone_id
@@ -327,12 +332,14 @@ module "write_compute_cluster_inventory" {
   lsf_clients                 = local.client_nodes
   gui_hosts                   = local.gui_hosts
   db_hosts                    = local.db_hosts
+  login_hosts                 = local.login_hosts
   prefix                      = var.cluster_prefix
   ha_shared_dir               = local.ha_shared_dir
   nfs_install_dir             = local.nfs_install_dir
   enable_monitoring           = local.enable_monitoring
   lsf_deployer_hostname       = local.lsf_deployer_hostname
   ibmcloud_api_key            = var.ibmcloud_api_key
+  app_center_gui_password     = var.app_center_gui_password
   lsf_version                 = var.lsf_version
   dns_domain_names            = var.dns_domain_names
   compute_public_key_content  = local.compute_public_key_content
@@ -348,6 +355,8 @@ module "write_compute_cluster_inventory" {
   compute_security_group_id   = local.compute_security_group_id
   compute_ssh_keys_ids        = local.ssh_keys_ids
   compute_subnet_crn          = local.compute_subnet_crn
+  kms_encryption_enabled      = local.kms_encryption_enabled
+  boot_volume_encryption_key  = var.boot_volume_encryption_key
   depends_on                  = [time_sleep.wait_60_seconds, module.landing_zone_vsi]
 }
 
@@ -363,7 +372,7 @@ module "write_compute_scale_cluster_inventory" {
   vpc_region                                       = jsonencode(local.region)
   vpc_availability_zones                           = var.zones
   scale_version                                    = jsonencode(local.scale_version)
-  compute_cluster_filesystem_mountpoint            = jsonencode(var.static_compute_instances[0]["filesystem"])
+  compute_cluster_filesystem_mountpoint            = jsonencode(var.scale_compute_cluster_filesystem_mountpoint)
   storage_cluster_filesystem_mountpoint            = jsonencode("None")
   filesystem_block_size                            = jsonencode("None")
   compute_cluster_instance_private_ips             = concat((local.enable_sec_interface_compute ? local.secondary_compute_instance_private_ips : local.compute_instance_private_ips), local.compute_mgmt_instance_private_ips)
@@ -648,6 +657,7 @@ module "compute_inventory" {
   source                              = "./modules/inventory"
   scheduler                           = var.scheduler
   hosts                               = local.compute_hosts
+  login_hosts                         = local.login_hosts
   inventory_path                      = local.compute_inventory_path
   name_mount_path_map                 = local.fileshare_name_mount_path_map
   logs_enable_for_management          = var.observability_logs_enable_for_management
@@ -710,6 +720,13 @@ module "bastion_inventory_hosts" {
   inventory_path = local.bastion_hosts_inventory_path
 }
 
+module "deployer_inventory_hosts" {
+  count          = var.enable_deployer == true ? 1 : 0
+  source         = "./modules/inventory_hosts"
+  hosts          = local.deployer_hosts_ips
+  inventory_path = local.deployer_hosts_inventory_path
+}
+
 module "ldap_inventory_hosts" {
   count          = var.enable_deployer == false && var.enable_ldap == true ? 1 : 0
   source         = "./modules/inventory_hosts"
@@ -724,8 +741,7 @@ module "compute_playbook" {
   bastion_fip                 = local.bastion_fip
   private_key_path            = local.compute_private_key_path
   inventory_path              = local.compute_inventory_path
-  playbook_path               = local.compute_playbook_path
-  enable_bastion              = var.enable_bastion
+  enable_deployer             = var.enable_deployer
   ibmcloud_api_key            = var.ibmcloud_api_key
   observability_provision     = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || var.observability_monitoring_enable ? true : false
   cloudlogs_provision         = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute ? true : false
@@ -734,6 +750,11 @@ module "compute_playbook" {
   enable_ldap                 = var.enable_ldap
   ldap_server                 = local.ldap_server
   playbooks_path              = local.playbooks_path
+  mgmnt_hosts                 = local.mgmnt_host_entry
+  comp_hosts                  = local.comp_host_entry
+  login_hosts                 = local.login_host_entry
+  deployer_host               = local.deployer_host_entry
+  domain_name                 = var.dns_domain_names["compute"]
   depends_on                  = [module.compute_inventory]
 }
 
@@ -758,7 +779,7 @@ module "cloud_monitoring_instance_creation" {
   cloud_logs_as_atracker_target  = var.observability_atracker_enable && (var.observability_atracker_target_type == "cloudlogs") ? true : false
   cloud_logs_data_bucket         = var.cloud_logs_data_bucket
   cloud_metrics_data_bucket      = var.cloud_metrics_data_bucket
-  tags                           = ["hpc", var.cluster_prefix]
+  tags                           = ["lsf", var.cluster_prefix]
 }
 
 # Code for SCC Instance
@@ -769,7 +790,7 @@ module "scc_instance_and_profile" {
   rg                      = var.resource_group_ids["service_rg"]
   scc_profile             = var.scc_enable ? var.scc_profile : ""
   event_notification_plan = var.scc_event_notification_plan
-  tags                    = ["hpc", var.cluster_prefix]
+  tags                    = ["lsf", var.cluster_prefix]
   prefix                  = var.cluster_prefix
   cos_bucket              = var.scc_cos_bucket
   cos_instance_crn        = var.scc_cos_instance_crn

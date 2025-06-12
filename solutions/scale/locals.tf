@@ -18,19 +18,19 @@ locals {
 
 locals {
   config = {
-    existing_resource_group                          = var.existing_resource_group
-    remote_allowed_ips                               = var.remote_allowed_ips
-    ssh_keys                                         = var.ssh_keys
-    vpc_cluster_login_private_subnets_cidr_blocks    = var.vpc_cluster_login_private_subnets_cidr_blocks
-    compute_gui_password                             = var.compute_gui_password
-    compute_gui_username                             = var.compute_gui_username
-    vpc_cluster_private_subnets_cidr_blocks          = var.vpc_cluster_private_subnets_cidr_blocks
-    cos_instance_name                                = var.cos_instance_name
-    dns_custom_resolver_id                           = var.dns_custom_resolver_id
-    dns_instance_id                                  = var.dns_instance_id
-    dns_domain_names                                 = var.dns_domain_names
-    enable_atracker                                  = var.enable_atracker
-    enable_bastion                                   = var.enable_bastion
+    existing_resource_group                       = var.existing_resource_group
+    remote_allowed_ips                            = var.remote_allowed_ips
+    ssh_keys                                      = var.ssh_keys
+    vpc_cluster_login_private_subnets_cidr_blocks = var.vpc_cluster_login_private_subnets_cidr_blocks
+    compute_gui_password                          = var.compute_gui_password
+    compute_gui_username                          = var.compute_gui_username
+    vpc_cluster_private_subnets_cidr_blocks       = var.vpc_cluster_private_subnets_cidr_blocks
+    cos_instance_name                             = var.cos_instance_name
+    dns_custom_resolver_id                        = var.dns_custom_resolver_id
+    dns_instance_id                               = var.dns_instance_id
+    dns_domain_names                              = var.dns_domain_names
+    enable_atracker                               = var.enable_atracker
+    # enable_bastion                                   = var.enable_bastion
     bastion_image                                    = var.bastion_image
     bastion_instance_profile                         = var.bastion_instance_profile
     deployer_image                                   = var.deployer_image
@@ -102,19 +102,19 @@ locals {
 # Compile Environment for Config output
 locals {
   env = {
-    existing_resource_group                          = lookup(local.override[local.override_type], "existing_resource_group", local.config.existing_resource_group)
-    remote_allowed_ips                               = lookup(local.override[local.override_type], "remote_allowed_ips", local.config.remote_allowed_ips)
-    ssh_keys                                         = lookup(local.override[local.override_type], "ssh_keys", local.config.ssh_keys)
-    vpc_cluster_login_private_subnets_cidr_blocks    = lookup(local.override[local.override_type], "vpc_cluster_login_private_subnets_cidr_blocks", local.config.vpc_cluster_login_private_subnets_cidr_blocks)
-    compute_gui_password                             = lookup(local.override[local.override_type], "compute_gui_password", local.config.compute_gui_password)
-    compute_gui_username                             = lookup(local.override[local.override_type], "compute_gui_username", local.config.compute_gui_username)
-    vpc_cluster_private_subnets_cidr_blocks          = lookup(local.override[local.override_type], "vpc_cluster_private_subnets_cidr_blocks", local.config.vpc_cluster_private_subnets_cidr_blocks)
-    cos_instance_name                                = lookup(local.override[local.override_type], "cos_instance_name", local.config.cos_instance_name)
-    dns_custom_resolver_id                           = lookup(local.override[local.override_type], "dns_custom_resolver_id", local.config.dns_custom_resolver_id)
-    dns_instance_id                                  = lookup(local.override[local.override_type], "dns_instance_id", local.config.dns_instance_id)
-    dns_domain_names                                 = lookup(local.override[local.override_type], "dns_domain_names", local.config.dns_domain_names)
-    enable_atracker                                  = lookup(local.override[local.override_type], "enable_atracker", local.config.enable_atracker)
-    enable_bastion                                   = lookup(local.override[local.override_type], "enable_bastion", local.config.enable_bastion)
+    existing_resource_group                       = lookup(local.override[local.override_type], "existing_resource_group", local.config.existing_resource_group)
+    remote_allowed_ips                            = lookup(local.override[local.override_type], "remote_allowed_ips", local.config.remote_allowed_ips)
+    ssh_keys                                      = lookup(local.override[local.override_type], "ssh_keys", local.config.ssh_keys)
+    vpc_cluster_login_private_subnets_cidr_blocks = lookup(local.override[local.override_type], "vpc_cluster_login_private_subnets_cidr_blocks", local.config.vpc_cluster_login_private_subnets_cidr_blocks)
+    compute_gui_password                          = lookup(local.override[local.override_type], "compute_gui_password", local.config.compute_gui_password)
+    compute_gui_username                          = lookup(local.override[local.override_type], "compute_gui_username", local.config.compute_gui_username)
+    vpc_cluster_private_subnets_cidr_blocks       = lookup(local.override[local.override_type], "vpc_cluster_private_subnets_cidr_blocks", local.config.vpc_cluster_private_subnets_cidr_blocks)
+    cos_instance_name                             = lookup(local.override[local.override_type], "cos_instance_name", local.config.cos_instance_name)
+    dns_custom_resolver_id                        = lookup(local.override[local.override_type], "dns_custom_resolver_id", local.config.dns_custom_resolver_id)
+    dns_instance_id                               = lookup(local.override[local.override_type], "dns_instance_id", local.config.dns_instance_id)
+    dns_domain_names                              = lookup(local.override[local.override_type], "dns_domain_names", local.config.dns_domain_names)
+    enable_atracker                               = lookup(local.override[local.override_type], "enable_atracker", local.config.enable_atracker)
+    # enable_bastion                                   = lookup(local.override[local.override_type], "enable_bastion", local.config.enable_bastion)
     bastion_image                                    = lookup(local.override[local.override_type], "bastion_image", local.config.bastion_image)
     bastion_instance_profile                         = lookup(local.override[local.override_type], "bastion_instance_profile", local.config.bastion_instance_profile)
     deployer_image                                   = lookup(local.override[local.override_type], "deployer_image", local.config.deployer_image)

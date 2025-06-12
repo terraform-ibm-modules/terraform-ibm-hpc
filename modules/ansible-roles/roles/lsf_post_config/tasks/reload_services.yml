@@ -1,0 +1,15 @@
+---
+
+# Restart LSF daemon (lsfd) service on the first management node
+- name: Restart lsfd service
+  service:
+    name: lsfd
+    state: restarted
+  when: inventory_hostname == groups['management_nodes'][0]
+
+# Restart the NetworkManager service on all nodes
+- name: Restart NetworkManager
+  service:
+    name: NetworkManager
+    state: restarted
+  when: inventory_hostname == groups['mgmt_compute_nodes']

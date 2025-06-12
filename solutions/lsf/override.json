@@ -101,5 +101,6 @@
    "scc_event_notification_plan": "lite",
    "skip_flowlogs_s2s_auth_policy": false,
    "skip_kms_s2s_auth_policy": false,
-   "skip_iam_authorization_policy": false
+   "skip_iam_authorization_policy": false,
+   "app_center_gui_password": "hpc@IBMCloud"
 }

@@ -1,11 +1,11 @@
 module "ssh_key" {
-  count            = local.enable_bastion ? 1 : 0
+  count            = var.enable_deployer ? 1 : 0
   source           = "./../key"
   private_key_path = "bastion_id_rsa" #checkov:skip=CKV_SECRET_6
 }
 
 module "bastion_sg" {
-  count                        = local.enable_bastion ? 1 : 0
+  count                        = var.enable_deployer ? 1 : 0
   source                       = "terraform-ibm-modules/security-group/ibm"
   version                      = "2.6.2"
   add_ibm_cloud_internal_rules = true
@@ -16,7 +16,7 @@ module "bastion_sg" {
 }
 
 module "existing_bastion_sg_update" {
-  count                          = (local.enable_bastion && var.bastion_security_group_id != null) ? 1 : 0
+  count                          = (var.enable_deployer && var.bastion_security_group_id != null) ? 1 : 0
   source                         = "terraform-ibm-modules/security-group/ibm"
   version                        = "2.6.2"
   resource_group                 = var.resource_group
@@ -29,7 +29,7 @@ module "existing_bastion_sg_update" {
 }
 
 module "bastion_vsi" {
-  count                         = (var.enable_bastion && var.bastion_instance_name == null) ? 1 : 0
+  count                         = (var.enable_deployer && var.bastion_instance_name == null) ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
   version                       = "5.0.0"
   vsi_per_subnet                = 1
@@ -59,7 +59,7 @@ module "deployer_vsi" {
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
-  image_id                      = local.deployer_image_id
+  image_id                      = local.deployer_image_found_in_map ? local.new_deployer_image_id : local.deployer_image_id
   machine_type                  = var.deployer_instance_profile
   prefix                        = local.deployer_node_name
   resource_group_id             = var.resource_group

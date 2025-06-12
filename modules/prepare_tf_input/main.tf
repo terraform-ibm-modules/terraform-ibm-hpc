@@ -4,6 +4,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
 {
   "scheduler": "${local.scheduler}",
   "ibmcloud_api_key": "${var.ibmcloud_api_key}",
+  "app_center_gui_password": "${var.app_center_gui_password}",
   "lsf_version": "${var.lsf_version}",
   "github_token": "${var.github_token}",
   "resource_group_ids": ${local.resource_group_ids},
@@ -11,7 +12,6 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "zones": ${local.zones},
   "enable_landing_zone": false,
   "enable_deployer": false,
-  "enable_bastion": false,
   "existing_bastion_instance_name": ${local.existing_bastion_instance_name},
   "ssh_keys": ${local.list_ssh_keys},
   "storage_instances": ${local.list_storage_instances},
@@ -86,7 +86,8 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "observability_atracker_target_type": "${var.observability_atracker_target_type}",
   "enable_dedicated_host": "${var.enable_dedicated_host}",
   "storage_security_group_id": "${local.storage_security_group_id}",
-  "custom_file_shares": ${local.custom_file_shares}
+  "custom_file_shares": ${local.custom_file_shares},
+  "login_instances": ${local.login_instances}
 }
 EOT
   filename = local.schematics_inputs_path

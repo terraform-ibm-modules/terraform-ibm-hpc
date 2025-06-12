@@ -21,6 +21,7 @@ import (
 	"github.com/IBM/secrets-manager-go-sdk/v2/secretsmanagerv2"
 	"github.com/stretchr/testify/assert"
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
+	"golang.org/x/crypto/ssh"
 )
 
 const (
@@ -28,19 +29,16 @@ const (
 	TimeLayout = "Jan02"
 )
 
-// VerifyDataContains is a generic function that checks if a value is present in data (string or string array)
-// VerifyDataContains performs a verification operation on the provided data
-// to determine if it contains the specified value. It supports string and
-// string array types, logging results with the provided AggregatedLogger.
-// Returns true if the value is found, false otherwise.
+// VerifyDataContains is a generic function that checks if a value is present in data (string, []string, or int).
+// It performs a verification operation on the provided data to determine if it contains the specified value.
+// Logs the result using the provided AggregatedLogger. Returns true if the value is found, false otherwise.
 func VerifyDataContains(t *testing.T, data interface{}, val interface{}, logger *AggregatedLogger) bool {
-	//The data.(type) syntax is used to check the actual type of the data variable.
 	switch d := data.(type) {
 	case string:
-		//check if the val variable is of type string.
+		// Check if val is a string
 		substr, ok := val.(string)
 		if !ok {
-			logger.Info(t, "Invalid type for val parameter")
+			logger.Info(t, "Invalid type for val parameter: expected string")
 			return false
 		}
 		if substr != "" && strings.Contains(d, substr) {
@@ -71,12 +69,26 @@ func VerifyDataContains(t *testing.T, data interface{}, val interface{}, logger 
 			return false
 
 		default:
-			logger.Info(t, "Invalid type for val parameter")
+			logger.Info(t, "Invalid type for val parameter: expected string or []string")
 			return false
 		}
 
+	case int:
+		// Check if val is an int
+		v, ok := val.(int)
+		if !ok {
+			logger.Info(t, "Invalid type for val parameter: expected int")
+			return false
+		}
+		if d == v {
+			logger.Info(t, fmt.Sprintf("The integers match: %d == %d\n", d, v))
+			return true
+		}
+		logger.Info(t, fmt.Sprintf("The integers do not match: %d != %d\n", d, v))
+		return false
+
 	default:
-		logger.Info(t, "Unsupported type for data parameter")
+		logger.Info(t, fmt.Sprintf("Unsupported type for data parameter: %T", data))
 		return false
 	}
 }
@@ -120,6 +132,15 @@ func LogVerificationResult(t *testing.T, err error, checkName string, logger *Ag
 	}
 }
 
+// Add this to your logger package or test utilities
+func LogValidationResult(t *testing.T, success bool, message string, l *AggregatedLogger) {
+	if success {
+		l.PASS(t, fmt.Sprintf("Validation succeeded: %s", message))
+	} else {
+		l.FAIL(t, fmt.Sprintf("Validation failed: %s", message))
+	}
+}
+
 // ParsePropertyValue parses the content of a string, searching for a property with the specified key.
 // It returns the value of the property if found, or an empty string and an error if the property is not found.
 func ParsePropertyValue(content, propertyKey string) (string, error) {
@@ -150,7 +171,13 @@ func FindImageNamesByCriteria(name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer readFile.Close()
+
+	var returnErr error
+	defer func() {
+		if cerr := readFile.Close(); cerr != nil && returnErr == nil {
+			returnErr = fmt.Errorf("failed to close file: %w", cerr)
+		}
+	}()
 
 	// Create a scanner to read lines from the file
 	fileScanner := bufio.NewScanner(readFile)
@@ -208,8 +235,8 @@ func LoginIntoIBMCloudUsingCLI(t *testing.T, apiKey, region, resourceGroup strin
 func GenerateTimestampedClusterPrefix(prefix string) string {
 	//Place current time in the string.
 	t := time.Now()
+	//return strings.ToLower("cicd" + "-" + t.Format(TimeLayout) + "-" + prefix)
 	return strings.ToLower("cicd" + "-" + t.Format(TimeLayout) + "-" + prefix)
-
 }
 
 // GetPublicIP returns the public IP address using ifconfig.io API
@@ -283,7 +310,7 @@ func GetValueForKey(inputMap map[string]string, key string) string {
 
 // Configuration struct matches the structure of your JSON data
 type Configuration struct {
-	ClusterID               string   `json:"clusterID"`
+	ClusterName             string   `json:"ClusterName"`
 	ReservationID           string   `json:"reservationID"`
 	ClusterPrefixName       string   `json:"clusterPrefixName"`
 	ResourceGroup           string   `json:"resourceGroup"`
@@ -331,7 +358,7 @@ func GetLdapIP(t *testing.T, options *testhelper.TestOptions, logger *Aggregated
 	filePath := options.TerraformOptions.TerraformDir
 
 	// Get the LDAP server IP and handle errors.
-	ldapIP, err = GetLdapServerIP(t, filePath, logger)
+	ldapIP, err = GetLdapServerIPFromIni(t, filePath, logger)
 	if err != nil {
 		return "", fmt.Errorf("error getting LDAP server IP: %w", err)
 	}
@@ -347,7 +374,7 @@ func GetBastionIP(t *testing.T, options *testhelper.TestOptions, logger *Aggrega
 	filePath := options.TerraformOptions.TerraformDir
 
 	// Get the bastion server IP and handle errors.
-	bastionIP, err = GetBastionServerIP(t, filePath, logger)
+	bastionIP, err = GetBastionServerIPFromIni(t, filePath, logger)
 	if err != nil {
 		return "", fmt.Errorf("error getting bastion server IP: %w", err)
 	}
@@ -356,44 +383,82 @@ func GetBastionIP(t *testing.T, options *testhelper.TestOptions, logger *Aggrega
 	return bastionIP, nil
 }
 
-// GetValueFromIniFile retrieves a value from an INI file based on the provided section and key.
-// It reads the specified INI file, extracts the specified section, and returns the value associated with the key.
-func GetValueFromIniFile(filePath, sectionName string) ([]string, error) {
-	// Read the content of the file
+// // GetValueFromIniFile retrieves a value from an INI file based on the provided section and key.
+// // It reads the specified INI file, extracts the specified section, and returns the value associated with the key.
+// func GetValueFromIniFile(filePath, sectionName string) ([]string, error) {
+// 	// Read the content of the file
+// 	absolutePath, err := filepath.Abs(filePath)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	data, err := os.ReadFile(absolutePath)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	// Convert the byte slice to a string
+// 	content := string(data)
+
+// 	// Split the input into sections based on empty lines
+// 	sections := strings.Split(content, "\n\n")
+
+// 	// Loop through sections and find the one with the specified sectionName
+// 	for _, section := range sections {
+
+// 		if strings.Contains(section, "["+sectionName+"]") {
+// 			// Split the section into lines
+// 			lines := strings.Split(section, "\n")
+
+// 			// Extract values
+// 			var sectionValues []string
+// 			for i := 1; i < len(lines); i++ {
+// 				// Skip the first line, as it contains the section name
+// 				sectionValues = append(sectionValues, strings.TrimSpace(lines[i]))
+// 			}
+
+// 			return sectionValues, nil
+// 		}
+// 	}
+
+// 	return nil, fmt.Errorf("section [%s] not found in file %s", sectionName, filePath)
+// }
+
+// GetValueFromIniFile reads a file containing IP addresses, one per line (with optional trailing '%').
+// It returns a slice of clean IP addresses and any error encountered.
+func GetValueFromIniFile(filePath string) ([]string, error) {
 	absolutePath, err := filepath.Abs(filePath)
 	if err != nil {
 		return nil, err
 	}
-	data, err := os.ReadFile(absolutePath)
+
+	file, err := os.Open(absolutePath)
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert the byte slice to a string
-	content := string(data)
+	defer func() {
+		if cerr := file.Close(); cerr != nil {
+			// handle error, log or override return err
+			fmt.Printf("Error closing file: %v\n", cerr)
+		}
+	}()
 
-	// Split the input into sections based on empty lines
-	sections := strings.Split(content, "\n\n")
+	var ipAddresses []string
+	scanner := bufio.NewScanner(file)
 
-	// Loop through sections and find the one with the specified sectionName
-	for _, section := range sections {
-
-		if strings.Contains(section, "["+sectionName+"]") {
-			// Split the section into lines
-			lines := strings.Split(section, "\n")
-
-			// Extract values
-			var sectionValues []string
-			for i := 1; i < len(lines); i++ {
-				// Skip the first line, as it contains the section name
-				sectionValues = append(sectionValues, strings.TrimSpace(lines[i]))
-			}
-
-			return sectionValues, nil
+	for scanner.Scan() {
+		ip := strings.TrimSpace(scanner.Text())
+		ip = strings.TrimSuffix(ip, "%") // Remove trailing % if present
+		if ip != "" {
+			ipAddresses = append(ipAddresses, ip)
 		}
 	}
 
-	return nil, fmt.Errorf("section [%s] not found in file %s", sectionName, filePath)
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return ipAddresses, nil
 }
 
 // GetRegion returns the region from a given zone.
@@ -422,4 +487,285 @@ func RemoveKeys(m map[string]interface{}, keysToRemove []string) {
 	for _, key := range keysToRemove {
 		delete(m, key)
 	}
+}
+
+// IsStringInSlice checks if a string exists in a slice of strings.
+func IsStringInSlice(slice []string, item string) bool {
+	for _, str := range slice {
+		if str == item {
+			return true
+		}
+	}
+	return false
+}
+
+// Helper function to retrieve the master node name
+func GetMasterNodeName(t *testing.T, sClient *ssh.Client, logger *AggregatedLogger) (string, error) {
+	output, err := RunCommandInSSHSession(sClient, `lsid | grep master | cut -d" " -f5`)
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve the master node name: %w", err)
+	}
+	masterName := strings.TrimSpace(output)
+	logger.Info(t, fmt.Sprintf("Master node: %s", masterName))
+	return masterName, nil
+}
+
+// Helper function to retrieve management node names
+func GetManagementNodeNames(t *testing.T, sClient *ssh.Client, logger *AggregatedLogger) ([]string, error) {
+	output, err := RunCommandInSSHSession(sClient, `bhosts -w -noheader | cut -d" " -f1 | grep mgmt | tr '\n' ' ' | sed 's/ *$//'`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve management node names: %w", err)
+	}
+	managementNodes := strings.Fields(output)
+	logger.Info(t, fmt.Sprintf("Management nodes: %s", managementNodes))
+	return managementNodes, nil
+}
+
+// GetIAMToken retrieves the IAM token using IBM Cloud CLI
+func GetIAMToken() (string, error) {
+	cmd := exec.Command("bash", "-c", "ibmcloud iam oauth-tokens --output json | jq -r '.iam_token'")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("failed to get IAM token: %w", err)
+	}
+
+	// Trim and check if the token is empty
+	token := strings.TrimSpace(string(output))
+	if token == "" {
+		return "", fmt.Errorf("empty IAM token received")
+	}
+
+	return token, nil
+}
+
+// ConvertToInt safely converts an interface{} to an int.
+func ConvertToInt(value interface{}) (int, error) {
+	switch v := value.(type) {
+	case int:
+		return v, nil
+	case float64:
+		return int(v), nil // JSON numbers are often float64.
+	case string:
+		intVal, err := strconv.Atoi(v)
+		if err != nil {
+			return 0, fmt.Errorf("could not convert string '%s' to int: %v", v, err)
+		}
+		return intVal, nil
+	default:
+		return 0, fmt.Errorf("unsupported type: %T", v)
+	}
+}
+
+// GetTotalStaticComputeCount extracts and sums all "count" values from the "static_compute_instances" variable.
+// It logs progress and errors using the provided logger and test context.
+func GetTotalStaticComputeCount(t *testing.T, terraformVars map[string]interface{}, logger *AggregatedLogger) (int, error) {
+	if logger == nil {
+		return 0, fmt.Errorf("logger cannot be nil")
+	}
+
+	rawVal, exists := terraformVars["static_compute_instances"]
+	if !exists {
+		err := fmt.Errorf("static_compute_instances key does not exist")
+		logger.Error(t, err.Error())
+		return 0, err
+	}
+
+	instances, ok := rawVal.([]map[string]interface{})
+	if !ok {
+		err := fmt.Errorf("static_compute_instances is not a slice of maps (got %T)", rawVal)
+		logger.Error(t, err.Error())
+		return 0, err
+	}
+
+	if len(instances) == 0 {
+		logger.Warn(t, "static_compute_instances is empty (count = 0)")
+		return 0, nil
+	}
+
+	var total int
+	for i, inst := range instances {
+		countVal, exists := inst["count"]
+		if !exists {
+			err := fmt.Errorf("instance at index %d is missing 'count' key", i)
+			logger.Error(t, err.Error())
+			return 0, err
+		}
+
+		switch v := countVal.(type) {
+		case int:
+			total += v
+		case float64:
+			total += int(v)
+		case json.Number:
+			n, err := v.Int64()
+			if err != nil {
+				logger.Error(t, fmt.Sprintf("instance %d: count is not an integer (got %v)", i, v))
+				return 0, fmt.Errorf("instance %d: invalid count: %v", i, err)
+			}
+			total += int(n)
+		default:
+			err := fmt.Errorf("instance %d: 'count' must be a number (got %T)", i, countVal)
+			logger.Error(t, err.Error())
+			return 0, err
+		}
+	}
+
+	logger.Info(t, fmt.Sprintf("Successfully summed counts: total = %d", total))
+	return total, nil
+}
+
+// GetFirstDynamicComputeProfile retrieves the "profile" of the first dynamic compute instance.
+func GetFirstDynamicComputeProfile(t *testing.T, terraformVars map[string]interface{}, logger *AggregatedLogger) (string, error) {
+	rawVal, exists := terraformVars["dynamic_compute_instances"]
+	if !exists {
+		return "", errors.New("dynamic_compute_instances key does not exist")
+	}
+
+	// Ensure rawVal is of type []map[string]interface{}
+	instances, ok := rawVal.([]map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("dynamic_compute_instances is not a slice, but %T", rawVal)
+	}
+
+	if len(instances) == 0 {
+		return "", errors.New("dynamic_compute_instances is empty")
+	}
+
+	profile, exists := instances[0]["profile"]
+	if !exists {
+		return "", errors.New("first dynamic compute instance is missing 'profile' key")
+	}
+
+	profileStr, ok := profile.(string)
+	if !ok {
+		return "", errors.New("'profile' is not a string")
+	}
+
+	logger.Info(t, fmt.Sprintf("First Dynamic Compute Profile: %s", profileStr))
+	return profileStr, nil
+}
+
+// RunCommandWithRetry executes a shell command with retries
+func RunCommandWithRetry(cmd string, retries int, delay time.Duration) ([]byte, error) {
+	var output []byte
+	var err error
+
+	for i := 0; i <= retries; i++ {
+		output, err = exec.Command("bash", "-c", cmd).CombinedOutput()
+		if err == nil {
+			return output, nil
+		}
+		if i < retries {
+			time.Sleep(delay) // Wait before retrying
+		}
+	}
+
+	return output, err
+}
+
+// TrimTrailingWhitespace removes any trailing whitespace characters (spaces, tabs, carriage returns, and newlines)
+// from the end of the provided string. It returns the trimmed string.
+func TrimTrailingWhitespace(content string) string {
+	return strings.TrimRight(content, " \t\r\n")
+}
+
+// RemoveDuplicateIPs filters out duplicate IPs from the input slice.
+func RemoveDuplicateIPs(ips []string) []string {
+	seen := make(map[string]struct{}, len(ips))
+	unique := make([]string, 0, len(ips))
+
+	for _, ip := range ips {
+		if _, exists := seen[ip]; !exists {
+			seen[ip] = struct{}{}
+			unique = append(unique, ip)
+		}
+	}
+	return unique
+}
+
+// GetVar retrieves any variable value from the map while preserving its original type.
+func GetVar(vars map[string]interface{}, key string) interface{} {
+	if val, ok := vars[key]; ok {
+		return val
+	}
+	return nil
+}
+
+// GetStringVar converts a map value to string, handling nil and "null" (as a string) as empty string.
+func GetStringVar(vars map[string]interface{}, key string) string {
+	val := GetVar(vars, key)
+
+	if val == nil {
+		return ""
+	}
+
+	if s, ok := val.(string); ok {
+		if s == "null" {
+			return ""
+		}
+		return s
+	}
+
+	// Fallback: convert other types (e.g., bool, int, float)
+	return fmt.Sprintf("%v", val)
+}
+
+// GetStringVarWithDefault returns a string value or a default if nil, empty, or "null".
+func GetStringVarWithDefault(vars map[string]interface{}, key, defaultValue string) string {
+	val := GetStringVar(vars, key)
+	if val != "" {
+		return val
+	}
+	return defaultValue
+}
+
+// GenerateLDAPPasswordHash generates an SSHA hashed password using slappasswd on a remote SSH session.
+func GenerateLDAPPasswordHash(t *testing.T, sClient *ssh.Client, password string, logger *AggregatedLogger) (string, error) {
+	// Security check - don't allow empty passwords
+	if password == "" {
+		return "", fmt.Errorf("password cannot be empty")
+	}
+
+	// Safely wrap password to prevent shell injection
+	cmd := fmt.Sprintf("slappasswd -s '%s'", password)
+
+	logger.Info(t, "Generating LDAP password hash via slappasswd")
+
+	output, err := RunCommandInSSHSession(sClient, cmd)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate password hash: %w", err)
+	}
+
+	// Clean and validate output
+	hashedPassword := strings.TrimSpace(string(output))
+	if !strings.HasPrefix(hashedPassword, "{SSHA}") {
+		return "", fmt.Errorf("invalid hash format generated: %s", hashedPassword)
+	}
+
+	return hashedPassword, nil
+}
+
+// ExtractTerraformValue splits a terraform output line by "=" and trims the result
+func ExtractTerraformValue(line string) string {
+	parts := strings.SplitN(line, "=", 2)
+	if len(parts) < 2 {
+		return ""
+	}
+	return strings.Trim(strings.TrimSpace(parts[1]), `"`)
+}
+
+// GetBoolVar fetches a boolean from the map by key and returns an error if missing or invalid.
+// Returns the boolean value and error status.
+func GetBoolVar(vars map[string]interface{}, key string) (bool, error) {
+	val, exists := vars[key]
+	if !exists {
+		return false, fmt.Errorf("missing bool var: %q", key)
+	}
+
+	boolVal, ok := val.(bool)
+	if !ok {
+		return false, fmt.Errorf("invalid bool var: %q (got type %T, expected bool)", key, val)
+	}
+
+	return boolVal, nil
 }

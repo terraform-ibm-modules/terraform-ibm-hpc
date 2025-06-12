@@ -1,6 +1,6 @@
 locals {
   # Defined values
-  name   = "hpc"
+  name   = "lsf"
   prefix = var.prefix
   tags   = [local.prefix, local.name]
   schematics_reserved_cidrs = [
@@ -72,30 +72,35 @@ locals {
         acl_name       = "hpc-acl"
         cidr           = var.client_subnets_cidr[index(local.active_zones, zone)]
         public_gateway = true
+        no_addr_prefix = true
       } : null,
       {
         name           = "compute-subnet-${zone}"
         acl_name       = "hpc-acl"
         cidr           = var.vpc_cluster_private_subnets_cidr_blocks[index(local.active_zones, zone)]
         public_gateway = true
+        no_addr_prefix = true
       },
       local.storage_instance_count != 0 ? {
         name           = "storage-subnet-${zone}"
         acl_name       = "hpc-acl"
         cidr           = var.storage_subnets_cidr[index(local.active_zones, zone)]
         public_gateway = true
+        no_addr_prefix = true
       } : null,
       local.storage_instance_count != 0 && local.protocol_instance_count != 0 ? {
         name           = "protocol-subnet-${zone}"
         acl_name       = "hpc-acl"
         cidr           = var.protocol_subnets_cidr[index(local.active_zones, zone)]
         public_gateway = true
+        no_addr_prefix = true
       } : null,
       zone == local.active_zones[0] ? {
         name           = "bastion-subnet"
         acl_name       = "hpc-acl"
         cidr           = var.vpc_cluster_login_private_subnets_cidr_blocks
         public_gateway = true
+        no_addr_prefix = true
       } : null
     ] : []
   }

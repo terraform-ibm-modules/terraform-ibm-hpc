@@ -7,70 +7,55 @@
 
 locals {
 
-  # Validation: When using a custom image in management_instances, all instances must use custom images only. Mixing custom and stock images is not supported.
-  mgmt_custom_image_only_cnd = alltrue([
-    for inst in var.management_instances :
-    !contains([for i in var.management_instances : can(regex("^hpc-", i.image))], true) || can(regex("^hpc-", inst.image))
-  ])
-  mgmt_custom_image_only_msg = "When using a custom image in management_instances, all instances must use custom images only. Mixing custom and stock images is not supported."
+  ldap_server_status = var.enable_ldap == true && var.ldap_server == null ? false : true
+
+  # LDAP Admin Password Validation
+  validate_ldap_adm_pwd = var.enable_ldap && var.ldap_server == null ? (length(var.ldap_admin_password) >= 8 && length(var.ldap_admin_password) <= 20 && can(regex("^(.*[0-9]){2}.*$", var.ldap_admin_password))) && can(regex("^(.*[A-Z]){1}.*$", var.ldap_admin_password)) && can(regex("^(.*[a-z]){1}.*$", var.ldap_admin_password)) && can(regex("^.*[~@_+:].*$", var.ldap_admin_password)) && can(regex("^[^!#$%^&*()=}{\\[\\]|\\\"';?.<,>-]+$", var.ldap_admin_password)) : local.ldap_server_status
+  ldap_adm_password_msg = "Password that is used for LDAP admin. The password must contain at least 8 characters and at most 20 characters. For a strong password, at least three alphabetic characters are required, with at least one uppercase and one lowercase letter. Two numbers, and at least one special character. Make sure that the password doesn't include the username."
   # tflint-ignore: terraform_unused_declarations
-  mgmt_custom_image_only_chk = regex("^${local.mgmt_custom_image_only_msg}$", (local.mgmt_custom_image_only_cnd ? local.mgmt_custom_image_only_msg : ""))
+  validate_ldap_adm_pwd_chk = regex(
+    "^${local.ldap_adm_password_msg}$",
+  (local.validate_ldap_adm_pwd ? local.ldap_adm_password_msg : ""))
 
-
-  # Validation: When using a custom image in static_compute_instances, all instances must use custom images only. Mixing custom and stock images is not supported.
-  cmpt_custom_image_only_cnd = alltrue([
-    for inst in var.static_compute_instances :
-    !contains([for i in var.static_compute_instances : can(regex("^hpc-", i.image))], true) || can(regex("^hpc-", inst.image))
-  ])
-  cmpt_custom_image_only_msg = "When using a custom image in static_compute_instances, all instances must use custom images only. Mixing custom and stock images is not supported."
+  # Validate existing login subnet should be in the appropriate zone.
+  validate_login_subnet_id_zone_msg = "Provided login subnet should be in appropriate zone."
+  validate_login_subnet_id_zone     = anytrue([var.login_subnet_id == null, var.login_subnet_id != null && var.vpc_name != null ? alltrue([data.ibm_is_subnet.existing_login_subnets[0].zone == var.zones[0]]) : false])
   # tflint-ignore: terraform_unused_declarations
-  cmpt_custom_image_only_chk = regex("^${local.cmpt_custom_image_only_msg}$", (local.cmpt_custom_image_only_cnd ? local.cmpt_custom_image_only_msg : ""))
+  validate_login_subnet_id_zone_chk = regex("^${local.validate_login_subnet_id_zone_msg}$",
+  (local.validate_login_subnet_id_zone ? local.validate_login_subnet_id_zone_msg : ""))
 
+  # Validate existing login subnet should be the subset of vpc_name entered
+  validate_login_subnet_id_vpc_msg = "Provided login subnet should be in appropriate zone."
+  validate_login_subnet_id_vpc     = anytrue([var.login_subnet_id == null, var.login_subnet_id != null && var.vpc_name != null ? alltrue([for subnet_id in [var.login_subnet_id] : contains(data.ibm_is_vpc.existing_vpc[0].subnets[*].id, subnet_id)]) : false])
+  # tflint-ignore: terraform_unused_declarations
+  validate_login_subnet_id_vpc_chk = regex("^${local.validate_login_subnet_id_vpc_msg}$",
+  (local.validate_login_subnet_id_vpc ? local.validate_login_subnet_id_vpc_msg : ""))
 
-  # # Validation 2: All stock images must use same OS family
-  # mgmt_stock_os_consistency_cnd = (
-  # length(distinct([
-  #     for inst in var.management_instances :
-  #     can(regex("^ibm-[^-]+-([^-]+)", inst.image)) ? regex("^ibm-[^-]+-([^-]+)", inst.image)[0] : ""
-  # ])) <= 1
-  # )
-  # mgmt_stock_os_consistency_msg = "When using IBM stock images (starting with 'ibm-'), all instances must use the same OS family (e.g., all redhat, debian, etc.)."
+  # Validate existing subnet public gateways
+  validate_subnet_name_pg_msg = "Provided existing cluster_subnet_ids should have public gateway attached."
+  validate_subnet_name_pg     = anytrue([var.cluster_subnet_ids == null, var.cluster_subnet_ids != null && var.vpc_name != null ? (data.ibm_is_subnet.existing_cluster_subnets[0].public_gateway != "") : false])
+  # tflint-ignore: terraform_unused_declarations
+  validate_subnet_name_pg_chk = regex("^${local.validate_subnet_name_pg_msg}$",
+  (local.validate_subnet_name_pg ? local.validate_subnet_name_pg_msg : ""))
+
+  # # Validate existing vpc public gateways
+  # validate_existing_vpc_pgw_msg = "Provided existing vpc should have the public gateways created in the provided zones."
+  # validate_existing_vpc_pgw     = anytrue([(var.vpc_name == null), alltrue([var.vpc_name != null, var.cluster_subnet_ids != null]), alltrue([var.vpc_name != null, var.cluster_subnet_ids == null, var.login_subnet_id == null, length(local.zone_1_pgw_ids) > 0])])
   # # tflint-ignore: terraform_unused_declarations
-  # mgmt_stock_os_consistency_chk = regex("^${local.mgmt_stock_os_consistency_msg}$", (local.mgmt_stock_os_consistency_cnd ? local.mgmt_stock_os_consistency_msg : ""))
+  # validate_existing_vpc_pgw_chk = regex("^${local.validate_existing_vpc_pgw_msg}$",
+  # (local.validate_existing_vpc_pgw ? local.validate_existing_vpc_pgw_msg : ""))
 
-
-  # Validation: If using IBM stock image in management_instances, it must be Red Hat
-  mgmt_stock_image_redhat_only_cnd = alltrue([
-    for inst in var.management_instances :
-    (
-      # Allow if not stock (doesn't start with ibm-)
-      !can(regex("^ibm-", inst.image)) ||
-      # If it starts with ibm-, ensure it contains 'ibm-redhat'
-      can(regex("^ibm-redhat-", inst.image))
-    )
-  ])
-  mgmt_stock_image_redhat_only_msg = "When using a stock image in `management_instances`, only Red Hat images are supported."
+  # Validate existing cluster subnet should be in the appropriate zone.
+  validate_subnet_id_zone_msg = "Provided cluster subnets should be in appropriate zone."
+  validate_subnet_id_zone     = anytrue([var.cluster_subnet_ids == null, var.cluster_subnet_ids != null && var.vpc_name != null ? alltrue([data.ibm_is_subnet.existing_cluster_subnets[0].zone == var.zones[0]]) : false])
   # tflint-ignore: terraform_unused_declarations
-  mgmt_stock_image_redhat_only_chk = regex(
-    "^${local.mgmt_stock_image_redhat_only_msg}$",
-    local.mgmt_stock_image_redhat_only_cnd ? local.mgmt_stock_image_redhat_only_msg : ""
-  )
+  validate_subnet_id_zone_chk = regex("^${local.validate_subnet_id_zone_msg}$",
+  (local.validate_subnet_id_zone ? local.validate_subnet_id_zone_msg : ""))
 
-
-  # Validation: IBM Cloud Monitoring validation
-  validate_observability_monitoring_enable_compute_nodes = (var.observability_monitoring_enable && var.observability_monitoring_on_compute_nodes_enable) || (var.observability_monitoring_enable && var.observability_monitoring_on_compute_nodes_enable == false) || (var.observability_monitoring_enable == false && var.observability_monitoring_on_compute_nodes_enable == false)
-  observability_monitoring_enable_compute_nodes_msg      = "To enable monitoring on compute nodes, IBM Cloud Monitoring must also be enabled."
+  # Validate existing cluster subnet should be the subset of vpc_name entered
+  validate_cluster_subnet_id_vpc_msg = "Provided cluster subnet should be within the vpc entered."
+  validate_cluster_subnet_id_vpc     = anytrue([var.cluster_subnet_ids == null, var.cluster_subnet_ids != null && var.vpc_name != null ? alltrue([for subnet_id in [var.cluster_subnet_ids] : contains(data.ibm_is_vpc.existing_vpc[0].subnets[*].id, subnet_id)]) : false])
   # tflint-ignore: terraform_unused_declarations
-  observability_monitoring_enable_compute_nodes_chk = regex(
-    "^${local.observability_monitoring_enable_compute_nodes_msg}$",
-  (local.validate_observability_monitoring_enable_compute_nodes ? local.observability_monitoring_enable_compute_nodes_msg : ""))
-
-  # Validation: Existing Storage security group validation
-  validate_existing_storage_sg     = length([for share in var.custom_file_shares : { mount_path = share.mount_path, nfs_share = share.nfs_share } if share.nfs_share != null && share.nfs_share != ""]) > 0 ? var.storage_security_group_id != null ? true : false : true
-  validate_existing_storage_sg_msg = "Storage security group ID cannot be null when NFS share mount path is provided under cluster_file_shares variable."
-  # tflint-ignore: terraform_unused_declarations
-  validate_existing_storage_sg_chk = regex(
-    "^${local.validate_existing_storage_sg_msg}$",
-  (local.validate_existing_storage_sg ? local.validate_existing_storage_sg_msg : ""))
-
+  validate_subnet_id_vpc_chk = regex("^${local.validate_cluster_subnet_id_vpc_msg}$",
+  (local.validate_cluster_subnet_id_vpc ? local.validate_cluster_subnet_id_vpc_msg : ""))
 }

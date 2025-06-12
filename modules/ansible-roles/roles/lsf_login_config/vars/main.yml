@@ -1,0 +1,8 @@
+LSF_SUITE: "/opt/ibm/lsfsuite"
+LSF_TOP: "{{ LSF_SUITE }}/lsf"
+LSF_CONF: "{{ LSF_TOP }}/conf"
+LSF_WORK: "{{ LSF_TOP }}/work"
+LSF_LOGS: "/opt/ibm/lsflogs"
+LSF_HOSTS_FILE: "{{ LSF_CONF }}/hosts"
+LSF_CLUSTER_FILE: "{{ LSF_CONF }}/lsf.cluster.{{ prefix }}"
+LSFADMIN_DIR: "/home/lsfadmin"

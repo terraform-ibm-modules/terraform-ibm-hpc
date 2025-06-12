@@ -115,11 +115,11 @@ variable "placement_strategy" {
 ##############################################################################
 # Access Variables
 ##############################################################################
-variable "enable_bastion" {
-  type        = bool
-  default     = true
-  description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
-}
+# variable "enable_bastion" {
+#   type        = bool
+#   default     = true
+#   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
+# }
 
 variable "bastion_image" {
   type        = string

@@ -18,7 +18,7 @@ resource "null_resource" "entitlement_check" {
 resource "local_sensitive_file" "write_meta_private_key" {
   count           = local.enable_compute ? 1 : 0
   content         = (local.compute_private_key_content)
-  filename        = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute_id_rsa" : "${path.root}/modules/ansible-roles/compute_id_rsa"
+  filename        = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/compute_id_rsa" : "${path.root}/modules/ansible-roles/compute_id_rsa"
   file_permission = "0600"
 }
 
@@ -48,7 +48,7 @@ resource "null_resource" "copy_compute_public_key_content" {
 module "storage_key" {
   count  = local.enable_storage ? 1 : 0
   source = "./../key"
-  # private_key_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage_id_rsa" : "${path.root}/modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
+  # private_key_path = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/storage_id_rsa" : "${path.root}/modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
 }
 
 module "client_sg" {
@@ -92,7 +92,7 @@ module "nfs_storage_sg" {
   add_ibm_cloud_internal_rules   = true
   use_existing_security_group_id = true
   existing_security_group_id     = var.storage_security_group_id
-  security_group_rules           = local.compute_security_group_rules
+  security_group_rules           = local.storage_nfs_security_group_rules
   vpc_id                         = var.vpc_id
 }
 
@@ -105,6 +105,32 @@ module "storage_sg" {
   security_group_name          = format("%s-strg-sg", local.prefix)
   security_group_rules         = local.storage_security_group_rules
   vpc_id                       = var.vpc_id
+}
+
+module "login_vsi" {
+  count                         = var.scheduler == "LSF" ? 1 : 0
+  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version                       = "5.0.0"
+  vsi_per_subnet                = 1
+  create_security_group         = false
+  security_group                = null
+  image_id                      = local.login_image_found_in_map ? local.new_login_image_id : local.login_image_id[count.index]
+  machine_type                  = var.login_instances[count.index]["profile"]
+  prefix                        = local.login_node_name
+  resource_group_id             = var.resource_group
+  enable_floating_ip            = false
+  security_group_ids            = module.compute_sg[*].security_group_id
+  ssh_key_ids                   = local.ssh_keys
+  subnets                       = length(var.bastion_subnets) == 2 ? [var.bastion_subnets[1]] : [var.bastion_subnets[0]]
+  tags                          = local.tags
+  user_data                     = data.template_file.login_user_data.rendered
+  vpc_id                        = var.vpc_id
+  kms_encryption_enabled        = var.kms_encryption_enabled
+  skip_iam_authorization_policy = local.skip_iam_authorization_policy
+  boot_volume_encryption_key    = var.boot_volume_encryption_key
+  existing_kms_instance_guid    = var.existing_kms_instance_guid
+  placement_group_id            = var.placement_group_ids
+  #placement_group_id = var.placement_group_ids[(var.management_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
 module "management_vsi" {
@@ -148,7 +174,7 @@ module "compute_vsi" {
   ssh_key_ids                   = local.ssh_keys
   subnets                       = local.cluster_subnet_ids
   tags                          = local.tags
-  user_data                     = data.template_file.compute_user_data.rendered
+  user_data                     = var.scheduler == "Scale" ? data.template_file.scale_compute_user_data.rendered : data.template_file.lsf_compute_user_data.rendered
   vpc_id                        = var.vpc_id
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
@@ -174,7 +200,7 @@ module "compute_cluster_management_vsi" {
   ssh_key_ids                   = local.ssh_keys
   subnets                       = local.cluster_subnet_ids
   tags                          = local.tags
-  user_data                     = data.template_file.compute_user_data.rendered
+  user_data                     = data.template_file.scale_compute_user_data.rendered
   vpc_id                        = var.vpc_id
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy

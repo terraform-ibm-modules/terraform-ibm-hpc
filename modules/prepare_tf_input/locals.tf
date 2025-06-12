@@ -1,5 +1,5 @@
 locals {
-  schematics_inputs_path          = "/tmp/.schematics/solution_terraform.auto.tfvars.json"
+  schematics_inputs_path          = format("/tmp/.schematics/%s/solution_terraform.auto.tfvars.json", var.cluster_prefix)
   scheduler                       = var.scheduler == null ? "null" : var.scheduler
   ibm_customer_number             = var.ibm_customer_number == null ? "" : var.ibm_customer_number
   storage_security_group_id       = var.storage_security_group_id == null ? "" : var.storage_security_group_id
@@ -40,4 +40,5 @@ locals {
   custom_file_shares              = jsonencode(var.custom_file_shares)
   resource_group_ids              = jsonencode(var.resource_group_ids)
   existing_bastion_instance_name  = jsonencode(var.existing_bastion_instance_name == null ? null : var.existing_bastion_instance_name)
+  login_instances                 = jsonencode(var.login_instances)
 }

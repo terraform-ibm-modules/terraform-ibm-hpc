@@ -1,0 +1,80 @@
+---
+
+- name: Log directories | Setup shared base directories
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: "{{ item.mode | default('0755') }}"
+    recurse: yes
+    owner: lsfadmin
+    group: root
+  loop:
+    - { path: "{{ SHARED_PATH }}/data", mode: '0755' }
+    - { path: "{{ SHARED_PATH }}/logs", mode: '0755' }
+    - { path: "{{ SHARED_PATH }}/repository-path", mode: '0755' }
+    - { path: "{{ SHARED_PATH }}/das_staging_area", mode: '0755' }
+  when: inventory_hostname == groups['management_nodes'][0]
+
+- name: Log directories | Create per-host log directory under shared path
+  file:
+    path: "{{ SHARED_PATH }}/logs/{{ inventory_hostname }}"
+    state: directory
+    mode: '0777'
+    owner: lsfadmin
+    group: root
+
+- name: Log directories | Move existing logs to shared per-host directory
+  shell: |
+    mv {{ LSF_LOGS }}/* {{ SHARED_PATH }}/logs/{{ inventory_hostname }}/ 2>/dev/null || true
+  args:
+    warn: false
+
+- name: Log directories | Remove original LSF logs directory if it exists
+  file:
+    path: "{{ LSF_LOGS }}"
+    state: absent
+  ignore_errors: true
+
+- name: Log directories | Create symlink from shared per-host logs to LSF log path
+  file:
+    src: "{{ SHARED_PATH }}/logs/{{ inventory_hostname }}"
+    dest: "{{ LSF_LOGS }}"
+    state: link
+    force: true
+    owner: lsfadmin
+    group: root
+
+- name: Log directories | Ensure correct permissions on per-host logs directory
+  file:
+    path: "{{ SHARED_PATH }}/logs/{{ inventory_hostname }}"
+    state: directory
+    mode: '0777'
+    recurse: yes
+    owner: lsfadmin
+    group: root
+
+- name: Log directories | Create symlink to shared data directory
+  file:
+    src: "{{ SHARED_PATH }}/data"
+    dest: "{{ LSF_TOP }}/work/data"
+    state: link
+    force: yes
+  when: inventory_hostname == groups['management_nodes'][0]
+
+- name: Log directories | Ensure ownership of shared data directory
+  file:
+    path: "{{ SHARED_PATH }}/data"
+    state: directory
+    recurse: yes
+    owner: lsfadmin
+    group: root
+  when: inventory_hostname == groups['management_nodes'][0]
+
+- name: Log directories | Ensure symlink for das_staging_area under LSF_TOP
+  shell: |
+    [ -L "{{ LSF_TOP }}/{{ item }}" ] && echo "Symlink exists, skipping." || { \
+      [ -d "{{ LSF_TOP }}/{{ item }}" ] && rm -rf "{{ LSF_TOP }}/{{ item }}"; \
+      ln -s /mnt/lsf/{{ item }} "{{ LSF_TOP }}/{{ item }}"; }
+  loop:
+    - das_staging_area
+  when: inventory_hostname == groups['management_nodes'][0]

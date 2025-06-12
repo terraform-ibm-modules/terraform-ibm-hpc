@@ -33,7 +33,7 @@ resource "null_resource" "tf_resource_provisioner" {
       "sudo cp ${local.remote_inputs_path} ${local.remote_terraform_path}",
 
       # Run Terraform init and apply
-      "export TF_LOG=${var.TF_LOG} && sudo -E terraform -chdir=${local.remote_terraform_path} init && sudo -E terraform -chdir=${local.remote_terraform_path} apply -parallelism=${var.TF_PARALLELISM} -auto-approve"
+      "export TF_LOG=${var.TF_LOG} && sudo -E terraform -chdir=${local.remote_terraform_path} init && sudo -E terraform -chdir=${local.remote_terraform_path} apply -parallelism=${var.TF_PARALLELISM} -auto-approve -lock=false"
     ]
   }
 
@@ -107,7 +107,7 @@ resource "null_resource" "cluster_destroyer" {
     when       = destroy
     on_failure = fail
     inline = [
-      "export TF_LOG=${self.triggers.conn_terraform_log_level} && sudo -E terraform -chdir=${self.triggers.conn_remote_terraform_path} destroy -auto-approve"
+      "export TF_LOG=${self.triggers.conn_terraform_log_level} && sudo -E terraform -chdir=${self.triggers.conn_remote_terraform_path} destroy -auto-approve -lock=false"
     ]
   }
 }

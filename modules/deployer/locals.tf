@@ -3,6 +3,7 @@ locals {
   name   = var.scheduler == "LSF" ? "LSF" : (var.scheduler == "Scale" ? "Scale" : (var.scheduler == "HPCaaS" ? "HPCaaS" : (var.scheduler == "Symphony" ? "Symphony" : (var.scheduler == "Slurm" ? "Slurm" : ""))))
   prefix = var.prefix
   tags   = [local.prefix, local.name]
+  region = join("-", slice(split("-", var.zones[0]), 0, 2))
 
   schematics_reserved_cidrs = [
     "169.44.0.0/14",
@@ -16,20 +17,24 @@ locals {
     "150.238.230.128/27",
     "169.55.82.128/27"
   ]
-  bastion_sg_variable_cidr = var.enable_deployer == false ? distinct(flatten([
+  bastion_sg_variable_cidr = distinct(flatten([
     local.schematics_reserved_cidrs,
     var.allowed_cidr,
     var.network_cidr
-  ])) : distinct(flatten([var.allowed_cidr, var.network_cidr]))
+  ]))
 
-  enable_bastion  = var.enable_bastion || var.enable_deployer
   enable_deployer = var.enable_deployer
 
   bastion_node_name  = format("%s-%s", local.prefix, "bastion")
   deployer_node_name = format("%s-%s", local.prefix, "deployer")
 
-  bastion_image_id  = data.ibm_is_image.bastion.id
+  bastion_image_id = data.ibm_is_image.bastion.id
+
   deployer_image_id = data.ibm_is_image.deployer.id
+  # Check whether an entry is found in the mapping file for the given deployer node image
+  deployer_image_found_in_map = contains(keys(local.image_region_map), var.deployer_image)
+  # If not found, assume the name is the id already (customer provided image)
+  new_deployer_image_id = local.deployer_image_found_in_map ? local.image_region_map[var.deployer_image][local.region] : "Image not found with the given name"
 
   bastion_ssh_keys = [for name in var.ssh_keys : data.ibm_is_ssh_key.bastion[name].id]
 
