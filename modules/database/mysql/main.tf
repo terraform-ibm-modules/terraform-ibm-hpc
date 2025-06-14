@@ -10,7 +10,7 @@
 
 module "db" {
   source             = "terraform-ibm-modules/icd-mysql/ibm"
-  version            = "1.3.9"
+  version            = "1.11.11"
   resource_group_id  = var.resource_group_id
   name               = var.name
   region             = var.region
