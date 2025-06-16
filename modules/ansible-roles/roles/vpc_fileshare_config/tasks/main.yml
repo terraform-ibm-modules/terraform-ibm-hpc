@@ -1,0 +1,4 @@
+---
+
+# tasks file for fileshare mount
+- import_tasks: vpc_fileshare_configure.yml

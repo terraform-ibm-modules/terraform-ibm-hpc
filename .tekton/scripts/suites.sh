@@ -10,8 +10,9 @@ common_suite() {
         source "$file"
     done
     export TF_VAR_ibmcloud_api_key=$API_KEY
+    export TF_VAR_github_token=$git_access_token
 
-    DIRECTORY="/artifacts/tests"
+    DIRECTORY="/artifacts/tests/lsf_tests"
     if [ -d "$DIRECTORY" ]; then
         cd $DIRECTORY || exit
         test_cases="${test_cases//,/|}"
@@ -23,7 +24,7 @@ common_suite() {
             if [[ "$CHECK_SOLUTION" == "hpcaas" ]]; then
                 # get ssh-key created based on pr-id
                 get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}"
-                SSH_KEY=${CICD_SSH_KEY:?} COMPUTE_IMAGE_NAME=${compute_image_name:?} LOGIN_NODE_IMAGE_NAME=${login_image_name:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
+                SSH_KEYS=${CICD_SSH_KEY:?} COMPUTE_IMAGE_NAME=${compute_image_name:?} LOGIN_NODE_IMAGE_NAME=${login_image_name:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
                     ZONE=${zone:?} RESERVATION_ID=${reservation_id:?} CLUSTER_NAME=${cluster_name:?} DEFAULT_EXISTING_RESOURCE_GROUP=${resource_group:?} \
                     go test -v -timeout 9000m -run "${test_cases}" | tee -a "$LOG_FILE"
                 # Upload log/test_output files to cos bucket
@@ -39,9 +40,23 @@ common_suite() {
             if [[ "$CHECK_SOLUTION" == "lsf" ]]; then
                 # get ssh-key created based on pr-id
                 get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}"
-                SSH_KEY=${CICD_SSH_KEY:?} COMPUTE_IMAGE_NAME=${compute_image_name:?} LOGIN_NODE_IMAGE_NAME=${login_image_name:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
+                SSH_KEYS=${CICD_SSH_KEY:?} COMPUTE_IMAGE_NAME=${compute_image_name:?} LOGIN_NODE_IMAGE_NAME=${login_image_name:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
                     ZONE=${zone:?} SOLUTION=${solution:?} DEFAULT_EXISTING_RESOURCE_GROUP=${resource_group:?} \
                     go test -v -timeout 9000m -run "${test_cases}" | tee -a "$LOG_FILE"
+                # Upload log/test_output files to cos bucket
+                cos_upload "PR" "${CHECK_SOLUTION}" "${DIRECTORY}"
+
+                # push custom reports to custom-reports repository
+                push_reports "${LOG_FILE}" "${DIRECTORY}" "PR" "${suite}" "${CHECK_SOLUTION}" "${BUILD_NUMBER}"
+
+                # Checking any error/issue from log file for pr
+                issue_track "${LOG_FILE}" "PR"
+            fi
+
+            if [[ "$CHECK_SOLUTION" == "lsf-da" ]]; then
+                # get ssh-key created based on pr-id
+                get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}"
+                SSH_KEYS=${CICD_SSH_KEY:?} go test -v -timeout=900m -parallel=10 -run="${test_cases}" | tee -a "$LOG_FILE_NAME"
                 # Upload log/test_output files to cos bucket
                 cos_upload "PR" "${CHECK_SOLUTION}" "${DIRECTORY}"
 
@@ -56,7 +71,7 @@ common_suite() {
             if [[ "$CHECK_SOLUTION" == "hpcaas" ]]; then
                 # get ssh-key created based on commit-id
                 get_commit_ssh_key "${REVISION}" "${CHECK_SOLUTION}"
-                SSH_KEY=${CICD_SSH_KEY:?} US_EAST_ZONE=${us_east_zone:?} US_EAST_CLUSTER_ID=${us_east_cluster_id:?} \
+                SSH_KEYS=${CICD_SSH_KEY:?} US_EAST_ZONE=${us_east_zone:?} US_EAST_CLUSTER_ID=${us_east_cluster_id:?} \
                     US_EAST_RESERVATION_ID=${us_east_reservation_id:?} US_SOUTH_ZONE=${us_south_zone:?} \
                     US_SOUTH_CLUSTER_ID=${us_south_cluster_id:?} US_SOUTH_RESERVATION_ID=${us_south_reservation_id:?} \
                     EU_DE_ZONE=${eu_de_zone:?} EU_DE_CLUSTER_ID=${eu_de_cluster_id:?} EU_DE_RESERVATION_ID=${eu_de_reservation_id:?} \
@@ -77,9 +92,23 @@ common_suite() {
             if [[ "$CHECK_SOLUTION" == "lsf" ]]; then
                 # get ssh-key created based on commit-id
                 get_commit_ssh_key "${REVISION}" "${CHECK_SOLUTION}"
-                SSH_KEY=${CICD_SSH_KEY:?} COMPUTE_IMAGE_NAME=${compute_image_name:?} LOGIN_NODE_IMAGE_NAME=${login_image_name:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
+                SSH_KEYS=${CICD_SSH_KEY:?} COMPUTE_IMAGE_NAME=${compute_image_name:?} LOGIN_NODE_IMAGE_NAME=${login_image_name:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
                     ZONE=${zone:?} SOLUTION=${solution:?} DEFAULT_EXISTING_RESOURCE_GROUP=${resource_group:?} \
                     go test -v -timeout 9000m -run "${test_cases}" | tee -a "$LOG_FILE"
+                # Upload log/test_output files to cos bucket
+                cos_upload "REGRESSION" "${CHECK_SOLUTION}" "${DIRECTORY}" "${VALIDATION_LOG_FILE_NAME}"
+
+                # push custom reports to custom-reports repository
+                push_reports "${LOG_FILE}" "${DIRECTORY}" "REGRESSION" "${suite}" "${CHECK_SOLUTION}" "${BUILD_NUMBER}"
+
+                # Checking any error/issue from log file for commit/push
+                issue_track "${LOG_FILE}"
+            fi
+
+            if [[ "$CHECK_SOLUTION" == "lsf-da" ]]; then
+                # get ssh-key created based on commit-id
+                get_commit_ssh_key "${REVISION}" "${CHECK_SOLUTION}"
+                SSH_KEYS=${CICD_SSH_KEY:?} go test -v -timeout=900m -parallel=10 -run="${test_cases}" | tee -a "$LOG_FILE_NAME"
                 # Upload log/test_output files to cos bucket
                 cos_upload "REGRESSION" "${CHECK_SOLUTION}" "${DIRECTORY}" "${VALIDATION_LOG_FILE_NAME}"
 
@@ -423,4 +452,104 @@ lsf_negative_suite_5() {
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:?}" "${solution:?}"
 }
 
-######################## HPCaaS Testcases End ########################
+######################## LSF Testcases End ########################
+
+######################## LSF-DA-LONGTERM Testcases Start ########################
+# pr based suite on rhel
+lsf_da_pr_rhel_suite() {
+    suite=lsf-da-pr-rhel-suite
+    solution=lsf-da
+    test_cases="TestRunDefault"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}" "PR"
+}
+
+# commit based suite on rhel-suite-1
+lsf_da_rhel_suite_1() {
+    suite=lsf-da-rhel-suite-1
+    solution=lsf-da
+    test_cases="TestRunBasic,TestRunCustomRGAsNull"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# commit based suite on rhel-suite-2
+lsf_da_rhel_suite_2() {
+    suite=lsf-da-rhel-suite-2
+    solution=lsf-da
+    test_cases="TestRunCustomRGAsNonDefault,TestRunNoKMSAndHTOff"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# commit based suite on rhel-suite-3
+lsf_da_rhel_suite_3() {
+    suite=lsf-da-rhel-suite-3
+    solution=lsf-da
+    test_cases="TestRunUsingExistingKMS,TestRunUsingExistingKMSInstanceIDAndWithoutKey"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# commit based suite on rhel-suite-4
+lsf_da_rhel_suite_4() {
+    suite=lsf-da-rhel-suite-4
+    solution=lsf-da
+    test_cases="TestRunWithExistingKMSInstanceAndKeyWithAuthorizationPolicy,TestRunLSFClusterCreationWithZeroWorkerNodes"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# commit based suite on rhel-suite-5
+lsf_da_rhel_suite_5() {
+    suite=lsf-da-rhel-suite-5
+    solution=lsf-da
+    test_cases="TestRunLDAP,TestRunCosAndVpcFlowLogs"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# commit based suite on rhel-suite-6
+lsf_da_rhel_suite_6() {
+    suite=lsf-da-rhel-suite-6
+    solution=lsf-da
+    test_cases="TestObservabilityAllFeaturesDisabled,TestObservabilityLogsEnabledForManagementAndCompute"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# commit based suite on rhel-suite-7
+lsf_da_rhel_suite_7() {
+    suite=lsf-da-rhel-suite-7
+    solution=lsf-da
+    test_cases="TestObservabilityMonitoringEnabledForManagementAndCompute,TestObservabilityAtrackerScenarios"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# commit based suite on rhel-suite-8
+lsf_da_rhel_suite_8() {
+    suite=lsf-da-rhel-suite-8
+    solution=lsf-da
+    test_cases="TestRunCIDRsAsNonDefault,TestRunMultiProfileStaticAndDynamic"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}

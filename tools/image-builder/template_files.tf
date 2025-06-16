@@ -19,6 +19,5 @@ data "template_file" "packer_user_data" {
     zones                    = join(",", var.zones)
     existing_resource_group  = var.existing_resource_group
     private_catalog_id       = var.private_catalog_id
-    solution                 = var.solution
   }
 }

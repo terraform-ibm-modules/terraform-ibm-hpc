@@ -1,0 +1,8 @@
+LSF_CONF_FILE_PATH: "/opt/ibm/lsfsuite/lsf/conf"
+LSF_CONF_FILE: "{{ LSF_CONF_FILE_PATH }}/lsf.conf"
+LSF_RC_IC_CONF: "{{ LSF_CONF_FILE_PATH }}/resource_connector/ibmcloudgen2/conf"
+LSF_LSBATCH_CONF: "{{ LSF_CONF_FILE_PATH }}/lsbatch/{{ prefix }}/configdir"
+LSF_HOSTS_FILE: "{{ LSF_CONF_FILE_PATH }}/hosts"
+LSF_EGO_CONF_FILE: "{{ LSF_CONF_FILE }}/ego/{{ prefix }}/kernel/ego.conf"
+LSF_CLUSTER_FILE: "{{ LSF_CONF_FILE_PATH }}/lsf.cluster.{{ prefix }}"
+JS_PAC_SERVER_URL: "/opt/ibm/lsfsuite/ext/ppm/conf/js.conf"

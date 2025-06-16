@@ -1,6 +1,0 @@
-# This localtweak will let you add IPs or networks to the allowed ips list, so you will be able
-# to access the cluster from those IPs.
-
-locals {
-  remote_allowed_ips_extra = ["192.0.2.0/24"]
-}
