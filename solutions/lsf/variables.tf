@@ -52,7 +52,7 @@ variable "app_center_gui_password" {
 ##############################################################################
 # Cluster Level Variables
 ##############################################################################
-variable "zone" {
+variable "zones" {
 
   description = "Specify the IBM Cloud zone within the chosen region where the IBM Spectrum LSF cluster will be deployed. A single zone input is required, and the management nodes, file storage shares, and compute nodes will all be provisioned in this zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
   type        = list(string)
