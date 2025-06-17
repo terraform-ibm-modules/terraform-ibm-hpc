@@ -58,7 +58,7 @@ variable "zones" {
   type        = list(string)
   default     = ["us-east-1"]
   validation {
-    condition     = length(var.zone) == 1
+    condition     = length(var.zones) == 1
     error_message = "HPC product deployment supports only a single zone. Provide a value for a single zone from the supported regions: eu-de-2 or eu-de-3 for eu-de, us-east-1 or us-east-3 for us-east, and us-south-1 for us-south."
 
   }

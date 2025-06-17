@@ -19,7 +19,7 @@ locals {
 
   # Validate existing login subnet should be in the appropriate zone.
   validate_login_subnet_id_zone_msg = "Provided login subnet should be in appropriate zone."
-  validate_login_subnet_id_zone     = anytrue([var.login_subnet_id == null, var.login_subnet_id != null && var.vpc_name != null ? alltrue([data.ibm_is_subnet.existing_login_subnets[0].zone == var.zone[0]]) : false])
+  validate_login_subnet_id_zone     = anytrue([var.login_subnet_id == null, var.login_subnet_id != null && var.vpc_name != null ? alltrue([data.ibm_is_subnet.existing_login_subnets[0].zone == var.zones[0]]) : false])
   # tflint-ignore: terraform_unused_declarations
   validate_login_subnet_id_zone_chk = regex("^${local.validate_login_subnet_id_zone_msg}$",
   (local.validate_login_subnet_id_zone ? local.validate_login_subnet_id_zone_msg : ""))
@@ -47,7 +47,7 @@ locals {
 
   # Validate existing cluster subnet should be in the appropriate zone.
   validate_subnet_id_zone_msg = "Provided cluster subnets should be in appropriate zone."
-  validate_subnet_id_zone     = anytrue([var.cluster_subnet_ids == null, var.cluster_subnet_ids != null && var.vpc_name != null ? alltrue([data.ibm_is_subnet.existing_cluster_subnets[0].zone == var.zone[0]]) : false])
+  validate_subnet_id_zone     = anytrue([var.cluster_subnet_ids == null, var.cluster_subnet_ids != null && var.vpc_name != null ? alltrue([data.ibm_is_subnet.existing_cluster_subnets[0].zone == var.zones[0]]) : false])
   # tflint-ignore: terraform_unused_declarations
   validate_subnet_id_zone_chk = regex("^${local.validate_subnet_id_zone_msg}$",
   (local.validate_subnet_id_zone ? local.validate_subnet_id_zone_msg : ""))

@@ -2,7 +2,7 @@ module "symphony" {
   source                                        = "./../.."
   scheduler                                     = "Symphony"
   ibm_customer_number                           = var.ibm_customer_number
-  zone                                          = var.zone
+  zones                                         = var.zones
   remote_allowed_ips                            = var.remote_allowed_ips
   cluster_prefix                                = local.env.cluster_prefix
   ssh_keys                                      = local.env.ssh_keys

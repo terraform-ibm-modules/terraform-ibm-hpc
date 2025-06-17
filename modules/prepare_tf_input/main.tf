@@ -9,7 +9,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "github_token": "${var.github_token}",
   "resource_group_ids": ${local.resource_group_ids},
   "cluster_prefix": "${var.cluster_prefix}",
-  "zone": ${local.zone},
+  "zones": ${local.zones},
   "enable_landing_zone": false,
   "enable_deployer": false,
   "existing_bastion_instance_name": ${local.existing_bastion_instance_name},

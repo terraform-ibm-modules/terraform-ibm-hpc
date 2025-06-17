@@ -29,7 +29,7 @@ module "landing_zone" {
   client_instances                              = var.client_instances
   client_subnets_cidr                           = var.client_subnets_cidr
   vpc_name                                      = var.vpc_name
-  zones                                         = var.zone
+  zones                                         = var.zones
   scc_enable                                    = var.scc_enable
   enable_vpn                                    = var.vpn_enabled
   skip_flowlogs_s2s_auth_policy                 = var.skip_flowlogs_s2s_auth_policy
@@ -45,7 +45,7 @@ module "deployer" {
   resource_group                = local.resource_group_ids["workload_rg"]
   prefix                        = var.cluster_prefix
   vpc_id                        = local.vpc_id
-  zones                         = var.zone
+  zones                         = var.zones
   network_cidr                  = var.vpc_cidr
   bastion_subnets               = local.login_subnets
   bastion_image                 = var.bastion_image
@@ -71,7 +71,7 @@ module "landing_zone_vsi" {
   resource_group                    = var.resource_group_ids["workload_rg"]
   prefix                            = var.cluster_prefix
   vpc_id                            = local.vpc_id
-  zones                             = var.zone
+  zones                             = var.zones
   bastion_security_group_id         = var.bastion_security_group_id
   bastion_security_group_id_for_ref = var.bastion_security_group_id_for_ref
   bastion_public_key_content        = local.bastion_public_key_content
@@ -124,7 +124,7 @@ module "prepare_tf_input" {
   lsf_version                                      = var.lsf_version
   resource_group_ids                               = local.resource_group_ids
   cluster_prefix                                   = var.cluster_prefix
-  zone                                             = var.zone
+  zones                                            = var.zones
   ssh_keys                                         = local.ssh_keys
   storage_instances                                = var.storage_instances
   storage_servers                                  = var.storage_servers
@@ -247,7 +247,7 @@ module "cos" {
 module "file_storage" {
   count                               = var.enable_deployer == false ? 1 : 0
   source                              = "./modules/file_storage"
-  zone                                = var.zone[0] # always the first zone
+  zone                                = var.zones[0] # always the first zone
   resource_group_id                   = var.resource_group_ids["workload_rg"]
   file_shares                         = local.file_shares
   encryption_key_crn                  = local.boot_volume_encryption_key
@@ -348,7 +348,7 @@ module "write_compute_cluster_inventory" {
   compute_subnet_id           = local.compute_subnet_id
   region                      = local.region
   resource_group_id           = var.resource_group_ids["service_rg"]
-  zones                       = var.zone
+  zones                       = var.zones
   vpc_id                      = local.vpc_id
   compute_subnets_cidr        = [var.vpc_cluster_private_subnets_cidr_blocks]
   dynamic_compute_instances   = var.dynamic_compute_instances
@@ -370,7 +370,7 @@ module "write_compute_scale_cluster_inventory" {
   cloud_platform                                   = jsonencode("IBMCloud")
   resource_prefix                                  = jsonencode(format("%s.%s", var.cluster_prefix, var.dns_domain_names["compute"]))
   vpc_region                                       = jsonencode(local.region)
-  vpc_availability_zones                           = var.zone
+  vpc_availability_zones                           = var.zones
   scale_version                                    = jsonencode(local.scale_version)
   compute_cluster_filesystem_mountpoint            = jsonencode(var.scale_compute_cluster_filesystem_mountpoint)
   storage_cluster_filesystem_mountpoint            = jsonencode("None")
@@ -420,7 +420,7 @@ module "write_storage_scale_cluster_inventory" {
   cloud_platform                                   = jsonencode("IBMCloud")
   resource_prefix                                  = jsonencode(format("%s.%s", var.cluster_prefix, var.dns_domain_names["storage"]))
   vpc_region                                       = jsonencode(local.region)
-  vpc_availability_zones                           = var.zone
+  vpc_availability_zones                           = var.zones
   scale_version                                    = jsonencode(local.scale_version)
   compute_cluster_filesystem_mountpoint            = jsonencode("None")
   storage_cluster_filesystem_mountpoint            = jsonencode(var.filesystem_config[0]["mount_point"]) #jsonencode(var.storage_instances[count.index].filesystem)

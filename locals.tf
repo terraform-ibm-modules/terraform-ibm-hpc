@@ -1,7 +1,7 @@
 # locals needed for landing_zone
 locals {
   # Region and Zone calculations
-  region = join("-", slice(split("-", var.zone[0]), 0, 2))
+  region = join("-", slice(split("-", var.zones[0]), 0, 2))
 
   # SSH key calculations
   # Combining the common ssh keys with host specific ssh keys

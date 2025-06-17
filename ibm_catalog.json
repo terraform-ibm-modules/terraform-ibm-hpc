@@ -511,7 +511,7 @@
                         {
                             "key": "ldap_instance",
                             "type": "array",
-                            "default_value": "[\n  {\n    \"instance_type\": \"bx2-4x16\",\n    \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-1\"\n  }\n]",
+                            "default_value": "[\n  {\n    \"instance_type\": \"cx2-2x4\",\n    \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-3\"\n  }\n]",
                             "required": false,
                             "custom_config": {
                                 "type": "json_editor",

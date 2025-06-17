@@ -389,10 +389,10 @@ if [ "$observability_logs_enable_for_compute" = true ]; then
 [INPUT]
   Name              tail
   Tag               *
-  Path              /opt/ibm/lsf_worker/log/*.log.*
+  Path              /opt/ibm/lsflogs/*.log.*
   Path_Key          file
   Exclude_Path      /var/log/at/**
-  DB                /opt/ibm/lsf_worker/log/fluent-bit.DB
+  DB                /opt/ibm/lsflogs/fluent-bit.DB
   Buffer_Chunk_Size 32KB
   Buffer_Max_Size   256KB
   Skip_Long_Lines   On
@@ -411,7 +411,7 @@ EOL
 
   sudo chmod +x post-config.sh
   sudo ./post-config.sh -h "$cloud_logs_ingress_private_endpoint" -p "3443" -t "/logs/v1/singles" -a IAMAPIKey -k "$VPC_APIKEY_VALUE" --send-directly-to-icl -s true -i Production
-  echo "INFO Testing IBM Cloud LSF Logs from compute: $hostname" | sudo tee -a /opt/ibm/lsf_worker/log/test.log.com >/dev/null
+  echo "INFO Testing IBM Cloud LSF Logs from compute: $hostname" | sudo tee -a /opt/ibm/lsflogs/test.log.com >/dev/null
   sudo logger -u /tmp/in_syslog my_ident my_syslog_test_message_from_compute:"$hostname"
 else
   echo "Cloud Logs configuration skipped since observability logs for compute is not enabled"
