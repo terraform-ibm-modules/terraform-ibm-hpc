@@ -352,7 +352,7 @@ variable "dns_domain_name" {
     compute = string
   })
   default = {
-    compute = "comp.com"
+    compute = "lsf.com"
   }
   description = "IBM Cloud DNS Services domain name to be used for the IBM Spectrum LSF cluster."
   validation {

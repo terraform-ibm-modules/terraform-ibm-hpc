@@ -69,7 +69,8 @@
                             "required": true
                         },
                         {
-                            "key": "ssh_keys"
+                            "key": "ssh_keys",
+                            "required": true
                         },
                         {
                             "key": "remote_allowed_ips"
