@@ -1,7 +1,7 @@
 module "lsf" {
   source                                           = "./../.."
   scheduler                                        = "LSF"
-  zones                                            = var.zones
+  zone                                             = var.zone
   remote_allowed_ips                               = var.remote_allowed_ips
   cluster_prefix                                   = local.env.cluster_prefix
   ssh_keys                                         = local.env.ssh_keys
@@ -13,7 +13,7 @@ module "lsf" {
   cos_instance_name                                = local.env.cos_instance_name
   dns_custom_resolver_id                           = local.env.dns_custom_resolver_id
   dns_instance_id                                  = local.env.dns_instance_id
-  dns_domain_names                                 = local.env.dns_domain_names
+  dns_domain_names                                 = local.env.dns_domain_name
   dynamic_compute_instances                        = local.env.dynamic_compute_instances
   bastion_image                                    = local.env.bastion_image
   bastion_instance_profile                         = local.env.bastion_instance_profile
@@ -46,7 +46,7 @@ module "lsf" {
   scc_location                                     = local.env.scc_location
   scc_event_notification_plan                      = local.env.scc_event_notification_plan
   skip_flowlogs_s2s_auth_policy                    = local.env.skip_flowlogs_s2s_auth_policy
-  skip_iam_authorization_policy                    = local.env.skip_iam_authorization_policy
+  skip_iam_block_storage_authorization_policy      = local.env.skip_iam_block_storage_authorization_policy
   skip_kms_s2s_auth_policy                         = local.env.skip_kms_s2s_auth_policy
   ibmcloud_api_key                                 = local.env.ibmcloud_api_key
   app_center_gui_password                          = local.env.app_center_gui_password
@@ -59,7 +59,7 @@ module "lsf" {
   ldap_user_password                               = local.env.ldap_user_password
   ldap_server                                      = local.env.ldap_server
   ldap_server_cert                                 = local.env.ldap_server_cert
-  ldap_instances                                   = local.env.ldap_instances
+  ldap_instance                                    = local.env.ldap_instance
   enable_dedicated_host                            = local.env.enable_dedicated_host
   existing_bastion_instance_name                   = local.env.existing_bastion_instance_name
   existing_bastion_instance_public_ip              = local.env.existing_bastion_instance_public_ip

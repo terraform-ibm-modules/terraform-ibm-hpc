@@ -10,7 +10,7 @@ common_suite() {
         source "$file"
     done
     export TF_VAR_ibmcloud_api_key=$API_KEY
-    export TF_VAR_github_token=$git_access_token
+    export TF_VAR_github_token=${git_access_token:?}
 
     DIRECTORY="/artifacts/tests/lsf_tests"
     if [ -d "$DIRECTORY" ]; then

@@ -18,7 +18,7 @@ variable "github_token" {
 variable "lsf_version" {
   type        = string
   default     = "fixpack_15"
-  description = "Select the LSF version to deploy: 'fixpack_14' or 'fixpack_15'. Use null to skip LSF deployment."
+  description = "Select the desired version of IBM Spectrum LSF to deploy either fixpack_15 or fixpack_14. By default, the solution uses the latest available version, which is Fix Pack 15. If you need to deploy an earlier version such as Fix Pack 14, update the lsf_version field to fixpack_14. When changing the LSF version, ensure that all custom images used for management, compute, and login nodes correspond to the same version. This is essential to maintain compatibility across the cluster and to prevent deployment issues."
 }
 
 ##############################################################################
@@ -54,12 +54,12 @@ variable "cluster_prefix" {
   }
 }
 
-variable "zones" {
+variable "zone" {
   description = "Specify the IBM Cloud zone within the chosen region where the IBM Spectrum LSF cluster will be deployed. A single zone input is required, and the management nodes, file storage shares, and compute nodes will all be provisioned in this zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
   type        = list(string)
   default     = ["us-east-1"]
   validation {
-    condition     = length(var.zones) == 1
+    condition     = length(var.zone) == 1
     error_message = "HPC product deployment supports only a single zone. Provide a value for a single zone from the supported regions: eu-de-2 or eu-de-3 for eu-de, us-east-1 or us-east-3 for us-east, and us-south-1 for us-south."
   }
 }
@@ -257,7 +257,7 @@ variable "dynamic_compute_instances" {
   )
   default = [{
     profile = "cx2-2x4"
-    count   = 1024
+    count   = 500
     image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "MaxNumber of instances to be launched for compute cluster."
@@ -517,10 +517,10 @@ variable "skip_kms_s2s_auth_policy" {
   description = "Skip auth policy between KMS service and COS instance, set to true if this policy is already in place on account."
 }
 
-variable "skip_iam_authorization_policy" {
+variable "skip_iam_block_storage_authorization_policy" {
   type        = bool
-  default     = true
-  description = "Set to false if authorization policy is required for VPC block storage volumes to access kms. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for block storage volume](https://cloud.ibm.com/docs/vpc?topic=vpc-block-s2s-auth&interface=ui)."
+  default     = false
+  description = "When using an existing KMS instance name, set this value to true if authorization is already enabled between KMS instance and the block storage volume. Otherwise, default is set to false. Ensuring proper authorization avoids access issues during deployment.For more information on how to create authorization policy manually, see [creating authorization policies for block storage volume](https://cloud.ibm.com/docs/vpc?topic=vpc-block-s2s-auth&interface=ui)."
 }
 
 ##############################################################################
@@ -920,7 +920,7 @@ variable "ldap_instance_key_pair" {
   description = "Name of the SSH key configured in your IBM Cloud account that is used to establish a connection to the LDAP Server. Make sure that the SSH key is present in the same resource group and region where the LDAP Servers are provisioned. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
 }
 
-variable "ldap_instances" {
+variable "ldap_instance" {
   type = list(
     object({
       profile = string
@@ -1132,4 +1132,26 @@ variable "login_instance" {
     image   = "hpcaas-lsf10-rhel810-compute-v8"
   }]
   description = "Number of instances to be launched for login node."
+}
+
+##############################################################################
+# Environment Variables
+##############################################################################
+
+# tflint-ignore: all
+variable "TF_VERSION" {
+  type        = string
+  default     = "1.9"
+  description = "The version of the Terraform engine that's used in the Schematics workspace."
+}
+
+# tflint-ignore: all
+variable "TF_PARALLELISM" {
+  type        = string
+  default     = "250"
+  description = "Parallelism/ concurrent operations limit. Valid values are between 1 and 256, both inclusive. [Learn more](https://www.terraform.io/docs/internals/graph.html#walking-the-graph)."
+  validation {
+    condition     = 1 <= var.TF_PARALLELISM && var.TF_PARALLELISM <= 256
+    error_message = "Input \"TF_PARALLELISM\" must be greater than or equal to 1 and less than or equal to 256."
+  }
 }

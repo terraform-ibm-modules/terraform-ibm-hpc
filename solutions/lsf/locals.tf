@@ -1,7 +1,7 @@
 # locals needed for ibm provider
 locals {
   # Region and Zone calculations
-  region = join("-", slice(split("-", var.zones[0]), 0, 2))
+  region = join("-", slice(split("-", var.zone[0]), 0, 2))
 }
 
 locals {
@@ -27,7 +27,7 @@ locals {
     cos_instance_name                             = var.cos_instance_name
     dns_custom_resolver_id                        = var.dns_custom_resolver_id
     dns_instance_id                               = var.dns_instance_id
-    dns_domain_names                              = var.dns_domain_names
+    dns_domain_name                               = var.dns_domain_name
     dynamic_compute_instances                     = var.dynamic_compute_instances
     bastion_image                                 = var.bastion_image
     bastion_instance_profile                      = var.bastion_instance_profile
@@ -63,7 +63,7 @@ locals {
     scc_location                                     = var.scc_location
     scc_event_notification_plan                      = var.scc_event_notification_plan
     skip_flowlogs_s2s_auth_policy                    = var.skip_flowlogs_s2s_auth_policy
-    skip_iam_authorization_policy                    = var.skip_iam_authorization_policy
+    skip_iam_block_storage_authorization_policy      = var.skip_iam_block_storage_authorization_policy
     skip_kms_s2s_auth_policy                         = var.skip_kms_s2s_auth_policy
     ibmcloud_api_key                                 = var.ibmcloud_api_key
     app_center_gui_password                          = var.app_center_gui_password
@@ -76,7 +76,7 @@ locals {
     ldap_user_password                               = var.ldap_user_password
     ldap_server                                      = var.ldap_server
     ldap_server_cert                                 = var.ldap_server_cert
-    ldap_instances                                   = var.ldap_instances
+    ldap_instance                                    = var.ldap_instance
     enable_dedicated_host                            = var.enable_dedicated_host
     existing_bastion_instance_name                   = var.existing_bastion_instance_name
     existing_bastion_instance_public_ip              = var.existing_bastion_instance_public_ip
@@ -102,7 +102,7 @@ locals {
     cos_instance_name                             = lookup(local.override[local.override_type], "cos_instance_name", local.config.cos_instance_name)
     dns_custom_resolver_id                        = lookup(local.override[local.override_type], "dns_custom_resolver_id", local.config.dns_custom_resolver_id)
     dns_instance_id                               = lookup(local.override[local.override_type], "dns_instance_id", local.config.dns_instance_id)
-    dns_domain_names                              = lookup(local.override[local.override_type], "dns_domain_names", local.config.dns_domain_names)
+    dns_domain_name                               = lookup(local.override[local.override_type], "dns_domain_name", local.config.dns_domain_name)
     dynamic_compute_instances                     = lookup(local.override[local.override_type], "dynamic_compute_instances", local.config.dynamic_compute_instances)
     bastion_image                                 = lookup(local.override[local.override_type], "bastion_image", local.config.bastion_image)
     bastion_instance_profile                      = lookup(local.override[local.override_type], "bastion_instance_profile", local.config.bastion_instance_profile)
@@ -137,7 +137,7 @@ locals {
     scc_location                                     = lookup(local.override[local.override_type], "scc_location", local.config.scc_location)
     scc_event_notification_plan                      = lookup(local.override[local.override_type], "scc_event_notification_plan", local.config.scc_event_notification_plan)
     skip_flowlogs_s2s_auth_policy                    = lookup(local.override[local.override_type], "skip_flowlogs_s2s_auth_policy", local.config.skip_flowlogs_s2s_auth_policy)
-    skip_iam_authorization_policy                    = lookup(local.override[local.override_type], "skip_iam_authorization_policy", local.config.skip_iam_authorization_policy)
+    skip_iam_block_storage_authorization_policy      = lookup(local.override[local.override_type], "skip_iam_block_storage_authorization_policy", local.config.skip_iam_block_storage_authorization_policy)
     skip_kms_s2s_auth_policy                         = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
     ibmcloud_api_key                                 = lookup(local.override[local.override_type], "ibmcloud_api_key", local.config.ibmcloud_api_key)
     app_center_gui_password                          = lookup(local.override[local.override_type], "app_center_gui_password", local.config.app_center_gui_password)
@@ -151,7 +151,7 @@ locals {
     ldap_user_password                               = lookup(local.override[local.override_type], "ldap_user_password", local.config.ldap_user_password)
     ldap_server                                      = lookup(local.override[local.override_type], "ldap_server", local.config.ldap_server)
     ldap_server_cert                                 = lookup(local.override[local.override_type], "ldap_server_cert", local.config.ldap_server_cert)
-    ldap_instances                                   = lookup(local.override[local.override_type], "ldap_instances", local.config.ldap_instances)
+    ldap_instance                                    = lookup(local.override[local.override_type], "ldap_instance", local.config.ldap_instance)
     enable_dedicated_host                            = lookup(local.override[local.override_type], "enable_dedicated_host", local.config.enable_dedicated_host)
     existing_bastion_instance_name                   = lookup(local.override[local.override_type], "existing_bastion_instance_name", local.config.existing_bastion_instance_name)
     existing_bastion_instance_public_ip              = lookup(local.override[local.override_type], "existing_bastion_instance_public_ip", local.config.existing_bastion_instance_public_ip)

@@ -34,7 +34,7 @@ variable "cluster_prefix" {
   }
 }
 
-variable "zones" {
+variable "zone" {
   description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
   type        = list(string)
 }
@@ -504,7 +504,7 @@ variable "ldap_instance_key_pair" {
   description = "Name of the SSH key configured in your IBM Cloud account that is used to establish a connection to the LDAP Server. Make sure that the SSH key is present in the same resource group and region where the LDAP Servers are provisioned. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
 }
 
-variable "ldap_instances" {
+variable "ldap_instance" {
   type = list(
     object({
       profile = string

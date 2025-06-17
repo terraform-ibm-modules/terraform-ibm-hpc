@@ -21,32 +21,32 @@ locals {
 
   # Resource group calculation
   # If user defined then use existing else create new
-  create_resource_group = var.existing_resource_group == null ? true : false
-  resource_group_id     = var.existing_resource_group != null ? data.ibm_resource_group.existing_resource_group.id : ""
-  new_resource_groups = var.existing_resource_group == null ? [
-    {
-      name   = "service-rg",
-      create = local.create_resource_group,
-      use_prefix : false
-    },
-    {
-      name   = "management-rg",
-      create = local.create_resource_group,
-      use_prefix : false
-    },
-    {
-      name   = "workload-rg",
-      create = local.create_resource_group,
-      use_prefix : false
-    }
-    ] : [
-    {
-      name   = var.existing_resource_group,
-      create = local.create_resource_group
-    }
-  ]
+  # create_resource_group = var.existing_resource_group == null ? true : false
+  resource_group_id = var.existing_resource_group != null ? data.ibm_resource_group.existing_resource_group.id : ""
+  # new_resource_groups = var.existing_resource_group == null ? [
+  #   {
+  #     name   = "service-rg",
+  #     create = local.create_resource_group,
+  #     use_prefix : false
+  #   },
+  #   {
+  #     name   = "management-rg",
+  #     create = local.create_resource_group,
+  #     use_prefix : false
+  #   },
+  #   {
+  #     name   = "workload-rg",
+  #     create = local.create_resource_group,
+  #     use_prefix : false
+  #   }
+  #   ] : [
+  #   {
+  #     name   = var.existing_resource_group,
+  #     create = local.create_resource_group
+  #   }
+  # ]
   # For the variables looking for resource group names only (transit_gateway, key_management, atracker)
-  existing_service_resource_group = var.existing_resource_group == null ? "service-rg" : var.existing_resource_group
+  # existing_service_resource_group = var.existing_resource_group == null ? "service-rg" : var.existing_resource_group
 
   # Region and Zone calculations
   region = join("-", slice(split("-", var.zones[0]), 0, 2))

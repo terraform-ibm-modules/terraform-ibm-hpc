@@ -26,7 +26,6 @@
       }
    ],
    "compute_gui_username": "admin",
-   "compute_gui_password": "hpc@IBMCloud",
    "storage_subnets_cidr": "10.10.30.0/24",
    "storage_instances": [
       {
@@ -59,7 +58,6 @@
    ],
    "colocate_protocol_instances": true,
    "storage_gui_username": "admin",
-   "storage_gui_password": "hpc@IBMCloud",
    "filesystem_config": [
       {
          "filesystem": "fs1",

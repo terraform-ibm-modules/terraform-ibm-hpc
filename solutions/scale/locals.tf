@@ -1,7 +1,7 @@
 # locals needed for ibm provider
 locals {
   # Region and Zone calculations
-  region = join("-", slice(split("-", var.zones[0]), 0, 2))
+  region = join("-", slice(split("-", var.zone[0]), 0, 2))
 }
 
 locals {
@@ -69,7 +69,7 @@ locals {
     scc_event_notification_plan                      = var.scc_event_notification_plan
     skip_flowlogs_s2s_auth_policy                    = var.skip_flowlogs_s2s_auth_policy
     skip_kms_s2s_auth_policy                         = var.skip_kms_s2s_auth_policy
-    skip_iam_authorization_policy                    = var.skip_iam_authorization_policy
+    skip_iam_block_storage_authorization_policy      = var.skip_iam_block_storage_authorization_policy
     ibmcloud_api_key                                 = var.ibmcloud_api_key
     afm_instances                                    = var.afm_instances
     afm_cos_config                                   = var.afm_cos_config
@@ -80,7 +80,7 @@ locals {
     ldap_user_password                               = var.ldap_user_password
     ldap_server                                      = var.ldap_server
     ldap_server_cert                                 = var.ldap_server_cert
-    ldap_instances                                   = var.ldap_instances
+    ldap_instance                                    = var.ldap_instance
     scale_encryption_enabled                         = var.scale_encryption_enabled
     scale_encryption_type                            = var.scale_encryption_type
     gklm_instance_key_pair                           = var.gklm_instance_key_pair
@@ -153,7 +153,7 @@ locals {
     scc_event_notification_plan                      = lookup(local.override[local.override_type], "scc_event_notification_plan", local.config.scc_event_notification_plan)
     skip_flowlogs_s2s_auth_policy                    = lookup(local.override[local.override_type], "skip_flowlogs_s2s_auth_policy", local.config.skip_flowlogs_s2s_auth_policy)
     skip_kms_s2s_auth_policy                         = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
-    skip_iam_authorization_policy                    = lookup(local.override[local.override_type], "skip_iam_authorization_policy", local.config.skip_iam_authorization_policy)
+    skip_iam_block_storage_authorization_policy      = lookup(local.override[local.override_type], "skip_iam_block_storage_authorization_policy", local.config.skip_iam_block_storage_authorization_policy)
     ibmcloud_api_key                                 = lookup(local.override[local.override_type], "ibmcloud_api_key", local.config.ibmcloud_api_key)
     afm_instances                                    = lookup(local.override[local.override_type], "afm_instances", local.config.afm_instances)
     afm_cos_config                                   = lookup(local.override[local.override_type], "afm_cos_config", local.config.afm_cos_config)
@@ -164,7 +164,7 @@ locals {
     ldap_user_password                               = lookup(local.override[local.override_type], "ldap_user_password", local.config.ldap_user_password)
     ldap_server                                      = lookup(local.override[local.override_type], "ldap_server", local.config.ldap_server)
     ldap_server_cert                                 = lookup(local.override[local.override_type], "ldap_server_cert", local.config.ldap_server_cert)
-    ldap_instances                                   = lookup(local.override[local.override_type], "ldap_instances", local.config.ldap_instances)
+    ldap_instance                                    = lookup(local.override[local.override_type], "ldap_instance", local.config.ldap_instance)
     scale_encryption_enabled                         = lookup(local.override[local.override_type], "scale_encryption_enabled", local.config.scale_encryption_enabled)
     scale_encryption_type                            = lookup(local.override[local.override_type], "scale_encryption_type", local.config.scale_encryption_type)
     gklm_instance_key_pair                           = lookup(local.override[local.override_type], "gklm_instance_key_pair", local.config.gklm_instance_key_pair)

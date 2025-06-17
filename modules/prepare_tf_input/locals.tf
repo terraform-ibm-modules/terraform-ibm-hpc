@@ -3,7 +3,7 @@ locals {
   scheduler                       = var.scheduler == null ? "null" : var.scheduler
   ibm_customer_number             = var.ibm_customer_number == null ? "" : var.ibm_customer_number
   storage_security_group_id       = var.storage_security_group_id == null ? "" : var.storage_security_group_id
-  zones                           = jsonencode(var.zones)
+  zone                            = jsonencode(var.zone)
   list_ssh_keys                   = jsonencode(var.ssh_keys)
   list_storage_instances          = jsonencode(var.storage_instances)
   list_storage_servers            = jsonencode(var.storage_servers)
@@ -26,7 +26,7 @@ locals {
   existing_kms_instance_guid      = jsonencode(var.existing_kms_instance_guid)
   dns_custom_resolver_id          = jsonencode(var.dns_custom_resolver_id != null ? (length(var.dns_custom_resolver_id) > 0 ? var.dns_custom_resolver_id : null) : var.dns_custom_resolver_id)
   dns_instance_id                 = jsonencode(var.dns_instance_id != null ? (length(var.dns_instance_id) > 0 ? var.dns_instance_id : null) : var.dns_instance_id)
-  list_ldap_instances             = jsonencode(var.ldap_instances)
+  list_ldap_instances             = jsonencode(var.ldap_instance)
   ldap_server                     = jsonencode(var.ldap_server)
   ldap_basedns                    = jsonencode(var.ldap_basedns)
   list_ldap_ssh_keys              = jsonencode(var.ldap_instance_key_pair)

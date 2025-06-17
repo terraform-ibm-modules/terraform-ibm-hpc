@@ -100,7 +100,7 @@ data "ibm_is_public_gateways" "public_gateways" {
 
 locals {
   public_gateways_list = data.ibm_is_public_gateways.public_gateways.public_gateways
-  zone_1_pgw_ids       = var.vpc_name != null ? [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == local.vpc_id && gateway.zone == var.zones[0]] : []
+  zone_1_pgw_ids       = var.vpc_name != null ? [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == local.vpc_id && gateway.zone == var.zone[0]] : []
 }
 
 resource "ibm_is_subnet_public_gateway_attachment" "zone_1_attachment" {

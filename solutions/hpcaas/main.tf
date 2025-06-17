@@ -2,7 +2,7 @@ module "hpcaas" {
   source                                        = "./../.."
   scheduler                                     = "HPCaaS"
   ibm_customer_number                           = var.ibm_customer_number
-  zones                                         = var.zones
+  zone                                          = var.zone
   remote_allowed_ips                            = var.remote_allowed_ips
   cluster_prefix                                = local.env.cluster_prefix
   ssh_keys                                      = local.env.ssh_keys

@@ -33,7 +33,6 @@
       }
    ],
    "compute_gui_username": "admin",
-   "compute_gui_password": "hpc@IBMCloud",
    "enable_hyperthreading": true,
    "storage_subnets_cidr": "10.10.30.0/24",
    "storage_instances": [
@@ -59,7 +58,6 @@
       }
    ],
    "storage_gui_username": "admin",
-   "storage_gui_password": "hpc@IBMCloud",
    "custom_file_shares": [
       {
          "mount_path": "/mnt/binaries",
@@ -74,10 +72,8 @@
    ],
    "dns_instance_id": null,
    "dns_custom_resolver_id": null,
-   "dns_domain_names": {
-      "compute": "comp.com",
-      "storage": "strg.com",
-      "protocol": "ces.com"
+   "dns_domain_name": {
+      "compute": "comp.com"
    },
    "enable_cos_integration": true,
    "cos_instance_name": null,
@@ -101,6 +97,5 @@
    "scc_event_notification_plan": "lite",
    "skip_flowlogs_s2s_auth_policy": false,
    "skip_kms_s2s_auth_policy": false,
-   "skip_iam_authorization_policy": false,
-   "app_center_gui_password": "hpc@IBMCloud"
+   "skip_iam_authorization_policy": false
 }

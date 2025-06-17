@@ -1,8 +1,8 @@
 ##############################################################################
-# Account Variables
+# Mandatory Required variables
 ##############################################################################
 variable "ibmcloud_api_key" {
-  description = "IBM Cloud API key for the IBM Cloud account where the IBM Spectrum LSF cluster needs to be deployed. For more information on how to create an API key, see [Managing user API keys](https://cloud.ibm.com/docs/account?topic=account-userapikey)."
+  description = "Provide the IBM Cloud API key associated with the account to deploy the IBM Spectrum LSF cluster. This key is used to authenticate your deployment and grant the necessary access to create and manage resources in your IBM Cloud environment, see [Managing user API keys](https://cloud.ibm.com/docs/account?topic=account-userapikey)."
   type        = string
   sensitive   = true
   validation {
@@ -21,7 +21,7 @@ variable "github_token" {
 variable "lsf_version" {
   type        = string
   default     = "fixpack_15"
-  description = "Select the LSF version to deploy: 'fixpack_14' or 'fixpack_15'."
+  description = "Select the desired version of IBM Spectrum LSF to deploy either fixpack_15 or fixpack_14. By default, the solution uses the latest available version, which is Fix Pack 15. If you need to deploy an earlier version such as Fix Pack 14, update the lsf_version field to fixpack_14. When changing the LSF version, ensure that all custom images used for management, compute, and login nodes correspond to the same version. This is essential to maintain compatibility across the cluster and to prevent deployment issues."
 
   validation {
     condition     = contains(["fixpack_14", "fixpack_15"], var.lsf_version)
@@ -29,23 +29,45 @@ variable "lsf_version" {
   }
 }
 
+variable "app_center_gui_password" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Password required to access the IBM Spectrum LSF Application Center (App Center) GUI, which is enabled by default in both Fix Pack 15 and Fix Pack 14 with HTTPS. This is a mandatory value and omitting it will result in deployment failure. The password must meet the following requirements, at least 8 characters in length, and must include one uppercase letter, one lowercase letter, one number, and one special character."
+
+  validation {
+    condition = (
+      can(regex("^.{8,}$", var.app_center_gui_password)) &&
+      can(regex("[0-9]", var.app_center_gui_password)) &&
+      can(regex("[a-z]", var.app_center_gui_password)) &&
+      can(regex("[A-Z]", var.app_center_gui_password)) &&
+      can(regex("[!@#$%^&*()_+=-]", var.app_center_gui_password)) &&
+      trimspace(var.app_center_gui_password) != ""
+    )
+    error_message = "The password must be at least 8 characters long and include at least one lowercase letter, one uppercase letter, one digit, and one special character (!@#$%^&*()_+=-)."
+  }
+}
+
+
 ##############################################################################
 # Cluster Level Variables
 ##############################################################################
-variable "zones" {
+variable "zone" {
+
   description = "Specify the IBM Cloud zone within the chosen region where the IBM Spectrum LSF cluster will be deployed. A single zone input is required, and the management nodes, file storage shares, and compute nodes will all be provisioned in this zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
   type        = list(string)
   default     = ["us-east-1"]
   validation {
-    condition     = length(var.zones) == 1
+    condition     = length(var.zone) == 1
     error_message = "HPC product deployment supports only a single zone. Provide a value for a single zone from the supported regions: eu-de-2 or eu-de-3 for eu-de, us-east-1 or us-east-3 for us-east, and us-south-1 for us-south."
+
   }
 }
 
 variable "ssh_keys" {
   type        = list(string)
   default     = null
-  description = "The key pair to use to access the HPC cluster."
+  description = "Provide the list of SSH key names already configured in your IBM Cloud account to establish a connection to the Spectrum LSF nodes. Solution does not create new SSH keys, provide the existing keys. Make sure the SSH key exists in the same resource group and region where the cluster is being provisioned. To pass multiple SSH keys, use the format [\"key-name-1\", \"key-name-2\"]. If you don't have an SSH key in your IBM Cloud account, you can create one by following the provided .[SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
 }
 
 variable "remote_allowed_ips" {
@@ -65,8 +87,11 @@ variable "remote_allowed_ips" {
   }
 }
 
+##############################################################################
+# Prefix Variables
+##############################################################################
 variable "cluster_prefix" {
-  description = "The prefix is used to name the IBM Cloud LSF cluster and the resources provisioned to build the  cluster instance. Each Spectrum LSF cluster must have a unique name, so ensure the prefix is distinct. It must begin with a lowercase letter and can only include lowercase letters, digits, and hyphens. Hyphens must be followed by a lowercase letter or digit, with no leading, trailing, or consecutive hyphens. The prefix length must be less than 16 characters."
+  description = "This prefix uniquely identifies the IBM Cloud Spectrum LSF cluster and its resources, it must always be unique. The name must start with a lowercase letter and can include only lowercase letters, digits, and hyphens. Hyphens must be followed by a lowercase letter or digit, with no leading, trailing, or consecutive hyphens. The prefix length must be less than 16 characters."
   type        = string
   default     = "hpc-lsf"
 
@@ -99,79 +124,24 @@ variable "existing_resource_group" {
 variable "vpc_name" {
   type        = string
   default     = null
-  description = "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+  description = "Provide the name of an existing VPC in which the cluster resources will be deployed. If no value is given, solution provisions a new VPC. [Learn more](https://cloud.ibm.com/docs/vpc)."
 }
 
 variable "vpc_cidr" {
   type        = string
   default     = "10.241.0.0/18"
-  description = "Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning."
-}
-
-# variable "placement_strategy" {
-#   type        = string
-#   default     = null
-#   description = "VPC placement groups to create (null / host_spread / power_spread)"
-# }
-
-##############################################################################
-# Access Variables
-##############################################################################
-
-variable "bastion_image" {
-  type        = string
-  default     = "ibm-ubuntu-22-04-3-minimal-amd64-1"
-  description = "The image to use to deploy the bastion host."
-}
-
-variable "bastion_instance_profile" {
-  type        = string
-  default     = "cx2-4x8"
-  description = "Deployer should be only used for better deployment performance"
+  description = "An address prefix is created for the new VPC when the vpc_name variable is set to null. This prefix is required to provision subnets within a single zone, and the subnets will be created using the specified CIDR blocks. For more information, see [Setting IP ranges](https://cloud.ibm.com/docs/vpc?topic=vpc-vpc-addressing-plan-design)."
 }
 
 variable "vpc_cluster_login_private_subnets_cidr_blocks" {
   type        = string
   default     = "10.241.16.0/28"
-  description = "Provide the CIDR block required for the creation of the login cluster's private subnet. Only one CIDR block is needed. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Since the login subnet is used only for the creation of login virtual server instances, provide a CIDR range of /28."
+  description = "Specify the CIDR block for the private subnet used by the login cluster. Only a single CIDR block is required. In hybrid environments, ensure the CIDR range does not overlap with any on-premises networks. Since this subnet is dedicated to login virtual server instances, a /28 CIDR range is recommended."
   validation {
     condition     = tonumber(regex("^.*?/(\\d+)$", var.vpc_cluster_login_private_subnets_cidr_blocks)[0]) <= 28
     error_message = "This subnet is used to create only a login virtual server instance. Providing a larger CIDR size will waste the usage of available IPs. A CIDR range of /28 is sufficient for the creation of the login subnet."
   }
 }
-
-variable "login_subnet_id" {
-  type        = string
-  default     = null
-  description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
-  validation {
-    condition     = (var.cluster_subnet_ids == null && var.login_subnet_id == null) || (var.cluster_subnet_ids != null && var.login_subnet_id != null)
-    error_message = "In case of existing subnets, provide both login_subnet_id and cluster_subnet_ids."
-  }
-}
-
-##############################################################################
-# Deployer Variables
-##############################################################################
-variable "deployer_image" {
-  type        = string
-  default     = "hpc-lsf-fp15-deployer-rhel810-v1"
-  description = "The image to use to deploy the deployer host."
-  validation {
-    condition     = contains(["hpc-lsf-fp15-deployer-rhel810-v1", "hpc-lsf-fp14-deployer-rhel810-v1"], var.deployer_image)
-    error_message = "Invalid deployer image. Allowed values are 'hpc-lsf-fp15-deployer-rhel810-v1' or 'hpc-lsf-fp14-deployer-rhel810-v1'."
-  }
-}
-
-variable "deployer_instance_profile" {
-  type        = string
-  default     = "bx2-8x32"
-  description = "Deployer should be only used for better deployment performance"
-}
-
-##############################################################################
-# Compute Variables
-#############################################################################
 
 variable "vpc_cluster_private_subnets_cidr_blocks" {
   type        = string
@@ -179,14 +149,74 @@ variable "vpc_cluster_private_subnets_cidr_blocks" {
   description = "Provide the CIDR block required for the creation of the compute cluster's private subnet. One CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Ensure the selected CIDR block size can accommodate the maximum number of management and dynamic compute nodes expected in your cluster. For more information on CIDR block size selection, refer to the documentation, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
 }
 
+variable "login_subnet_id" {
+  type        = string
+  default     = null
+  description = "Provide the ID of an existing subnet to deploy cluster resources, this is used only for provisioning bastion, deployer, and login nodes. If not provided, new subnet will be created.[Learn more](https://cloud.ibm.com/docs/vpc)."
+  validation {
+    condition     = (var.cluster_subnet_ids == null && var.login_subnet_id == null) || (var.cluster_subnet_ids != null && var.login_subnet_id != null)
+    error_message = "In case of existing subnets, provide both login_subnet_id and cluster_subnet_ids."
+  }
+}
+
 variable "cluster_subnet_ids" {
   type        = string
   default     = null
-  description = "Existing subnet ID under the existing VPC where the cluster will be provisioned. One subnet ID is required as input value. The management nodes, file storage shares, and compute nodes will be deployed in the same zone."
+  description = "Provide the ID of an existing subnet to deploy cluster resources; this is used only for provisioning VPC file storage shares, management, and compute nodes. If not provided, a new subnet will be created. Ensure that a public gateway is attached to enable VPC API communication. [Learn more](https://cloud.ibm.com/docs/vpc)."
   validation {
     condition     = anytrue([var.vpc_name != null && var.cluster_subnet_ids != null, var.cluster_subnet_ids == null])
     error_message = "If the cluster_subnet_ids are provided, the user should also provide the vpc_name."
   }
+}
+##############################################################################
+# Bastion/Deployer Variables
+##############################################################################
+
+variable "bastion_image" {
+  type        = string
+  default     = "ibm-ubuntu-22-04-5-minimal-amd64-3"
+  description = "Name of the image that will be used to provision the Bastion node for the IBM LSF cluster. Only Ubuntu stock image of any version available to the IBM Cloud account in the specific region are supported."
+}
+
+variable "bastion_instance_profile" {
+  type        = string
+  default     = "cx2-4x8"
+  description = "The virtual server instance profile type name to be used to create the Bastion node. For more information, see [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
+}
+
+variable "deployer_image" {
+  type        = string
+  default     = "hpc-lsf-fp15-deployer-rhel810-v1"
+  description = "Name of the custom image to be used for creating the deployer node in the IBM LSF cluster. The solution supports only predefined custom images. By default, the deployer image is configured for fixpack_15. If you intend to deploy using fixpack_14, update the lsf_version accordingly and use the recommended image 'hpc-lsf-fp14-deployer-rhel810-v1'. Ensure that the image selected aligns with the specified lsf_version, any mismatch may lead to deployment failures."
+  validation {
+    condition     = contains(["hpc-lsf-fp15-deployer-rhel810-v1", "hpc-lsf-fp14-deployer-rhel810-v1"], var.deployer_image)
+    error_message = "Invalid deployer image. Allowed values for fixpack_15 is 'hpc-lsf-fp15-deployer-rhel810-v1' and for fixpack_14 is 'hpc-lsf-fp14-deployer-rhel810-v1'."
+  }
+}
+
+variable "deployer_instance_profile" {
+  type        = string
+  default     = "bx2-8x32"
+  description = "The virtual server instance profile type name to be used to create the deployer node. For more information, see [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
+}
+
+##############################################################################
+# LSF Cluster Variables
+##############################################################################
+
+variable "login_instance" {
+  type = list(
+    object({
+      profile = string
+      image   = string
+    })
+  )
+  default = [{
+    profile = "bx2-2x8"
+    image   = "hpc-lsf-fp15-compute-rhel810-v1"
+  }]
+  description = "Specify the list of login node configurations, including instance profile, image name. By default, login nodes is created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures."
+
 }
 
 variable "management_instances" {
@@ -198,11 +228,11 @@ variable "management_instances" {
     })
   )
   default = [{
-    profile = "bx2-4x16"
+    profile = "bx2-16x64"
     count   = 2
     image   = "hpc-lsf-fp15-rhel810-v1"
   }]
-  description = "Number of instances to be launched for management."
+  description = "Specify the list of management node configurations, including instance profile, image name, and count. By default, all management nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. The solution allows customization of instance profiles and counts, but mixing custom images and IBM stock images across instances is not supported. If using IBM stock images, only Red Hat-based images are allowed."
   validation {
     condition     = alltrue([for inst in var.management_instances : !contains([for i in var.management_instances : can(regex("^ibm", i.image))], true) || can(regex("^ibm-redhat", inst.image))])
     error_message = "When defining management_instances, all instances must either use custom images or IBM stock images exclusively — mixing the two is not supported. If stock images are used, only Red Hat-based IBM images (e.g., ibm-redhat-*) are allowed."
@@ -218,11 +248,11 @@ variable "static_compute_instances" {
     })
   )
   default = [{
-    profile = "bx2-2x8"
+    profile = "bx2-4x16"
     count   = 1
     image   = "hpc-lsf-fp15-compute-rhel810-v1"
   }]
-  description = "Min Number of instances to be launched for compute cluster."
+  description = "Specify the list of static compute node configurations, including instance profile, image name, and count. By default, all compute nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. The solution allows customization of instance profiles and counts, but mixing custom images and IBM stock images across instances is not supported. If using IBM stock images, only Red Hat-based images are allowed."
   validation {
     condition = alltrue([
       for inst in var.static_compute_instances :
@@ -242,68 +272,20 @@ variable "dynamic_compute_instances" {
     })
   )
   default = [{
-    profile = "bx2-2x8"
+    profile = "bx2-4x16"
     count   = 1024
     image   = "hpc-lsf-fp15-compute-rhel810-v1"
   }]
-  description = "MaxNumber of instances to be launched for compute cluster."
+  description = "Specify the list of dynamic compute node configurations, including instance profile, image name, and count. By default, all dynamic compute nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. Currently, only a single instance profile is supported for dynamic compute nodes—multiple profiles are not yet supported.."
 }
 
-# variable "cluster_name" {
-#   type        = string
-#   default     = "HPCCluster"
-#   description = "Unique ID of the cluster used by LSF for configuration of resources. This can be up to 39 alphanumeric characters."
-#   validation {
-#     condition     = 0 < length(var.cluster_name) && length(var.cluster_name) < 40 && can(regex("^[a-zA-Z0-9_.-]+$", var.cluster_name))
-#     error_message = "The ID can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters."
-#   }
-# }
-
-variable "enable_hyperthreading" {
-  type        = bool
-  default     = true
-  description = "Setting this to true will enable hyper-threading in the worker nodes of the cluster (default). Otherwise, hyper-threading will be disabled."
-}
-
-# variable "enable_dedicated_host" {
-#   type        = bool
-#   default     = false
-#   description = "Set to true to use dedicated hosts for compute hosts (default: false)."
-# }
-
-# variable "dedicated_host_placement" {
-#   type        = string
-#   default     = "spread"
-#   description = "Specify 'pack' or 'spread'. The 'pack' option will deploy VSIs on one dedicated host until full before moving on to the next dedicated host."
-#   validation {
-#     condition     = var.dedicated_host_placement == "spread" || var.dedicated_host_placement == "pack"
-#     error_message = "Supported values for dedicated_host_placement: spread or pack."
-#   }
-# }
-
-variable "app_center_gui_password" {
-  type        = string
-  default     = ""
-  sensitive   = true
-  description = "Password for IBM Spectrum LSF Application Center GUI."
-
-  validation {
-    condition = (
-      can(regex("^.{8,}$", var.app_center_gui_password)) &&
-      can(regex("[0-9]", var.app_center_gui_password)) &&
-      can(regex("[a-z]", var.app_center_gui_password)) &&
-      can(regex("[A-Z]", var.app_center_gui_password)) &&
-      can(regex("[!@#$%^&*()_+=-]", var.app_center_gui_password)) &&
-      trimspace(var.app_center_gui_password) != ""
-    )
-    error_message = "The password must be at least 8 characters long and include at least one lowercase letter, one uppercase letter, one digit, and one special character (!@#$%^&*()_+=-)."
-  }
-}
-
+##############################################################################
+# File share variables
+##############################################################################
 variable "storage_security_group_id" {
   type        = string
   default     = null
-  description = "Provide the storage security group ID from the Spectrum Scale storage cluster if the mount_path in the cluster_file_share variable is set to use Scale fileset mount points. This security group is essential for establishing connections between the Spectrum LSF cluster nodes and NFS mount points, ensuring the nodes can access the specified mount points."
+  description = "Provide the storage security group ID from the Spectrum Scale storage cluster when an nfs_share value is specified for a given mount_path in the cluster_file_share variable. This security group is necessary to enable network connectivity between the Spectrum LSF cluster nodes and the NFS mount point, ensuring successful access to the shared file system."
   validation {
     condition     = length([for share in var.custom_file_shares : share.nfs_share if share.nfs_share != null && share.nfs_share != ""]) == 0 || var.storage_security_group_id != null
     error_message = "Storage security group ID cannot be null when NFS share mount path is provided under cluster_file_shares variable."
@@ -352,29 +334,29 @@ variable "custom_file_shares" {
 variable "dns_instance_id" {
   type        = string
   default     = null
-  description = "Provide the ID of an existing IBM Cloud DNS service instance to avoid creating a new one. Note: If dns_instance_id is not set to null, a new DNS zone will be created within the specified DNS service instance."
+  description = "Specify the ID of an existing IBM Cloud DNS service instance. When provided, domain names are created within the specified instance. If set to null, a new DNS service instance is created, and the required DNS zones are associated with it."
 }
 
 variable "dns_custom_resolver_id" {
   type        = string
   default     = null
-  description = "IBM Cloud DNS custom resolver id."
+  description = "Specify the ID of an existing IBM Cloud DNS custom resolver to avoid creating a new one. If set to null, a new custom resolver will be created and associated with the VPC. Note: A VPC can be associated with only one custom resolver. When using an existing VPC, if a custom resolver is already associated and this ID is not provided, the deployment will fail."
   validation {
     condition     = var.vpc_name != null || var.dns_custom_resolver_id == null
     error_message = "If this is a new VPC deployment (vpc_name is null), do not provide dns_custom_resolver_id, as it may impact name resolution."
   }
 }
 
-variable "dns_domain_names" {
+variable "dns_domain_name" {
   type = object({
     compute = string
   })
   default = {
     compute = "comp.com"
   }
-  description = "IBM Cloud HPC DNS domain names."
+  description = "IBM Cloud DNS Services domain name to be used for the IBM Spectrum LSF cluster."
   validation {
-    condition     = can(regex("^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.com$", var.dns_domain_names.compute))
+    condition     = can(regex("^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.com$", var.dns_domain_name.compute))
     error_message = "The compute domain name must be a valid FQDN ending in '.com'. It may include letters, digits, hyphens, and must start and end with an alphanumeric character."
   }
 }
@@ -458,7 +440,7 @@ variable "ldap_server_cert" {
   default     = null
   description = "Provide the existing LDAP server certificate. This value is required if the 'ldap_server' variable is not set to null. If the certificate is not provided or is invalid, the LDAP configuration may fail. For more information on how to create or obtain the certificate, please refer [existing LDAP server certificate](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-integrating-openldap)."
   validation {
-    condition     = var.enable_ldap == false || var.ldap_server == null || (var.ldap_server_cert != null ? (length(trimspace(var.ldap_server_cert)) > 0 && var.ldap_server_cert != "null"): false)
+    condition     = var.enable_ldap == false || var.ldap_server == null || (var.ldap_server_cert != null ? (length(trimspace(var.ldap_server_cert)) > 0 && var.ldap_server_cert != "null") : false)
     error_message = "Provide the current LDAP server certificate. This is required if 'ldap_server' is set; otherwise, the LDAP configuration will not succeed."
   }
 }
@@ -491,7 +473,7 @@ variable "ldap_user_password" {
   }
 }
 
-variable "ldap_instances" {
+variable "ldap_instance" {
   type = list(
     object({
       profile = string
@@ -500,9 +482,31 @@ variable "ldap_instances" {
   )
   default = [{
     profile = "cx2-2x4"
-    image   = "ibm-ubuntu-22-04-5-minimal-amd64-1"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-3"
   }]
-  description = "Profile and Image name to be used for provisioning the LDAP instances. Note: Debian based OS are only supported for the LDAP feature"
+  description = "Specify the compute instance profile and image to be used for deploying LDAP instances. Only Debian-based operating systems, such as Ubuntu, are supported for LDAP functionality."
+}
+
+
+##############################################################################
+# Additional feature Variables
+##############################################################################
+variable "enable_cos_integration" {
+  type        = bool
+  default     = true
+  description = "Set to true to create an extra cos bucket to integrate with HPC cluster deployment."
+}
+
+variable "cos_instance_name" {
+  type        = string
+  default     = null
+  description = "Provide the name of the existing COS instance where the logs for the enabled functionalities will be stored."
+}
+
+variable "enable_vpc_flow_logs" {
+  type        = bool
+  default     = true
+  description = "This flag determines whether VPC flow logs are enabled. When set to true, a flow log collector will be created to capture and monitor network traffic data within the VPC. Enabling flow logs provides valuable insights for troubleshooting, performance monitoring, and security auditing by recording information about the traffic passing through your VPC. Consider enabling this feature to enhance visibility and maintain robust network management practices."
 }
 
 variable "vpn_enabled" {
@@ -511,27 +515,11 @@ variable "vpn_enabled" {
   description = "Set the value as true to deploy a VPN gateway for VPC in the cluster."
 }
 
-##############################################################################
-# Observability Variables
-##############################################################################
-variable "enable_cos_integration" {
+variable "enable_hyperthreading" {
   type        = bool
   default     = true
-  description = "Integrate COS with HPC solution"
+  description = "Setting this to true will enable hyper-threading in the worker nodes of the cluster (default). Otherwise, hyper-threading will be disabled."
 }
-
-variable "cos_instance_name" {
-  type        = string
-  default     = null
-  description = "Exiting COS instance name"
-}
-
-variable "enable_vpc_flow_logs" {
-  type        = bool
-  default     = true
-  description = "Enable Activity tracker"
-}
-
 ##############################################################################
 # Observability Variables
 ##############################################################################
@@ -545,7 +533,7 @@ variable "observability_atracker_enable" {
 variable "observability_atracker_target_type" {
   type        = string
   default     = "cloudlogs"
-  description = "All the events will be stored in either COS bucket or Cloud Logs on the basis of user input, so customers can retrieve or ingest them in their system."
+  description = "Specify the target where Atracker events will be stored—either IBM Cloud Logs or a Cloud Object Storage (COS) bucket—based on the selected value. This allows the logs to be accessed or integrated with external systems."
   validation {
     condition     = contains(["cloudlogs", "cos"], var.observability_atracker_target_type)
     error_message = "Allowed values for atracker target type is cloudlogs and cos."
@@ -553,18 +541,13 @@ variable "observability_atracker_target_type" {
 }
 
 variable "observability_monitoring_enable" {
-  description = "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure and LSF application metrics from Management Nodes will be ingested."
+  description = "Enables or disables IBM Cloud Monitoring integration. When enabled, metrics from both the infrastructure and LSF application running on Management Nodes will be collected. This must be set to true if monitoring is required on management nodes."
   type        = bool
   default     = true
   validation {
     condition     = var.observability_monitoring_enable == true || var.observability_monitoring_on_compute_nodes_enable == false
     error_message = "To enable monitoring on compute nodes, IBM Cloud Monitoring must also be enabled."
   }
-  ##alternate
-  #validation {
-  #condition = (var.observability_monitoring_enable && var.observability_monitoring_on_compute_nodes_enable) || (var.observability_monitoring_enable && var.observability_monitoring_on_compute_nodes_enable == false) || (!var.observability_monitoring_enable && !var.observability_monitoring_on_compute_nodes_enable)
-  #error_message = "To enable monitoring on compute nodes, IBM Cloud Monitoring must also be enabled."
-  #}
 }
 
 variable "observability_logs_enable_for_management" {
@@ -602,7 +585,7 @@ variable "observability_logs_retention_period" {
 }
 
 variable "observability_monitoring_on_compute_nodes_enable" {
-  description = "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure metrics from Compute Nodes will be ingested."
+  description = "Enables or disables IBM Cloud Monitoring integration. When enabled, metrics from both the infrastructure and LSF application running on compute Nodes will be collected. This must be set to true if monitoring is required on compute nodes."
   type        = bool
   default     = false
 }
@@ -660,19 +643,19 @@ variable "scc_event_notification_plan" {
 variable "skip_flowlogs_s2s_auth_policy" {
   type        = bool
   default     = false
-  description = "Skip auth policy between flow logs service and COS instance, set to true if this policy is already in place on account."
+  description = "When using an existing COS instance, set this value to true if authorization is already enabled between COS instance and the flow logs service. Otherwise, default is set to false. Ensuring proper authorization avoids access issues during deployment."
 }
 
 variable "skip_kms_s2s_auth_policy" {
   type        = bool
   default     = false
-  description = "Skip auth policy between KMS service and COS instance, set to true if this policy is already in place on account."
+  description = "When using an existing COS instance, set this value to true if authorization is already enabled between COS instance and the kms. Otherwise, default is set to false. Ensuring proper authorization avoids access issues during deployment."
 }
 
-variable "skip_iam_authorization_policy" {
+variable "skip_iam_block_storage_authorization_policy" {
   type        = bool
-  default     = true
-  description = "Set to false if authorization policy is required for VPC block storage volumes to access kms. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for block storage volume](https://cloud.ibm.com/docs/vpc?topic=vpc-block-s2s-auth&interface=ui)."
+  default     = false
+  description = "When using an existing KMS instance name, set this value to true if authorization is already enabled between KMS instance and the block storage volume. Otherwise, default is set to false. Ensuring proper authorization avoids access issues during deployment.For more information on how to create authorization policy manually, see [creating authorization policies for block storage volume](https://cloud.ibm.com/docs/vpc?topic=vpc-block-s2s-auth&interface=ui)."
 }
 
 ##############################################################################
@@ -698,7 +681,7 @@ variable "override_json_string" {
 variable "enable_dedicated_host" {
   type        = bool
   default     = false
-  description = "Set this option to true to enable dedicated hosts for the VSI created for workload servers. The default value is false. When a dedicated host is enabled, the solution supports only static worker nodes with a single profile, and multiple profile combinations are not supported. For example, you can select a profile from a single family, such as bx2, cx2, or mx2. If you are provisioning a static cluster with a third-generation profile, ensure that dedicated hosts are supported in the chosen regions, as not all regions support dedicated hosts for third-gen profiles. To learn more about dedicated host, [click here.](https://cloud.ibm.com/docs/vpc?topic=vpc-dh-profiles&interface=ui)"
+  description = "Set this option to true to enable dedicated hosts for the VSIs provisioned as workload servers. The default value is false. When dedicated hosts are enabled, multiple vsi instance profiles from the same or different families (e.g., bx2, cx2, mx2) can be used. If you plan to deploy a static cluster with a third-generation profile, ensure that dedicated host support is available in the selected region, as not all regions support third-gen profiles on dedicated hosts. To learn more about dedicated host, [click here.](https://cloud.ibm.com/docs/vpc?topic=vpc-dh-profiles&interface=ui)."
 }
 
 ###########################################################################
@@ -722,7 +705,7 @@ variable "existing_bastion_instance_name" {
 variable "existing_bastion_instance_public_ip" {
   type        = string
   default     = null
-  description = "Provide the public ip address of the bastion instance to establish the remote connection."
+  description = "Provide the public ip address of the existing bastion instance to establish the remote connection. Also using this public ip address, connection to the LSF cluster nodes shall be established"
 }
 
 variable "existing_bastion_security_group_id" {
@@ -739,18 +722,23 @@ variable "existing_bastion_ssh_private_key" {
 }
 
 ##############################################################################
-# Login Variables
+# Environment Variables
 ##############################################################################
-variable "login_instance" {
-  type = list(
-    object({
-      profile = string
-      image   = string
-    })
-  )
-  default = [{
-    profile = "bx2-2x8"
-    image   = "hpc-lsf-fp15-compute-rhel810-v1"
-  }]
-  description = "Number of instances to be launched for login node."
+
+# tflint-ignore: all
+variable "TF_VERSION" {
+  type        = string
+  default     = "1.9"
+  description = "The version of the Terraform engine that's used in the Schematics workspace."
+}
+
+# tflint-ignore: all
+variable "TF_PARALLELISM" {
+  type        = string
+  default     = "250"
+  description = "Parallelism/ concurrent operations limit. Valid values are between 1 and 256, both inclusive. [Learn more](https://www.terraform.io/docs/internals/graph.html#walking-the-graph)."
+  validation {
+    condition     = 1 <= var.TF_PARALLELISM && var.TF_PARALLELISM <= 256
+    error_message = "Input \"TF_PARALLELISM\" must be greater than or equal to 1 and less than or equal to 256."
+  }
 }

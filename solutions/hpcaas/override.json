@@ -40,7 +40,6 @@
       }
    ],
    "compute_gui_username": "admin",
-   "compute_gui_password": "hpc@IBMCloud",
    "storage_subnets_cidr": "10.10.30.0/24",
    "storage_instances": [
       {
@@ -58,7 +57,6 @@
       }
    ],
    "storage_gui_username": "admin",
-   "storage_gui_password": "hpc@IBMCloud",
    "custom_file_shares": [
       {
          "mount_path": "/mnt/binaries",

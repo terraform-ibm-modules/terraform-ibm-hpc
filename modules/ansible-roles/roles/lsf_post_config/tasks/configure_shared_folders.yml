@@ -1,5 +1,11 @@
 ---
 
+# - name: Log directories | Remove duplicate logs
+#   ansible.builtin.shell: >
+#     find /opt/ibm/lsflogs -type f ! -name "*.{{ dns_domain_names }}" ! -name "ibmcloudgen2*" -delete
+#   become: true
+#   when: inventory_hostname in groups['management_nodes']
+
 - name: Log directories | Setup shared base directories
   file:
     path: "{{ item.path }}"

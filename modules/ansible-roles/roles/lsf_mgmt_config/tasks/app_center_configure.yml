@@ -1,10 +1,65 @@
 ---
 # AppCenter Configuration
 
-- name: PAC | Set GUI password for lsfadmin
-  ansible.builtin.command: passwd --stdin lsfadmin
-  args:
-    stdin: "{{ app_center_gui_password }}"
+- name: PAC | Check if HTTPS is already enabled
+  command: pmcadmin https enable
+  register: https_check
+  changed_when: "'was already enabled' not in https_check.stdout"
+  failed_when: false
+  run_once: true
+
+- name: Debug HTTPS status
+  debug:
+    msg: "HTTPS is already enabled"
+  when: "'was already enabled' in https_check.stdout"
+  run_once: true
+
+- name: Run steps to enable HTTPS
+  block:
+
+    - name: PAC | Set GUI password for lsfadmin
+      ansible.builtin.command: passwd --stdin lsfadmin
+      args:
+        stdin: "{{ app_center_gui_password }}"
+
+    - name: PAC | Enable HTTPS access for AppCenter
+      ansible.builtin.command: >
+        pmcadmin https enable
+        --password {{ app_center_gui_password }}
+        --validhosts localhost
+
+    - name: PAC | Stop pmcadmin service
+      ansible.builtin.command: pmcadmin stop
+
+    - name: PAC | Wait for 5 seconds before restarting service
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: PAC | Start pmcadmin service
+      ansible.builtin.command: pmcadmin start
+
+    - name: PAC | Update JS_PAC_SERVER_URL in js.conf
+      ansible.builtin.lineinfile:
+        path: "{{ JS_PAC_SERVER_URL }}"
+        regexp: '^JS_PAC_SERVER_URL='
+        line: "JS_PAC_SERVER_URL=https://{{ lsf_masters[0] }}:8443"
+        backrefs: true
+
+    - name: PAC | Stop acd (Application Center Daemon) service
+      ansible.builtin.service:
+        name: acd
+        state: stopped
+
+    - name: PAC | Wait for 5 seconds before restarting service
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: PAC | Start acd (Application Center Daemon) service
+      ansible.builtin.service:
+        name: acd
+        state: started
+
+  when: "'was already enabled' not in https_check.stdout"
   run_once: true
 
 # - name: PAC | Upfdate NEWJOB_REFRESH value in lsb.params
@@ -12,31 +67,3 @@
 #     path: "{{ LSF_LSBATCH_CONF }}/lsb.params"
 #     regexp: '^NEWJOB_REFRESH=y$'
 #     replace: 'NEWJOB_REFRESH=Y'
-
-# - name: PAC | Enable HTTPS access for AppCenter (pmcadmin)
-#   ansible.builtin.command: >
-#     pmcadmin https enable
-#     --password {{ app_center_gui_password }}
-#     --validhosts {{ lsf_masters[0] }}
-#   run_once: true
-
-# - name: PAC | Update JS_PAC_SERVER_URL in js.conf
-#   ansible.builtin.lineinfile:
-#     path: /opt/ibm/lsfsuite/ext/ppm/conf/js.conf
-#     regexp: '^JS_PAC_SERVER_URL='
-#     line: "JS_PAC_SERVER_URL=https://{{ lsf_masters[0] }}:8443"
-#     backrefs: true
-#   run_once: true
-
-# - name: PAC | Stop pmcadmin service
-#   ansible.builtin.command: pmcadmin stop
-#   run_once: true
-
-# - name: PAC | Wait for 5 seconds before restarting service
-#   ansible.builtin.pause:
-#     seconds: 5
-#   run_once: true
-
-# - name: PAC | Start pmcadmin service
-#   ansible.builtin.command: pmcadmin start
-#   run_once: true

@@ -2,7 +2,7 @@ module "scale" {
   source                                        = "./../.."
   scheduler                                     = "Scale"
   ibm_customer_number                           = var.ibm_customer_number
-  zones                                         = var.zones
+  zone                                          = var.zone
   remote_allowed_ips                            = var.remote_allowed_ips
   cluster_prefix                                = local.env.cluster_prefix
   ssh_keys                                      = local.env.ssh_keys
@@ -53,7 +53,7 @@ module "scale" {
   scc_event_notification_plan                      = local.env.scc_event_notification_plan
   skip_flowlogs_s2s_auth_policy                    = local.env.skip_flowlogs_s2s_auth_policy
   skip_kms_s2s_auth_policy                         = local.env.skip_kms_s2s_auth_policy
-  skip_iam_authorization_policy                    = local.env.skip_iam_authorization_policy
+  skip_iam_block_storage_authorization_policy      = local.env.skip_iam_block_storage_authorization_policy
   ibmcloud_api_key                                 = local.env.ibmcloud_api_key
   afm_instances                                    = local.env.afm_instances
   afm_cos_config                                   = local.env.afm_cos_config
@@ -64,7 +64,7 @@ module "scale" {
   ldap_user_password                               = local.env.ldap_user_password
   ldap_server                                      = local.env.ldap_server
   ldap_server_cert                                 = local.env.ldap_server_cert
-  ldap_instances                                   = local.env.ldap_instances
+  ldap_instance                                    = local.env.ldap_instance
   scale_encryption_enabled                         = local.env.scale_encryption_enabled
   scale_encryption_type                            = local.env.scale_encryption_type
   gklm_instance_key_pair                           = local.env.gklm_instance_key_pair
