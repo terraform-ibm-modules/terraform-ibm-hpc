@@ -133,7 +133,7 @@ module "login_vsi" {
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
-  image_id                      = local.login_image_found_in_map ? local.new_login_image_id : local.login_image_id[count.index]
+  image_id                      = local.login_image_found_in_map ? local.new_login_image_id : data.ibm_is_image.login_vsi_image[0].id
   machine_type                  = var.login_instance[count.index]["profile"]
   prefix                        = local.login_node_name
   resource_group_id             = var.resource_group
@@ -159,7 +159,7 @@ module "management_vsi" {
   vsi_per_subnet                = var.management_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
-  image_id                      = local.image_mapping_entry_found ? local.new_image_id : local.management_image_id[count.index]
+  image_id                      = local.image_mapping_entry_found ? local.new_image_id : data.ibm_is_image.management_stock_image[0].id
   machine_type                  = var.management_instances[count.index]["profile"]
   prefix                        = format("%s-%s", local.management_node_name, count.index + 1)
   resource_group_id             = var.resource_group
@@ -184,7 +184,7 @@ module "compute_vsi" {
   vsi_per_subnet                = var.static_compute_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
-  image_id                      = local.compute_image_found_in_map ? local.new_compute_image_id : local.compute_image_id[count.index]
+  image_id                      = local.compute_image_found_in_map ? local.new_compute_image_id : data.ibm_is_image.compute_stock_image[0].id
   machine_type                  = var.static_compute_instances[count.index]["profile"]
   prefix                        = format("%s-%s", local.compute_node_name, count.index + 1)
   resource_group_id             = var.resource_group
@@ -212,7 +212,7 @@ module "compute_cluster_management_vsi" {
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
-  image_id                      = local.compute_image_id[count.index]
+  image_id                      = data.ibm_is_image.compute_stock_image[0].id
   machine_type                  = var.static_compute_instances[count.index]["profile"]
   prefix                        = count.index == 0 ? local.cpmoute_management_node_name : format("%s-%s", local.cpmoute_management_node_name, count.index)
   resource_group_id             = var.resource_group

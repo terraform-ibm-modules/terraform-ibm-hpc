@@ -12,18 +12,18 @@ locals {
   # Region and Zone calculations
   region = join("-", slice(split("-", var.zones[0]), 0, 2))
 
-  management_image_id = data.ibm_is_image.management_stock_image[*].id
+  # management_image_id = data.ibm_is_image.management_stock_image[*].id
   # Check whether an entry is found in the mapping file for the given management node image
   image_mapping_entry_found = contains(keys(local.image_region_map), var.management_instances[0]["image"])
   new_image_id              = local.image_mapping_entry_found ? local.image_region_map[var.management_instances[0]["image"]][local.region] : "Image not found with the given name"
 
-  compute_image_id = data.ibm_is_image.compute_stock_image[*].id
+  # compute_image_id = data.ibm_is_image.compute_stock_image[*].id
   # Check whether an entry is found in the mapping file for the given compute node image
   compute_image_found_in_map = contains(keys(local.image_region_map), var.static_compute_instances[0]["image"])
   # If not found, assume the name is the id already (customer provided image)
   new_compute_image_id = local.compute_image_found_in_map ? local.image_region_map[var.static_compute_instances[0]["image"]][local.region] : "Image not found with the given name"
 
-  login_image_id = data.ibm_is_image.login_vsi_image[*].id
+  # login_image_id = data.ibm_is_image.login_vsi_image[*].id
   # Check whether an entry is found in the mapping file for the given login node image
   login_image_found_in_map = contains(keys(local.image_region_map), var.login_instance[0]["image"])
   # If not found, assume the name is the id already (customer provided image)

@@ -7,6 +7,7 @@ data "ibm_is_image" "bastion" {
 }
 
 data "ibm_is_image" "deployer" {
+  count = local.deployer_image_found_in_map ? 0 : 1
   name = var.deployer_image
 }
 

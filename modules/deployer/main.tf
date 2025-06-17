@@ -59,7 +59,7 @@ module "deployer_vsi" {
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
-  image_id                      = local.deployer_image_found_in_map ? local.new_deployer_image_id : local.deployer_image_id
+  image_id                      = local.deployer_image_found_in_map ? local.new_deployer_image_id : data.ibm_is_image.deployer[0].id
   machine_type                  = var.deployer_instance_profile
   prefix                        = local.deployer_node_name
   resource_group_id             = var.resource_group

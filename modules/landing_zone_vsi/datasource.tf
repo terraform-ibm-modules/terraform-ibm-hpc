@@ -3,7 +3,7 @@
 # }
 
 data "ibm_is_image" "management_stock_image" {
-  count = length(var.management_instances)
+  count = local.image_mapping_entry_found ? 0 : length(var.management_instances)
   name  = var.management_instances[count.index]["image"]
 }
 
@@ -38,7 +38,7 @@ data "ibm_is_image" "client" {
 }
 
 data "ibm_is_image" "compute_stock_image" {
-  count = length(var.static_compute_instances)
+  count = local.compute_image_found_in_map ? 0 : length(var.static_compute_instances)
   name  = var.static_compute_instances[count.index]["image"]
 }
 
@@ -94,7 +94,7 @@ data "ibm_is_image" "gklm" {
 }
 
 data "ibm_is_image" "login_vsi_image" {
-  count = var.scheduler == "LSF" ? 1 : 0
+  count = local.login_image_found_in_map ? 0 : 1
   name  = var.login_instance[count.index]["image"]
 }
 

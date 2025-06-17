@@ -30,7 +30,7 @@ locals {
 
   bastion_image_id = data.ibm_is_image.bastion.id
 
-  deployer_image_id = data.ibm_is_image.deployer.id
+  # deployer_image_id = data.ibm_is_image.deployer[0].id
   # Check whether an entry is found in the mapping file for the given deployer node image
   deployer_image_found_in_map = contains(keys(local.image_region_map), var.deployer_image)
   # If not found, assume the name is the id already (customer provided image)
