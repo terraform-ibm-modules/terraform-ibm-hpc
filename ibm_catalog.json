@@ -90,7 +90,7 @@
                             ]
                         },
                         {
-                            "key": "zone",
+                            "key": "zones",
                             "required": true,
                             "default_value": ["us-east-1"],
                             "options": [
