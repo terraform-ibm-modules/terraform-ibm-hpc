@@ -13,31 +13,14 @@ output "vpc_id" {
   value       = module.landing_zone[*].vpc_data[0].vpc_id
 }
 
-output "vpc_crn" {
-  description = "VPC CRN"
-  value       = module.landing_zone[*].vpc_data[0].vpc_crn
-}
-
-output "public_gateways" {
-  description = "Public Gateway IDs"
-  value       = module.landing_zone[*].vpc_data[0].public_gateways
-}
-
 output "vpc_cidr" {
   description = "To fetch the vpc cidr"
   value       = module.landing_zone[*].vpc_data[0].cidr_blocks[0]
 }
 
-output "subnets" {
-  description = "subnets"
-  value = [for subnet in flatten(module.landing_zone[*].subnet_data) : {
-    name = subnet["name"]
-    id   = subnet["id"]
-    zone = subnet["zone"]
-    cidr = subnet["cidr"]
-    crn  = subnet["crn"]
-    }
-  ]
+output "vpc_crn" {
+  description = "VPC CRN"
+  value       = module.landing_zone[*].vpc_data[0].vpc_crn
 }
 
 output "bastion_subnets" {
@@ -51,14 +34,14 @@ output "bastion_subnets" {
   ]
 }
 
-output "login_subnets" {
-  description = "Login subnets"
+output "client_subnets" {
+  description = "client subnets"
   value = [for subnet in flatten(module.landing_zone[*].subnet_data) : {
     name = subnet["name"]
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-lsf-login-subnet")
+    } if strcontains(subnet["name"], "-lsf-client-subnet")
   ]
 }
 
@@ -69,8 +52,6 @@ output "compute_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    crn  = subnet["crn"]
-    #ipv4_cidr_block = subnet["ipv4_cidr_block "]
     } if strcontains(subnet["name"], "-lsf-compute-subnet-zone-")
   ]
 }
@@ -110,7 +91,12 @@ output "boot_volume_encryption_key" {
 
 output "key_management_guid" {
   description = "GUID for KMS instance"
-  value       = var.key_management == "key_protect" ? module.landing_zone[0].key_management_guid : null
+  value       = var.enable_landing_zone ? var.key_management != null ? module.landing_zone[0].key_management_guid : null : null
+}
+
+output "cos_buckets_data" {
+  description = "COS buckets data"
+  value       = flatten(module.landing_zone[*].cos_bucket_data)
 }
 
 output "cos_instance_crns" {
@@ -121,11 +107,6 @@ output "cos_instance_crns" {
 output "cos_buckets_names" {
   description = "Name of the COS Bucket created for SCC Instance"
   value       = flatten(module.landing_zone[*].cos_bucket_names)
-}
-
-output "cos_buckets_data" {
-  description = "COS buckets data"
-  value       = flatten(module.landing_zone[*].cos_bucket_data)
 }
 
 # TODO: Observability data

@@ -1,0 +1,13 @@
+---
+
+# Tasks for Cloud Logs Configuration (for management nodes)
+- import_tasks: roles/cloudlogs/tasks/mgmt-cloudlogs-configure.yml
+  when:
+    - inventory_hostname in groups['management_nodes']
+    - logs_enable_for_management | bool
+
+# Tasks for Cloud Logs Configuration (for compute nodes)
+- import_tasks: roles/cloudlogs/tasks/compute-cloudlogs-configure.yml
+  when:
+    - inventory_hostname in groups['compute_nodes']
+    - logs_enable_for_compute | bool

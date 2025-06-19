@@ -1,0 +1,991 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: pipeline-git-event-processing
+spec:
+  params:
+    - name: repository
+      description: the git repo
+    - name: branch
+      description: the branch for the git repo
+    - name: revision
+      description: the commit id/sha for the clone action
+      default: ""
+    - name: state
+    - name: description
+      default: "The status of tekton commit"
+    - name: git_access_token
+      description: the token to access the git repository for the clone operations
+      default: ""
+    - name: properties-file
+      default: "output/thebuild.properties"
+    - name: git-credentials-json-file
+      default: "output/secrets/thecredentials.json"
+    - name: directory-name
+      default: "."
+    - name: pipeline-debug
+      default: "0"
+    - name: zone
+      default: ""
+      description: The IBM Cloud zone name within the selected region where the IBM Cloud HPC cluster should be deployed and requires a single zone input value. Supported zones are eu-de-2 and eu-de-3 for eu-de, us-east-1 and us-east-3 for us-east, and us-south-1 for us-south. The management nodes, file storage shares, and compute nodes will be deployed in the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli).
+    - name: resource_group
+      description: Resource group name from your IBM Cloud account where the VPC resources should be deployed. Note. If the resource group value is set as null, automation creates two different RG with the name (workload-rg and service-rg). For additional information on resource groups, see [Managing resource groups](https://cloud.ibm.com/docs/account?topic=account-rgs).
+      default: Default
+    - name: compute_image_name_rhel
+      description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v1). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
+      default: ""
+    - name: compute_image_name_ubuntu
+      description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v1). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
+      default: ""
+    - name: login_image_name
+      description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster login node. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v2). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
+      default: ""
+    - name: management_image_name
+      description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster management nodes. By default, the solution uses a RHEL88 base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
+      default: ""
+    - name: deployer_image_name
+      description: Name of the deployer image.
+      default: ""
+    - name: cos_region
+      description: The cos region name.
+      default: ""
+    - name: cos_bucket
+      description: The cos bucket name.
+      default: ""
+    - name: cos_instance_crn
+      description: The cos instance crn.
+      default: ""
+    - name: cos_api_key
+      description: The cos account api key.
+      default: ""
+    - name: hpc_custom_reports_repo
+      description: The HPC custom reports storage repository.
+      default: ""
+    - name: hpc_custom_reports_branch
+      description: The HPC custom reports storage repository branch.
+      default: "main"
+    - name: git_user_name
+      description: The git user name.
+      default: ""
+    - name: git_user_email
+      description: The git user email.
+      default: ""
+    - name: solution
+      description: Provide the value for the solution that is needed for the support of lsf and HPC.
+      default: "lsf"
+    - name: pac_ha_exist_certificate
+      description: PAC HA Existing Certificate
+      default: ""
+  workspaces:
+    - name: pipeline-ws
+  tasks:
+    - name: git-clone
+      taskRef:
+        name: git-clone-repo
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: branch
+          value: $(params.branch)
+        - name: revision
+          value: $(params.revision)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: directory-name
+          value: "$(params.directory-name)"
+        - name: properties-file
+          value: $(params.properties-file)
+        - name: git-credentials-json-file
+          value: $(params.git-credentials-json-file)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+      workspaces:
+        - name: output
+          workspace: pipeline-ws
+    - name: pre-requisites-install
+      runAfter: [git-clone]
+      taskRef:
+        name: pre-requisites-install
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: repository
+          value: $(params.repository)
+    - name: ssh-key-creation
+      runAfter: [git-clone, pre-requisites-install]
+      taskRef:
+        name: ssh-key-creation
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: revision
+          value: $(params.revision)
+        - name: solution
+          value: $(params.solution)
+    - name: wes-lsf-da-rhel-1
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: wes-lsf-da-rhel-1
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+    - name: wes-lsf-da-rhel-2
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: wes-lsf-da-rhel-2
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+    - name: wes-lsf-da-rhel-3
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: wes-lsf-da-rhel-3
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+    - name: wes-lsf-da-rhel-4
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: wes-lsf-da-rhel-4
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+    # # - name: wes-lsf-da-ubuntu
+    # #   runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+    # #   taskRef:
+    # #     name: wes-lsf-da-ubuntu
+    # #   workspaces:
+    # #     - name: workspace
+    # #       workspace: pipeline-ws
+    # #   params:
+    # #     - name: repository
+    # #       value: $(params.repository)
+    # #     - name: git_access_token
+    # #       value: $(params.git_access_token)
+    # #     - name: pipeline-debug
+    # #       value: $(params.pipeline-debug)
+    # #     - name: zone
+    # #       value: $(params.zone)
+    # #     - name: resource_group
+    # #       value: $(params.resource_group)
+    # #     - name: compute_image_name_rhel
+    # #       value: $(params.compute_image_name_rhel)
+    # #     - name: compute_image_name_ubuntu
+    # #       value: $(params.compute_image_name_ubuntu)
+    # #     - name: login_image_name
+    # #       value: $(params.login_image_name)
+    # #     - name: management_image_name
+    # #       value: $(params.management_image_name)
+    # #     - name: revision
+    # #       value: $(params.revision)
+    # #     - name: cos_region
+    # #       value: $(params.cos_region)
+    # #     - name: cos_bucket
+    # #       value: $(params.cos_bucket)
+    # #     - name: cos_instance_crn
+    # #       value: $(params.cos_instance_crn)
+    # #     - name: cos_api_key
+    # #       value: $(params.cos_api_key)
+    # #     - name: hpc_custom_reports_repo
+    # #       value: $(params.hpc_custom_reports_repo)
+    # #     - name: hpc_custom_reports_branch
+    # #       value: $(params.hpc_custom_reports_branch)
+    # #     - name: git_user_name
+    # #       value: $(params.git_user_name)
+    # #     - name: git_user_email
+    # #       value: $(params.git_user_email)
+    # - name: wes-lsf-da-region
+    #   runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+    #   taskRef:
+    #     name: wes-lsf-da-region
+    #   workspaces:
+    #     - name: workspace
+    #       workspace: pipeline-ws
+    #   params:
+    #     - name: repository
+    #       value: $(params.repository)
+    #     - name: git_access_token
+    #       value: $(params.git_access_token)
+    #     - name: pipeline-debug
+    #       value: $(params.pipeline-debug)
+    #     - name: zone
+    #       value: $(params.zone)
+    #     - name: resource_group
+    #       value: $(params.resource_group)
+    #     - name: compute_image_name_rhel
+    #       value: $(params.compute_image_name_rhel)
+    #     - name: compute_image_name_ubuntu
+    #       value: $(params.compute_image_name_ubuntu)
+    #     - name: login_image_name
+    #       value: $(params.login_image_name)
+    #     - name: management_image_name
+    #       value: $(params.management_image_name)
+    #     - name: deployer_image_name
+    #       value: $(params.deployer_image_name)
+    #     - name: revision
+    #       value: $(params.revision)
+    #     - name: cos_region
+    #       value: $(params.cos_region)
+    #     - name: cos_bucket
+    #       value: $(params.cos_bucket)
+    #     - name: cos_instance_crn
+    #       value: $(params.cos_instance_crn)
+    #     - name: cos_api_key
+    #       value: $(params.cos_api_key)
+    #     - name: hpc_custom_reports_repo
+    #       value: $(params.hpc_custom_reports_repo)
+    #     - name: hpc_custom_reports_branch
+    #       value: $(params.hpc_custom_reports_branch)
+    #     - name: git_user_name
+    #       value: $(params.git_user_name)
+    #     - name: git_user_email
+    #       value: $(params.git_user_email)
+    #     - name: solution
+    #       value: $(params.solution)
+    # - name: wes-lsf-da-negative
+    #   runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+    #   taskRef:
+    #     name: wes-lsf-da-negative
+    #   workspaces:
+    #     - name: workspace
+    #       workspace: pipeline-ws
+    #   params:
+    #     - name: repository
+    #       value: $(params.repository)
+    #     - name: git_access_token
+    #       value: $(params.git_access_token)
+    #     - name: pipeline-debug
+    #       value: $(params.pipeline-debug)
+    #     - name: zone
+    #       value: $(params.zone)
+    #     - name: resource_group
+    #       value: $(params.resource_group)
+    #     - name: compute_image_name_rhel
+    #       value: $(params.compute_image_name_rhel)
+    #     - name: compute_image_name_ubuntu
+    #       value: $(params.compute_image_name_ubuntu)
+    #     - name: login_image_name
+    #       value: $(params.login_image_name)
+    #     - name: management_image_name
+    #       value: $(params.management_image_name)
+    #     - name: deployer_image_name
+    #       value: $(params.deployer_image_name)
+    #     - name: revision
+    #       value: $(params.revision)
+    #     - name: cos_region
+    #       value: $(params.cos_region)
+    #     - name: cos_bucket
+    #       value: $(params.cos_bucket)
+    #     - name: cos_instance_crn
+    #       value: $(params.cos_instance_crn)
+    #     - name: cos_api_key
+    #       value: $(params.cos_api_key)
+    #     - name: hpc_custom_reports_repo
+    #       value: $(params.hpc_custom_reports_repo)
+    #     - name: hpc_custom_reports_branch
+    #       value: $(params.hpc_custom_reports_branch)
+    #     - name: git_user_name
+    #       value: $(params.git_user_name)
+    #     - name: git_user_email
+    #       value: $(params.git_user_email)
+    - name: ssh-key-deletion
+      runAfter: [
+          wes-lsf-da-rhel-1,
+          wes-lsf-da-rhel-2,
+          wes-lsf-da-rhel-3,
+          wes-lsf-da-rhel-4,
+          # wes-lsf-da-region,
+          # wes-lsf-da-negative,
+        ]
+      taskRef:
+        name: ssh-key-deletion
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: revision
+          value: $(params.revision)
+        - name: solution
+          value: $(params.solution)
+    - name: git-content-inspect
+      runAfter: [
+          wes-lsf-da-rhel-1,
+          wes-lsf-da-rhel-2,
+          wes-lsf-da-rhel-3,
+          wes-lsf-da-rhel-4,
+          # wes-lsf-da-region,
+          # wes-lsf-da-negative,
+        ]
+      taskRef:
+        name: inspect-git-content
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(tasks.git-clone.results.git-repository)
+        - name: directory-name
+          value: $(tasks.git-clone.results.clone-directory)
+        - name: properties-file
+          value: $(params.properties-file)
+        - name: git-credentials-json-file
+          value: $(params.git-credentials-json-file)
+        - name: git-branch
+          value: $(tasks.git-clone.results.git-branch)
+        - name: git-commit
+          value: $(tasks.git-clone.results.git-commit)
+        - name: git-user
+          value: $(tasks.git-clone.results.git-user)
+    - name: display-validation-logs
+      runAfter: [
+          wes-lsf-da-rhel-1,
+          wes-lsf-da-rhel-2,
+          wes-lsf-da-rhel-3,
+          wes-lsf-da-rhel-4,
+          # wes-lsf-da-region,
+          # wes-lsf-da-negative,
+        ]
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      taskSpec:
+        workspaces:
+          - name: workspace
+            description: The git repo will be cloned onto the volume backing this workspace
+            mountPath: /artifacts
+        steps:
+          - name: validation-lsf-da-rhel-suite-1
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-1.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-lsf-da-rhel-suite-2
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-2.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-lsf-da-rhel-suite-3
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-3.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-lsf-da-rhel-suite-4
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-4.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-lsf-da-rhel-suite-5
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-5.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-lsf-da-rhel-suite-6
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-6.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-lsf-da-rhel-suite-7
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-7.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-lsf-da-rhel-suite-8
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-8.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+
+          # - name: validation-lsf-da-rhel-suite-9
+          #   onError: continue
+          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          #   workingDir: "/artifacts"
+          #   command: ["/bin/bash", "-c"]
+          #   args:
+          #     - |
+          #       #!/bin/bash
+          #       VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-9.log"
+          #       source .tekton/scripts/issue_track.sh
+          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          # - name: validation-lsf-da-rhel-suite-10
+          #   onError: continue
+          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          #   workingDir: "/artifacts"
+          #   command: ["/bin/bash", "-c"]
+          #   args:
+          #     - |
+          #       #!/bin/bash
+          #       VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-10.log"
+          #       source .tekton/scripts/issue_track.sh
+          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          # - name: validation-lsf-da-rhel-suite-11
+          #   onError: continue
+          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          #   workingDir: "/artifacts"
+          #   command: ["/bin/bash", "-c"]
+          #   args:
+          #     - |
+          #       #!/bin/bash
+          #       VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-11.log"
+          #       source .tekton/scripts/issue_track.sh
+          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          # # - name: validation-lsf-ubuntu-suite
+          # #   onError: continue
+          # #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          # #   workingDir: "/artifacts"
+          # #   command: ["/bin/bash", "-c"]
+          # #   args:
+          # #     - |
+          # #       #!/bin/bash
+          # #       VALIDATION_LOG_FILE_NAME="lsf-da-ubuntu-suite.log"
+          # #       source .tekton/scripts/issue_track.sh
+          # #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          # - name: validation-lsf-regions-suite
+          #   onError: continue
+          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          #   workingDir: "/artifacts"
+          #   command: ["/bin/bash", "-c"]
+          #   args:
+          #     - |
+          #       #!/bin/bash
+          #       VALIDATION_LOG_FILE_NAME="lsf-da-regions-suite.log"
+          #       source .tekton/scripts/issue_track.sh
+          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          # - name: validation-lsf-da-negative-suite-1
+          #   onError: continue
+          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          #   workingDir: "/artifacts"
+          #   command: ["/bin/bash", "-c"]
+          #   args:
+          #     - |
+          #       #!/bin/bash
+          #       VALIDATION_LOG_FILE_NAME="lsf-da-negative-suite-1.log"
+          #       source .tekton/scripts/issue_track.sh
+          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          # - name: validation-lsf-da-negative-suite-2
+          #   onError: continue
+          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          #   workingDir: "/artifacts"
+          #   command: ["/bin/bash", "-c"]
+          #   args:
+          #     - |
+          #       #!/bin/bash
+          #       VALIDATION_LOG_FILE_NAME="lsf-da-negative-suite-2.log"
+          #       source .tekton/scripts/issue_track.sh
+          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          # - name: validation-lsf-da-negative-suite-3
+          #   onError: continue
+          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          #   workingDir: "/artifacts"
+          #   command: ["/bin/bash", "-c"]
+          #   args:
+          #     - |
+          #       #!/bin/bash
+          #       VALIDATION_LOG_FILE_NAME="lsf-da-negative-suite-3.log"
+          #       source .tekton/scripts/issue_track.sh
+          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          # - name: validation-lsf-da-negative-suite-4
+          #   onError: continue
+          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          #   workingDir: "/artifacts"
+          #   command: ["/bin/bash", "-c"]
+          #   args:
+          #     - |
+          #       #!/bin/bash
+          #       VALIDATION_LOG_FILE_NAME="lsf-da-negative-suite-4.log"
+          #       source .tekton/scripts/issue_track.sh
+          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          # - name: validation-lsf-da-negative-suite-5
+          #   onError: continue
+          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          #   workingDir: "/artifacts"
+          #   command: ["/bin/bash", "-c"]
+          #   args:
+          #     - |
+          #       #!/bin/bash
+          #       VALIDATION_LOG_FILE_NAME="lsf-da-negative-suite-5.log"
+          #       source .tekton/scripts/issue_track.sh
+          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+    - name: display-lsf-da-infra-logs
+      runAfter: [
+          wes-lsf-da-rhel-1,
+          wes-lsf-da-rhel-2,
+          wes-lsf-da-rhel-3,
+          wes-lsf-da-rhel-4,
+          # wes-lsf-da-region,
+          # wes-lsf-da-negative,
+        ]
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      taskSpec:
+        workspaces:
+          - name: workspace
+            description: The git repo will be cloned onto the volume backing this workspace
+            mountPath: /artifacts
+        steps:
+          - name: display-infra-da-log-rhel-suite-1
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="lsf-da-rhel-suite-1.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: display-infra-da-log-rhel-suite-2
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="lsf-da-rhel-suite-2.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: display-infra-da-log-rhel-suite-3
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="lsf-da-rhel-suite-3.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: display-infra-da-log-rhel-suite-4
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="lsf-da-rhel-suite-4.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: display-infra-da-log-rhel-suite-5
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="lsf-da-rhel-suite-5.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: display-infra-da-log-rhel-suite-6
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="lsf-da-rhel-suite-6.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: display-infra-da-log-rhel-suite-7
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="lsf-da-rhel-suite-7.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: display-infra-da-log-rhel-suite-8
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="lsf-da-rhel-suite-8.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          # - name: display-infra-da-log-rhel-suite-9
+          #   onError: continue
+          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          #   workingDir: "/artifacts"
+          #   command: ["/bin/bash", "-c"]
+          #   args:
+          #     - |
+          #       #!/bin/bash
+          #       LOG_FILE_NAME="lsf-da-rhel-suite-9.json"
+          #       source .tekton/scripts/issue_track.sh
+          #       issue_track "${LOG_FILE_NAME}"
+          # - name: display-infra-da-log-rhel-suite-10
+          #   onError: continue
+          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          #   workingDir: "/artifacts"
+          #   command: ["/bin/bash", "-c"]
+          #   args:
+          #     - |
+          #       #!/bin/bash
+          #       LOG_FILE_NAME="lsf-da-rhel-suite-10.json"
+          #       source .tekton/scripts/issue_track.sh
+          #       issue_track "${LOG_FILE_NAME}"
+          # - name: display-infra-da-log-rhel-suite-11
+          #   onError: continue
+          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          #   workingDir: "/artifacts"
+          #   command: ["/bin/bash", "-c"]
+          #   args:
+          #     - |
+          #       #!/bin/bash
+          #       LOG_FILE_NAME="lsf-da-rhel-suite-11.json"
+          #       source .tekton/scripts/issue_track.sh
+          #       issue_track "${LOG_FILE_NAME}"
+          # # - name: display-infra-log-ubuntu-suite
+          # #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          # #   workingDir: "/artifacts"
+          # #   command: ["/bin/bash", "-c"]
+          # #   args:
+          # #     - |
+          # #       #!/bin/bash
+          # #       LOG_FILE_NAME="pipeline-ubuntu-suite.json"
+          # #       source .tekton/scripts/issue_track.sh
+          # #       issue_track "${LOG_FILE_NAME}"
+          # - name: display-infra-log-regions-suite
+          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          #   onError: continue
+          #   workingDir: "/artifacts"
+          #   command: ["/bin/bash", "-c"]
+          #   args:
+          #     - |
+          #       #!/bin/bash
+          #       LOG_FILE_NAME="lsf-regions-suite.json"
+          #       source .tekton/scripts/issue_track.sh
+          #       issue_track "${LOG_FILE_NAME}"
+          # - name: display-infra-log-negative-suite-1
+          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          #   onError: continue
+          #   workingDir: "/artifacts"
+          #   command: ["/bin/bash", "-c"]
+          #   args:
+          #     - |
+          #       #!/bin/bash
+          #       LOG_FILE_NAME="lsf-da-negative-suite-1.json"
+          #       source .tekton/scripts/issue_track.sh
+          #       issue_track "${LOG_FILE_NAME}" "negative_suite"
+          # - name: display-infra-log-negative-suite-2
+          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          #   onError: continue
+          #   workingDir: "/artifacts"
+          #   command: ["/bin/bash", "-c"]
+          #   args:
+          #     - |
+          #       #!/bin/bash
+          #       LOG_FILE_NAME="lsf-da-negative-suite-2.json"
+          #       source .tekton/scripts/issue_track.sh
+          #       issue_track "${LOG_FILE_NAME}" "negative_suite"
+          # - name: display-infra-log-negative-suite-3
+          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          #   onError: continue
+          #   workingDir: "/artifacts"
+          #   command: ["/bin/bash", "-c"]
+          #   args:
+          #     - |
+          #       #!/bin/bash
+          #       LOG_FILE_NAME="lsf-da-negative-suite-3.json"
+          #       source .tekton/scripts/issue_track.sh
+          #       issue_track "${LOG_FILE_NAME}" "negative_suite"
+          # - name: display-infra-log-negative-suite-4
+          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          #   onError: continue
+          #   workingDir: "/artifacts"
+          #   command: ["/bin/bash", "-c"]
+          #   args:
+          #     - |
+          #       #!/bin/bash
+          #       LOG_FILE_NAME="lsf-da-negative-suite-4.json"
+          #       source .tekton/scripts/issue_track.sh
+          #       issue_track "${LOG_FILE_NAME}" "negative_suite"
+          # - name: display-infra-log-negative-suite-5
+          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+          #   onError: continue
+          #   workingDir: "/artifacts"
+          #   command: ["/bin/bash", "-c"]
+          #   args:
+          #     - |
+          #       #!/bin/bash
+          #       LOG_FILE_NAME="lsf-da-negative-suite-5.json"
+          #       source .tekton/scripts/issue_track.sh
+          #       issue_track "${LOG_FILE_NAME}" "negative_suite"
+    - name: error-check-on-lsf-da-infra-logs
+      runAfter: [display-validation-logs, display-lsf-da-infra-logs]
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      taskSpec:
+        workspaces:
+          - name: workspace
+            description: The git repo will be cloned onto the volume backing this workspace
+            mountPath: /artifacts
+        steps:
+          - name: status-on-infra-log
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                source .tekton/scripts/issue_track.sh
+                DIRECTORY="/artifacts/tests/lsf_tests"
+                pattern="*.json"
+                error_check_on_all_file "${DIRECTORY}" "${pattern}" "infra"
+    - name: error-check-on-lsf-validation-logs
+      runAfter: [display-validation-logs, display-lsf-da-infra-logs]
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      taskSpec:
+        workspaces:
+          - name: workspace
+            description: The git repo will be cloned onto the volume backing this workspace
+            mountPath: /artifacts
+        steps:
+          - name: status-on-validation-log
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                source .tekton/scripts/issue_track.sh
+                DIRECTORY="/artifacts/tests/logs_output"
+                pattern="*.log"
+                error_check_on_all_file "${DIRECTORY}" "${pattern}" "validation"

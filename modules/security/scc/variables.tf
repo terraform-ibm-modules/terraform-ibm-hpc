@@ -37,13 +37,6 @@ variable "scc_provision" {
   description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
 }
 
-# SCC Instance Location
-# variable "scc_location" {
-#   type        = string
-#   default     = "us-south"
-#   description = "SCC Instance region (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
-# }
-
 variable "en_source_name" {
   type        = string
   default     = "compliance"
@@ -67,8 +60,15 @@ variable "scc_plan" {
 variable "scc_profile" {
   type        = string
   default     = "CIS IBM Cloud Foundations Benchmark v1.1.0"
-  description = "Profile to be set on the SCC Instance (accepting empty, 'CIS IBM Cloud Foundations Benchmark v1.1.0' and 'IBM Cloud Framework for Financial Services')"
+  description = "Profile to be set on the SCC Instance (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')"
 }
+
+# SCC Instance Profile Version
+# variable "scc_profile_version" {
+#   type        = string
+#   default     = "1.1.0"
+#   description = "Version of Profile to be set on the SCC Instance"
+# }
 
 # SCC Scope Environment
 variable "scc_scope_environment" {
@@ -91,21 +91,14 @@ variable "scc_attachment_schedule" {
   description = "Schedule of the SCC Attachment"
 }
 
-# SCC Attachment Status
-# variable "scc_attachment_status" {
-#   type        = string
-#   default     = "enabled"
-#   description = "Status of the SCC Attachment"
-# }
-
-# Event Notification Instance Plan
+# Event Notification Instance Plan
 variable "event_notification_plan" {
   type        = string
   default     = "lite"
   description = "Event Notifications Instance plan to be used"
 }
 
-# Event Notification Instance Service Endpoints
+# Event Notification Instance Service Endpoints
 variable "event_notification_service_endpoints" {
   type        = string
   default     = "public-and-private"

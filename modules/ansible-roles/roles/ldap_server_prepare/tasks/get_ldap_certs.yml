@@ -1,0 +1,19 @@
+---
+# Getting OpenLDAP SSL Certificate
+
+- name: LDAP_Server_Setup | Check if CA certificate exists on the remote server
+  stat:
+    path: /usr/local/share/ca-certificates/ldap_cacert.pem
+  register: remote_cert_status
+
+- name: LDAP_Server_Setup | Check if CA certificate already exists locally
+  stat:
+    path: "{{ LDAP_CERT_FILES_DIR }}/ldap_cacert.pem"
+  register: ldap_cert_status
+
+- name: LDAP_Server_Setup | Download CA certificate from remote to local if not present locally
+  fetch:
+    src: /usr/local/share/ca-certificates/ldap_cacert.pem
+    dest: "{{ LDAP_CERT_FILES_DIR }}/ldap_cacert.pem"
+    flat: true
+  when: remote_cert_status.stat.exists and not ldap_cert_status.stat.exists

@@ -1,0 +1,6 @@
+---
+
+# Static Variables
+
+inventory_path: "/opt/ibm/lsf_installer/playbook/"
+lsf_dir: "{{ HA_shared_dir | basename }}"

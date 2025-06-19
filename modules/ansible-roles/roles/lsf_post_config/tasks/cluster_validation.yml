@@ -1,0 +1,43 @@
+---
+- name: MTU Check | Restart NetworkManager if MTU 9000 is not configured
+  ansible.builtin.shell: |
+    ip route show | grep -q 'mtu 9000' || {
+      systemctl restart NetworkManager
+      echo "restarted"
+    }
+  register: mtu_check_result
+  changed_when: "'restarted' in mtu_check_result.stdout"
+  when: inventory_hostname in groups['mgmt_compute_nodes']
+
+- name: LSF Version | Retrieve lsid output
+  ansible.builtin.shell: lsid
+  register: lsid_output
+  changed_when: false
+  when: inventory_hostname == groups['management_nodes'][0]
+
+- name: LSF Version | Display lsid output
+  ansible.builtin.debug:
+    msg: "{{ lsid_output.stdout }}"
+  when: inventory_hostname == groups['management_nodes'][0]
+
+- name: Cluster Status | Fetch node status using bhosts
+  ansible.builtin.shell: bhosts -w
+  register: cluster_status_output
+  changed_when: false
+  when: inventory_hostname == groups['management_nodes'][0]
+
+- name: Cluster Status | Show node status
+  ansible.builtin.debug:
+    msg: "{{ cluster_status_output.stdout }}"
+  when: inventory_hostname == groups['management_nodes'][0]
+
+- name: Cluster Health | Restart lsfd if any node is unreach or unavail
+  ansible.builtin.shell: |
+    if bhosts -w | grep -Eq 'unreach|unavail'; then
+      systemctl restart lsfd
+      sleep 5
+      echo "lsfd restarted"
+    fi
+  register: lsfd_restart_result
+  changed_when: "'lsfd restarted' in lsfd_restart_result.stdout"
+  when: inventory_hostname == groups['management_nodes'][0]

@@ -65,6 +65,12 @@ variable "enable_hub" {
   default     = false
 }
 
+variable "dns_zone_name" {
+  description = "The name of the DNS zone to be created."
+  default     = null
+  type        = string
+}
+
 variable "allowed_cidr" {
   description = "Network CIDR to access the VPC. This is used to manage network ACL rules for accessing the cluster."
   type        = list(string)
