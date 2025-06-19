@@ -1,15 +1,13 @@
 resource "ibm_is_share" "share" {
   count               = var.file_shares != null ? length(var.file_shares) : 0
   name                = format("%s-fs", var.file_shares[count.index]["name"])
+  resource_group      = var.resource_group_id
   access_control_mode = var.security_group_ids != null ? "security_group" : "vpc"
   size                = var.file_shares[count.index]["size"]
   profile             = "dp2"
   iops                = var.file_shares[count.index]["iops"]
   zone                = var.zone
   encryption_key      = var.encryption_key_crn
-  resource_group      = var.resource_group
-  tags                = local.tags
-  depends_on          = [time_sleep.wait_for_authorization_policy]
 }
 
 resource "ibm_iam_authorization_policy" "policy" {
@@ -22,8 +20,7 @@ resource "ibm_iam_authorization_policy" "policy" {
 }
 
 resource "time_sleep" "wait_for_authorization_policy" {
-  depends_on = [ibm_iam_authorization_policy.policy[0]]
-
+  depends_on      = [ibm_iam_authorization_policy.policy[0]]
   create_duration = "30s"
 }
 
@@ -46,5 +43,6 @@ resource "ibm_is_share_mount_target" "share_target_sg" {
     name            = format("%s-fs-vni", var.file_shares[count.index]["name"])
     security_groups = var.security_group_ids
   }
-  #transit_encryption = "user_managed"
+  # TODO: update transit_encryption value conditionaly; it fails with
+  # transit_encryption = "user_managed"
 }

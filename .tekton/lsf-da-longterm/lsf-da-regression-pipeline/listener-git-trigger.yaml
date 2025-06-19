@@ -1,0 +1,290 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: TriggerTemplate
+args: [--allow-multiple-documents]
+metadata:
+  name: triggertemplate-git-trigger
+spec:
+  params:
+    - name: git_access_token
+      description: the token to access the git repository for the clone operations
+    - name: repository
+      description: The git repo
+      default: " "
+    - name: branch
+      description: the branch for the git repo
+    - name: revision
+      description: the commit id/sha for the clone action
+      default: " "
+    - name: pr-repository
+      description: The source git repo for the PullRequest
+      default: " "
+    - name: pr-branch
+      description: The source branch for the PullRequest
+      default: " "
+    - name: pr-revision
+      description: the commit id/sha for the PullRequest
+      default: " "
+    - name: directory-name
+      default: "."
+    - name: triggerName
+      default: "git-pr-process"
+    - name: pipeline-debug
+      default: "0"
+    - name: state
+      default: "success"
+    - name: description
+      default: "The status of tekton commit"
+    - name: zone
+      default: ""
+      description: The IBM Cloud zone name within the selected region where the IBM Cloud HPC cluster should be deployed and requires a single zone input value. Supported zones are eu-de-2 and eu-de-3 for eu-de, us-east-1 and us-east-3 for us-east, and us-south-1 for us-south. The management nodes, file storage shares, and compute nodes will be deployed in the same zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli).
+    - name: resource_group
+      description: Resource group name from your IBM Cloud account where the VPC resources should be deployed. Note. If the resource group value is set as null, automation creates two different RG with the name (workload-rg and service-rg). For additional information on resource groups, see [Managing resource groups](https://cloud.ibm.com/docs/account?topic=account-rgs).
+      default: Default
+    - name: compute_image_name_rhel
+      description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v1). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
+      default: ""
+    - name: compute_image_name_ubuntu
+      description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster dynamic compute nodes. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v1). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
+      default: ""
+    - name: login_image_name
+      description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster login node. By default, the solution uses a RHEL 8-6 OS image with additional software packages mentioned [here](https://cloud.ibm.com/docs/hpc-spectrum-LSF#create-custom-image). The solution also offers, Ubuntu 22-04 OS base image (hpcaas-lsf10-ubuntu2204-compute-v2). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
+      default: ""
+    - name: management_image_name
+      description: Name of the custom image that you want to use to create virtual server instances in your IBM Cloud account to deploy the IBM Cloud HPC cluster management nodes. By default, the solution uses a RHEL88 base image with additional software packages mentioned [here](https://cloud.ibm.com/docs/ibm-spectrum-lsf#create-custom-image). If you would like to include your application-specific binary files, follow the instructions in [ Planning for custom images ](https://cloud.ibm.com/docs/vpc?topic=vpc-planning-custom-images) to create your own custom image and use that to build the IBM Cloud HPC cluster through this offering.
+      default: ""
+    - name: deployer_image_name
+      description: Name of the deployer image.
+      default: ""
+    - name: cos_region
+      description: The cos region name.
+      default: ""
+    - name: cos_bucket
+      description: The cos bucket name.
+      default: ""
+    - name: cos_instance_crn
+      description: The cos instance crn.
+      default: ""
+    - name: cos_api_key
+      description: The cos account api key.
+      default: ""
+    - name: hpc_custom_reports_repo
+      description: The HPC custom reports storage repository.
+      default: ""
+    - name: hpc_custom_reports_branch
+      description: The HPC custom reports storage repository branch.
+      default: "main"
+    - name: git_user_name
+      description: The git user name.
+      default: ""
+    - name: git_user_email
+      description: The git user email.
+      default: ""
+    - name: solution
+      description: Provide the value for the solution that is needed for the support of lsf and HPC.
+      default: "lsf"
+    - name: pac_ha_exist_certificate
+      description: PAC HA Existing Certificate
+      default: ""
+  resourcetemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: $(params.triggerName)-$(uid)-pvc
+      spec:
+        resources:
+          requests:
+            storage: 5Gi
+        volumeMode: Filesystem
+        accessModes:
+          - ReadWriteOnce
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        name: $(params.triggerName)-$(uid)
+      spec:
+        pipelineRef:
+          name: pipeline-git-event-processing
+        params:
+          - name: git_access_token
+            value: $(params.git_access_token)
+          - name: directory-name
+            value: $(params.directory-name)
+          - name: repository
+            value: $(params.repository)
+          - name: branch
+            value: $(params.branch)
+          - name: revision
+            value: $(params.revision)
+          - name: pipeline-debug
+            value: $(params.pipeline-debug)
+          - name: state
+            value: $(params.state)
+          - name: description
+            value: $(params.description)
+          - name: resource_group
+            value: $(params.resource_group)
+          - name: zone
+            value: $(params.zone)
+          - name: compute_image_name_rhel
+            value: $(params.compute_image_name_rhel)
+          - name: management_image_name
+            value: $(params.management_image_name)
+          - name: login_image_name
+            value: $(params.login_image_name)
+          - name: deployer_image_name
+            value: $(params.deployer_image_name)
+          - name: cos_region
+            value: $(params.cos_region)
+          - name: cos_bucket
+            value: $(params.cos_bucket)
+          - name: cos_instance_crn
+            value: $(params.cos_instance_crn)
+          - name: cos_api_key
+            value: $(params.cos_api_key)
+          - name: solution
+            value: $(params.solution)
+          - name: hpc_custom_reports_repo
+            value: $(params.hpc_custom_reports_repo)
+          - name: hpc_custom_reports_branch
+            value: $(params.hpc_custom_reports_branch)
+          - name: git_user_name
+            value: $(params.git_user_name)
+          - name: git_user_email
+            value: $(params.git_user_email)
+          - name: pac_ha_exist_certificate
+            value: $(params.pac_ha_exist_certificate)
+        workspaces:
+          - name: pipeline-ws
+            persistentVolumeClaim:
+              claimName: $(params.triggerName)-$(uid)-pvc
+---
+apiVersion: tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: triggerbinding-git-trigger-manual
+spec:
+  params:
+    - name: repository
+      value: $(params.repository)
+    - name: branch
+      value: $(params.branch)
+    - name: triggerName
+      value: manual-trigger
+    - name: resource_group
+      value: $(params.resource_group)
+    - name: zone
+      value: $(params.zone)
+    - name: compute_image_name_rhel
+      value: $(params.compute_image_name_rhel)
+    - name: management_image_name
+      value: $(params.management_image_name)
+    - name: login_image_name
+      value: $(params.login_image_name)
+    - name: cos_region
+      value: $(params.cos_region)
+    - name: cos_bucket
+      value: $(params.cos_bucket)
+    - name: cos_instance_crn
+      value: $(params.cos_instance_crn)
+    - name: cos_api_key
+      value: $(params.cos_api_key)
+    - name: hpc_custom_reports_repo
+      value: $(params.hpc_custom_reports_repo)
+    - name: hpc_custom_reports_branch
+      value: $(params.hpc_custom_reports_branch)
+    - name: git_user_name
+      value: $(params.git_user_name)
+    - name: git_user_email
+      value: $(params.git_user_email)
+    - name: solution
+      value: $(params.solution)
+    - name: pac_ha_exist_certificate
+      value: $(params.pac_ha_exist_certificate)
+---
+apiVersion: tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: eventlistener-git-trigger-manual
+spec:
+  triggers:
+    - binding:
+        name: triggerbinding-git-trigger-manual
+      template:
+        name: triggertemplate-git-trigger
+---
+apiVersion: tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: triggerbinding-git-trigger-github-pr
+spec:
+  params:
+    - name: repository
+      value: "$(event.pull_request.base.repo.clone_url)"
+    - name: branch
+      value: "$(event.pull_request.base.ref)"
+    - name: pr-repository
+      value: "$(event.pull_request.head.repo.clone_url)"
+    - name: pr-branch
+      value: "$(event.pull_request.head.ref)"
+    - name: pr-revision
+      value: "$(event.pull_request.head.sha)"
+    - name: triggerName
+      value: "github-pullrequest"
+---
+apiVersion: tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: triggerbinding-git-trigger-github-commit
+spec:
+  params:
+    - name: triggerName
+      value: "github-commit"
+    - name: repository
+      value: "$(event.repository.url)"
+    - name: revision
+      value: "$(event.head_commit.id)"
+    - name: branch
+      value: "$(event.ref)"
+    - name: resource_group
+      value: $(event.ref)
+    - name: compute_image_name_rhel
+      value: $(event.ref)
+    - name: management_image_name
+      value: $(event.ref)
+    - name: login_image_name
+      value: $(event.ref)
+    - name: hpc_custom_reports_repo
+      value: $(event.ref)
+    - name: hpc_custom_reports_branch
+      value: $(event.ref)
+    - name: git_user_name
+      value: $(event.ref)
+    - name: git_user_email
+      value: $(event.ref)
+    - name: solution
+      value: $(event.ref)
+    - name: pac_ha_exist_certificate
+      value: $(event.ref)
+---
+apiVersion: tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: eventlistener-git-trigger-github-pr
+spec:
+  triggers:
+    - binding:
+        name: triggerbinding-git-trigger-github-pr
+      template:
+        name: triggertemplate-git-trigger
+---
+apiVersion: tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: eventlistener-git-trigger-github-commit
+spec:
+  triggers:
+    - binding:
+        name: triggerbinding-git-trigger-github-commit
+      template:
+        name: triggertemplate-git-trigger

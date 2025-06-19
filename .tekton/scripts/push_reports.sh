@@ -28,6 +28,9 @@ push_reports() {
     if [[ "$CHECK_SOLUTION" == "lsf" ]]; then
         folder_name="lsf/${time_stamp}/$PR_OR_REGRESSION/${BUILD_NUMBER}"
     fi
+    if [[ "$CHECK_SOLUTION" == "lsf-da" ]]; then
+        folder_name="lsf-da/${time_stamp}/$PR_OR_REGRESSION/${BUILD_NUMBER}"
+    fi
     mkdir -p "${folder_name}"
     git pull origin "${hpc_custom_reports_branch:?}"
     cp "$DIRECTORY"/"${HTML_FILE_NAME}".html "$DIRECTORY"/push_reports/"${suite}"/"${folder_name}"

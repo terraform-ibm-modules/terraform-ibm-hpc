@@ -1,0 +1,108 @@
+{
+   "cluster_prefix": "lsf",
+   "lsf_version": "fixpack_15",
+   "existing_resource_group": "Default",
+   "vpc_name": null,
+   "vpc_cidr": "10.0.0.0/8",
+   "placement_strategy": null,
+   "ssh_keys": null,
+   "enable_bastion": true,
+   "enable_deployer": false,
+   "bastion_instance": {
+      "profile": "cx2-4x8",
+      "image": "ibm-ubuntu-22-04-5-minimal-amd64-3"
+   },
+   "deployer_instance": {
+      "profile": "bx2-8x32",
+      "image": "hpc-lsf-fp15-deployer-rhel810-v1"
+   },
+   "vpc_cluster_login_private_subnets_cidr_blocks": "10.0.0.0/24",
+   "vpc_cluster_private_subnets_cidr_blocks": "10.10.20.0/24",
+   "management_instances": [
+      {
+         "profile": "cx2-2x4",
+         "count": 3,
+         "image": "ibm-redhat-8-10-minimal-amd64-2"
+      }
+   ],
+   "static_compute_instances": [
+      {
+         "profile": "cx2-2x4",
+         "count": 0,
+         "image": "ibm-redhat-8-10-minimal-amd64-2"
+      }
+   ],
+   "dynamic_compute_instances": [
+      {
+         "profile": "cx2-2x4",
+         "count": 5000,
+         "image": "ibm-redhat-8-10-minimal-amd64-2"
+      }
+   ],
+   "compute_gui_username": "admin",
+   "enable_hyperthreading": true,
+   "storage_subnets_cidr": "10.10.30.0/24",
+   "storage_instances": [
+      {
+         "profile": "cx2-2x4",
+         "count": 2,
+         "image": "ibm-redhat-8-10-minimal-amd64-2"
+      }
+   ],
+   "storage_servers": [
+      {
+         "profile": "cx2d-metal-96x192",
+         "count": 2,
+         "image": "ibm-redhat-8-10-minimal-amd64-2"
+      }
+   ],
+   "protocol_subnets_cidr": "10.10.40.0/24",
+   "protocol_instances": [
+      {
+         "profile": "cx2-2x4",
+         "count": 2,
+         "image": "ibm-redhat-8-10-minimal-amd64-2"
+      }
+   ],
+   "storage_gui_username": "admin",
+   "custom_file_shares": [
+      {
+         "mount_path": "/mnt/binaries",
+         "size": 100,
+         "iops": 1000
+      },
+      {
+         "mount_path": "/mnt/data",
+         "size": 100,
+         "iops": 1000
+      }
+   ],
+   "dns_instance_id": null,
+   "dns_custom_resolver_id": null,
+   "dns_domain_name": {
+      "compute": "comp.com"
+   },
+   "enable_cos_integration": true,
+   "cos_instance_name": null,
+   "enable_vpc_flow_logs": true,
+   "key_management": "key_protect",
+   "kms_instance_name": null,
+   "kms_key_name": null,
+   "observability_atracker_enable": true,
+   "observability_atracker_target_type": "cloudlogs",
+   "observability_monitoring_enable": true,
+   "observability_logs_enable_for_management": false,
+   "observability_logs_enable_for_compute": false,
+   "observability_enable_platform_logs": false,
+   "observability_enable_metrics_routing": false,
+   "observability_logs_retention_period": 7,
+   "observability_monitoring_on_compute_nodes_enable": false,
+   "observability_monitoring_plan": "graduated-tier",
+   "scc_enable": true,
+   "scc_profile": "CIS IBM Cloud Foundations Benchmark v1.1.0",
+   "scc_location": "us-south",
+   "scc_event_notification_plan": "lite",
+   "skip_flowlogs_s2s_auth_policy": false,
+   "skip_kms_s2s_auth_policy": false,
+   "skip_iam_authorization_policy": false
+}

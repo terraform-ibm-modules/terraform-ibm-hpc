@@ -1,0 +1,41 @@
+module "symphony" {
+  source                                        = "./../.."
+  scheduler                                     = "Symphony"
+  ibm_customer_number                           = var.ibm_customer_number
+  zones                                         = var.zones
+  remote_allowed_ips                            = var.remote_allowed_ips
+  cluster_prefix                                = local.env.cluster_prefix
+  ssh_keys                                      = local.env.ssh_keys
+  existing_resource_group                       = local.env.existing_resource_group
+  deployer_instance                             = local.env.deployer_instance
+  vpc_cluster_login_private_subnets_cidr_blocks = local.env.vpc_cluster_login_private_subnets_cidr_blocks
+  vpc_cluster_private_subnets_cidr_blocks       = local.env.vpc_cluster_private_subnets_cidr_blocks
+  cos_instance_name                             = local.env.cos_instance_name
+  dns_custom_resolver_id                        = local.env.dns_custom_resolver_id
+  dns_instance_id                               = local.env.dns_instance_id
+  dns_domain_names                              = local.env.dns_domain_names
+  dynamic_compute_instances                     = local.env.dynamic_compute_instances
+  enable_atracker                               = local.env.enable_atracker
+  # enable_bastion                                = local.env.enable_bastion
+  enable_cos_integration   = local.env.enable_cos_integration
+  enable_vpc_flow_logs     = local.env.enable_vpc_flow_logs
+  custom_file_shares       = local.env.custom_file_shares
+  key_management           = local.env.key_management
+  client_instances         = local.env.client_instances
+  management_instances     = local.env.management_instances
+  vpc_cidr                 = local.env.vpc_cidr
+  placement_strategy       = local.env.placement_strategy
+  protocol_instances       = local.env.protocol_instances
+  protocol_subnets_cidr    = [local.env.protocol_subnets_cidr]
+  static_compute_instances = local.env.static_compute_instances
+  storage_instances        = local.env.storage_instances
+  storage_subnets_cidr     = [local.env.storage_subnets_cidr]
+  vpc_name                 = local.env.vpc_name
+
+  # compute_gui_password = local.env.compute_gui_password
+  # compute_gui_username = local.env.compute_gui_username
+  # hpcs_instance_name   = local.env.hpcs_instance_name
+  # client_subnets_cidr  = [local.env.client_subnets_cidr]
+  # storage_gui_password = local.env.storage_gui_password
+  # storage_gui_username = local.env.storage_gui_username
+}

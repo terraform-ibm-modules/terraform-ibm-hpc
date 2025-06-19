@@ -45,7 +45,7 @@ issue_track() {
     DIRECTORY="/artifacts/tests"
     if [ -d "$DIRECTORY" ]; then
         if [[ "${LOG_FILE_NAME}" == *"negative"* ]]; then
-            negative_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' $DIRECTORY/"$LOG_FILE_NAME" | grep 'FAIL')
+            negative_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' $DIRECTORY/lsf_tests/"$LOG_FILE_NAME" | grep 'FAIL')
             if [[ "$negative_log_error_check" ]]; then
                 echo "${negative_log_error_check}"
                 echo "Found FAIL in plan/apply log. Please check log : ${LOG_FILE_NAME}"
@@ -53,7 +53,7 @@ issue_track() {
             fi
         else
             # Track error/fail from the suites log file
-            log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' $DIRECTORY/"$LOG_FILE_NAME" | grep -E -w 'FAIL|Error|ERROR')
+            log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' $DIRECTORY/lsf_tests/"$LOG_FILE_NAME" | grep -E -w 'FAIL|Error|ERROR')
             if [[ "$log_error_check" ]]; then
                 echo "${log_error_check}"
                 echo "Found Error/FAIL/ERROR in plan/apply log. Please check log : ${LOG_FILE_NAME}"
@@ -64,15 +64,15 @@ issue_track() {
         if [[ "${CHECK_PR_OR_TASK}" != "PR" ]]; then
             VALIDATION_LOG_FILE=$(echo "$LOG_FILE_NAME" | cut -f 1 -d '.').log
             # Track test_output log file initiated or not
-            test_output_file_check=$(find $DIRECTORY/logs/"$VALIDATION_LOG_FILE" 2>/dev/null)
+            test_output_file_check=$(find $DIRECTORY/logs_output/"$VALIDATION_LOG_FILE" 2>/dev/null)
             if [[ -z "$test_output_file_check" ]]; then
-                echo "Validation log file not initiated under ${DIRECTORY/logs/}"
+                echo "Validation log file not initiated under ${DIRECTORY/logs_output/}"
                 exit 1
             fi
         fi
 
         # Track suites log file initiated or not
-        log_file_check=$(find $DIRECTORY/*.json 2>/dev/null)
+        log_file_check=$(find $DIRECTORY/lsf_tests/*.json 2>/dev/null)
         if [[ -z "$log_file_check" ]]; then
             echo "Infra log not initiated under ${DIRECTORY}"
             exit 1
@@ -88,13 +88,13 @@ display_validation_log() {
     DIRECTORY="/artifacts/tests"
     if [ -d "$DIRECTORY" ]; then
         # Display test_output log file
-        validation_log_file_check=$(find $DIRECTORY/logs/"$LOG_FILE_NAME" 2>/dev/null)
+        validation_log_file_check=$(find $DIRECTORY/logs_output/"$LOG_FILE_NAME" 2>/dev/null)
         if [[ -z "$validation_log_file_check" ]]; then
             echo "Test output log file not initiated."
             exit 1
         else
             echo "********************** DISPLAY ${LOG_FILE_NAME} VALIDATION OUTPUT LOG ********************"
-            cat $DIRECTORY/logs/"$LOG_FILE_NAME"
+            cat $DIRECTORY/logs_output/"$LOG_FILE_NAME"
             echo "********************** DISPLAY ${LOG_FILE_NAME} VALIDATION OUTPUT LOG **********************"
 
             echo "##################################################################################"
@@ -103,9 +103,9 @@ display_validation_log() {
             echo "##################################################################################"
             echo "##################################################################################"
             if [[ "${LOG_FILE_NAME}" == *"negative"* ]]; then
-                validation_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' $DIRECTORY/logs/"$LOG_FILE_NAME" | grep -E -w 'FAIL')
+                validation_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' $DIRECTORY/logs_output/"$LOG_FILE_NAME" | grep -E -w 'FAIL')
             else
-                validation_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' $DIRECTORY/logs/"$LOG_FILE_NAME" | grep -E -w 'FAIL|Error|ERROR')
+                validation_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' $DIRECTORY/logs_output/"$LOG_FILE_NAME" | grep -E -w 'FAIL|Error|ERROR')
             fi
 
             # Display if any error in validation log
@@ -115,7 +115,7 @@ display_validation_log() {
                 echo "********************** ERROR CHECK in  ${LOG_FILE_NAME} VALIDATION OUTPUT LOG **********************"
                 exit 1
             else
-                echo "No Error found in $DIRECTORY/logs/$LOG_FILE_NAME"
+                echo "No Error found in $DIRECTORY/logs_output/$LOG_FILE_NAME"
             fi
         fi
     else

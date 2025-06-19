@@ -1,0 +1,16 @@
+---
+
+# MTU Configuration
+- import_tasks: mtu_configuration.yml
+
+# lsf_tunables configuration
+- import_tasks: lsf_tunables.yml
+
+# Create lsfadmin user
+- import_tasks: lsfadmin_creation.yml
+
+# Setup Password less authentication for lsfadmin user
+- import_tasks: lsfadmin_password_less_auth.yml
+
+# Disable Hyperthreading
+- import_tasks: hyperthreading.yml
