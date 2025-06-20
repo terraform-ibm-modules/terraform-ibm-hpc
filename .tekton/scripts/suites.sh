@@ -12,7 +12,7 @@ common_suite() {
     export TF_VAR_ibmcloud_api_key=$API_KEY
     export TF_VAR_github_token=${git_access_token:?}
 
-    DIRECTORY="/artifacts/tests/lsf_tests"
+    DIRECTORY="/artifacts/tests"
     if [ -d "$DIRECTORY" ]; then
         cd $DIRECTORY || exit
         test_cases="${test_cases//,/|}"
@@ -56,7 +56,7 @@ common_suite() {
             if [[ "$CHECK_SOLUTION" == "lsf-da" ]]; then
                 # get ssh-key created based on pr-id
                 get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}"
-                SSH_KEYS=${CICD_SSH_KEY:?} go test -v -timeout=900m -parallel=10 -run="${test_cases}" | tee -a "$LOG_FILE_NAME"
+                LSF_VERSION=${lsf_version:?} SSH_KEYS=${CICD_SSH_KEY:?} go test -v -timeout=900m -parallel=10 -run="${test_cases}" | tee -a "$LOG_FILE_NAME"
                 # Upload log/test_output files to cos bucket
                 cos_upload "PR" "${CHECK_SOLUTION}" "${DIRECTORY}"
 
@@ -108,7 +108,7 @@ common_suite() {
             if [[ "$CHECK_SOLUTION" == "lsf-da" ]]; then
                 # get ssh-key created based on commit-id
                 get_commit_ssh_key "${REVISION}" "${CHECK_SOLUTION}"
-                SSH_KEYS=${CICD_SSH_KEY:?} go test -v -timeout=900m -parallel=10 -run="${test_cases}" | tee -a "$LOG_FILE_NAME"
+                LSF_VERSION=${lsf_version:?} SSH_KEYS=${CICD_SSH_KEY:?} go test -v -timeout=900m -parallel=10 -run="${test_cases}" | tee -a "$LOG_FILE_NAME"
                 # Upload log/test_output files to cos bucket
                 cos_upload "REGRESSION" "${CHECK_SOLUTION}" "${DIRECTORY}" "${VALIDATION_LOG_FILE_NAME}"
 
@@ -514,7 +514,7 @@ lsf_da_rhel_suite_4() {
 lsf_da_rhel_suite_5() {
     suite=lsf-da-rhel-suite-5
     solution=lsf-da
-    test_cases="TestRunLDAP,TestRunCosAndVpcFlowLogs"
+    test_cases="TestRunLDAP,TestRunExistingLDAP,TestRunCosAndVpcFlowLogs"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
@@ -525,7 +525,7 @@ lsf_da_rhel_suite_5() {
 lsf_da_rhel_suite_6() {
     suite=lsf-da-rhel-suite-6
     solution=lsf-da
-    test_cases="TestObservabilityAllFeaturesDisabled,TestObservabilityLogsEnabledForManagementAndCompute"
+    test_cases="TestRunDedicatedHost,TestObservabilityAllFeaturesDisabled,TestObservabilityLogsEnabledForManagementAndCompute"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
@@ -548,6 +548,28 @@ lsf_da_rhel_suite_8() {
     suite=lsf-da-rhel-suite-8
     solution=lsf-da
     test_cases="TestRunCIDRsAsNonDefault,TestRunMultiProfileStaticAndDynamic"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# commit based suite on rhel-suite-9
+lsf_da_rhel_suite_9() {
+    suite=lsf-da-rhel-suite-9
+    solution=lsf-da
+    test_cases="TestRunCreateVpc"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# commit based suite on rhel-suite-10
+lsf_da_rhel_suite_10() {
+    suite=lsf-da-rhel-suite-10
+    solution=lsf-da
+    test_cases="TestRunVpcWithCustomDns"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"

@@ -45,7 +45,7 @@ issue_track() {
     DIRECTORY="/artifacts/tests"
     if [ -d "$DIRECTORY" ]; then
         if [[ "${LOG_FILE_NAME}" == *"negative"* ]]; then
-            negative_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' $DIRECTORY/lsf_tests/"$LOG_FILE_NAME" | grep 'FAIL')
+            negative_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' $DIRECTORY/"$LOG_FILE_NAME" | grep 'FAIL')
             if [[ "$negative_log_error_check" ]]; then
                 echo "${negative_log_error_check}"
                 echo "Found FAIL in plan/apply log. Please check log : ${LOG_FILE_NAME}"
@@ -53,7 +53,7 @@ issue_track() {
             fi
         else
             # Track error/fail from the suites log file
-            log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' $DIRECTORY/lsf_tests/"$LOG_FILE_NAME" | grep -E -w 'FAIL|Error|ERROR')
+            log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' $DIRECTORY/"$LOG_FILE_NAME" | grep -E -w 'FAIL|Error|ERROR')
             if [[ "$log_error_check" ]]; then
                 echo "${log_error_check}"
                 echo "Found Error/FAIL/ERROR in plan/apply log. Please check log : ${LOG_FILE_NAME}"
@@ -72,7 +72,7 @@ issue_track() {
         fi
 
         # Track suites log file initiated or not
-        log_file_check=$(find $DIRECTORY/lsf_tests/*.json 2>/dev/null)
+        log_file_check=$(find $DIRECTORY/*.json 2>/dev/null)
         if [[ -z "$log_file_check" ]]; then
             echo "Infra log not initiated under ${DIRECTORY}"
             exit 1

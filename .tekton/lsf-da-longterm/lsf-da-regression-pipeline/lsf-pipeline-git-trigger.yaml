@@ -73,10 +73,13 @@ spec:
       default: ""
     - name: solution
       description: Provide the value for the solution that is needed for the support of lsf and HPC.
-      default: "lsf"
+      default: "lsf-da"
     - name: pac_ha_exist_certificate
       description: PAC HA Existing Certificate
       default: ""
+    - name: lsf_version
+      description: Fix pack LSF Version
+      default: "lsf15"
   workspaces:
     - name: pipeline-ws
   tasks:
@@ -179,6 +182,8 @@ spec:
           value: $(params.git_user_email)
         - name: solution
           value: $(params.solution)
+        - name: lsf_version
+          value: $(params.lsf_version)
     - name: wes-lsf-da-rhel-2
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
@@ -227,6 +232,8 @@ spec:
           value: $(params.git_user_email)
         - name: solution
           value: $(params.solution)
+        - name: lsf_version
+          value: $(params.lsf_version)
     - name: wes-lsf-da-rhel-3
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
@@ -275,6 +282,8 @@ spec:
           value: $(params.git_user_email)
         - name: solution
           value: $(params.solution)
+        - name: lsf_version
+          value: $(params.lsf_version)
     - name: wes-lsf-da-rhel-4
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
@@ -325,6 +334,8 @@ spec:
           value: $(params.solution)
         - name: pac_ha_exist_certificate
           value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
     # # - name: wes-lsf-da-ubuntu
     # #   runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
     # #   taskRef:
@@ -619,29 +630,28 @@ spec:
                 VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-8.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-
-          # - name: validation-lsf-da-rhel-suite-9
-          #   onError: continue
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-9.log"
-          #       source .tekton/scripts/issue_track.sh
-          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          # - name: validation-lsf-da-rhel-suite-10
-          #   onError: continue
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-10.log"
-          #       source .tekton/scripts/issue_track.sh
-          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-lsf-da-rhel-suite-9
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-9.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-lsf-da-rhel-suite-10
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-10.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
           # - name: validation-lsf-da-rhel-suite-11
           #   onError: continue
           #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
@@ -836,28 +846,28 @@ spec:
                 LOG_FILE_NAME="lsf-da-rhel-suite-8.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          # - name: display-infra-da-log-rhel-suite-9
-          #   onError: continue
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       LOG_FILE_NAME="lsf-da-rhel-suite-9.json"
-          #       source .tekton/scripts/issue_track.sh
-          #       issue_track "${LOG_FILE_NAME}"
-          # - name: display-infra-da-log-rhel-suite-10
-          #   onError: continue
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       LOG_FILE_NAME="lsf-da-rhel-suite-10.json"
-          #       source .tekton/scripts/issue_track.sh
-          #       issue_track "${LOG_FILE_NAME}"
+          - name: display-infra-da-log-rhel-suite-9
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="lsf-da-rhel-suite-9.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: display-infra-da-log-rhel-suite-10
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="lsf-da-rhel-suite-10.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
           # - name: display-infra-da-log-rhel-suite-11
           #   onError: continue
           #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
@@ -964,7 +974,7 @@ spec:
               - |
                 #!/bin/bash
                 source .tekton/scripts/issue_track.sh
-                DIRECTORY="/artifacts/tests/lsf_tests"
+                DIRECTORY="/artifacts/tests"
                 pattern="*.json"
                 error_check_on_all_file "${DIRECTORY}" "${pattern}" "infra"
     - name: error-check-on-lsf-validation-logs

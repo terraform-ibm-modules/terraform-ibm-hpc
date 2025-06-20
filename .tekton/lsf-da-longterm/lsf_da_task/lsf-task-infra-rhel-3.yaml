@@ -73,7 +73,10 @@ spec:
       default: ""
     - name: solution
       description: Provide the value for the solution that is needed for the support of lsf and HPC.
-      default: "lsf"
+      default: "lsf-da"
+    - name: lsf_version
+      description: Fix pack LSF Version
+      default: "lsf15"
   workspaces:
     - name: workspace
       mountPath: /artifacts
@@ -125,6 +128,8 @@ spec:
         value: $(params.management_image_name)
       - name: deployer_image_name
         value: $(params.deployer_image_name)
+      - name: lsf_version
+        value: $(params.lsf_version)
   steps:
     - name: rhel-suite-5
       onError: continue

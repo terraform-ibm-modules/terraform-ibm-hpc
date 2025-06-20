@@ -1,7 +1,7 @@
 #!/bin/bash
 set_ssh_key_name() {
     CHECK_SOLUTION=$1
-    REGIONS=("jp-tok" "eu-de" "us-east" "ca-tor")
+    REGIONS=("jp-tok" "eu-de" "br-sao" "ca-tor")
     if [[ "$CHECK_SOLUTION" == "hpcaas" ]]; then
         CICD_SSH_KEY=cicd-hpcaas
         if [ -z "${PR_REVISION}" ] && [ "${REVISION}" ]; then

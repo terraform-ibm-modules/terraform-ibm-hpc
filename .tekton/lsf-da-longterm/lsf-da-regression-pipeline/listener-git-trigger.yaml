@@ -82,10 +82,13 @@ spec:
       default: ""
     - name: solution
       description: Provide the value for the solution that is needed for the support of lsf and HPC.
-      default: "lsf"
+      default: "lsf-da"
     - name: pac_ha_exist_certificate
       description: PAC HA Existing Certificate
       default: ""
+    - name: lsf_version
+      description: Fix pack LSF Version
+      default: "lsf15"
   resourcetemplates:
     - apiVersion: v1
       kind: PersistentVolumeClaim
@@ -154,6 +157,8 @@ spec:
             value: $(params.git_user_email)
           - name: pac_ha_exist_certificate
             value: $(params.pac_ha_exist_certificate)
+          - name: lsf_version
+            value: $(params.lsf_version)
         workspaces:
           - name: pipeline-ws
             persistentVolumeClaim:
@@ -201,6 +206,8 @@ spec:
       value: $(params.solution)
     - name: pac_ha_exist_certificate
       value: $(params.pac_ha_exist_certificate)
+    - name: lsf_version
+      value: $(params.lsf_version)
 ---
 apiVersion: tekton.dev/v1beta1
 kind: EventListener
@@ -265,6 +272,8 @@ spec:
     - name: solution
       value: $(event.ref)
     - name: pac_ha_exist_certificate
+      value: $(event.ref)
+    - name: lsf_version
       value: $(event.ref)
 ---
 apiVersion: tekton.dev/v1beta1

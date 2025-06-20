@@ -75,7 +75,10 @@ spec:
       default: ""
     - name: solution
       description: Provide the value for the solution that is needed for the support of lsf and HPC.
-      default: "lsf"
+      default: "lsf-da"
+    - name: lsf_version
+      description: Fix pack LSF Version
+      default: "lsf15"
   resourcetemplates:
     - apiVersion: v1
       kind: PersistentVolumeClaim
@@ -144,6 +147,8 @@ spec:
             value: $(params.git_user_email)
           - name: solution
             value: $(params.solution)
+          - name: lsf_version
+            value: $(params.lsf_version)
         workspaces:
           - name: pipeline-ws
             persistentVolumeClaim:
