@@ -561,3 +561,12 @@ locals {
   existing_vpc_cidr = var.vpc_name != null ? data.ibm_is_vpc_address_prefixes.existing_vpc_cidr[0].address_prefixes[0].cidr : null
   cluster_cidr      = var.vpc_name == null ? var.vpc_cidr : local.existing_vpc_cidr
 }
+
+# locals needed for ssh connection
+locals {
+  ssh_forward_host = var.enable_deployer ? "" : local.mgmt_hosts_ips[0]
+  ssh_forwards     = var.enable_deployer ? "" : "-L 8443:${local.ssh_forward_host}:8443 -L 6080:${local.ssh_forward_host}:6080 -L 8444:${local.ssh_forward_host}:8444"
+  ssh_jump_host    = var.enable_deployer ? "" : local.bastion_instance_public_ip != null ? local.bastion_instance_public_ip : var.bastion_fip
+  ssh_jump_option  = var.enable_deployer ? "" : "-J ubuntu@${local.ssh_jump_host}"
+  ssh_cmd          = var.enable_deployer ? "" : "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 ${local.ssh_forwards} ${local.ssh_jump_option} lsfadmin@${join(",", local.login_host_ip)}"
+}
