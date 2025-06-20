@@ -77,7 +77,8 @@ data "ibm_is_instance_profile" "storage_profile" {
 }
 
 data "ibm_is_bare_metal_server_profile" "storage_bms_profile" {
-  name = local.storage_bms_profile[0]
+  count = var.scheduler == "Scale" ? 1 : 0
+  name  = local.storage_bms_profile[0]
 }
 
 data "ibm_is_instance_profile" "management_profile" {
