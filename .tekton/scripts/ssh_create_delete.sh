@@ -1,6 +1,7 @@
 #!/bin/bash
 set_ssh_key_name() {
     CHECK_SOLUTION=$1
+    LSF_VERSION=$2
     REGIONS=("jp-tok" "eu-de" "br-sao" "ca-tor")
     if [[ "$CHECK_SOLUTION" == "hpcaas" ]]; then
         CICD_SSH_KEY=cicd-hpcaas
@@ -25,7 +26,7 @@ set_ssh_key_name() {
     fi
 
     if [[ "$CHECK_SOLUTION" == "lsf-da" ]]; then
-        CICD_SSH_KEY=cicd-lsf-da
+        CICD_SSH_KEY=cicd-"$LSF_VERSION"
         if [ -z "${PR_REVISION}" ] && [ "${REVISION}" ]; then
             CICD_SSH_KEY=$(echo $CICD_SSH_KEY-"$REVISION")
         elif [ "${PR_REVISION}" ] && [ -z "${REVISION}" ]; then
@@ -38,7 +39,8 @@ set_ssh_key_name() {
 
 ssh_key_create() {
     CHECK_SOLUTION=$1
-    set_ssh_key_name "${CHECK_SOLUTION}"
+    LSF_VERSION=$2
+    set_ssh_key_name "${CHECK_SOLUTION}" "${LSF_VERSION}"
     file=/artifacts/.ssh
     if [ ! -e "$file" ]; then
         echo "$file does not exist, creating ssh-key-pairs."

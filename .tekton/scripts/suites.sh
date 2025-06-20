@@ -23,7 +23,7 @@ common_suite() {
         if [[ "$CHECK_PR_SUITE" ]]; then
             if [[ "$CHECK_SOLUTION" == "hpcaas" ]]; then
                 # get ssh-key created based on pr-id
-                get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}"
+                get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}" "${lsf_version}"
                 SSH_KEYS=${CICD_SSH_KEY:?} COMPUTE_IMAGE_NAME=${compute_image_name:?} LOGIN_NODE_IMAGE_NAME=${login_image_name:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
                     ZONE=${zone:?} RESERVATION_ID=${reservation_id:?} CLUSTER_NAME=${cluster_name:?} DEFAULT_EXISTING_RESOURCE_GROUP=${resource_group:?} \
                     go test -v -timeout 9000m -run "${test_cases}" | tee -a "$LOG_FILE"
@@ -39,7 +39,7 @@ common_suite() {
 
             if [[ "$CHECK_SOLUTION" == "lsf" ]]; then
                 # get ssh-key created based on pr-id
-                get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}"
+                get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}" "${lsf_version}"
                 SSH_KEYS=${CICD_SSH_KEY:?} COMPUTE_IMAGE_NAME=${compute_image_name:?} LOGIN_NODE_IMAGE_NAME=${login_image_name:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
                     ZONE=${zone:?} SOLUTION=${solution:?} DEFAULT_EXISTING_RESOURCE_GROUP=${resource_group:?} \
                     go test -v -timeout 9000m -run "${test_cases}" | tee -a "$LOG_FILE"
@@ -55,7 +55,7 @@ common_suite() {
 
             if [[ "$CHECK_SOLUTION" == "lsf-da" ]]; then
                 # get ssh-key created based on pr-id
-                get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}"
+                get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}" "${lsf_version}"
                 LSF_VERSION=${lsf_version:?} SSH_KEYS=${CICD_SSH_KEY:?} go test -v -timeout=900m -parallel=10 -run="${test_cases}" | tee -a "$LOG_FILE_NAME"
                 # Upload log/test_output files to cos bucket
                 cos_upload "PR" "${CHECK_SOLUTION}" "${DIRECTORY}"
@@ -70,7 +70,7 @@ common_suite() {
         else
             if [[ "$CHECK_SOLUTION" == "hpcaas" ]]; then
                 # get ssh-key created based on commit-id
-                get_commit_ssh_key "${REVISION}" "${CHECK_SOLUTION}"
+                get_commit_ssh_key "${REVISION}" "${CHECK_SOLUTION}" "${lsf_version}"
                 SSH_KEYS=${CICD_SSH_KEY:?} US_EAST_ZONE=${us_east_zone:?} US_EAST_CLUSTER_ID=${us_east_cluster_id:?} \
                     US_EAST_RESERVATION_ID=${us_east_reservation_id:?} US_SOUTH_ZONE=${us_south_zone:?} \
                     US_SOUTH_CLUSTER_ID=${us_south_cluster_id:?} US_SOUTH_RESERVATION_ID=${us_south_reservation_id:?} \
@@ -91,7 +91,7 @@ common_suite() {
 
             if [[ "$CHECK_SOLUTION" == "lsf" ]]; then
                 # get ssh-key created based on commit-id
-                get_commit_ssh_key "${REVISION}" "${CHECK_SOLUTION}"
+                get_commit_ssh_key "${REVISION}" "${CHECK_SOLUTION}" "${lsf_version}"
                 SSH_KEYS=${CICD_SSH_KEY:?} COMPUTE_IMAGE_NAME=${compute_image_name:?} LOGIN_NODE_IMAGE_NAME=${login_image_name:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
                     ZONE=${zone:?} SOLUTION=${solution:?} DEFAULT_EXISTING_RESOURCE_GROUP=${resource_group:?} \
                     go test -v -timeout 9000m -run "${test_cases}" | tee -a "$LOG_FILE"
@@ -107,7 +107,7 @@ common_suite() {
 
             if [[ "$CHECK_SOLUTION" == "lsf-da" ]]; then
                 # get ssh-key created based on commit-id
-                get_commit_ssh_key "${REVISION}" "${CHECK_SOLUTION}"
+                get_commit_ssh_key "${REVISION}" "${CHECK_SOLUTION}" "${lsf_version}"
                 LSF_VERSION=${lsf_version:?} SSH_KEYS=${CICD_SSH_KEY:?} go test -v -timeout=900m -parallel=10 -run="${test_cases}" | tee -a "$LOG_FILE_NAME"
                 # Upload log/test_output files to cos bucket
                 cos_upload "REGRESSION" "${CHECK_SOLUTION}" "${DIRECTORY}" "${VALIDATION_LOG_FILE_NAME}"

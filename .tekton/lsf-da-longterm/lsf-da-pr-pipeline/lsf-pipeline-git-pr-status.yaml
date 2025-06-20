@@ -184,6 +184,8 @@ spec:
           value: $(params.pr-revision)
         - name: solution
           value: $(params.solution)
+        - name: lsf_version
+          value: $(params.lsf_version)
     - name: wes-lsf-da-rhel-pr
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
@@ -288,6 +290,8 @@ spec:
           value: $(params.pr-revision)
         - name: solution
           value: $(params.solution)
+        - name: lsf_version
+          value: $(params.lsf_version)
     - name: error-check-on-lsf-pr-infra-log
       runAfter: [git-clone, wes-lsf-da-rhel-pr]
       workspaces:

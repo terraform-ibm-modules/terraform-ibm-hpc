@@ -31,6 +31,9 @@ spec:
     - name: solution
       description: Provide the value for the solution that is needed for the support of lsf and HPC.
       default: ""
+    - name: lsf_version
+      description: Fix pack LSF Version
+      default: ""
   workspaces:
     - name: workspace
       mountPath: /artifacts
@@ -52,6 +55,8 @@ spec:
         value: $(params.resource_group)
       - name: solution
         value: $(params.solution)
+      - name: lsf_version
+        value: $(params.lsf_version)
   steps:
     - name: ssh-key-creation
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
@@ -71,4 +76,4 @@ spec:
 
           source .tekton/scripts/ssh_create_delete.sh
           echo "${solution}"
-          ssh_key_create "${solution}"
+          ssh_key_create "${solution}" "${lsf_version}"
