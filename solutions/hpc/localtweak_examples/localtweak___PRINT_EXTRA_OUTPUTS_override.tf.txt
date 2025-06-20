@@ -1,5 +1,0 @@
-# This localtweak will enable extra outputs (more debugging).
-
-locals {
-  print_extra_outputs = true
-}

@@ -1,10 +1,8 @@
-
-
-# HPC Automation
+# HPC Automation - LSF
 
 ## Overview
 
-This repository contains automation tests for High-Performance Computing as a Service (HPCaaS) using the `ibmcloud-terratest-wrapper/testhelper` library and the Terratest framework in Golang. This guide provides instructions for setting up the environment, running tests, and troubleshooting issues.
+This repository contains automation tests for High-Performance Computing as a Service (HPCaaS-LSF) using the `ibmcloud-terratest-wrapper/testhelper` library and the Terratest framework in Golang. This guide provides instructions for setting up the environment, running tests, and troubleshooting issues.
 
 ## Table of Contents
 
@@ -12,38 +10,46 @@ This repository contains automation tests for High-Performance Computing as a Se
 2. [Cloning the Repository](#cloning-the-repository)
 3. [Setting Up the Go Project](#setting-up-the-go-project)
 4. [Running the Tests](#running-the-tests)
-   - [Passing Input Parameters](#passing-input-parameters)
-     - [Updating `test_config.yml`](#updating-test_configyml)
-     - [Command-Line Overrides](#command-line-overrides)
-   - [Using Default Parameters](#using-default-parameters)
-   - [Overriding Parameters](#overriding-parameters)
-   - [Running Multiple Tests](#running-multiple-tests)
+
+   * [Passing Input Parameters](#passing-input-parameters)
+
+     * [Updating `lsf_config.yml`](#updating-lsf_configyml)
+     * [Command-Line Overrides](#command-line-overrides)
+   * [Using Default Parameters](#using-default-parameters)
+   * [Overriding Parameters](#overriding-parameters)
+   * [Running Multiple Tests](#running-multiple-tests)
 5. [Exporting API Key](#exporting-api-key)
 6. [Analyzing Test Results](#analyzing-test-results)
-   - [Reviewing Test Output](#reviewing-test-output)
-   - [Viewing Test Output Logs](#viewing-test-output-logs)
+
+   * [Reviewing Test Output](#reviewing-test-output)
+   * [Viewing Test Output Logs](#viewing-test-output-logs)
 7. [Troubleshooting](#troubleshooting)
-   - [Common Issues](#common-issues)
+
+   * [Common Issues](#common-issues)
 8. [Project Structure](#project-structure)
 9. [Utilities](#utilities)
-   - [LSF Utilities](#lsf-utilities)
-   - [LSF Cluster Test Utilities](#lsf-cluster-test-utilities)
-   - [Test Validation Utilities](#test-validation-utilities)
-   - [SSH Utilities](#ssh-utilities)
-   - [Logger Utilities](#logger-utilities)
-   - [Common Utilities](#common-utilities)
-   - [Deploy Utilities](#deploy-utilities)
+
+   * [LSF Utilities](#lsf-utilities)
+   * [LSF Cluster Test Utilities](#lsf-cluster-test-utilities)
+   * [Test Validation Utilities](#test-validation-utilities)
+   * [SSH Utilities](#ssh-utilities)
+   * [Logger Utilities](#logger-utilities)
+   * [Common Utilities](#common-utilities)
+   * [Deploy Utilities](#deploy-utilities)
 10. [Acknowledgments](#acknowledgments)
+
+---
 
 ## Prerequisites
 
 Ensure you have the following tools and utilities installed:
 
-- **Go Programming Language**: [Install Go](https://golang.org/doc/install)
-- **Git**: [Install Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-- **Terraform**: [Install Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli)
-- **IBM Cloud CLI**: [Install IBM Cloud CLI](https://cloud.ibm.com/docs/cli?topic=cli-install-ibmcloud-cli)
-- **IBM Cloud Plugins**:
+* **Go Programming Language**: [Install Go](https://golang.org/doc/install)
+* **Git**: [Install Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+* **Terraform**: [Install Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli)
+* **IBM Cloud CLI**: [Install IBM Cloud CLI](https://cloud.ibm.com/docs/cli?topic=cli-install-ibmcloud-cli)
+* **IBM Cloud Plugins**:
+
   ```sh
   ibmcloud plugin install cloud-object-storage
   ibmcloud plugin install vpc-infrastructure
@@ -52,128 +58,161 @@ Ensure you have the following tools and utilities installed:
   ibmcloud plugin install key-protect -r "IBM Cloud"
   ```
 
+---
 
 ## Cloning the Repository
 
 Clone the repository to your local machine:
+
 ```sh
 git clone https://github.ibm.com/workload-eng-services/HPCaaS.git
 ```
 
+---
+
 ## Setting Up the Go Project
 
-Navigate to the project directory:
+Navigate to the test directory:
+
+```sh
+cd HPCaaS/tests/
+```
+
+Install project dependencies using Go modules:
+
+```sh
+go mod tidy
+```
+
+Initialize Git Submodules:
+
+```sh
+git submodule update --init
+```
+
+Navigate to the test directory:
+
 ```sh
 cd HPCaaS/tests
 ```
 
-Install project dependencies using Go modules:
-```sh
-go mod tidy
-```
-Initialize Git Submodules:
-  ```sh
-  git submodule update --init
-  ```
+---
 
+## Running the Tests
 
-# Running the Tests
+### Passing Input Parameters
 
-## Passing Input Parameters
+#### For Solution LSF
 
-### For Solution LSF
+##### Updating `lsf_config.yml`
 
-#### Updating `lsf_config.yml`
+You can update the `/tests/data/lsf_config.yml` file to provide input parameters. This file contains default values for various parameters used during testing. Modify the values as needed to suit your testing requirements.
 
-You can update the `lsf_config.yml` file to provide input parameters. This file contains default values for various parameters used during testing. Modify the values as needed to suit your testing requirements.
+---
 
-### For Solution HPC
+### Command-Line Overrides
 
-#### Updating `hpc_config.yml`
-
-You can update the `hpc_config.yml` file to provide input parameters. This file contains default values for various parameters used during testing. Modify the values as needed to suit your testing requirements.
-
-## Command-Line Overrides
-
-If you want to override the values in `lsf_config.yml` or `hpc_config.yml`, you can pass the input parameters through the command line. For example:
+If you want to override the values in `lsf_config.yml`, you can pass the input parameters through the command line. For example:
 
 ```sh
-SSH_KEY=your_ssh_key ZONE=your_zone EXISTING_RESOURCE_GROUP=your_existing_resource_group SOLUTION=your_solution go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee -a $LOG_FILE_NAME
+export TF_VAR_ibmcloud_api_key=your_api_key  # pragma: allowlist secret
+export TF_VAR_github_token=your_github_token
+export LOG_FILE_NAME="filename.json"
+SSH_KEY=your_ssh_key ZONES=your_zone EXISTING_RESOURCE_GROUP=your_existing_resource_group SOLUTION=your_solution go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee -a $LOG_FILE_NAME
 ```
 
 Replace placeholders (e.g., `your_ssh_key`, `your_zone`, etc.) with actual values.
 
-## Running a Specific Test
+---
 
-To run a specific test, use the `-run` flag with the test name pattern. For example:
-
-```sh
-SOLUTION=your_solution  go test -v -timeout=900m -parallel 10 -run="^TestRunBasic$" | tee -a $LOG_FILE_NAME
-```
-
-This will run only the `TestRunBasic` test.
-
-## Using Default Parameters
-
-If you prefer to run tests with the default parameter values from the `lsf_config.yml` file, you can simply run:
+### Running a Specific Test
 
 ```sh
-SOLUTION=your_solution  go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee -a $LOG_FILE_NAME
+export TF_VAR_ibmcloud_api_key=your_api_key # pragma: allowlist secret
+export TF_VAR_github_token=your_github_token
+export LOG_FILE_NAME="filename.json"
+SSH_KEY=your_ssh_key go test -v -timeout=900m -parallel 10 -run="^TestRunBasic$" | tee -a $LOG_FILE_NAME
 ```
 
+---
+
+### Using Default Parameters
+
+```sh
+export TF_VAR_ibmcloud_api_key=your_api_key   # pragma: allowlist secret
+export TF_VAR_github_token=your_github_token
+export LOG_FILE_NAME="filename.json"
+go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee -a $LOG_FILE_NAME
+```
+
+---
 
 ### Overriding Parameters
 
-To override default values, pass the required parameters when executing the command. Below are examples for **HPC** and **LSF** solutions:
+Example:
 
-#### Example for HPC:
 ```sh
-SOLUTION=hpc SSH_KEY=your_ssh_key ZONE=your_zone EXISTING_RESOURCE_GROUP=your_existing_resource_group RESERVATION_ID=your_reservation_id KMS_INSTANCE_ID=your_kms_instance_id KMS_KEY_NAME=your_kms_key_name IMAGE_NAME=your_image_name CLUSTER_NAME=your_cluster_name DEFAULT_EXITING_RESOURCE_GROUP=your_default_existing_resource_group NON_DEFAULT_EXITING_RESOURCE_GROUP=your_non_default_existing_resource_group LOGIN_NODE_INSTANCE_TYPE=your_login_node_instance_type MANAGEMENT_IMAGE_NAME=your_management_image_name COMPUTE_IMAGE_NAME=your_compute_image_name MANAGEMENT_NODE_INSTANCE_TYPE=your_management_node_instance_type MANAGEMENT_NODE_COUNT=your_management_node_count ENABLE_VPC_FLOW_LOGS=true KEY_MANAGEMENT=enabled KMS_INSTANCE_NAME=your_kms_instance_name HYPERTHREADING_ENABLED=true SSH_FILE_PATH=your_ssh_file_path APP_CENTER_EXISTING_CERTIFICATE_INSTANCE=your_app_center_existing_certificate_instance go test -v -timeout=900m -parallel=4 -run "TestRunBasic"| tee -a $LOG_FILE_NAME
+LSF_VERSION=your_lsf_version \
+SSH_KEY=your_ssh_key \
+ZONES=your_zone \
+IMAGE_NAME=your_image_name \
+DEFAULT_EXISTING_RESOURCE_GROUP=your_default_existing_resource_group \
+NON_DEFAULT_EXISTING_RESOURCE_GROUP=your_non_default_existing_resource_group \
+KMS_KEY_NAME=your_kms_key_name \
+KEY_MANAGEMENT=enabled \
+KMS_INSTANCE_NAME=your_kms_instance_name \
+KMS_INSTANCE_ID=your_kms_instance_id \
+ENABLE_HYPERTHREADING=trueOrFalse \
+SSH_FILE_PATH=your_ssh_file_path \
+REMOTE_ALLOWED_IPS=your_system_ip \
+APP_CENTER_EXISTING_CERTIFICATE_INSTANCE=your_app_center_existing_certificate_instance \
+go test -v -timeout=900m -parallel=4 -run "TestRunBasic" | tee -a $LOG_FILE_NAME
 ```
 
-#### Example for LSF:
-```sh
-SOLUTION=lsf SSH_KEY=your_ssh_key ZONE=your_zone EXISTING_RESOURCE_GROUP=your_default_existing_resource_group WORKER_NODE_MAX_COUNT=your_worker_node_max_count WORKER_NODE_INSTANCE_TYPE=your_worker_node_instance_type KMS_INSTANCE_ID=your_kms_instance_id KMS_KEY_NAME=your_kms_key_name IMAGE_NAME=your_image_name CLUSTER_NAME=your_cluster_name DEFAULT_EXISTING_RESOURCE_GROUP=your_default_existing_resource_group NON_DEFAULT_EXISTING_RESOURCE_GROUP=your_non_default_existing_resource_group LOGIN_NODE_INSTANCE_TYPE=your_login_node_instance_type MANAGEMENT_IMAGE_NAME=your_management_image_name COMPUTE_IMAGE_NAME=your_compute_image_name MANAGEMENT_NODE_INSTANCE_TYPE=your_management_node_instance_type MANAGEMENT_NODE_COUNT=your_management_node_count ENABLE_VPC_FLOW_LOGS=true KEY_MANAGEMENT=enabled KMS_INSTANCE_NAME=your_kms_instance_name HYPERTHREADING_ENABLED=true SSH_FILE_PATH=your_ssh_file_path APP_CENTER_EXISTING_CERTIFICATE_INSTANCE=your_app_center_existing_certificate_instance go test -v -timeout=900m -parallel=4 -run "TestRunBasic" | tee -a $LOG_FILE_NAME
-```
-
-### Notes:
-- Replace placeholders (e.g., `your_ssh_key`, `your_zone`, etc.) with the actual values applicable to your setup.
-- Ensure that all required parameters are included for the respective solution type (`HPC` or `LSF`).
-- Parameters like `ENABLE_VPC_FLOW_LOGS` and `HYPERTHREADING_ENABLED` can be set as `true` or `false` based on your requirement.
-- The parameter EXISTING_CERTIFICATE_INSTANCE should be assigned a value only when running the PAC HA test case.
+---
 
 ### Running Multiple Tests
 
-Execute multiple tests simultaneously:
 ```sh
+export TF_VAR_ibmcloud_api_key=your_api_key     # pragma: allowlist secret
+export TF_VAR_github_token=your_github_token
+export LOG_FILE_NAME="filename.json"
 go test -v -timeout 900m -parallel 10 -run="TestRunDefault|TestRunBasic|TestRunLDAP|TestRunAppCenter" | tee -a $LOG_FILE_NAME
 ```
 
+---
+
 ### Specific Test Files
 
-- `pr_test.go`: Contains tests that are run for any Pull Request (PR) raised. It ensures that changes proposed in a PR do not break existing functionality.
-- `other_test.go`: Includes all P0, P1, and P2 test cases, covering all functional testing. It ensures comprehensive testing of all core functionalities.
+* `lsf_pr_test.go`: PR validation tests.
+* `lsf_e2e_test.go`: Functional test coverage (P0, P1, P2).
+* `lsf_negative_test.go`: Negative test validations.
+
+---
 
 ## Exporting API Key
 
+```sh
+export TF_VAR_ibmcloud_api_key="your_api_key"  # pragma: allowlist secret
+export LOG_FILE_NAME="your_log_file_name"
+```
 
-# Before running tests, export your IBM Cloud API key and log file name as environment variables.
-export TF_VAR_ibmcloud_api_key="your_api_key"  # Replace 'your_api_key' with your actual IBM Cloud API key  # pragma: allowlist secret
-export LOG_FILE_NAME="your_log_file_name"      # Replace 'your_log_file_name' with the desired log file name
-
+---
 
 ## Analyzing Test Results
 
 ### Reviewing Test Output
 
-Passing Test Example:
+**Pass Example:**
+
 ```sh
 --- PASS: TestRunHpcBasicExample (514.35s)
 PASS
 ok github.com/terraform-ibm-modules/terraform-ibmcloud-hpc 514.369s
 ```
 
-Failing Test Example:
+**Fail Example:**
+
 ```sh
 --- FAIL: TestRunHpcBasicExample (663.30s)
 FAIL
@@ -181,58 +220,96 @@ exit status 1
 FAIL github.com/terraform-ibm-modules/terraform-ibcloud-hpc 663.323s
 ```
 
+---
+
 ### Viewing Test Output Logs
 
-- **Console Output**: Check the console for immediate test results.
-- **Log Files**: Detailed logs are saved in `test_output.log` and custom logs in the `/tests/logs_output` folder. Logs are timestamped for easier tracking (e.g., `log_20XX-MM-DD_HH-MM-SS.log`).
+* **Console Output**: Immediate feedback.
+* **Log Files**: Saved under `/tests/logs_output`, timestamped.
+
+---
 
 ## Troubleshooting
 
 ### Common Issues
 
-- **Missing Test Directories**: Ensure the project directory structure is correct and that the required directories for your tests are present.
-- **Invalid API Key**: Verify that the `TF_VAR_ibmcloud_api_key` environment variable is set correctly.Double-check the key format and permissions. # pragma: allowlist secret
-- **Invalid Solution Type**: Ensure that the `SOLUTION` environment variable is correctly defined. If it is misconfigured, tests may not run as expected.
-- **Invalid SSH Key**: Confirm that the `SSH_KEY` environment variable is set properly and points to the correct SSH key file used for authentication.
-- **Invalid Zone**: Check that the `ZONE` environment variable corresponds to a valid IBM Cloud zone where your resources are located.
-- **Remote IP Configuration**: Ensure the `REMOTE_ALLOWED_IPS` environment variable is set to allow connections from the appropriate IP addresses. Update this if necessary.
-- **Terraform Initialization**: Make sure Terraform modules and plugins are up-to-date by running `terraform init`. If any modules fail to load, investigate the error messages and ensure correct configuration.
-- **Test Output Logs**: Inspect the test output logs carefully for errors and failure messages. Logs often provide useful hints on what went wrong during the test execution.
-- **Resource Limitations**: Ensure there are enough resources (e.g., compute power, storage) available in the cloud environment for your tests to run successfully.
-- **Network Configuration**: Double-check that your network configuration (e.g., firewall settings, security groups) allows necessary traffic for the tests.
+* **Missing Test Directories**
+* **Invalid API/SSH Keys**
+* **Zone Misconfiguration**
+* **Network/Firewall Rules**
+* **Insufficient Cloud Resources**
+* **Terraform Init Errors**
+* **Check `REMOTE_ALLOWED_IPS`**
 
-For additional help, contact the project maintainers.
+### Debugging `TF_VAR_github_token`
+
+```sh
+echo $TF_VAR_github_token
+export TF_VAR_github_token="your_github_token"
+```
+
+* Ensure the token includes proper GitHub permissions (`repo`, `workflow`, etc.)
+
+
+
+
+---
 
 ## Project Structure
 
 ```
 /root/HPCAAS/tests
-├── README.md
-├── utilities
-│   ├── deployment.go           # Deployment-related utility functions
-│   ├── fileops.go              # File operations utility functions
-│   ├── helpers.go              # General helper functions
-│   ├── logging.go              # Logging utility functions
-│   ├── resources.go            # Resource management utility functions
-│   └── ssh.go                  # SSH utility functions
-├── constants.go                # Project-wide constants
-├── go.mod                       # Go module definition
-├── go.sum                       # Go module checksum
-├── lsf
-│   ├── cluster_helpers.go      # Helper functions for cluster testing
-│   ├── cluster_utils.go        # General utilities for cluster operations
-│   ├── cluster_validation.go   # Validation logic for cluster tests
-│   └── constants.go            # Constants specific to LSF
-├── other_tests.go              # Additional test cases
-├── pr_tests.go                 # Pull request-related tests
-├── config.yml                  # Configuration file
-└── logs                        # Directory for log files
-
+│
+├── data/                           # Cluster config files
+│   ├── lsf_14_config.yml           # Input YAML for test setup
+│   └── lsf_15_config.yml           # Input YAML for test setup
+│
+├── deployment/                     # Deployment-specific logic
+│   └── lsf_deployment.go
+│
+├── logs_output/                    # Runtime or SSH logs
+│   └── output.txt
+│
+├── lsf/                            # Core logic and cluster operations
+│   ├── cluster_helpers.go
+│   ├── cluster_utils.go
+│   ├── cluster_validation.go
+│   └── constants.go
+│
+├── utilities/                      # Shared utils across modules
+│   ├── api_utils.go                # IBM Cloud API interaction helpers
+│   ├── fileops.go                  # File read/write utilities
+│   ├── helpers.go                  # Common general-purpose functions
+│   ├── logging.go                  # Centralized logger
+│   ├── report.go                   # HTML/JSON report generation
+│   ├── resources.go                # Resource-specific helpers
+│   └── ssh.go                      # SSH connection + command execution
+│
+├── go.mod                          # Go module file
+├─- lsf_constants.go
+│── pr_test.go                  # PR-level minimal test
+│── lsf_e2e_test.go             # Full end-to-end test
+│── lsf_negative_test.go        # Negative test scenarios
+│── lsf_setup.go
+│── README.md                   # Instructions for running tests
 ```
+
+---
 
 ## Utilities
 
-### LSF Utilities: `lsf_cluster_utils.go`
+* `lsf/` - Helper functions for LSF validation.
+* `lsf_tests/` - All test cases.
+* `deployment/` - Provisioning and teardown logic.
+* `utilities/`:
+
+  * `ssh.go` - SSH logic
+  * `logger.go` - JSON and plain log generation
+  * `common.go` - Shared test utilities
+  * `validation.go` - Functional/infra test logic
+  * `deploy.go` - Cluster-level provisioning
+
+### LSF Utilities: `cluster_utils.go`
 
 - **CheckLSFVersion**: Verify the LSF version.
 - **LSFCheckSSHKeyForComputeNodes**: Check SSH key for compute nodes.
@@ -285,7 +362,7 @@ For additional help, contact the project maintainers.
 - **HPCGenerateFilePathMap**: Generate a file path map.
 - **ValidateFlowLogs**: Validate flow logs configuration.
 
-### LSF Cluster Test Utilities: `lsf_cluster_test_utils.go`
+### LSF Cluster Test Utilities: `cluster_helpers.go`
 
 - **VerifyManagementNodeConfig**: Verify configurations for management nodes.
 - **VerifySSHKey**: Check if the SSH key is set correctly.

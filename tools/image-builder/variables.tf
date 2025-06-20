@@ -21,7 +21,7 @@ variable "existing_resource_group" {
   type        = string
   default     = "Default"
   validation {
-    condition     = var.existing_resource_group != null
+    condition     = var.resource_group != null
     error_message = "If you want to provide null for resource_group variable, it should be within double quotes."
   }
 }
@@ -201,8 +201,11 @@ variable "cluster_name" {
 variable "reservation_id" {
   type        = string
   sensitive   = true
-  default     = ""
   description = "Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_)."
+  validation {
+    condition     = can(regex("^[a-zA-Z][a-zA-Z0-9-_]*$", var.reservation_id))
+    error_message = "Reservation ID must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_)."
+  }
 }
 
 # tflint-ignore: terraform_unused_declarations
@@ -210,10 +213,4 @@ variable "private_catalog_id" {
   type        = string
   default     = ""
   description = "Provide the private catalog ID if you wish to publish and share the created image to the CE account."
-}
-
-variable "solution" {
-  type        = string
-  default     = "lsf"
-  description = "Provide the value for the solution that is needed for the support of lsf and HPC"
 }

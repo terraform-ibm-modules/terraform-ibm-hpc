@@ -1,0 +1,6 @@
+---
+
+SHARED_PATH: "/mnt/lsf"
+LSF_SUITE: "/opt/ibm/lsfsuite"
+LSF_TOP: "{{ LSF_SUITE }}/lsf"
+LSF_LOGS: "/opt/ibm/lsflogs"

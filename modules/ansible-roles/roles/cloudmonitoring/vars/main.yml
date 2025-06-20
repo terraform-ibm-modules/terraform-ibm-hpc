@@ -1,0 +1,4 @@
+sysdig_config_file: "/opt/draios/etc/dragent.yaml"
+prometheus_config_file: "/opt/prometheus/prometheus.yml"
+LSF_CONF: "/opt/ibm/lsfsuite/lsf/conf"
+PROMETHEUS_VERSION: "2.51.1"

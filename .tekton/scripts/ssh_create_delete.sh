@@ -23,6 +23,17 @@ set_ssh_key_name() {
             CICD_SSH_KEY=$CICD_SSH_KEY-tekton
         fi
     fi
+
+    if [[ "$CHECK_SOLUTION" == "lsf-da" ]]; then
+        CICD_SSH_KEY=cicd-lsf-da
+        if [ -z "${PR_REVISION}" ] && [ "${REVISION}" ]; then
+            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-"$REVISION")
+        elif [ "${PR_REVISION}" ] && [ -z "${REVISION}" ]; then
+            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-"$PR_REVISION")
+        else
+            CICD_SSH_KEY=$CICD_SSH_KEY-tekton
+        fi
+    fi
 }
 
 ssh_key_create() {

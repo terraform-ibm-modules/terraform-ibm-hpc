@@ -22,15 +22,3 @@ variable "dns_records" {
   default     = null
   description = "IBM Cloud HPC DNS record."
 }
-
-variable "dns_domain_names" {
-  type = object({
-    compute = string
-    #storage  = string
-    #protocol = string
-  })
-  default = {
-    compute = "comp.com"
-  }
-  description = "IBM Cloud HPC DNS domain names."
-}

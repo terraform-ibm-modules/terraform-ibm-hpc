@@ -157,7 +157,8 @@ func ToCreateFileWithContent(t *testing.T, sClient *ssh.Client, filePath, fileNa
 
 	if isPathExist {
 		// Path exists, create the file using SSH command
-		command := "cd " + filePath + " && echo '" + content + "' > " + fileName
+		//command := "cd " + filePath + " && echo '" + content + "' > " + fileName
+		command := fmt.Sprintf("cd %s && echo %q > %s", filePath, content, fileName)
 		_, createFileErr := RunCommandInSSHSession(sClient, command)
 
 		if createFileErr == nil {
