@@ -2,7 +2,7 @@
 set_ssh_key_name() {
     CHECK_SOLUTION=$1
     LSF_VERSION=$2
-    REGIONS=("jp-tok" "eu-de" "br-sao" "ca-tor")
+    REGIONS=("jp-tok" "eu-de" "us-east" "ca-tor")
     if [[ "$CHECK_SOLUTION" == "hpcaas" ]]; then
         CICD_SSH_KEY=cicd-hpcaas
         if [ -z "${PR_REVISION}" ] && [ "${REVISION}" ]; then
