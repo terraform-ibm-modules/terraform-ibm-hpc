@@ -23,7 +23,7 @@ const (
 	terraformDir = "solutions/lsf"
 
 	// Default scheduler
-	solution = "lsf"
+	Solution = "lsf"
 
 	// Configuration files for each LSF version
 	lsfFP14ConfigFile = "lsf_fp14_config.yml"
@@ -376,7 +376,7 @@ func GetLSFVersionConfig() (string, error) {
 	return productFileName, nil
 }
 
-// TestRunDefault validates creation and verification of an HPC cluster
+// DefaultTest validates creation and verification of an HPC cluster
 // Tests:
 // - Successful cluster provisioning
 // - Valid output structure

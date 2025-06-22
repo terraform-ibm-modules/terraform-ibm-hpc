@@ -3,7 +3,9 @@ package tests
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -11,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
+	deploy "github.com/terraform-ibm-modules/terraform-ibm-hpc/deployment"
 	lsf "github.com/terraform-ibm-modules/terraform-ibm-hpc/lsf"
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/utilities"
 )
@@ -19,6 +22,48 @@ import (
 const (
 	createVpcTerraformDir = "examples/create_vpc/" // Brand new VPC
 )
+
+// TestMain is the entry point for all tests
+func TestMain(m *testing.M) {
+
+	// Load LSF version configuration
+	productFileName, err := GetLSFVersionConfig()
+	if err != nil {
+		log.Fatalf("❌ Failed to get LSF version config: %v", err)
+	}
+
+	// Load and validate configuration
+	configFilePath, err := filepath.Abs("../data/" + productFileName)
+	if err != nil {
+		log.Fatalf("❌ Failed to resolve config path: %v", err)
+	}
+
+	if _, err := os.Stat(configFilePath); err != nil {
+		log.Fatalf("❌ Config file not accessible: %v", err)
+	}
+
+	if _, err := deploy.GetConfigFromYAML(configFilePath); err != nil {
+		log.Fatalf("❌ Config load failed: %v", err)
+	}
+	log.Printf("✅ Configuration loaded successfully from %s", filepath.Base(configFilePath))
+
+	// Execute tests
+	exitCode := m.Run()
+
+	// Generate HTML report if JSON log exists
+	if jsonFileName, ok := os.LookupEnv("LOG_FILE_NAME"); ok {
+		if _, err := os.Stat(jsonFileName); err == nil {
+			results, err := utils.ParseJSONFile(jsonFileName)
+			if err != nil {
+				log.Printf("Failed to parse JSON results: %v", err)
+			} else if err := utils.GenerateHTMLReport(results); err != nil {
+				log.Printf("Failed to generate HTML report: %v", err)
+			}
+		}
+	}
+
+	os.Exit(exitCode)
+}
 
 // TestRunBasic validates the basic cluster configuration requirements.
 // The test ensures proper resource isolation through random prefix generation
@@ -593,10 +638,9 @@ func TestRunLSFClusterCreationWithZeroWorkerNodes(t *testing.T) {
 	// Cluster Profile Configuration
 	options.TerraformVars["static_compute_instances"] = []map[string]interface{}{
 		{
-			"profile":    "bx2d-4x16",
-			"count":      0,
-			"image":      envVars.StaticComputeInstancesImage,
-			"filesystem": "/gpfs/fs1",
+			"profile": "bx2d-4x16",
+			"count":   0,
+			"image":   envVars.StaticComputeInstancesImage,
 		},
 	}
 
@@ -966,10 +1010,9 @@ func TestRunDedicatedHost(t *testing.T) {
 	options.TerraformVars["enable_dedicated_host"] = true
 	options.TerraformVars["static_compute_instances"] = []map[string]interface{}{
 		{
-			"profile":    "bx2-2x8",
-			"count":      1,
-			"image":      envVars.StaticComputeInstancesImage,
-			"filesystem": "/gpfs/fs1",
+			"profile": "bx2-2x8",
+			"count":   1,
+			"image":   envVars.StaticComputeInstancesImage,
 		},
 	}
 	options.TerraformVars["dynamic_compute_instances"] = []map[string]interface{}{
@@ -987,12 +1030,6 @@ func TestRunDedicatedHost(t *testing.T) {
 	// Cluster Deployment
 	deploymentStart := time.Now()
 	testLogger.Info(t, "Starting dedicated host cluster deployment")
-
-	WorkerNodeMinCount, err := utils.GetTotalStaticComputeCount(t, options.TerraformVars, testLogger)
-	require.NoError(t, err, "Error retrieving worker node total count")
-
-	fmt.Println(WorkerNodeMinCount)
-	fmt.Println(deploymentStart)
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -1666,7 +1703,7 @@ func RunExistingVpcSubnetIdCustomNullDnsNull(t *testing.T, vpcName string, basti
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
 	options.TerraformVars["vpc_name"] = vpcName
 	options.TerraformVars["login_subnet_id"] = bastionsubnetId
-	options.TerraformVars["cluster_subnet_ids"] = computesubnetIds
+	options.TerraformVars["cluster_subnet_id"] = computesubnetIds
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Skip test teardown for further inspection
@@ -1753,7 +1790,7 @@ func RunHpcExistingVpcBothCustomDnsExist(t *testing.T, vpcName string, bastionsu
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
 	options.TerraformVars["vpc_name"] = vpcName
 	options.TerraformVars["login_subnet_id"] = bastionsubnetId
-	options.TerraformVars["cluster_subnet_ids"] = computesubnetIds
+	options.TerraformVars["cluster_subnet_id"] = computesubnetIds
 	options.TerraformVars["dns_instance_id"] = instanceId
 	options.TerraformVars["dns_custom_resolver_id"] = customResolverId
 
@@ -1798,7 +1835,7 @@ func RunHpcExistingVpcCustomExistDnsNull(t *testing.T, vpcName string, bastionsu
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
 	options.TerraformVars["vpc_name"] = vpcName
 	options.TerraformVars["login_subnet_id"] = bastionsubnetId
-	options.TerraformVars["cluster_subnet_ids"] = computesubnetIds
+	options.TerraformVars["cluster_subnet_id"] = computesubnetIds
 	options.TerraformVars["dns_custom_resolver_id"] = customResolverId
 
 	require.NoError(t, err, "Error setting up test options: %v", err)
@@ -2006,16 +2043,14 @@ func TestRunMultiProfileStaticAndDynamic(t *testing.T) {
 	// Define multiple static compute instances
 	options.TerraformVars["static_compute_instances"] = []map[string]interface{}{
 		{
-			"profile":    "bx2d-4x16",
-			"count":      1,
-			"image":      envVars.StaticComputeInstancesImage,
-			"filesystem": "/gpfs/fs1",
+			"profile": "bx2d-4x16",
+			"count":   1,
+			"image":   envVars.StaticComputeInstancesImage,
 		},
 		{
-			"profile":    "bx2-2x8",
-			"count":      2,
-			"image":      envVars.StaticComputeInstancesImage,
-			"filesystem": "/gpfs/fs1",
+			"profile": "bx2-2x8",
+			"count":   2,
+			"image":   envVars.StaticComputeInstancesImage,
 		},
 	}
 

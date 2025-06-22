@@ -7,43 +7,40 @@ import (
 	"testing"
 
 	deploy "github.com/terraform-ibm-modules/terraform-ibm-hpc/deployment"
+	lsf_tests "github.com/terraform-ibm-modules/terraform-ibm-hpc/lsf_tests"
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/utilities"
 )
 
 func TestRunDefault(t *testing.T) {
 	t.Parallel()
-	DefaultTest(t)
+	lsf_tests.DefaultTest(t)
 }
 
 // TestMain is the entry point for all tests
 func TestMain(m *testing.M) {
 
-	productFileName, err := GetLSFVersionConfig()
-
+	// Load LSF version configuration
+	productFileName, err := lsf_tests.GetLSFVersionConfig()
 	if err != nil {
-		log.Fatalf("Unsupported solution specified: %s", solution)
+		log.Fatalf("❌ Failed to get LSF version config: %v", err)
 	}
 
-	// Load configuration from YAML
+	// Load and validate configuration
 	configFilePath, err := filepath.Abs("data/" + productFileName)
 	if err != nil {
-		log.Fatalf("❌ Failed to get absolute path for config file: %v", err)
+		log.Fatalf("❌ Failed to resolve config path: %v", err)
 	}
 
-	// Check if the file exists
-	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
-		log.Fatalf("❌ Configuration file not found: %s", configFilePath)
+	if _, err := os.Stat(configFilePath); err != nil {
+		log.Fatalf("❌ Config file not accessible: %v", err)
 	}
 
-	// Load the config
-	_, err = deploy.GetConfigFromYAML(configFilePath)
-	if err != nil {
-		log.Fatalf("❌ Failed to load configuration: %v", err)
+	if _, err := deploy.GetConfigFromYAML(configFilePath); err != nil {
+		log.Fatalf("❌ Config load failed: %v", err)
 	}
+	log.Printf("✅ Configuration loaded successfully from %s", filepath.Base(configFilePath))
 
-	log.Printf("✅ Successfully loaded configuration")
-
-	// Run tests
+	// Execute tests
 	exitCode := m.Run()
 
 	// Generate HTML report if JSON log exists

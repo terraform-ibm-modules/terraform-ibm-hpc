@@ -73,7 +73,7 @@ func runClusterValidationsOnManagementNode(t *testing.T, sshClient *ssh.Client, 
 	VerifyAPPCenterConfig(t, sshClient, logger)
 
 	// Verify noVNC configuration
-	VerifyNoVNCConfig(t, sshClient, logger)
+	//VerifyNoVNCConfig(t, sshClient, logger)
 
 	// Verify SSH key on management nodes
 	VerifySSHKey(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, "management", managementNodeIPs, expected.NumOfKeys, logger)

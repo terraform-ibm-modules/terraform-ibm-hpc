@@ -31,7 +31,7 @@ type AggregatedLogger struct {
 // NewAggregatedLogger creates a new logger instance with file output
 func NewAggregatedLogger(logFileName string) (*AggregatedLogger, error) {
 	// Ensure logs directory exists
-	logsDir := filepath.Join("logs_output")
+	logsDir := filepath.Join("..", "logs_output")
 	if err := os.MkdirAll(logsDir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create logs directory: %w", err)
 	}
