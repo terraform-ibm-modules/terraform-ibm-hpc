@@ -358,6 +358,7 @@ locals {
   deployer_hosts_ips  = var.scheduler == "LSF" ? var.enable_deployer ? [module.deployer.deployer_ip] : [] : []
   mgmt_instances_data = var.scheduler == "LSF" ? var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data]) : []
   mgmt_hosts_ips      = var.scheduler == "LSF" ? var.enable_deployer ? [] : local.mgmt_instances_data[*]["ipv4_address"] : []
+  ldap_hosts_ips      = var.scheduler == "LSF" ? var.enable_deployer ? [] : (var.enable_ldap == true ? (var.ldap_server == "null" ? local.ldap_instances[*]["ipv4_address"] : [var.ldap_server]) : []) : []
   json_inventory_path = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json"
   management_nodes    = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"] : []
   login_host          = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].login_vsi_data]))[*]["name"] : []

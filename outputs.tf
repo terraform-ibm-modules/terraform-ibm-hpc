@@ -8,6 +8,11 @@ output "vpc_name" {
   value       = local.vpc_name
 }
 
+output "image_details" {
+  description = "The image details used for deploying cluster resources"
+  value       = format("LSF Version: %s | Management Image: %s", var.lsf_version, var.management_instances[0].image)
+}
+
 output "remote_allowed_cidr" {
   description = "The following IPs/networks are allow-listed for incoming connections"
   value       = var.remote_allowed_ips
@@ -21,6 +26,11 @@ output "ssh_to_deployer" {
 output "ssh_to_management_node" {
   description = "SSH command to connect to the management node"
   value       = var.scheduler == "LSF" && (var.enable_deployer == false) && length(local.mgmt_hosts_ips) > 0 ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J ubuntu@${var.bastion_fip} lsfadmin@${local.mgmt_hosts_ips[0]}" : null
+}
+
+output "ssh_to_ldap_node" {
+  description = "SSH command to connect to LDAP node"
+  value       = (var.scheduler == "LSF" && var.enable_deployer == false && var.enable_ldap && length(local.ldap_hosts_ips) > 0) ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 -J ubuntu@${var.bastion_fip} ubuntu@${local.ldap_hosts_ips[0]}" : null
 }
 
 output "cloud_monitoring_url" {
