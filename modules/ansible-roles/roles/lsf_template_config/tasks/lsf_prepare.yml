@@ -9,7 +9,7 @@
   package_facts:
     manager: auto
 
-- name: LSF | Install missing lsof and ipmitool packages
+- name: LSF | Ensure lsof and ipmitool packages are installed if missing
   dnf:
     name: "{{ ['lsof', 'ipmitool'] | difference(ansible_facts.packages.keys() | list) }}"
     state: present
