@@ -3351,7 +3351,7 @@ func VerifyEncryptionCRN(t *testing.T, sshClient *ssh.Client, keyManagement stri
 		expectedCRN := "\"crn\":\"crn:v1:bluemix:public:kms"
 		if strings.ToLower(keyManagement) != "key_protect" {
 			//expectedCRN = "\"crn\":\"\""
-			expectedCRN = "\"crn\":\"null\""
+			expectedCRN = "\"crn\":\"\""
 		}
 
 		if !utils.VerifyDataContains(t, normalizedOutput, expectedCRN, logger) {
