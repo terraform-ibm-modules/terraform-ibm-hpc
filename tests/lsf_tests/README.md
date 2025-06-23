@@ -285,12 +285,12 @@ export TF_VAR_github_token="your_github_token"
 │   ├── resources.go                # Resource-specific helpers
 │   └── ssh.go                      # SSH connection + command execution
 │
-├── lsf_tests/  
+├── lsf_tests/
 │   ├── lsf_e2e_test.go             # Full end-to-end test
 │   ├── lsf_negative_test.go        # Negative test scenarios
 │   ├── lsf_setup.go
 │   ├── lsf_constants.go
-│   ├── resource_exemptions.go          
+│   ├── resource_exemptions.go
 │   └── README.md                   # Instructions for running tests
 |
 ├── go.mod                          # Go module file
