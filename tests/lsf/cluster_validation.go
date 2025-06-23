@@ -219,6 +219,7 @@ func ValidateClusterConfiguration(t *testing.T, options *testhelper.TestOptions,
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
 		if err := WaitForDynamicNodeDisappearance(t, sshClient, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("Error in WaitForDynamicNodeDisappearance: %v", err))
 			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
 		}
 	}()
@@ -305,6 +306,7 @@ func ValidateClusterConfigurationWithPACHA(t *testing.T, options *testhelper.Tes
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
 		if err := WaitForDynamicNodeDisappearance(t, sshClient, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("Error in WaitForDynamicNodeDisappearance: %v", err))
 			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
 		}
 	}()
@@ -382,6 +384,7 @@ func ValidateBasicClusterConfiguration(t *testing.T, options *testhelper.TestOpt
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
 		if err := WaitForDynamicNodeDisappearance(t, sshClient, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("Error in WaitForDynamicNodeDisappearance: %v", err))
 			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
 		}
 	}()
@@ -452,6 +455,7 @@ func ValidateBasicClusterConfigurationWithDynamicProfile(t *testing.T, options *
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
 		if err := WaitForDynamicNodeDisappearance(t, sshClient, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("Error in WaitForDynamicNodeDisappearance: %v", err))
 			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
 		}
 	}()
@@ -537,6 +541,7 @@ func ValidateLDAPClusterConfiguration(t *testing.T, options *testhelper.TestOpti
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
 		if err := WaitForDynamicNodeDisappearance(t, sshClient, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("Error in WaitForDynamicNodeDisappearance: %v", err))
 			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
 		}
 	}()
@@ -664,6 +669,7 @@ func ValidatePACANDLDAPClusterConfiguration(t *testing.T, options *testhelper.Te
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
 		if err := WaitForDynamicNodeDisappearance(t, sshClient, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("Error in WaitForDynamicNodeDisappearance: %v", err))
 			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
 		}
 	}()
@@ -774,6 +780,7 @@ func ValidateExistingLDAPClusterConfig(t *testing.T, ldapServerBastionIP, ldapSe
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
 		if err := WaitForDynamicNodeDisappearance(t, sshClient, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("Error in WaitForDynamicNodeDisappearance: %v", err))
 			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
 		}
 	}()
@@ -881,6 +888,7 @@ func ValidateBasicClusterConfigurationWithVPCFlowLogsAndCos(t *testing.T, option
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
 		if err := WaitForDynamicNodeDisappearance(t, sshClient, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("Error in WaitForDynamicNodeDisappearance: %v", err))
 			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
 		}
 	}()
@@ -955,9 +963,10 @@ func ValidateBasicClusterConfigurationLSFLogs(t *testing.T, options *testhelper.
 	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPs[0])
 	require.NoError(t, connectionErr, "Failed to re-establish SSH connection after reboot - check node recovery")
 
-	// Wait for dynamic node disappearance
+	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
 		if err := WaitForDynamicNodeDisappearance(t, sshClient, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("Error in WaitForDynamicNodeDisappearance: %v", err))
 			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
 		}
 	}()
@@ -1028,6 +1037,7 @@ func ValidateBasicClusterConfigurationWithDedicatedHost(t *testing.T, options *t
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
 		if err := WaitForDynamicNodeDisappearance(t, sshClient, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("Error in WaitForDynamicNodeDisappearance: %v", err))
 			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
 		}
 	}()
@@ -1098,6 +1108,7 @@ func ValidateBasicClusterConfigurationWithSCC(t *testing.T, options *testhelper.
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
 		if err := WaitForDynamicNodeDisappearance(t, sshClient, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("Error in WaitForDynamicNodeDisappearance: %v", err))
 			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
 		}
 	}()
@@ -1187,6 +1198,7 @@ func ValidateBasicClusterConfigurationWithCloudLogs(t *testing.T, options *testh
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
 		if err := WaitForDynamicNodeDisappearance(t, sshClient, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("Error in WaitForDynamicNodeDisappearance: %v", err))
 			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
 		}
 	}()
@@ -1270,6 +1282,7 @@ func ValidateBasicClusterConfigurationWithCloudMonitoring(t *testing.T, options 
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
 		if err := WaitForDynamicNodeDisappearance(t, sshClient, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("Error in WaitForDynamicNodeDisappearance: %v", err))
 			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
 		}
 	}()
@@ -1349,6 +1362,7 @@ func ValidateBasicClusterConfigurationWithCloudAtracker(t *testing.T, options *t
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
 		if err := WaitForDynamicNodeDisappearance(t, sshClient, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("Error in WaitForDynamicNodeDisappearance: %v", err))
 			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
 		}
 	}()
@@ -1438,9 +1452,10 @@ func ValidateBasicObservabilityClusterConfiguration(t *testing.T, options *testh
 	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPs[0])
 	require.NoError(t, connectionErr, "Failed to re-establish SSH connection after reboot - check node recovery")
 
-	// Ensure dynamic worker nodes disappear
+	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
 		if err := WaitForDynamicNodeDisappearance(t, sshClient, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("Error in WaitForDynamicNodeDisappearance: %v", err))
 			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
 		}
 	}()
@@ -1545,6 +1560,7 @@ func ValidateClusterConfigurationWithMultipleKeys(t *testing.T, options *testhel
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
 		if err := WaitForDynamicNodeDisappearance(t, sshClientOne, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("Error in WaitForDynamicNodeDisappearance: %v", err))
 			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
 		}
 	}()
@@ -1618,9 +1634,10 @@ func ValidateBasicClusterConfigurationForMultiProfileStaticAndDynamic(t *testing
 	// Verify management node configuration
 	VerifyManagementNodeConfig(t, sshClient, expected.MasterName, expected.Hyperthreading, managementNodeIPs, expected.LsfVersion, logger)
 
-	// Wait for dynamic node disappearance after job runs
+	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {
 		if err := WaitForDynamicNodeDisappearance(t, sshClient, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("Error in WaitForDynamicNodeDisappearance: %v", err))
 			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
 		}
 	}()

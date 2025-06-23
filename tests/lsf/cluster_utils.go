@@ -485,7 +485,7 @@ func LSFExtractJobID(response string) (string, error) {
 func WaitForDynamicNodeDisappearance(t *testing.T, sClient *ssh.Client, logger *utils.AggregatedLogger) error {
 	const (
 		statusOK      = "ok"
-		workerKeyword = "-comp-"
+		workerKeyword = "comp"
 		pollInterval  = 90 * time.Second
 	)
 
@@ -4239,7 +4239,7 @@ func LSFHealthCheck(t *testing.T, sClient *ssh.Client, logger *utils.AggregatedL
 }
 
 // ValidateTerraformOutput connects to the LSF deployer node via SSH,
-// fetches Terraform outputs, and validates the following:
+// fetches Terraform outputs, and validates:
 // - cloud_logs_url (if cloud logging is enabled)
 // - cloud_monitoring_url (if cloud monitoring is enabled)
 // - ssh_to_ldap_node (if LDAP is enabled)
@@ -4271,8 +4271,16 @@ func ValidateTerraformOutput(
 
 	lines := strings.Split(string(output), "\n")
 
+	// Initialize validation flags outside the loop
+	isCloudvalidated := false
+	isCloudMonitoringvalidated := false
+	isldapServervalidated := false
+
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
 
 		// Validate cloud_logs_url
 		if isCloudLogEnabled && strings.Contains(line, "cloud_logs_url") {
@@ -4284,6 +4292,8 @@ func ValidateTerraformOutput(
 			if err != nil || !utils.VerifyDataContains(t, string(actualOutput), "200", logger) {
 				return fmt.Errorf("cloud_logs_url validation failed. Output: %s", actualOutput)
 			}
+			isCloudvalidated = true
+			logger.Info(t, "✅ cloud_logs_url validated successfully.")
 		}
 
 		// Validate cloud_monitoring_url
@@ -4295,6 +4305,8 @@ func ValidateTerraformOutput(
 			if !strings.HasPrefix(url, expectedPrefix) {
 				return fmt.Errorf("cloud_monitoring_url mismatch. Output: %s, Expected prefix: %s", url, expectedPrefix)
 			}
+			isCloudMonitoringvalidated = true
+			logger.Info(t, "✅ cloud_monitoring_url validated successfully.")
 		}
 
 		// Validate ssh_to_ldap_node
@@ -4306,6 +4318,8 @@ func ValidateTerraformOutput(
 			if !strings.HasPrefix(url, expectedPrefix) {
 				return fmt.Errorf("ssh_to_ldap_node mismatch. Output: %s, Expected prefix: %s", url, expectedPrefix)
 			}
+			isldapServervalidated = true
+			logger.Info(t, "✅ ssh_to_ldap_node validated successfully.")
 		}
 
 		// Validate application_center_tunnel
@@ -4317,7 +4331,10 @@ func ValidateTerraformOutput(
 			if !utils.VerifyDataContains(t, line, expected, logger) {
 				return fmt.Errorf("application_center_tunnel string missing or incorrect in terraform output")
 			}
+			logger.Info(t, "✅ application_center_tunnel validated successfully.")
 		}
+
+		// Validate application_center_url
 		if strings.Contains(line, "application_center_url") {
 			url := utils.ExtractTerraformValue(line)
 			logger.DEBUG(t, fmt.Sprintf("'application_center_url' output: %s", url))
@@ -4326,6 +4343,7 @@ func ValidateTerraformOutput(
 			if !utils.VerifyDataContains(t, line, expected, logger) {
 				return fmt.Errorf("application_center_url string missing or incorrect in terraform output")
 			}
+			logger.Info(t, "✅ application_center_url validated successfully.")
 		}
 
 		// Validate ssh_to_deployer
@@ -4334,6 +4352,7 @@ func ValidateTerraformOutput(
 			if !utils.VerifyDataContains(t, line, expected, logger) {
 				return fmt.Errorf("ssh_to_deployer string missing or incorrect in terraform output")
 			}
+			logger.Info(t, "✅ ssh_to_deployer validated successfully.")
 		}
 
 		// Validate ssh_to_management_node
@@ -4342,18 +4361,19 @@ func ValidateTerraformOutput(
 			if !utils.VerifyDataContains(t, line, expected, logger) {
 				return fmt.Errorf("ssh_to_management_node string missing or incorrect in terraform output")
 			}
+			logger.Info(t, "✅ ssh_to_management_node validated successfully.")
 		}
 	}
 
-	// Warn about skipped validations
-	if !isCloudLogEnabled {
-		logger.Warn(t, "Cloud logs not enabled; skipping cloud_logs_url validation")
+	// Final validation checks to ensure expected outputs were found
+	if isCloudLogEnabled && !isCloudvalidated {
+		return fmt.Errorf("cloud_logs_url not found in terraform output")
 	}
-	if !isCloudMonitoringEnabled {
-		logger.Warn(t, "Cloud monitoring not enabled; skipping cloud_monitoring_url validation")
+	if isCloudMonitoringEnabled && !isCloudMonitoringvalidated {
+		return fmt.Errorf("cloud_monitoring_url not found in terraform output")
 	}
-	if !isldapServerEnabled {
-		logger.Warn(t, "LDAP not enabled; skipping ldap_node_url validation")
+	if isldapServerEnabled && !isldapServervalidated {
+		return fmt.Errorf("ssh_to_ldap_node not found in terraform output")
 	}
 
 	return nil

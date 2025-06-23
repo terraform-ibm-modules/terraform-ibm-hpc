@@ -74,7 +74,7 @@ us_south_zone: us-south-1
 us_south_cluster_name: HPC-LSF-2
 jp_tok_zone: jp-tok-1
 jp_tok_cluster_name: HPC-LSF-2
-attracker_test_zone: jp-tok-1  #added for testing purpose
+attracker_test_zone: eu-de-1  #added for testing purpose
 management_instances_image: hpc-lsf-fp15-rhel810-v1   #added for testing purpose
 static_compute_instances_image: hpc-lsf-fp15-compute-rhel810-v1 #added for testing purpose
 dynamic_compute_instances_image: hpc-lsf-fp15-compute-rhel810-v1 #added for testing purpose

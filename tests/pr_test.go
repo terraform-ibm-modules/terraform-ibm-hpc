@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	deploy "github.com/terraform-ibm-modules/terraform-ibm-hpc/deployment"
 	lsf_tests "github.com/terraform-ibm-modules/terraform-ibm-hpc/lsf_tests"
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/utilities"
@@ -13,6 +14,11 @@ import (
 
 func TestRunDefault(t *testing.T) {
 	t.Parallel()
+
+	require.NoError(t, os.Setenv("ZONES", "us-east-3"), "Failed to set ZONES env variable")
+	require.NoError(t, os.Setenv("DEFAULT_EXISTING_RESOURCE_GROUP", "Default"), "Failed to set DEFAULT_EXISTING_RESOURCE_GROUP")
+
+	t.Log("Running default LSF cluster test for region us-east-3")
 	lsf_tests.DefaultTest(t)
 }
 
