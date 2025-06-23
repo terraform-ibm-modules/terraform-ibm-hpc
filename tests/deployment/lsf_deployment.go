@@ -297,7 +297,7 @@ func setEnvironmentVariable(key string, value interface{}) error {
 	}
 
 	if key == "REMOTE_ALLOWED_IPS" {
-		return handleARemoteAllowedIPs(value)
+		return handleRemoteAllowedIPs(value)
 	}
 
 	switch v := value.(type) {
@@ -327,7 +327,7 @@ func setEnvironmentVariable(key string, value interface{}) error {
 }
 
 // handleARemoteAllowedIPs handles special case for the remote_allowed_ips environment variable.
-func handleARemoteAllowedIPs(value interface{}) error {
+func handleRemoteAllowedIPs(value interface{}) error {
 	// Assert value is of type string
 	cidr, ok := value.(string)
 	if !ok {

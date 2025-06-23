@@ -4302,18 +4302,27 @@ func ValidateTerraformOutput(
 			url := utils.ExtractTerraformValue(line)
 			logger.DEBUG(t, fmt.Sprintf("'ssh_to_ldap_node' output: %s", url))
 
-			expectedPrefix := "https://cloud.ibm.com/observe/embedded-view/monitoring/"
+			expectedPrefix := "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o"
 			if !strings.HasPrefix(url, expectedPrefix) {
 				return fmt.Errorf("ssh_to_ldap_node mismatch. Output: %s, Expected prefix: %s", url, expectedPrefix)
 			}
 		}
 
-		// Validate application_center_url
+		// Validate application_center_tunnel
+		if strings.Contains(line, "application_center_tunnel") {
+			url := utils.ExtractTerraformValue(line)
+			logger.DEBUG(t, fmt.Sprintf("'application_center_tunnel' output: %s", url))
+
+			expected := `ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 -L 8443`
+			if !utils.VerifyDataContains(t, line, expected, logger) {
+				return fmt.Errorf("application_center_tunnel string missing or incorrect in terraform output")
+			}
+		}
 		if strings.Contains(line, "application_center_url") {
 			url := utils.ExtractTerraformValue(line)
 			logger.DEBUG(t, fmt.Sprintf("'application_center_url' output: %s", url))
 
-			expected := `ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J`
+			expected := `https://localhost:8443`
 			if !utils.VerifyDataContains(t, line, expected, logger) {
 				return fmt.Errorf("application_center_url string missing or incorrect in terraform output")
 			}
