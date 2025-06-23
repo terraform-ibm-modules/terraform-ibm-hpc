@@ -40,7 +40,7 @@ func getBaseVars(t *testing.T) map[string]interface{} {
 		"ssh_keys":                utils.SplitAndTrim(envVars.SSHKeys, ","),
 		"zones":                   utils.SplitAndTrim(envVars.Zones, ","),
 		"remote_allowed_ips":      utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
-		"app_center_gui_password": APP_CENTER_GUI_PASSWORD,
+		"app_center_gui_password": APP_CENTER_GUI_PASSWORD, // pragma: allowlist secret
 	}
 }
 
@@ -129,25 +129,25 @@ func TestInvalidAppCenterPassword(t *testing.T) {
 
 	invalidPasswords := []string{
 		"weak",                          // Too short
-		"PasswoRD123",                   // Contains dictionary word
-		"password123",                   // All lowercase
-		"Password@",                     // Missing numbers
-		"Password123",                   // Common password pattern
-		"password@12345678901234567890", // Too long
+		"PasswoRD123",                   // Contains dictionary word // pragma: allowlist secret
+		"password123",                   // All lowercase            // pragma: allowlist secret
+		"Password@",                     // Missing numbers          // pragma: allowlist secret
+		"Password123",                   // Common password pattern   // pragma: allowlist secret
+		"password@12345678901234567890", // Too long                   // pragma: allowlist secret
 	}
 
 	setupTestSuite(t)
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	for _, password := range invalidPasswords {
-		password := password // create local copy for parallel tests
-		t.Run(password, func(t *testing.T) {
+	for _, password := range invalidPasswords { // pragma: allowlist secret
+		password := password                 // create local copy for parallel tests    // pragma: allowlist secret
+		t.Run(password, func(t *testing.T) { // pragma: allowlist secret
 			t.Parallel()
 
 			// Get base Terraform variables
 			terraformVars := getBaseVars(t)
 			testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-			terraformVars["app_center_gui_password"] = password // Invalid password
+			terraformVars["app_center_gui_password"] = password // Invalid password    // pragma: allowlist secret
 
 			terraformDirPath := getTerraformDirPath(t)
 			terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
@@ -159,9 +159,9 @@ func TestInvalidAppCenterPassword(t *testing.T) {
 			_, err := terraform.PlanE(t, terraformOptions)
 
 			require.Error(t, err, "Expected an error during plan")
-			validationPassed := utils.VerifyDataContains(t, err.Error(), "The password must be at least 8 characters long", testLogger)
-			assert.True(t, validationPassed, "Should fail with invalid password error")
-			testLogger.LogValidationResult(t, validationPassed, "Invalid App Center password validation")
+			validationPassed := utils.VerifyDataContains(t, err.Error(), "The password must be at least 8 characters long", testLogger) // pragma: allowlist secret
+			assert.True(t, validationPassed, "Should fail with invalid password error")                                                 // pragma: allowlist secret
+			testLogger.LogValidationResult(t, validationPassed, "Invalid App Center password validation")                               // pragma: allowlist secret
 		})
 	}
 }
@@ -511,12 +511,13 @@ func TestInvalidLdapServerIP(t *testing.T) {
 
 	// Retrieve environment variables
 	envVars, err := GetEnvVars()
+	require.NoError(t, err, "Failed to get environment variables")
 	if strings.ToLower(envVars.EnableLdap) != "true" {
 		t.Skip("LDAP is not enabled. Set the 'enable_ldap' environment variable to 'true' to run this test.")
 	}
 
 	// Validate required LDAP credentials
-	if len(envVars.LdapAdminPassword) == 0 || len(envVars.LdapUserName) == 0 || len(envVars.LdapUserPassword) == 0 {
+	if len(envVars.LdapAdminPassword) == 0 || len(envVars.LdapUserName) == 0 || len(envVars.LdapUserPassword) == 0 { // pragma: allowlist secret
 		t.Fatal("LDAP credentials are missing. Make sure LDAP admin password, LDAP user name, and LDAP user password are provided.")
 	}
 
@@ -529,7 +530,7 @@ func TestInvalidLdapServerIP(t *testing.T) {
 	terraformVars["enable_ldap"] = true
 	terraformVars["ldap_server"] = "10.10.10.10" // Invalid IP
 	terraformVars["ldap_server_cert"] = "SampleTest"
-	terraformVars["ldap_admin_password"] = envVars.LdapAdminPassword
+	terraformVars["ldap_admin_password"] = envVars.LdapAdminPassword // pragma: allowlist secret
 
 	terraformDirPath := getTerraformDirPath(t)
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
@@ -564,7 +565,7 @@ func TestInvalidLdapServerCert(t *testing.T) {
 	}
 
 	// Validate required LDAP credentials
-	if len(envVars.LdapAdminPassword) == 0 || len(envVars.LdapUserName) == 0 || len(envVars.LdapUserPassword) == 0 {
+	if len(envVars.LdapAdminPassword) == 0 || len(envVars.LdapUserName) == 0 || len(envVars.LdapUserPassword) == 0 { // pragma: allowlist secret
 		t.Fatal("LDAP credentials are missing. Make sure LDAP admin password, LDAP user name, and LDAP user password are provided.")
 	}
 
@@ -575,9 +576,9 @@ func TestInvalidLdapServerCert(t *testing.T) {
 
 	// Set invalid LDAP server certificate configuration
 	terraformVars["enable_ldap"] = true
-	terraformVars["ldap_server"] = "10.10.10.10" // Existing server
-	terraformVars["ldap_server_cert"] = ""       // Missing certificate
-	terraformVars["ldap_admin_password"] = envVars.LdapAdminPassword
+	terraformVars["ldap_server"] = "10.10.10.10"                     // Existing server
+	terraformVars["ldap_server_cert"] = ""                           // Missing certificate
+	terraformVars["ldap_admin_password"] = envVars.LdapAdminPassword // pragma: allowlist secret
 
 	terraformDirPath := getTerraformDirPath(t)
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
@@ -615,8 +616,8 @@ func TestInvalidLdapConfigurations(t *testing.T) {
 			config: map[string]interface{}{
 				"enable_ldap":         true,
 				"ldap_user_name":      "invalid user",
-				"ldap_user_password":  "ValidPass123!",
-				"ldap_admin_password": "AdminPass123!",
+				"ldap_user_password":  "ValidPass123!", // pragma: allowlist secret
+				"ldap_admin_password": "AdminPass123!", // pragma: allowlist secret
 			},
 			expectedErrors: []string{
 				"LDAP username must be between 4-32 characters",
@@ -629,8 +630,8 @@ func TestInvalidLdapConfigurations(t *testing.T) {
 			config: map[string]interface{}{
 				"enable_ldap":         true,
 				"ldap_user_name":      "usr",
-				"ldap_user_password":  "ValidPass123!",
-				"ldap_admin_password": "AdminPass123!",
+				"ldap_user_password":  "ValidPass123!", // pragma: allowlist secret
+				"ldap_admin_password": "AdminPass123!", // pragma: allowlist secret
 			},
 			expectedErrors: []string{
 				"LDAP username must be between 4-32 characters",
@@ -642,8 +643,8 @@ func TestInvalidLdapConfigurations(t *testing.T) {
 			config: map[string]interface{}{
 				"enable_ldap":         true,
 				"ldap_user_name":      "user@name",
-				"ldap_user_password":  "ValidPass@123",
-				"ldap_admin_password": "ValidPass@123",
+				"ldap_user_password":  "ValidPass@123", // pragma: allowlist secret
+				"ldap_admin_password": "ValidPass@123", // pragma: allowlist secret
 			},
 
 			expectedErrors: []string{
@@ -656,8 +657,8 @@ func TestInvalidLdapConfigurations(t *testing.T) {
 			config: map[string]interface{}{
 				"enable_ldap":         true,
 				"ldap_user_name":      "validuser",
-				"ldap_user_password":  "weak",
-				"ldap_admin_password": "AdminPass123!",
+				"ldap_user_password":  "weak",          // pragma: allowlist secret
+				"ldap_admin_password": "AdminPass123!", // pragma: allowlist secret
 			},
 			expectedErrors: []string{
 				"must contain at least 8 characters",
@@ -672,8 +673,8 @@ func TestInvalidLdapConfigurations(t *testing.T) {
 			config: map[string]interface{}{
 				"enable_ldap":         true,
 				"ldap_user_name":      "validuser",
-				"ldap_user_password":  "validuser123!",
-				"ldap_admin_password": "validPass123!",
+				"ldap_user_password":  "validuser123!", // pragma: allowlist secret
+				"ldap_admin_password": "validPass123!", // pragma: allowlist secret
 			},
 			expectedErrors: []string{
 				"Make sure that the password doesn't include the username",
@@ -686,8 +687,8 @@ func TestInvalidLdapConfigurations(t *testing.T) {
 				"enable_ldap":         true,
 				"ldap_basedns":        "",
 				"ldap_user_name":      "validuser",
-				"ldap_user_password":  "ValidPass123!",
-				"ldap_admin_password": "AdminPass123!",
+				"ldap_user_password":  "ValidPass123!", // pragma: allowlist secret
+				"ldap_admin_password": "AdminPass123!", // pragma: allowlist secret
 			},
 			expectedErrors: []string{
 				"base DNS should not be empty or null",
@@ -700,8 +701,8 @@ func TestInvalidLdapConfigurations(t *testing.T) {
 			config: map[string]interface{}{
 				"enable_ldap":         true,
 				"ldap_user_name":      "validuser",
-				"ldap_user_password":  "ValidPass123!",
-				"ldap_admin_password": "",
+				"ldap_user_password":  "ValidPass123!", // pragma: allowlist secret
+				"ldap_admin_password": "",              // pragma: allowlist secret
 			},
 			expectedErrors: []string{
 				"Password that is used for LDAP admin. The password must contain at least 8 characters and at most 20 characters.",
