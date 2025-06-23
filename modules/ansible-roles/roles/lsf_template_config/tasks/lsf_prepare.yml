@@ -5,13 +5,17 @@
   register: rhel_version
   changed_when: false
 
-- name: LSF | Install Required Packages
-  ansible.builtin.dnf:
-    name:
-      - lsof
-      - ipmitool
+- name: LSF | Get installed packages
+  package_facts:
+    manager: auto
+
+- name: LSF | Install missing lsof and ipmitool packages
+  dnf:
+    name: "{{ ['lsof', 'ipmitool'] | difference(ansible_facts.packages.keys() | list) }}"
     state: present
-  when: rhel_version.stdout in ["8", "9"]
+  when:
+    - rhel_version.stdout in ['8', '9']
+    - (['lsof', 'ipmitool'] | difference(ansible_facts.packages.keys() | list)) | length > 0
 
 # Create the shared LSF directory
 - name: LSF | Display the last directory
