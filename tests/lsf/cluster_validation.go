@@ -25,31 +25,29 @@ type ExpectedClusterConfig struct {
 }
 
 // GetExpectedClusterConfig retrieves and structures the expected cluster
-// configuration from Terraform output. It parses relevant variables like
-// cluster name, resource group, key management, and DNS settings.
+// configuration from Terraform output variables.
 func GetExpectedClusterConfig(t *testing.T, options *testhelper.TestOptions) ExpectedClusterConfig {
-
 	masterName := utils.GetStringVarWithDefault(options.TerraformVars, "cluster_prefix", "")
 	resourceGroup := utils.GetStringVarWithDefault(options.TerraformVars, "existing_resource_group", "")
 	keyManagement := utils.GetStringVarWithDefault(options.TerraformVars, "key_management", "null")
 	lsfVersion := utils.GetStringVarWithDefault(options.TerraformVars, "lsf_version", "")
 
-	zones := options.TerraformVars["zones"].([]string)[0]
-	numOfKeys := len(options.TerraformVars["ssh_keys"].([]string))
+	zone := options.TerraformVars["zones"].([]string)[0]
+	numKeys := len(options.TerraformVars["ssh_keys"].([]string))
 
-	dnsStr := options.TerraformVars["dns_domain_name"].(string)
+	dnsJSON := options.TerraformVars["dns_domain_name"].(string)
 	var dnsMap map[string]string
-	require.NoError(t, json.Unmarshal([]byte(dnsStr), &dnsMap), "Failed to unmarshal dns_domain_name")
+	require.NoError(t, json.Unmarshal([]byte(dnsJSON), &dnsMap), "Failed to unmarshal dns_domain_name")
 
 	hyperthreading, err := strconv.ParseBool(options.TerraformVars["enable_hyperthreading"].(string))
-	require.NoError(t, err, "Failed to parse enable_hyperthreading from Terraform vars - check variable type and value")
+	require.NoError(t, err, "Failed to parse enable_hyperthreading from Terraform vars")
 
 	return ExpectedClusterConfig{
 		MasterName:     masterName,
 		ResourceGroup:  resourceGroup,
 		KeyManagement:  keyManagement,
-		Zones:          zones,
-		NumOfKeys:      numOfKeys,
+		Zones:          zone,
+		NumOfKeys:      numKeys,
 		DnsDomainName:  dnsMap["compute"],
 		Hyperthreading: hyperthreading,
 		LsfVersion:     lsfVersion,
@@ -1165,7 +1163,7 @@ func ValidateBasicClusterConfigurationWithCloudLogs(t *testing.T, options *testh
 	// Log validation start
 	logger.Info(t, t.Name()+" Validation started ......")
 
-	VerifyTestTerraformOutputs(t, bastionIP, deployerIP, true, false, false, logger)
+	VerifyTestTerraformOutputs(t, bastionIP, deployerIP, expectedLogsEnabledForManagement, false, false, logger)
 
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPs[0])
@@ -1249,7 +1247,7 @@ func ValidateBasicClusterConfigurationWithCloudMonitoring(t *testing.T, options 
 	// Log validation start
 	logger.Info(t, t.Name()+" Validation started ......")
 
-	VerifyTestTerraformOutputs(t, bastionIP, deployerIP, false, true, false, logger)
+	VerifyTestTerraformOutputs(t, bastionIP, deployerIP, false, expectedMonitoringEnabledForManagement, false, logger)
 
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPs[0])
@@ -1427,7 +1425,7 @@ func ValidateBasicObservabilityClusterConfiguration(t *testing.T, options *testh
 
 	logger.Info(t, t.Name()+" validation started")
 
-	VerifyTestTerraformOutputs(t, bastionIP, deployerIP, true, true, false, logger)
+	VerifyTestTerraformOutputs(t, bastionIP, deployerIP, expectedLogsEnabledForManagement, expectedMonitoringEnabledForManagement, false, logger)
 
 	// Connect to the master node via SSH and handle connection errors
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPs[0])
@@ -1608,8 +1606,16 @@ func ValidateBasicClusterConfigurationForMultiProfileStaticAndDynamic(t *testing
 	bastionIP, managementNodeIPs, loginNodeIP, staticWorkerNodeIPs, getClusterIPErr := GetClusterIPs(t, options, logger)
 	require.NoError(t, getClusterIPErr, "Failed to get cluster IPs from Terraform outputs - check network configuration")
 
+	deployerIP, getdeployerIPErr := GetDeployerIPs(t, options, logger)
+	require.NoError(t, getdeployerIPErr, "Failed to get deployer IP from Terraform outputs - check deployer configuration")
+
 	// Get job command for high memory tasks
 	jobCommandLow, _, jobCommandHigh := GenerateLSFJobCommandsForMemoryTypes()
+
+	// Log validation start
+	logger.Info(t, t.Name()+" Validation started ......")
+
+	VerifyTestTerraformOutputs(t, bastionIP, deployerIP, false, false, false, logger)
 
 	// Log validation start
 	logger.Info(t, t.Name()+" validation started...")

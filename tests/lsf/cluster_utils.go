@@ -1761,96 +1761,6 @@ func VerifyLDAPServerConfig(t *testing.T, sClient *ssh.Client, ldapAdminpassword
 	return nil
 }
 
-// // verifyPTRRecords verifies PTR records for 'mgmt' or 'login' nodes and ensures their resolution via SSH.
-// // It retrieves hostnames, performs nslookup to verify PTR records, and returns an error if any step fails.
-// func verifyPTRRecords(t *testing.T, sClient *ssh.Client, publicHostName, publicHostIP, privateHostName string, managementNodeIPList []string, loginNodeIP string, domainName string, logger *utils.AggregatedLogger) error {
-// 	// Slice to hold the list of hostnames
-// 	var hostNamesList []string
-
-// 	// Check if the management node IP list is empty
-// 	if len(managementNodeIPList) == 0 {
-// 		return fmt.Errorf("management node IPs cannot be empty")
-// 	}
-
-// 	// Execute the command to get the hostnames
-// 	hostNames, err := utils.RunCommandInSSHSession(sClient, "lshosts -w | awk 'NR>1' | awk '{print $1}' | grep -E 'mgmt|login'")
-// 	if err != nil {
-// 		return fmt.Errorf("failed to execute command to retrieve hostnames: %w", err)
-// 	}
-
-// 	// Process the retrieved hostnames
-// 	for _, hostName := range strings.Split(strings.TrimSpace(hostNames), "\n") {
-// 		// Append domain name to hostnames if not already present
-// 		if !strings.Contains(hostName, domainName) {
-// 			hostNamesList = append(hostNamesList, hostName+"."+domainName)
-// 		} else {
-// 			hostNamesList = append(hostNamesList, hostName)
-// 		}
-// 	}
-
-// 	// Function to perform nslookup and verify PTR records
-// 	verifyPTR := func(sshClient *ssh.Client, nodeDesc string) error {
-// 		for _, hostName := range hostNamesList {
-// 			// Execute nslookup command for the hostname
-// 			nsOutput, err := utils.RunCommandInSSHSession(sshClient, "nslookup "+hostName)
-// 			if err != nil {
-// 				return fmt.Errorf("failed to execute nslookup command for %s: %w", hostName, err)
-// 			}
-
-// 			// Verify the PTR record existence in the search results
-// 			if utils.VerifyDataContains(t, nsOutput, "server can't find", logger) {
-// 				return fmt.Errorf("PTR record for %s not found in search results", hostName)
-// 			}
-// 		}
-// 		logger.Info(t, fmt.Sprintf("PTR Records for %s completed successfully.", nodeDesc))
-// 		return nil
-// 	}
-
-// 	// Iterate over management nodes
-// 	for _, mgmtIP := range managementNodeIPList {
-// 		// Connect to the management node via SSH
-// 		mgmtSshClient, connectionErr := utils.ConnectToHost(publicHostName, publicHostIP, privateHostName, mgmtIP)
-// 		if connectionErr != nil {
-// 			return fmt.Errorf("failed to connect to the management node %s via SSH: %v", mgmtIP, connectionErr)
-// 		}
-
-// 		defer func() {
-// 			if err := mgmtSshClient.Close(); err != nil {
-// 				logger.Info(t, fmt.Sprintf("failed to close mgmtSshClient: %v", err))
-// 			}
-// 		}()
-
-// 		// Verify PTR records on management node
-// 		if err := verifyPTR(mgmtSshClient, fmt.Sprintf("management node %s", mgmtIP)); err != nil {
-// 			return err
-// 		}
-// 	}
-// 	logger.Info(t, "Verify PTR Records for management nodes completed successfully.")
-
-// 	// If login node IP is provided, verify PTR records on login node as well
-// 	if loginNodeIP != "" {
-// 		loginSshClient, connectionErr := utils.ConnectToHost(publicHostName, publicHostIP, privateHostName, loginNodeIP)
-// 		if connectionErr != nil {
-// 			return fmt.Errorf("failed to connect to the login node %s via SSH: %v", loginNodeIP, connectionErr)
-// 		}
-
-// 		defer func() {
-// 			if err := loginSshClient.Close(); err != nil {
-// 				logger.Info(t, fmt.Sprintf("failed to close loginSshClient: %v", err))
-// 			}
-// 		}()
-
-// 		// Verify PTR records on login node
-// 		if err := verifyPTR(loginSshClient, fmt.Sprintf("login node %s", loginNodeIP)); err != nil {
-// 			return err
-// 		}
-// 	}
-
-// 	logger.Info(t, "Verify PTR Records for login node completed successfully.")
-// 	logger.Info(t, "Verify PTR Records completed successfully.")
-// 	return nil
-// }
-
 // verifyPTRRecords verifies PTR records for 'mgmt'  nodes and ensures their resolution via SSH.
 // It retrieves hostnames, performs nslookup to verify PTR records, and returns an error if any step fails.
 func verifyPTRRecords(t *testing.T, sClient *ssh.Client, publicHostName, publicHostIP, privateHostName string, managementNodeIPList []string, domainName string, logger *utils.AggregatedLogger) error {
@@ -1986,6 +1896,14 @@ func DeleteServiceInstance(t *testing.T, apiKey, region, resourceGroup, instance
 
 	logger.Info(t, fmt.Sprintf("Service instance '%s' retrieved successfully. Instance ID: %s", instanceName, serviceInstanceID))
 
+	// Set the IBM Cloud Key Protect region
+	setKPRegionCommand := fmt.Sprintf("ibmcloud kp region-set %s", region)
+	setKPRegionExec := exec.Command("bash", "-c", setKPRegionCommand)
+	setKPRegionOutput, err := setKPRegionExec.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to set Key Protect region: %w. Output: %s", err, string(setKPRegionOutput))
+	}
+
 	// Retrieve and delete associated keys
 	getAssociatedKeysCmd := fmt.Sprintf("ibmcloud kp keys -i %s | awk 'NR>3' | awk '{print $1}'", serviceInstanceID)
 	cmdKeysID := exec.Command("bash", "-c", getAssociatedKeysCmd)
@@ -2053,11 +1971,18 @@ func CreateKey(t *testing.T, apiKey, region, resourceGroup, instanceName, keyNam
 
 	logger.Info(t, fmt.Sprintf("Service instance '%s' retrieved successfully. Instance ID: %s", instanceName, serviceInstanceID))
 
-	// Create key
+	// Set the IBM Cloud Key Protect region
+	setKPRegionCommand := fmt.Sprintf("ibmcloud kp region-set %s", region)
+	setKPRegionExec := exec.Command("bash", "-c", setKPRegionCommand)
+	setKPRegionOutput, err := setKPRegionExec.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to set Key Protect region: %w. Output: %s", err, string(setKPRegionOutput))
+	}
 
+	// Create key
 	createKeyCmd := fmt.Sprintf("ibmcloud kp key create %s -i %s", keyName, serviceInstanceID)
-	cmdKey := exec.Command("bash", "-c", createKeyCmd)
-	keyOutput, err := cmdKey.CombinedOutput()
+	createCmdKey := exec.Command("bash", "-c", createKeyCmd)
+	keyOutput, err := createCmdKey.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to create key: %w. Output: %s", err, string(keyOutput))
 	}

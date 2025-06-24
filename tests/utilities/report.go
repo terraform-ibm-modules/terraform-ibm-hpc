@@ -15,7 +15,7 @@ import (
 type TestResult struct {
 	Test    string  `json:"test"`    // Name of the test case
 	Action  string  `json:"action"`  // Test outcome (PASS/FAIL)
-	Elapsed float64 `json:"elapsed"` // Duration in seconds
+	Elapsed float64 `json:"elapsed"` // Duration in minutes (updated from seconds)
 }
 
 // ReportData contains all data needed to generate the HTML report
@@ -24,7 +24,7 @@ type ReportData struct {
 	TotalTests int          `json:"totalTests"` // Total number of tests
 	TotalPass  int          `json:"totalPass"`  // Number of passed tests
 	TotalFail  int          `json:"totalFail"`  // Number of failed tests
-	TotalTime  float64      `json:"totalTime"`  // Total execution time
+	TotalTime  float64      `json:"totalTime"`  // Total execution time (now in minutes)
 	ChartData  string       `json:"chartData"`  // JSON data for charts
 	DateTime   string       `json:"dateTime"`   // Report generation timestamp
 }
@@ -47,7 +47,7 @@ func ParseJSONFile(fileName string) ([]TestResult, error) {
 			results = append(results, TestResult{
 				Test:    matches[2],
 				Action:  matches[1],
-				Elapsed: parseElapsedTime(matches[3]),
+				Elapsed: parseElapsedTime(matches[3]), // Now stores minutes
 			})
 		}
 	}
@@ -98,7 +98,7 @@ type reportStats struct {
 	totalTests int
 	totalPass  int
 	totalFail  int
-	totalTime  float64
+	totalTime  float64 // Now in minutes
 }
 
 // calculateStats computes summary statistics from test results
@@ -113,7 +113,7 @@ func calculateStats(results []TestResult) reportStats {
 		case "FAIL":
 			stats.totalFail++
 		}
-		stats.totalTime += result.Elapsed
+		stats.totalTime += result.Elapsed // Already in minutes
 	}
 
 	return stats
@@ -139,7 +139,6 @@ func writeReport(data ReportData) error {
 		return fmt.Errorf("error writing report: %w", err)
 	}
 
-	//status
 	fmt.Printf("✅ HTML report generated: %s\n", reportFileName)
 	return nil
 }
@@ -152,13 +151,14 @@ func getReportFileName() string {
 	return "test-report-" + time.Now().Format("20060102-150405") + ".html"
 }
 
-// parseElapsedTime converts elapsed time string to float64
+// parseElapsedTime converts elapsed time string to float64 (now in minutes)
 func parseElapsedTime(elapsedStr string) float64 {
-	var elapsed float64
-	if _, err := fmt.Sscanf(elapsedStr, "%f", &elapsed); err != nil {
+	var seconds float64
+	if _, err := fmt.Sscanf(elapsedStr, "%f", &seconds); err != nil {
 		fmt.Fprintf(os.Stderr, "warning: failed to parse elapsed time '%s': %v\n", elapsedStr, err)
+		return 0
 	}
-	return elapsed
+	return seconds / 60 // Convert seconds → minutes
 }
 
 // cleanTemplateOutput processes template output for better HTML formatting
@@ -184,7 +184,7 @@ func closeFile(file *os.File, fileName string) {
 	}
 }
 
-// reportTemplate is the HTML template for the test report
+// reportTemplate is the HTML template for the test report (updated to show "mins")
 const reportTemplate = `<!DOCTYPE html>
 <html>
 <head>
@@ -271,7 +271,7 @@ const reportTemplate = `<!DOCTYPE html>
             </div>
             <div class="metric time-metric">
                 <div>Total Time</div>
-                <div class="metric-value">{{printf "%.2f" .TotalTime}}s</div>
+                <div class="metric-value">{{printf "%.2f" .TotalTime}} mins</div>
             </div>
         </div>
     </div>
@@ -286,7 +286,7 @@ const reportTemplate = `<!DOCTYPE html>
             <tr>
                 <th>Test Name</th>
                 <th>Status</th>
-                <th>Duration (s)</th>
+                <th>Duration (mins)</th>
             </tr>
         </thead>
         <tbody>

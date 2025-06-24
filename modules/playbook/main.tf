@@ -285,8 +285,8 @@ resource "local_file" "lsf_prerequesite_playbook" {
   become: yes
   vars:
     rpm_urls:
-      "8": "https://rpmfind.net/linux/almalinux/8.10/BaseOS/x86_64/os/Packages/bc-1.07.1-5.el8.x86_64.rpm"
-      "9": "https://rpmfind.net/linux/centos-stream/9-stream/BaseOS/x86_64/os/Packages/bc-1.07.1-14.el9.x86_64.rpm"
+      "8": "https://vault.centos.org/8-stream/BaseOS/x86_64/os/Packages/bc-1.07.1-5.el8.x86_64.rpm"
+      "9": "https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/Packages/bc-1.07.1-14.el9.x86_64.rpm"
   tasks:
     - name: Check if bc is already installed
       command: rpm -q bc
