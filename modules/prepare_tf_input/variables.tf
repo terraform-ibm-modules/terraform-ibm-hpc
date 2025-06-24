@@ -44,6 +44,12 @@ variable "resource_group_ids" {
   description = "Map describing resource groups to create or reference"
 }
 
+variable "resource_group_name" {
+  type        = string
+  default     = ""
+  description = "Map describing resource groups to create or reference"
+}
+
 ##############################################################################
 # Compute Variables
 ##############################################################################
@@ -740,4 +746,30 @@ variable "vpc_cluster_private_subnets_cidr_blocks" {
   type        = string
   default     = "10.241.0.0/20"
   description = "Provide the CIDR block required for the creation of the compute cluster's private subnet. One CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Ensure the selected CIDR block size can accommodate the maximum number of management and dynamic compute nodes expected in your cluster. For more information on CIDR block size selection, refer to the documentation, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
+}
+
+variable "sccwp_service_plan" {
+  description = "IBM service pricing plan."
+  type        = string
+  default     = "free-trial"
+  validation {
+    error_message = "Plan for SCC Workload Protection instances can only be `free-trial` or `graduated-tier`."
+    condition = contains(
+      ["free-trial", "graduated-tier"],
+      var.sccwp_service_plan
+    )
+  }
+}
+
+variable "sccwp_enable" {
+  type        = bool
+  default     = true
+  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+}
+
+variable "cspm_enabled" {
+  description = "Enable Cloud Security Posture Management (CSPM) for the Workload Protection instance. This will create a trusted profile associated with the SCC Workload Protection instance that has viewer / reader access to the App Config service and viewer access to the Enterprise service. [Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
+  type        = bool
+  default     = false
+  nullable    = false
 }

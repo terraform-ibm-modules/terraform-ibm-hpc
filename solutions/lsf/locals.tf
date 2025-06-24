@@ -82,6 +82,9 @@ locals {
     existing_bastion_ssh_private_key                 = var.existing_bastion_ssh_private_key
     login_instance                                   = var.login_instance
     vpn_enabled                                      = var.vpn_enabled
+    sccwp_service_plan                               = var.sccwp_service_plan
+    sccwp_enable                                     = var.sccwp_enable
+    cspm_enabled                                     = var.cspm_enabled
 
   }
 }
@@ -153,6 +156,9 @@ locals {
     existing_bastion_security_group_id               = lookup(local.override[local.override_type], "existing_bastion_security_group_id", local.config.existing_bastion_security_group_id)
     existing_bastion_ssh_private_key                 = lookup(local.override[local.override_type], "existing_bastion_ssh_private_key", local.config.existing_bastion_ssh_private_key)
     login_instance                                   = lookup(local.override[local.override_type], "login_instance", local.config.login_instance)
+    sccwp_enable                                     = lookup(local.override[local.override_type], "scc_wp_enable", local.config.sccwp_enable)
+    cspm_enable                                      = lookup(local.override[local.override_type], "cspm_enable", local.config.cspm_enabled)
+    sccwp_service_plan                               = lookup(local.override[local.override_type], "scc_wp_service_plan", local.config.sccwp_service_plan)
     # client_instances                                 = lookup(local.override[local.override_type], "client_instances", local.config.client_instances)
     # client_subnets_cidr                              = lookup(local.override[local.override_type], "client_subnets_cidr", local.config.client_subnets_cidr)
   }

@@ -65,4 +65,7 @@ module "lsf" {
   existing_bastion_ssh_private_key                 = local.env.existing_bastion_ssh_private_key
   vpn_enabled                                      = local.env.vpn_enabled
   login_instance                                   = local.env.login_instance
+  sccwp_enable                                     = local.env.sccwp_enable
+  sccwp_service_plan                               = local.env.sccwp_service_plan
+  cspm_enabled                                     = var.cspm_enabled
 }

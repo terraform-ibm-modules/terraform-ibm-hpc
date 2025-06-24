@@ -832,3 +832,30 @@ variable "TF_PARALLELISM" {
     error_message = "Input \"TF_PARALLELISM\" must be greater than or equal to 1 and less than or equal to 256."
   }
 }
+
+
+variable "sccwp_service_plan" {
+  description = "IBM service pricing plan."
+  type        = string
+  default     = "free-trial"
+  validation {
+    error_message = "Plan for SCC Workload Protection instances can only be `free-trial` or `graduated-tier`."
+    condition = contains(
+      ["free-trial", "graduated-tier"],
+      var.sccwp_service_plan
+    )
+  }
+}
+
+variable "sccwp_enable" {
+  type        = bool
+  default     = true
+  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+}
+
+variable "cspm_enabled" {
+  description = "Enable Cloud Security Posture Management (CSPM) for the Workload Protection instance. This will create a trusted profile associated with the SCC Workload Protection instance that has viewer / reader access to the App Config service and viewer access to the Enterprise service. [Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
+  type        = bool
+  default     = false
+  nullable    = false
+}

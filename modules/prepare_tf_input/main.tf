@@ -7,6 +7,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "app_center_gui_password": "${var.app_center_gui_password}",
   "lsf_version": "${var.lsf_version}",
   "resource_group_ids": ${local.resource_group_ids},
+  "resource_group_name": ${var.resource_group_name},
   "cluster_prefix": "${var.cluster_prefix}",
   "zones": ${local.zones},
   "enable_landing_zone": false,
@@ -87,7 +88,10 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "storage_security_group_id": "${local.storage_security_group_id}",
   "custom_file_shares": ${local.custom_file_shares},
   "login_instance": ${local.login_instance},
-  "vpc_cluster_private_subnets_cidr_blocks": "${var.vpc_cluster_private_subnets_cidr_blocks}"
+  "vpc_cluster_private_subnets_cidr_blocks": "${var.vpc_cluster_private_subnets_cidr_blocks}",
+  "sccwp_service_plan": "${var.sccwp_service_plan}",
+  "sccwp_enable": ${var.sccwp_enable},
+  "cspm_enabled": ${var.cspm_enabled}
 }
 EOT
   filename = local.schematics_inputs_path
