@@ -44,12 +44,6 @@ variable "resource_group_ids" {
   description = "Map describing resource groups to create or reference"
 }
 
-variable "resource_group_name" {
-  type        = string
-  default     = ""
-  description = "Map describing resource groups to create or reference"
-}
-
 ##############################################################################
 # Compute Variables
 ##############################################################################

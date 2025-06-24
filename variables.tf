@@ -1097,12 +1097,6 @@ variable "resource_group_ids" {
   default     = null
   description = "Map describing resource groups to create or reference"
 }
-
-variable "resource_group_name" {
-  type        = string
-  default     = ""
-  description = "Map describing resource groups to create or reference"
-}
 ##############################################################################
 # Login Variables
 ##############################################################################

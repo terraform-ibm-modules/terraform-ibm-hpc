@@ -7,7 +7,6 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "app_center_gui_password": "${var.app_center_gui_password}",
   "lsf_version": "${var.lsf_version}",
   "resource_group_ids": ${local.resource_group_ids},
-  "resource_group_name": ${var.resource_group_name},
   "cluster_prefix": "${var.cluster_prefix}",
   "zones": ${local.zones},
   "enable_landing_zone": false,
