@@ -350,7 +350,7 @@ func TestRunNoKMSAndHTOff(t *testing.T) {
 	}
 }
 
-// TestRunUsingExistingKMS validates cluster creation with existing Key Protect service instance.
+// TestRunUsingExistingKMSInstanceAndExistingKey validates cluster creation with existing Key Protect service instance.
 // Verifies proper KMS integration and encryption functionality.
 //
 // Prerequisites:
@@ -576,6 +576,7 @@ func TestRunWithExistingKMSInstanceAndKeyWithAuthorizationPolicy(t *testing.T) {
 	options.TerraformVars["kms_instance_name"] = envVars.KMSInstanceName
 	options.TerraformVars["kms_key_name"] = envVars.KMSKeyName
 	options.TerraformVars["skip_iam_share_authorization_policy"] = true
+	options.TerraformVars["skip_iam_block_storage_authorization_policy"] = true
 
 	// Cluster Teardown Configuration
 	options.SkipTestTearDown = true
