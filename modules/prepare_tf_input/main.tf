@@ -90,7 +90,8 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "vpc_cluster_private_subnets_cidr_blocks": "${var.vpc_cluster_private_subnets_cidr_blocks}",
   "sccwp_service_plan": "${var.sccwp_service_plan}",
   "sccwp_enable": ${var.sccwp_enable},
-  "cspm_enabled": ${var.cspm_enabled}
+  "cspm_enabled": ${var.cspm_enabled},
+  "cloud_monitoring_instance_crn": ${local.cloud_monitoring_instance_crn}
 }
 EOT
   filename = local.schematics_inputs_path

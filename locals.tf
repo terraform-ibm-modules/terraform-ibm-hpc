@@ -571,3 +571,11 @@ locals {
   ssh_jump_option  = var.enable_deployer ? "" : "-J ubuntu@${local.ssh_jump_host}"
   ssh_cmd          = var.enable_deployer ? "" : "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 ${local.ssh_forwards} ${local.ssh_jump_option} lsfadmin@${join(",", local.login_host_ip)}"
 }
+
+#locals {
+#  cloud_monitoring_instance_crn = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_crn : null
+#}
+
+locals {
+  cloud_monitoring_instance_crn = var.observability_monitoring_enable && length(module.cloud_monitoring_instance_creation) > 0 ? module.cloud_monitoring_instance_creation[0].cloud_monitoring_crn : null
+}

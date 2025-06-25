@@ -204,6 +204,7 @@ module "prepare_tf_input" {
   sccwp_enable                                     = var.sccwp_enable
   sccwp_service_plan                               = var.sccwp_service_plan
   cspm_enabled                                     = var.cspm_enabled
+  cloud_monitoring_instance_crn                    = local.cloud_monitoring_instance_crn
   depends_on                                       = [module.deployer]
 }
 
@@ -824,4 +825,5 @@ module "scc-workload-protection" {
   enable_deployer       = var.enable_deployer
   sccwp_enable          = var.sccwp_enable
   cspm_enabled          = var.cspm_enabled
+  cloud_monitoring_instance_crn = var.cloud_monitoring_instance_crn
 }

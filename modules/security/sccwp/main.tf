@@ -32,6 +32,7 @@ module "scc-workload-protection" {
   scc_wp_service_plan                      = var.sccwp_service_plan
   resource_tags                            = var.resource_tags
   cspm_enabled                             = var.cspm_enabled
+  cloud_monitoring_instance_crn            = var.cloud_monitoring_instance_crn
   app_config_crn                           = var.cspm_enabled && length(module.app_config) > 0 ? module.app_config[0].app_config_crn : null
   scc_workload_protection_trusted_profile_name = var.cspm_enabled == true ? "${var.prefix}-wp-tp" : "workload-protection-trusted-profile"
 }

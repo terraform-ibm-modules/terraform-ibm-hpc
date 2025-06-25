@@ -1162,3 +1162,9 @@ variable "cspm_enabled" {
   default     = false
   nullable    = false
 }
+
+variable "cloud_monitoring_instance_crn" {
+  type        = string
+  description = "The CRN of an IBM Cloud Monitoring instance to connect to the SCC Workload Protection instance."
+  default     = null
+}
