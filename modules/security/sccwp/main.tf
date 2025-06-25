@@ -15,7 +15,7 @@ module "app_config" {
   version                                = "1.6.2"
   region                                 = var.region
   resource_group_id                      = data.ibm_resource_group.existing_resource_group[0].id
-  app_config_plan                        = "basic"
+  app_config_plan                        = var.app_config_plan
   app_config_name                        = "${var.prefix}-app-config"
   app_config_tags                        = var.resource_tags
   enable_config_aggregator               = true

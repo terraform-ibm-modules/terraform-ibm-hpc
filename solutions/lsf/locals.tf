@@ -85,6 +85,7 @@ locals {
     sccwp_service_plan                               = var.sccwp_service_plan
     sccwp_enable                                     = var.sccwp_enable
     cspm_enabled                                     = var.cspm_enabled
+    app_config_plan                                  = var.app_config_plan
 
   }
 }
@@ -159,6 +160,7 @@ locals {
     sccwp_enable                                     = lookup(local.override[local.override_type], "scc_wp_enable", local.config.sccwp_enable)
     cspm_enable                                      = lookup(local.override[local.override_type], "cspm_enable", local.config.cspm_enabled)
     sccwp_service_plan                               = lookup(local.override[local.override_type], "scc_wp_service_plan", local.config.sccwp_service_plan)
+    app_config_plan                                  = lookup(local.override[local.override_type], "app_config_plan", local.config.app_config_plan)
     # client_instances                                 = lookup(local.override[local.override_type], "client_instances", local.config.client_instances)
     # client_subnets_cidr                              = lookup(local.override[local.override_type], "client_subnets_cidr", local.config.client_subnets_cidr)
   }

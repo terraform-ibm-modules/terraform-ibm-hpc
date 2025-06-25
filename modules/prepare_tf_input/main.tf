@@ -91,7 +91,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "sccwp_service_plan": "${var.sccwp_service_plan}",
   "sccwp_enable": ${var.sccwp_enable},
   "cspm_enabled": ${var.cspm_enabled},
-  "cloud_monitoring_instance_crn": ${local.cloud_monitoring_instance_crn}
+  "app_config_plan": "${var.app_config_plan}"
 }
 EOT
   filename = local.schematics_inputs_path

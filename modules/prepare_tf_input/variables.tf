@@ -768,8 +768,15 @@ variable "cspm_enabled" {
   nullable    = false
 }
 
-variable "cloud_monitoring_instance_crn" {
+variable "app_config_plan" {
+  description = "IBM service pricing plan."
   type        = string
-  description = "The CRN of an IBM Cloud Monitoring instance to connect to the SCC Workload Protection instance."
-  default     = null
+  default     = "basic"
+  validation {
+    error_message = "Plan for SCC Workload Protection instances can only be `free-trial` or `graduated-tier`."
+    condition = contains(
+      ["basic", "lite", "Standard", "Enterprise"],
+      var.app_config_plan
+    )
+  }
 }

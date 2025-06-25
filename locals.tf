@@ -577,5 +577,5 @@ locals {
 #}
 
 locals {
-  cloud_monitoring_instance_crn = var.observability_monitoring_enable && length(module.cloud_monitoring_instance_creation) > 0 ? module.cloud_monitoring_instance_creation[0].cloud_monitoring_crn : null
+  cloud_monitoring_instance_crn = var.enable_deployer ? "" : var.observability_monitoring_enable && length(module.cloud_monitoring_instance_creation) > 0 ? module.cloud_monitoring_instance_creation[0].cloud_monitoring_crn : null
 }

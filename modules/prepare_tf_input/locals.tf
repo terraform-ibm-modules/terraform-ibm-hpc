@@ -42,6 +42,5 @@ locals {
   existing_bastion_instance_name     = jsonencode(var.existing_bastion_instance_name == null ? null : var.existing_bastion_instance_name)
   existing_bastion_security_group_id = jsonencode(var.existing_bastion_security_group_id == null ? null : var.existing_bastion_security_group_id)
   login_instance                     = jsonencode(var.login_instance)
-  cloud_monitoring_instance_crn      = jsonencode(var.cloud_monitoring_instance_crn)
 
 }

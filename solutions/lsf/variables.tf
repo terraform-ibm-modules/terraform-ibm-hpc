@@ -859,3 +859,16 @@ variable "cspm_enabled" {
   default     = false
   nullable    = false
 }
+
+variable "app_config_plan" {
+  description = "IBM service pricing plan."
+  type        = string
+  default     = "basic"
+  validation {
+    error_message = "Plan for SCC Workload Protection instances can only be `free-trial` or `graduated-tier`."
+    condition = contains(
+      ["basic", "lite", "Standard", "Enterprise"],
+      var.app_config_plan
+    )
+  }
+}

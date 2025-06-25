@@ -27,6 +27,19 @@ variable "sccwp_service_plan" {
   }
 }
 
+variable "app_config_plan" {
+  description = "IBM service pricing plan."
+  type        = string
+  default     = "basic"
+  validation {
+    error_message = "Plan for SCC Workload Protection instances can only be `free-trial` or `graduated-tier`."
+    condition = contains(
+      ["basic", "lite", "Standard", "Enterprise"],
+      var.app_config_plan
+    )
+  }
+}
+
 variable "resource_tags" {
   type        = list(string)
   description = "Optional list of tags to be added to created SCC WP instance."
