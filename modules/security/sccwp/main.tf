@@ -4,7 +4,7 @@ provider "restapi" {
   # see https://cloud.ibm.com/apidocs/resource-controller/resource-controller#endpoint-url for full list of available resource controller endpoints
   uri = "https://resource-controller.cloud.ibm.com"
   headers = {
-    Authorization  = data.ibm_iam_auth_token.auth_token.iam_access_token
+    Authorization = data.ibm_iam_auth_token.auth_token.iam_access_token
   }
   write_returns_object = true
 }
@@ -23,16 +23,15 @@ module "app_config" {
 }
 
 module "scc-workload-protection" {
-  count                                    = var.enable_deployer == false && var.sccwp_enable ? 1 : 0
-  source                                   = "terraform-ibm-modules/scc-workload-protection/ibm"
-  version                                  = "1.8.0"
-  region                                   = var.region
-  name                                     = var.prefix
-  resource_group_id                        = data.ibm_resource_group.existing_resource_group[0].id
-  scc_wp_service_plan                      = var.sccwp_service_plan
-  resource_tags                            = var.resource_tags
-  cspm_enabled                             = var.cspm_enabled
-  cloud_monitoring_instance_crn            = var.cloud_monitoring_instance_crn
-  app_config_crn                           = var.cspm_enabled && length(module.app_config) > 0 ? module.app_config[0].app_config_crn : null
+  count                                        = var.enable_deployer == false && var.sccwp_enable ? 1 : 0
+  source                                       = "terraform-ibm-modules/scc-workload-protection/ibm"
+  version                                      = "1.8.0"
+  region                                       = var.region
+  name                                         = var.prefix
+  resource_group_id                            = data.ibm_resource_group.existing_resource_group[0].id
+  scc_wp_service_plan                          = var.sccwp_service_plan
+  resource_tags                                = var.resource_tags
+  cspm_enabled                                 = var.cspm_enabled
+  app_config_crn                               = var.cspm_enabled && length(module.app_config) > 0 ? module.app_config[0].app_config_crn : null
   scc_workload_protection_trusted_profile_name = var.cspm_enabled == true ? "${var.prefix}-wp-tp" : "workload-protection-trusted-profile"
 }

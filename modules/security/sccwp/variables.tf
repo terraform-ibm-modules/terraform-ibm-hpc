@@ -129,12 +129,6 @@ variable "cbr_rules" {
   # Validation happens in the rule module
 }
 
-variable "cloud_monitoring_instance_crn" {
-  type        = string
-  description = "The CRN of an IBM Cloud Monitoring instance to connect to the SCC Workload Protection instance."
-  default     = null
-}
-
 variable "enable_deployer" {
   type        = bool
   default     = true

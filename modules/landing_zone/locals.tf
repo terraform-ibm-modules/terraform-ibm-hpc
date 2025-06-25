@@ -189,7 +189,7 @@ locals {
 
   active_cos = [
     (
-      var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker || var.scc_enable || var.observability_logs_enable
+      var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker || var.observability_logs_enable
       ) ? {
       name                          = var.cos_instance_name == null ? "hpc-cos" : var.cos_instance_name
       resource_group                = local.service_resource_group
@@ -257,18 +257,6 @@ locals {
             enable  = true
             rule_id = "bucket-expire-rule"
           }
-        } : null,
-        var.scc_enable ? {
-          name          = "scc-bucket"
-          storage_class = "standard"
-          endpoint_type = "public"
-          force_delete  = true
-          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-scc-key", var.prefix) : var.kms_key_name) : null
-          expire_rule = {
-            days    = 30
-            enable  = true
-            rule_id = "bucket-expire-rule"
-          }
         } : null
       ]
     } : null
@@ -319,9 +307,6 @@ locals {
     } : null,
     var.enable_atracker ? {
       name = format("%s-atracker-key", var.prefix)
-    } : null,
-    var.scc_enable ? {
-      name = format("%s-scc-key", var.prefix)
     } : null
     ] : [
     {

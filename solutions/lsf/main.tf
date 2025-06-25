@@ -39,10 +39,6 @@ module "lsf" {
   observability_enable_metrics_routing             = local.env.observability_enable_metrics_routing
   observability_logs_retention_period              = local.env.observability_logs_retention_period
   observability_monitoring_plan                    = local.env.observability_monitoring_plan
-  scc_enable                                       = local.env.scc_enable
-  scc_profile                                      = local.env.scc_profile
-  scc_location                                     = local.env.scc_location
-  scc_event_notification_plan                      = local.env.scc_event_notification_plan
   skip_flowlogs_s2s_auth_policy                    = local.env.skip_flowlogs_s2s_auth_policy
   skip_iam_block_storage_authorization_policy      = local.env.skip_iam_block_storage_authorization_policy
   skip_kms_s2s_auth_policy                         = local.env.skip_kms_s2s_auth_policy

@@ -279,12 +279,6 @@ variable "skip_kms_s2s_auth_policy" {
 # Observability Variables
 ##############################################################################
 
-variable "scc_enable" {
-  type        = bool
-  default     = false
-  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
-}
-
 variable "observability_logs_enable" {
   description = "Set false to disable IBM Cloud Logs integration. If enabled, infrastructure and LSF application logs from Management/Compute Nodes will be ingested under COS bucket."
   type        = bool

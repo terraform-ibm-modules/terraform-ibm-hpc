@@ -242,9 +242,6 @@ variable "enable_vpc_flow_logs" {
   description = "Enable Activity tracker"
 }
 
-##############################################################################
-# SCC Variables
-##############################################################################
 variable "enable_atracker" {
   type        = bool
   default     = false
@@ -281,46 +278,6 @@ variable "bastion_fip" {
   description = "bastion node fip"
 }
 
-##############################################################################
-# SCC Variables
-##############################################################################
-
-variable "scc_enable" {
-  type        = bool
-  default     = true
-  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
-}
-
-variable "scc_profile" {
-  type        = string
-  default     = "CIS IBM Cloud Foundations Benchmark v1.1.0"
-  description = "Profile to be set on the SCC Instance (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')"
-  validation {
-    condition     = can(regex("^(|CIS IBM Cloud Foundations Benchmark v1.1.0|IBM Cloud Framework for Financial Services)$", var.scc_profile))
-    error_message = "Provide SCC Profile Name to be used (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')."
-  }
-}
-
-variable "scc_location" {
-  description = "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
-  type        = string
-  default     = "us-south"
-  validation {
-    condition     = can(regex("^(|us-south|eu-de|ca-tor|eu-es)$", var.scc_location))
-    error_message = "Provide region where it's possible to deploy an SCC Instance (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es') or leave blank and it will default to 'us-south'."
-  }
-}
-
-variable "scc_event_notification_plan" {
-  type        = string
-  default     = "lite"
-  description = "Event Notifications Instance plan to be used (it's used with S.C.C. instance), possible values 'lite' and 'standard'."
-  validation {
-    condition     = can(regex("^(|lite|standard)$", var.scc_event_notification_plan))
-    error_message = "Provide Event Notification instance plan to be used (accepting 'lite' and 'standard', defaulting to 'lite'). This instance is used in conjuction with S.C.C. one."
-  }
-}
-
 variable "cloud_logs_data_bucket" {
   type        = any
   default     = null
@@ -331,18 +288,6 @@ variable "cloud_metrics_data_bucket" {
   type        = any
   default     = null
   description = "cloud metrics data bucket"
-}
-
-variable "scc_cos_bucket" {
-  type        = string
-  default     = null
-  description = "scc cos bucket"
-}
-
-variable "scc_cos_instance_crn" {
-  type        = string
-  default     = null
-  description = "scc cos instance crn"
 }
 
 ##############################################################################
@@ -741,6 +686,10 @@ variable "vpc_cluster_private_subnets_cidr_blocks" {
   default     = "10.241.0.0/20"
   description = "Provide the CIDR block required for the creation of the compute cluster's private subnet. One CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Ensure the selected CIDR block size can accommodate the maximum number of management and dynamic compute nodes expected in your cluster. For more information on CIDR block size selection, refer to the documentation, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
 }
+
+##############################################################################
+# SCC Variables
+##############################################################################
 
 variable "sccwp_service_plan" {
   description = "IBM service pricing plan."
