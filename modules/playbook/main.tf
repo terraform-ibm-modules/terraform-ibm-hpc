@@ -29,6 +29,7 @@ resource "local_file" "deployer_host_entry_play" {
   vars:
     mgmnt_hosts: '{}'
     comp_hosts: '{}'
+    login_host: '{}'
     hosts_file: /etc/hosts
 
   pre_tasks:
@@ -144,6 +145,7 @@ resource "local_file" "lsf_host_entry_playbook" {
   vars:
     mgmnt_hosts: '{}'
     comp_hosts: '{}'
+    login_host: '{}'
     deployer_host: '{}'
     hosts_file: /etc/hosts
 
