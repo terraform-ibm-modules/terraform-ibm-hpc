@@ -533,7 +533,7 @@ variable "ldap_admin_password" {
   type        = string
   sensitive   = true
   default     = null
-  description = "The LDAP administrative password should be 8 to 20 characters long, with a mix of at least two alphabetic characters, including one uppercase and one lowercase letter. It must also include one numerical digit and at least one special character from (~@_+:) are required. It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
+  description = "The LDAP administrative password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces. [This value is ignored for an existing LDAP server]."
 }
 
 variable "ldap_user_name" {
@@ -550,10 +550,10 @@ variable "ldap_user_password" {
   type        = string
   sensitive   = true
   default     = ""
-  description = "The LDAP user password should be 8 to 20 characters long, with a mix of at least two alphabetic characters, including one uppercase and one lowercase letter. It must also include one numerical digit and at least one special character from (!@#$%^&*()_+=-) are required. Spaces are not allowed. It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
+  description = "The LDAP user password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one numeric digit, and at least one special character from the set (!@#$%^&*()_+=-). Spaces are not allowed. The password must not contain the username for enhanced security. [This value is ignored for an existing LDAP server]."
   validation {
     condition     = !var.enable_ldap || var.ldap_server != null || ((replace(lower(var.ldap_user_password), lower(var.ldap_user_name), "") == lower(var.ldap_user_password)) && length(var.ldap_user_password) >= 8 && length(var.ldap_user_password) <= 20 && can(regex("^(.*[0-9]){1}.*$", var.ldap_user_password))) && can(regex("^(.*[A-Z]){1}.*$", var.ldap_user_password)) && can(regex("^(.*[a-z]){1}.*$", var.ldap_user_password)) && can(regex("^.*[!@#$%^&*()_+=-].*$", var.ldap_user_password)) && !can(regex(".*\\s.*", var.ldap_user_password))
-    error_message = "Password that is used for LDAP user. The password must contain at least 8 characters and at most 20 characters. For a strong password, at least two alphabetic characters are required, with at least one uppercase and one lowercase letter. one number, and at least one special character. It must not contain spaces or include the username."
+    error_message = "The LDAP user password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one numeric digit, and at least one special character from the set (!@#$%^&*()_+=-). Spaces are not allowed. The password must not contain the username for enhanced security. [This value is ignored for an existing LDAP server]."
   }
 }
 
