@@ -1725,12 +1725,12 @@ func TestRunMultiProfileStaticAndDynamic(t *testing.T) {
 		{
 			"profile": "bx2d-16x64",
 			"count":   1,
-			"image":   "hpc-lsf-fp14-rhel810-v1",
+			"image":   envVars.ManagementInstancesImage,
 		},
 		{
 			"profile": "bx2-2x8",
 			"count":   1,
-			"image":   "hpc-lsf-fp14-rhel810-v1",
+			"image":   envVars.ManagementInstancesImage,
 		},
 	}
 

@@ -134,6 +134,8 @@ func TestInvalidAppCenterPassword(t *testing.T) {
 		"Password@",                     // Missing numbers          // pragma: allowlist secret
 		"Password123",                   // Common password pattern   // pragma: allowlist secret
 		"password@12345678901234567890", // Too long                   // pragma: allowlist secret
+		"ValidPass123\\",                //Backslash not in allowed special chars  // pragma: allowlist secret
+		"Pass word@1",                   //Contains space       // pragma: allowlist secret
 	}
 
 	setupTestSuite(t)
@@ -611,8 +613,9 @@ func TestInvalidLdapConfigurations(t *testing.T) {
 		expectedErrors []string
 		description    string
 	}{
+		// Username validation tests
 		{
-			name: "InvalidUsernameWithSpace",
+			name: "UsernameWithSpace",
 			config: map[string]interface{}{
 				"enable_ldap":         true,
 				"ldap_user_name":      "invalid user",
@@ -622,11 +625,12 @@ func TestInvalidLdapConfigurations(t *testing.T) {
 			expectedErrors: []string{
 				"LDAP username must be between 4-32 characters",
 				"can only contain letters, numbers, hyphens, and underscores",
+				"Spaces are not permitted.",
 			},
-			description: "Username with space validation",
+			description: "Username containing space should fail",
 		},
 		{
-			name: "InvalidShortUsername",
+			name: "UsernameTooShort",
 			config: map[string]interface{}{
 				"enable_ldap":         true,
 				"ldap_user_name":      "usr",
@@ -634,53 +638,175 @@ func TestInvalidLdapConfigurations(t *testing.T) {
 				"ldap_admin_password": "AdminPass123!", // pragma: allowlist secret
 			},
 			expectedErrors: []string{
-				"LDAP username must be between 4-32 characters",
+				"LDAP username must be between 4-32 characters long and can only contain",
+				"letters, numbers, hyphens, and underscores",
 			},
-			description: "Short username validation",
+			description: "Username shorter than 4 characters should fail",
 		},
 		{
-			name: "InvalidUsernameSpecialChars",
+			name: "UsernameTooLong",
 			config: map[string]interface{}{
 				"enable_ldap":         true,
-				"ldap_user_name":      "user@name",
-				"ldap_user_password":  "ValidPass@123", // pragma: allowlist secret
-				"ldap_admin_password": "ValidPass@123", // pragma: allowlist secret
-			},
-
-			expectedErrors: []string{
-				"LDAP username must be between 4-32 characters long and can only contain", "letters, numbers, hyphens, and underscores. Spaces are not permitted.",
-			},
-			description: "Username with special chars validation",
-		},
-		{
-			name: "InvalidWeakPassword",
-			config: map[string]interface{}{
-				"enable_ldap":         true,
-				"ldap_user_name":      "validuser",
-				"ldap_user_password":  "weak",          // pragma: allowlist secret
+				"ldap_user_name":      "thisusernameiswaytoolongandshouldfailvalidation",
+				"ldap_user_password":  "ValidPass123!", // pragma: allowlist secret
 				"ldap_admin_password": "AdminPass123!", // pragma: allowlist secret
 			},
 			expectedErrors: []string{
-				"must contain at least 8 characters",
-				"at least one uppercase",
-				"two numbers",
+				"LDAP username must be between 4-32 characters long and can only contain",
+				"letters, numbers, hyphens, and underscores",
+			},
+			description: "Username longer than 32 characters should fail",
+		},
+		{
+			name: "UsernameWithSpecialChars",
+			config: map[string]interface{}{
+				"enable_ldap":         true,
+				"ldap_user_name":      "user@name#",
+				"ldap_user_password":  "ValidPass123!", // pragma: allowlist secret
+				"ldap_admin_password": "AdminPass123!", // pragma: allowlist secret
+			},
+			expectedErrors: []string{
+				"LDAP username must be between 4-32 characters long and can only contain",
+				"letters, numbers, hyphens, and underscores. Spaces are not permitted.",
+			},
+			description: "Username with special characters should fail",
+		},
+
+		// Password validation tests
+		{
+			name: "PasswordTooShort",
+			config: map[string]interface{}{
+				"enable_ldap":         true,
+				"ldap_user_name":      "validuser",
+				"ldap_user_password":  "Short1!",       // pragma: allowlist secret
+				"ldap_admin_password": "AdminPass123!", // pragma: allowlist secret
+			},
+			expectedErrors: []string{
+				"must be 8 to 20 characters long",
+			},
+			description: "Password shorter than 8 characters should fail",
+		},
+		{
+			name: "PasswordTooLong",
+			config: map[string]interface{}{
+				"enable_ldap":         true,
+				"ldap_user_name":      "validuser",
+				"ldap_user_password":  "ThisPasswordIsWayTooLong123!", // pragma: allowlist secret
+				"ldap_admin_password": "AdminPass123!",                // pragma: allowlist secret
+			},
+			expectedErrors: []string{
+				"must be 8 to 20 characters long",
+			},
+			description: "Password longer than 20 characters should fail",
+		},
+		{
+			name: "PasswordMissingUppercase",
+			config: map[string]interface{}{
+				"enable_ldap":         true,
+				"ldap_user_name":      "validuser",
+				"ldap_user_password":  "missingupper1!", // pragma: allowlist secret
+				"ldap_admin_password": "AdminPass123!",  // pragma: allowlist secret
+			},
+			expectedErrors: []string{
+				"two alphabetic characters (with one uppercase and one lowercase)",
+			},
+			description: "Password missing uppercase letter should fail",
+		},
+		{
+			name: "PasswordMissingLowercase",
+			config: map[string]interface{}{
+				"enable_ldap":         true,
+				"ldap_user_name":      "validuser",
+				"ldap_user_password":  "MISSINGLOWER1!", // pragma: allowlist secret
+				"ldap_admin_password": "AdminPass123!",  // pragma: allowlist secret
+			},
+			expectedErrors: []string{
+				"two alphabetic characters (with one uppercase and one lowercase)",
+			},
+			description: "Password missing lowercase letter should fail",
+		},
+		{
+			name: "PasswordMissingNumber",
+			config: map[string]interface{}{
+				"enable_ldap":         true,
+				"ldap_user_name":      "validuser",
+				"ldap_user_password":  "MissingNumber!", // pragma: allowlist secret
+				"ldap_admin_password": "AdminPass123!",  // pragma: allowlist secret
+			},
+			expectedErrors: []string{
+				"one number",
+			},
+			description: "Password missing number should fail",
+		},
+		{
+			name: "PasswordMissingSpecialChar",
+			config: map[string]interface{}{
+				"enable_ldap":         true,
+				"ldap_user_name":      "validuser",
+				"ldap_user_password":  "MissingSpecial1", // pragma: allowlist secret
+				"ldap_admin_password": "AdminPass123!",   // pragma: allowlist secret
+			},
+			expectedErrors: []string{
 				"one special character",
 			},
-			description: "Weak password validation",
+			description: "Password missing special character should fail",
+		},
+		{
+			name: "PasswordWithSpace",
+			config: map[string]interface{}{
+				"enable_ldap":         true,
+				"ldap_user_name":      "validuser",
+				"ldap_user_password":  "Invalid Pass123!", // pragma: allowlist secret
+				"ldap_admin_password": "AdminPass123!",    // pragma: allowlist secret
+			},
+			expectedErrors: []string{
+				"password must not contain the username or any spaces",
+			},
+			description: "Password containing space should fail",
 		},
 		{
 			name: "PasswordContainsUsername",
 			config: map[string]interface{}{
 				"enable_ldap":         true,
 				"ldap_user_name":      "validuser",
-				"ldap_user_password":  "validuser123!", // pragma: allowlist secret
-				"ldap_admin_password": "validPass123!", // pragma: allowlist secret
+				"ldap_user_password":  "Validuser123!", // pragma: allowlist secret
+				"ldap_admin_password": "AdminPass123!", // pragma: allowlist secret
 			},
 			expectedErrors: []string{
-				"Make sure that the password doesn't include the username",
+				"The password must not contain the username",
 			},
-			description: "Password containing username validation",
+			description: "Password containing username should fail",
 		},
+
+		// Admin password validation tests
+		{
+			name: "AdminPasswordMissing",
+			config: map[string]interface{}{
+				"enable_ldap":         true,
+				"ldap_user_name":      "validuser",
+				"ldap_user_password":  "ValidPass123!", // pragma: allowlist secret
+				"ldap_admin_password": "",              // pragma: allowlist secret
+			},
+			expectedErrors: []string{
+				"The LDAP administrative password must be 8 to 20 characters long and include at least two alphabetic characters",
+			},
+			description: "Missing admin password should fail",
+		},
+		{
+			name: "AdminPasswordTooShort",
+			config: map[string]interface{}{
+				"enable_ldap":         true,
+				"ldap_user_name":      "validuser",
+				"ldap_user_password":  "ValidPass123!", // pragma: allowlist secret
+				"ldap_admin_password": "Short1!",       // pragma: allowlist secret
+			},
+			expectedErrors: []string{
+				"must be 8 to 20 characters long",
+			},
+			description: "Admin password too short should fail",
+		},
+
+		// Base DNS validation
 		{
 			name: "MissingBaseDNS",
 			config: map[string]interface{}{
@@ -691,24 +817,23 @@ func TestInvalidLdapConfigurations(t *testing.T) {
 				"ldap_admin_password": "AdminPass123!", // pragma: allowlist secret
 			},
 			expectedErrors: []string{
-				"base DNS should not be empty or null",
-				"Need a valid domain name",
+				"If LDAP is enabled, then the base DNS should not be empty or null.",
 			},
-			description: "Missing base DNS validation",
+			description: "Missing base DNS should fail",
 		},
 		{
-			name: "MissingAdminPassword",
+			name: "InvalidBaseDNSFormat",
 			config: map[string]interface{}{
 				"enable_ldap":         true,
+				"ldap_basedns":        "invalid_dns_format",
 				"ldap_user_name":      "validuser",
-				"ldap_user_password":  "ValidPass123!", // pragma: allowlist secret
-				"ldap_admin_password": "",              // pragma: allowlist secret
+				"ldap_user_password":  "UserPass123!",  // pragma: allowlist secret
+				"ldap_admin_password": "AdminPass123!", // pragma: allowlist secret
 			},
 			expectedErrors: []string{
-				"Password that is used for LDAP admin. The password must contain at least 8 characters and at most 20 characters.",
-				"For a strong password, at least three alphabetic characters are required, with at least one uppercase and one lowercase letter. Two numbers, and at least one special character.",
+				"Need a valid domain name",
 			},
-			description: "Missing admin password validation",
+			description: "Invalid base DNS format should fail",
 		},
 	}
 
@@ -721,7 +846,6 @@ func TestInvalidLdapConfigurations(t *testing.T) {
 			testLogger.Info(t, "Test: "+t.Name())
 
 			// Get base vars and merge with test case config
-			// Get base Terraform variables
 			terraformVars := getBaseVars(t)
 			testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
 			for k, v := range tc.config {

@@ -1,6 +1,6 @@
 Scheduler: LSF
 lsf_version: fixpack_15
-zones: br-sao-1
+zones: jp-tok-1
 remote_allowed_ips:
 cluster_name: HPC-LSF-1
 ssh_keys: geretain-hpc
