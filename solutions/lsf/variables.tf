@@ -26,7 +26,7 @@ variable "app_center_gui_password" {
   type        = string
   default     = ""
   sensitive   = true
-  description = "Password required to access the IBM Spectrum LSF Application Center (App Center) GUI, which is enabled by default in both Fix Pack 15 and Fix Pack 14 with HTTPS. This is a mandatory value and omitting it will result in deployment failure. The password must meet the following requirements, at least 8 characters in length, and must include one uppercase letter, one lowercase letter, one number, and one special character."
+  description = "Password required to access the IBM Spectrum LSF Application Center (App Center) GUI, which is enabled by default in both Fix Pack 15 and Fix Pack 14 with HTTPS. This is a mandatory value and omitting it will result in deployment failure. The password must meet the following requirements, at least 8 characters in length, and must include one uppercase letter, one lowercase letter, one number, and one special character. Spaces are not allowed."
 
   validation {
     condition = (
@@ -35,9 +35,9 @@ variable "app_center_gui_password" {
       can(regex("[a-z]", var.app_center_gui_password)) &&
       can(regex("[A-Z]", var.app_center_gui_password)) &&
       can(regex("[!@#$%^&*()_+=-]", var.app_center_gui_password)) &&
-      trimspace(var.app_center_gui_password) != ""
+      !can(regex(".*\\s.*", var.app_center_gui_password))
     )
-    error_message = "The password must be at least 8 characters long and include at least one lowercase letter, one uppercase letter, one digit, and one special character (!@#$%^&*()_+=-)."
+    error_message = "The password must be at least 8 characters long and include at least one lowercase letter, one uppercase letter, one digit, and one special character (!@#$%^&*()_+=-). Spaces are not allowed."
   }
 }
 
