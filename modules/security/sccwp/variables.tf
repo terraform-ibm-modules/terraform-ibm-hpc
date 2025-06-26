@@ -46,30 +46,30 @@ variable "resource_tags" {
   default     = []
 }
 
-variable "access_tags" {
-  type        = list(string)
-  description = "A list of access tags to apply to the SCC WP instance created by the module. For more information, see https://cloud.ibm.com/docs/account?topic=account-access-tags-tutorial."
-  default     = []
+# variable "access_tags" {
+#   type        = list(string)
+#   description = "A list of access tags to apply to the SCC WP instance created by the module. For more information, see https://cloud.ibm.com/docs/account?topic=account-access-tags-tutorial."
+#   default     = []
 
-  validation {
-    condition = alltrue([
-      for tag in var.access_tags : can(regex("[\\w\\-_\\.]+:[\\w\\-_\\.]+", tag)) && length(tag) <= 128
-    ])
-    error_message = "Tags must match the regular expression \"[\\w\\-_\\.]+:[\\w\\-_\\.]+\", see https://cloud.ibm.com/docs/account?topic=account-tag&interface=ui#limits for more details"
-  }
-}
+#   validation {
+#     condition = alltrue([
+#       for tag in var.access_tags : can(regex("[\\w\\-_\\.]+:[\\w\\-_\\.]+", tag)) && length(tag) <= 128
+#     ])
+#     error_message = "Tags must match the regular expression \"[\\w\\-_\\.]+:[\\w\\-_\\.]+\", see https://cloud.ibm.com/docs/account?topic=account-tag&interface=ui#limits for more details"
+#   }
+# }
 
-variable "resource_key_name" {
-  type        = string
-  description = "The name to give the IBM Cloud SCC WP resource key."
-  default     = "SCCWPManagerKey"
-}
+# variable "resource_key_name" {
+#   type        = string
+#   description = "The name to give the IBM Cloud SCC WP resource key."
+#   default     = "SCCWPManagerKey"
+# }
 
-variable "resource_key_tags" {
-  type        = list(string)
-  description = "Tags associated with the IBM Cloud SCC WP resource key."
-  default     = []
-}
+# variable "resource_key_tags" {
+#   type        = list(string)
+#   description = "Tags associated with the IBM Cloud SCC WP resource key."
+#   default     = []
+# }
 
 variable "cspm_enabled" {
   description = "Enable Cloud Security Posture Management (CSPM) for the Workload Protection instance. This will create a trusted profile associated with the SCC Workload Protection instance that has viewer / reader access to the App Config service and viewer access to the Enterprise service. [Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
@@ -109,25 +109,25 @@ variable "scc_workload_protection_trusted_profile_name" {
   }
 }
 
-variable "cbr_rules" {
-  type = list(object({
-    description = string
-    account_id  = string
-    tags = optional(list(object({
-      name  = string
-      value = string
-    })), [])
-    rule_contexts = list(object({
-      attributes = optional(list(object({
-        name  = string
-        value = string
-    }))) }))
-    enforcement_mode = string
-  }))
-  description = "The list of context-based restriction rules to create."
-  default     = []
-  # Validation happens in the rule module
-}
+# variable "cbr_rules" {
+#   type = list(object({
+#     description = string
+#     account_id  = string
+#     tags = optional(list(object({
+#       name  = string
+#       value = string
+#     })), [])
+#     rule_contexts = list(object({
+#       attributes = optional(list(object({
+#         name  = string
+#         value = string
+#     }))) }))
+#     enforcement_mode = string
+#   }))
+#   description = "The list of context-based restriction rules to create."
+#   default     = []
+#   # Validation happens in the rule module
+# }
 
 variable "enable_deployer" {
   type        = bool

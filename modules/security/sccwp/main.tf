@@ -22,7 +22,7 @@ module "app_config" {
   config_aggregator_trusted_profile_name = "${var.prefix}-app-config-tp"
 }
 
-module "scc-workload-protection" {
+module "scc_workload_protection" {
   count                                        = var.enable_deployer == false && var.sccwp_enable ? 1 : 0
   source                                       = "terraform-ibm-modules/scc-workload-protection/ibm"
   version                                      = "1.10.0"
@@ -33,5 +33,5 @@ module "scc-workload-protection" {
   resource_tags                                = var.resource_tags
   cspm_enabled                                 = var.cspm_enabled
   app_config_crn                               = var.cspm_enabled && length(module.app_config) > 0 ? module.app_config[0].app_config_crn : null
-  scc_workload_protection_trusted_profile_name = var.cspm_enabled == true ? "${var.prefix}-wp-tp" : "workload-protection-trusted-profile"
+  scc_workload_protection_trusted_profile_name = var.cspm_enabled == true ? var.scc_workload_protection_trusted_profile_name : "workload-protection-trusted-profile"
 }

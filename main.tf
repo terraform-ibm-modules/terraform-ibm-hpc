@@ -740,30 +740,30 @@ module "ldap_inventory_hosts" {
   inventory_path = local.ldap_hosts_inventory_path
 }
 
-#module "compute_playbook" {
-#  count                       = var.enable_deployer == false ? 1 : 0
-#  source                      = "./modules/playbook"
-#  scheduler                   = var.scheduler
-#  bastion_fip                 = local.bastion_fip
-#  private_key_path            = local.compute_private_key_path
-#  inventory_path              = local.compute_inventory_path
-#  enable_deployer             = var.enable_deployer
-#  ibmcloud_api_key            = var.ibmcloud_api_key
-#  observability_provision     = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || var.observability_monitoring_enable ? true : false
-#  cloudlogs_provision         = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute ? true : false
-#  observability_playbook_path = local.observability_playbook_path
-#  lsf_mgmt_playbooks_path     = local.lsf_mgmt_playbooks_path
-#  enable_ldap                 = var.enable_ldap
-#  ldap_server                 = local.ldap_server
-#  playbooks_path              = local.playbooks_path
-#  mgmnt_hosts                 = local.mgmnt_host_entry
-#  comp_hosts                  = local.comp_host_entry
-#  login_host                  = local.login_host_entry
-#  deployer_host               = local.deployer_host_entry
-#  domain_name                 = var.dns_domain_names["compute"]
-#  enable_dedicated_host       = var.enable_dedicated_host
-#  depends_on                  = [module.compute_inventory, module.landing_zone_vsi]
-#}
+module "compute_playbook" {
+  count                       = var.enable_deployer == false ? 1 : 0
+  source                      = "./modules/playbook"
+  scheduler                   = var.scheduler
+  bastion_fip                 = local.bastion_fip
+  private_key_path            = local.compute_private_key_path
+  inventory_path              = local.compute_inventory_path
+  enable_deployer             = var.enable_deployer
+  ibmcloud_api_key            = var.ibmcloud_api_key
+  observability_provision     = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || var.observability_monitoring_enable ? true : false
+  cloudlogs_provision         = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute ? true : false
+  observability_playbook_path = local.observability_playbook_path
+  lsf_mgmt_playbooks_path     = local.lsf_mgmt_playbooks_path
+  enable_ldap                 = var.enable_ldap
+  ldap_server                 = local.ldap_server
+  playbooks_path              = local.playbooks_path
+  mgmnt_hosts                 = local.mgmnt_host_entry
+  comp_hosts                  = local.comp_host_entry
+  login_host                  = local.login_host_entry
+  deployer_host               = local.deployer_host_entry
+  domain_name                 = var.dns_domain_names["compute"]
+  enable_dedicated_host       = var.enable_dedicated_host
+  depends_on                  = [module.compute_inventory, module.landing_zone_vsi]
+}
 
 ###################################################
 # Observability Modules
@@ -789,19 +789,16 @@ module "cloud_monitoring_instance_creation" {
   tags                           = ["lsf", var.cluster_prefix]
 }
 
-# provider "restapi" {
-#   uri = "https://resource-controller.cloud.ibm.com"
-# }
-
-module "scc-workload-protection" {
-  source              = "./modules/security/sccwp"
-  resource_group_name = var.existing_resource_group != "null" ? var.existing_resource_group : "${var.cluster_prefix}-service-rg"
-  prefix              = var.cluster_prefix
-  region              = local.region
-  sccwp_service_plan  = var.sccwp_service_plan
-  resource_tags       = ["lsf", var.cluster_prefix]
-  enable_deployer     = var.enable_deployer
-  sccwp_enable        = var.sccwp_enable
-  cspm_enabled        = var.cspm_enabled
-  app_config_plan     = var.app_config_plan
+module "scc_workload_protection" {
+  source                                       = "./modules/security/sccwp"
+  resource_group_name                          = var.existing_resource_group != "null" ? var.existing_resource_group : "${var.cluster_prefix}-service-rg"
+  prefix                                       = var.cluster_prefix
+  region                                       = local.region
+  sccwp_service_plan                           = var.sccwp_service_plan
+  resource_tags                                = ["lsf", var.cluster_prefix]
+  enable_deployer                              = var.enable_deployer
+  sccwp_enable                                 = var.sccwp_enable
+  cspm_enabled                                 = var.cspm_enabled
+  app_config_plan                              = var.app_config_plan
+  scc_workload_protection_trusted_profile_name = "${var.cluster_prefix}-wp-tp"
 }
