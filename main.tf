@@ -789,12 +789,11 @@ module "cloud_monitoring_instance_creation" {
   tags                           = ["lsf", var.cluster_prefix]
 }
 
-provider "restapi" {
-  uri = "https://resource-controller.cloud.ibm.com"
-}
+# provider "restapi" {
+#   uri = "https://resource-controller.cloud.ibm.com"
+# }
 
 module "scc-workload-protection" {
-  #  count = var.enable_deployer == false && var.scc_wp_enable ? 1 : 0
   source              = "./modules/security/sccwp"
   resource_group_name = var.existing_resource_group != "null" ? var.existing_resource_group : "${var.cluster_prefix}-service-rg"
   prefix              = var.cluster_prefix
