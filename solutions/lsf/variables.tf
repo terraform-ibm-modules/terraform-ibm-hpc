@@ -798,7 +798,7 @@ variable "TF_PARALLELISM" {
 ##############################################################################
 
 variable "sccwp_service_plan" {
-  description = "IBM service pricing plan."
+  description = "Specify the plan type for the Security and Compliance Center (SCC) Workload Protection instance. Valid values are free-trial and graduated-tier only."
   type        = string
   default     = "free-trial"
   validation {
@@ -813,24 +813,24 @@ variable "sccwp_service_plan" {
 variable "sccwp_enable" {
   type        = bool
   default     = true
-  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+  description = "Set this flag to true to create an instance of IBM Security and Compliance Center (SCC) Workload Protection. When enabled, it provides tools to discover and prioritize vulnerabilities, monitor for security threats, and enforce configuration, permission, and compliance policies across the full lifecycle of your workloads."
 }
 
 variable "cspm_enabled" {
-  description = "Enable Cloud Security Posture Management (CSPM) for the Workload Protection instance. This will create a trusted profile associated with the SCC Workload Protection instance that has viewer / reader access to the App Config service and viewer access to the Enterprise service. [Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
+  description = "When enabled, a trusted profile will be created and associated with the SCC Workload Protection instance. This profile will have viewer access to the App Configuration service and viewer access to the Enterprise service. Enabling CSPM allows account-level metrics to be displayed on the SCC Workload Protection dashboard. Ensure CSPM is enabled to view these metrics on the dashboard.[Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
   type        = bool
   default     = false
   nullable    = false
 }
 
 variable "app_config_plan" {
-  description = "IBM service pricing plan."
+  description = "Specify the IBM service pricing plan for the application. Allowed values are 'basic', 'lite', 'standard', 'enterprise'."
   type        = string
   default     = "basic"
   validation {
-    error_message = "Plan for SCC Workload Protection instances can only be `free-trial` or `graduated-tier`."
+    error_message = "Plan for App configuration can only be basic, lite, standard, enterprise.."
     condition = contains(
-      ["basic", "lite", "Standard", "Enterprise"],
+      ["basic", "lite", "standard", "enterprise"],
       var.app_config_plan
     )
   }

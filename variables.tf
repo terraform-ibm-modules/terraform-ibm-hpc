@@ -1133,7 +1133,7 @@ variable "app_config_plan" {
   validation {
     error_message = "Plan for SCC Workload Protection instances can only be `free-trial` or `graduated-tier`."
     condition = contains(
-      ["basic", "lite", "Standard", "Enterprise"],
+      ["basic", "lite", "standard", "enterprise"],
       var.app_config_plan
     )
   }

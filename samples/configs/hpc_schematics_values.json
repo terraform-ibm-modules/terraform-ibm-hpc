@@ -363,32 +363,32 @@
           "description": "When using an existing COS instance, set this value to true if authorization is already enabled between COS instance and the kms. Otherwise, default is set to false. Ensuring proper authorization avoids access issues during deployment."
         },
         {
-          "name": "scc_enable",
-          "value": "false",
+          "name": "sccwp_enable",
+          "value": "true",
           "type": "bool",
           "secure": false,
-          "description": "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+          "description": "Set this flag to true to create an instance of IBM Security and Compliance Center (SCC) Workload Protection. When enabled, it provides tools to discover and prioritize vulnerabilities, monitor for security threats, and enforce configuration, permission, and compliance policies across the full lifecycle of your workloads."
         },
         {
-          "name": "scc_profile",
-          "value": "CIS IBM Cloud Foundations Benchmark v1.1.0",
+          "name": "sccwp_service_plan",
+          "value": "free-trial",
           "type": "string",
           "secure": false,
-          "description": "Profile to be set on the SCC Instance (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')"
+          "description": "Specify the plan type for the Security and Compliance Center (SCC) Workload Protection instance. Valid values are free-trial and graduated-tier only."
         },
         {
-          "name": "scc_location",
-          "value": "us-south",
+          "name": "cspm_enabled",
+          "value": "true",
           "type": "string",
           "secure": false,
-          "description": "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
+          "description": "Enable Cloud Security Posture Management (CSPM) for the Workload Protection instance. This will create a trusted profile associated with the SCC Workload Protection instance that has viewer / reader access to the App Config service and viewer access to the Enterprise service. [Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
         },
         {
-          "name": "scc_event_notification_plan",
-          "value": "lite",
+          "name": "app_config_plan",
+          "value": "basic",
           "type": "string",
           "secure": false,
-          "description": "Event Notifications Instance plan to be used (it's used with S.C.C. instance), possible values 'lite' and 'standard'"
+          "description": "Specify the IBM service pricing plan for the application. Allowed values are 'basic', 'lite', 'standard', 'enterprise'."
         },
         { "name": "observability_monitoring_enable",
           "value": "true",
