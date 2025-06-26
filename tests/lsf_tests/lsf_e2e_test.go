@@ -1222,18 +1222,114 @@ func TestObservabilityMonitoringEnabledForManagementAndCompute(t *testing.T) {
 	}
 }
 
-// TestObservabilityAtrackerScenarios validates various cluster deployments with different Atracker
-// and observability configurations in parallel. Each test scenario provisions an LSF cluster with
-// specific logging and monitoring options enabled or disabled, and then verifies the expected behavior.
+// TestObservabilityAtrackerLoggingMonitoring provisions LSF clusters with full observability configurations,
+// including logging, monitoring, and Atracker integration, to verify end-to-end behavior across different targets.
 //
-// Scenarios include:
-// - Atracker with COS only
-// - Full logging and monitoring with Atracker targeting COS
-// - Full logging and monitoring with Atracker targeting Cloud Logs
+// Scenarios covered:
+// - Logging and monitoring enabled, Atracker targeting COS
+// - Logging and monitoring enabled, Atracker targeting Cloud Logs
 //
-// This test ensures compatibility and correctness of observability features across configurations.
-// Note: Atracker target route capacity is limited to 1 per region; test cases have been combined.
-func TestObservabilityAtrackerScenarios(t *testing.T) {
+// Each test validates cluster creation and configuration integrity under the given observability setup.
+// Note: Due to Atracker's 1-target-per-region limit, COS and Cloud Logs scenarios are executed sequentially.
+
+func TestObservabilityAtrackerLoggingMonitoring(t *testing.T) {
+	t.Parallel()
+
+	setupTestSuite(t)
+	require.NotNil(t, testLogger, "Test logger must be initialized")
+
+	envVars, err := GetEnvVars()
+	require.NoError(t, err, "Must load valid environment configuration")
+
+	scenarios := []struct {
+		name                string
+		logsForManagement   bool
+		logsForCompute      bool
+		platformLogs        bool
+		monitoring          bool
+		monitoringOnCompute bool
+		atrackerTargetType  string
+		validationFunc      func(t *testing.T, options *testhelper.TestOptions, testLogger *utils.AggregatedLogger)
+	}{
+
+		{
+			name:                "Logs_Monitoring_Atracker_COS",
+			logsForManagement:   true,
+			logsForCompute:      true,
+			platformLogs:        false,
+			monitoring:          true,
+			monitoringOnCompute: true,
+			atrackerTargetType:  "cos",
+			validationFunc:      lsf.ValidateBasicObservabilityClusterConfiguration,
+		},
+		{
+			name:                "Logs_Monitoring_Atracker_CloudLogs",
+			logsForManagement:   true,
+			logsForCompute:      true,
+			platformLogs:        true,
+			monitoring:          true,
+			monitoringOnCompute: true,
+			atrackerTargetType:  "cloudlogs",
+			validationFunc:      lsf.ValidateBasicObservabilityClusterConfiguration,
+		},
+	}
+
+	for _, sc := range scenarios {
+		scenario := sc // capture range variable
+
+		t.Run(scenario.name, func(t *testing.T) {
+
+			testLogger.Info(t, fmt.Sprintf("Scenario %s started", scenario.name))
+
+			clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+			testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
+
+			options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
+			require.NoError(t, err, "Must initialize valid test options")
+
+			options.TerraformVars["observability_enable_platform_logs"] = scenario.platformLogs
+			options.TerraformVars["observability_logs_enable_for_management"] = scenario.logsForManagement
+			options.TerraformVars["observability_logs_enable_for_compute"] = scenario.logsForCompute
+			options.TerraformVars["observability_monitoring_enable"] = scenario.monitoring
+			options.TerraformVars["observability_monitoring_on_compute_nodes_enable"] = scenario.monitoringOnCompute
+			options.TerraformVars["observability_monitoring_plan"] = "graduated-tier"
+			options.TerraformVars["observability_atracker_enable"] = true
+			options.TerraformVars["observability_atracker_target_type"] = scenario.atrackerTargetType
+			options.TerraformVars["zones"] = utils.SplitAndTrim(envVars.AttrackerTestZone, ",")
+			options.SkipTestTearDown = true
+			defer options.TestTearDown()
+
+			testLogger.Info(t, fmt.Sprintf("Deploying cluster for: %s", scenario.name))
+			err = lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
+			require.NoError(t, err, "Cluster creation failed")
+
+			testLogger.Info(t, "Starting validation...")
+			scenario.validationFunc(t, options, testLogger)
+
+			if t.Failed() {
+				testLogger.Error(t, fmt.Sprintf("Scenario %s failed", scenario.name))
+			} else {
+				testLogger.PASS(t, fmt.Sprintf("Scenario %s passed", scenario.name))
+			}
+		})
+	}
+}
+
+// TestObservabilityAtrackerCosAndCloudLogs provisions LSF clusters with different Atracker targets
+// (COS and Cloud Logs) and validates basic observability integration.
+//
+// Each scenario disables logging and monitoring features while testing Atracker routing separately.
+// This ensures that Atracker configurations function correctly, even when other observability
+// options are turned off.
+//
+// Scenarios:
+// - Atracker targeting COS
+// - Atracker targeting Cloud Logs
+//
+// Note: Atracker route target capacity is limited to 1 per region. These test cases are run in parallel
+// to validate coexistence across configurations within that constraint.
+
+func TestObservabilityAtrackerWithCosAndCloudLogs(t *testing.T) {
 	t.Parallel()
 
 	setupTestSuite(t)
@@ -1263,24 +1359,14 @@ func TestObservabilityAtrackerScenarios(t *testing.T) {
 			validationFunc:      lsf.ValidateBasicClusterConfigurationWithCloudAtracker,
 		},
 		{
-			name:                "Logs_Monitoring_Atracker_COS",
-			logsForManagement:   true,
-			logsForCompute:      true,
+			name:                "Atracker_CloudLogs_Only",
+			logsForManagement:   false,
+			logsForCompute:      false,
 			platformLogs:        false,
-			monitoring:          true,
-			monitoringOnCompute: true,
-			atrackerTargetType:  "cos",
-			validationFunc:      lsf.ValidateBasicObservabilityClusterConfiguration,
-		},
-		{
-			name:                "Logs_Monitoring_Atracker_CloudLogs",
-			logsForManagement:   true,
-			logsForCompute:      true,
-			platformLogs:        true,
-			monitoring:          true,
-			monitoringOnCompute: true,
+			monitoring:          false,
+			monitoringOnCompute: false,
 			atrackerTargetType:  "cloudlogs",
-			validationFunc:      lsf.ValidateBasicObservabilityClusterConfiguration,
+			validationFunc:      lsf.ValidateBasicClusterConfigurationWithCloudAtracker,
 		},
 	}
 
@@ -1289,7 +1375,6 @@ func TestObservabilityAtrackerScenarios(t *testing.T) {
 
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()
-
 			testLogger.Info(t, fmt.Sprintf("Scenario %s started", scenario.name))
 
 			clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
@@ -1725,12 +1810,12 @@ func TestRunMultiProfileStaticAndDynamic(t *testing.T) {
 		{
 			"profile": "bx2d-16x64",
 			"count":   1,
-			"image":   "hpc-lsf-fp14-rhel810-v1",
+			"image":   envVars.ManagementInstancesImage,
 		},
 		{
 			"profile": "bx2-2x8",
 			"count":   1,
-			"image":   "hpc-lsf-fp14-rhel810-v1",
+			"image":   envVars.ManagementInstancesImage,
 		},
 	}
 
