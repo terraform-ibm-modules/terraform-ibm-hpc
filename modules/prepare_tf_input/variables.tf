@@ -218,6 +218,12 @@ variable "enable_deployer" {
   description = "Deployer should be only used for better deployment performance"
 }
 
+variable "existing_resource_group" {
+  type        = string
+  default     = "Default"
+  description = "String describing resource groups to create or reference"
+}
+
 ##############################################################################
 # Offering Variations
 ##############################################################################

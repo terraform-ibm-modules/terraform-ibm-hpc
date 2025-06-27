@@ -198,6 +198,7 @@ module "prepare_tf_input" {
   sccwp_service_plan                               = var.sccwp_service_plan
   cspm_enabled                                     = var.cspm_enabled
   app_config_plan                                  = var.app_config_plan
+  existing_resource_group                          = var.existing_resource_group
   depends_on                                       = [module.deployer]
 }
 

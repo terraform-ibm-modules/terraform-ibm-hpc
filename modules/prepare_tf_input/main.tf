@@ -82,6 +82,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "custom_file_shares": ${local.custom_file_shares},
   "login_instance": ${local.login_instance},
   "vpc_cluster_private_subnets_cidr_blocks": "${var.vpc_cluster_private_subnets_cidr_blocks}",
+  "existing_resource_group": "${var.existing_resource_group}",
   "sccwp_service_plan": "${var.sccwp_service_plan}",
   "sccwp_enable": ${var.sccwp_enable},
   "cspm_enabled": ${var.cspm_enabled},
