@@ -1059,13 +1059,12 @@ func ValidateBasicClusterConfigurationWithDedicatedHost(t *testing.T, options *t
 	logger.Info(t, t.Name()+" Validation ended")
 }
 
-// ValidateBasicClusterConfigurationWithSCC validates the basic cluster configuration.
-// It performs validation tasks on essential aspects of the cluster setup,
-// including the management node, compute nodes, and login node configurations.
-// Additionally, it ensures proper connectivity and functionality.
-// This function checks service instance details, extracts relevant GUIDs, and verifies attachments' states.
-// Errors and validation steps are logged during the process.
-func ValidateBasicClusterConfigurationWithSCC(t *testing.T, options *testhelper.TestOptions, logger *utils.AggregatedLogger) {
+// ValidateClusterConfigurationWithSCCWPAndCSPM validates the cluster configuration
+// with SCCWP and CSPM enabled.
+// It performs validation on critical components such as the management node,
+// compute nodes, and login node to ensure proper setup and connectivity.
+// All validation steps and errors are logged throughout the process.
+func ValidateBasicClusterConfigurationWithSCCWPAndCSPM(t *testing.T, options *testhelper.TestOptions, logger *utils.AggregatedLogger) {
 
 	// Retrieve common cluster details from options
 	expected := GetExpectedClusterConfig(t, options)
@@ -1101,7 +1100,7 @@ func ValidateBasicClusterConfigurationWithSCC(t *testing.T, options *testhelper.
 	VerifyManagementNodeConfig(t, sshClient, expected.MasterName, expected.Hyperthreading, managementNodeIPs, expected.LsfVersion, logger)
 
 	// Verify SCC instance
-	ValidateSCCInstance(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expected.Zones), expected.ResourceGroup, expected.MasterName, SCC_INSTANCE_REGION, logger)
+	//ValidateSCCInstance(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expected.Zones), expected.ResourceGroup, expected.MasterName, SCC_INSTANCE_REGION, logger)
 
 	// Wait for dynamic node disappearance and handle potential errors
 	defer func() {

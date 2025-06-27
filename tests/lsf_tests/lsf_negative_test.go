@@ -1029,3 +1029,170 @@ func TestInvalidRemoteAllowedIP(t *testing.T) {
 	assert.True(t, validationPassed, "Should fail with invalid SSH keys and IP error")
 	testLogger.LogValidationResult(t, validationPassed, "Invalid SSH keys and remote allowed IP validation")
 }
+
+// TestInvalidInstanceProfiles validates invalid instance profile configurations
+func TestInvalidInstanceProfiles(t *testing.T) {
+	t.Parallel()
+
+	setupTestSuite(t)
+	testLogger.Info(t, "Starting negative tests for instance profile validation")
+
+	invalidCases := []struct {
+		name            string
+		bastionProfile  string
+		deployerProfile string
+		loginProfile    string
+		mgmtProfile     string
+		staticProfile   string
+		dynamicProfile  string
+		expectedError   string
+	}{
+		{
+			name:            "Invalid_Bastion_Profile_Format",
+			bastionProfile:  "cx2-invalid",
+			deployerProfile: "bx2-8x32",
+			loginProfile:    "bx2-2x8",
+			mgmtProfile:     "bx2-16x64",
+			staticProfile:   "bx2-4x16",
+			dynamicProfile:  "bx2-4x16",
+			expectedError:   "The profile must be a valid virtual server instance profile",
+		},
+		{
+			name:            "Invalid_Deployer_Profile_Format",
+			bastionProfile:  "cx2-4x8",
+			deployerProfile: "bx2-invalid",
+			loginProfile:    "bx2-2x8",
+			mgmtProfile:     "bx2-16x64",
+			staticProfile:   "bx2-4x16",
+			dynamicProfile:  "bx2-4x16",
+			expectedError:   "The profile must be a valid virtual server instance profile",
+		},
+		{
+			name:            "Invalid_Login_Profile_Format",
+			bastionProfile:  "cx2-4x8",
+			deployerProfile: "bx2-8x32",
+			loginProfile:    "invalid-login-profile",
+			mgmtProfile:     "bx2-16x64",
+			staticProfile:   "bx2-4x16",
+			dynamicProfile:  "bx2-4x16",
+			expectedError:   "The profile must be a valid virtual server instance profile",
+		},
+		{
+			name:            "Invalid_Management_Profile_Format",
+			bastionProfile:  "cx2-4x8",
+			deployerProfile: "bx2-8x32",
+			loginProfile:    "bx2-2x8",
+			mgmtProfile:     "mgmt-invalid-format",
+			staticProfile:   "bx2-4x16",
+			dynamicProfile:  "bx2-4x16",
+			expectedError:   "The profile must be a valid virtual server instance profile",
+		},
+		{
+			name:            "Invalid_Static_Compute_Profile_Format",
+			bastionProfile:  "cx2-4x8",
+			deployerProfile: "bx2-8x32",
+			loginProfile:    "bx2-2x8",
+			mgmtProfile:     "bx2-16x64",
+			staticProfile:   "static-invalid",
+			dynamicProfile:  "bx2-4x16",
+			expectedError:   "The profile must be a valid virtual server instance profile",
+		},
+		{
+			name:            "Invalid_Dynamic_Compute_Profile_Format",
+			bastionProfile:  "cx2-4x8",
+			deployerProfile: "bx2-8x32",
+			loginProfile:    "bx2-2x8",
+			mgmtProfile:     "bx2-16x64",
+			staticProfile:   "bx2-4x16",
+			dynamicProfile:  "dynamic-invalid",
+			expectedError:   "The profile must be a valid virtual server instance profile",
+		},
+		{
+			name:            "Multiple_Dynamic_Compute_Profiles",
+			bastionProfile:  "cx2-4x8",
+			deployerProfile: "bx2-8x32",
+			loginProfile:    "bx2-2x8",
+			mgmtProfile:     "bx2-16x64",
+			staticProfile:   "bx2-4x16",
+			dynamicProfile:  "bx2-4x16",
+			expectedError:   "Only a single map (one instance profile) is allowed for dynamic compute",
+		},
+	}
+
+	for _, tc := range invalidCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			// Get base Terraform variables
+			terraformVars := getBaseVars(t)
+			testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
+
+			// Set instance profiles
+			terraformVars["bastion_instance"] = map[string]interface{}{
+				"image":   "ibm-ubuntu-22-04-5-minimal-amd64-3",
+				"profile": tc.bastionProfile,
+			}
+			terraformVars["deployer_instance"] = map[string]interface{}{
+				"image":   "hpc-lsf-fp15-deployer-rhel810-v1",
+				"profile": tc.deployerProfile,
+			}
+			terraformVars["login_instance"] = []map[string]interface{}{
+				{
+					"image":   "hpc-lsf-fp15-compute-rhel810-v1",
+					"profile": tc.loginProfile,
+				},
+			}
+			terraformVars["management_instances"] = []map[string]interface{}{
+				{
+					"image":   "hpc-lsf-fp15-rhel810-v1",
+					"profile": tc.mgmtProfile,
+					"count":   2,
+				},
+			}
+			terraformVars["static_compute_instances"] = []map[string]interface{}{
+				{
+					"image":   "hpc-lsf-fp15-compute-rhel810-v1",
+					"profile": tc.staticProfile,
+					"count":   1,
+				},
+			}
+
+			// Special case for multiple dynamic compute profiles
+			if tc.name == "Multiple_Dynamic_Compute_Profiles" {
+				terraformVars["dynamic_compute_instances"] = []map[string]interface{}{
+					{
+						"image":   "hpc-lsf-fp15-compute-rhel810-v1",
+						"profile": "bx2-4x16",
+						"count":   512,
+					},
+					{
+						"image":   "hpc-lsf-fp15-compute-rhel810-v1",
+						"profile": "bx2-8x32",
+						"count":   512,
+					},
+				}
+			} else {
+				terraformVars["dynamic_compute_instances"] = []map[string]interface{}{
+					{
+						"image":   "hpc-lsf-fp15-compute-rhel810-v1",
+						"profile": tc.dynamicProfile,
+						"count":   1024,
+					},
+				}
+			}
+
+			terraformDirPath := getTerraformDirPath(t)
+			terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+				TerraformDir: terraformDirPath,
+				Vars:         terraformVars,
+			})
+
+			_, err := terraform.PlanE(t, terraformOptions)
+			require.Error(t, err, "Expected '%s' to fail but it passed", tc.name)
+			assert.Contains(t, err.Error(), tc.expectedError,
+				"Expected error message mismatch for case: %s", tc.name)
+			testLogger.Info(t, fmt.Sprintf("Correctly blocked invalid case: %s", tc.name))
+		})
+	}
+}

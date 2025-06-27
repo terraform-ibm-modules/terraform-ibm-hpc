@@ -88,9 +88,10 @@ type EnvVars struct {
 	WorkerNodeMaxCount                          string
 	StaticComputeInstances                      string
 	DynamicComputeInstances                     string
-	SccEnabled                                  string
-	SccEventNotificationPlan                    string
-	SccLocation                                 string
+	SccWPEnabled                                string
+	CspmEnabled                                 string
+	SccwpServicePlan                            string
+	AppConfigPlan                               string
 	ObservabilityMonitoringEnable               string
 	ObservabilityMonitoringOnComputeNodesEnable string
 	ObservabilityAtrackerEnable                 string
@@ -155,9 +156,10 @@ func GetEnvVars() (*EnvVars, error) {
 		WorkerNodeMaxCount:              os.Getenv("WORKER_NODE_MAX_COUNT"),
 		StaticComputeInstances:          os.Getenv("STATIC_COMPUTE_INSTANCES"),
 		DynamicComputeInstances:         os.Getenv("DYNAMIC_COMPUTE_INSTANCES"),
-		SccEnabled:                      os.Getenv("SCC_ENABLED"),
-		SccEventNotificationPlan:        os.Getenv("SCC_EVENT_NOTIFICATION_PLAN"),
-		SccLocation:                     os.Getenv("SCC_LOCATION"),
+		SccWPEnabled:                    os.Getenv("SCCWP_ENABLED"),
+		CspmEnabled:                     os.Getenv("CSPM_ENABLED"),
+		SccwpServicePlan:                os.Getenv("SCCWP_SERVICE_PLAN"),
+		AppConfigPlan:                   os.Getenv("APP_CONFIG_PLAN"),
 		ObservabilityMonitoringEnable:   os.Getenv("OBSERVABILITY_MONITORING_ENABLE"),
 		ObservabilityMonitoringOnComputeNodesEnable: os.Getenv("OBSERVABILITY_MONITORING_ON_COMPUTE_NODES_ENABLE"),
 		ObservabilityAtrackerEnable:                 os.Getenv("OBSERVABILITY_ATRACKER_ENABLE"),
@@ -323,7 +325,8 @@ func setupOptions(t *testing.T, clusterNamePrefix, terraformDir, existingResourc
 			"static_compute_instances":        envVars.StaticComputeInstances,
 			"dynamic_compute_instances":       envVars.DynamicComputeInstances,
 			"bastion_instance":                envVars.BastionInstance,
-			"scc_enable":                      false,
+			"sccwp_enable":                    false,
+			"cspm_enabled":                    false,
 			"custom_file_shares":              envVars.CustomFileShares,
 			"enable_cos_integration":          false,
 			"enable_vpc_flow_logs":            false,

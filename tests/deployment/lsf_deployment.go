@@ -108,9 +108,10 @@ type Config struct {
 	SSHFilePathTwo                              string                    `yaml:"ssh_file_path_two"`
 	StaticComputeInstances                      []StaticWorkerInstances   `yaml:"static_compute_instances"`
 	DynamicComputeInstances                     []DynamicWorkerInstances  `yaml:"dynamic_compute_instances"`
-	SccEnabled                                  bool                      `yaml:"scc_enable"`
-	SccEventNotificationPlan                    string                    `yaml:"scc_event_notification_plan"`
-	SccLocation                                 string                    `yaml:"scc_location"`
+	SccWPEnabled                                bool                      `yaml:"sccwp_enable"`
+	CspmEnabled                                 bool                      `yaml:"cspm_enabled"`
+	SccwpServicePlan                            string                    `yaml:"sccwp_service_plan"`
+	AppConfigPlan                               string                    `yaml:"app_config_plan"`
 	ObservabilityMonitoringEnable               bool                      `yaml:"observability_monitoring_enable"`
 	ObservabilityMonitoringOnComputeNodesEnable bool                      `yaml:"observability_monitoring_on_compute_nodes_enable"`
 	ObservabilityAtrackerEnable                 bool                      `yaml:"observability_atracker_enable"`
@@ -198,9 +199,10 @@ func setEnvFromConfig(config *Config) error {
 		"SSH_FILE_PATH":                       config.SSHFilePath,
 		"SSH_FILE_PATH_TWO":                   config.SSHFilePathTwo,
 		"SCHEDULER":                           config.Scheduler,
-		"SCC_ENABLED":                         config.SccEnabled,
-		"SCC_EVENT_NOTIFICATION_PLAN":         config.SccEventNotificationPlan,
-		"SCC_LOCATION":                        config.SccLocation,
+		"SCCWP_ENABLED":                       config.SccWPEnabled,
+		"CSPM_ENABLED":                        config.CspmEnabled,
+		"SCCWP_SERVICE_PLAN":                  config.SccwpServicePlan,
+		"APP_CONFIG_PLAN":                     config.AppConfigPlan,
 		"OBSERVABILITY_MONITORING_ENABLE":     config.ObservabilityMonitoringEnable,
 		"OBSERVABILITY_MONITORING_ON_COMPUTE_NODES_ENABLE": config.ObservabilityMonitoringOnComputeNodesEnable,
 		"OBSERVABILITY_ATRACKER_ENABLE":                    config.ObservabilityAtrackerEnable,

@@ -53,9 +53,10 @@ observability_enable_platform_logs: true
 observability_enable_metrics_routing: true
 observability_logs_retention_period: 7
 observability_monitoring_plan: graduated-tier
-scc_enable: true
-scc_location: us-south
-scc_event_notification_plan: standard
+sccwp_enable: true
+cspm_enabled: true
+sccwp_service_plan: graduated-tier
+app_config_plan: standardv2
 enable_hyperthreading: true
 enable_ldap: true
 ldap_basedns: cicdldap.com
