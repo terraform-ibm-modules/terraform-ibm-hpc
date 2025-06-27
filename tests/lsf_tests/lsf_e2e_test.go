@@ -227,14 +227,8 @@ func TestRunCustomRGAsNonDefault(t *testing.T) {
 	}
 }
 
-// TestRunSCCEnabled validates cluster creation with SCC (Spectrum Computing Console) integration.
-// Verifies proper SCC configuration including event notification and location settings.
-//
-// Prerequisites:
-// - SCC enabled in environment configuration
-// - Valid non-default resource group
-// - Proper test suite initialization
-func TestRunSCCEnabled(t *testing.T) {
+// TestRunSCCWPAndCSPMEnabledClusterValidation tests basic cluster validation with SCCWP and CSPM enabled.
+func TestRunSCCWPAndCSPMEnabledClusterValidation(t *testing.T) {
 
 	t.Parallel()
 
@@ -252,18 +246,19 @@ func TestRunSCCEnabled(t *testing.T) {
 	require.NoError(t, err, "Failed to load environment configuration")
 
 	// Skip the test if SCC is disabled
-	if strings.ToLower(envVars.SccEnabled) == "false" {
-		testLogger.Warn(t, fmt.Sprintf("Skipping %s - SCC disabled in configuration", t.Name()))
+	if strings.ToLower(envVars.SccWPEnabled) == "false" {
+		testLogger.Warn(t, fmt.Sprintf("Skipping %s - SCCWP disabled in configuration", t.Name()))
 		return
 	}
 
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
 	require.NoError(t, err, "Failed to initialize test options")
 
-	// SCC Specific Configuration
-	options.TerraformVars["scc_enable"] = envVars.SccEnabled
-	options.TerraformVars["scc_event_notification_plan"] = envVars.SccEventNotificationPlan
-	options.TerraformVars["scc_location"] = envVars.SccLocation
+	// SCCWP Specific Configuration
+	options.TerraformVars["sccwp_enable"] = envVars.SccWPEnabled
+	options.TerraformVars["cspm_enabled"] = envVars.CspmEnabled
+	options.TerraformVars["sccwp_service_plan"] = envVars.SccwpServicePlan
+	options.TerraformVars["app_config_plan"] = envVars.AppConfigPlan
 
 	// Resource Cleanup Configuration
 	options.SkipTestTearDown = true
@@ -279,7 +274,7 @@ func TestRunSCCEnabled(t *testing.T) {
 
 	// Post-deployment Validation
 	validationStart := time.Now()
-	lsf.ValidateBasicClusterConfigurationWithSCC(t, options, testLogger)
+	lsf.ValidateBasicClusterConfigurationWithSCCWPAndCSPM(t, options, testLogger)
 	testLogger.Info(t, fmt.Sprintf("Validation completed (duration: %v)", time.Since(validationStart)))
 
 	// Test Result Evaluation
