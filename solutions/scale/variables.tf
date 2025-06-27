@@ -713,46 +713,6 @@ variable "observability_monitoring_plan" {
   }
 }
 
-##############################################################################
-# SCC Variables
-##############################################################################
-
-variable "scc_enable" {
-  type        = bool
-  default     = true
-  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
-}
-
-variable "scc_profile" {
-  type        = string
-  default     = "CIS IBM Cloud Foundations Benchmark v1.1.0"
-  description = "Profile to be set on the SCC Instance (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')"
-  validation {
-    condition     = can(regex("^(|CIS IBM Cloud Foundations Benchmark v1.1.0|IBM Cloud Framework for Financial Services)$", var.scc_profile))
-    error_message = "Provide SCC Profile Name to be used (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')."
-  }
-}
-
-variable "scc_location" {
-  description = "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
-  type        = string
-  default     = "us-south"
-  validation {
-    condition     = can(regex("^(|us-south|eu-de|ca-tor|eu-es)$", var.scc_location))
-    error_message = "Provide region where it's possible to deploy an SCC Instance (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es') or leave blank and it will default to 'us-south'."
-  }
-}
-
-variable "scc_event_notification_plan" {
-  type        = string
-  default     = "lite"
-  description = "Event Notifications Instance plan to be used (it's used with S.C.C. instance), possible values 'lite' and 'standard'."
-  validation {
-    condition     = can(regex("^(|lite|standard)$", var.scc_event_notification_plan))
-    error_message = "Provide Event Notification instance plan to be used (accepting 'lite' and 'standard', defaulting to 'lite'). This instance is used in conjuction with S.C.C. one."
-  }
-}
-
 variable "skip_flowlogs_s2s_auth_policy" {
   type        = bool
   default     = false

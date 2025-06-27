@@ -62,15 +62,15 @@
           "description": "Specify the existing resource group name from your IBM Cloud account where the VPC resources should be deployed. By default, the resource group name is set to 'Default.' Note that in some older accounts, the resource group name may be 'default,' so please validate the resource_group name before deployment. If the resource group value is set to the string \"null\", the automation will create two different resource groups named 'workload-rg' and 'service-rg.' For more information on resource groups, refer to Managing resource groups."
         },
         {
-          "name": "zone",
-          "value": "[\"us-east-1\"]",
+          "name": "zones",
+          "value": "[\"eu-de-1\"]",
           "type": "list(string)",
           "secure": false,
           "description": "Specify the IBM Cloud zone within the chosen region where the IBM Spectrum LSF cluster will be deployed. A single zone input is required, and the management nodes, file storage shares, and compute nodes will all be provisioned in this zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
         },
         {
           "name": "lsf_version",
-          "value": "Fixpack_15",
+          "value": "fixpack_15",
           "type": "string",
           "secure": false,
           "description": "Select the desired version of IBM Spectrum LSF to deploy either fixpack_15 or fixpack_14. By default, the solution uses the latest available version, which is Fix Pack 15. If you need to deploy an earlier version such as Fix Pack 14, update the lsf_version field to fixpack_14. When changing the LSF version, ensure that all custom images used for management, compute, and login nodes correspond to the same version. This is essential to maintain compatibility across the cluster and to prevent deployment issues."
@@ -84,7 +84,7 @@
         },
         {
           "name": "app_center_gui_password",
-          "value": "",
+          "value": "Please fill here",
           "type": "string",
           "secure": true,
           "description": "Password required to access the IBM Spectrum LSF Application Center (App Center) GUI, which is enabled by default in both Fix Pack 15 and Fix Pack 14 with HTTPS. This is a mandatory value and omitting it will result in deployment failure. The password must meet the following requirements, at least 8 characters in length, and must include one uppercase letter, one lowercase letter, one number, and one special character."
@@ -112,8 +112,8 @@
         },
         {
           "name": "cluster_subnet_id",
-          "value": "[]",
-          "type": "list(string)",
+          "value": "__NULL__",
+          "type": "string",
           "secure": false,
           "description": "Provide the list of existing subnet ID under the existing VPC where the cluster will be provisioned. One subnet ID is required as input value. Supported zones are: eu-de-2 and eu-de-3 for eu-de, us-east-1 and us-east-3 for us-east, and us-south-1 for us-south. The management nodes, file storage shares, and compute nodes will be deployed in the same zone."
         },
@@ -133,21 +133,21 @@
         },
         {
           "name": "vpc_cluster_private_subnets_cidr_blocks",
-          "value": "[\"10.241.0.0/20\"]",
-          "type": "list(string)",
+          "value": "10.241.0.0/20",
+          "type": "string",
           "secure": false,
           "description": "Provide the CIDR block required for the creation of the compute cluster's private subnet. One CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Ensure the selected CIDR block size can accommodate the maximum number of management and dynamic compute nodes expected in your cluster. For more information on CIDR block size selection, refer to the documentation, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
         },
         {
           "name": "vpc_cluster_login_private_subnets_cidr_blocks",
-          "value": "[\"10.241.16.0/28\"]",
-          "type": "list(string)",
+          "value": "10.241.16.0/28",
+          "type": "string",
           "secure": false,
           "description": "Provide the CIDR block required for the creation of the login cluster's private subnet. Only one CIDR block is needed. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Since the login subnet is used only for the creation of login virtual server instances, provide a CIDR range of /28."
         },
         {
           "name": "dns_domain_name",
-          "value": "{compute= \"hpcaas.com\"}",
+          "value": "{compute= \"lsf.com\"}",
           "type": "object({compute = string})",
           "secure": false,
           "description": "IBM Cloud DNS Services domain name to be used for the IBM Cloud HPC cluster."
@@ -182,14 +182,14 @@
         },
         {
           "name": "bastion_instance",
-          "value": "{ image = \"ibm-ubuntu-22-04-5-minimal-amd64-3\", profile = \"cx2-4x8\" }",
+          "value": "{image = \"ibm-ubuntu-22-04-5-minimal-amd64-3\", profile = \"cx2-4x8\"}",
           "type": "object({ image = string, profile = string })",
           "secure": false,
           "description": "Specify the Bastion node configuration, including instance profile and image name. Only Ubuntu stock images available in the IBM Cloud account and region are supported."
         },
         {
           "name": "deployer_instance",
-          "value": "{ image = \"hpc-lsf-fp15-deployer-rhel810-v1\", profile = \"bx2-8x32\" }",
+          "value": "{image = \"hpc-lsf-fp15-deployer-rhel810-v1\", profile = \"bx2-8x32\" }",
           "type": "object({ image = string, profile = string })",
           "secure": false,
           "description": "Specify the deployer node configuration, including instance profile and image name. By default, the image is set for fixpack_15. Use 'hpc-lsf-fp14-deployer-rhel810-v1' if deploying with fixpack_14, and ensure lsf_version matches the image."
@@ -218,7 +218,7 @@
         {
           "name": "login_instance",
           "value": "[{ profile = \"bx2-2x8\", image = \"hpc-lsf-fp15-compute-rhel810-v1\" }]",
-          "type": "list(object({ profile = string, count = number, image = string }))",
+          "type": "list(object({ profile = string, image = string }))",
           "secure": false,
           "description": "Specify the list of login node configurations, including instance profile, image name. By default, login nodes is created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures."
         },
@@ -363,32 +363,32 @@
           "description": "When using an existing COS instance, set this value to true if authorization is already enabled between COS instance and the kms. Otherwise, default is set to false. Ensuring proper authorization avoids access issues during deployment."
         },
         {
-          "name": "scc_enable",
-          "value": "false",
+          "name": "sccwp_enable",
+          "value": "true",
           "type": "bool",
           "secure": false,
-          "description": "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+          "description": "Set this flag to true to create an instance of IBM Security and Compliance Center (SCC) Workload Protection. When enabled, it provides tools to discover and prioritize vulnerabilities, monitor for security threats, and enforce configuration, permission, and compliance policies across the full lifecycle of your workloads."
         },
         {
-          "name": "scc_profile",
-          "value": "CIS IBM Cloud Foundations Benchmark",
+          "name": "sccwp_service_plan",
+          "value": "free-trial",
           "type": "string",
           "secure": false,
-          "description": "Profile to be set on the SCC Instance (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')"
+          "description": "Specify the plan type for the Security and Compliance Center (SCC) Workload Protection instance. Valid values are free-trial and graduated-tier only."
         },
         {
-          "name": "scc_location",
-          "value": "us-south",
+          "name": "cspm_enabled",
+          "value": "true",
           "type": "string",
           "secure": false,
-          "description": "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
+          "description": "Enable Cloud Security Posture Management (CSPM) for the Workload Protection instance. This will create a trusted profile associated with the SCC Workload Protection instance that has viewer / reader access to the App Config service and viewer access to the Enterprise service. [Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
         },
         {
-          "name": "scc_event_notification_plan",
-          "value": "lite",
+          "name": "app_config_plan",
+          "value": "basic",
           "type": "string",
           "secure": false,
-          "description": "Event Notifications Instance plan to be used (it's used with S.C.C. instance), possible values 'lite' and 'standard'"
+          "description": "Specify the IBM service pricing plan for the application. Allowed values are 'basic', 'lite', 'standard', 'enterprise'."
         },
         { "name": "observability_monitoring_enable",
           "value": "true",

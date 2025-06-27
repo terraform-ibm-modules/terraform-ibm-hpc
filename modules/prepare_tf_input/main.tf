@@ -65,12 +65,6 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "scale_encryption_admin_password": "${local.scale_encryption_admin_password}",
   "filesystem_config": ${local.filesystem_config},
   "enable_hyperthreading": ${var.enable_hyperthreading},
-  "scc_enable": ${var.scc_enable},
-  "scc_profile": "${var.scc_profile}",
-  "scc_location": "${var.scc_location}",
-  "scc_cos_bucket": "${var.scc_cos_bucket}",
-  "scc_cos_instance_crn": "${var.scc_cos_instance_crn}",
-  "scc_event_notification_plan": "${var.scc_event_notification_plan}",
   "cloud_logs_data_bucket": ${var.cloud_logs_data_bucket},
   "cloud_metrics_data_bucket": ${var.cloud_metrics_data_bucket},
   "observability_logs_enable_for_management": ${var.observability_logs_enable_for_management},
@@ -87,7 +81,12 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "storage_security_group_id": "${local.storage_security_group_id}",
   "custom_file_shares": ${local.custom_file_shares},
   "login_instance": ${local.login_instance},
-  "vpc_cluster_private_subnets_cidr_blocks": "${var.vpc_cluster_private_subnets_cidr_blocks}"
+  "vpc_cluster_private_subnets_cidr_blocks": "${var.vpc_cluster_private_subnets_cidr_blocks}",
+  "existing_resource_group": "${var.existing_resource_group}",
+  "sccwp_service_plan": "${var.sccwp_service_plan}",
+  "sccwp_enable": ${var.sccwp_enable},
+  "cspm_enabled": ${var.cspm_enabled},
+  "app_config_plan": "${var.app_config_plan}"
 }
 EOT
   filename = local.schematics_inputs_path

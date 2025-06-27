@@ -401,8 +401,8 @@ locals {
     bucket_crn      = local.cloud_metrics_bucket.crn
     bucket_endpoint = local.cloud_metrics_bucket.s3_endpoint_direct
   } : null)
-  scc_cos_bucket       = length(module.landing_zone.cos_buckets_names) > 0 && var.scc_enable ? [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0] : ""
-  scc_cos_instance_crn = length(module.landing_zone.cos_instance_crns) > 0 && var.scc_enable ? module.landing_zone.cos_instance_crns[0] : ""
+  # scc_cos_bucket       = length(module.landing_zone.cos_buckets_names) > 0 && var.scc_enable ? [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0] : ""
+  # scc_cos_instance_crn = length(module.landing_zone.cos_instance_crns) > 0 && var.scc_enable ? module.landing_zone.cos_instance_crns[0] : ""
 
   compute_subnet_crn          = var.enable_deployer ? "" : data.ibm_is_subnet.compute_subnet_crn[0].crn
   ssh_keys_ids                = var.enable_deployer ? [] : [for name in var.ssh_keys : data.ibm_is_ssh_key.ssh_keys[name].id]
@@ -571,3 +571,11 @@ locals {
   ssh_jump_option  = var.enable_deployer ? "" : "-J ubuntu@${local.ssh_jump_host}"
   ssh_cmd          = var.enable_deployer ? "" : "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 ${local.ssh_forwards} ${local.ssh_jump_option} lsfadmin@${join(",", local.login_host_ip)}"
 }
+
+#locals {
+#  cloud_monitoring_instance_crn = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation.cloud_monitoring_crn : null
+#}
+
+# locals {
+#   cloud_monitoring_instance_crn = var.enable_deployer ? "" : var.observability_monitoring_enable && length(module.cloud_monitoring_instance_creation) > 0 ? module.cloud_monitoring_instance_creation[0].cloud_monitoring_crn : null
+# }

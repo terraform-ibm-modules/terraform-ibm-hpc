@@ -46,7 +46,6 @@ variable "app_center_gui_password" {
 # Cluster Level Variables
 ##############################################################################
 variable "zones" {
-
   description = "Specify the IBM Cloud zone within the chosen region where the IBM Spectrum LSF cluster will be deployed. A single zone input is required, and the management nodes, file storage shares, and compute nodes will all be provisioned in this zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
   type        = list(string)
   default     = ["us-east-1"]
@@ -145,7 +144,7 @@ variable "vpc_cluster_private_subnets_cidr_blocks" {
 variable "login_subnet_id" {
   type        = string
   default     = null
-  description = "Provide the ID of an existing subnet to deploy cluster resources, this is used only for provisioning bastion, deployer, and login nodes. If not provided, new subnet will be created.[Learn more](https://cloud.ibm.com/docs/vpc)."
+  description = "Provide the ID of an existing subnet to deploy cluster resources, this is used only for provisioning bastion, deployer, and login nodes. If not provided, new subnet will be created.When providing an existing subnet ID, make sure that the subnet has an associated public gateway..[Learn more](https://cloud.ibm.com/docs/vpc)."
   validation {
     condition     = (var.cluster_subnet_id == null && var.login_subnet_id == null) || (var.cluster_subnet_id != null && var.login_subnet_id != null)
     error_message = "In case of existing subnets, provide both login_subnet_id and cluster_subnet_id."
@@ -174,7 +173,7 @@ variable "bastion_instance" {
     image   = "ibm-ubuntu-22-04-5-minimal-amd64-3"
     profile = "cx2-4x8"
   }
-  description = "Configuration for the Bastion node, including the image and instance profile. Only Ubuntu stock images are supported."
+  description = "Configuration for the bastion node, including the image and instance profile. Only Ubuntu 22.04 stock images are supported."
 
   validation {
     condition     = can(regex("^ibm-ubuntu", var.bastion_instance.image))
@@ -196,7 +195,7 @@ variable "deployer_instance" {
     image   = "hpc-lsf-fp15-deployer-rhel810-v1"
     profile = "bx2-8x32"
   }
-  description = "Configuration for the deployer node, including the custom image and instance profile. By default, uses fixpack_15 image and a bx2-8x32 profile."
+  description = "Configuration for the deployer node, including the custom image and instance profile. By default, deployer node is created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp15-deployer-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures."
   validation {
     condition = contains([
       "hpc-lsf-fp15-deployer-rhel810-v1",
@@ -232,7 +231,7 @@ variable "login_instance" {
     profile = "bx2-2x8"
     image   = "hpc-lsf-fp15-compute-rhel810-v1"
   }]
-  description = "Specify the list of login node configurations, including instance profile, image name. By default, login nodes is created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures."
+  description = "Specify the list of login node configurations, including instance profile, image name. By default, login node is created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures."
   validation {
     condition = alltrue([
       for inst in var.login_instance : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
@@ -338,7 +337,7 @@ variable "dynamic_compute_instances" {
   )
   default = [{
     profile = "bx2-4x16"
-    count   = 1024
+    count   = 500
     image   = "hpc-lsf-fp15-compute-rhel810-v1"
   }]
   description = "Specify the list of dynamic compute node configurations, including instance profile, image name, and count. By default, all dynamic compute nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. Currently, only a single instance profile is supported for dynamic compute nodes—multiple profiles are not yet supported.."
@@ -694,46 +693,6 @@ variable "observability_monitoring_plan" {
   }
 }
 
-##############################################################################
-# SCC Variables
-##############################################################################
-
-variable "scc_enable" {
-  type        = bool
-  default     = true
-  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
-}
-
-variable "scc_profile" {
-  type        = string
-  default     = "CIS IBM Cloud Foundations Benchmark v1.1.0"
-  description = "Profile to be set on the SCC Instance (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')"
-  validation {
-    condition     = can(regex("^(|CIS IBM Cloud Foundations Benchmark v1.1.0|IBM Cloud Framework for Financial Services)$", var.scc_profile))
-    error_message = "Provide SCC Profile Name to be used (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')."
-  }
-}
-
-variable "scc_location" {
-  description = "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
-  type        = string
-  default     = "us-south"
-  validation {
-    condition     = can(regex("^(|us-south|eu-de|ca-tor|eu-es)$", var.scc_location))
-    error_message = "Provide region where it's possible to deploy an SCC Instance (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es') or leave blank and it will default to 'us-south'."
-  }
-}
-
-variable "scc_event_notification_plan" {
-  type        = string
-  default     = "lite"
-  description = "Event Notifications Instance plan to be used (it's used with S.C.C. instance), possible values 'lite' and 'standard'."
-  validation {
-    condition     = can(regex("^(|lite|standard)$", var.scc_event_notification_plan))
-    error_message = "Provide Event Notification instance plan to be used (accepting 'lite' and 'standard', defaulting to 'lite'). This instance is used in conjuction with S.C.C. one."
-  }
-}
-
 variable "skip_flowlogs_s2s_auth_policy" {
   type        = bool
   default     = false
@@ -834,5 +793,48 @@ variable "TF_PARALLELISM" {
   validation {
     condition     = 1 <= var.TF_PARALLELISM && var.TF_PARALLELISM <= 256
     error_message = "Input \"TF_PARALLELISM\" must be greater than or equal to 1 and less than or equal to 256."
+  }
+}
+
+##############################################################################
+# SCC Variables
+##############################################################################
+
+variable "sccwp_service_plan" {
+  description = "Specify the plan type for the Security and Compliance Center (SCC) Workload Protection instance. Valid values are free-trial and graduated-tier only."
+  type        = string
+  default     = "free-trial"
+  validation {
+    error_message = "Plan for SCC Workload Protection instances can only be `free-trial` or `graduated-tier`."
+    condition = contains(
+      ["free-trial", "graduated-tier"],
+      var.sccwp_service_plan
+    )
+  }
+}
+
+variable "sccwp_enable" {
+  type        = bool
+  default     = true
+  description = "Set this flag to true to create an instance of IBM Security and Compliance Center (SCC) Workload Protection. When enabled, it provides tools to discover and prioritize vulnerabilities, monitor for security threats, and enforce configuration, permission, and compliance policies across the full lifecycle of your workloads. To view the data on the dashboard, enable the cspm to create the app configuration and required trusted profile policies.[Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
+}
+
+variable "cspm_enabled" {
+  description = "CSPM (Cloud Security Posture Management) is a set of tools and practices that continuously monitor and secure cloud infrastructure. When enabled, it creates a trusted profile with viewer access to the App Configuration and Enterprise services for the SCC Workload Protection instance. Make sure the required IAM permissions are in place, as missing permissions will cause deployment to fail. If CSPM is disabled, dashboard data will not be available.[Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
+  type        = bool
+  default     = true
+  nullable    = false
+}
+
+variable "app_config_plan" {
+  description = "Specify the IBM service pricing plan for the app configuration. Allowed values are 'basic', 'lite', 'standardv2', 'enterprise'."
+  type        = string
+  default     = "basic"
+  validation {
+    error_message = "Plan for App configuration can only be basic, lite, standardv2, enterprise.."
+    condition = contains(
+      ["basic", "lite", "standardv2", "enterprise"],
+      var.app_config_plan
+    )
   }
 }

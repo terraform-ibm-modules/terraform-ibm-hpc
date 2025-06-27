@@ -742,46 +742,6 @@ variable "observability_monitoring_plan" {
   }
 }
 
-##############################################################################
-# SCC Variables
-##############################################################################
-
-variable "scc_enable" {
-  type        = bool
-  default     = true
-  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
-}
-
-variable "scc_profile" {
-  type        = string
-  default     = "CIS IBM Cloud Foundations Benchmark v1.1.0"
-  description = "Profile to be set on the SCC Instance (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')"
-  validation {
-    condition     = can(regex("^(|CIS IBM Cloud Foundations Benchmark v1.1.0|IBM Cloud Framework for Financial Services)$", var.scc_profile))
-    error_message = "Provide SCC Profile Name to be used (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')."
-  }
-}
-
-variable "scc_location" {
-  description = "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
-  type        = string
-  default     = "us-south"
-  validation {
-    condition     = can(regex("^(|us-south|eu-de|ca-tor|eu-es)$", var.scc_location))
-    error_message = "Provide region where it's possible to deploy an SCC Instance (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es') or leave blank and it will default to 'us-south'."
-  }
-}
-
-variable "scc_event_notification_plan" {
-  type        = string
-  default     = "lite"
-  description = "Event Notifications Instance plan to be used (it's used with S.C.C. instance), possible values 'lite' and 'standard'."
-  validation {
-    condition     = can(regex("^(|lite|standard)$", var.scc_event_notification_plan))
-    error_message = "Provide Event Notification instance plan to be used (accepting 'lite' and 'standard', defaulting to 'lite'). This instance is used in conjuction with S.C.C. one."
-  }
-}
-
 variable "enable_landing_zone" {
   type        = bool
   default     = true
@@ -824,17 +784,17 @@ variable "cloud_metrics_data_bucket" {
   description = "cloud metrics data bucket"
 }
 
-variable "scc_cos_bucket" {
-  type        = string
-  default     = null
-  description = "scc cos bucket"
-}
+# variable "scc_cos_bucket" {
+#   type        = string
+#   default     = null
+#   description = "scc cos bucket"
+# }
 
-variable "scc_cos_instance_crn" {
-  type        = string
-  default     = null
-  description = "scc cos instance crn"
-}
+# variable "scc_cos_instance_crn" {
+#   type        = string
+#   default     = null
+#   description = "scc cos instance crn"
+# }
 
 #############################################################################
 # VARIABLES TO BE CHECKED
@@ -1097,7 +1057,6 @@ variable "resource_group_ids" {
   default     = null
   description = "Map describing resource groups to create or reference"
 }
-
 ##############################################################################
 # Login Variables
 ##############################################################################
@@ -1134,5 +1093,48 @@ variable "TF_PARALLELISM" {
   validation {
     condition     = 1 <= var.TF_PARALLELISM && var.TF_PARALLELISM <= 256
     error_message = "Input \"TF_PARALLELISM\" must be greater than or equal to 1 and less than or equal to 256."
+  }
+}
+
+##############################################################################
+# SCC Variables
+##############################################################################
+
+variable "sccwp_service_plan" {
+  description = "IBM service pricing plan."
+  type        = string
+  default     = "free-trial"
+  validation {
+    error_message = "Plan for SCC Workload Protection instances can only be `free-trial` or `graduated-tier`."
+    condition = contains(
+      ["free-trial", "graduated-tier"],
+      var.sccwp_service_plan
+    )
+  }
+}
+
+variable "sccwp_enable" {
+  type        = bool
+  default     = true
+  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+}
+
+variable "cspm_enabled" {
+  description = "Enable Cloud Security Posture Management (CSPM) for the Workload Protection instance. This will create a trusted profile associated with the SCC Workload Protection instance that has viewer / reader access to the App Config service and viewer access to the Enterprise service. [Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
+  type        = bool
+  default     = false
+  nullable    = false
+}
+
+variable "app_config_plan" {
+  description = "Specify the IBM service pricing plan for the app configuration. Allowed values are 'basic', 'lite', 'standardv2', 'enterprise'."
+  type        = string
+  default     = "basic"
+  validation {
+    error_message = "Plan for App configuration can only be basic, lite, standardv2, enterprise.."
+    condition = contains(
+      ["basic", "lite", "standardv2", "enterprise"],
+      var.app_config_plan
+    )
   }
 }

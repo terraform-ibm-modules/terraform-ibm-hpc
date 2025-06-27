@@ -29,7 +29,6 @@ module "landing_zone" {
   client_subnets_cidr                           = var.client_subnets_cidr
   vpc_name                                      = var.vpc_name
   zones                                         = var.zones
-  scc_enable                                    = var.scc_enable
   enable_vpn                                    = var.vpn_enabled
   skip_flowlogs_s2s_auth_policy                 = var.skip_flowlogs_s2s_auth_policy
   skip_kms_s2s_auth_policy                      = var.skip_kms_s2s_auth_policy
@@ -161,12 +160,6 @@ module "prepare_tf_input" {
   bastion_security_group_id                        = local.bastion_security_group_id
   deployer_hostname                                = local.deployer_hostname
   enable_hyperthreading                            = var.enable_hyperthreading
-  scc_enable                                       = var.scc_enable
-  scc_profile                                      = var.scc_profile
-  scc_location                                     = var.scc_location
-  scc_cos_bucket                                   = local.scc_cos_bucket
-  scc_cos_instance_crn                             = local.scc_cos_instance_crn
-  scc_event_notification_plan                      = var.scc_event_notification_plan
   cloud_logs_data_bucket                           = local.cloud_logs_data_bucket
   cloud_metrics_data_bucket                        = local.cloud_metrics_data_bucket
   observability_logs_enable_for_management         = var.observability_logs_enable_for_management
@@ -201,6 +194,11 @@ module "prepare_tf_input" {
   existing_bastion_instance_name                   = var.existing_bastion_instance_name
   existing_bastion_security_group_id               = var.existing_bastion_security_group_id
   vpc_cluster_private_subnets_cidr_blocks          = var.vpc_cluster_private_subnets_cidr_blocks
+  sccwp_enable                                     = var.sccwp_enable
+  sccwp_service_plan                               = var.sccwp_service_plan
+  cspm_enabled                                     = var.cspm_enabled
+  app_config_plan                                  = var.app_config_plan
+  existing_resource_group                          = var.existing_resource_group
   depends_on                                       = [module.deployer]
 }
 
@@ -792,16 +790,16 @@ module "cloud_monitoring_instance_creation" {
   tags                           = ["lsf", var.cluster_prefix]
 }
 
-# Code for SCC Instance
-module "scc_instance_and_profile" {
-  count                   = var.enable_deployer == false && var.scc_enable ? 1 : 0
-  source                  = "./modules/security/scc"
-  location                = var.scc_location != "" ? var.scc_location : "us-south"
-  rg                      = var.resource_group_ids["service_rg"]
-  scc_profile             = var.scc_enable ? var.scc_profile : ""
-  event_notification_plan = var.scc_event_notification_plan
-  tags                    = ["lsf", var.cluster_prefix]
-  prefix                  = var.cluster_prefix
-  cos_bucket              = var.scc_cos_bucket
-  cos_instance_crn        = var.scc_cos_instance_crn
+module "scc_workload_protection" {
+  source                                       = "./modules/security/sccwp"
+  resource_group_name                          = var.existing_resource_group != "null" ? var.existing_resource_group : "${var.cluster_prefix}-service-rg"
+  prefix                                       = var.cluster_prefix
+  region                                       = local.region
+  sccwp_service_plan                           = var.sccwp_service_plan
+  resource_tags                                = ["lsf", var.cluster_prefix]
+  enable_deployer                              = var.enable_deployer
+  sccwp_enable                                 = var.sccwp_enable
+  cspm_enabled                                 = var.cspm_enabled
+  app_config_plan                              = var.app_config_plan
+  scc_workload_protection_trusted_profile_name = "${var.cluster_prefix}-wp-tp"
 }
