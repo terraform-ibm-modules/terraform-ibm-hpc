@@ -536,7 +536,7 @@ variable "ldap_admin_password" {
   description = "The LDAP admin password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces. [This value is ignored for an existing LDAP server]."
   validation {
     condition     = (!var.enable_ldap || var.ldap_server != null || can(var.ldap_admin_password != null && length(var.ldap_admin_password) >= 8 && length(var.ldap_admin_password) <= 20 && regex(".*[0-9].*", var.ldap_admin_password) != "" && regex(".*[A-Z].*", var.ldap_admin_password) != "" && regex(".*[a-z].*", var.ldap_admin_password) != "" && regex(".*[!@#$%^&*()_+=-].*", var.ldap_admin_password) != "" && !can(regex(".*\\s.*", var.ldap_admin_password))))
-    error_message = "The LDAP admin password must be 8 to 20 characters long, include uppercase, lowercase, number, special character (!@#$%^&*()_+=-), and have no spaces. Skipped if LDAP is disabled or external server is used."
+    error_message = "The LDAP admin password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces."
   }
 }
 
