@@ -1131,7 +1131,7 @@ variable "app_config_plan" {
   type        = string
   default     = "basic"
   validation {
-    error_message = "Plan for App configuration can only be basic, lite, standard, enterprise.."
+    error_message = "Plan for App configuration can only be basic, lite, standardv2, enterprise.."
     condition = contains(
       ["basic", "lite", "standardv2", "enterprise"],
       var.app_config_plan
