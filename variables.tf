@@ -1131,9 +1131,9 @@ variable "app_config_plan" {
   type        = string
   default     = "basic"
   validation {
-    error_message = "Plan for SCC Workload Protection instances can only be `free-trial` or `graduated-tier`."
+    error_message = "Plan for App configuration can only be basic, lite, standard, enterprise.."
     condition = contains(
-      ["basic", "lite", "standard", "enterprise"],
+      ["basic", "lite", "standardv2", "enterprise"],
       var.app_config_plan
     )
   }
