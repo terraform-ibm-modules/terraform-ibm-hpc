@@ -606,7 +606,7 @@
                             ]
                         },
                         {
-                            "serviceType": "service",
+                            "service_name": "service",
                             "role_crns": [
                                 "crn:v1:bluemix:public:iam::::serviceRole:Manager",
                                 "crn:v1:bluemix:public:iam::::role:Administrator"
