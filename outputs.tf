@@ -28,6 +28,11 @@ output "ssh_to_management_node" {
   value       = var.scheduler == "LSF" && (var.enable_deployer == false) && length(local.mgmt_hosts_ips) > 0 ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J ubuntu@${var.bastion_fip} lsfadmin@${local.mgmt_hosts_ips[0]}" : null
 }
 
+output "ssh_to_login_node" {
+  description = "SSH command to connect to the Login node"
+  value       = var.scheduler == "LSF" && (var.enable_deployer == false) ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J ubuntu@${var.bastion_fip} lsfadmin@${local.login_host_ip[0]}" : null
+}
+
 output "ssh_to_ldap_node" {
   description = "SSH command to connect to LDAP node"
   value       = (var.scheduler == "LSF" && var.enable_deployer == false && var.enable_ldap && length(local.ldap_hosts_ips) > 0) ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 -J ubuntu@${var.bastion_fip} ubuntu@${local.ldap_hosts_ips[0]}" : null

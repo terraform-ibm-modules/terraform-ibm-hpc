@@ -610,7 +610,7 @@ resource "local_file" "remove_host_entry_playbook" {
   content  = <<EOT
 ---
 - name: Remove managed host entries from /etc/hosts
-  hosts: [mgmt_compute_nodes]
+  hosts: all
   connection: local
   become: yes
   vars:
