@@ -1127,7 +1127,7 @@ variable "cspm_enabled" {
 }
 
 variable "app_config_plan" {
-  description = "IBM service pricing plan."
+  description = "Specify the IBM service pricing plan for the app configuration. Allowed values are 'basic', 'lite', 'standardv2', 'enterprise'."
   type        = string
   default     = "basic"
   validation {

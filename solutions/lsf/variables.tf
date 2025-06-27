@@ -46,7 +46,6 @@ variable "app_center_gui_password" {
 # Cluster Level Variables
 ##############################################################################
 variable "zones" {
-
   description = "Specify the IBM Cloud zone within the chosen region where the IBM Spectrum LSF cluster will be deployed. A single zone input is required, and the management nodes, file storage shares, and compute nodes will all be provisioned in this zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
   type        = list(string)
   default     = ["us-east-1"]
@@ -145,7 +144,7 @@ variable "vpc_cluster_private_subnets_cidr_blocks" {
 variable "login_subnet_id" {
   type        = string
   default     = null
-  description = "Provide the ID of an existing subnet to deploy cluster resources, this is used only for provisioning bastion, deployer, and login nodes. If not provided, new subnet will be created.[Learn more](https://cloud.ibm.com/docs/vpc)."
+  description = "Provide the ID of an existing subnet to deploy cluster resources, this is used only for provisioning bastion, deployer, and login nodes. If not provided, new subnet will be created.When providing an existing subnet ID, make sure that the subnet has an associated public gateway..[Learn more](https://cloud.ibm.com/docs/vpc)."
   validation {
     condition     = (var.cluster_subnet_id == null && var.login_subnet_id == null) || (var.cluster_subnet_id != null && var.login_subnet_id != null)
     error_message = "In case of existing subnets, provide both login_subnet_id and cluster_subnet_id."
@@ -174,7 +173,7 @@ variable "bastion_instance" {
     image   = "ibm-ubuntu-22-04-5-minimal-amd64-3"
     profile = "cx2-4x8"
   }
-  description = "Configuration for the Bastion node, including the image and instance profile. Only Ubuntu stock images are supported."
+  description = "Configuration for the bastion node, including the image and instance profile. Only Ubuntu 22.04 stock images are supported."
 
   validation {
     condition     = can(regex("^ibm-ubuntu", var.bastion_instance.image))
@@ -196,7 +195,7 @@ variable "deployer_instance" {
     image   = "hpc-lsf-fp15-deployer-rhel810-v1"
     profile = "bx2-8x32"
   }
-  description = "Configuration for the deployer node, including the custom image and instance profile. By default, uses fixpack_15 image and a bx2-8x32 profile."
+  description = "Configuration for the deployer node, including the custom image and instance profile. By default, deployer node is created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp15-deployer-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures."
   validation {
     condition = contains([
       "hpc-lsf-fp15-deployer-rhel810-v1",
@@ -232,7 +231,7 @@ variable "login_instance" {
     profile = "bx2-2x8"
     image   = "hpc-lsf-fp15-compute-rhel810-v1"
   }]
-  description = "Specify the list of login node configurations, including instance profile, image name. By default, login nodes is created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures."
+  description = "Specify the list of login node configurations, including instance profile, image name. By default, login node is created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures."
   validation {
     condition = alltrue([
       for inst in var.login_instance : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
@@ -338,7 +337,7 @@ variable "dynamic_compute_instances" {
   )
   default = [{
     profile = "bx2-4x16"
-    count   = 1024
+    count   = 500
     image   = "hpc-lsf-fp15-compute-rhel810-v1"
   }]
   description = "Specify the list of dynamic compute node configurations, including instance profile, image name, and count. By default, all dynamic compute nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. Currently, only a single instance profile is supported for dynamic compute nodes—multiple profiles are not yet supported.."
@@ -817,14 +816,14 @@ variable "sccwp_enable" {
 }
 
 variable "cspm_enabled" {
-  description = "When enabled, a trusted profile will be created and associated with the SCC Workload Protection instance. This profile will have viewer access to the App Configuration service and viewer access to the Enterprise service. Enabling CSPM allows account-level metrics to be displayed on the SCC Workload Protection dashboard. Ensure CSPM is enabled to view these metrics on the dashboard.[Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
+  description = "CSPM (Cloud Security Posture Management) is a set of tools and practices used to continuously monitor and secure cloud infrastructure. When enabled, it creates a trusted profile with viewer access to the App Configuration and Enterprise services for the SCC Workload Protection instance. Ensure appropriate IAM permissions are in place, as missing permissions will lead to deployment failure.[Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
   type        = bool
   default     = false
   nullable    = false
 }
 
 variable "app_config_plan" {
-  description = "Specify the IBM service pricing plan for the application. Allowed values are 'basic', 'lite', 'standard', 'enterprise'."
+  description = "Specify the IBM service pricing plan for the app configuration. Allowed values are 'basic', 'lite', 'standardv2', 'enterprise'."
   type        = string
   default     = "basic"
   validation {
