@@ -532,7 +532,7 @@ variable "ldap_server_cert" {
 variable "ldap_admin_password" {
   type        = string
   sensitive   = true
-  default     = ""
+  default     = null
   description = "The LDAP admin password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces. [This value is ignored for an existing LDAP server]."
   validation {
     condition     = !var.enable_ldap || var.ldap_server != null || length(var.ldap_admin_password) >= 8 && length(var.ldap_admin_password) <= 20 && can(regex("^(.*[0-9]){1}.*$", var.ldap_admin_password)) && can(regex("^(.*[A-Z]){1}.*$", var.ldap_admin_password)) && can(regex("^(.*[a-z]){1}.*$", var.ldap_admin_password)) && can(regex("^.*[!@#$%^&*()_+=-].*$", var.ldap_admin_password)) && !can(regex(".*\\s.*", var.ldap_admin_password))
