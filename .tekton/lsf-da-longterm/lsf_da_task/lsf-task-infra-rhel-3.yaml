@@ -73,7 +73,10 @@ spec:
       default: ""
     - name: solution
       description: Provide the value for the solution that is needed for the support of lsf and HPC.
-      default: "lsf"
+      default: "lsf-da"
+    - name: lsf_version
+      description: Fix pack LSF Version
+      default: "lsf15"
   workspaces:
     - name: workspace
       mountPath: /artifacts
@@ -125,8 +128,10 @@ spec:
         value: $(params.management_image_name)
       - name: deployer_image_name
         value: $(params.deployer_image_name)
+      - name: lsf_version
+        value: $(params.lsf_version)
   steps:
-    - name: rhel-suite-5
+    - name: rhel-suite-7
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -144,8 +149,8 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          lsf_da_rhel_suite_5
-    - name: rhel-suite-6
+          lsf_da_rhel_suite_7
+    - name: rhel-suite-8
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -163,4 +168,4 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          lsf_da_rhel_suite_6
+          lsf_da_rhel_suite_8

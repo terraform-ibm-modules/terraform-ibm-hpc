@@ -80,7 +80,13 @@ spec:
       default: ""
     - name: solution
       description: Provide the value for the solution that is needed for the support of lsf and HPC.
-      default: "lsf"
+      default: "lsf-da"
+    - name: lsf_version
+      description: Fix pack LSF Version
+      default: "lsf15"
+    - name: ssh_key_regions
+      description: Region to create ssh_keys
+      default: ""
   workspaces:
     - name: pipeline-ws
   tasks:
@@ -128,6 +134,8 @@ spec:
           value: $(params.git-credentials-json-file)
         - name: pipeline-debug
           value: $(params.pipeline-debug)
+        - name: lsf_version
+          value: $(params.lsf_version)
       workspaces:
         - name: output
           workspace: pipeline-ws
@@ -179,6 +187,10 @@ spec:
           value: $(params.pr-revision)
         - name: solution
           value: $(params.solution)
+        - name: lsf_version
+          value: $(params.lsf_version)
+        - name: ssh_key_regions
+          value: $(params.ssh_key_regions)
     - name: wes-lsf-da-rhel-pr
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
@@ -225,6 +237,8 @@ spec:
           value: $(params.git_user_email)
         - name: solution
           value: $(params.solution)
+        - name: lsf_version
+          value: $(params.lsf_version)
     # - name: wes-lsf-da-ubuntu-pr
     #   runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
     #   taskRef:
@@ -281,6 +295,10 @@ spec:
           value: $(params.pr-revision)
         - name: solution
           value: $(params.solution)
+        - name: lsf_version
+          value: $(params.lsf_version)
+        - name: ssh_key_regions
+          value: $(params.ssh_key_regions)
     - name: error-check-on-lsf-pr-infra-log
       runAfter: [git-clone, wes-lsf-da-rhel-pr]
       workspaces:
