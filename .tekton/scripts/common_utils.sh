@@ -5,7 +5,7 @@ get_commit_ssh_key() {
     CHECK_SOLUTION=$2
     LSF_VERSION=$3
     if [[ "$CHECK_SOLUTION" == "hpcaas" ]]; then
-        CICD_SSH_KEY=cicd-hpcaas
+        CICD_SSH_KEY=cicd-hpcaas-"${BUILD_NUMBER:?}"
         if [ "${REVISION}" ]; then
             CICD_SSH_KEY=$(echo $CICD_SSH_KEY-"$REVISION")
         else
@@ -13,7 +13,7 @@ get_commit_ssh_key() {
         fi
     fi
     if [[ "$CHECK_SOLUTION" == "lsf" ]]; then
-        CICD_SSH_KEY=cicd-lsf
+        CICD_SSH_KEY=cicd-lsf-"${BUILD_NUMBER:?}"
         if [ "${REVISION}" ]; then
             CICD_SSH_KEY=$(echo $CICD_SSH_KEY-"$REVISION")
         else
@@ -21,7 +21,7 @@ get_commit_ssh_key() {
         fi
     fi
     if [[ "$CHECK_SOLUTION" == "lsf-da" ]]; then
-        CICD_SSH_KEY=cicd-"$LSF_VERSION"
+        CICD_SSH_KEY=cicd-"$LSF_VERSION"-"${BUILD_NUMBER:?}"
         if [ "${REVISION}" ]; then
             CICD_SSH_KEY=$(echo $CICD_SSH_KEY-"$REVISION")
         else
@@ -36,15 +36,15 @@ get_pr_ssh_key() {
     CHECK_SOLUTION=$2
     LSF_VERSION=$3
     if [[ "$CHECK_SOLUTION" == "hpcaas" ]]; then
-        CICD_SSH_KEY=cicd-hpcaas
+        CICD_SSH_KEY=cicd-hpcaas-"${BUILD_NUMBER:?}"
         CICD_SSH_KEY=$(echo $CICD_SSH_KEY-"$PR_REVISION")
     fi
     if [[ "$CHECK_SOLUTION" == "lsf" ]]; then
-        CICD_SSH_KEY=cicd-lsf
+        CICD_SSH_KEY=cicd-lsf-"${BUILD_NUMBER:?}"
         CICD_SSH_KEY=$(echo $CICD_SSH_KEY-"$PR_REVISION")
     fi
     if [[ "$CHECK_SOLUTION" == "lsf-da" ]]; then
-        CICD_SSH_KEY=cicd-"$LSF_VERSION"
+        CICD_SSH_KEY=cicd-"$LSF_VERSION"-"${BUILD_NUMBER:?}"
         CICD_SSH_KEY=$(echo $CICD_SSH_KEY-"$PR_REVISION")
     fi
 }
