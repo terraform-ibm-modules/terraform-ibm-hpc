@@ -1,0 +1,162 @@
+---
+#-----------------------------------
+# Copyright IBM Corp. 1992, 2017. All rights reserved.
+# US Government Users Restricted Rights - Use, duplication or disclosure
+# restricted by GSA ADP Schedule Contract with IBM Corp.
+#-----------------------------------
+
+LSF:
+  # Set my_cluster_name to the name of the cluster.
+  my_cluster_name: {{ prefix }}
+
+  # Enable_Monitoring controls whether
+  # system monitoring functions are turned on.
+  # Set to False to disable monitoring or True
+  # to enable monitoring.
+  Enable_Monitoring: {{ Enable_Monitoring }}
+
+  # HA_shared_dir is the shared directory for High-Availability (HA).
+  # If set to a directory, the installation copies
+  # the configuration files and work directory
+  # contents to the specified directory, and updates the configuration
+  # to point to it.
+  # Set to "none" if an HA shared directory is not used,
+  # or if you use an NFS shared directory defined with
+  # NFS_install_dir below.
+  # HA_shared_dir: /shared/directory/path
+  HA_shared_dir: {{ HA_shared_dir }}
+
+  # NFS_install_dir is a shared directory that contains
+  # the LSF master, server and client binary files, man pages,
+  # and configuration files. When defined, the directory
+  # is also used for HA, so HA_shared_dir above
+  # should be set to "none".
+  # NFS_install_dir: /nfs-or-gpfs-directory
+  # Optionally the LSF_Masters may be installed locally, \
+  # to permit upgrading of LSF Masters independently \
+  # of the rest of the cluster.  This is controlled \
+  # by the LSF_MASTERS_ON_LOCAL parameter in: \
+  #      /opt/ibm/lsf_installer/playbook/group_vars/all
+  NFS_install_dir: {{ NFS_install_dir }}
+
+  # JDBC_string is the connection string for the
+  # optional external database. If a host has
+  # been given the role of "database" in the
+  # lsf-inventory file, the specified value is set
+  # automatically. If you do not specify a host in the DB_Host role
+  # in the lsf-inventory file, you must define a JDBC_string.
+  # The external database must be created
+  # by sourcing the database schema files:
+  #   - Copy the /opt/ibm/lsf_installer/DBschema/MySQL/*.sql files on the deployer machine to the remote database host
+  #   - Create a database that is named pac
+  #   - Create a database user who is named pacuser
+  #   - Grant this user all privileges on the pac database
+  #   - Run the schema files for the database
+  # For more information, see
+  # "https://www.ibm.com/support/knowledgecenter/SSZRJV_10.2.0/install_guide/pac_install_config.html".
+  # Set the following environment variables on the deployer machine:
+  #   - JDBC_USER
+  #   - JDBC_PASSWORD
+  #
+  #JDBC_string: jdbc:mariadb://<host>[:<port>]/<databaseName>?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT
+  #
+  JDBC_string: none
+
+  # (Optional) Primary_LSF_ADMIN is a primary LSF administrator.
+  #
+  # The primary LSF administrator account must exist
+  # on all hosts in the cluster before you install LSF.
+  #
+  # Note that the primary LSF administrator is lsfadmin by default.
+  # if the lsfadmin user does not exist, the installation creates lsfadmin
+  # with UID 495. The primary administrator owns the LSF configuration files
+  # and log files for job events.
+  #
+  #Primary_LSF_ADMIN: user_name
+
+  # (Optional) Secondary_LSF_ADMINS is a space delimited
+  # list of secondary LSF administrators.
+  #
+  # LSF administrators have permission to reconfigure LSF
+  # and to control batch jobs that are submitted by other users.
+  # Secondary administrators typically do not have permission to start LSF
+  # daemons. Usually, only root has permission to start LSF daemons.
+  #
+  # All secondary LSF administrator accounts must exist
+  # on all hosts in the cluster before you install LSF.
+  #
+  #Secondary_LSF_ADMINS: user_name1 user_name2 ...
+
+  # (Optional) LSF_Ports is a space delimited
+  # list of LSF port numbers.
+  #
+  # LSF has the following default port number values listed below.
+  # All are used for TCP, except LSF_LIM_PORT which also uses UDP.
+  #LSF_LIM_PORT: 7869
+  #LSF_RES_PORT: 6878
+  #LSB_SBD_PORT: 6882
+  #LSB_MBD_PORT: 6881
+  #LSB_QUERY_PORT: 6891
+  #LSF_DATA_PORT: 9998
+  #EGO_KD_PORT: 7870
+  #EGO_PEM_PORT: 7871
+  #ESC_PORT: 7872
+  #
+  # Specify either nine individual port numbers or
+  # a range with the starting port number followed by '-'.
+  # A port number must be an integer in the range 1024 - 65535
+  # except for any of the following:
+  # 1966, 1967, 1968, 5000, 6080, 8046, 8047, 8048, 8080, 8081, 8443, 8444.
+  # For example,
+  # LSF_Ports: 9991 9992 9993 9994 9995 9996 9997 9998 9999
+  # LSF_Ports: 9991 -
+  # where '-' indicates eight consecutive numbers from the leading number
+  #
+  #LSF_Ports: port_number1 [ - | port_number2 ... port_number9 ]
+
+  # (Optional) Private_IPv4_Range allows you to specify a range of private IPv4
+  # addresses used by LSF hosts.
+  # This parameter can be used in scenarios where the LSF master host has both
+  # public and private IP addresses, but the compute nodes have only private IP
+  # addresses.
+  # Specify a range of IPv4 addresses in the form of a Classless Inter-Domain
+  # Routing (CIDR) block.
+  # For example, Private_IPv4_Range: 10.10.99.0/8
+  #Private_IPv4_Range: none
+
+  # The ES_SERVERS parameter sets the list of the Elasticsearch servers where
+  # Elasticsearch 7.2, or later, is running.
+  #
+  # It contains the URLs to which Elasticsearch is listening and enables
+  # LSF Explorer to use the Elasticsearch features.
+  #
+  # Enter a space-separated list of the Elasticserch server URLs in the following format:
+  #        http:// or https:// IP_address or host_name : port number
+  # For example,
+  # ES_SERVERS: "http://hostA:9200 http://hostB:9200"
+  #
+  # If the first server does not respond, the next server in the list is contacted.
+  #
+  #ES_SERVERS: "http://ES_host_ip:9200"
+
+  # ES_SSL_CERTIFICATE_PATH must be configured when
+  # the protocol Elasticsearch (scheme of the URL) is https.
+  # The file path must be accessible on the deployer machine.
+  # For example,
+  #ES_SSL_CERTIFICATE_PATH: /path/to/cert_file.crt
+
+  # LOGSTASH_TOP is the top directory of the Logstash installation.
+  # Use this parameter to enable the energy accounting and the gpfsio-collector service.
+  # When LOGSTASH_TOP is defined, ES_SERVERS must also be defined in lsf-config.yml.
+  #
+  # The directory path must point to the top directory of Logstash on a host in the GUI_Hosts role.
+  # For example, LOGSTASH_TOP: /path/to/logstash/top/directory
+  #
+  # If the Logstash path.settings is not set to LOGSTASH_TOP/config,
+  # make a symbolic link for LOGSTASH_TOP/config to the Logstash path.settings directory.
+  # For example,
+  # ln -s /etc/logstash LOGSTASH_TOP/config
+  #
+  #LOGSTASH_TOP: none
+
+# END OF LSF-CONFIG.YML

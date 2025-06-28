@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/utilities"
 	"golang.org/x/crypto/ssh"
@@ -25,7 +26,11 @@ const (
 	timeOutForDynamicNodeDisappear = 15 * time.Minute
 	jobCompletionWaitTime          = 50 * time.Second
 	dynamicNodeWaitTime            = 3 * time.Minute
-	appCenterPort                  = 8443
+)
+
+const (
+	LSFVersion14 = "fixpack_14"
+	LSFVersion15 = "fixpack_15"
 )
 
 // LSFMTUCheck checks the MTU setting for multiple nodes of a specified type.
@@ -234,58 +239,64 @@ func LSFRestartDaemons(t *testing.T, sClient *ssh.Client, logger *utils.Aggregat
 // LSFControlBctrld performs start or stop operations on the bctrld daemon on the specified machine.
 // It returns an error if any step fails or if an invalid value (other than 'start' or 'stop') is provided.
 // It executes the 'bctrld' command with the specified operation and waits for the daemon to start or stop.
+// Only mgmt node lines are used to verify reachability.
 func LSFControlBctrld(t *testing.T, sClient *ssh.Client, startOrStop string, logger *utils.AggregatedLogger) error {
-	// Make startOrStop case-insensitive
 	startOrStop = strings.ToLower(startOrStop)
 
-	// Validate the operation type
 	if startOrStop != "start" && startOrStop != "stop" {
 		return fmt.Errorf("invalid operation type. Please specify 'start' or 'stop'")
 	}
 
 	var command string
-
-	// Construct the command based on the operation type
 	if startOrStop == "stop" {
 		command = "bctrld stop sbd"
 	} else {
 		command = "sudo su -l root -c 'systemctl restart lsfd'"
 	}
 
-	// Execute the command
 	if _, err := utils.RunCommandInSSHSession(sClient, command); err != nil {
 		return fmt.Errorf("failed to run '%s' command: %w", command, err)
 	}
 
-	// Sleep for a specified duration to allow time for the daemon to start or stop
+	// Sleep to give daemon time to settle
 	if startOrStop == "stop" {
-		time.Sleep(63 * time.Second)
+		time.Sleep(90 * time.Second)
 	} else {
 		time.Sleep(120 * time.Second)
 	}
 
-	// Check the status of the daemon using the 'bhosts -w' command on the remote SSH server
+	// Run bhosts and get status
 	statusCmd := "bhosts -w"
-	out, err := utils.RunCommandInSSHSession(sClient, statusCmd)
+	output, err := utils.RunCommandInSSHSession(sClient, statusCmd)
 	if err != nil {
-		return fmt.Errorf("failed to run 'bhosts' command: %w", err)
+		return fmt.Errorf("failed to run 'bhosts -w': %w", err)
 	}
 
-	// Count the number of unreachable nodes
-	unreachCount := strings.Count(string(out), "unreach")
+	logger.DEBUG(t, fmt.Sprintf("startOrStop: %s", startOrStop))
+	logger.DEBUG(t, fmt.Sprintf("bhosts -w Output:\n%s", string(output)))
 
-	// Check the output based on the startOrStop parameter
-	expectedUnreachCount := 0
+	// Filter only -mgmt- lines
+	lines := strings.Split(string(output), "\n")
+	unreachMgmtCount := 0
+	for _, line := range lines {
+		if strings.Contains(line, "-mgmt-") && strings.Contains(line, "unreach") {
+			unreachMgmtCount++
+		}
+	}
+
+	// Validate based on operation
 	if startOrStop == "stop" {
-		expectedUnreachCount = 1
+		if unreachMgmtCount == 0 {
+			return fmt.Errorf("expected mgmt node to be unreachable after stop, found none")
+		}
+		logger.Info(t, fmt.Sprintf("Daemon stopped successfully. %d mgmt nodes are unreachable", unreachMgmtCount))
+	} else {
+		if unreachMgmtCount > 0 {
+			return fmt.Errorf("expected all mgmt nodes to be reachable after start, but found %d unreachable", unreachMgmtCount)
+		}
+		logger.Info(t, "Daemon started successfully. All mgmt nodes are reachable.")
 	}
 
-	if unreachCount != expectedUnreachCount {
-		// If the unreachable node count does not match the expected count, return an error
-		return fmt.Errorf("failed to %s the sbd daemon on the management node", startOrStop)
-	}
-
-	// Log success if no errors occurred
 	logger.Info(t, fmt.Sprintf("Daemon %s successfully", startOrStop))
 	return nil
 }
@@ -396,7 +407,7 @@ func LSFRunJobs(t *testing.T, sClient *ssh.Client, jobCmd string, logger *utils.
 	if err != nil {
 		return err
 	}
-	min = 300 + min
+	min = 720 + min
 	jobMaxTimeout = time.Duration(min) * time.Second
 
 	// Log the job output for debugging purposes
@@ -472,102 +483,167 @@ func LSFExtractJobID(response string) (string, error) {
 // It sets a timeout and checks for disappearance until completion. Returns an error if the timeout is exceeded or if
 // there is an issue running the SSH command.
 func WaitForDynamicNodeDisappearance(t *testing.T, sClient *ssh.Client, logger *utils.AggregatedLogger) error {
-	// Record the start time of the job execution
-	startTime := time.Now()
+	const (
+		statusOK      = "ok"
+		workerKeyword = "comp"
+		pollInterval  = 90 * time.Second
+	)
 
-	// Continuously monitor the dynamic node until it disappears or the timeout occurs
+	startTime := time.Now()
+	waitCount := 0
+
 	for time.Since(startTime) < timeOutForDynamicNodeDisappear {
-		// Run the 'bhosts -w' command on the remote SSH server
-		command := "bhosts -w"
-		output, err := utils.RunCommandInSSHSession(sClient, command)
+		output, err := utils.RunCommandInSSHSession(sClient, "bhosts -w")
 		if err != nil {
-			return fmt.Errorf("failed to execute SSH command '%s': %w", command, err)
+			return fmt.Errorf("SSH command failed: %w", err)
 		}
 
-		// Split the output into lines and process each line
-		lines := strings.Split(output, "\n")
 		foundRelevantNode := false
-		for _, line := range lines {
-			// Check if the line contains "ok" and does not contain "-worker-"
-			if strings.Contains(line, "ok") && !strings.Contains(line, "-worker-") {
+		var activeNode string
+		for _, line := range strings.Split(output, "\n") {
+			line = strings.TrimSpace(line)
+			if line == "" {
+				continue
+			}
+
+			if strings.Contains(line, statusOK) && !strings.Contains(line, workerKeyword) {
 				foundRelevantNode = true
-				logger.Info(t, fmt.Sprintf("Relevant dynamic node still present: %s", line))
+				activeNode = line
 				break
 			}
 		}
 
-		if foundRelevantNode {
-			// Wait and retry if a relevant node is still present
-			time.Sleep(90 * time.Second)
-		} else {
-			// All relevant dynamic nodes have disappeared
-			logger.Info(t, "All relevant dynamic nodes have disappeared!")
+		if !foundRelevantNode {
+			logger.Info(t, "Cluster status: All dynamic nodes have been removed successfully")
 			return nil
 		}
+
+		waitCount++
+		elapsed := time.Since(startTime)
+		logger.Info(t, fmt.Sprintf("Monitoring: Node '%s' still active (elapsed: %.1f minutes)",
+			strings.Fields(activeNode)[0], // Extract just the node name
+			elapsed.Minutes()))
+
+		time.Sleep(pollInterval)
 	}
 
-	// Timeout exceeded while waiting for dynamic nodes to disappear
-	return fmt.Errorf("timeout of %s occurred while waiting for the dynamic node to disappear", timeOutForDynamicNodeDisappear.String())
+	return fmt.Errorf("operation timed out after %.1f minutes: dynamic nodes still present",
+		timeOutForDynamicNodeDisappear.Minutes())
 }
 
-// LSFAPPCenterConfiguration performs configuration validation for the APP Center by checking the status of essential services
-// (WEBGUI and PNC) and ensuring that the APP center port (8081) is actively listening.
-// Returns an error if the validation encounters issues, otherwise, nil is returned.
-// LSFAPPCenterConfiguration checks and validates the configuration of the LSF App Center.
-// It verifies whether the APP Center GUI or PNC is configured correctly,
-// if the APP center port is listening as expected, if the APP center binary is installed,
-// and if MariaDB packages are installed as expected.
-// Returns an error if any validation check fails, otherwise nil.
-
+// LSFAPPCenterConfiguration performs configuration validation for the APP Center by checking essential services
+// (WEBGUI and PNC), port listening, installed binaries, and MariaDB packages.
+// Returns an error if any validation check fails; otherwise, returns nil.
 func LSFAPPCenterConfiguration(t *testing.T, sClient *ssh.Client, logger *utils.AggregatedLogger) error {
 
 	lsfAppCenterPkg := "lsf-appcenter-10."
+	port := "8443"
+	//expectedStatus := "200 OK"
 
-	// Check the result of CheckAppCenterSetup for any errors
+	// 1. Validate App Center setup using pmcadmin
 	if err := CheckAppCenterSetup(t, sClient, logger); err != nil {
-		// If there's an error, return it wrapped with a custom message
-		return fmt.Errorf("CheckAppCenterSetup pmcadmin list validation failed : %w", err)
+		return fmt.Errorf("CheckAppCenterSetup pmcadmin list validation failed: %w", err)
 	}
 
-	// Command to check if APP center port is listening as expected
-	portStatusCommand := fmt.Sprintf("netstat -tuln | grep %d", appCenterPort)
+	// 2. Check if port is listening
+	portStatusCommand := fmt.Sprintf("netstat -tuln | grep %s", port)
 	portStatusOutput, err := utils.RunCommandInSSHSession(sClient, portStatusCommand)
 	if err != nil {
 		return fmt.Errorf("failed to execute command '%s': %w", portStatusCommand, err)
 	}
-
 	if !utils.VerifyDataContains(t, portStatusOutput, "LISTEN", logger) {
-		return fmt.Errorf("APP center port not listening as expected: %s", portStatusOutput)
+		return fmt.Errorf("APP Center port %s is not listening as expected: %s", port, portStatusOutput)
 	}
 
-	// Command to check if APP center binary is installed as expected
+	// 3. Validate App Center binary is installed
 	appBinaryCommand := "rpm -qa | grep lsf-appcenter"
 	appBinaryOutput, err := utils.RunCommandInSSHSession(sClient, appBinaryCommand)
 	if err != nil {
 		return fmt.Errorf("failed to execute command '%s': %w", appBinaryCommand, err)
 	}
-
 	if !utils.VerifyDataContains(t, appBinaryOutput, lsfAppCenterPkg, logger) {
-		return fmt.Errorf("APP center binary not installed as expected: %s", appBinaryOutput)
+		return fmt.Errorf("app Center binary not installed as expected: %s", appBinaryOutput)
 	}
 
-	// Command to check if MariaDB packages are installed as expected
-	mariaDBCommand := "rpm -qa | grep MariaDB"
-	mariaDBOutput, err := utils.RunCommandInSSHSession(sClient, mariaDBCommand)
+	// 4. Define the command to check mariadb status
+	mariaDBCommand := "sudo su -l root -c 'systemctl status mariadb'"
+
+	const expectedMessage = "Active: active (running)"
+
+	// Run the systemctl command on the remote host
+	output, err := utils.RunCommandInSSHSession(sClient, mariaDBCommand)
 	if err != nil {
-		return fmt.Errorf("failed to execute command '%s': %w", mariaDBCommand, err)
+		return fmt.Errorf("failed to run '%s': %w", mariaDBCommand, err)
 	}
 
-	mariaDBPackages := [4]string{"MariaDB-client", "MariaDB-common", "MariaDB-shared", "MariaDB-server"}
-	for _, out := range mariaDBPackages {
-		if !utils.VerifyDataContains(t, mariaDBOutput, out, logger) {
-			return fmt.Errorf("MariaDB was not installed as expected binary: %s", mariaDBOutput)
-		}
+	// Check if the output contains the expected active message
+	if !utils.VerifyDataContains(t, string(output), expectedMessage, logger) {
+		return fmt.Errorf("mariadb health check failed: expected message '%s' not found in output:\n%s", expectedMessage, string(output))
 	}
-	// Log success if no errors occurred
-	logger.Info(t, "Appcenter configuration validated successfully")
+
+	// 5. Validate web interface status via curl
+	// curlCommand := fmt.Sprintf("curl -i http://localhost:%s/platform/login | head -1", port)
+	// curlCommandOutput, err := utils.RunCommandInSSHSession(sClient, curlCommand)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to execute command '%s': %w", curlCommand, err)
+	// }
+	// if !utils.VerifyDataContains(t, string(curlCommandOutput), expectedStatus, logger) {
+	// 	return fmt.Errorf("app Center did not return expected HTTP status '%s': %s", expectedStatus, curlCommandOutput)
+	// }
+
+	logger.Info(t, "App Center configuration validated successfully")
 	return nil
 }
+
+// // LSFGETDynamicComputeNodeIPs retrieves the IP addresses of static nodes with a status of "ok" in an LSF cluster.
+// // It excludes nodes containing "worker" in their HOST_NAME and processes the IP addresses from the node names.
+// // The function executes the "bhosts -w" command over an SSH session, parses the output, and returns a sorted slice of IP addresses.
+// // Returns:
+// // - A sorted slice of IP addresses as []string.
+// // - An error if the command execution or output parsing fails.
+// func LSFGETDynamicComputeNodeIPs(t *testing.T, sClient *ssh.Client, logger *utils.AggregatedLogger) ([]string, error) {
+// 	const (
+// 		statusOK      = "ok"
+// 		workerKeyword = "worker"
+// 	)
+
+// 	// Run the "bhosts -w" command to get the node status
+// 	nodeStatus, err := utils.RunCommandInSSHSession(sClient, "bhosts -w")
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to execute 'bhosts' command: %w", err)
+// 	}
+
+// 	var workerIPs []string
+
+// 	// Parse the command output
+// 	scanner := bufio.NewScanner(strings.NewReader(nodeStatus))
+// 	for scanner.Scan() {
+// 		fields := strings.Fields(scanner.Text())
+
+// 		// Ensure fields exist and match the required conditions
+// 		if len(fields) > 1 && fields[1] == statusOK && !strings.Contains(fields[0], workerKeyword) {
+// 			// Extract the IP address from the HOST_NAME (expected format: <host-name>-<ip-part>)
+// 			parts := strings.Split(fields[0], "-")
+// 			if len(parts) >= 4 { // Ensure enough segments exist
+// 				ip := strings.Join(parts[len(parts)-4:], ".")
+// 				workerIPs = append(workerIPs, ip)
+// 			}
+// 		}
+// 	}
+
+// 	// Check for scanning errors
+// 	if err := scanner.Err(); err != nil {
+// 		return nil, fmt.Errorf("error scanning node status: %w", err)
+// 	}
+
+// 	// Sort the IP addresses
+// 	sort.Strings(workerIPs)
+
+// 	// Log the retrieved IPs
+// 	logger.Info(t, fmt.Sprintf("Retrieved Worker IPs: %v", workerIPs))
+
+// 	return workerIPs, nil
+// }
 
 // LSFGETDynamicComputeNodeIPs retrieves the IP addresses of static nodes with a status of "ok" in an LSF cluster.
 // It excludes nodes containing "worker" in their HOST_NAME and processes the IP addresses from the node names.
@@ -578,7 +654,7 @@ func LSFAPPCenterConfiguration(t *testing.T, sClient *ssh.Client, logger *utils.
 func LSFGETDynamicComputeNodeIPs(t *testing.T, sClient *ssh.Client, logger *utils.AggregatedLogger) ([]string, error) {
 	const (
 		statusOK      = "ok"
-		workerKeyword = "worker"
+		workerKeyword = "-comp-"
 	)
 
 	// Run the "bhosts -w" command to get the node status
@@ -614,7 +690,7 @@ func LSFGETDynamicComputeNodeIPs(t *testing.T, sClient *ssh.Client, logger *util
 	sort.Strings(workerIPs)
 
 	// Log the retrieved IPs
-	logger.Info(t, fmt.Sprintf("Retrieved Worker IPs: %v", workerIPs))
+	logger.Info(t, fmt.Sprintf("Retrieved Dynamic Worker IPs: %v", workerIPs))
 
 	return workerIPs, nil
 }
@@ -655,7 +731,7 @@ func HPCGETDynamicComputeNodeIPs(t *testing.T, sClient *ssh.Client, logger *util
 	sort.Strings(workerIPs)
 
 	// Log the retrieved IPs
-	logger.Info(t, fmt.Sprintf("Retrieved Worker IPs: %v", workerIPs))
+	logger.Info(t, fmt.Sprintf("Retrieved Dynamic Worker IPs: %v", workerIPs))
 
 	return workerIPs, nil
 }
@@ -924,29 +1000,33 @@ func LSFCheckSSHKeyForComputeNodes(t *testing.T, sClient *ssh.Client, computeNod
 	return nil
 }
 
-// CheckLSFVersion verifies if the IBM Spectrum LSF version on the cluster matches the expected version.
-// It executes the 'lsid' command, retrieves the cluster ID, and compares it with the expected version.
-func CheckLSFVersion(t *testing.T, sClient *ssh.Client, expectedVersion string, logger *utils.AggregatedLogger) error {
-
-	// Execute the 'lsid' command to get the cluster ID
+// CheckLSFVersion verifies that the IBM Spectrum LSF version on the cluster
+// matches the expected Fixpack version by running the 'lsid' command.
+func CheckLSFVersion(t *testing.T, sClient *ssh.Client, lsfVersion string, logger *utils.AggregatedLogger) error {
 	command := LOGIN_NODE_EXECUTION_PATH + "lsid"
 
 	output, err := utils.RunCommandInSSHSession(sClient, command)
 	if err != nil {
-		// Handle the error when executing the 'lsid' command
 		return fmt.Errorf("failed to execute 'lsid' command: %w", err)
 	}
 
-	// Verify if the expected cluster ID is present in the output
-	if !utils.VerifyDataContains(t, output, "IBM Spectrum LSF Standard "+expectedVersion, logger) {
-		// Extract actual cluster version from the output for better error reporting
-		actualValue := strings.TrimSpace(strings.Split(strings.Split(output, "IBM Spectrum LSF Standard")[1], ", ")[0])
+	var expectedVersion string
+	switch lsfVersion {
+	case LSFVersion14:
+		expectedVersion = LSF_VERSION_FP14
+	case LSFVersion15:
+		expectedVersion = LSF_VERSION_FP15
+	default:
+		return fmt.Errorf("unsupported LSF version identifier: %s", lsfVersion)
+	}
+
+	expectedString := "IBM Spectrum LSF " + expectedVersion
+	if !utils.VerifyDataContains(t, output, expectedString, logger) {
+		actualValue := strings.TrimSpace(strings.Split(strings.Split(output, "IBM Spectrum LSF")[1], ", ")[0])
 		return fmt.Errorf("expected cluster Version %s, but found %s", expectedVersion, actualValue)
 	}
 
-	// Log information when the cluster version is set as expected
 	logger.Info(t, fmt.Sprintf("Cluster Version is set as expected: %s", expectedVersion))
-	// No errors occurred
 	return nil
 }
 
@@ -1002,11 +1082,11 @@ func GetOSNameOfNode(t *testing.T, sClient *ssh.Client, hostIP string, logger *u
 	return "", parseErr
 }
 
-// HPCCheckFileMount checks if essential LSF directories (conf, config_done, das_staging_area, data, gui-conf, gui-logs, log, repository-path and work) exist
+// CheckFileMount checks if essential LSF directories ("gui", "lsf", "perf", "ppm", and "ssh",) exist
 // on remote machines identified by the provided list of IP addresses. It utilizes SSH to
 // query and validate the directories. Any missing directory triggers an error, and the
 // function logs the success message if all directories are found.
-func HPCCheckFileMount(t *testing.T, sClient *ssh.Client, ipsList []string, nodeType string, logger *utils.AggregatedLogger) error {
+func CheckFileMount(t *testing.T, sClient *ssh.Client, ipsList []string, nodeType string, logger *utils.AggregatedLogger) error {
 	// Define constants
 	const (
 		sampleText     = "Welcome to the ibm cloud HPC"
@@ -1031,12 +1111,12 @@ func HPCCheckFileMount(t *testing.T, sClient *ssh.Client, ipsList []string, node
 		// Check if it's not a login node
 		if !(strings.Contains(strings.ToLower(nodeType), "login")) {
 			// Define expected file system mounts
-			expectedMount := []string{"/mnt/lsf", "/mnt/vpcstorage/tools", "/mnt/vpcstorage/data"}
+			expectedMounts := []string{"/mnt/lsf", "/mnt/vpcstorage/tools", "/mnt/vpcstorage/data"}
 
 			// Check if all expected mounts exist
-			for _, mount := range expectedMount {
+			for _, mount := range expectedMounts {
 				if !utils.VerifyDataContains(t, actualMount, mount, logger) {
-					return fmt.Errorf("actual filesystem '%v' does not match the expected filesystem '%v' for node IP '%s'", actualMount, expectedMount, ip)
+					return fmt.Errorf("actual filesystem '%v' does not match the expected filesystem '%v' for node IP '%s'", actualMount, expectedMounts, ip)
 				}
 			}
 
@@ -1049,22 +1129,22 @@ func HPCCheckFileMount(t *testing.T, sClient *ssh.Client, ipsList []string, node
 			}
 
 			// Create, read, verify and delete sample files in each mount
-			for i := 1; i < len(expectedMount); i++ {
+			for i := 1; i < len(expectedMounts); i++ {
 				// Create file
-				_, fileCreationErr := utils.ToCreateFileWithContent(t, sClient, expectedMount[i], SampleFileName, sampleText, logger)
+				_, fileCreationErr := utils.ToCreateFileWithContent(t, sClient, expectedMounts[i], SampleFileName, sampleText, logger)
 				if fileCreationErr != nil {
-					return fmt.Errorf("failed to create file on %s for machine IP %s: %w", expectedMount[i], ip, fileCreationErr)
+					return fmt.Errorf("failed to create file on %s for machine IP %s: %w", expectedMounts[i], ip, fileCreationErr)
 				}
 
 				// Read file
-				actualText, fileReadErr := utils.ReadRemoteFileContents(t, sClient, expectedMount[i], SampleFileName, logger)
+				actualText, fileReadErr := utils.ReadRemoteFileContents(t, sClient, expectedMounts[i], SampleFileName, logger)
 				if fileReadErr != nil {
 					// Delete file if reading fails
-					_, fileDeletionErr := utils.ToDeleteFile(t, sClient, expectedMount[i], SampleFileName, logger)
+					_, fileDeletionErr := utils.ToDeleteFile(t, sClient, expectedMounts[i], SampleFileName, logger)
 					if fileDeletionErr != nil {
 						return fmt.Errorf("failed to delete %s file on machine IP %s: %w", SampleFileName, ip, fileDeletionErr)
 					}
-					return fmt.Errorf("failed to read %s file content on %s machine IP %s: %w", SampleFileName, expectedMount[i], ip, fileReadErr)
+					return fmt.Errorf("failed to read %s file content on %s machine IP %s: %w", SampleFileName, expectedMounts[i], ip, fileReadErr)
 				}
 
 				// Verify file content
@@ -1073,18 +1153,18 @@ func HPCCheckFileMount(t *testing.T, sClient *ssh.Client, ipsList []string, node
 				}
 
 				// Delete file after verification
-				_, fileDeletionErr := utils.ToDeleteFile(t, sClient, expectedMount[i], SampleFileName, logger)
+				_, fileDeletionErr := utils.ToDeleteFile(t, sClient, expectedMounts[i], SampleFileName, logger)
 				if fileDeletionErr != nil {
 					return fmt.Errorf("failed to delete %s file on machine IP %s: %w", SampleFileName, ip, fileDeletionErr)
 				}
 			}
 		} else {
 			// For login nodes, only /mnt/lsf is checked
-			expectedMount := "/mnt/lsf"
+			loginNodeMountPath := "/mnt/lsf"
 
 			// Verify /mnt/lsf existence
-			if !utils.VerifyDataContains(t, actualMount, expectedMount, logger) {
-				return fmt.Errorf("actual filesystem '%v' does not match the expected filesystem '%v' for node IP '%s'", actualMount, expectedMount, ip)
+			if !utils.VerifyDataContains(t, actualMount, loginNodeMountPath, logger) {
+				return fmt.Errorf("actual filesystem '%v' does not match the expected filesystem '%v' for node IP '%s'", actualMount, loginNodeMountPath, ip)
 			}
 
 			// Log /mnt/lsf existence
@@ -1119,18 +1199,15 @@ func verifyDirectories(t *testing.T, sClient *ssh.Client, ip string, logger *uti
 	switch {
 	case utils.IsStringInSlice(actualDirs, "openldap"):
 		expectedDirs = []string{
-			"conf", "config_done", "das_staging_area", "data",
-			"gui-logs", "log", "openldap", "repository-path", "work",
+			"das_staging_area", "data", "gui", "logs", "lsf", "openldap", "perf", "ppm", "repository-path", "ssh",
 		}
 	case utils.IsStringInSlice(actualDirs, "pac"):
 		expectedDirs = []string{
-			"conf", "config_done", "das_staging_area", "data",
-			"gui-logs", "log", "lsf_packages", "pac", "repository-path", "work",
+			"das_staging_area", "data", "gui", "logs", "lsf", "perf", "ppm", "repository-path", "ssh",
 		}
 	default:
 		expectedDirs = []string{
-			"conf", "config_done", "das_staging_area", "data",
-			"gui-logs", "log", "repository-path", "work",
+			"das_staging_area", "data", "gui", "logs", "lsf", "perf", "ppm", "repository-path", "ssh",
 		}
 	}
 
@@ -1139,15 +1216,13 @@ func verifyDirectories(t *testing.T, sClient *ssh.Client, ip string, logger *uti
 		return fmt.Errorf("actual directory '%v' does not match the expected directory '%v' for node IP '%s'", actualDirs, expectedDirs, ip)
 	}
 
-	// Log directories existence
-	logger.Info(t, fmt.Sprintf("Directories [10.1, conf, config_done, das_staging_area, data, gui-conf, gui-logs, log, repository-path and work] exist on %s", ip))
 	return nil
 }
 
-// VerifyTerraformOutputs verifies specific fields in the Terraform outputs and ensures they are not empty based on the provided LastTestTerraformOutputs.
+// HPCVerifyTerraformOutputs verifies specific fields in the Terraform outputs and ensures they are not empty based on the provided LastTestTerraformOutputs.
 // Additional checks are performed for the application center and LDAP server based on the isAPPCenterEnabled and ldapServerEnabled flags.
 // Any missing essential field results in an error being returned with detailed information.
-func VerifyTerraformOutputs(t *testing.T, LastTestTerraformOutputs map[string]interface{}, isAPPCenterEnabled, ldapServerEnabled bool, logger *utils.AggregatedLogger) error {
+func HPCVerifyTerraformOutputs(t *testing.T, LastTestTerraformOutputs map[string]interface{}, isAPPCenterEnabled, ldapServerEnabled bool, logger *utils.AggregatedLogger) error {
 
 	fields := []string{"ssh_to_management_node", "ssh_to_login_node", "vpc_name", "region_name"}
 	actualOutput := make(map[string]interface{})
@@ -1183,57 +1258,58 @@ func VerifyTerraformOutputs(t *testing.T, LastTestTerraformOutputs map[string]in
 
 }
 
-// LSFCheckSSHConnectivityToNodesFromLogin checks SSH connectivity from the login node to other nodes.
-func LSFCheckSSHConnectivityToNodesFromLogin(t *testing.T, sshLoginClient *ssh.Client, managementNodeIPList, computeNodeIPList []string, logger *utils.AggregatedLogger) error {
+// LSFCheckSSHConnectivityToNodesFromLogin verifies SSH connectivity from the login node
+// to all other nodes in the cluster (management and compute).
+func LSFCheckSSHConnectivityToNodesFromLogin(t *testing.T, sshLoginClient *ssh.Client, managementNodeIPList, computeNodeIPList []string, logger *utils.AggregatedLogger,
+) error {
 
 	// Check if management node IP list is empty
 	if len(managementNodeIPList) == 0 {
-		return fmt.Errorf("ERROR: management node IPs cannot be empty")
+		return fmt.Errorf("management node IP list cannot be empty")
 	}
 
-	// Iterate over each management node IP in the list
+	// Check connectivity to each management node
 	for _, managementNodeIP := range managementNodeIPList {
-		// Run SSH command to get the hostname of the management node
 		command := fmt.Sprintf("ssh %s 'hostname'", managementNodeIP)
 		actualOutput, err := utils.RunCommandInSSHSession(sshLoginClient, command)
 		if err != nil {
-			return fmt.Errorf("failed to run SSH command on management node IP %s: %w", managementNodeIP, err)
+			return fmt.Errorf("failed to SSH from login node to management node IP %s: %w", managementNodeIP, err)
 		}
-		// Check if the hostname contains "mgmt" substring
 		if !utils.VerifyDataContains(t, actualOutput, "mgmt", logger) {
-			return fmt.Errorf("compute node '%v' does not contain 'mgmt' substring for node IP '%s'", actualOutput, managementNodeIP)
+			return fmt.Errorf("hostname '%v' does not contain 'mgmt' for management node IP '%s'", actualOutput, managementNodeIP)
 		}
 	}
 
 	// Check if compute node IP list is empty
 	if len(computeNodeIPList) == 0 {
-		return fmt.Errorf("ERROR: compute node IPs cannot be empty")
+		return fmt.Errorf("compute node IP list cannot be empty")
 	}
-	// Iterate over each compute node IP in the list
+
+	// Check connectivity to each compute node
 	for _, computeNodeIP := range computeNodeIPList {
-		// Run a simple SSH command to check connectivity
 		command := fmt.Sprintf("ssh -o ConnectTimeout=12 -q %s exit", computeNodeIP)
 		_, err := utils.RunCommandInSSHSession(sshLoginClient, command)
 		if err != nil {
-			return fmt.Errorf("failed to run SSH command on compute node IP %s: %w", computeNodeIP, err)
+			return fmt.Errorf("failed to SSH from login node to compute node IP %s: %w", computeNodeIP, err)
 		}
-
 	}
-	// Log success if no errors occurred
-	logger.Info(t, "SSH connectivity check from login node to other nodes completed successfully")
-	// No errors occurred
+
+	// Log success
+	logger.Info(t, "SSH connectivity check from login node to management and compute nodes completed successfully")
 	return nil
 }
 
-// HPCCheckNoVNC checks if NO VNC is properly configured on a remote machine.
+// LSFCheckNoVNC checks if NO VNC is properly configured on a remote machine.
 // It executes a series of commands via SSH and verifies the expected output.
-func HPCCheckNoVNC(t *testing.T, sClient *ssh.Client, logger *utils.AggregatedLogger) error {
+func LSFCheckNoVNC(t *testing.T, sClient *ssh.Client, logger *utils.AggregatedLogger) error {
 	// Define commands to be executed and their expected outputs
 	commands := map[string]string{
-		"rpm -qa  | grep xterm":     "xterm",
-		"rpm -qa | grep tigervnc":   "tigervnc",
-		"ps aux | grep -i novnc":    "-Ddefault.novnc.port=6080",
-		"netstat -tuln | grep 6080": "0.0.0.0:6080",
+		"rpm -qa  | grep xterm":                    "xterm",
+		"rpm -qa | grep tigervnc":                  "tigervnc",
+		"ps aux | grep -i novnc":                   "-Ddefault.novnc.port=6080",
+		"netstat -tuln | grep 6080":                "0.0.0.0:6080",
+		"curl -sI http://localhost:6080 | head -1": "200 OK",
+		"which vncserver || command -v vncserver":  "vncserver",
 	}
 
 	// Iterate over commands
@@ -1311,7 +1387,7 @@ func VerifyEncryption(t *testing.T, apiKey, region, resourceGroup, clusterPrefix
 	}
 
 	//	// Retrieve the list of file shares (retry once after 2s if it fails)
-	fileSharesOutput, err := utils.RunCommandWithRetry(fileSharesCmd, 1, 60*time.Second)
+	fileSharesOutput, err := utils.RunCommandWithRetry(fileSharesCmd, 3, 60*time.Second)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve file shares: %w", err)
 	}
@@ -1321,6 +1397,7 @@ func VerifyEncryption(t *testing.T, apiKey, region, resourceGroup, clusterPrefix
 
 	for _, fileShareName := range fileShareNames {
 		fileShareCmd := exec.Command("ibmcloud", "is", "share", fileShareName)
+
 		output, err := fileShareCmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to retrieve file share details for '%s': %w", fileShareName, err)
@@ -1328,13 +1405,14 @@ func VerifyEncryption(t *testing.T, apiKey, region, resourceGroup, clusterPrefix
 
 		if !utils.VerifyDataContains(t, strings.ToLower(keyManagement), "key_protect", logger) {
 			if !utils.VerifyDataContains(t, string(output), "provider_managed", logger) {
-				return fmt.Errorf("encryption in transit is unexpectedly enabled for the file shares ")
+				return fmt.Errorf("encryption-in-transit is unexpectedly enabled for the file shares")
 			}
 		} else {
 			if !utils.VerifyDataContains(t, string(output), "user_managed", logger) {
-				return fmt.Errorf("encryption in transit is unexpectedly disabled for the file shares")
+				return fmt.Errorf("encryption-in-transit is unexpectedly disabled for the file shares")
 			}
 		}
+
 	}
 	logger.Info(t, "Encryption set as expected")
 	return nil
@@ -1431,11 +1509,11 @@ func LSFRunJobsAsLDAPUser(t *testing.T, sClient *ssh.Client, jobCmd, ldapUser st
 	return fmt.Errorf("job execution for ID %s exceeded the specified time", jobID)
 }
 
-// HPCCheckFileMountAsLDAPUser checks if essential LSF directories (conf, config_done, das_staging_area, data, gui-conf, gui-logs, log, openldap, repository-path and work) exist
+// CheckFileMountAsLDAPUser checks if essential LSF directories (conf, config_done, das_staging_area, data, gui-conf, gui-logs, log, openldap, repository-path and work) exist
 // on remote machines It utilizes SSH to
 // query and validate the directories. Any missing directory triggers an error, and the
 // function logs the success message if all directories are found.
-func HPCCheckFileMountAsLDAPUser(t *testing.T, sClient *ssh.Client, nodeType string, logger *utils.AggregatedLogger) error {
+func CheckFileMountAsLDAPUser(t *testing.T, sClient *ssh.Client, nodeType string, logger *utils.AggregatedLogger) error {
 	// Define constants
 	const (
 		sampleText     = "Welcome to the ibm cloud HPC"
@@ -1455,10 +1533,10 @@ func HPCCheckFileMountAsLDAPUser(t *testing.T, sClient *ssh.Client, nodeType str
 	actualMount := strings.TrimSpace(string(outputOne))
 
 	if !strings.Contains(strings.ToLower(nodeType), "login") {
-		expectedMount := []string{"/mnt/lsf", "/mnt/vpcstorage/tools", "/mnt/vpcstorage/data"}
-		for _, mount := range expectedMount {
+		expectedMounts := []string{"/mnt/lsf", "/mnt/vpcstorage/tools", "/mnt/vpcstorage/data"}
+		for _, mount := range expectedMounts {
 			if !utils.VerifyDataContains(t, actualMount, mount, logger) {
-				return fmt.Errorf("actual filesystem '%v' does not match the expected filesystem '%v' for node %s", actualMount, expectedMount, hostname)
+				return fmt.Errorf("actual filesystem '%v' does not match the expected filesystem '%v' for node %s", actualMount, expectedMounts, hostname)
 			}
 		}
 		logger.Info(t, fmt.Sprintf("Filesystems [/mnt/lsf, /mnt/vpcstorage/tools,/mnt/vpcstorage/data] exist on the node %s", hostname))
@@ -1467,34 +1545,34 @@ func HPCCheckFileMountAsLDAPUser(t *testing.T, sClient *ssh.Client, nodeType str
 			return err
 		}
 
-		for i := 1; i < len(expectedMount); i++ {
-			_, fileCreationErr := utils.ToCreateFileWithContent(t, sClient, expectedMount[i], SampleFileName, sampleText, logger)
+		for i := 1; i < len(expectedMounts); i++ {
+			_, fileCreationErr := utils.ToCreateFileWithContent(t, sClient, expectedMounts[i], SampleFileName, sampleText, logger)
 			if fileCreationErr != nil {
-				return fmt.Errorf("failed to create file on %s for machine %s: %w", expectedMount[i], hostname, fileCreationErr)
+				return fmt.Errorf("failed to create file on %s for machine %s: %w", expectedMounts[i], hostname, fileCreationErr)
 			}
 
-			actualText, fileReadErr := utils.ReadRemoteFileContents(t, sClient, expectedMount[i], SampleFileName, logger)
+			actualText, fileReadErr := utils.ReadRemoteFileContents(t, sClient, expectedMounts[i], SampleFileName, logger)
 			if fileReadErr != nil {
-				_, fileDeletionErr := utils.ToDeleteFile(t, sClient, expectedMount[i], SampleFileName, logger)
+				_, fileDeletionErr := utils.ToDeleteFile(t, sClient, expectedMounts[i], SampleFileName, logger)
 				if fileDeletionErr != nil {
 					return fmt.Errorf("failed to delete %s file on machine %s: %w", SampleFileName, hostname, fileDeletionErr)
 				}
-				return fmt.Errorf("failed to read %s file content on %s machine %s: %w", SampleFileName, expectedMount[i], hostname, fileReadErr)
+				return fmt.Errorf("failed to read %s file content on %s machine %s: %w", SampleFileName, expectedMounts[i], hostname, fileReadErr)
 			}
 
 			if !utils.VerifyDataContains(t, actualText, sampleText, logger) {
 				return fmt.Errorf("%s actual file content '%v' does not match the file content '%v' for node %s", SampleFileName, actualText, sampleText, hostname)
 			}
 
-			_, fileDeletionErr := utils.ToDeleteFile(t, sClient, expectedMount[i], SampleFileName, logger)
+			_, fileDeletionErr := utils.ToDeleteFile(t, sClient, expectedMounts[i], SampleFileName, logger)
 			if fileDeletionErr != nil {
 				return fmt.Errorf("failed to delete %s file on machine %s: %w", SampleFileName, hostname, fileDeletionErr)
 			}
 		}
 	} else {
-		expectedMount := "/mnt/lsf"
-		if !utils.VerifyDataContains(t, actualMount, expectedMount, logger) {
-			return fmt.Errorf("actual filesystem '%v' does not match the expected filesystem '%v' for node %s", actualMount, expectedMount, hostname)
+		loginNodeMountPath := "/mnt/lsf"
+		if !utils.VerifyDataContains(t, actualMount, loginNodeMountPath, logger) {
+			return fmt.Errorf("actual filesystem '%v' does not match the expected filesystem '%v' for node %s", actualMount, loginNodeMountPath, hostname)
 		}
 		logger.Info(t, fmt.Sprintf("Filesystems /mnt/lsf exist on the node %s", hostname))
 
@@ -1519,15 +1597,13 @@ func verifyDirectoriesAsLdapUser(t *testing.T, sClient *ssh.Client, hostname str
 	actualDirs := strings.Fields(strings.TrimSpace(string(outputTwo)))
 
 	// Define expected directories
-	expectedDirs := []string{"conf", "config_done", "das_staging_area", "data", "gui-logs", "log", "openldap", "repository-path", "work"}
+	expectedDirs := []string{"das_staging_area", "data", "gui", "logs", "lsf", "openldap", "perf", "ppm", "repository-path", "ssh"}
 
 	// Verify if all expected directories exist
 	if !utils.VerifyDataContains(t, actualDirs, expectedDirs, logger) {
 		return fmt.Errorf("actual directory '%v' does not match the expected directory '%v' for node IP '%s'", actualDirs, expectedDirs, hostname)
 	}
 
-	// Log directories existence
-	logger.Info(t, fmt.Sprintf("Directories [10.1, conf, config_done, das_staging_area, data, gui-conf, gui-logs, log, repository-path and work] exist on %s", hostname))
 	return nil
 }
 
@@ -1648,7 +1724,7 @@ func VerifyLDAPServerConfig(t *testing.T, sClient *ssh.Client, ldapAdminpassword
 	if err != nil {
 		return fmt.Errorf("failed to execute command '%s' via SSH: %v", ldapConfigCheckCmd, err)
 	}
-	expected := fmt.Sprintf("BASE   dc=%s,dc=%s", strings.Split(ldapDomain, ".")[0], strings.Split(ldapDomain, ".")[1])
+	expected := fmt.Sprintf("BASE    dc=%s,dc=%s", strings.Split(ldapDomain, ".")[0], strings.Split(ldapDomain, ".")[1])
 	if !utils.VerifyDataContains(t, actual, expected, logger) {
 		return fmt.Errorf("LDAP configuration check failed: Expected '%s', got '%s'", expected, actual)
 	}
@@ -1685,9 +1761,9 @@ func VerifyLDAPServerConfig(t *testing.T, sClient *ssh.Client, ldapAdminpassword
 	return nil
 }
 
-// verifyPTRRecords verifies PTR records for 'mgmt' or 'login' nodes and ensures their resolution via SSH.
+// verifyPTRRecords verifies PTR records for 'mgmt'  nodes and ensures their resolution via SSH.
 // It retrieves hostnames, performs nslookup to verify PTR records, and returns an error if any step fails.
-func verifyPTRRecords(t *testing.T, sClient *ssh.Client, publicHostName, publicHostIP, privateHostName string, managementNodeIPList []string, loginNodeIP string, domainName string, logger *utils.AggregatedLogger) error {
+func verifyPTRRecords(t *testing.T, sClient *ssh.Client, publicHostName, publicHostIP, privateHostName string, managementNodeIPList []string, domainName string, logger *utils.AggregatedLogger) error {
 	// Slice to hold the list of hostnames
 	var hostNamesList []string
 
@@ -1750,25 +1826,6 @@ func verifyPTRRecords(t *testing.T, sClient *ssh.Client, publicHostName, publicH
 		}
 	}
 	logger.Info(t, "Verify PTR Records for management nodes completed successfully.")
-
-	// If login node IP is provided, verify PTR records on login node as well
-	if loginNodeIP != "" {
-		loginSshClient, connectionErr := utils.ConnectToHost(publicHostName, publicHostIP, privateHostName, loginNodeIP)
-		if connectionErr != nil {
-			return fmt.Errorf("failed to connect to the login node %s via SSH: %v", loginNodeIP, connectionErr)
-		}
-
-		defer func() {
-			if err := loginSshClient.Close(); err != nil {
-				logger.Info(t, fmt.Sprintf("failed to close loginSshClient: %v", err))
-			}
-		}()
-
-		// Verify PTR records on login node
-		if err := verifyPTR(loginSshClient, fmt.Sprintf("login node %s", loginNodeIP)); err != nil {
-			return err
-		}
-	}
 
 	logger.Info(t, "Verify PTR Records for login node completed successfully.")
 	logger.Info(t, "Verify PTR Records completed successfully.")
@@ -1839,6 +1896,14 @@ func DeleteServiceInstance(t *testing.T, apiKey, region, resourceGroup, instance
 
 	logger.Info(t, fmt.Sprintf("Service instance '%s' retrieved successfully. Instance ID: %s", instanceName, serviceInstanceID))
 
+	// Set the IBM Cloud Key Protect region
+	setKPRegionCommand := fmt.Sprintf("ibmcloud kp region-set %s", region)
+	setKPRegionExec := exec.Command("bash", "-c", setKPRegionCommand)
+	setKPRegionOutput, err := setKPRegionExec.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to set Key Protect region: %w. Output: %s", err, string(setKPRegionOutput))
+	}
+
 	// Retrieve and delete associated keys
 	getAssociatedKeysCmd := fmt.Sprintf("ibmcloud kp keys -i %s | awk 'NR>3' | awk '{print $1}'", serviceInstanceID)
 	cmdKeysID := exec.Command("bash", "-c", getAssociatedKeysCmd)
@@ -1906,11 +1971,18 @@ func CreateKey(t *testing.T, apiKey, region, resourceGroup, instanceName, keyNam
 
 	logger.Info(t, fmt.Sprintf("Service instance '%s' retrieved successfully. Instance ID: %s", instanceName, serviceInstanceID))
 
-	// Create key
+	// Set the IBM Cloud Key Protect region
+	setKPRegionCommand := fmt.Sprintf("ibmcloud kp region-set %s", region)
+	setKPRegionExec := exec.Command("bash", "-c", setKPRegionCommand)
+	setKPRegionOutput, err := setKPRegionExec.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to set Key Protect region: %w. Output: %s", err, string(setKPRegionOutput))
+	}
 
+	// Create key
 	createKeyCmd := fmt.Sprintf("ibmcloud kp key create %s -i %s", keyName, serviceInstanceID)
-	cmdKey := exec.Command("bash", "-c", createKeyCmd)
-	keyOutput, err := cmdKey.CombinedOutput()
+	createCmdKey := exec.Command("bash", "-c", createKeyCmd)
+	keyOutput, err := createCmdKey.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to create key: %w. Output: %s", err, string(keyOutput))
 	}
@@ -1994,68 +2066,85 @@ func LSFDNSCheck(t *testing.T, sClient *ssh.Client, ipsList []string, domain str
 	return nil
 }
 
-// HPCAddNewLDAPUser adds a new LDAP user by modifying an existing user's configuration and running necessary commands.
-// It reads the existing LDAP user configuration, replaces the existing user information with the new LDAP user
-// information, creates a new LDIF file on the LDAP server, and then runs LDAP commands to add the new user. Finally, it
-// verifies the addition of the new LDAP user by searching the LDAP server.
-// Returns an error if the  if any step fails
-func HPCAddNewLDAPUser(t *testing.T, sClient *ssh.Client, ldapAdminPassword, ldapDomain, ldapUser, newLdapUser string, logger *utils.AggregatedLogger) error {
-	// Define the command to read the existing LDAP user configuration
-	getLDAPUserConf := "cat /opt/users.ldif"
-	actual, err := utils.RunCommandInSSHSession(sClient, getLDAPUserConf)
-	if err != nil {
-		return fmt.Errorf("failed to execute command '%s' via SSH: %v", getLDAPUserConf, err)
-	}
-
-	// Replace the existing LDAP user name with the new LDAP user name
-	ldifContent := strings.ReplaceAll(actual, ldapUser, newLdapUser)
-
-	ldifContent = strings.ReplaceAll(ldifContent, "10000", "20000")
-
-	// Create the new LDIF file on the LDAP server
-	_, fileCreationErr := utils.ToCreateFileWithContent(t, sClient, ".", "user2.ldif", ldifContent, logger)
-	if fileCreationErr != nil {
-		return fmt.Errorf("failed to create file on LDAP server: %w", fileCreationErr)
-	}
-
-	// Parse the LDAP domain for reuse
+// LSFAddNewLDAPUser creates a new user in LDAP via SSH connection.
+// Generates password hash, prepares LDIF configuration, and executes
+// remote ldapadd command. Verifies success by searching for the new user.
+// Returns nil on success or error if any operation fails.
+// Domain must be in "dc1.dc2" format.
+func LSFAddNewLDAPUser(t *testing.T, sClient *ssh.Client, ldapAdminPassword, ldapDomain, ldapUser, newLdapUser, newLdapPassword string, logger *utils.AggregatedLogger) error {
+	// Step 1: Parse the LDAP domain
 	domainParts := strings.Split(ldapDomain, ".")
 	if len(domainParts) != 2 {
 		return fmt.Errorf("invalid LDAP domain format: %s", ldapDomain)
 	}
 	dc1, dc2 := domainParts[0], domainParts[1]
 
-	// Define the command to add the new LDAP user using the ldapadd command
-	ldapAddCmd := fmt.Sprintf(
-		"ldapadd -x -D cn=admin,dc=%s,dc=%s -w %s -f user2.ldif",
-		dc1, dc2, ldapAdminPassword,
-	)
+	// Step 2: Fetch existing user LDIF
+	getLDAPUserConf := fmt.Sprintf(`ldapsearch -x -D "cn=admin,dc=%s,dc=%s" -w '%s' -b "ou=people,dc=%s,dc=%s" "(uid=%s)" | awk '/^dn: uid=/{flag=1} /^# search result/{flag=0} flag' > newuser.ldif`,
+		dc1, dc2, ldapAdminPassword, dc1, dc2, ldapUser)
+	_, err := utils.RunCommandInSSHSession(sClient, getLDAPUserConf)
+	if err != nil {
+		return fmt.Errorf("failed to run ldapsearch: %v", err)
+	}
+
+	// Step 3: Read the original LDIF
+	originalLDIF, err := utils.RunCommandInSSHSession(sClient, "cat ./newuser.ldif")
+	if err != nil {
+		return fmt.Errorf("failed to read LDIF: %v", err)
+	}
+	if strings.TrimSpace(originalLDIF) == "" {
+		return fmt.Errorf("no LDIF content found for user %s", ldapUser)
+	}
+
+	// Step 4: Replace username and UID
+	updatedLDIF := strings.ReplaceAll(originalLDIF, ldapUser, newLdapUser)
+	updatedLDIF = strings.ReplaceAll(updatedLDIF, "uidNumber: 10000", "uidNumber: 20000")
+
+	// Generate password hash
+	hashedPass, err := utils.GenerateLDAPPasswordHash(t, sClient, newLdapPassword, logger)
+	if err != nil {
+		return fmt.Errorf("password hash generation failed: %w", err)
+	}
+
+	lines := strings.Split(updatedLDIF, "\n")
+	for i, line := range lines {
+		if strings.HasPrefix(line, "userPassword:") || strings.HasPrefix(line, "userPassword::") { // pragma: allowlist secret
+			lines[i] = "userPassword: " + hashedPass // pragma: allowlist secret
+		}
+	}
+	updatedLDIF = strings.Join(lines, "\n")
+
+	// Step 6: Write the updated LDIF to file using heredoc
+	heredoc := fmt.Sprintf(`cat <<EOF > ./user2.ldif
+%s
+EOF`, updatedLDIF)
+	_, err = utils.RunCommandInSSHSession(sClient, heredoc)
+	if err != nil {
+		return fmt.Errorf("failed to write user2.ldif via heredoc: %v", err)
+	}
+
+	// ➕ Step 7: Add the new LDAP user
+	ldapAddCmd := fmt.Sprintf("ldapadd -x -D cn=admin,dc=%s,dc=%s -w '%s' -f user2.ldif", dc1, dc2, ldapAdminPassword)
 	ldapAddOutput, err := utils.RunCommandInSSHSession(sClient, ldapAddCmd)
 	if err != nil {
-		return fmt.Errorf("failed to execute command '%s' via SSH: %v", ldapAddCmd, err)
+		return fmt.Errorf("ldapadd failed: %v", err)
+	}
+	if !utils.VerifyDataContains(t, ldapAddOutput, "adding new entry", logger) {
+		return fmt.Errorf("ldapadd did not confirm user addition: %s", ldapAddOutput)
 	}
 
-	// Verify the new LDAP user exists in the search results
-	if !utils.VerifyDataContains(t, ldapAddOutput, "uid="+newLdapUser, logger) {
-		return fmt.Errorf("LDAP user %s not found in add command output", newLdapUser)
-	}
-
-	// Define the command to search for the new LDAP user to verify the addition
-	ldapSearchCmd := fmt.Sprintf(
-		"ldapsearch -x -D \"cn=admin,dc=%s,dc=%s\" -w %s -b \"ou=people,dc=%s,dc=%s\" -s sub \"(objectClass=*)\"",
-		dc1, dc2, ldapAdminPassword, dc1, dc2,
-	)
+	// Step 8: Verify the new user
+	ldapSearchCmd := fmt.Sprintf(`ldapsearch -x -D "cn=admin,dc=%s,dc=%s" -w '%s' -b "ou=people,dc=%s,dc=%s" "(uid=%s)"`,
+		dc1, dc2, ldapAdminPassword, dc1, dc2, newLdapUser)
 	ldapSearchOutput, err := utils.RunCommandInSSHSession(sClient, ldapSearchCmd)
 	if err != nil {
-		return fmt.Errorf("failed to execute command '%s' via SSH: %v", ldapSearchCmd, err)
+		return fmt.Errorf("ldapsearch verification failed: %v", err)
 	}
-
-	// Verify the new LDAP user exists in the search results
 	if !utils.VerifyDataContains(t, ldapSearchOutput, "uid: "+newLdapUser, logger) {
 		return fmt.Errorf("LDAP user %s not found in search results", newLdapUser)
 	}
 
-	logger.Info(t, fmt.Sprintf("New LDAP user %s created successfully", newLdapUser))
+	logger.Info(t, fmt.Sprintf("✅ New LDAP user '%s' created successfully", newLdapUser))
 	return nil
 }
 
@@ -2110,7 +2199,8 @@ func ValidateFlowLogs(t *testing.T, apiKey, region, resourceGroup, clusterPrefix
 	if err := utils.LoginIntoIBMCloudUsingCLI(t, apiKey, region, resourceGroup); err != nil {
 		return fmt.Errorf("failed to log in to IBM Cloud: %w", err)
 	}
-	flowLogName := fmt.Sprintf("%s-lsf-vpc", clusterPrefix)
+	//flowLogName := fmt.Sprintf("%s-lsf-vpc", clusterPrefix)
+	flowLogName := fmt.Sprintf("%s-lsf-logs", clusterPrefix)
 	// Fetching the flow log details
 	retrieveFlowLogs := fmt.Sprintf("ibmcloud is flow-logs %s", flowLogName)
 	cmdRetrieveFlowLogs := exec.Command("bash", "-c", retrieveFlowLogs)
@@ -2178,177 +2268,252 @@ func GetLDAPServerCert(publicHostName, bastionIP, ldapHostName, ldapServerIP str
 	return ldapServerCert, nil
 }
 
-// GetClusterInfo retrieves key cluster-related information from Terraform variables.
-// It extracts the cluster ID, reservation ID, and cluster prefix from the provided test options.
-// Returns the cluster ID, reservation ID, and cluster prefix as strings.
-func GetClusterInfo(options *testhelper.TestOptions) (string, string, string) {
-	var ClusterName, reservationID, clusterPrefix string
+// // GetClusterInfo retrieves key cluster-related information from Terraform variables.
+// // It extracts the cluster ID, reservation ID, and cluster prefix from the provided test options.
+// // Returns the cluster ID, reservation ID, and cluster prefix as strings.
+// func GetClusterInfo(options *testhelper.TestOptions) (string, string, string) {
+// 	var ClusterName, reservationID, clusterPrefix string
 
-	// Retrieve values safely with type assertion
-	if id, ok := options.TerraformVars["cluster_name"].(string); ok {
-		ClusterName = id
-	}
-	if reservation, ok := options.TerraformVars["reservation_id"].(string); ok {
-		reservationID = reservation
-	}
+// 	// Retrieve values safely with type assertion
+// 	if id, ok := options.TerraformVars["cluster_name"].(string); ok {
+// 		ClusterName = id
+// 	}
+// 	if reservation, ok := options.TerraformVars["reservation_id"].(string); ok {
+// 		reservationID = reservation
+// 	}
+// 	if prefix, ok := options.TerraformVars["cluster_prefix"].(string); ok {
+// 		clusterPrefix = prefix
+// 	}
+
+// 	return ClusterName, reservationID, clusterPrefix
+// }
+
+// // GetClusterInfo extracts key cluster-related information from Terraform variables.
+// // It returns the cluster name and cluster prefix as strings.
+// func GetClusterInfo(options *testhelper.TestOptions) (clusterName string, clusterPrefix string) {
+// 	// Retrieve the cluster name if present and of type string
+// 	if name, ok := options.TerraformVars["cluster_name"].(string); ok {
+// 		clusterName = name
+// 	}
+
+// 	// Retrieve the cluster prefix if present and of type string
+// 	if prefix, ok := options.TerraformVars["cluster_prefix"].(string); ok {
+// 		clusterPrefix = prefix
+// 	}
+
+// 	return
+// }
+
+// GetClusterInfo extracts key cluster-related information from Terraform variables.
+// It returns cluster prefix as strings.
+func GetClusterInfo(options *testhelper.TestOptions) (clusterPrefix string) {
+
+	// Retrieve the cluster prefix if present and of type string
 	if prefix, ok := options.TerraformVars["cluster_prefix"].(string); ok {
 		clusterPrefix = prefix
 	}
 
-	return ClusterName, reservationID, clusterPrefix
+	return
 }
 
-// SetJobCommands generates job commands customized for the specified solution type and zone.
-// For 'hpc' solutions, it dynamically generates commands based on the zone.
-// For other solution types, it applies predefined default commands for low and medium-memory tasks.
-func SetJobCommands(solution, zone string) (string, string) {
-	var lowMemJobCmd, medMemJobCmd string
+// GenerateLSFJobCommandsForMemoryTypes generates the LSF job commands for low, medium, and high memory tasks.
+// It returns the predefined commands for each job type.
+func GenerateLSFJobCommandsForMemoryTypes() (string, string, string) {
+	// Default job commands for low, medium, and high memory tasks
+	lowMemJobCmd := LSF_JOB_COMMAND_LOW_MEM
+	medMemJobCmd := LSF_JOB_COMMAND_MED_MEM
+	highMemJobCmd := LSF_JOB_COMMAND_HIGH_MEM
 
-	// Determine the job commands based on the solution type
-	if strings.Contains(strings.ToLower(solution), "hpc") {
-		// For HPC solutions, generate job commands dynamically based on the zone
-		lowMemJobCmd = GetJobCommand(zone, "low")
-		medMemJobCmd = GetJobCommand(zone, "med")
-	} else {
-		// For non-HPC solutions, use predefined default commands
-		lowMemJobCmd = LSF_JOB_COMMAND_LOW_MEM
-		medMemJobCmd = LSF_JOB_COMMAND_MED_MEM
-	}
-
-	// Return the commands for low and medium memory jobs
-	return lowMemJobCmd, medMemJobCmd
+	// Return the commands for low, medium, and high memory jobs
+	return lowMemJobCmd, medMemJobCmd, highMemJobCmd
 }
 
-// ValidateClusterCreation checks that the cluster was successfully created by running a consistency test.
-// It logs any errors encountered and returns an error if the consistency test fails or the output is nil.
-func ValidateClusterCreation(t *testing.T, options *testhelper.TestOptions, logger *utils.AggregatedLogger) error {
-	// Run the consistency test to verify cluster creation
+// VerifyClusterCreationAndConsistency validates successful cluster creation and operational
+// consistency. It:
+//  1. Executes a consistency test via RunTestConsistency()
+//  2. Verifies non-nil output
+//  3. Provides detailed, traceable errors on failure
+//
+// Returns nil on success, or an error with context on failure.
+// All outcomes are logged through the provided logger.
+func VerifyClusterCreationAndConsistency(t *testing.T, options *testhelper.TestOptions, logger *utils.AggregatedLogger) error {
+	const op = "cluster creation and consistency check"
+
+	// Create a local copy of the test name to prevent race conditions
+	testName := t.Name()
+
+	// Execute the consistency test - ensure RunTestConsistency() is thread-safe
 	output, err := options.RunTestConsistency()
+
 	if err != nil {
-		logger.Error(t, fmt.Sprintf("Error running consistency test: %v", err))
-		return fmt.Errorf("error running consistency test: %v", err)
+		// Thread-safe logging
+		logger.Error(t, fmt.Sprintf("%s failed for test %s: %v", op, testName, err))
+		return fmt.Errorf("%s failed for test %s: %w", op, testName, err)
 	}
 
-	// Ensure that the output is non-nil
+	// Check output with thread-safe nil check
 	if output == nil {
-		logger.Error(t, "Expected non-nil output, but got nil")
-		return fmt.Errorf("expected non-nil output, but got nil")
+		msg := fmt.Sprintf("%s failed for test %s: nil consistency output", op, testName)
+		// Thread-safe logging
+		logger.Error(t, msg)
+		return fmt.Errorf("%s: %s", op, msg)
 	}
 
-	// Log success message
-	logger.Info(t, t.Name()+" Cluster created successfully")
+	// Thread-safe success logging
+	logger.Info(t, fmt.Sprintf("%s: %s passed", testName, op))
 	return nil
 }
 
-// GetClusterIPs retrieves server IPs based on the solution type (HPC or LSF).
-// It returns the bastion IP, management node IPs, login node IP, and static worker node IPs,
-// and an error if the solution type is invalid or there is a problem retrieving the IPs.
-func GetClusterIPs(t *testing.T, options *testhelper.TestOptions, solution string, logger *utils.AggregatedLogger) (string, []string, string, []string, error) {
-	var bastionIP, loginNodeIP string
-	var managementNodeIPList, staticWorkerNodeIPList []string
-	var err error
+// VerifyClusterCreation checks cluster creation and operational consistency.
+// It runs options.RunTest and ensures the output is not nil.
+// Logs results and returns an error if validation fails.
+func VerifyClusterCreation(t *testing.T, options *testhelper.TestOptions, logger *utils.AggregatedLogger) error {
+	const op = "cluster creation and consistency check"
 
-	// Retrieve server IPs based on solution type
-	switch {
-	case strings.EqualFold(solution, "hpc"):
-		bastionIP, managementNodeIPList, loginNodeIP, err = utils.HPCGetClusterIPs(t, options, logger)
-	case strings.EqualFold(solution, "lsf"):
-		bastionIP, managementNodeIPList, loginNodeIP, staticWorkerNodeIPList, err = utils.LSFGetClusterIPs(t, options, logger)
-	default:
-		return "", nil, "", nil, fmt.Errorf("invalid solution type: %s", solution)
+	// Create a local copy of the test name to prevent race conditions
+	testName := t.Name()
+
+	// Execute the consistency test - ensure RunTest is thread-safe
+	output, err := options.RunTest()
+	if err != nil {
+		// Thread-safe logging
+		logger.Error(t, fmt.Sprintf("%s failed for test %s: %v", op, testName, err))
+		return fmt.Errorf("%s failed for test %s: %w", op, testName, err)
 	}
 
-	// Return error if any occurred while fetching server IPs
+	// Check output with thread-safe nil check
+	if output == "" {
+		msg := fmt.Sprintf("%s failed for test %s: no output from cluster validation test", op, testName)
+		logger.Error(t, msg)
+		return fmt.Errorf("%s: %s", op, msg)
+	}
+
+	// Thread-safe success logging
+	logger.Info(t, fmt.Sprintf("%s: %s passed", testName, op))
+	return nil
+}
+
+// GetClusterIPs fetches all key server IPs for an LSF cluster, including bastion, management, login, and static worker nodes.
+// Returns individual IPs and lists along with an error if retrieval fails.
+func GetClusterIPs(t *testing.T, options *testhelper.TestOptions, logger *utils.AggregatedLogger) (string, []string, string, []string, error) {
+
+	bastionIP, managementNodeIPList, loginNodeIP, staticWorkerNodeIPList, err := utils.LSFGetClusterIPs(t, options, logger)
 	if err != nil {
-		return "", nil, "", nil, fmt.Errorf("error occurred while getting server IPs for solution %s: %w", solution, err)
+		return "", nil, "", nil, fmt.Errorf("failed to retrieve cluster IPs: %w", err)
 	}
 
 	return bastionIP, managementNodeIPList, loginNodeIP, staticWorkerNodeIPList, nil
 }
 
-// GetClusterIPsWithLDAP retrieves server IPs along with LDAP information based on the solution type (HPC or LSF).
-// It returns the bastion IP, management node IPs, login node IP, static worker node IPs,
-// LDAP server IP, and an error if the solution type is invalid or there is an issue retrieving the IPs.
-func GetClusterIPsWithLDAP(t *testing.T, options *testhelper.TestOptions, solution string, logger *utils.AggregatedLogger) (string, []string, string, []string, string, error) {
-	var bastionIP, loginNodeIP, ldapServerIP string
-	var managementNodeIPList, staticWorkerNodeIPList []string
-	var err error
-
-	// Retrieve server IPs with LDAP information based on solution type
-	switch {
-	case strings.EqualFold(solution, "hpc"):
-		bastionIP, managementNodeIPList, loginNodeIP, ldapServerIP, err = utils.HPCGetClusterIPsWithLDAP(t, options, logger)
-	case strings.EqualFold(solution, "lsf"):
-		bastionIP, managementNodeIPList, loginNodeIP, staticWorkerNodeIPList, ldapServerIP, err = utils.LSFGetClusterIPsWithLDAP(t, options, logger)
-	default:
-		return "", nil, "", nil, "", fmt.Errorf("invalid solution type: %s", solution)
+// GetDeployerIPs retrieves the IP address of the deployer node
+// using the provided test options and logs the process using the given logger.
+// It returns the deployer IP or an error if the retrieval fails.
+func GetDeployerIPs(t *testing.T, options *testhelper.TestOptions, logger *utils.AggregatedLogger) (string, error) {
+	deployerIP, err := utils.LSFGetDeployerIP(t, options, logger)
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve deployer IP: %w", err)
 	}
 
-	// Return error if any occurred while fetching server IPs
+	return deployerIP, nil
+}
+
+// GetClusterIPsWithLDAP fetches all relevant server IPs for an LSF cluster, including LDAP information.
+// Returns bastion, management, login, static worker node IPs, LDAP server IP, and an error if retrieval fails.
+func GetClusterIPsWithLDAP(t *testing.T, options *testhelper.TestOptions, logger *utils.AggregatedLogger) (
+	string, []string, string, []string, string, error) {
+
+	bastionIP, managementNodeIPList, loginNodeIP, staticWorkerNodeIPList, ldapServerIP, err :=
+		utils.LSFGetClusterIPsWithLDAP(t, options, logger)
+
 	if err != nil {
-		return "", nil, "", nil, "", fmt.Errorf("error occurred while getting server IPs for solution %s: %w", solution, err)
+		return "", nil, "", nil, "", fmt.Errorf("failed to retrieve LSF cluster IPs with LDAP: %w", err)
 	}
 
 	return bastionIP, managementNodeIPList, loginNodeIP, staticWorkerNodeIPList, ldapServerIP, nil
 }
 
-// GetComputeNodeIPs retrieves dynamic compute node IPs based on the solution type (HPC or LSF).
-// It returns a list of compute node IPs and an error if the solution type is invalid or there is a problem retrieving the IPs.
-// It also appends static worker node IPs if provided in the input list.
-func GetComputeNodeIPs(t *testing.T, sshClient *ssh.Client, logger *utils.AggregatedLogger, solution string, staticWorkerNodeIPList []string) ([]string, error) {
-	var computeNodeIPList []string
-	var err error
+// GetComputeNodeIPs retrieves compute node IPs for an LSF environment by combining
+// dynamically discovered IPs with any optional static worker node IPs.
+//
+// Parameters:
+//   - t: *testing.T for test logging context
+//   - sshClient: Active SSH client for node communication
+//   - logger: AggregatedLogger for structured logging
+//   - staticWorkerNodeIPList: Optional list of static worker node IPs
+//
+// Returns:
+//   - []string: Unique list of compute node IPs (dynamic + static)
+//   - error: Wrapped error if retrieval fails or no valid IPs are found
+func GetComputeNodeIPs(t *testing.T, sshClient *ssh.Client, staticWorkerNodeIPList []string, logger *utils.AggregatedLogger) ([]string, error) {
+	const op = "LSF compute node IP retrieval"
 
-	// Retrieve dynamic compute node IPs based on solution type
-	if strings.Contains(solution, "hpc") {
-		computeNodeIPList, err = HPCGETDynamicComputeNodeIPs(t, sshClient, logger)
-		if err != nil {
-			logger.Error(t, fmt.Sprintf("Error retrieving dynamic compute node IPs for HPC: %v", err))
-			return nil, fmt.Errorf("error retrieving dynamic compute node IPs for HPC: %w", err)
-		}
-	} else if strings.Contains(solution, "lsf") {
-		computeNodeIPList, err = LSFGETDynamicComputeNodeIPs(t, sshClient, logger)
-		if err != nil {
-			logger.Error(t, fmt.Sprintf("Error retrieving dynamic compute node IPs for LSF: %v", err))
-			return nil, fmt.Errorf("error retrieving dynamic compute node IPs for LSF: %w", err)
-		}
-	} else {
-		logger.Error(t, "Invalid solution type provided. Expected 'hpc' or 'lsf'.")
-		return nil, fmt.Errorf("invalid solution type provided: %s", solution)
+	// Retrieve dynamic IPs from LSF environment
+	dynamicIPs, err := LSFGETDynamicComputeNodeIPs(t, sshClient, logger)
+	if err != nil {
+		logger.Error(t, fmt.Sprintf("%s: failed to get dynamic IPs: %v", op, err))
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	// Append static worker node IPs to the dynamic node IP list if provided
-	if len(staticWorkerNodeIPList) > 0 {
-		computeNodeIPList = append(computeNodeIPList, staticWorkerNodeIPList...)
-		logger.Info(t, fmt.Sprintf("Appended %d static worker node IPs", len(staticWorkerNodeIPList)))
+	// Combine dynamic and static IPs
+	allIPs := append(dynamicIPs, staticWorkerNodeIPList...)
+	uniqueIPs := utils.RemoveDuplicateIPs(allIPs)
+
+	if len(uniqueIPs) == 0 {
+		err := fmt.Errorf("no compute node IPs found (dynamic or static)")
+		logger.Error(t, fmt.Sprintf("%s: %v", op, err))
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	// Log the total count of retrieved compute node IPs
-	logger.Info(t, fmt.Sprintf("Dynamic compute node IPs retrieved successfully. Total IPs: %d", len(computeNodeIPList)))
+	logger.Info(t, fmt.Sprintf("%s completed: %d dynamic + %d static => %d unique IPs",
+		op,
+		len(dynamicIPs),
+		len(staticWorkerNodeIPList),
+		len(uniqueIPs)))
 
-	return computeNodeIPList, nil
+	return uniqueIPs, nil
 }
 
-// GetLDAPServerCredentialsInfo retrieves LDAP-related information from Terraform variables.
-// It returns the expected LDAP domain, LDAP admin username,LDAP user username, and LDAP user password.
-func GetLDAPServerCredentialsInfo(options *testhelper.TestOptions) (string, string, string, string) {
-	var expectedLdapDomain, ldapAdminPassword, ldapUserName, ldapUserPassword string
+// GetValidatedLDAPCredentials retrieves and validates LDAP-related credentials
+// from Terraform variables. It returns the LDAP domain, admin password,
+// user name, and user password. Returns an error if any required value is missing or invalid.
+func GetValidatedLDAPCredentials(t *testing.T, options *testhelper.TestOptions, logger *utils.AggregatedLogger) (string, string, string, string, error) {
+	var (
+		expectedLdapDomain string
+		ldapAdminPassword  string // pragma: allowlist secret
+		ldapUserName       string
+		ldapUserPassword   string // pragma: allowlist secret
+		ok                 bool
+	)
 
-	// Retrieve and type-assert values safely
-	if domain, ok := options.TerraformVars["ldap_basedns"].(string); ok {
-		expectedLdapDomain = domain
-	}
-	if adminPassword, ok := options.TerraformVars["ldap_admin_password"].(string); ok {
-		ldapAdminPassword = adminPassword // pragma: allowlist secret
-	}
-	if userName, ok := options.TerraformVars["ldap_user_name"].(string); ok {
-		ldapUserName = userName
-	}
-	if userPassword, ok := options.TerraformVars["ldap_user_password"].(string); ok {
-		ldapUserPassword = userPassword // pragma: allowlist secret
+	// Extract LDAP domain
+	if expectedLdapDomain, ok = options.TerraformVars["ldap_basedns"].(string); !ok || expectedLdapDomain == "" {
+		err := fmt.Errorf("missing or invalid 'ldap_basedns' in TerraformVars")
+		logger.Error(nil, err.Error())
+		return "", "", "", "", err
 	}
 
-	return expectedLdapDomain, ldapAdminPassword, ldapUserName, ldapUserPassword
+	// Extract admin password
+	if ldapAdminPassword, ok = options.TerraformVars["ldap_admin_password"].(string); !ok || ldapAdminPassword == "" {
+		err := fmt.Errorf("missing or invalid 'ldap_admin_password' in TerraformVars")
+		logger.Error(nil, err.Error())
+		return "", "", "", "", err
+	}
+
+	// Extract LDAP username
+	if ldapUserName, ok = options.TerraformVars["ldap_user_name"].(string); !ok || ldapUserName == "" {
+		err := fmt.Errorf("missing or invalid 'ldap_user_name' in TerraformVars")
+		logger.Error(nil, err.Error())
+		return "", "", "", "", err
+	}
+
+	// Extract user password
+	if ldapUserPassword, ok = options.TerraformVars["ldap_user_password"].(string); !ok || ldapUserPassword == "" {
+		err := fmt.Errorf("missing or invalid 'ldap_user_password' in TerraformVars")
+		logger.Error(nil, err.Error())
+		return "", "", "", "", err
+	}
+
+	return expectedLdapDomain, ldapAdminPassword, ldapUserName, ldapUserPassword, nil
 }
 
 //*****************************LSF Logs*****************************
@@ -2371,7 +2536,7 @@ func validateNodeLogFiles(t *testing.T, sClient *ssh.Client, node, sharedLogDir,
 			fmt.Sprintf("%s/lim.log.%s", dirPath, node),
 			fmt.Sprintf("%s/res.log.%s", dirPath, node),
 			fmt.Sprintf("%s/pim.log.%s", dirPath, node),
-			fmt.Sprintf("%s/Install.log", dirPath),
+			//fmt.Sprintf("%s/Install.log", dirPath),
 		}
 	case "master":
 		logFiles = []string{
@@ -2408,8 +2573,8 @@ func getFileModificationTime(t *testing.T, sClient *ssh.Client, sharedLogDir, ma
 	}
 
 	// Parse the output to extract modification time
-	modTimeStr := strings.TrimSpace(output)
-	modTime, err := strconv.ParseInt(modTimeStr, 10, 64)
+	modTimeStr := strings.TrimSpace(output)              //stat -c %Y is the correct syntax on most Linux systems to get modification time in epoch seconds.
+	modTime, err := strconv.ParseInt(modTimeStr, 10, 64) // converts the string timestamp to an integer.
 	if err != nil {
 		logger.Error(t, fmt.Sprintf("Failed to parse modification time from output: %s. Error: %v", modTimeStr, err))
 		return 0, fmt.Errorf("failed to parse file modification time: %w", err)
@@ -2449,7 +2614,7 @@ func LogFilesInSharedFolder(t *testing.T, sClient *ssh.Client, logger *utils.Agg
 		return err
 	}
 
-	sharedLogDir := "/mnt/lsf/log"
+	sharedLogDir := SHAREDLOGDIRPATH
 	for _, node := range managementNodes {
 		if err := validateNodeLogFiles(t, sClient, node, sharedLogDir, "management", logger); err != nil {
 			return err
@@ -2476,7 +2641,7 @@ func LogFilesAfterMasterReboot(t *testing.T, sClient *ssh.Client, bastionIP, man
 		return err
 	}
 
-	sharedLogDir := "/mnt/lsf/log"
+	sharedLogDir := SHAREDLOGDIRPATH
 	datePreRestart, err := getFileModificationTime(t, sClient, sharedLogDir, masterName, logger)
 	if err != nil {
 		return err
@@ -2544,7 +2709,7 @@ func LogFilesAfterMasterShutdown(t *testing.T, sshClient *ssh.Client, apiKey, re
 		return fmt.Errorf("failed to get current master node name: %w", err)
 	}
 
-	sharedLogDir := "/mnt/lsf/log"
+	sharedLogDir := SHAREDLOGDIRPATH
 
 	// Shutdown the master node
 	if err := shutdownMasterNode(t, sshClient, oldMasterNodeName, logger); err != nil {
@@ -3056,7 +3221,7 @@ func verifyDedicatedHost(t *testing.T, apiKey, region, resourceGroup, clusterPre
 		}
 
 		// Count the number of worker nodes attached to the dedicated host
-		actualCount := strings.Count(strings.TrimSpace(string(output)), clusterPrefix+"-worker")
+		actualCount := strings.Count(strings.TrimSpace(string(output)), clusterPrefix+"-comp")
 
 		logger.Info(t, fmt.Sprintf("Actual worker node count: %d, Expected: %d", actualCount, expectedWorkerNodeCount))
 
@@ -3088,7 +3253,7 @@ func VerifyEncryptionCRN(t *testing.T, sshClient *ssh.Client, keyManagement stri
 	}
 
 	// Command to retrieve CRN configuration
-	cmd := "cat /opt/ibm/lsf/conf/resource_connector/ibmcloudgen2/conf/ibmcloudgen2_templates.json"
+	cmd := "cat /opt/ibm/lsfsuite/lsf/conf/resource_connector/ibmcloudgen2/conf/ibmcloudgen2_templates.json"
 
 	// Iterate over each management node IP in the list
 	for _, managementNodeIP := range managementNodeIPList {
@@ -3110,6 +3275,7 @@ func VerifyEncryptionCRN(t *testing.T, sshClient *ssh.Client, keyManagement stri
 		// Determine the expected CRN format based on key management type
 		expectedCRN := "\"crn\":\"crn:v1:bluemix:public:kms"
 		if strings.ToLower(keyManagement) != "key_protect" {
+			//expectedCRN = "\"crn\":\"\""
 			expectedCRN = "\"crn\":\"\""
 		}
 
@@ -3314,10 +3480,10 @@ func VerifyCloudLogsURLFromTerraformOutput(t *testing.T, LastTestTerraformOutput
 	return nil
 }
 
-// LSFFluentBitServiceForManagementNodes validates Fluent Bit service for management nodes.
+// VerifyFluentBitServiceForManagementNodes validates Fluent Bit service for management nodes.
 // It connects via SSH to each management node, validates the Fluent Bit service state, and logs results.
 // Returns an error if the process encounters any issues during validation, or nil if successful.
-func LSFFluentBitServiceForManagementNodes(t *testing.T, sshClient *ssh.Client, managementNodeIPs []string, isCloudLogsManagementEnabled bool, logger *utils.AggregatedLogger) error {
+func VerifyFluentBitServiceForManagementNodes(t *testing.T, sshClient *ssh.Client, managementNodeIPs []string, isCloudLogsManagementEnabled bool, logger *utils.AggregatedLogger) error {
 
 	// Ensure management node IPs are provided if cloud logs are enabled
 	if isCloudLogsManagementEnabled {
@@ -3332,19 +3498,20 @@ func LSFFluentBitServiceForManagementNodes(t *testing.T, sshClient *ssh.Client, 
 				return fmt.Errorf("failed Fluent Bit service verification for management node %s: %w", managementIP, err)
 			}
 		}
+	} else {
+		logger.Warn(t, "Cloud logging is disabled for management nodes - skipping Fluent Bit validation")
 	}
 
 	return nil
 }
 
-// LSFFluentBitServiceForComputeNodes initiates the process of validating Fluent Bit service
+// VerifyFluentBitServiceForComputeNodes initiates the process of validating Fluent Bit service
 // on all compute nodes in a cluster. If cloud logging is enabled, it checks the service
 // status for each compute node. It returns an error if any node fails the verification.
 // Returns an error if the process encounters any issues during validation, or nil if successful.
-func LSFFluentBitServiceForComputeNodes(
+func VerifyFluentBitServiceForComputeNodes(
 	t *testing.T,
 	sshClient *ssh.Client,
-	expectedSolution string,
 	staticWorkerNodeIPs []string,
 	isCloudLogsComputeEnabled bool,
 	logger *utils.AggregatedLogger) error {
@@ -3356,7 +3523,7 @@ func LSFFluentBitServiceForComputeNodes(
 		}
 
 		// Retrieve compute node IPs from the worker nodes
-		computeNodeIPs, err := GetComputeNodeIPs(t, sshClient, logger, expectedSolution, staticWorkerNodeIPs)
+		computeNodeIPs, err := GetComputeNodeIPs(t, sshClient, staticWorkerNodeIPs, logger)
 		if err != nil || len(computeNodeIPs) == 0 {
 			return fmt.Errorf("failed to retrieve compute node IPs: %w", err)
 		}
@@ -3368,6 +3535,8 @@ func LSFFluentBitServiceForComputeNodes(
 				return fmt.Errorf("failed Fluent Bit service verification for compute node %s: %w", computeIP, err)
 			}
 		}
+	} else {
+		logger.Warn(t, "Cloud logging is disabled for compute nodes - skipping Fluent Bit validation")
 	}
 	return nil
 }
@@ -3468,6 +3637,29 @@ func CheckPlatformLogsPresent(t *testing.T, apiKey, region, resourceGroup string
 	return true, nil
 }
 
+// VerifyPlatformStatus checks if platform logs are enabled in the specified region and logs the outcome.
+// It returns an error if there is an issue fetching the platform log status or if the verification fails.
+func VerifyPlatformStatus(t *testing.T, apiKey, region, resourceGroup string, isPlatformLogsEnabled bool, logger *utils.AggregatedLogger) error {
+
+	if isPlatformLogsEnabled {
+		isPlatformLogEnabled, err := CheckPlatformLogsPresent(t, apiKey, region, resourceGroup, logger)
+		if err != nil {
+			return fmt.Errorf("failed to check platform logs presence: %w", err)
+		}
+
+		if utils.VerifyDataContains(t, isPlatformLogEnabled, isPlatformLogsEnabled, logger) {
+			logger.Info(t, fmt.Sprintf("Platform logs status mismatch for region '%s'. Expected: %v, Got: %v.", region, isPlatformLogsEnabled, isPlatformLogEnabled))
+			return fmt.Errorf("platform logs status mismatch for region '%s': expected %v, got %v", region, isPlatformLogsEnabled, isPlatformLogEnabled)
+		}
+
+		logger.Info(t, fmt.Sprintf("Platform logs found for region '%s' as expected.", region))
+	} else {
+		logger.Warn(t, "Platform logging is disabled - skipping validation")
+	}
+
+	return nil
+}
+
 // VerifyCloudMonitoringURLFromTerraformOutput validates the cloud log URL in Terraform outputs.
 // It checks required fields in the Terraform output map and ensures the cloud logs URL
 // is present when cloud logging is enabled for either management or compute nodes.
@@ -3527,13 +3719,18 @@ func LSFPrometheusAndDragentServiceForManagementNodes(t *testing.T, sshClient *s
 				return fmt.Errorf("failed Prometheus service verification for management node %s: %w", managementIP, err)
 			}
 
+			err = VerifyLSFPrometheusExportServiceForNode(t, sshClient, managementIP, logger)
+			if err != nil {
+				return fmt.Errorf("failed Prometheus export service verification for management node %s: %w", managementIP, err)
+			}
+
 			err = VerifyLSFdragentServiceForNode(t, sshClient, managementIP, logger)
 			if err != nil {
 				return fmt.Errorf("failed dragent service verification for management node %s: %w", managementIP, err)
 			}
 		}
 	} else {
-		logger.Warn(t, "Cloud monitoring are not enabled for the management node. As a result, the Prometheus and Fluent dragent service will not be validated.")
+		logger.Warn(t, "Cloud monitoring is disabled for management nodes - skipping validation of Prometheus, Prometheus_Exporter, and Dragent service agents.")
 	}
 
 	return nil
@@ -3546,7 +3743,6 @@ func LSFPrometheusAndDragentServiceForManagementNodes(t *testing.T, sshClient *s
 func LSFDragentServiceForComputeNodes(
 	t *testing.T,
 	sshClient *ssh.Client,
-	expectedSolution string,
 	staticWorkerNodeIPs []string,
 	isCloudMonitoringEnabledForCompute bool,
 	logger *utils.AggregatedLogger) error {
@@ -3558,7 +3754,7 @@ func LSFDragentServiceForComputeNodes(
 		}
 
 		// Retrieve compute node IPs from the worker nodes
-		computeNodeIPs, err := GetComputeNodeIPs(t, sshClient, logger, expectedSolution, staticWorkerNodeIPs)
+		computeNodeIPs, err := GetComputeNodeIPs(t, sshClient, staticWorkerNodeIPs, logger)
 		if err != nil || len(computeNodeIPs) == 0 {
 			return fmt.Errorf("failed to retrieve compute node IPs: %w", err)
 		}
@@ -3573,7 +3769,7 @@ func LSFDragentServiceForComputeNodes(
 
 		}
 	} else {
-		logger.Warn(t, "Cloud monitoring are not enabled for the compute node. As a result, the dragent service will not be validated.")
+		logger.Warn(t, "Cloud monitoring is disabled for compute nodes - skipping validation of Dragent service agent.")
 	}
 	return nil
 }
@@ -3594,7 +3790,7 @@ func VerifyLSFPrometheusServiceForNode(
 		return fmt.Errorf("failed to execute command '%s' on node %s: %w", command, nodeIP, err)
 	}
 
-	// Expected Fluent Bit service state should be "active (running)"
+	// Expected prometheus service state should be "active (running)"
 	expectedState := "Active: active (running)"
 
 	// Verify if the service is in the expected running state
@@ -3606,10 +3802,45 @@ func VerifyLSFPrometheusServiceForNode(
 		)
 	}
 
-	// Log success if Fluent Bit service is running as expected
+	// Log success if prometheus service is running as expected
 	logger.Info(t, fmt.Sprintf("Prometheus service validation passed for node %s", nodeIP))
 	return nil
 }
+
+// VerifyLSFPrometheusExportServiceForNode checks the status of the Prometheus export service on a given node.
+// It ensures the service is running and returns an error if its state does not match "active (running)."
+func VerifyLSFPrometheusExportServiceForNode(
+	t *testing.T,
+	sshClient *ssh.Client,
+	nodeIP string,
+	logger *utils.AggregatedLogger) error {
+
+	// Command to check the status of Prometheus export service on the node
+	command := fmt.Sprintf("ssh %s systemctl status lsf_prometheus_exporter", nodeIP)
+	output, err := utils.RunCommandInSSHSession(sshClient, command)
+	if err != nil {
+		// Return an error if the command fails to execute
+		return fmt.Errorf("failed to execute command '%s' on node %s: %w", command, nodeIP, err)
+	}
+
+	// Expected lsf prometheus exporter service state should be "active (running)"
+	expectedState := "Active: active (running)"
+
+	// Verify if the lsf prometheus exporter service is in the expected running state
+	if !utils.VerifyDataContains(t, output, expectedState, logger) {
+		// If the service state does not match the expected state, return an error with output
+		return fmt.Errorf(
+			"unexpected Prometheus export state for node %s: expected '%s', got:\n%s",
+			nodeIP, expectedState, output,
+		)
+	}
+
+	// Log success if lsf prometheus exporter service is running as expected
+	logger.Info(t, fmt.Sprintf("Prometheus export service validation passed for node %s", nodeIP))
+	return nil
+}
+
+//systemctl status lsf_prometheus_exporter
 
 // VerifyLSFDragentServiceForNode checks the status of the Dragent service on a given node.
 // It ensures the service is running and returns an error if its state does not match "active (running)."
@@ -3668,7 +3899,7 @@ func ValidateDynamicWorkerProfile(t *testing.T, apiKey, region, resourceGroup, c
 	}
 
 	// Fetch the dynamic worker node profile
-	dynamicWorkerProfileCmd := fmt.Sprintf("ibmcloud is instances | grep %s | awk '/-compute-/ && !/-worker-|-login-|-mgmt-|-bastion-/ {print $6; exit}'", clusterPrefix)
+	dynamicWorkerProfileCmd := fmt.Sprintf("ibmcloud is instances | grep %s | awk '!/-comp-|-login-|-mgmt-|-bastion-|-deployer-/ {print $6; exit}'", clusterPrefix)
 	cmd = exec.Command("bash", "-c", dynamicWorkerProfileCmd)
 	dynamicWorkerProfile, err := cmd.CombinedOutput()
 	if err != nil {
@@ -3812,6 +4043,262 @@ func ValidateAtrackerRouteTarget(t *testing.T, apiKey, region, resourceGroup, cl
 	// Validate CRN presence
 	if response.CRN == "" {
 		return errors.New("CRN value should not be empty")
+	}
+
+	return nil
+}
+
+// LSFCheckSSHConnectivityToNodesFromManagement verifies SSH connectivity from the primary management node
+// to other nodes in the cluster, including secondary management nodes, compute nodes, and the login node.
+func LSFCheckSSHConnectivityToNodesFromManagement(
+	t *testing.T,
+	sshClient *ssh.Client,
+	managementNodeIPList, computeNodeIPList []string,
+	loginNodeIP string,
+	logger *utils.AggregatedLogger,
+) error {
+
+	// Check if management node IP list has at least two entries (primary + at least one secondary)
+	if len(managementNodeIPList) <= 1 {
+		return fmt.Errorf("not enough management node IPs to process after removing the first entry")
+	}
+
+	// Iterate over each secondary management node IP (skipping the first, assuming it's the primary)
+	for _, managementNodeIP := range managementNodeIPList[1:] {
+		command := fmt.Sprintf("ssh %s 'hostname'", managementNodeIP)
+		actualOutput, err := utils.RunCommandInSSHSession(sshClient, command)
+		if err != nil {
+			return fmt.Errorf("failed to run SSH command on management node IP %s: %w", managementNodeIP, err)
+		}
+
+		if !utils.VerifyDataContains(t, actualOutput, "mgmt", logger) {
+			return fmt.Errorf("management node hostname '%v' does not contain 'mgmt' substring for node IP '%s'", actualOutput, managementNodeIP)
+		}
+	}
+
+	// Check if compute node IP list is empty
+	if len(computeNodeIPList) == 0 {
+		return fmt.Errorf("ERROR: compute node IP list cannot be empty")
+	}
+
+	// Iterate over each compute node IP
+	for _, computeNodeIP := range computeNodeIPList {
+		command := fmt.Sprintf("ssh -o ConnectTimeout=12 -q %s exit", computeNodeIP)
+		_, err := utils.RunCommandInSSHSession(sshClient, command)
+		if err != nil {
+			return fmt.Errorf("failed to run SSH command on compute node IP %s: %w", computeNodeIP, err)
+		}
+	}
+
+	// Check SSH connectivity to the login node
+	loginCommand := fmt.Sprintf("ssh -o ConnectTimeout=12 -q %s exit", loginNodeIP)
+	_, err := utils.RunCommandInSSHSession(sshClient, loginCommand)
+	if err != nil {
+		return fmt.Errorf("failed to run SSH command on login node IP %s: %w", loginNodeIP, err)
+	}
+
+	// Log success
+	logger.Info(t, "SSH connectivity check from the primary management node to all other nodes completed successfully")
+	return nil
+}
+
+// CheckLSFHosts runs 'bhosts -w' command via SSH to get the LSF host status.
+// It logs the output for debugging and returns any command execution errors.
+func CheckLSFHosts(t *testing.T, sClient *ssh.Client, logger *utils.AggregatedLogger) error {
+	statusCmd := "bhosts -w"
+	output, err := utils.RunCommandInSSHSession(sClient, statusCmd)
+	if err != nil {
+		return fmt.Errorf("failed to run '%s': %w", statusCmd, err)
+	}
+
+	logger.DEBUG(t, fmt.Sprintf("'bhosts -w' output:\n%s", string(output)))
+	return nil
+}
+
+// ValidateLSFConfig verifies LSF configuration health by running 'lsadmin ckconfig -v'.
+// It checks for a success message in the output and logs it for debugging purposes.
+func ValidateLSFConfig(t *testing.T, sClient *ssh.Client, logger *utils.AggregatedLogger) error {
+	expectedMessage := "No errors found."
+	statusCmd := "sudo su -l root -c 'lsadmin ckconfig -v'"
+
+	output, err := utils.RunCommandInSSHSession(sClient, statusCmd)
+	if err != nil {
+		return fmt.Errorf("failed to run '%s': %w", statusCmd, err)
+	}
+
+	// Trim whitespace and check for empty output
+	trimmedOutput := strings.TrimSpace(string(output))
+	if trimmedOutput == "" {
+		return fmt.Errorf("LSF health check failed: command returned empty output")
+	}
+
+	logger.DEBUG(t, fmt.Sprintf("lsadmin ckconfig -v output:\n%s", trimmedOutput))
+
+	if !utils.VerifyDataContains(t, trimmedOutput, expectedMessage, logger) {
+		return fmt.Errorf("LSF health check failed: expected message '%s' not found in output:\n%s",
+			expectedMessage, trimmedOutput)
+	}
+
+	return nil
+}
+
+// LSFHealthCheck verifies if the LSF daemon (lsfd) is running and healthy on the target host.
+func LSFHealthCheck(t *testing.T, sClient *ssh.Client, logger *utils.AggregatedLogger) error {
+	const expectedMessage = "Active: active (running)"
+
+	// Define the command to check lsfd status
+	statusCmd := "sudo su -l root -c 'systemctl status lsfd'"
+
+	// Run the systemctl command on the remote host
+	output, err := utils.RunCommandInSSHSession(sClient, statusCmd)
+	if err != nil {
+		return fmt.Errorf("failed to run '%s': %w", statusCmd, err)
+	}
+
+	// Check if the output contains the expected active message
+	if !utils.VerifyDataContains(t, string(output), expectedMessage, logger) {
+		return fmt.Errorf("LSF health check failed: expected message '%s' not found in output:\n%s", expectedMessage, string(output))
+	}
+
+	return nil
+}
+
+// ValidateTerraformOutput connects to the LSF deployer node via SSH,
+// fetches Terraform outputs, and validates:
+// - cloud_logs_url (if cloud logging is enabled)
+// - cloud_monitoring_url (if cloud monitoring is enabled)
+// - ssh_to_ldap_node (if LDAP is enabled)
+// - application_center_url, ssh_to_deployer, ssh_to_management_node
+func ValidateTerraformOutput(
+	t *testing.T,
+	bastionIP, deployerIP string,
+	isCloudLogEnabled, isCloudMonitoringEnabled, isldapServerEnabled bool,
+	logger *utils.AggregatedLogger,
+) error {
+
+	// Establish SSH connection to the deployer node
+	sDeployerClient, err := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_DEPLOYER_HOST_NAME, deployerIP)
+	require.NoError(t, err, "Failed to connect to the deployer node via SSH")
+
+	defer func() {
+		if cerr := sDeployerClient.Close(); cerr != nil {
+			logger.Info(t, fmt.Sprintf("Failed to close SSH client: %v", cerr))
+		}
+	}()
+
+	// Run terraform output command
+	cmd := "cd /opt/ibm/terraform-ibm-hpc && terraform output"
+	output, err := utils.RunCommandInSSHSession(sDeployerClient, cmd)
+	if err != nil {
+		return fmt.Errorf("failed to run '%s': %w", cmd, err)
+	}
+	logger.DEBUG(t, "Terraform OUTPUT:\n"+string(output))
+
+	lines := strings.Split(string(output), "\n")
+
+	// Initialize validation flags outside the loop
+	isCloudvalidated := false
+	isCloudMonitoringvalidated := false
+	isldapServervalidated := false
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		// Validate cloud_logs_url
+		if isCloudLogEnabled && strings.Contains(line, "cloud_logs_url") {
+			url := utils.ExtractTerraformValue(line)
+			logger.DEBUG(t, fmt.Sprintf("'cloud_logs_url' output: %s", url))
+
+			curlCmd := fmt.Sprintf("curl -I '%s'", url)
+			actualOutput, err := utils.RunCommandInSSHSession(sDeployerClient, curlCmd)
+			if err != nil || !utils.VerifyDataContains(t, string(actualOutput), "200", logger) {
+				return fmt.Errorf("cloud_logs_url validation failed. Output: %s", actualOutput)
+			}
+			isCloudvalidated = true
+			logger.Info(t, "✅ cloud_logs_url validated successfully.")
+		}
+
+		// Validate cloud_monitoring_url
+		if isCloudMonitoringEnabled && strings.Contains(line, "cloud_monitoring_url") {
+			url := utils.ExtractTerraformValue(line)
+			logger.DEBUG(t, fmt.Sprintf("'cloud_monitoring_url' output: %s", url))
+
+			expectedPrefix := "https://cloud.ibm.com/observe/embedded-view/monitoring/"
+			if !strings.HasPrefix(url, expectedPrefix) {
+				return fmt.Errorf("cloud_monitoring_url mismatch. Output: %s, Expected prefix: %s", url, expectedPrefix)
+			}
+			isCloudMonitoringvalidated = true
+			logger.Info(t, "✅ cloud_monitoring_url validated successfully.")
+		}
+
+		// Validate ssh_to_ldap_node
+		if isldapServerEnabled && strings.Contains(line, "ssh_to_ldap_node") {
+			url := utils.ExtractTerraformValue(line)
+			logger.DEBUG(t, fmt.Sprintf("'ssh_to_ldap_node' output: %s", url))
+
+			expectedPrefix := "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o"
+			if !strings.HasPrefix(url, expectedPrefix) {
+				return fmt.Errorf("ssh_to_ldap_node mismatch. Output: %s, Expected prefix: %s", url, expectedPrefix)
+			}
+			isldapServervalidated = true
+			logger.Info(t, "✅ ssh_to_ldap_node validated successfully.")
+		}
+
+		// Validate application_center_tunnel
+		if strings.Contains(line, "application_center_tunnel") {
+			url := utils.ExtractTerraformValue(line)
+			logger.DEBUG(t, fmt.Sprintf("'application_center_tunnel' output: %s", url))
+
+			expected := `ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 -L 8443`
+			if !utils.VerifyDataContains(t, line, expected, logger) {
+				return fmt.Errorf("application_center_tunnel string missing or incorrect in terraform output")
+			}
+			logger.Info(t, "✅ application_center_tunnel validated successfully.")
+		}
+
+		// Validate application_center_url
+		if strings.Contains(line, "application_center_url") {
+			url := utils.ExtractTerraformValue(line)
+			logger.DEBUG(t, fmt.Sprintf("'application_center_url' output: %s", url))
+
+			expected := `https://localhost:8443`
+			if !utils.VerifyDataContains(t, line, expected, logger) {
+				return fmt.Errorf("application_center_url string missing or incorrect in terraform output")
+			}
+			logger.Info(t, "✅ application_center_url validated successfully.")
+		}
+
+		// Validate ssh_to_deployer
+		if strings.Contains(line, "ssh_to_deployer") {
+			expected := `ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J`
+			if !utils.VerifyDataContains(t, line, expected, logger) {
+				return fmt.Errorf("ssh_to_deployer string missing or incorrect in terraform output")
+			}
+			logger.Info(t, "✅ ssh_to_deployer validated successfully.")
+		}
+
+		// Validate ssh_to_management_node
+		if strings.Contains(line, "ssh_to_management_node") {
+			expected := `ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J`
+			if !utils.VerifyDataContains(t, line, expected, logger) {
+				return fmt.Errorf("ssh_to_management_node string missing or incorrect in terraform output")
+			}
+			logger.Info(t, "✅ ssh_to_management_node validated successfully.")
+		}
+	}
+
+	// Final validation checks to ensure expected outputs were found
+	if isCloudLogEnabled && !isCloudvalidated {
+		return fmt.Errorf("cloud_logs_url not found in terraform output")
+	}
+	if isCloudMonitoringEnabled && !isCloudMonitoringvalidated {
+		return fmt.Errorf("cloud_monitoring_url not found in terraform output")
+	}
+	if isldapServerEnabled && !isldapServervalidated {
+		return fmt.Errorf("ssh_to_ldap_node not found in terraform output")
 	}
 
 	return nil

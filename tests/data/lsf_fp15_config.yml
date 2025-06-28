@@ -1,0 +1,83 @@
+Scheduler: LSF
+lsf_version: fixpack_15
+zones: jp-tok-1
+remote_allowed_ips:
+cluster_name: HPC-LSF-1
+ssh_keys: geretain-hpc
+default_existing_resource_group: HPCC
+non_default_existing_resource_group: Default
+dns_domain_name:
+  compute: comp.com
+bastion_instance:
+  profile:  cx2-4x8
+  image: ibm-ubuntu-22-04-5-minimal-amd64-3
+deployer_instance:
+  profile:  bx2-8x32
+  image: hpc-lsf-fp15-deployer-rhel810-v1
+enable_cos_integration: false
+enable_vpc_flow_logs: false
+custom_file_shares:
+  - mount_path: /mnt/vpcstorage/tools
+    size: 100
+    iops: 1000
+  - mount_path: /mnt/vpcstorage/data
+    size: 100
+    iops: 1000
+key_management: key_protect
+login_instance:
+  - profile:  bx2-2x8
+    image: hpc-lsf-fp15-compute-rhel810-v1
+management_instances:
+  - profile:  bx2d-4x16
+    count: 2
+    image: hpc-lsf-fp15-rhel810-v1
+static_compute_instances:
+  - profile: bx2-2x8
+    count: 2
+    image: hpc-lsf-fp15-compute-rhel810-v1
+dynamic_compute_instances:
+  - profile: bx2-2x8
+    count: 1024
+    image: hpc-lsf-fp15-compute-rhel810-v1
+placement_strategy: spread
+kms_instance_name: cicd-lsf-dnd-kms-instance
+kms_key_name: cicd-lsf-dnd-kms-key
+app_center_gui_password: Pass@1234  # pragma: allowlist secret
+observability_atracker_enable: true
+observability_atracker_target_type: cloudlogs
+observability_monitoring_enable: true
+observability_monitoring_on_compute_nodes_enable: true
+observability_logs_enable_for_management: true
+observability_logs_enable_for_compute: true
+observability_enable_platform_logs: true
+observability_enable_metrics_routing: true
+observability_logs_retention_period: 7
+observability_monitoring_plan: graduated-tier
+sccwp_enable: true
+cspm_enabled: true
+sccwp_service_plan: graduated-tier
+app_config_plan: standardv2
+enable_hyperthreading: true
+enable_ldap: true
+ldap_basedns: cicdldap.com
+ldap_admin_password: Pass@123  # pragma: allowlist secret
+ldap_user_name: tester
+ldap_user_password: Pass@123    # pragma: allowlist secret
+ldap_instance:
+  - profile: cx2-2x4
+    image: ibm-ubuntu-22-04-5-minimal-amd64-1
+    count: 1
+us_east_zone: us-east-3
+us_east_cluster_name: HPC-LSF-1
+eu_de_zone: eu-de-3
+eu_de_cluster_name: HPC-LSF-2
+us_south_zone: us-south-1
+us_south_cluster_name: HPC-LSF-2
+jp_tok_zone: jp-tok-1
+jp_tok_cluster_name: HPC-LSF-2
+attracker_test_zone: eu-de-1  #added for testing purpose
+management_instances_image: hpc-lsf-fp15-rhel810-v1   #added for testing purpose
+static_compute_instances_image: hpc-lsf-fp15-compute-rhel810-v1 #added for testing purpose
+dynamic_compute_instances_image: hpc-lsf-fp15-compute-rhel810-v1 #added for testing purpose
+ssh_file_path: /artifacts/.ssh/id_rsa
+ssh_file_path_two: /artifacts/.ssh/id_rsa

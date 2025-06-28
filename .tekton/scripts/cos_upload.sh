@@ -18,7 +18,7 @@ cos_upload() {
         COMMIT_MESSAGE="manual"
     fi
 
-    ls -ltr "$DIRECTORY"/logs
+    ls -ltr "$DIRECTORY"
 
     echo "***********INSTALL IBM-COS-SDK *************"
     python3 -m pip install --pre --upgrade ibm-cos-sdk==2.0.1 --quiet
@@ -26,14 +26,20 @@ cos_upload() {
 
     if [[ "$CHECK_SOLUTION" == "hpcaas" ]]; then
         if [[ "$CHECK_PR" == "REGRESSION" ]]; then
-            python3 /artifacts/.tekton/scripts/cos_data.py UPLOAD "$DIRECTORY"/logs/"$VALIDATION_LOG_FILE_NAME" "$COS_FOLDER"/HPCAAS/VALIDATION_LOG/"$COMMIT_MESSAGE"/"$VALIDATION_LOG_FILE"
+            python3 /artifacts/.tekton/scripts/cos_data.py UPLOAD "$DIRECTORY"/logs_output/"$VALIDATION_LOG_FILE_NAME" "$COS_FOLDER"/HPCAAS/VALIDATION_LOG/"$COMMIT_MESSAGE"/"$VALIDATION_LOG_FILE"
         fi
         python3 /artifacts/.tekton/scripts/cos_data.py UPLOAD "$LOG_FILE_NAME" "$COS_FOLDER"/HPCAAS/INFRA_LOG/"$COMMIT_MESSAGE"/"$LOG_FILE_NAME"-"$CURRENT_DATE_FILE".log
     fi
     if [[ "$CHECK_SOLUTION" == "lsf" ]]; then
         if [[ "$CHECK_PR" == "REGRESSION" ]]; then
-            python3 /artifacts/.tekton/scripts/cos_data.py UPLOAD "$DIRECTORY"/logs/"$VALIDATION_LOG_FILE_NAME" "$COS_FOLDER"/LSF/VALIDATION_LOG/"$COMMIT_MESSAGE"/"$VALIDATION_LOG_FILE"
+            python3 /artifacts/.tekton/scripts/cos_data.py UPLOAD "$DIRECTORY"/logs_output/"$VALIDATION_LOG_FILE_NAME" "$COS_FOLDER"/LSF/VALIDATION_LOG/"$COMMIT_MESSAGE"/"$VALIDATION_LOG_FILE"
         fi
         python3 /artifacts/.tekton/scripts/cos_data.py UPLOAD "$LOG_FILE_NAME" "$COS_FOLDER"/LSF/INFRA_LOG/"$COMMIT_MESSAGE"/"$LOG_FILE_NAME"-"$CURRENT_DATE_FILE".log
+    fi
+    if [[ "$CHECK_SOLUTION" == "lsf-da" ]]; then
+        if [[ "$CHECK_PR" == "REGRESSION" ]]; then
+            python3 /artifacts/.tekton/scripts/cos_data.py UPLOAD "$DIRECTORY"/logs_output/"$VALIDATION_LOG_FILE_NAME" "$COS_FOLDER"/LSF-DA/VALIDATION_LOG/"$COMMIT_MESSAGE"/"$VALIDATION_LOG_FILE"
+        fi
+        python3 /artifacts/.tekton/scripts/cos_data.py UPLOAD "$LOG_FILE_NAME" "$COS_FOLDER"/LSF-DA/INFRA_LOG/"$COMMIT_MESSAGE"/"$LOG_FILE_NAME"-"$CURRENT_DATE_FILE".log
     fi
 }

@@ -1,6 +1,6 @@
 module "landing_zone" {
   source                                 = "terraform-ibm-modules/landing-zone/ibm"
-  version                                = "7.4.3"
+  version                                = "7.4.4"
   prefix                                 = local.prefix
   region                                 = local.region
   tags                                   = local.tags
@@ -48,15 +48,11 @@ resource "ibm_is_subnet_public_gateway_attachment" "zone_1_attachment" {
 resource "null_resource" "compress_and_encode_folder" {
   provisioner "local-exec" {
     command = <<EOT
-      # Compress the compute folder into a .tar.gz archive
-      tar -czf ./packer/hpcaas/compressed_compute.tar.gz ./packer/hpcaas/compute
+    # Compress the folder
+    tar -czf ${path.module}/packer/hpcaas/compressed_compute.tar.gz ${path.module}/packer/hpcaas/compute
 
-      # Encode the archive to base64 format (macOS vs Linux handling)
-      if [[ "$(uname)" == "Darwin" ]]; then
-        base64 -i ./packer/hpcaas/compressed_compute.tar.gz -o ./packer/hpcaas/encoded_compute.txt
-      else
-        base64 ./packer/hpcaas/compressed_compute.tar.gz > ./packer/hpcaas/encoded_compute.txt
-      fi
+    # Encode the compressed file to base64
+    base64 -i ${path.module}/packer/hpcaas/compressed_compute.tar.gz -o ${path.module}/packer/hpcaas/encoded_compute.txt
     EOT
   }
 }

@@ -1,0 +1,48 @@
+- name: Check if monitoring is enabled
+  ansible.builtin.debug:
+    msg: "Cloud Monitoring is enabled for compute"
+  when: monitoring_enable_for_compute | bool
+
+- name: Check if Sysdig Agent binary exists
+  ansible.builtin.stat:
+    path: /opt/draios/bin/dragent
+  register: sysdig_binary
+  when: monitoring_enable_for_compute | bool
+
+- name: Install Sysdig Agent if binary is missing
+  ansible.builtin.shell: |
+    echo "Installing Sysdig Agent..."
+    curl -sL https://ibm.biz/install-sysdig-agent | sudo bash -s -- \
+      --access_key {{ cloud_monitoring_access_key }} \
+      --collector {{ cloud_monitoring_ingestion_url }} \
+      --collector_port 6443 \
+      --secure true \
+      --check_certificate false \
+      --additional_conf 'sysdig_capture_enabled: false\nremotefs: true\nfeature:\n mode: monitor_light'
+  when:
+    - monitoring_enable_for_compute | bool
+    - not sysdig_binary.stat.exists
+
+- name: Configure Sysdig
+  ansible.builtin.lineinfile:
+    path: "{{ sysdig_config_file }}"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    create: yes
+  loop:
+    - { regexp: "==ACCESSKEY==", line: "customerid: {{ cloud_monitoring_access_key }}" }
+    - { regexp: "==COLLECTOR==", line: "collector: {{ cloud_monitoring_ingestion_url }}" }
+    - { regexp: "^tags:", line: "tags: type:compute,lsf:true" }
+  when: monitoring_enable_for_compute | bool
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  when: monitoring_enable_for_compute | bool
+
+- name: Ensure Sysdig Agent is enabled and running
+  ansible.builtin.systemd:
+    name: dragent
+    enabled: yes
+    state: started
+  when: monitoring_enable_for_compute | bool

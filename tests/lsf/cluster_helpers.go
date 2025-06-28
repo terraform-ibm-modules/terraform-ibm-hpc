@@ -12,31 +12,30 @@ import (
 )
 
 // VerifyManagementNodeConfig verifies the configuration of a management node by performing various checks.
-// It checks the cluster ID, master name, Reservation ID, MTU, IP route, hyperthreading, LSF version, solution, Run tasks and file mount.
+// It checks the cluster ID, master name, MTU, IP route, hyperthreading, LSF version, Run tasks and file mount.
 // The results of the checks are logged using the provided logger.
 func VerifyManagementNodeConfig(
 	t *testing.T,
 	sshMgmtClient *ssh.Client,
-	expectedClusterName, expectedMasterName, expectedReservationID string,
+	clusterPrefix string,
 	expectedHyperthreadingStatus bool,
 	managementNodeIPList []string,
 	lsfVersion string,
-	solution string,
 	logger *utils.AggregatedLogger,
 ) {
-	// Verify Cluster ID
-	checkClusterNameErr := LSFCheckClusterName(t, sshMgmtClient, expectedClusterName, logger)
-	utils.LogVerificationResult(t, checkClusterNameErr, "Check Cluster ID on management node", logger)
+
+	// Validate LSF health on the management node
+	healthCheckErr := LSFHealthCheck(t, sshMgmtClient, logger)
+	utils.LogVerificationResult(t, healthCheckErr, "Validate LSF health on management node", logger)
+
+	// Verify cluster name
+	clusterNameErr := LSFCheckClusterName(t, sshMgmtClient, clusterPrefix, logger)
+	utils.LogVerificationResult(t, clusterNameErr, "Verify cluster name on management node", logger)
 
 	// Verify Master Name
-	checkMasterNameErr := LSFCheckMasterName(t, sshMgmtClient, expectedMasterName, logger)
+	checkMasterNameErr := LSFCheckMasterName(t, sshMgmtClient, clusterPrefix, logger)
 	utils.LogVerificationResult(t, checkMasterNameErr, "Check Master Name on management node", logger)
 
-	// Verify Reservation ID if the solution contains "hpc"
-	if strings.Contains(solution, "hpc") {
-		reservationIDErr := HPCCheckReservationID(t, sshMgmtClient, expectedReservationID, logger)
-		utils.LogVerificationResult(t, reservationIDErr, "Check Reservation ID on management node", logger)
-	}
 	// MTU check for management nodes
 	mtuCheckErr := LSFMTUCheck(t, sshMgmtClient, managementNodeIPList, logger)
 	utils.LogVerificationResult(t, mtuCheckErr, "MTU check on management node", logger)
@@ -54,7 +53,7 @@ func VerifyManagementNodeConfig(
 	utils.LogVerificationResult(t, versionErr, "check LSF version on management node", logger)
 
 	//File Mount
-	fileMountErr := HPCCheckFileMount(t, sshMgmtClient, managementNodeIPList, "management", logger)
+	fileMountErr := CheckFileMount(t, sshMgmtClient, managementNodeIPList, "management", logger)
 	utils.LogVerificationResult(t, fileMountErr, "File mount check on management node", logger)
 
 }
@@ -155,11 +154,11 @@ func VerifyComputeNodeConfig(
 	logger *utils.AggregatedLogger,
 ) {
 
-	// MTU check for management nodes
+	// MTU check for compute nodes
 	mtuCheckErr := LSFMTUCheck(t, sshMgmtClient, computeNodeIPList, logger)
 	utils.LogVerificationResult(t, mtuCheckErr, "MTU check on compute node", logger)
 
-	// IP route check for management nodes
+	// IP route check for compute nodes
 	ipRouteCheckErr := LSFIPRouteCheck(t, sshMgmtClient, computeNodeIPList, logger)
 	utils.LogVerificationResult(t, ipRouteCheckErr, "IP route check on compute node", logger)
 
@@ -168,7 +167,7 @@ func VerifyComputeNodeConfig(
 	utils.LogVerificationResult(t, hyperthreadErr, "Hyperthreading check on compute node", logger)
 
 	// File mount
-	fileMountErr := HPCCheckFileMount(t, sshMgmtClient, computeNodeIPList, "compute", logger)
+	fileMountErr := CheckFileMount(t, sshMgmtClient, computeNodeIPList, "compute", logger)
 	utils.LogVerificationResult(t, fileMountErr, "File mount check on compute node", logger)
 
 	// Intel One mpi
@@ -190,68 +189,68 @@ func VerifyAPPCenterConfig(
 
 }
 
-// VerifyLoginNodeConfig verifies the configuration of a login node by performing various checks.
-// It checks the cluster ID, master name, Reservation ID, MTU, IP route, hyperthreading, LSF version, Run tasks and file mount.
-// The results of the checks are logged using the provided logger.
+// VerifyLoginNodeConfig validates the configuration of a login node by performing multiple checks.
+// It verifies the cluster name, master node name, MTU settings, IP routing, hyperthreading status,
+// LSF version, file mounts, job execution, and LSF command availability.
+// All results are logged using the provided logger.
 func VerifyLoginNodeConfig(
 	t *testing.T,
 	sshLoginClient *ssh.Client,
-	expectedClusterName, expectedMasterName, expectedReservationID string,
+	clusterPrefix string,
 	expectedHyperthreadingStatus bool,
 	loginNodeIP string,
 	jobCommand string,
 	lsfVersion string,
 	logger *utils.AggregatedLogger,
 ) {
+	// Verify cluster name
+	clusterNameErr := LSFCheckClusterName(t, sshLoginClient, clusterPrefix, logger)
+	utils.LogVerificationResult(t, clusterNameErr, "Verify cluster name on login node", logger)
 
-	// Verify cluster ID
-	checkClusterNameErr := LSFCheckClusterName(t, sshLoginClient, expectedClusterName, logger)
-	utils.LogVerificationResult(t, checkClusterNameErr, "check Cluster ID on login node", logger)
+	// Verify master node name
+	masterNameErr := LSFCheckMasterName(t, sshLoginClient, clusterPrefix, logger)
+	utils.LogVerificationResult(t, masterNameErr, "Verify master node name on login node", logger)
 
-	// Verify master name
-	checkMasterNameErr := LSFCheckMasterName(t, sshLoginClient, expectedMasterName, logger)
-	utils.LogVerificationResult(t, checkMasterNameErr, "check Master name on login node", logger)
+	// Check MTU configuration
+	mtuErr := LSFMTUCheck(t, sshLoginClient, []string{loginNodeIP}, logger)
+	utils.LogVerificationResult(t, mtuErr, "Verify MTU configuration on login node", logger)
 
-	// MTU check for login nodes
-	mtuCheckErr := LSFMTUCheck(t, sshLoginClient, []string{loginNodeIP}, logger)
-	utils.LogVerificationResult(t, mtuCheckErr, "MTU check on login node", logger)
+	// Check IP routing
+	ipRouteErr := LSFIPRouteCheck(t, sshLoginClient, []string{loginNodeIP}, logger)
+	utils.LogVerificationResult(t, ipRouteErr, "Verify IP routing on login node", logger)
 
-	// IP route check for login nodes
-	ipRouteCheckErr := LSFIPRouteCheck(t, sshLoginClient, []string{loginNodeIP}, logger)
-	utils.LogVerificationResult(t, ipRouteCheckErr, "IP route check on login node", logger)
+	// Check hyperthreading status
+	hyperthreadingErr := LSFCheckHyperthreading(t, sshLoginClient, expectedHyperthreadingStatus, logger)
+	utils.LogVerificationResult(t, hyperthreadingErr, "Verify hyperthreading status on login node", logger)
 
-	// Hyperthreading check
-	hyperthreadErr := LSFCheckHyperthreading(t, sshLoginClient, expectedHyperthreadingStatus, logger)
-	utils.LogVerificationResult(t, hyperthreadErr, "Hyperthreading check on login node", logger)
-
-	// LSF version check
+	// Check LSF version
 	versionErr := CheckLSFVersion(t, sshLoginClient, lsfVersion, logger)
-	utils.LogVerificationResult(t, versionErr, "check LSF version", logger)
+	utils.LogVerificationResult(t, versionErr, "Verify LSF version on login node", logger)
 
-	//File Mount
-	fileMountErr := HPCCheckFileMount(t, sshLoginClient, []string{loginNodeIP}, "login", logger)
-	utils.LogVerificationResult(t, fileMountErr, "File mount check on login node", logger)
+	// Verify file mounts
+	fileMountErr := CheckFileMount(t, sshLoginClient, []string{loginNodeIP}, "login", logger)
+	utils.LogVerificationResult(t, fileMountErr, "Verify file mounts on login node", logger)
 
-	//Run job
-	jobErr := LSFRunJobs(t, sshLoginClient, LOGIN_NODE_EXECUTION_PATH+jobCommand, logger) //Added the executable path
-	utils.LogVerificationResult(t, jobErr, "check Run job on login node", logger)
+	// Execute test job
+	jobExecutionErr := LSFRunJobs(t, sshLoginClient, LOGIN_NODE_EXECUTION_PATH+jobCommand, logger)
+	utils.LogVerificationResult(t, jobExecutionErr, "Verify job execution on login node", logger)
 
-	// Verify LSF commands
+	// Verify LSF commands availability
 	lsfCmdErr := VerifyLSFCommands(t, sshLoginClient, "login", logger)
-	utils.LogVerificationResult(t, lsfCmdErr, "Check the 'lsf' command on the login node", logger)
+	utils.LogVerificationResult(t, lsfCmdErr, "Verify availability of LSF commands on login node", logger)
 }
 
 // VerifyTestTerraformOutputs is a function that verifies the Terraform outputs for a test scenario.
 func VerifyTestTerraformOutputs(
 	t *testing.T,
-	LastTestTerraformOutputs map[string]interface{},
-	isAPPCenterEnabled bool,
+	bastionIP, deployerIP string,
+	isCloudLogEnabled, isCloudMonitoringEnabled bool,
 	ldapServerEnabled bool,
 	logger *utils.AggregatedLogger,
 ) {
 
 	// Check the Terraform logger outputs
-	outputErr := VerifyTerraformOutputs(t, LastTestTerraformOutputs, isAPPCenterEnabled, ldapServerEnabled, logger)
+	outputErr := ValidateTerraformOutput(t, bastionIP, deployerIP, isCloudLogEnabled, isCloudMonitoringEnabled, ldapServerEnabled, logger)
 	utils.LogVerificationResult(t, outputErr, "check terraform outputs", logger)
 
 }
@@ -278,7 +277,7 @@ func VerifyNoVNCConfig(
 ) {
 
 	// Verify noVNC center
-	appCenterErr := HPCCheckNoVNC(t, sshMgmtClient, logger)
+	appCenterErr := LSFCheckNoVNC(t, sshMgmtClient, logger)
 	utils.LogVerificationResult(t, appCenterErr, "check noVnc", logger)
 
 }
@@ -340,7 +339,7 @@ func VerifyManagementNodeLDAPConfig(
 	}()
 
 	// Check file mount
-	if err := HPCCheckFileMountAsLDAPUser(t, sshLdapClient, "management", logger); err != nil {
+	if err := CheckFileMountAsLDAPUser(t, sshLdapClient, "management", logger); err != nil {
 		utils.LogVerificationResult(t, err, "File mount check as LDAP user on management node failed", logger)
 	}
 
@@ -407,7 +406,7 @@ func VerifyLoginNodeLDAPConfig(
 	}()
 
 	// Check file mount
-	if err := HPCCheckFileMountAsLDAPUser(t, sshLdapClient, "login", logger); err != nil {
+	if err := CheckFileMountAsLDAPUser(t, sshLdapClient, "login", logger); err != nil {
 		utils.LogVerificationResult(t, err, "File mount check as LDAP user on login node failed", logger)
 	}
 
@@ -456,7 +455,7 @@ func VerifyComputeNodeLDAPConfig(
 	utils.LogVerificationResult(t, ldapErr, "ldap configuration check on the compute node", logger)
 
 	// Check file mount
-	fileMountErr := HPCCheckFileMountAsLDAPUser(t, sshLdapClient, "compute", logger)
+	fileMountErr := CheckFileMountAsLDAPUser(t, sshLdapClient, "compute", logger)
 	utils.LogVerificationResult(t, fileMountErr, "check file mount as an LDAP user on the compute node", logger)
 
 	// Verify LSF commands
@@ -487,11 +486,21 @@ func CheckLDAPServerStatus(t *testing.T, sClient *ssh.Client, ldapAdminpassword,
 	utils.LogVerificationResult(t, ldapErr, "ldap Server Status", logger)
 }
 
-// VerifyPTRRecordsForManagementAndLoginNodes verifies PTR records for 'mgmt' or 'login' nodes and ensures their resolution via SSH.
+// // VerifyPTRRecordsForManagementAndLoginNodes verifies PTR records for 'mgmt' or 'login' nodes and ensures their resolution via SSH.
+// // It retrieves hostnames, performs nslookup to verify PTR records, and returns an error if any step fails.
+// func VerifyPTRRecordsForManagementAndLoginNodes(t *testing.T, sClient *ssh.Client, publicHostName, publicHostIP, privateHostName string, managementNodeIPList []string, loginNodeIP string, domainName string, logger *utils.AggregatedLogger) {
+// 	// Call sub-function to verify PTR records
+// 	err := verifyPTRRecords(t, sClient, publicHostName, publicHostIP, privateHostName, managementNodeIPList, loginNodeIP, domainName, logger)
+// 	// Log the verification result
+// 	utils.LogVerificationResult(t, err, "PTR Records For Management And Login Nodes", logger)
+
+// }
+
+// VerifyPTRRecordsForManagementAndLoginNodes verifies PTR records for 'mgmt' nodes and ensures their resolution via SSH.
 // It retrieves hostnames, performs nslookup to verify PTR records, and returns an error if any step fails.
-func VerifyPTRRecordsForManagementAndLoginNodes(t *testing.T, sClient *ssh.Client, publicHostName, publicHostIP, privateHostName string, managementNodeIPList []string, loginNodeIP string, domainName string, logger *utils.AggregatedLogger) {
+func VerifyPTRRecordsForManagement(t *testing.T, sClient *ssh.Client, publicHostName, publicHostIP, privateHostName string, managementNodeIPList []string, domainName string, logger *utils.AggregatedLogger) {
 	// Call sub-function to verify PTR records
-	err := verifyPTRRecords(t, sClient, publicHostName, publicHostIP, privateHostName, managementNodeIPList, loginNodeIP, domainName, logger)
+	err := verifyPTRRecords(t, sClient, publicHostName, publicHostIP, privateHostName, managementNodeIPList, domainName, logger)
 	// Log the verification result
 	utils.LogVerificationResult(t, err, "PTR Records For Management And Login Nodes", logger)
 
@@ -551,22 +560,22 @@ func VerifyCreateNewLdapUserAndManagementNodeLDAPConfig(
 	ldapServerIP string,
 	managementNodeIPList []string,
 	jobCommand string,
+	ldapUserName string,
 	ldapAdminPassword string,
 	ldapDomainName string,
-	ldapUserName string,
-	ldapUserPassword string,
 	newLdapUserName string,
+	newLdapUserPassword string,
 	logger *utils.AggregatedLogger,
 ) {
 
 	// Add a new LDAP user
-	if err := HPCAddNewLDAPUser(t, sldapClient, ldapAdminPassword, ldapDomainName, ldapUserName, newLdapUserName, logger); err != nil {
+	if err := LSFAddNewLDAPUser(t, sldapClient, ldapAdminPassword, ldapDomainName, ldapUserName, newLdapUserName, newLdapUserPassword, logger); err != nil {
 		utils.LogVerificationResult(t, err, "add new LDAP user", logger)
 		return
 	}
 
 	// Connect to the management node via SSH as the new LDAP user
-	sshLdapClientUser, err := utils.ConnectToHostAsLDAPUser(LSF_PUBLIC_HOST_NAME, bastionIP, managementNodeIPList[0], newLdapUserName, ldapUserPassword)
+	sshLdapClientUser, err := utils.ConnectToHostAsLDAPUser(LSF_PUBLIC_HOST_NAME, bastionIP, managementNodeIPList[0], newLdapUserName, newLdapUserPassword)
 	if err != nil {
 		utils.LogVerificationResult(t, err, "connect to the management node via SSH as the new LDAP user", logger)
 		return
@@ -673,30 +682,39 @@ func ValidateSCCInstance(t *testing.T, apiKey, region, resourceGroup, clusterPre
 }
 
 // VerifyCloudLogs validates the configuration and status of cloud logging services.
-// It checks the correctness of cloud logs URLs from Terraform outputs and validates logging services for management and compute nodes.
 // The function logs verification results for each step and handles errors gracefully.
 // Parameters include test context, SSH client, cluster details, and logging configuration.
 // The function does not return values but logs outcomes for validation steps.
 func VerifyCloudLogs(
 	t *testing.T,
 	sshClient *ssh.Client,
-	expectedSolution string,
 	LastTestTerraformOutputs map[string]interface{},
 	managementNodeIPList []string, staticWorkerNodeIPList []string,
 	isCloudLogsEnabledForManagement, isCloudLogsEnabledForCompute bool,
 	logger *utils.AggregatedLogger) {
 
-	// Verify cloud logs URL from Terraform outputs
-	err := VerifyCloudLogsURLFromTerraformOutput(t, LastTestTerraformOutputs, isCloudLogsEnabledForManagement, isCloudLogsEnabledForCompute, logger)
-	utils.LogVerificationResult(t, err, "cloud logs URL from Terraform outputs", logger)
-
 	// Verify Fluent Bit service for management nodes
-	mgmtErr := LSFFluentBitServiceForManagementNodes(t, sshClient, managementNodeIPList, isCloudLogsEnabledForManagement, logger)
+	mgmtErr := VerifyFluentBitServiceForManagementNodes(t, sshClient, managementNodeIPList, isCloudLogsEnabledForManagement, logger)
 	utils.LogVerificationResult(t, mgmtErr, "Fluent Bit service for management nodes", logger)
 
 	// Verify Fluent Bit service for compute nodes
-	compErr := LSFFluentBitServiceForComputeNodes(t, sshClient, expectedSolution, staticWorkerNodeIPList, isCloudLogsEnabledForCompute, logger)
+	compErr := VerifyFluentBitServiceForComputeNodes(t, sshClient, staticWorkerNodeIPList, isCloudLogsEnabledForCompute, logger)
 	utils.LogVerificationResult(t, compErr, "Fluent Bit service for compute nodes", logger)
+
+}
+
+// VerifyPlatformLogs validates whether platform logs are enabled or disabled.
+// It uses the provided API key, region, and logger to check the platform log status.
+// The result is logged using the aggregated logger.
+func VerifyPlatformLogs(
+	t *testing.T,
+	apiKey, region, resourceGroup string,
+	isPlatformLogsEnabled bool,
+	logger *utils.AggregatedLogger,
+) {
+
+	err := VerifyPlatformStatus(t, apiKey, region, resourceGroup, isPlatformLogsEnabled, logger)
+	utils.LogVerificationResult(t, err, "Platform logs", logger)
 
 }
 
@@ -704,8 +722,8 @@ func VerifyCloudLogs(
 // and comparing it against the expected profile obtained from IBM Cloud CLI.
 func ValidateDynamicNodeProfile(t *testing.T, apiKey, region, resourceGroup, clusterPrefix string, options *testhelper.TestOptions, logger *utils.AggregatedLogger) {
 
-	expectedDynamicWorkerProfile, expectedWorkerNodeProfileErr := utils.GetFirstWorkerNodeInstanceType(t, options.TerraformVars, logger)
-	utils.LogVerificationResult(t, expectedWorkerNodeProfileErr, "Fetching worker node profile", logger)
+	expectedDynamicWorkerProfile, expectedWorkerNodeProfileErr := utils.GetFirstDynamicComputeProfile(t, options.TerraformVars, logger)
+	utils.LogVerificationResult(t, expectedWorkerNodeProfileErr, "Fetching dynamic worker node profile", logger)
 
 	validateDynamicWorkerProfileErr := ValidateDynamicWorkerProfile(t, apiKey, region, resourceGroup, clusterPrefix, expectedDynamicWorkerProfile, logger)
 	utils.LogVerificationResult(t, validateDynamicWorkerProfileErr, "Validating dynamic worker node profile", logger)
@@ -713,30 +731,24 @@ func ValidateDynamicNodeProfile(t *testing.T, apiKey, region, resourceGroup, clu
 }
 
 // VerifyCloudMonitoring checks the cloud monitoring configuration and status.
-// It validates cloud log URLs from Terraform outputs and monitoring services
-// for management and compute nodes. The function logs verification results
+// The function logs verification results
 // and handles errors gracefully. It takes test context, SSH client, cluster
 // details, monitoring flags, and a logger as parameters. No values are
 // returned; only validation outcomes are logged.
 func VerifyCloudMonitoring(
 	t *testing.T,
 	sshClient *ssh.Client,
-	expectedSolution string,
 	LastTestTerraformOutputs map[string]interface{},
 	managementNodeIPList []string, staticWorkerNodeIPList []string,
-	isCloudMonitoringEnabledForManagement, isCloudMonitoringEnabledForCompute bool,
+	isCloudMonitoringEnableForManagement, isCloudMonitoringEnableForCompute bool,
 	logger *utils.AggregatedLogger) {
 
-	// Verify cloud logs URL from Terraform outputs
-	err := VerifycloudMonitoringURLFromTerraformOutput(t, LastTestTerraformOutputs, isCloudMonitoringEnabledForManagement, isCloudMonitoringEnabledForCompute, logger)
-	utils.LogVerificationResult(t, err, "cloud logs URL from Terraform outputs", logger)
-
 	// Verify Prometheus Dragent service for management nodes
-	mgmtErr := LSFPrometheusAndDragentServiceForManagementNodes(t, sshClient, managementNodeIPList, isCloudMonitoringEnabledForManagement, logger)
+	mgmtErr := LSFPrometheusAndDragentServiceForManagementNodes(t, sshClient, managementNodeIPList, isCloudMonitoringEnableForManagement, logger)
 	utils.LogVerificationResult(t, mgmtErr, "Prometheus and Dragent service for management nodes", logger)
 
 	// Verify Dragent service for compute nodes
-	compErr := LSFDragentServiceForComputeNodes(t, sshClient, expectedSolution, staticWorkerNodeIPList, isCloudMonitoringEnabledForCompute, logger)
+	compErr := LSFDragentServiceForComputeNodes(t, sshClient, staticWorkerNodeIPList, isCloudMonitoringEnableForCompute, logger)
 	utils.LogVerificationResult(t, compErr, "Prometheus and Dragent service for compute nodes", logger)
 
 }
@@ -756,18 +768,13 @@ func ValidateAtracker(t *testing.T, apiKey, region, resourceGroup, clusterPrefix
 			return // Exit early to prevent further errors
 		}
 
-		// Ensure Target ID is set and has a valid length when Observability Atracker is enabled
-		trimmedTargetID := strings.TrimSpace(targetID)
-		if len(trimmedTargetID) <= 36 {
-			utils.LogVerificationResult(t, fmt.Errorf("target ID is either missing or too short (must be more than 36 characters)"),
-				"ValidateAtracker: Target ID invalid", logger)
-			return
-		}
-
 		// Validate the Atracker Route Target
 		atrackerRouteTargetErr := ValidateAtrackerRouteTarget(t, apiKey, region, resourceGroup, clusterPrefix, targetID, targetType, logger)
 		if atrackerRouteTargetErr != nil {
 			utils.LogVerificationResult(t, atrackerRouteTargetErr, "ValidateAtracker: Validation failed for Atracker Route Target", logger)
 		}
+	} else {
+		logger.Warn(t, "Cloud atracker is disabled  - skipping validation of Atracker Route Target.")
+
 	}
 }

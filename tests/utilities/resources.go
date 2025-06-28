@@ -3,7 +3,9 @@ package tests
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -41,54 +43,120 @@ func IsVPCExist(vpcName string) (bool, error) {
 	return bytes.Contains(output, []byte(vpcName)), nil
 }
 
+// // GetBastionServerIP retrieves the IP address from the BastionServer section in the specified INI file.
+// func GetBastionServerIPFromIni(t *testing.T, filePath string, logger *AggregatedLogger) (string, error) {
+// 	value, err := GetValueFromIniFile(filePath+"/bastion.ini", "BastionServer")
+// 	if err != nil {
+// 		return "", fmt.Errorf("failed to get value from bastion.ini: %w", err)
+// 	}
+// 	logger.Info(t, fmt.Sprintf("Bastion Server IP: %s", value[1]))
+// 	return value[1], nil
+// }
+
+// // GetManagementNodeIPs retrieves the IP addresses from the HPCAASCluster section in the specified INI file.
+// func GetManagementNodeIPsFromIni(t *testing.T, filePath string, logger *AggregatedLogger) ([]string, error) {
+// 	value, err := GetValueFromIniFile(filePath+"/compute.ini", "HPCAASCluster")
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to get value from compute.ini: %w", err)
+// 	}
+// 	logger.Info(t, fmt.Sprintf("Management Node IPs List: %q", value[1:]))
+// 	return value[1:], nil
+// }
+
+// // GetLoginNodeIP retrieves the IP address from the LoginServer section in the specified login INI file.
+// func GetLoginNodeIPFromIni(t *testing.T, filePath string, logger *AggregatedLogger) (string, error) {
+// 	value, err := GetValueFromIniFile(filePath+"/login.ini", "LoginServer")
+// 	if err != nil {
+// 		return "", fmt.Errorf("failed to get value from login.ini: %w", err)
+// 	}
+// 	logger.Info(t, fmt.Sprintf("Login Server IP: %s", value[1]))
+// 	return value[1], nil
+// }
+
+// // GetLdapServerIP retrieves the IP address from the LdapServer section in the specified login INI file.
+// func GetLdapServerIPFromIni(t *testing.T, filePath string, logger *AggregatedLogger) (string, error) {
+// 	value, err := GetValueFromIniFile(filePath+"/ldap.ini", "LDAPServer")
+// 	if err != nil {
+// 		return "", fmt.Errorf("failed to get value from ldap.ini: %w", err)
+// 	}
+// 	logger.Info(t, fmt.Sprintf("Ldap Server IP: %s", value[1]))
+// 	return value[1], nil
+// }
+
+// // GetWorkerNodeIPsFromIni retrieves the IP address from the WorkerServer section in the specified login INI file.
+// func GetWorkerNodeIPsFromIni(t *testing.T, filePath string, logger *AggregatedLogger) ([]string, error) {
+// 	value, err := GetValueFromIniFile(filePath+"/worker.ini", "WorkerServer")
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to get value from worker.ini: %w", err)
+// 	}
+// 	logger.Info(t, fmt.Sprintf("Worker Node IPs List %q", value[1:]))
+// 	return value[1:], nil
+// }
+
 // GetBastionServerIP retrieves the IP address from the BastionServer section in the specified INI file.
 func GetBastionServerIPFromIni(t *testing.T, filePath string, logger *AggregatedLogger) (string, error) {
-	value, err := GetValueFromIniFile(filePath+"/bastion.ini", "BastionServer")
+
+	value, err := GetValueFromIniFile(filepath.Join(filePath, "bastion_hosts.ini"))
 	if err != nil {
-		return "", fmt.Errorf("failed to get value from bastion.ini: %w", err)
+		return "", fmt.Errorf("failed to get value from bastion_hosts.ini : %w", err)
 	}
-	logger.Info(t, fmt.Sprintf("Bastion Server IP: %s", value[1]))
-	return value[1], nil
+	logger.Info(t, fmt.Sprintf("Bastion Server IP: %s", value[0]))
+	return value[0], nil
 }
 
 // GetManagementNodeIPs retrieves the IP addresses from the HPCAASCluster section in the specified INI file.
 func GetManagementNodeIPsFromIni(t *testing.T, filePath string, logger *AggregatedLogger) ([]string, error) {
-	value, err := GetValueFromIniFile(filePath+"/compute.ini", "HPCAASCluster")
+
+	value, err := GetValueFromIniFile(filepath.Join(filePath, "mgmt_hosts.ini"))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get value from compute.ini: %w", err)
+		return nil, fmt.Errorf("failed to get value from mgmt_hosts.ini : %w", err)
 	}
-	logger.Info(t, fmt.Sprintf("Management Node IPs List: %q", value[1:]))
-	return value[1:], nil
+	logger.Info(t, fmt.Sprintf("Management Node IPs List: %q", value))
+	return value, nil
 }
 
-// GetLoginNodeIP retrieves the IP address from the LoginServer section in the specified login INI file.
+// GetLoginNodeIP retrieves the IP address from the LoginServer section in the specified INI file.
 func GetLoginNodeIPFromIni(t *testing.T, filePath string, logger *AggregatedLogger) (string, error) {
-	value, err := GetValueFromIniFile(filePath+"/login.ini", "LoginServer")
+
+	value, err := GetValueFromIniFile(filepath.Join(filePath, "login_host.ini"))
 	if err != nil {
-		return "", fmt.Errorf("failed to get value from login.ini: %w", err)
+		return "", fmt.Errorf("failed to get value from login_host.ini : %w", err)
 	}
-	logger.Info(t, fmt.Sprintf("Login Server IP: %s", value[1]))
-	return value[1], nil
+	logger.Info(t, fmt.Sprintf("Login Server IP: %s", value[0]))
+	return value[0], nil
 }
 
-// GetLdapServerIP retrieves the IP address from the LdapServer section in the specified login INI file.
+// GetWorkerNodeIPsFromIni retrieves the IP address from the WorkerServer section in the specified INI file.
+func GetWorkerNodeIPsFromIni(t *testing.T, filePath string, logger *AggregatedLogger) ([]string, error) {
+
+	value, err := GetValueFromIniFile(filepath.Join(filePath, "compute_hosts.ini"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get value from compute_hosts.ini : %w", err)
+	}
+	logger.Info(t, fmt.Sprintf("Worker Node IPs List %q", value))
+	return value, nil
+}
+
+// GetLdapServerIP retrieves the IP address from the LdapServer section in the specified INI file.
 func GetLdapServerIPFromIni(t *testing.T, filePath string, logger *AggregatedLogger) (string, error) {
-	value, err := GetValueFromIniFile(filePath+"/ldap.ini", "LDAPServer")
+
+	value, err := GetValueFromIniFile(filepath.Join(filePath, "ldap_hosts.ini"))
 	if err != nil {
 		return "", fmt.Errorf("failed to get value from ldap.ini: %w", err)
 	}
-	logger.Info(t, fmt.Sprintf("Ldap Server IP: %s", value[1]))
-	return value[1], nil
+	logger.Info(t, fmt.Sprintf("Ldap Server IP: %s", value[0]))
+	return value[0], nil
 }
 
-// GetWorkerNodeIPsFromIni retrieves the IP address from the WorkerServer section in the specified login INI file.
-func GetWorkerNodeIPsFromIni(t *testing.T, filePath string, logger *AggregatedLogger) ([]string, error) {
-	value, err := GetValueFromIniFile(filePath+"/worker.ini", "WorkerServer")
+// GetDeployerNodeIPFromIni retrieves the IP address from the deployer section in the specified INI file.
+func GetDeployerNodeIPFromIni(t *testing.T, filePath string, logger *AggregatedLogger) (string, error) {
+
+	value, err := GetValueFromIniFile(filepath.Join(filePath, "deployer_hosts.ini"))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get value from worker.ini: %w", err)
+		return "", fmt.Errorf("failed to get value from deployer_hosts.ini: %w", err)
 	}
-	logger.Info(t, fmt.Sprintf("Worker Node IPs List %q", value[1:]))
-	return value[1:], nil
+	logger.Info(t, fmt.Sprintf("Deployer Server IP: %s", value[0]))
+	return value[0], nil
 }
 
 // HPCGetClusterIPs retrieves the IP addresses of the bastion server, management nodes, and login node
@@ -119,10 +187,29 @@ func HPCGetClusterIPs(t *testing.T, options *testhelper.TestOptions, logger *Agg
 	return bastionIP, managementNodeIPList, loginNodeIP, nil
 }
 
+// List files in directory
+func ListFiles(dir string) {
+	fmt.Println("Listing files in:", dir)
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			fmt.Printf("Walk error on %s: %v\n", path, err)
+			return nil
+		}
+		if !info.IsDir() {
+			fmt.Printf("Found file: %s (%d bytes)\n", path, info.Size())
+		}
+		return nil
+	})
+	if err != nil {
+		fmt.Println("Walk error:", err)
+	}
+}
+
 // LSFGetClusterIPs retrieves the IP addresses of the bastion server, management nodes, and login node
 // from the specified file path in the provided test options, using the provided logger for logging.
 // It returns the bastion server IP, a list of management node IPs, the login node IP, and any error encountered.
 func LSFGetClusterIPs(t *testing.T, options *testhelper.TestOptions, logger *AggregatedLogger) (bastionIP string, managementNodeIPList []string, loginNodeIP string, workerNodeIPList []string, err error) {
+
 	// Retrieve the Terraform directory from the options.
 	filePath := options.TerraformOptions.TerraformDir
 
@@ -153,41 +240,6 @@ func LSFGetClusterIPs(t *testing.T, options *testhelper.TestOptions, logger *Agg
 	return bastionIP, managementNodeIPList, loginNodeIP, workerNodeIPList, nil
 }
 
-// HPCGetClusterIPsWithLDAP retrieves the IP addresses of various servers, including the LDAP server.
-// from the specified file path in the provided test options, using the provided logger for logging.
-// It returns the bastion server IP, a list of management node IPs, the login node IP, ldap server IP and any error encountered.
-func HPCGetClusterIPsWithLDAP(t *testing.T, options *testhelper.TestOptions, logger *AggregatedLogger) (bastionIP string, managementNodeIPList []string, loginNodeIP, ldapIP string, err error) {
-	// Retrieve the Terraform directory from the options.
-	filePath := options.TerraformOptions.TerraformDir
-
-	// Get the bastion server IP and handle errors.
-	bastionIP, err = GetBastionServerIPFromIni(t, filePath, logger)
-	if err != nil {
-		return "", nil, "", "", fmt.Errorf("error getting bastion server IP: %v", err)
-	}
-
-	// Get the management node IPs and handle errors.
-	managementNodeIPList, err = GetManagementNodeIPsFromIni(t, filePath, logger)
-	if err != nil {
-		return "", nil, "", "", fmt.Errorf("error getting management node IPs: %v", err)
-	}
-
-	// Get the login node IP and handle errors.
-	loginNodeIP, err = GetLoginNodeIPFromIni(t, filePath, logger)
-	if err != nil {
-		return "", nil, "", "", fmt.Errorf("error getting login node IP: %v", err)
-	}
-
-	// Get the LDAP server IP and handle errors.
-	ldapIP, err = GetLdapServerIPFromIni(t, filePath, logger)
-	if err != nil {
-		return "", nil, "", "", fmt.Errorf("error getting LDAP server IP: %v", err)
-	}
-
-	// Return the retrieved IP addresses and any error.
-	return bastionIP, managementNodeIPList, loginNodeIP, ldapIP, nil
-}
-
 // LSFGetClusterIPsWithLDAP retrieves the IP addresses of various servers, including the LDAP server,
 // from the specified file path in the provided test options, using the provided logger for logging.
 // It returns the bastion server IP, a list of management node IPs, the login node IP, worker node IPs,
@@ -215,10 +267,10 @@ func LSFGetClusterIPsWithLDAP(t *testing.T, options *testhelper.TestOptions, log
 		return "", nil, "", nil, "", fmt.Errorf("failed to get management node IPs: %v", err)
 	}
 
-	// Get the login node IP and handle errors.
+	// Get login node IP and handle errors
 	loginNodeIP, err = GetLoginNodeIPFromIni(t, filePath, logger)
 	if err != nil {
-		return "", nil, "", nil, "", fmt.Errorf("failed to get login node IP: %v", err)
+		return "", nil, "", nil, "", fmt.Errorf("failed to get login node IPs: %v", err)
 	}
 
 	// Get worker node IPs and handle errors.
@@ -416,7 +468,8 @@ func RetrieveAndUpdateSecurityGroup(t *testing.T, apiKey, region, resourceGroup,
 	}
 
 	// Command to get the security group ID based on the cluster prefix.
-	getSecurityGroupIDCmd := fmt.Sprintf("ibmcloud is security-groups | grep %s-cluster-sg | awk '{print $1}'", clusterPrefix)
+	//getSecurityGroupIDCmd := fmt.Sprintf("ibmcloud is security-groups | grep %s-cluster-sg | awk '{print $1}'", clusterPrefix)
+	getSecurityGroupIDCmd := fmt.Sprintf("ibmcloud is security-groups | grep %s-comp-sg | awk '{print $1}'", clusterPrefix)
 	securityGroupIDBytes, err := exec.Command("bash", "-c", getSecurityGroupIDCmd).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to retrieve security group ID: %w", err)
@@ -445,4 +498,18 @@ func RetrieveAndUpdateSecurityGroup(t *testing.T, apiKey, region, resourceGroup,
 	}
 
 	return nil
+}
+
+// LSFGetDeployerIP retrieves the deployer node IP address
+// from the specified Terraform directory in the test options.
+// It logs operations using the provided logger and returns the IP address or an error.
+func LSFGetDeployerIP(t *testing.T, options *testhelper.TestOptions, logger *AggregatedLogger) (string, error) {
+	terraformDir := options.TerraformOptions.TerraformDir
+
+	deployerIP, err := GetDeployerNodeIPFromIni(t, terraformDir, logger)
+	if err != nil {
+		return "", fmt.Errorf("error retrieving deployer IP from INI: %w", err)
+	}
+
+	return deployerIP, nil
 }

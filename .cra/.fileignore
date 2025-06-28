@@ -1,0 +1,3 @@
+# ignore temporary copies of referenced repos
+.terraform
+common-dev-assets

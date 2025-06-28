@@ -1,7 +1,7 @@
 # This module requires additional logdna provider configuration blocks
 locals {
   cloud_monitoring_instance_name = var.cloud_monitoring_instance_name
-  logs_instance_endpoint         = "https://api.${var.location}.logging.cloud.ibm.com"
+  # logs_instance_endpoint         = "https://api.${var.location}.logging.cloud.ibm.com"
 }
 
 module "observability_instance" {
@@ -21,13 +21,13 @@ module "observability_instance" {
     # logs and metrics buckets must be different
     logs_data = {
       enabled         = true
-      bucket_crn      = var.cloud_logs_data_bucket != null ? var.cloud_logs_data_bucket["crn"] : ""
-      bucket_endpoint = var.cloud_logs_data_bucket != null ? var.cloud_logs_data_bucket["s3_endpoint_direct"] : ""
+      bucket_crn      = var.cloud_logs_data_bucket != null ? var.cloud_logs_data_bucket["bucket_crn"] : ""
+      bucket_endpoint = var.cloud_logs_data_bucket != null ? var.cloud_logs_data_bucket["bucket_endpoint"] : ""
     },
     metrics_data = {
       enabled         = true
-      bucket_crn      = var.cloud_metrics_data_bucket != null ? var.cloud_metrics_data_bucket["crn"] : ""
-      bucket_endpoint = var.cloud_metrics_data_bucket != null ? var.cloud_metrics_data_bucket["s3_endpoint_direct"] : ""
+      bucket_crn      = var.cloud_metrics_data_bucket != null ? var.cloud_metrics_data_bucket["bucket_crn"] : ""
+      bucket_endpoint = var.cloud_metrics_data_bucket != null ? var.cloud_metrics_data_bucket["bucket_endpoint"] : ""
     }
   }
   activity_tracker_routes = var.cloud_logs_as_atracker_target ? [
