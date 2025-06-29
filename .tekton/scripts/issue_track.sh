@@ -7,7 +7,7 @@ error_check_on_all_file() {
     for file in "$DIRECTORY"/$pattern; do
         if [ -f "$file" ]; then
             if [[ "${file}" == *"negative"* ]]; then
-                infra_validation_negative_log_fail_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' -e '"conn_terraform_log_level"   = "ERROR"' -e 'provider: error encountered while scanning stdout: error="read |0: file already closed"' "$file" | grep -E -w 'FAIL')
+                infra_validation_negative_log_fail_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' -e '"conn_terraform_log_level"   = "ERROR"' -e 'provider: error encountered while scanning stdout: error="read |0: file already closed"' -e 'No provider config schema available for provider' "$file" | grep -E -w 'FAIL')
                 if [[ "$infra_validation_negative_log_fail_check" ]]; then
                     results+=("true")
                     if [[ "${infra_or_validation}" == "infra" ]]; then
@@ -17,7 +17,7 @@ error_check_on_all_file() {
                     fi
                 fi
             else
-                infra_validation_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' -e '"conn_terraform_log_level"   = "ERROR"' -e 'provider: error encountered while scanning stdout: error="read |0: file already closed"' "$file" | grep -E -w 'FAIL|Error|ERROR')
+                infra_validation_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' -e '"conn_terraform_log_level"   = "ERROR"' -e 'provider: error encountered while scanning stdout: error="read |0: file already closed"' -e 'No provider config schema available for provider' "$file" | grep -E -w 'FAIL|Error|ERROR')
                 if [[ "$infra_validation_log_error_check" ]]; then
                     results+=("true")
                     if [[ "${infra_or_validation}" == "infra" ]]; then
@@ -45,7 +45,7 @@ issue_track() {
     DIRECTORY="/artifacts/tests"
     if [ -d "$DIRECTORY" ]; then
         if [[ "${LOG_FILE_NAME}" == *"negative"* ]]; then
-            negative_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' -e '"conn_terraform_log_level"   = "ERROR"' -e 'provider: error encountered while scanning stdout: error="read |0: file already closed"' $DIRECTORY/lsf_tests/"$LOG_FILE_NAME" | grep 'FAIL')
+            negative_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' -e '"conn_terraform_log_level"   = "ERROR"' -e 'provider: error encountered while scanning stdout: error="read |0: file already closed"' -e 'No provider config schema available for provider' $DIRECTORY/lsf_tests/"$LOG_FILE_NAME" | grep 'FAIL')
             if [[ "$negative_log_error_check" ]]; then
                 echo "${negative_log_error_check}"
                 echo "Found FAIL in plan/apply log. Please check log : ${LOG_FILE_NAME}"
@@ -54,9 +54,9 @@ issue_track() {
         else
             # Track error/fail from the suites log file
             if [[ "${CHECK_PR_OR_TASK}" != "PR" ]]; then
-                log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' -e '"conn_terraform_log_level"   = "ERROR"' -e 'provider: error encountered while scanning stdout: error="read |0: file already closed"' $DIRECTORY/lsf_tests/"$LOG_FILE_NAME" | grep -E -w 'FAIL|Error|ERROR')
+                log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' -e '"conn_terraform_log_level"   = "ERROR"' -e 'provider: error encountered while scanning stdout: error="read |0: file already closed"' -e 'No provider config schema available for provider' $DIRECTORY/lsf_tests/"$LOG_FILE_NAME" | grep -E -w 'FAIL|Error|ERROR')
             else
-                log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' -e '"conn_terraform_log_level"   = "ERROR"' -e 'provider: error encountered while scanning stdout: error="read |0: file already closed"' $DIRECTORY/"$LOG_FILE_NAME" | grep -E -w 'FAIL|Error|ERROR')
+                log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' -e '"conn_terraform_log_level"   = "ERROR"' -e 'provider: error encountered while scanning stdout: error="read |0: file already closed"' -e 'No provider config schema available for provider' $DIRECTORY/"$LOG_FILE_NAME" | grep -E -w 'FAIL|Error|ERROR')
             fi
             if [[ "$log_error_check" ]]; then
                 echo "${log_error_check}"
@@ -111,9 +111,9 @@ display_validation_log() {
             echo "##################################################################################"
             echo "##################################################################################"
             if [[ "${LOG_FILE_NAME}" == *"negative"* ]]; then
-                validation_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' -e '"conn_terraform_log_level"   = "ERROR"' $DIRECTORY/logs_output/"$LOG_FILE_NAME" | grep -E -w 'FAIL')
+                validation_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' -e '"conn_terraform_log_level"   = "ERROR"' -e 'No provider config schema available for provider' $DIRECTORY/logs_output/"$LOG_FILE_NAME" | grep -E -w 'FAIL')
             else
-                validation_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' -e '"conn_terraform_log_level"   = "ERROR"' $DIRECTORY/logs_output/"$LOG_FILE_NAME" | grep -E -w 'FAIL|Error|ERROR')
+                validation_log_error_check=$(grep -v -e 'Terraform upgrade output:' -e 'Error retrieving reservation ID from secrets:' -e 'Field validation for' -e '"conn_terraform_log_level"   = "ERROR"' -e 'No provider config schema available for provider' $DIRECTORY/logs_output/"$LOG_FILE_NAME" | grep -E -w 'FAIL|Error|ERROR')
             fi
 
             # Display if any error in validation log

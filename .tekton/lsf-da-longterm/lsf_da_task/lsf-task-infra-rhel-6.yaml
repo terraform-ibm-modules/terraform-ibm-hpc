@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: wes-lsf-da-rhel-5
+  name: wes-lsf-da-rhel-6
 spec:
   params:
     - name: ibmcloud-api
@@ -136,7 +136,7 @@ spec:
       - name: lsf_version
         value: $(params.lsf_version)
   steps:
-    - name: rhel-suite-11
+    - name: rhel-suite-13
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -154,8 +154,8 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          lsf_da_rhel_suite_11
-    - name: rhel-suite-12
+          lsf_da_rhel_suite_13
+    - name: rhel-suite-14
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -173,4 +173,4 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          lsf_da_rhel_suite_12
+          lsf_da_rhel_suite_14

@@ -395,6 +395,58 @@ spec:
           value: $(params.pac_ha_exist_certificate)
         - name: lsf_version
           value: $(params.lsf_version)
+    - name: wes-lsf-da-rhel-6
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: wes-lsf-da-rhel-6
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
     # # - name: wes-lsf-da-ubuntu
     # #   runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
     # #   taskRef:
@@ -540,6 +592,7 @@ spec:
           wes-lsf-da-rhel-3,
           wes-lsf-da-rhel-4,
           wes-lsf-da-rhel-5,
+          wes-lsf-da-rhel-6,
           # wes-lsf-da-region,
           # wes-lsf-da-negative,
         ]
@@ -566,6 +619,7 @@ spec:
           wes-lsf-da-rhel-3,
           wes-lsf-da-rhel-4,
           wes-lsf-da-rhel-5,
+          wes-lsf-da-rhel-6,
           # wes-lsf-da-region,
           # wes-lsf-da-negative,
         ]
@@ -596,6 +650,7 @@ spec:
           wes-lsf-da-rhel-3,
           wes-lsf-da-rhel-4,
           wes-lsf-da-rhel-5,
+          wes-lsf-da-rhel-6,
           # wes-lsf-da-region,
           # wes-lsf-da-negative,
         ]
@@ -749,6 +804,17 @@ spec:
               - |
                 #!/bin/bash
                 VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-13.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-lsf-da-rhel-suite-14
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-14.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
           # # - name: validation-lsf-ubuntu-suite
@@ -988,6 +1054,17 @@ spec:
               - |
                 #!/bin/bash
                 LOG_FILE_NAME="lsf-da-rhel-suite-13.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: display-infra-da-log-rhel-suite-14
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="lsf-da-rhel-suite-14.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
           # # - name: display-infra-log-ubuntu-suite

@@ -538,7 +538,7 @@ lsf_da_rhel_suite_6() {
 lsf_da_rhel_suite_7() {
     suite=lsf-da-rhel-suite-7
     solution=lsf-da
-    test_cases="TestObservabilityAtrackerLoggingMonitoring,TestRunSCCWPAndCSPMEnabledClusterValidation"
+    test_cases="TestObservabilityAtrackerLoggingMonitoring"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
@@ -582,7 +582,7 @@ lsf_da_rhel_suite_10() {
 lsf_da_rhel_suite_11() {
     suite=lsf-da-rhel-suite-11
     solution=lsf-da
-    test_cases="TestRunCreateVpcWithCustomDnsOnlyDNS"
+    test_cases="TestRunCreateVpcWithCustomDns"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
@@ -604,7 +604,18 @@ lsf_da_rhel_suite_12() {
 lsf_da_rhel_suite_13() {
     suite=lsf-da-rhel-suite-13
     solution=lsf-da
-    test_cases="TestObservabilityAtrackerWithCosAndCloudLogs,TestRunCreateVpcWithCustomDns"
+    test_cases="TestObservabilityAtrackerWithCosAndCloudLogs,TestRunCreateVpcWithCustomDnsOnlyDNS"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# commit based suite on rhel-suite-14
+lsf_da_rhel_suite_14() {
+    suite=lsf-da-rhel-suite-14
+    solution=lsf-da
+    test_cases="TestRunSCCWPAndCSPMEnabledClusterValidation"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
