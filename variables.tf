@@ -1071,7 +1071,7 @@ variable "login_instance" {
     profile = "bx2-2x8"
     image   = "hpcaas-lsf10-rhel810-compute-v8"
   }]
-  description = "Number of instances to be launched for login node."
+  description = "Specify the list of login node configurations, including instance profile, image name. By default, login node is created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures."
 }
 
 ##############################################################################
@@ -1101,7 +1101,7 @@ variable "TF_PARALLELISM" {
 ##############################################################################
 
 variable "sccwp_service_plan" {
-  description = "IBM service pricing plan."
+  description = "Specify the plan type for the Security and Compliance Center (SCC) Workload Protection instance. Valid values are free-trial and graduated-tier only."
   type        = string
   default     = "free-trial"
   validation {
@@ -1116,11 +1116,11 @@ variable "sccwp_service_plan" {
 variable "sccwp_enable" {
   type        = bool
   default     = true
-  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+  description = "Set this flag to true to create an instance of IBM Security and Compliance Center (SCC) Workload Protection. When enabled, it provides tools to discover and prioritize vulnerabilities, monitor for security threats, and enforce configuration, permission, and compliance policies across the full lifecycle of your workloads. To view the data on the dashboard, enable the cspm to create the app configuration and required trusted profile policies.[Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
 }
 
 variable "cspm_enabled" {
-  description = "Enable Cloud Security Posture Management (CSPM) for the Workload Protection instance. This will create a trusted profile associated with the SCC Workload Protection instance that has viewer / reader access to the App Config service and viewer access to the Enterprise service. [Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
+  description = "CSPM (Cloud Security Posture Management) is a set of tools and practices that continuously monitor and secure cloud infrastructure. When enabled, it creates a trusted profile with viewer access to the App Configuration and Enterprise services for the SCC Workload Protection instance. Make sure the required IAM permissions are in place, as missing permissions will cause deployment to fail. If CSPM is disabled, dashboard data will not be available.[Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
   type        = bool
   default     = false
   nullable    = false
