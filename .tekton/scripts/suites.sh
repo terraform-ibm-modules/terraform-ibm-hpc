@@ -604,7 +604,7 @@ lsf_da_rhel_suite_12() {
 lsf_da_rhel_suite_13() {
     suite=lsf-da-rhel-suite-13
     solution=lsf-da
-    test_cases="TestObservabilityAtrackerWithCosAndCloudLogs,TestRunCreateVpcWithCustomDnsOnlyDNS"
+    test_cases="TestObservabilityAtrackerWithCosAndCloudLogs"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
@@ -615,7 +615,7 @@ lsf_da_rhel_suite_13() {
 lsf_da_rhel_suite_14() {
     suite=lsf-da-rhel-suite-14
     solution=lsf-da
-    test_cases="TestRunSCCWPAndCSPMEnabledClusterValidation"
+    test_cases="TestRunSCCWPAndCSPMEnabledClusterValidation,TestRunCreateVpcWithCustomDnsOnlyDNS"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
