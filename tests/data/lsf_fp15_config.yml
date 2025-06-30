@@ -1,6 +1,6 @@
 Scheduler: LSF
 lsf_version: fixpack_15
-zones: au-syd-1
+zones: eu-gb-1
 remote_allowed_ips:
 cluster_name: HPC-LSF-1
 ssh_keys: geretain-hpc
