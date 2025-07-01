@@ -8,11 +8,17 @@ variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
 }
 
-# Delete this variable before pushing to the public repository.
-variable "github_token" {
+##############################################################################
+# Cluster Level Variables
+##############################################################################
+variable "cluster_prefix" {
   type        = string
-  default     = null
-  description = "Provide your GitHub token to download the HPCaaS code into the Deployer node"
+  default     = "hpc"
+  description = "A unique identifier for resources. Must begin with a letter and end with a letter or number. This cluster_prefix will be prepended to any resources provisioned by this template. Prefixes must be 16 or fewer characters."
+  validation {
+    error_message = "Prefix must begin and end with a letter and contain only letters, numbers, and - characters."
+    condition     = can(regex("^([A-z]|[a-z][-a-z0-9]*[a-z0-9])$", var.cluster_prefix))
+  }
 }
 
 ##############################################################################
@@ -53,6 +59,19 @@ variable "bastion_private_key_content" {
   sensitive   = true
   default     = null
   description = "Bastion private key content."
+}
+
+variable "existing_bastion_instance_name" {
+  type        = string
+  default     = null
+  description = "Provide the name of the bastion instance. If none given then new bastion will be created."
+}
+
+variable "bastion_public_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Bastion security group id."
 }
 
 ##############################################################################

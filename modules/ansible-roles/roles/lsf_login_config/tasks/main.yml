@@ -1,0 +1,4 @@
+---
+
+# Configure Login node
+- import_tasks: login_node_configuration.yml

@@ -25,12 +25,7 @@ output "bastion_fip_id" {
 
 output "bastion_security_group_id" {
   description = "Bastion SG"
-  value       = var.bastion_security_group_id != null ? var.bastion_security_group_id : one(module.bastion_sg[*].security_group_id)
-}
-
-output "bastion_security_group_id_for_ref" {
-  description = "Bastion SG id for ref"
-  value       = one(module.bastion_sg[*].security_group_id_for_ref)
+  value       = one(module.bastion_sg[*].security_group_id)
 }
 
 output "bastion_public_key_content" {

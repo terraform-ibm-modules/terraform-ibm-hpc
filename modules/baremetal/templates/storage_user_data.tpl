@@ -32,6 +32,7 @@ then
     if grep -q "platform:el9" /etc/os-release
     then
         PACKAGE_MGR=dnf
+        subscription-manager repos --enable=rhel-9-for-x86_64-supplementary-eus-rpms
         package_list="python3 kernel-devel-$(uname -r) kernel-headers-$(uname -r) firewalld numactl make gcc-c++ elfutils-libelf-devel bind-utils iptables-nft nfs-utils elfutils elfutils-devel python3-dnf-plugin-versionlock"
     elif grep -q "platform:el8" /etc/os-release
     then
@@ -96,6 +97,8 @@ echo "##########################################################################
 
 echo "DOMAIN=${storage_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${storage_interfaces}"
 echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${storage_interfaces}"
+sed -i -e "s#QUEUE_COUNT=3#QUEUE_COUNT=\`ethtool -l \$iface | echo \$(awk '\$1 ~ /Combined:/ {print \$2;exit}')\`#g" /var/lib/cloud/scripts/per-boot/iface-config
+ethtool -L eth0 combined 16
 chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
 sleep 120
 systemctl restart NetworkManager

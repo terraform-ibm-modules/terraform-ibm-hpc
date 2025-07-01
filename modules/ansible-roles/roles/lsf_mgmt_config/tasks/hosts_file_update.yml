@@ -31,7 +31,7 @@
 
 - name:  Management Config | Aggregate all IPs from all hosts
   set_fact:
-    all_ips: "{{ groups['all'] | map('extract', hostvars, 'host_ip') | list }}"
+    all_ips: "{{ groups['mgmt_compute_nodes'] | map('extract', hostvars, 'host_ip') | list }}"
   run_once: true
 
 - name:  Management Config | Display all resolved IP addresses

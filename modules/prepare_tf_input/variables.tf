@@ -8,13 +8,6 @@ variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
 }
 
-# Delete this variable before pushing to the public repository.
-variable "github_token" {
-  type        = string
-  default     = null
-  description = "Provide your GitHub token to download the HPCaaS code into the Deployer node"
-}
-
 variable "lsf_version" {
   type        = string
   default     = "fixpack_15"
@@ -26,7 +19,7 @@ variable "lsf_version" {
 ##############################################################################
 variable "cluster_prefix" {
   type        = string
-  default     = "hpc"
+  default     = "lsf"
   description = "A unique identifier for resources. Must begin with a letter and end with a letter or number. This cluster_prefix will be prepended to any resources provisioned by this template. Prefixes must be 16 or fewer characters."
   validation {
     error_message = "Prefix must begin and end with a letter and contain only letters, numbers, and - characters."
@@ -77,7 +70,7 @@ variable "client_instances" {
   description = "Number of instances to be launched for client."
 }
 
-variable "cluster_subnet_ids" {
+variable "cluster_subnet_id" {
   type        = string
   default     = null
   description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
@@ -97,10 +90,9 @@ variable "management_instances" {
 variable "static_compute_instances" {
   type = list(
     object({
-      profile    = string
-      count      = number
-      image      = string
-      filesystem = string
+      profile = string
+      count   = number
+      image   = string
     })
   )
   description = "Min Number of instances to be launched for compute cluster."
@@ -163,6 +155,24 @@ variable "storage_servers" {
     filesystem = "/gpfs/fs1"
   }]
   description = "Number of BareMetal Servers to be launched for storage cluster."
+}
+
+variable "tie_breaker_bm_server" {
+  type = list(
+    object({
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = string
+    })
+  )
+  default = [{
+    profile    = "cx2d-metal-96x192"
+    count      = 1
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "fs1"
+  }]
+  description = "BareMetal Server to be launched for Tie Breaker."
 }
 
 variable "protocol_instances" {
@@ -265,10 +275,10 @@ variable "bastion_security_group_id" {
   description = "bastion security group id"
 }
 
-variable "bastion_security_group_id_for_ref" {
+variable "existing_bastion_security_group_id" {
   type        = string
   default     = null
-  description = "bastion security group id for ref"
+  description = "Existing Bastion Security Group ID"
 }
 
 variable "deployer_hostname" {
@@ -505,7 +515,7 @@ variable "ldap_instance_key_pair" {
   description = "Name of the SSH key configured in your IBM Cloud account that is used to establish a connection to the LDAP Server. Make sure that the SSH key is present in the same resource group and region where the LDAP Servers are provisioned. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
 }
 
-variable "ldap_instances" {
+variable "ldap_instance" {
   type = list(
     object({
       profile = string
@@ -556,22 +566,28 @@ variable "gklm_instances" {
   description = "Number of instances to be launched for client."
 }
 
-# variable "scale_encryption_admin_default_password" {
-#   type        = string
-#   default     = null
-#   description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
-# }
+variable "scale_encryption_admin_default_password" {
+  type        = string
+  default     = "SKLM@dmin123"
+  description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
+}
 
-# variable "scale_encryption_admin_username" {
-#   type        = string
-#   default     = null
-#   description = "The default Admin username for Security Key Lifecycle Manager(GKLM)."
-# }
+variable "scale_encryption_admin_username" {
+  type        = string
+  default     = "SKLMAdmin"
+  description = "The default Admin username for Security Key Lifecycle Manager(GKLM)."
+}
 
 variable "scale_encryption_admin_password" {
   type        = string
   default     = null
   description = "Password that is used for performing administrative operations for the GKLM.The password must contain at least 8 characters and at most 20 characters. For a strong password, at least three alphabetic characters are required, with at least one uppercase and one lowercase letter.  Two numbers, and at least one special character from this(~@_+:). Make sure that the password doesn't include the username. Visit this [page](https://www.ibm.com/docs/en/gklm/3.0.1?topic=roles-password-policy) to know more about password policy of GKLM. "
+}
+
+variable "key_protect_instance_id" {
+  type        = string
+  default     = null
+  description = "An existing Key Protect instance used for filesystem encryption"
 }
 
 variable "storage_type" {
@@ -714,4 +730,44 @@ variable "existing_bastion_instance_name" {
   type        = string
   default     = null
   description = "Bastion instance name."
+}
+
+###########################################################################
+# Application Center variables
+###########################################################################
+
+variable "app_center_gui_password" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Password for IBM Spectrum LSF Application Center GUI."
+}
+
+###########################################################################
+# Login Node variables
+###########################################################################
+variable "login_instance" {
+  type = list(
+    object({
+      profile = string
+      image   = string
+    })
+  )
+  default = [{
+    profile = "bx2-2x8"
+    image   = "hpcaas-lsf10-rhel810-compute-v8"
+  }]
+  description = "Number of instances to be launched for login node."
+}
+
+variable "vpc_cluster_private_subnets_cidr_blocks" {
+  type        = string
+  default     = "10.241.0.0/20"
+  description = "Provide the CIDR block required for the creation of the compute cluster's private subnet. One CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Ensure the selected CIDR block size can accommodate the maximum number of management and dynamic compute nodes expected in your cluster. For more information on CIDR block size selection, refer to the documentation, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
+}
+
+variable "bms_boot_drive_encryption" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the boot drive of bare metal server. Select true or false"
 }

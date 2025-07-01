@@ -15,10 +15,29 @@ resource "null_resource" "entitlement_check" {
   }
 }
 
+#Checks the Dedicated host profile and stops the build
+resource "null_resource" "dedicated_host_validation" {
+  count = var.enable_dedicated_host && length(var.static_compute_instances) > 0 && local.should_validate_profile ? 1 : 0
+
+  provisioner "local-exec" {
+    command     = <<EOT
+      echo "ERROR: Invalid instance profile for available dedicated host detected:"
+      echo "${join("\n", local.errors)}"
+      echo ""
+      echo "Available CURRENT dedicated host profiles:"
+%{for p in local.current_dh_profiles~}
+      echo " - ${p.name} (${p.family})"
+%{endfor~}
+      exit 1
+    EOT
+    interpreter = ["/bin/bash", "-c"]
+  }
+}
+
 resource "local_sensitive_file" "write_meta_private_key" {
   count           = local.enable_compute ? 1 : 0
   content         = (local.compute_private_key_content)
-  filename        = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/compute_id_rsa" : "${path.root}/modules/ansible-roles/compute_id_rsa"
+  filename        = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/compute_id_rsa" : "${path.root}/modules/ansible-roles/compute_id_rsa"
   file_permission = "0600"
 }
 
@@ -48,7 +67,7 @@ resource "null_resource" "copy_compute_public_key_content" {
 module "storage_key" {
   count  = local.enable_storage ? 1 : 0
   source = "./../key"
-  # private_key_path = var.enable_bastion ? "${path.root}/../../modules/ansible-roles/storage_id_rsa" : "${path.root}/modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
+  # private_key_path = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/storage_id_rsa" : "${path.root}/modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
 }
 
 module "client_sg" {
@@ -77,10 +96,10 @@ module "bastion_sg_existing" {
   source                         = "terraform-ibm-modules/security-group/ibm"
   version                        = "2.6.2"
   resource_group                 = var.resource_group
-  add_ibm_cloud_internal_rules   = true
+  add_ibm_cloud_internal_rules   = false
   use_existing_security_group_id = true
   existing_security_group_id     = var.bastion_security_group_id
-  security_group_rules           = local.compute_security_group_rules
+  security_group_rules           = local.bastion_security_group_update_rule
   vpc_id                         = var.vpc_id
 }
 
@@ -92,7 +111,7 @@ module "nfs_storage_sg" {
   add_ibm_cloud_internal_rules   = true
   use_existing_security_group_id = true
   existing_security_group_id     = var.storage_security_group_id
-  security_group_rules           = local.compute_security_group_rules
+  security_group_rules           = local.storage_nfs_security_group_rules
   vpc_id                         = var.vpc_id
 }
 
@@ -107,6 +126,32 @@ module "storage_sg" {
   vpc_id                       = var.vpc_id
 }
 
+module "login_vsi" {
+  count                         = var.scheduler == "LSF" ? 1 : 0
+  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version                       = "5.0.0"
+  vsi_per_subnet                = 1
+  create_security_group         = false
+  security_group                = null
+  image_id                      = local.login_image_found_in_map ? local.new_login_image_id : data.ibm_is_image.login_vsi_image[0].id
+  machine_type                  = var.login_instance[count.index]["profile"]
+  prefix                        = local.login_node_name
+  resource_group_id             = var.resource_group
+  enable_floating_ip            = false
+  security_group_ids            = module.compute_sg[*].security_group_id
+  ssh_key_ids                   = local.ssh_keys
+  subnets                       = length(var.bastion_subnets) == 2 ? [var.bastion_subnets[1]] : [var.bastion_subnets[0]]
+  tags                          = local.tags
+  user_data                     = data.template_file.login_user_data.rendered
+  vpc_id                        = var.vpc_id
+  kms_encryption_enabled        = var.kms_encryption_enabled
+  skip_iam_authorization_policy = local.skip_iam_authorization_policy
+  boot_volume_encryption_key    = var.boot_volume_encryption_key
+  existing_kms_instance_guid    = var.existing_kms_instance_guid
+  placement_group_id            = var.placement_group_ids
+  #placement_group_id = var.placement_group_ids[(var.management_instances[count.index]["count"])%(length(var.placement_group_ids))]
+}
+
 module "management_vsi" {
   count                         = length(var.management_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
@@ -114,14 +159,14 @@ module "management_vsi" {
   vsi_per_subnet                = var.management_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
-  image_id                      = local.image_mapping_entry_found ? local.new_image_id : local.management_image_id[count.index]
+  image_id                      = local.image_mapping_entry_found ? local.new_image_id : data.ibm_is_image.management_stock_image[0].id
   machine_type                  = var.management_instances[count.index]["profile"]
   prefix                        = format("%s-%s", local.management_node_name, count.index + 1)
   resource_group_id             = var.resource_group
   enable_floating_ip            = false
   security_group_ids            = module.compute_sg[*].security_group_id
   ssh_key_ids                   = local.ssh_keys
-  subnets                       = local.cluster_subnet_ids
+  subnets                       = local.cluster_subnet_id
   tags                          = local.tags
   user_data                     = data.template_file.management_user_data.rendered
   vpc_id                        = var.vpc_id
@@ -139,23 +184,25 @@ module "compute_vsi" {
   vsi_per_subnet                = var.static_compute_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
-  image_id                      = local.compute_image_found_in_map ? local.new_compute_image_id : local.compute_image_id[count.index]
+  image_id                      = local.compute_image_found_in_map ? local.new_compute_image_id : data.ibm_is_image.compute_stock_image[0].id
   machine_type                  = var.static_compute_instances[count.index]["profile"]
   prefix                        = format("%s-%s", local.compute_node_name, count.index + 1)
   resource_group_id             = var.resource_group
   enable_floating_ip            = false
   security_group_ids            = module.compute_sg[*].security_group_id
   ssh_key_ids                   = local.ssh_keys
-  subnets                       = local.cluster_subnet_ids
+  subnets                       = local.cluster_subnet_id
   tags                          = local.tags
-  user_data                     = data.template_file.compute_user_data.rendered
+  user_data                     = var.scheduler == "Scale" ? data.template_file.scale_compute_user_data.rendered : data.template_file.lsf_compute_user_data.rendered
   vpc_id                        = var.vpc_id
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
   existing_kms_instance_guid    = var.existing_kms_instance_guid
-  placement_group_id            = var.placement_group_ids
-  dedicated_host_id             = var.enable_dedicated_host ? local.dedicated_host_map[var.static_compute_instances[count.index]["profile"]] : null
+  placement_group_id            = var.enable_dedicated_host ? null : var.placement_group_ids
+  enable_dedicated_host         = var.enable_dedicated_host
+  dedicated_host_id             = var.enable_dedicated_host && length(var.static_compute_instances) > 0 ? local.dedicated_host_map[var.static_compute_instances[count.index]["profile"]] : null
+  depends_on                    = [module.dedicated_host, null_resource.dedicated_host_validation]
 }
 
 module "compute_cluster_management_vsi" {
@@ -165,16 +212,16 @@ module "compute_cluster_management_vsi" {
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
-  image_id                      = local.compute_image_id[count.index]
+  image_id                      = local.compute_image_found_in_map ? local.new_compute_image_id : data.ibm_is_image.compute_stock_image[0].id
   machine_type                  = var.static_compute_instances[count.index]["profile"]
-  prefix                        = count.index == 0 ? local.cpmoute_management_node_name : format("%s-%s", local.cpmoute_management_node_name, count.index)
+  prefix                        = count.index == 0 ? local.compute_management_node_name : format("%s-%s", local.compute_management_node_name, count.index)
   resource_group_id             = var.resource_group
   enable_floating_ip            = false
   security_group_ids            = module.compute_sg[*].security_group_id
   ssh_key_ids                   = local.ssh_keys
-  subnets                       = local.cluster_subnet_ids
+  subnets                       = local.cluster_subnet_id
   tags                          = local.tags
-  user_data                     = data.template_file.compute_user_data.rendered
+  user_data                     = data.template_file.scale_compute_user_data.rendered
   vpc_id                        = var.vpc_id
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
@@ -304,7 +351,7 @@ module "client_vsi" {
 module "protocol_vsi" {
   count                         = var.colocate_protocol_instances == true ? 0 : length(var.protocol_instances)
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.0.0"
+  version                       = "5.1.20"
   vsi_per_subnet                = var.protocol_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -322,16 +369,16 @@ module "protocol_vsi" {
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
-  existing_kms_instance_guid    = var.existing_kms_instance_guid
+  # existing_kms_instance_guid    = var.existing_kms_instance_guid
   # Bug: 5847 - LB profile & subnets are not configurable
   # load_balancers        = local.enable_load_balancer ? local.load_balancers : []
-  secondary_allow_ip_spoofing     = true
-  secondary_security_groups       = local.protocol_secondary_security_group
-  secondary_subnets               = local.protocol_subnets
-  placement_group_id              = var.placement_group_ids
-  manage_reserved_ips             = true
-  primary_vni_additional_ip_count = var.protocol_instances[count.index]["count"]
-  depends_on                      = [resource.null_resource.entitlement_check]
+  secondary_allow_ip_spoofing = true
+  secondary_security_groups   = local.protocol_secondary_security_group
+  secondary_subnets           = local.protocol_subnets
+  # placement_group_id          = var.placement_group_ids
+  manage_reserved_ips = true
+  # primary_vni_additional_ip_count = var.protocol_instances[count.index]["count"]
+  depends_on = [resource.null_resource.entitlement_check]
   # placement_group_id = var.placement_group_ids[(var.protocol_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
@@ -399,7 +446,7 @@ module "ldap_vsi" {
   enable_floating_ip            = false
   security_group_ids            = local.products == "lsf" ? module.compute_sg[*].security_group_id : module.storage_sg[*].security_group_id
   ssh_key_ids                   = local.products == "lsf" ? local.ssh_keys : local.ldap_ssh_keys
-  subnets                       = local.products == "lsf" ? local.cluster_subnet_ids : [local.storage_subnets[0]]
+  subnets                       = local.products == "lsf" ? local.cluster_subnet_id : [local.storage_subnets[0]]
   tags                          = local.tags
   user_data                     = data.template_file.ldap_user_data.rendered
   vpc_id                        = var.vpc_id
@@ -425,6 +472,7 @@ module "dedicated_host" {
   profile             = each.value.profile
   family              = each.value.family
   resource_group_id   = var.resource_group
+  depends_on          = [null_resource.dedicated_host_validation]
 }
 
 ########################################################################
@@ -432,14 +480,32 @@ module "dedicated_host" {
 ########################################################################
 
 module "storage_baremetal" {
+  count                       = length(var.storage_servers) > 0 && var.storage_type == "persistent" ? 1 : 0
+  source                      = "../baremetal"
+  existing_resource_group     = var.resource_group
+  prefix                      = var.prefix
+  storage_subnets             = [for subnet in local.storage_subnets : subnet.id]
+  storage_ssh_keys            = local.ssh_keys
+  storage_servers             = var.storage_servers
+  security_group_ids          = module.storage_sg[*].security_group_id
+  bastion_public_key_content  = var.bastion_public_key_content
+  storage_public_key_content  = local.enable_storage ? module.storage_key[0].public_key_content : ""
+  storage_private_key_content = local.enable_storage ? module.storage_key[0].private_key_content : ""
+  bms_boot_drive_encryption   = var.bms_boot_drive_encryption
 
-  count                      = length(var.storage_servers) > 0 && var.storage_type == "persistent" ? 1 : 0
-  source                     = "../baremetal"
-  existing_resource_group    = var.resource_group
-  prefix                     = var.prefix
-  storage_subnets            = [for subnet in local.storage_subnets : subnet.id]
-  storage_ssh_keys           = local.ssh_keys
-  storage_servers            = var.storage_servers
-  security_group_ids         = module.storage_sg[*].security_group_id
-  bastion_public_key_content = var.bastion_public_key_content
+}
+
+module "storage_baremetal_tie_breaker" {
+  count                       = length(var.storage_servers) > 0 && var.storage_type == "persistent" ? 1 : 0
+  source                      = "../baremetal"
+  existing_resource_group     = var.resource_group
+  prefix                      = format("%s-strg-tie", var.prefix)
+  storage_subnets             = [for subnet in local.storage_subnets : subnet.id]
+  storage_ssh_keys            = local.ssh_keys
+  storage_servers             = var.tie_breaker_bm_server
+  security_group_ids          = module.storage_sg[*].security_group_id
+  bastion_public_key_content  = var.bastion_public_key_content
+  storage_public_key_content  = local.enable_storage ? module.storage_key[0].public_key_content : ""
+  storage_private_key_content = local.enable_storage ? module.storage_key[0].private_key_content : ""
+  bms_boot_drive_encryption   = var.bms_boot_drive_encryption
 }

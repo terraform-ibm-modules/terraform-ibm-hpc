@@ -5,8 +5,8 @@
   template:
     src: fp14-inventory.j2
     dest: "{{ inventory_path }}/lsf-inventory"
-  # delegate_to: localhost
-  delegate_to: "{{ lsf_deployer_hostname }}.{{ dns_domain_names }}"
+  delegate_to: localhost
+
   run_once: true
   when: lsf_version == "fixpack_14"
 
@@ -14,8 +14,7 @@
   template:
     src: fp14-config.j2
     dest: "{{ inventory_path }}/lsf-config.yml"
-  # delegate_to: localhost
-  delegate_to: "{{ lsf_deployer_hostname }}.{{ dns_domain_names }}"
+  delegate_to: localhost
   run_once: true
   when: lsf_version == "fixpack_14"
 
@@ -23,8 +22,7 @@
   template:
     src: fp15-inventory.j2
     dest: "{{ inventory_path }}/lsf-inventory"
-  # delegate_to: localhost
-  delegate_to: "{{ lsf_deployer_hostname }}.{{ dns_domain_names }}"
+  delegate_to: localhost
   run_once: true
   when: lsf_version == "fixpack_15"
 
@@ -32,8 +30,7 @@
   template:
     src: fp15-config.j2
     dest: "{{ inventory_path }}/lsf-config.yml"
-  # delegate_to: localhost
-  delegate_to: "{{ lsf_deployer_hostname }}.{{ dns_domain_names }}"
+  delegate_to: localhost
   run_once: true
   when: lsf_version == "fixpack_15"
 
@@ -43,6 +40,5 @@
     path: "{{ inventory_path }}/group_vars/all"
     regexp: "^deployer_hostname: .*"
     line: "deployer_hostname: {{ lsf_deployer_hostname }}"
-    # backup: yes
-  delegate_to: "{{ lsf_deployer_hostname }}.{{ dns_domain_names }}"
+  delegate_to: localhost
   run_once: true

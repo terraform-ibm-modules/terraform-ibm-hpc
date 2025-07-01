@@ -1,20 +1,8 @@
 locals {
   # Defined values
-  name   = "hpc"
+  name   = "lsf"
   prefix = var.prefix
   tags   = [local.prefix, local.name]
-  schematics_reserved_cidrs = [
-    "169.44.0.0/14",
-    "169.60.0.0/14",
-    "158.175.0.0/16",
-    "158.176.0.0/15",
-    "141.125.0.0/16",
-    "161.156.0.0/16",
-    "149.81.0.0/16",
-    "159.122.111.224/27",
-    "150.238.230.128/27",
-    "169.55.82.128/27"
-  ]
 
   # Derived values
 
@@ -57,7 +45,7 @@ locals {
   # Future use
   #zone_count = length(local.active_zones)
 
-  bastion_sg_variable_cidr_list = split(",", var.network_cidr)
+  bastion_sg_variable_cidr_list = split(",", var.cluster_cidr)
 
   # Address Prefixes calculation
   address_prefixes = {
@@ -72,30 +60,35 @@ locals {
         acl_name       = "hpc-acl"
         cidr           = var.client_subnets_cidr[index(local.active_zones, zone)]
         public_gateway = true
+        no_addr_prefix = true
       } : null,
       {
         name           = "compute-subnet-${zone}"
         acl_name       = "hpc-acl"
         cidr           = var.vpc_cluster_private_subnets_cidr_blocks[index(local.active_zones, zone)]
         public_gateway = true
+        no_addr_prefix = true
       },
       local.storage_instance_count != 0 ? {
         name           = "storage-subnet-${zone}"
         acl_name       = "hpc-acl"
         cidr           = var.storage_subnets_cidr[index(local.active_zones, zone)]
         public_gateway = true
+        no_addr_prefix = true
       } : null,
       local.storage_instance_count != 0 && local.protocol_instance_count != 0 ? {
         name           = "protocol-subnet-${zone}"
         acl_name       = "hpc-acl"
         cidr           = var.protocol_subnets_cidr[index(local.active_zones, zone)]
         public_gateway = true
+        no_addr_prefix = true
       } : null,
       zone == local.active_zones[0] ? {
         name           = "bastion-subnet"
         acl_name       = "hpc-acl"
         cidr           = var.vpc_cluster_login_private_subnets_cidr_blocks
         public_gateway = true
+        no_addr_prefix = true
       } : null
     ] : []
   }
@@ -110,12 +103,12 @@ locals {
   # If user defined then use existing else create new
   # Calculate network acl rules (can be done inplace in vpcs)
   # TODO: VPN expectation
-  cidrs_network_acl_rules = compact(flatten([local.schematics_reserved_cidrs, var.allowed_cidr, var.network_cidr, "161.26.0.0/16", "166.8.0.0/14", "0.0.0.0/0"]))
+  cidrs_network_acl_rules = compact(flatten(["0.0.0.0/0"]))
   network_acl_inbound_rules = [
     for cidr_index in range(length(local.cidrs_network_acl_rules)) : {
       name        = format("allow-inbound-%s", cidr_index + 1)
       action      = "allow"
-      destination = var.network_cidr
+      destination = var.cluster_cidr
       direction   = "inbound"
       source      = element(local.cidrs_network_acl_rules, cidr_index)
     }
@@ -126,7 +119,7 @@ locals {
       action      = "allow"
       destination = element(local.cidrs_network_acl_rules, cidr_index)
       direction   = "outbound"
-      source      = var.network_cidr
+      source      = var.cluster_cidr
     }
   ]
   network_acl_rules = flatten([local.network_acl_inbound_rules, local.network_acl_outbound_rules])
@@ -337,7 +330,7 @@ locals {
     }
   ]) : null
 
-  key_management = var.key_management == "key_protect" ? {
+  key_management = var.key_management == "key_protect" || (var.scale_encryption_enabled && var.scale_encryption_type == "key_protect" && var.key_protect_instance_id == null) ? {
     name           = var.kms_instance_name != null ? var.kms_instance_name : format("%s-kms", var.prefix) # var.key_management == "hs_crypto" ? var.hpcs_instance_name : format("%s-kms", var.prefix)
     resource_group = local.service_resource_group
     use_hs_crypto  = false
@@ -399,7 +392,7 @@ locals {
 locals {
   env = {
     resource_groups                        = local.resource_groups
-    network_cidr                           = var.network_cidr
+    cluster_cidr                           = var.cluster_cidr
     vpcs                                   = local.vpcs
     vpn_gateways                           = local.vpn_gateways
     enable_transit_gateway                 = local.enable_transit_gateway
@@ -423,5 +416,6 @@ locals {
     f5_vsi                                 = local.f5_vsi
     f5_template_data                       = local.f5_template_data
     skip_kms_block_storage_s2s_auth_policy = local.skip_kms_block_storage_s2s_auth_policy
+
   }
 }

@@ -47,10 +47,10 @@ variable "vpc_name" {
   default     = null
 }
 
-variable "network_cidr" {
-  description = "Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning."
+variable "cluster_cidr" {
+  description = "Network CIDR of the VPC. This is used to manage network security rules for cluster provisioning."
   type        = string
-  default     = "10.0.0.0/8"
+  default     = "10.241.0.0/18"
 }
 
 variable "placement_strategy" {
@@ -72,12 +72,6 @@ variable "vpc_cluster_login_private_subnets_cidr_blocks" {
   type        = string
   default     = "10.0.0.0/24"
   description = "Provide the CIDR block required for the creation of the login cluster's private subnet. Only one CIDR block is needed. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Since the login subnet is used only for the creation of login virtual server instances, provide a CIDR range of /28."
-}
-
-variable "allowed_cidr" {
-  description = "Network CIDR to access the VPC. This is used to manage network ACL rules for accessing the cluster."
-  type        = list(string)
-  default     = ["10.0.0.0/8"]
 }
 
 ##############################################################################
@@ -261,6 +255,27 @@ variable "kms_key_name" {
   type        = string
   default     = null
   description = "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. (for example kms_key_name: my-encryption-key)."
+}
+
+
+##Scale Encryption Variables
+
+variable "scale_encryption_enabled" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the filesystem. Select true or false"
+}
+
+variable "scale_encryption_type" {
+  type        = string
+  default     = null
+  description = "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled"
+}
+
+variable "key_protect_instance_id" {
+  type        = string
+  default     = null
+  description = "An existing Key Protect instance used for filesystem encryption"
 }
 
 # variable "hpcs_instance_name" {

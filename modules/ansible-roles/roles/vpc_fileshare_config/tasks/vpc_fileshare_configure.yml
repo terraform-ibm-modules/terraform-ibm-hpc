@@ -62,3 +62,11 @@
   register: ls_output
   changed_when: false
   failed_when: ls_output.rc != 0
+
+- name: Set appropriate permissions on base dirs
+  ansible.builtin.shell: |
+    chmod -R {{ (item.key == '/mnt/lsf') | ternary('0755', '0777') }} "{{ item.key }}"
+  args:
+    warn: false
+  with_dict: "{{ name_mount_path_map }}"
+  run_once: true

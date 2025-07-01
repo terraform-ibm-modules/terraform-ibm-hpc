@@ -20,8 +20,7 @@ resource "null_resource" "tf_resource_provisioner" {
     inline = [
       # Remove and re-clone the remote terraform path repo
       # "if [ -d ${local.remote_terraform_path} ]; then echo 'Removing existing repository at ${local.remote_terraform_path}' && sudo rm -rf ${local.remote_terraform_path}; fi",
-      # "echo 'Cloning repository with tag: ${local.da_hpc_repo_tag}' && sudo git clone -b ${local.da_hpc_repo_tag} https://${var.github_token}@${local.da_hpc_repo_url} ${local.remote_terraform_path}",
-      "if [ ! -d ${local.remote_terraform_path} ]; then echo 'Cloning repository with tag: ${local.da_hpc_repo_tag}' && sudo git clone -b ${local.da_hpc_repo_tag} https://${var.github_token}@${local.da_hpc_repo_url} ${local.remote_terraform_path}; fi",
+      "if [ ! -d ${local.remote_terraform_path} ]; then echo 'Cloning repository with tag: ${local.da_hpc_repo_tag}' && sudo git clone -b ${local.da_hpc_repo_tag} https://${local.da_hpc_repo_url} ${local.remote_terraform_path}; fi",
 
       # Clone Spectrum Scale collection if it doesn't exist
       "if [ ! -d ${local.remote_ansible_path}/${local.scale_cloud_infra_repo_name}/collections/ansible_collections/ibm/spectrum_scale ]; then sudo git clone -b ${local.scale_cloud_infra_repo_tag} ${local.scale_cloud_infra_repo_url} ${local.remote_ansible_path}/${local.scale_cloud_infra_repo_name}/collections/ansible_collections/ibm/spectrum_scale; fi",
@@ -33,12 +32,31 @@ resource "null_resource" "tf_resource_provisioner" {
       "sudo cp ${local.remote_inputs_path} ${local.remote_terraform_path}",
 
       # Run Terraform init and apply
-      "export TF_LOG=${var.TF_LOG} && sudo -E terraform -chdir=${local.remote_terraform_path} init && sudo -E terraform -chdir=${local.remote_terraform_path} apply -parallelism=${var.TF_PARALLELISM} -auto-approve"
+      "export TF_LOG=${var.TF_LOG} && sudo -E terraform -chdir=${local.remote_terraform_path} init && sudo -E terraform -chdir=${local.remote_terraform_path} apply -parallelism=${var.TF_PARALLELISM} -auto-approve -lock=false"
     ]
   }
 
   triggers = {
     always_run = timestamp()
+  }
+}
+
+resource "null_resource" "ext_bastion_access" {
+  count = var.enable_deployer && var.existing_bastion_instance_name != null ? 1 : 0
+
+  connection {
+    type        = "ssh"
+    host        = var.bastion_fip
+    user        = "ubuntu"
+    private_key = var.bastion_private_key_content
+    timeout     = "60m"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "echo 'Adding SSH Key to Existing Bastion Host'",
+      sensitive("echo '${local.bastion_public_key_content}' >> /home/$(whoami)/.ssh/authorized_keys"),
+    ]
   }
 }
 
@@ -107,7 +125,7 @@ resource "null_resource" "cluster_destroyer" {
     when       = destroy
     on_failure = fail
     inline = [
-      "export TF_LOG=${self.triggers.conn_terraform_log_level} && sudo -E terraform -chdir=${self.triggers.conn_remote_terraform_path} destroy -auto-approve"
+      "export TF_LOG=${self.triggers.conn_terraform_log_level} && sudo -E terraform -chdir=${self.triggers.conn_remote_terraform_path} destroy -auto-approve -lock=false"
     ]
   }
 }
