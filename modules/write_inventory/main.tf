@@ -7,6 +7,7 @@ resource "local_sensitive_file" "infra_details_to_json" {
   "lsf_clients": ${jsonencode(var.lsf_clients)},
   "gui_hosts": ${jsonencode(var.gui_hosts)},
   "db_hosts": ${jsonencode(var.db_hosts)},
+  "login_host": ${jsonencode(var.login_host)},
   "prefix": ${jsonencode(var.prefix)},
   "HA_shared_dir": ${jsonencode(var.ha_shared_dir)},
   "NFS_install_dir": ${jsonencode(var.nfs_install_dir)},
@@ -15,6 +16,7 @@ resource "local_sensitive_file" "infra_details_to_json" {
   "dns_domain_names": ${jsonencode(var.dns_domain_names["compute"])},
   "enable_hyperthreading": ${var.enable_hyperthreading},
   "ibmcloud_api_key": "${var.ibmcloud_api_key}",
+  "app_center_gui_password": "${var.app_center_gui_password}",
   "lsf_version": "${var.lsf_version}",
   "compute_public_key_content": ${jsonencode(var.compute_public_key_content)},
   "compute_private_key_content": ${jsonencode(var.compute_private_key_content)},
@@ -34,7 +36,8 @@ resource "local_sensitive_file" "infra_details_to_json" {
   "dynamic_compute_instances": ${jsonencode(var.dynamic_compute_instances)},
   "compute_subnets_cidr": ${jsonencode(var.compute_subnets_cidr)},
   "compute_security_group_id": ${jsonencode(var.compute_security_group_id)},
-  "compute_subnet_crn": "${var.compute_subnet_crn}"
+  "compute_subnet_crn": "${var.compute_subnet_crn}",
+  "boot_volume_encryption_key": ${local.boot_volume_encryption_key}
 }
 EOT
   filename = var.json_inventory_path

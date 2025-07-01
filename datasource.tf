@@ -10,9 +10,15 @@ data "ibm_is_zone" "zone" {
 }
 */
 
+#Fetching Existing VPC CIDR for Security rules:
 data "ibm_is_vpc" "existing_vpc" {
   count = var.vpc_name != null ? 1 : 0
   name  = var.vpc_name
+}
+
+data "ibm_is_vpc_address_prefixes" "existing_vpc_cidr" {
+  count = var.vpc_name != null ? 1 : 0
+  vpc   = data.ibm_is_vpc.existing_vpc[0].id
 }
 
 /*
@@ -28,8 +34,8 @@ data "ibm_is_subnet" "subnet" {
 # }
 
 data "ibm_is_subnet" "existing_cluster_subnets" {
-  count      = var.vpc_name != null && var.cluster_subnet_ids != null ? 1 : 0
-  identifier = var.cluster_subnet_ids
+  count      = var.vpc_name != null && var.cluster_subnet_id != null ? 1 : 0
+  identifier = var.cluster_subnet_id
 }
 
 data "ibm_is_subnet" "existing_storage_subnets" {
@@ -58,6 +64,7 @@ data "ibm_is_ssh_key" "ssh_keys" {
 }
 
 data "ibm_is_subnet" "compute_subnet_crn" {
+  count      = var.vpc_name != null && var.cluster_subnet_id != null ? 1 : 0
   identifier = local.compute_subnet_id
 }
 
@@ -83,7 +90,7 @@ data "ibm_is_instance_profile" "protocol_profile" {
 }
 
 data "ibm_is_subnet_reserved_ips" "protocol_subnet_reserved_ips" {
-  count  = local.scale_ces_enabled == true ? 1 : 0
+  count  = var.enable_deployer == false && local.scale_ces_enabled == true ? 1 : 0
   subnet = local.protocol_subnet_id
 }
 

@@ -6,4 +6,6 @@
 
 - import_tasks: hosts_file_update.yml
 
+- import_tasks: app_center_configure.yml
+
 - import_tasks: configure_dynamic_nodes_templates.yml

@@ -4,6 +4,12 @@ variable "hosts" {
   default     = ["localhost"]
 }
 
+variable "login_host" {
+  description = "Login node host"
+  type        = list(string)
+  default     = []
+}
+
 variable "inventory_path" {
   description = "Inventory file path"
   type        = string

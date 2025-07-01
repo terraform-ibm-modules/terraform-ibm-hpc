@@ -103,3 +103,21 @@
     path: "{{ LSF_CLUSTER_FILE }}"
     regexp: '^lsfservers'
     state: absent
+  run_once: true
+
+# Temporary: Remove after new image build includes cleanup
+- name: Temporary Cleanup | Delete all 'sagar-fp-15-new1' folders
+  ansible.builtin.shell: |
+    find "{{ LSF_EXT_CONF }}" -type d -name "sagar-fp-15-new1" -exec rm -rf {} +
+  args:
+    warn: false
+  ignore_errors: true
+  when: inventory_hostname in groups['management_nodes']
+
+# Temporary: Remove after new image build includes cleanup
+- name: Temporary Cleanup | Replace 'sagar-fp-15-new1' with 'lsfservers'
+  ansible.builtin.shell: |
+    grep -rl 'sagar-fp-15-new1' "{{ LSF_EXT_CONF }}"  | xargs sed -i 's/sagar-fp-15-new1/lsfservers/g' || true
+  args:
+    warn: false
+  when: inventory_hostname in groups['management_nodes']

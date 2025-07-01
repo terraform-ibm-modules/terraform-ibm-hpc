@@ -107,3 +107,23 @@ variable "dns_domain_names" {
   }
   description = "IBM Cloud HPC DNS domain names."
 }
+
+variable "storage_public_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Storage nodes public key content."
+}
+
+variable "storage_private_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Storage nodes private key content."
+}
+
+variable "bms_boot_drive_encryption" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the boot drive of bare metal server. Select true or false"
+}

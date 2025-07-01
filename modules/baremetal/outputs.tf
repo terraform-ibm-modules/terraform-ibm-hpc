@@ -12,3 +12,8 @@ output "list" {
     ]
   ])
 }
+
+output "instance_ips_with_vol_mapping" {
+  value       = { for instance_details in local.bm_server_name : instance_details => local.selected_disks }
+  description = "Instance ips with vol mapping"
+}

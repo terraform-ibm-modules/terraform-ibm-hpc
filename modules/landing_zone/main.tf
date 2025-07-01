@@ -1,12 +1,12 @@
 module "landing_zone" {
   count                                  = var.enable_landing_zone ? 1 : 0
   source                                 = "terraform-ibm-modules/landing-zone/ibm"
-  version                                = "7.5.0"
+  version                                = "8.2.0"
   prefix                                 = local.prefix
   region                                 = local.region
   tags                                   = local.tags
   resource_groups                        = local.env.resource_groups
-  network_cidr                           = local.env.network_cidr
+  network_cidr                           = local.env.cluster_cidr
   vpcs                                   = local.env.vpcs
   vpn_gateways                           = local.env.vpn_gateways
   enable_transit_gateway                 = local.env.enable_transit_gateway

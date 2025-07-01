@@ -31,10 +31,39 @@ variable "vpc_id" {
   description = "ID of an existing VPC in which the cluster resources will be deployed."
 }
 
-variable "network_cidr" {
-  description = "Network CIDR for the VPC. This is used to manage network ACL rules for cluster provisioning."
+variable "ext_vpc_name" {
   type        = string
-  default     = "10.0.0.0/8"
+  default     = null
+  description = "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+}
+
+variable "cluster_cidr" {
+  description = "Network CIDR of the VPC. This is used to manage network security rules for cluster provisioning."
+  type        = string
+  default     = "10.241.0.0/18"
+}
+
+variable "cluster_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+}
+
+variable "ext_login_subnet_id" {
+  type        = string
+  default     = null
+  description = "Name of an existing subnets in which the bastion and cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+}
+
+variable "ext_cluster_subnet_id" {
+  type        = string
+  default     = null
+  description = "Name of an existing subnets in which the bastion and cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
 }
 
 ##############################################################################
@@ -49,22 +78,17 @@ variable "scheduler" {
 ##############################################################################
 # Access Variables
 ##############################################################################
-variable "enable_bastion" {
-  type        = bool
-  default     = true
-  description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
-}
 
-variable "bastion_image" {
-  type        = string
-  default     = "ibm-ubuntu-22-04-3-minimal-amd64-1"
-  description = "The image to use to deploy the bastion host."
-}
-
-variable "bastion_instance_profile" {
-  type        = string
-  default     = "cx2-4x8"
-  description = "Deployer should be only used for better deployment performance"
+variable "bastion_instance" {
+  type = object({
+    image   = string
+    profile = string
+  })
+  default = {
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-3"
+    profile = "cx2-4x8"
+  }
+  description = "Configuration for the Bastion node, including the image and instance profile. Only Ubuntu stock images are supported."
 }
 
 variable "bastion_subnets" {
@@ -84,19 +108,19 @@ variable "bastion_subnets" {
 variable "enable_deployer" {
   type        = bool
   default     = false
-  description = "deployer should be only used for better deployment performance"
+  description = "Deployer should be only used for better deployment performance."
 }
 
-variable "deployer_image" {
-  type        = string
-  default     = "ibm-redhat-8-10-minimal-amd64-2"
-  description = "The image to use to deploy the deployer host."
-}
-
-variable "deployer_instance_profile" {
-  type        = string
-  default     = "mx2-4x32"
-  description = "deployer should be only used for better deployment performance"
+variable "deployer_instance" {
+  type = object({
+    image   = string
+    profile = string
+  })
+  default = {
+    image   = "hpc-lsf-fp15-deployer-rhel810-v1"
+    profile = "bx2-8x32"
+  }
+  description = "Configuration for the deployer node, including the custom image and instance profile. By default, uses fixpack_15 image and a bx2-8x32 profile."
 }
 
 variable "ssh_keys" {
@@ -107,7 +131,7 @@ variable "ssh_keys" {
 variable "allowed_cidr" {
   description = "Network CIDR to access the VPC. This is used to manage network ACL rules for accessing the cluster."
   type        = list(string)
-  default     = ["10.0.0.0/8"]
+  default     = []
 }
 
 # TODO: landing-zone-vsi limitation to opt out encryption
@@ -160,8 +184,13 @@ variable "bastion_instance_public_ip" {
   description = "Bastion instance public ip address."
 }
 
-variable "bastion_security_group_id" {
+variable "existing_bastion_security_group_id" {
   type        = string
   default     = null
-  description = "Bastion security group id."
+  description = "Existing bastion security group id."
+}
+
+variable "zones" {
+  description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
+  type        = list(string)
 }

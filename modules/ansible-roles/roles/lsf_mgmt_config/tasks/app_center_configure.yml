@@ -1,0 +1,73 @@
+---
+# AppCenter HTTPS Configuration
+
+- name: PAC | Check if HTTPS is already enabled
+  ansible.builtin.command: pmcadmin https enable
+  register: https_check
+  changed_when: "'was already enabled' not in https_check.stdout"
+  failed_when: false
+  run_once: true
+
+- name: PAC | Debug HTTPS status
+  ansible.builtin.debug:
+    msg: "HTTPS is already enabled"
+  when: "'was already enabled' in https_check.stdout"
+  run_once: true
+
+- name: PAC | Configure HTTPS for AppCenter
+  block:
+
+    - name: PAC | Set GUI password for lsfadmin
+      ansible.builtin.command: passwd --stdin lsfadmin
+      args:
+        stdin: "{{ app_center_gui_password }}"
+
+    - name: PAC | Enable HTTPS access for AppCenter
+      ansible.builtin.command: >
+        pmcadmin https enable
+        --password {{ app_center_gui_password }}
+        --validhosts localhost
+
+    - name: PAC | Stop pmcadmin service
+      ansible.builtin.command: pmcadmin stop
+
+    - name: PAC | Pause before restarting pmcadmin
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: PAC | Start pmcadmin service
+      ansible.builtin.command: pmcadmin start
+
+    - name: PAC | Update JS_PAC_SERVER_URL in js.conf
+      ansible.builtin.lineinfile:
+        path: "{{ JS_PAC_SERVER_URL }}"
+        regexp: '^JS_PAC_SERVER_URL='
+        line: "JS_PAC_SERVER_URL=https://{{ lsf_masters[0] }}:8443"
+        backrefs: true
+
+    - name: PAC | Stop ACD (Application Center Daemon) service
+      ansible.builtin.service:
+        name: acd
+        state: stopped
+
+    - name: PAC | Pause before restarting ACD
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: PAC | Start ACD (Application Center Daemon) service
+      ansible.builtin.service:
+        name: acd
+        state: started
+
+  rescue:
+    - name: PAC | Log error if AppCenter HTTPS configuration fails
+      ansible.builtin.debug:
+        msg: "AppCenter HTTPS configuration block failed. Check previous task results."
+
+  always:
+    - name: PAC | Always log final status of AppCenter HTTPS configuration
+      ansible.builtin.debug:
+        msg: "AppCenter HTTPS configuration block completed (success or failure)."
+
+  when: "'was already enabled' not in https_check.stdout"
+  run_once: true

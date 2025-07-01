@@ -181,3 +181,28 @@ variable "dynamic_compute_instances" {
   }]
   description = "MaxNumber of instances to be launched for compute cluster."
 }
+
+variable "boot_volume_encryption_key" {
+  type        = string
+  default     = null
+  description = "The kms_key crn."
+}
+
+variable "kms_encryption_enabled" {
+  description = "Enable Key management"
+  type        = bool
+  default     = true
+}
+
+variable "app_center_gui_password" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Password for IBM Spectrum LSF Application Center GUI."
+}
+
+variable "login_host" {
+  type        = list(string)
+  default     = null
+  description = "list of lsf Login node"
+}

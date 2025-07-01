@@ -36,6 +36,13 @@ variable "zones" {
   type        = list(string)
 }
 
+
+variable "cluster_cidr" {
+  description = "Network CIDR of the VPC. This is used to manage network security rules for cluster provisioning."
+  type        = string
+  default     = "10.241.0.0/18"
+}
+
 ##############################################################################
 # VPC Variables
 ##############################################################################
@@ -66,12 +73,6 @@ variable "bastion_public_key_content" {
   default     = null
   description = "Bastion security group id."
 }
-
-variable "bastion_security_group_id_for_ref" {
-  type        = string
-  description = "Bastion security group id for ref."
-}
-
 
 variable "storage_security_group_id" {
   type        = string
@@ -110,7 +111,7 @@ variable "client_instances" {
   description = "Number of instances to be launched for client."
 }
 
-variable "cluster_subnet_ids" {
+variable "cluster_subnet_id" {
   type = list(object({
     name = string
     id   = string
@@ -240,6 +241,24 @@ variable "storage_servers" {
   description = "Number of BareMetal Servers to be launched for storage cluster."
 }
 
+variable "tie_breaker_bm_server" {
+  type = list(
+    object({
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = string
+    })
+  )
+  default = [{
+    profile    = "cx2d-metal-96x192"
+    count      = 1
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "fs1"
+  }]
+  description = "BareMetal Server to be launched for Tie Breaker."
+}
+
 variable "protocol_subnets" {
   type = list(object({
     name = string
@@ -292,13 +311,17 @@ variable "nsd_details" {
 variable "dns_domain_names" {
   type = object({
     compute  = string
-    storage  = string
-    protocol = string
+    storage  = optional(string)
+    protocol = optional(string)
+    client   = optional(string)
+    gklm     = optional(string)
   })
   default = {
     compute  = "comp.com"
     storage  = "strg.com"
     protocol = "ces.com"
+    client   = "clnt.com"
+    gklm     = "gklm.com"
   }
   description = "IBM Cloud HPC DNS domain names."
 }
@@ -344,10 +367,10 @@ variable "existing_kms_instance_guid" {
 #   description = "Compute security key content."
 # }
 
-variable "enable_bastion" {
+variable "enable_deployer" {
   type        = bool
   default     = true
-  description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
+  description = "Deployer should be only used for better deployment performance"
 }
 
 #############################################################################
@@ -465,4 +488,38 @@ variable "enable_dedicated_host" {
   type        = bool
   default     = false
   description = "Enables dedicated host to the compute instances"
+}
+
+##############################################################################
+# Login Variables
+##############################################################################
+variable "login_instance" {
+  type = list(
+    object({
+      profile = string
+      image   = string
+    })
+  )
+  default = [{
+    profile = "bx2-2x8"
+    image   = "hpcaas-lsf10-rhel810-compute-v8"
+  }]
+  description = "Number of instances to be launched for login node."
+}
+
+variable "bastion_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the bastion host."
+}
+
+variable "bms_boot_drive_encryption" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the boot drive of bare metal server. Select true or false"
 }

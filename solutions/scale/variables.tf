@@ -24,13 +24,6 @@ variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
 }
 
-# Delete this variable before pushing to the public repository.
-variable "github_token" {
-  type        = string
-  default     = null
-  description = "Provide your GitHub token to download the HPCaaS code into the Deployer node"
-}
-
 ##############################################################################
 # Cluster Level Variables
 ##############################################################################
@@ -115,22 +108,22 @@ variable "placement_strategy" {
 ##############################################################################
 # Access Variables
 ##############################################################################
-variable "enable_bastion" {
-  type        = bool
-  default     = true
-  description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
-}
+# variable "enable_bastion" {
+#   type        = bool
+#   default     = true
+#   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
+# }
 
-variable "bastion_image" {
-  type        = string
-  default     = "ibm-ubuntu-22-04-3-minimal-amd64-1"
-  description = "The image to use to deploy the bastion host."
-}
-
-variable "bastion_instance_profile" {
-  type        = string
-  default     = "cx2-4x8"
-  description = "Deployer should be only used for better deployment performance"
+variable "bastion_instance" {
+  type = object({
+    image   = string
+    profile = string
+  })
+  default = {
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-3"
+    profile = "cx2-4x8"
+  }
+  description = "Configuration for the Bastion node, including the image and instance profile. Only Ubuntu stock images are supported."
 }
 
 variable "vpc_cluster_login_private_subnets_cidr_blocks" {
@@ -146,16 +139,17 @@ variable "vpc_cluster_login_private_subnets_cidr_blocks" {
 ##############################################################################
 # Deployer Variables
 ##############################################################################
-variable "deployer_image" {
-  type        = string
-  default     = "jay-lsf-new-image"
-  description = "The image to use to deploy the deployer host."
-}
 
-variable "deployer_instance_profile" {
-  type        = string
-  default     = "mx2-4x32"
-  description = "Deployer should be only used for better deployment performance"
+variable "deployer_instance" {
+  type = object({
+    image   = string
+    profile = string
+  })
+  default = {
+    image   = "jay-lsf-new-image"
+    profile = "mx2-4x32"
+  }
+  description = "Configuration for the deployer node, including the custom image and instance profile. By default, uses fixpack_15 image and a bx2-8x32 profile."
 }
 
 ##############################################################################
@@ -264,6 +258,24 @@ variable "storage_servers" {
     filesystem = "/gpfs/fs1"
   }]
   description = "Number of BareMetal Servers to be launched for storage cluster."
+}
+
+variable "tie_breaker_bm_server" {
+  type = list(
+    object({
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = string
+    })
+  )
+  default = [{
+    profile    = "cx2d-metal-96x192"
+    count      = 1
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "/gpfs/fs1"
+  }]
+  description = "BareMetal Server to be launched for Tie Breaker."
 }
 
 variable "protocol_subnets_cidr" {
@@ -548,7 +560,7 @@ variable "ldap_user_password" {
 #   description = "Name of the SSH key configured in your IBM Cloud account that is used to establish a connection to the LDAP Server. Make sure that the SSH key is present in the same resource group and region where the LDAP Servers are provisioned. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
 # }
 
-variable "ldap_instances" {
+variable "ldap_instance" {
   type = list(
     object({
       profile = string
@@ -575,6 +587,11 @@ variable "scale_encryption_type" {
   type        = string
   default     = null
   description = "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled"
+
+  validation {
+    condition     = var.scale_encryption_type == "key_protect" || var.scale_encryption_type == "gklm" || var.scale_encryption_type == "null"
+    error_message = "Invalid value: scale_encryption_type must be 'key_protect', 'gklm', or 'null'"
+  }
 }
 
 variable "gklm_instance_key_pair" {
@@ -594,14 +611,14 @@ variable "gklm_instances" {
   default = [{
     profile = "bx2-2x8"
     count   = 2
-    image   = "ibm-redhat-8-10-minimal-amd64-4"
+    image   = "hpcc-scale-gklm4202-v2-5-2"
   }]
-  description = "Number of instances to be launched for client."
+  description = "Number of GKLM instances to be launched for scale cluster."
 }
 
 variable "scale_encryption_admin_default_password" {
   type        = string
-  default     = null
+  default     = "SKLM@dmin123"
   description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
 }
 
@@ -615,6 +632,14 @@ variable "scale_encryption_admin_password" {
   type        = string
   default     = null
   description = "Password that is used for performing administrative operations for the GKLM.The password must contain at least 8 characters and at most 20 characters. For a strong password, at least three alphabetic characters are required, with at least one uppercase and one lowercase letter.  Two numbers, and at least one special character from this(~@_+:). Make sure that the password doesn't include the username. Visit this [page](https://www.ibm.com/docs/en/gklm/3.0.1?topic=roles-password-policy) to know more about password policy of GKLM. "
+}
+
+# Existing Key Protect Instance Details
+
+variable "key_protect_instance_id" {
+  type        = string
+  default     = null
+  description = "An existing Key Protect instance used for filesystem encryption"
 }
 
 variable "storage_type" {
@@ -771,10 +796,10 @@ variable "skip_kms_s2s_auth_policy" {
   description = "Skip auth policy between KMS service and COS instance, set to true if this policy is already in place on account."
 }
 
-variable "skip_iam_authorization_policy" {
+variable "skip_iam_block_storage_authorization_policy" {
   type        = bool
-  default     = true
-  description = "Set to false if authorization policy is required for VPC block storage volumes to access kms. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for block storage volume](https://cloud.ibm.com/docs/vpc?topic=vpc-block-s2s-auth&interface=ui)."
+  default     = false
+  description = "When using an existing KMS instance name, set this value to true if authorization is already enabled between KMS instance and the block storage volume. Otherwise, default is set to false. Ensuring proper authorization avoids access issues during deployment.For more information on how to create authorization policy manually, see [creating authorization policies for block storage volume](https://cloud.ibm.com/docs/vpc?topic=vpc-block-s2s-auth&interface=ui)."
 }
 
 ###########################################################################
@@ -804,4 +829,10 @@ variable "existing_bastion_ssh_private_key" {
   sensitive   = true
   default     = null
   description = "Provide the private SSH key (named id_rsa) used during the creation and configuration of the bastion server to securely authenticate and connect to the bastion server. This allows access to internal network resources from a secure entry point. Note: The corresponding public SSH key (named id_rsa.pub) must already be available in the ~/.ssh/authorized_keys file on the bastion host to establish authentication."
+}
+
+variable "bms_boot_drive_encryption" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the boot drive of bare metal server. Select true or false"
 }

@@ -8,17 +8,10 @@ variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
 }
 
-# Delete this variable before pushing to the public repository.
-variable "github_token" {
-  type        = string
-  default     = null
-  description = "Provide your GitHub token to download the HPCaaS code into the Deployer node"
-}
-
 variable "lsf_version" {
   type        = string
   default     = "fixpack_15"
-  description = "Select the LSF version to deploy: 'fixpack_14' or 'fixpack_15'. Use null to skip LSF deployment."
+  description = "Select the desired version of IBM Spectrum LSF to deploy either fixpack_15 or fixpack_14. By default, the solution uses the latest available version, which is Fix Pack 15. If you need to deploy an earlier version such as Fix Pack 14, update the lsf_version field to fixpack_14. When changing the LSF version, ensure that all custom images used for management, compute, and login nodes correspond to the same version. This is essential to maintain compatibility across the cluster and to prevent deployment issues."
 }
 
 ##############################################################################
@@ -42,7 +35,7 @@ variable "ibm_customer_number" {
 ##############################################################################
 variable "cluster_prefix" {
   type        = string
-  default     = "hpc"
+  default     = "lsf"
   description = "A unique identifier for resources. Must begin with a letter and end with a letter or number. This cluster_prefix will be prepended to any resources provisioned by this template. Prefixes must be 16 or fewer characters."
   validation {
     error_message = "cluster_prefix must begin and end with a letter and contain only letters, numbers, and - characters."
@@ -117,22 +110,16 @@ variable "placement_strategy" {
 ##############################################################################
 # Access Variables
 ##############################################################################
-variable "enable_bastion" {
-  type        = bool
-  default     = true
-  description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN or direct connection, set this value to false."
-}
-
-variable "bastion_image" {
-  type        = string
-  default     = "ibm-ubuntu-22-04-3-minimal-amd64-1"
-  description = "The image to use to deploy the bastion host."
-}
-
-variable "bastion_instance_profile" {
-  type        = string
-  default     = "cx2-4x8"
-  description = "Deployer should be only used for better deployment performance"
+variable "bastion_instance" {
+  type = object({
+    image   = string
+    profile = string
+  })
+  default = {
+    image   = "ibm-ubuntu-22-04-3-minimal-amd64-1"
+    profile = "cx2-4x8"
+  }
+  description = "Configuration for the Bastion node, including the image and instance profile. Only Ubuntu stock images are supported."
 }
 
 variable "login_subnet_id" {
@@ -160,16 +147,16 @@ variable "enable_deployer" {
   description = "Deployer should be only used for better deployment performance"
 }
 
-variable "deployer_image" {
-  type        = string
-  default     = "ibm-redhat-8-10-minimal-amd64-4"
-  description = "The image to use to deploy the deployer host."
-}
-
-variable "deployer_instance_profile" {
-  type        = string
-  default     = "bx2-8x32"
-  description = "Deployer should be only used for better deployment performance"
+variable "deployer_instance" {
+  type = object({
+    image   = string
+    profile = string
+  })
+  default = {
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
+    profile = "bx2-8x32"
+  }
+  description = "Configuration for the deployer node, including the custom image and instance profile. By default, uses fixpack_15 image and a bx2-8x32 profile."
 }
 
 ##############################################################################
@@ -203,7 +190,7 @@ variable "client_instances" {
   description = "Number of instances to be launched for client."
 }
 
-variable "cluster_subnet_ids" {
+variable "cluster_subnet_id" {
   type        = string
   default     = null
   description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
@@ -234,17 +221,15 @@ variable "management_instances" {
 variable "static_compute_instances" {
   type = list(
     object({
-      profile    = string
-      count      = number
-      image      = string
-      filesystem = string
+      profile = string
+      count   = number
+      image   = string
     })
   )
   default = [{
-    profile    = "cx2-2x4"
-    count      = 0
-    image      = "ibm-redhat-8-10-minimal-amd64-4"
-    filesystem = "/gpfs/fs1"
+    profile = "cx2-2x4"
+    count   = 0
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "Min Number of instances to be launched for compute cluster."
 }
@@ -259,7 +244,7 @@ variable "dynamic_compute_instances" {
   )
   default = [{
     profile = "cx2-2x4"
-    count   = 1024
+    count   = 500
     image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "MaxNumber of instances to be launched for compute cluster."
@@ -328,6 +313,24 @@ variable "storage_servers" {
     filesystem = "/ibm/fs1"
   }]
   description = "Number of BareMetal Servers to be launched for storage cluster."
+}
+
+variable "tie_breaker_bm_server" {
+  type = list(
+    object({
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = string
+    })
+  )
+  default = [{
+    profile    = "cx2d-metal-96x192"
+    count      = 1
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "fs1"
+  }]
+  description = "BareMetal Server to be launched for Tie Breaker."
 }
 
 variable "protocol_subnets" {
@@ -437,10 +440,10 @@ variable "dns_custom_resolver_id" {
 variable "dns_domain_names" {
   type = object({
     compute  = string
-    storage  = string
-    protocol = string
-    client   = string
-    gklm     = string
+    storage  = optional(string)
+    protocol = optional(string)
+    client   = optional(string)
+    gklm     = optional(string)
   })
   default = {
     compute  = "comp.com"
@@ -495,6 +498,12 @@ variable "existing_kms_instance_guid" {
   description = "The existing KMS instance guid."
 }
 
+variable "key_protect_instance_id" {
+  type        = string
+  default     = null
+  description = "An existing Key Protect instance used for filesystem encryption"
+}
+
 # variable "hpcs_instance_name" {
 #   type        = string
 #   default     = null
@@ -519,10 +528,10 @@ variable "skip_kms_s2s_auth_policy" {
   description = "Skip auth policy between KMS service and COS instance, set to true if this policy is already in place on account."
 }
 
-variable "skip_iam_authorization_policy" {
+variable "skip_iam_block_storage_authorization_policy" {
   type        = bool
-  default     = true
-  description = "Set to false if authorization policy is required for VPC block storage volumes to access kms. This can be set to true if authorization policy already exists. For more information on how to create authorization policy manually, see [creating authorization policies for block storage volume](https://cloud.ibm.com/docs/vpc?topic=vpc-block-s2s-auth&interface=ui)."
+  default     = false
+  description = "When using an existing KMS instance name, set this value to true if authorization is already enabled between KMS instance and the block storage volume. Otherwise, default is set to false. Ensuring proper authorization avoids access issues during deployment.For more information on how to create authorization policy manually, see [creating authorization policies for block storage volume](https://cloud.ibm.com/docs/vpc?topic=vpc-block-s2s-auth&interface=ui)."
 }
 
 ##############################################################################
@@ -666,25 +675,12 @@ variable "enable_hyperthreading" {
 #   }
 # }
 
-# variable "enable_app_center" {
-#   type        = bool
-#   default     = false
-#   description = "Set to true to install and enable use of the IBM Spectrum LSF Application Center GUI."
-# }
-
-# variable "app_center_gui_password" {
-#   type        = string
-#   default     = "hpc@IBMCloud"
-#   sensitive   = true
-#   description = "Password for IBM Spectrum LSF Application Center GUI."
-# }
-
-# variable "app_center_db_password" {
-#   type        = string
-#   default     = "hpc@IBMCloud"
-#   sensitive   = true
-#   description = "Password for IBM Spectrum LSF Application Center database GUI."
-# }
+variable "app_center_gui_password" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Password for IBM Spectrum LSF Application Center GUI."
+}
 
 ##############################################################################
 # Symphony specific Variables
@@ -828,12 +824,6 @@ variable "bastion_security_group_id" {
   description = "bastion security group id"
 }
 
-variable "bastion_security_group_id_for_ref" {
-  type        = string
-  default     = null
-  description = "bastion security group id"
-}
-
 variable "deployer_hostname" {
   type        = string
   default     = null
@@ -935,7 +925,7 @@ variable "ldap_instance_key_pair" {
   description = "Name of the SSH key configured in your IBM Cloud account that is used to establish a connection to the LDAP Server. Make sure that the SSH key is present in the same resource group and region where the LDAP Servers are provisioned. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
 }
 
-variable "ldap_instances" {
+variable "ldap_instance" {
   type = list(
     object({
       profile = string
@@ -981,22 +971,22 @@ variable "gklm_instances" {
   default = [{
     profile = "bx2-2x8"
     count   = 2
-    image   = "ibm-redhat-8-10-minimal-amd64-4"
+    image   = "hpcc-scale-gklm4202-v2-5-2"
   }]
-  description = "Number of instances to be launched for client."
+  description = "Number of GKLM instances to be launched for scale cluster."
 }
 
-# variable "scale_encryption_admin_default_password" {
-#   type        = string
-#   default     = null
-#   description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
-# }
+variable "scale_encryption_admin_default_password" {
+  type        = string
+  default     = "SKLM@dmin123"
+  description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
+}
 
-# variable "scale_encryption_admin_username" {
-#   type        = string
-#   default     = null
-#   description = "The default Admin username for Security Key Lifecycle Manager(GKLM)."
-# }
+variable "scale_encryption_admin_username" {
+  type        = string
+  default     = null
+  description = "The default Admin username for Security Key Lifecycle Manager(GKLM)."
+}
 
 variable "scale_encryption_admin_password" {
   type        = string
@@ -1082,6 +1072,11 @@ variable "bastion_fip" {
   description = "bastion fip"
 }
 
+variable "scale_compute_cluster_filesystem_mountpoint" {
+  type        = string
+  default     = "/gpfs/fs1"
+  description = "Compute cluster (accessingCluster) Filesystem mount point."
+}
 ##############################################################################
 # Dedicatedhost Variables
 ##############################################################################
@@ -1125,4 +1120,49 @@ variable "resource_group_ids" {
   type        = any
   default     = null
   description = "Map describing resource groups to create or reference"
+}
+
+##############################################################################
+# Login Variables
+##############################################################################
+variable "login_instance" {
+  type = list(
+    object({
+      profile = string
+      image   = string
+    })
+  )
+  default = [{
+    profile = "bx2-2x8"
+    image   = "hpcaas-lsf10-rhel810-compute-v8"
+  }]
+  description = "Number of instances to be launched for login node."
+}
+
+##############################################################################
+# Environment Variables
+##############################################################################
+
+# tflint-ignore: all
+variable "TF_VERSION" {
+  type        = string
+  default     = "1.9"
+  description = "The version of the Terraform engine that's used in the Schematics workspace."
+}
+
+# tflint-ignore: all
+variable "TF_PARALLELISM" {
+  type        = string
+  default     = "250"
+  description = "Parallelism/ concurrent operations limit. Valid values are between 1 and 256, both inclusive. [Learn more](https://www.terraform.io/docs/internals/graph.html#walking-the-graph)."
+  validation {
+    condition     = 1 <= var.TF_PARALLELISM && var.TF_PARALLELISM <= 256
+    error_message = "Input \"TF_PARALLELISM\" must be greater than or equal to 1 and less than or equal to 256."
+  }
+}
+
+variable "bms_boot_drive_encryption" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the boot drive of bare metal server. Select true or false"
 }

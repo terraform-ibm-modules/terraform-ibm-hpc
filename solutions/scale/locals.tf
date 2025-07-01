@@ -18,23 +18,21 @@ locals {
 
 locals {
   config = {
-    existing_resource_group                          = var.existing_resource_group
-    remote_allowed_ips                               = var.remote_allowed_ips
-    ssh_keys                                         = var.ssh_keys
-    vpc_cluster_login_private_subnets_cidr_blocks    = var.vpc_cluster_login_private_subnets_cidr_blocks
-    compute_gui_password                             = var.compute_gui_password
-    compute_gui_username                             = var.compute_gui_username
-    vpc_cluster_private_subnets_cidr_blocks          = var.vpc_cluster_private_subnets_cidr_blocks
-    cos_instance_name                                = var.cos_instance_name
-    dns_custom_resolver_id                           = var.dns_custom_resolver_id
-    dns_instance_id                                  = var.dns_instance_id
-    dns_domain_names                                 = var.dns_domain_names
-    enable_atracker                                  = var.enable_atracker
-    enable_bastion                                   = var.enable_bastion
-    bastion_image                                    = var.bastion_image
-    bastion_instance_profile                         = var.bastion_instance_profile
-    deployer_image                                   = var.deployer_image
-    deployer_instance_profile                        = var.deployer_instance_profile
+    existing_resource_group                       = var.existing_resource_group
+    remote_allowed_ips                            = var.remote_allowed_ips
+    ssh_keys                                      = var.ssh_keys
+    vpc_cluster_login_private_subnets_cidr_blocks = var.vpc_cluster_login_private_subnets_cidr_blocks
+    compute_gui_password                          = var.compute_gui_password
+    compute_gui_username                          = var.compute_gui_username
+    vpc_cluster_private_subnets_cidr_blocks       = var.vpc_cluster_private_subnets_cidr_blocks
+    cos_instance_name                             = var.cos_instance_name
+    dns_custom_resolver_id                        = var.dns_custom_resolver_id
+    dns_instance_id                               = var.dns_instance_id
+    dns_domain_names                              = var.dns_domain_names
+    enable_atracker                               = var.enable_atracker
+    # enable_bastion                                   = var.enable_bastion
+    bastion_instance                                 = var.bastion_instance
+    deployer_instance                                = var.deployer_instance
     enable_cos_integration                           = var.enable_cos_integration
     enable_vpc_flow_logs                             = var.enable_vpc_flow_logs
     hpcs_instance_name                               = var.hpcs_instance_name
@@ -69,7 +67,7 @@ locals {
     scc_event_notification_plan                      = var.scc_event_notification_plan
     skip_flowlogs_s2s_auth_policy                    = var.skip_flowlogs_s2s_auth_policy
     skip_kms_s2s_auth_policy                         = var.skip_kms_s2s_auth_policy
-    skip_iam_authorization_policy                    = var.skip_iam_authorization_policy
+    skip_iam_block_storage_authorization_policy      = var.skip_iam_block_storage_authorization_policy
     ibmcloud_api_key                                 = var.ibmcloud_api_key
     afm_instances                                    = var.afm_instances
     afm_cos_config                                   = var.afm_cos_config
@@ -80,7 +78,7 @@ locals {
     ldap_user_password                               = var.ldap_user_password
     ldap_server                                      = var.ldap_server
     ldap_server_cert                                 = var.ldap_server_cert
-    ldap_instances                                   = var.ldap_instances
+    ldap_instance                                    = var.ldap_instance
     scale_encryption_enabled                         = var.scale_encryption_enabled
     scale_encryption_type                            = var.scale_encryption_type
     gklm_instance_key_pair                           = var.gklm_instance_key_pair
@@ -90,35 +88,35 @@ locals {
     scale_encryption_admin_default_password          = var.scale_encryption_admin_default_password
     scale_encryption_admin_password                  = var.scale_encryption_admin_password
     scale_encryption_admin_username                  = var.scale_encryption_admin_username
+    key_protect_instance_id                          = var.key_protect_instance_id
     filesystem_config                                = var.filesystem_config
     existing_bastion_instance_name                   = var.existing_bastion_instance_name
     existing_bastion_instance_public_ip              = var.existing_bastion_instance_public_ip
     existing_bastion_security_group_id               = var.existing_bastion_security_group_id
     existing_bastion_ssh_private_key                 = var.existing_bastion_ssh_private_key
-    github_token                                     = var.github_token # Delete this variable before pushing to the public repository.
+    bms_boot_drive_encryption                        = var.bms_boot_drive_encryption
+    tie_breaker_bm_server                            = var.tie_breaker_bm_server
   }
 }
 
 # Compile Environment for Config output
 locals {
   env = {
-    existing_resource_group                          = lookup(local.override[local.override_type], "existing_resource_group", local.config.existing_resource_group)
-    remote_allowed_ips                               = lookup(local.override[local.override_type], "remote_allowed_ips", local.config.remote_allowed_ips)
-    ssh_keys                                         = lookup(local.override[local.override_type], "ssh_keys", local.config.ssh_keys)
-    vpc_cluster_login_private_subnets_cidr_blocks    = lookup(local.override[local.override_type], "vpc_cluster_login_private_subnets_cidr_blocks", local.config.vpc_cluster_login_private_subnets_cidr_blocks)
-    compute_gui_password                             = lookup(local.override[local.override_type], "compute_gui_password", local.config.compute_gui_password)
-    compute_gui_username                             = lookup(local.override[local.override_type], "compute_gui_username", local.config.compute_gui_username)
-    vpc_cluster_private_subnets_cidr_blocks          = lookup(local.override[local.override_type], "vpc_cluster_private_subnets_cidr_blocks", local.config.vpc_cluster_private_subnets_cidr_blocks)
-    cos_instance_name                                = lookup(local.override[local.override_type], "cos_instance_name", local.config.cos_instance_name)
-    dns_custom_resolver_id                           = lookup(local.override[local.override_type], "dns_custom_resolver_id", local.config.dns_custom_resolver_id)
-    dns_instance_id                                  = lookup(local.override[local.override_type], "dns_instance_id", local.config.dns_instance_id)
-    dns_domain_names                                 = lookup(local.override[local.override_type], "dns_domain_names", local.config.dns_domain_names)
-    enable_atracker                                  = lookup(local.override[local.override_type], "enable_atracker", local.config.enable_atracker)
-    enable_bastion                                   = lookup(local.override[local.override_type], "enable_bastion", local.config.enable_bastion)
-    bastion_image                                    = lookup(local.override[local.override_type], "bastion_image", local.config.bastion_image)
-    bastion_instance_profile                         = lookup(local.override[local.override_type], "bastion_instance_profile", local.config.bastion_instance_profile)
-    deployer_image                                   = lookup(local.override[local.override_type], "deployer_image", local.config.deployer_image)
-    deployer_instance_profile                        = lookup(local.override[local.override_type], "deployer_instance_profile", local.config.deployer_instance_profile)
+    existing_resource_group                       = lookup(local.override[local.override_type], "existing_resource_group", local.config.existing_resource_group)
+    remote_allowed_ips                            = lookup(local.override[local.override_type], "remote_allowed_ips", local.config.remote_allowed_ips)
+    ssh_keys                                      = lookup(local.override[local.override_type], "ssh_keys", local.config.ssh_keys)
+    vpc_cluster_login_private_subnets_cidr_blocks = lookup(local.override[local.override_type], "vpc_cluster_login_private_subnets_cidr_blocks", local.config.vpc_cluster_login_private_subnets_cidr_blocks)
+    compute_gui_password                          = lookup(local.override[local.override_type], "compute_gui_password", local.config.compute_gui_password)
+    compute_gui_username                          = lookup(local.override[local.override_type], "compute_gui_username", local.config.compute_gui_username)
+    vpc_cluster_private_subnets_cidr_blocks       = lookup(local.override[local.override_type], "vpc_cluster_private_subnets_cidr_blocks", local.config.vpc_cluster_private_subnets_cidr_blocks)
+    cos_instance_name                             = lookup(local.override[local.override_type], "cos_instance_name", local.config.cos_instance_name)
+    dns_custom_resolver_id                        = lookup(local.override[local.override_type], "dns_custom_resolver_id", local.config.dns_custom_resolver_id)
+    dns_instance_id                               = lookup(local.override[local.override_type], "dns_instance_id", local.config.dns_instance_id)
+    dns_domain_names                              = lookup(local.override[local.override_type], "dns_domain_names", local.config.dns_domain_names)
+    enable_atracker                               = lookup(local.override[local.override_type], "enable_atracker", local.config.enable_atracker)
+    # enable_bastion                                   = lookup(local.override[local.override_type], "enable_bastion", local.config.enable_bastion)
+    bastion_instance                                 = lookup(local.override[local.override_type], "bastion_instance", local.config.bastion_instance)
+    deployer_instance                                = lookup(local.override[local.override_type], "deployer_instance", local.config.deployer_instance)
     enable_cos_integration                           = lookup(local.override[local.override_type], "enable_cos_integration", local.config.enable_cos_integration)
     enable_vpc_flow_logs                             = lookup(local.override[local.override_type], "enable_vpc_flow_logs", local.config.enable_vpc_flow_logs)
     hpcs_instance_name                               = lookup(local.override[local.override_type], "hpcs_instance_name", local.config.hpcs_instance_name)
@@ -153,7 +151,7 @@ locals {
     scc_event_notification_plan                      = lookup(local.override[local.override_type], "scc_event_notification_plan", local.config.scc_event_notification_plan)
     skip_flowlogs_s2s_auth_policy                    = lookup(local.override[local.override_type], "skip_flowlogs_s2s_auth_policy", local.config.skip_flowlogs_s2s_auth_policy)
     skip_kms_s2s_auth_policy                         = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
-    skip_iam_authorization_policy                    = lookup(local.override[local.override_type], "skip_iam_authorization_policy", local.config.skip_iam_authorization_policy)
+    skip_iam_block_storage_authorization_policy      = lookup(local.override[local.override_type], "skip_iam_block_storage_authorization_policy", local.config.skip_iam_block_storage_authorization_policy)
     ibmcloud_api_key                                 = lookup(local.override[local.override_type], "ibmcloud_api_key", local.config.ibmcloud_api_key)
     afm_instances                                    = lookup(local.override[local.override_type], "afm_instances", local.config.afm_instances)
     afm_cos_config                                   = lookup(local.override[local.override_type], "afm_cos_config", local.config.afm_cos_config)
@@ -164,11 +162,12 @@ locals {
     ldap_user_password                               = lookup(local.override[local.override_type], "ldap_user_password", local.config.ldap_user_password)
     ldap_server                                      = lookup(local.override[local.override_type], "ldap_server", local.config.ldap_server)
     ldap_server_cert                                 = lookup(local.override[local.override_type], "ldap_server_cert", local.config.ldap_server_cert)
-    ldap_instances                                   = lookup(local.override[local.override_type], "ldap_instances", local.config.ldap_instances)
+    ldap_instance                                    = lookup(local.override[local.override_type], "ldap_instance", local.config.ldap_instance)
     scale_encryption_enabled                         = lookup(local.override[local.override_type], "scale_encryption_enabled", local.config.scale_encryption_enabled)
     scale_encryption_type                            = lookup(local.override[local.override_type], "scale_encryption_type", local.config.scale_encryption_type)
     gklm_instance_key_pair                           = lookup(local.override[local.override_type], "gklm_instance_key_pair", local.config.gklm_instance_key_pair)
     gklm_instances                                   = lookup(local.override[local.override_type], "gklm_instances", local.config.gklm_instances)
+    key_protect_instance_id                          = lookup(local.override[local.override_type], "key_protect_instance_id", local.config.key_protect_instance_id)
     storage_type                                     = lookup(local.override[local.override_type], "storage_type", local.config.storage_type)
     colocate_protocol_instances                      = lookup(local.override[local.override_type], "colocate_protocol_instances", local.config.colocate_protocol_instances)
     scale_encryption_admin_default_password          = lookup(local.override[local.override_type], "scale_encryption_admin_default_password", local.config.scale_encryption_admin_default_password)
@@ -179,6 +178,7 @@ locals {
     existing_bastion_instance_public_ip              = lookup(local.override[local.override_type], "existing_bastion_instance_public_ip", local.config.existing_bastion_instance_public_ip)
     existing_bastion_security_group_id               = lookup(local.override[local.override_type], "existing_bastion_security_group_id", local.config.existing_bastion_security_group_id)
     existing_bastion_ssh_private_key                 = lookup(local.override[local.override_type], "existing_bastion_ssh_private_key", local.config.existing_bastion_ssh_private_key)
-    github_token                                     = lookup(local.override[local.override_type], "github_token", local.config.github_token) # Delete this variable before pushing to the public repository.
-  }
+    bms_boot_drive_encryption                        = lookup(local.override[local.override_type], "bms_boot_drive_encryption", local.config.bms_boot_drive_encryption)
+    tie_breaker_bm_server                            = lookup(local.override[local.override_type], "tie_breaker_bm_server", local.config.tie_breaker_bm_server)
+   }
 }

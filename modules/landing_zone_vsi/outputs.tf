@@ -18,6 +18,11 @@ output "compute_management_vsi_data" {
   value       = module.compute_cluster_management_vsi[*]["list"]
 }
 
+output "login_vsi_data" {
+  description = "Login VSI data"
+  value       = module.login_vsi[*]["list"]
+}
+
 output "storage_vsi_data" {
   description = "Storage VSI data"
   value       = module.storage_vsi[*]["list"]
@@ -26,6 +31,21 @@ output "storage_vsi_data" {
 output "storage_bms_data" {
   description = "Storage BareMetal Server data"
   value       = flatten(module.storage_baremetal[*].list)
+}
+
+output "storage_bm_name_with_vol_mapping" {
+  description = "Storage BareMetal Server data"
+  value       = flatten(module.storage_baremetal[*].instance_ips_with_vol_mapping)
+}
+
+output "storage_tie_breaker_bms_data" {
+  description = "Storage BareMetal Server data"
+  value       = flatten(module.storage_baremetal_tie_breaker[*].list)
+}
+
+output "storage_tie_breaker_bms_name_with_vol_mapping" {
+  description = "Storage BareMetal Server data"
+  value       = flatten(module.storage_baremetal_tie_breaker[*].instance_ips_with_vol_mapping)
 }
 
 output "storage_cluster_management_vsi" {
