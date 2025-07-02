@@ -587,7 +587,7 @@
                             ]
                         },
                         {
-                            "service_name": "sysdig-secure",
+                            "service_name": "Security and compliance centre workload protection",
                             "role_crns": [
                                 "crn:v1:bluemix:public:iam::::role:Administrator"
                             ]
@@ -606,7 +606,7 @@
                             ]
                         },
                         {
-                            "service_name": "service",
+                            "service_name": "All Identity and Access enabled services",
                             "role_crns": [
                                 "crn:v1:bluemix:public:iam::::serviceRole:Manager",
                                 "crn:v1:bluemix:public:iam::::role:Administrator"
