@@ -587,7 +587,7 @@
                             ]
                         },
                         {
-                            "service_name": "Security and compliance centre workload protection",
+                            "service_name": "Security and Compliance Center Workload Protection",
                             "role_crns": [
                                 "crn:v1:bluemix:public:iam::::role:Administrator"
                             ]
