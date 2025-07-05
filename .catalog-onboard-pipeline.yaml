@@ -2,10 +2,10 @@
 apiVersion: v1
 offerings:
 # below is an example of a Deployable Architecture (DA) solution
-- name: deploy-arch-ibm-hpc # must match the offering name in the ibm_catalog.json
+- name: deploy-arch-ibm-hpc-lsf # must match the offering name in the ibm_catalog.json
   kind: solution
-  catalog_id: 8611e025-10b2-488e-8261-a7f584a5114b
-  offering_id: bf3c07f8-5a62-4289-8ea0-94dbb2b410e6
+  catalog_id: 0d89ec0d-d39a-494d-ac5b-9d940d8cc65f
+  offering_id: 1444e20a-af22-40d1-af98-c880918849cb
   # list all of the variations (flavors) you have included in the ibm_catalog.json
   variations:
     - name: Cluster-with-LSF

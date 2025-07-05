@@ -298,7 +298,7 @@ variable "static_compute_instances" {
   )
   default = [{
     profile = "bx2-4x16"
-    count   = 1
+    count   = 0
     image   = "hpc-lsf-fp15-compute-rhel810-v1"
   }]
   description = "Specify the list of static compute node configurations, including instance profile, image name, and count. By default, all compute nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. The solution allows customization of instance profiles and counts, but mixing custom images and IBM stock images across instances is not supported. If using IBM stock images, only Red Hat-based images are allowed."
@@ -475,7 +475,7 @@ variable "kms_instance_name" {
 variable "kms_key_name" {
   type        = string
   default     = null
-  description = "Provide the existing kms key name that you want to use for the IBM Cloud HPC cluster. Note: kms_key_name to be considered only if key_management value is set as key_protect.(for example kms_key_name: my-encryption-key)."
+  description = "Provide the existing kms key name that you want to use for the IBM Spectrum LSF cluster. Note: kms_key_name to be considered only if key_management value is set as key_protect.(for example kms_key_name: my-encryption-key)."
   validation {
     condition     = anytrue([alltrue([var.kms_key_name != null, var.kms_instance_name != null]), (var.kms_key_name == null), (var.key_management != "key_protect")])
     error_message = "Please make sure you are passing the kms_instance_name if you are passing kms_key_name."
