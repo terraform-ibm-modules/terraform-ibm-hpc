@@ -30,7 +30,7 @@ func VerifyManagementNodeConfig(
 
 	// Verify cluster name
 	clusterNameErr := LSFCheckClusterName(t, sshMgmtClient, clusterPrefix, logger)
-	utils.LogVerificationResult(t, clusterNameErr, "Verify cluster name on management node", logger)
+	utils.LogVerificationResult(t, clusterNameErr, "Verify cluster name on login node", logger)
 
 	// Verify Master Name
 	checkMasterNameErr := LSFCheckMasterName(t, sshMgmtClient, clusterPrefix, logger)
@@ -560,7 +560,6 @@ func VerifyCreateNewLdapUserAndManagementNodeLDAPConfig(
 	ldapServerIP string,
 	managementNodeIPList []string,
 	jobCommand string,
-	ldapUserName string,
 	ldapAdminPassword string,
 	ldapDomainName string,
 	newLdapUserName string,
@@ -569,7 +568,7 @@ func VerifyCreateNewLdapUserAndManagementNodeLDAPConfig(
 ) {
 
 	// Add a new LDAP user
-	if err := LSFAddNewLDAPUser(t, sldapClient, ldapAdminPassword, ldapDomainName, ldapUserName, newLdapUserName, newLdapUserPassword, logger); err != nil {
+	if err := LSFAddNewLDAPUser(t, sldapClient, ldapAdminPassword, ldapDomainName, newLdapUserName, newLdapUserPassword, logger); err != nil {
 		utils.LogVerificationResult(t, err, "add new LDAP user", logger)
 		return
 	}

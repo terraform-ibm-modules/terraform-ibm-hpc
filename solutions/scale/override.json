@@ -66,21 +66,21 @@
          "default_metadata_replica": 2,
          "max_data_replica": 3,
          "max_metadata_replica": 3,
-         "mount_point": "/ibm/fs1"
+         "mount_point": "/gpfs/fs1"
       }
    ],
    "filesets_config": [
       {
          "fileset": "fileset1",
          "filesystem": "fs1",
-         "junction_path": "/ibm/fs1/fileset1",
+         "junction_path": "/gpfs/fs1/fileset1",
          "client_mount_path": "/mnt",
          "quota": 100
       },
       {
          "fileset": "fileset2",
          "filesystem": "fs1",
-         "junction_path": "/ibm/fs1/fileset1",
+         "junction_path": "/gpfs/fs1/fileset1",
          "client_mount_path": "/mnt",
          "quota": 0
       }

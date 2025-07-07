@@ -5,6 +5,17 @@ resource "local_sensitive_file" "write_client_meta_private_key" {
   file_permission = "0600"
 }
 
+resource "null_resource" "scale_host_play" {
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "sudo ansible-playbook -f 50 -i ${local.scale_all_inventory} -l 'client' --private-key=${local.client_private_key} -e @${local.scale_cluster_hosts} -e 'domain_names=${local.dns_names}' ${local.scale_hostentry_playbook_path}"
+  }
+
+  triggers = {
+    build = timestamp()
+  }
+}
+
 resource "null_resource" "prepare_client_inventory_using_jumphost_connection" {
   count = (tobool(var.turn_on) == true && tobool(var.storage_cluster_create_complete) == true && tobool(var.using_jumphost_connection) == true && tobool(var.create_scale_cluster) == true) ? 1 : 0
   provisioner "local-exec" {
@@ -39,4 +50,16 @@ resource "null_resource" "perform_client_configuration" {
     build = timestamp()
   }
   depends_on = [resource.local_sensitive_file.write_client_meta_private_key, resource.null_resource.prepare_client_inventory_using_jumphost_connection, resource.null_resource.prepare_client_inventory]
+}
+
+resource "null_resource" "remove_host_entry_play" {
+  count = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true && tobool(var.create_scale_cluster) == true) ? 1 : 0
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "sudo ansible-playbook -f 50 -i ${local.scale_all_inventory} -l 'client' --private-key=${local.client_private_key}  ${local.remove_hostentry_playbooks_path}"
+  }
+  triggers = {
+    build = timestamp()
+  }
+  depends_on = [resource.local_sensitive_file.write_client_meta_private_key, resource.null_resource.prepare_client_inventory_using_jumphost_connection, resource.null_resource.prepare_client_inventory, null_resource.perform_client_configuration]
 }

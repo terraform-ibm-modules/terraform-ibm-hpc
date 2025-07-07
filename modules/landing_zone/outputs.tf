@@ -91,7 +91,7 @@ output "boot_volume_encryption_key" {
 
 output "key_management_guid" {
   description = "GUID for KMS instance"
-  value       = var.enable_landing_zone ? var.key_management != null ? module.landing_zone[0].key_management_guid : null : null
+  value       = var.enable_landing_zone ? var.key_management != null || (var.scale_encryption_enabled && var.scale_encryption_type == "key_protect" && var.key_protect_instance_id == null) ? module.landing_zone[0].key_management_guid : null : null
 }
 
 output "cos_buckets_data" {

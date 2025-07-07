@@ -22,6 +22,12 @@ variable "existing_resource_group" {
 # Module Level Variables
 ##############################################################################
 
+variable "scheduler" {
+  type        = string
+  default     = null
+  description = "Select one of the scheduler (scale/LSF/Symphony/Slurm/null)"
+}
+
 variable "prefix" {
   description = "A unique identifier for resources. Must begin with a letter and end with a letter or number. This prefix will be prepended to any resources provisioned by this template. Prefixes must be 16 or fewer characters."
   type        = string
@@ -257,6 +263,27 @@ variable "kms_key_name" {
   description = "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. (for example kms_key_name: my-encryption-key)."
 }
 
+
+##Scale Encryption Variables
+
+variable "scale_encryption_enabled" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the filesystem. Select true or false"
+}
+
+variable "scale_encryption_type" {
+  type        = string
+  default     = null
+  description = "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled"
+}
+
+variable "key_protect_instance_id" {
+  type        = string
+  default     = null
+  description = "An existing Key Protect instance used for filesystem encryption"
+}
+
 # variable "hpcs_instance_name" {
 #   type        = string
 #   default     = null
@@ -278,6 +305,12 @@ variable "skip_kms_s2s_auth_policy" {
 ##############################################################################
 # Observability Variables
 ##############################################################################
+
+variable "scc_enable" {
+  type        = bool
+  default     = false
+  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+}
 
 variable "observability_logs_enable" {
   description = "Set false to disable IBM Cloud Logs integration. If enabled, infrastructure and LSF application logs from Management/Compute Nodes will be ingested under COS bucket."

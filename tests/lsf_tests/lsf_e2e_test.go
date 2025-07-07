@@ -3,9 +3,7 @@ package tests
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -13,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
-	deploy "github.com/terraform-ibm-modules/terraform-ibm-hpc/deployment"
 	lsf "github.com/terraform-ibm-modules/terraform-ibm-hpc/lsf"
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/utilities"
 )
@@ -22,48 +19,6 @@ import (
 const (
 	createVpcTerraformDir = "examples/create_vpc/" // Brand new VPC
 )
-
-// TestMain is the entry point for all tests
-func TestMain(m *testing.M) {
-
-	// Load LSF version configuration
-	productFileName, err := GetLSFVersionConfig()
-	if err != nil {
-		log.Fatalf("❌ Failed to get LSF version config: %v", err)
-	}
-
-	// Load and validate configuration
-	configFilePath, err := filepath.Abs("../data/" + productFileName)
-	if err != nil {
-		log.Fatalf("❌ Failed to resolve config path: %v", err)
-	}
-
-	if _, err := os.Stat(configFilePath); err != nil {
-		log.Fatalf("❌ Config file not accessible: %v", err)
-	}
-
-	if _, err := deploy.GetConfigFromYAML(configFilePath); err != nil {
-		log.Fatalf("❌ Config load failed: %v", err)
-	}
-	log.Printf("✅ Configuration loaded successfully from %s", filepath.Base(configFilePath))
-
-	// Execute tests
-	exitCode := m.Run()
-
-	// Generate HTML report if JSON log exists
-	if jsonFileName, ok := os.LookupEnv("LOG_FILE_NAME"); ok {
-		if _, err := os.Stat(jsonFileName); err == nil {
-			results, err := utils.ParseJSONFile(jsonFileName)
-			if err != nil {
-				log.Printf("Failed to parse JSON results: %v", err)
-			} else if err := utils.GenerateHTMLReport(results); err != nil {
-				log.Printf("Failed to generate HTML report: %v", err)
-			}
-		}
-	}
-
-	os.Exit(exitCode)
-}
 
 // TestRunBasic validates the basic cluster configuration requirements.
 // The test ensures proper resource isolation through random prefix generation
@@ -99,7 +54,7 @@ func TestRunBasic(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting basic cluster deployment")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -149,7 +104,7 @@ func TestRunCustomRGAsNull(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting cluster deployment with null resource group")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -205,7 +160,7 @@ func TestRunCustomRGAsNonDefault(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting cluster deployment with non-default resource group")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -227,8 +182,14 @@ func TestRunCustomRGAsNonDefault(t *testing.T) {
 	}
 }
 
-// TestRunSCCWPAndCSPMEnabledClusterValidation tests basic cluster validation with SCCWP and CSPM enabled.
-func TestRunSCCWPAndCSPMEnabledClusterValidation(t *testing.T) {
+// TestRunSCCEnabled validates cluster creation with SCC (Spectrum Computing Console) integration.
+// Verifies proper SCC configuration including event notification and location settings.
+//
+// Prerequisites:
+// - SCC enabled in environment configuration
+// - Valid non-default resource group
+// - Proper test suite initialization
+func TestRunSCCEnabled(t *testing.T) {
 
 	t.Parallel()
 
@@ -246,19 +207,18 @@ func TestRunSCCWPAndCSPMEnabledClusterValidation(t *testing.T) {
 	require.NoError(t, err, "Failed to load environment configuration")
 
 	// Skip the test if SCC is disabled
-	if strings.ToLower(envVars.SccWPEnabled) == "false" {
-		testLogger.Warn(t, fmt.Sprintf("Skipping %s - SCCWP disabled in configuration", t.Name()))
+	if strings.ToLower(envVars.SccEnabled) == "false" {
+		testLogger.Warn(t, fmt.Sprintf("Skipping %s - SCC disabled in configuration", t.Name()))
 		return
 	}
 
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
 	require.NoError(t, err, "Failed to initialize test options")
 
-	// SCCWP Specific Configuration
-	options.TerraformVars["sccwp_enable"] = envVars.SccWPEnabled
-	options.TerraformVars["cspm_enabled"] = envVars.CspmEnabled
-	options.TerraformVars["sccwp_service_plan"] = envVars.SccwpServicePlan
-	options.TerraformVars["app_config_plan"] = envVars.AppConfigPlan
+	// SCC Specific Configuration
+	options.TerraformVars["scc_enable"] = envVars.SccEnabled
+	options.TerraformVars["scc_event_notification_plan"] = envVars.SccEventNotificationPlan
+	options.TerraformVars["scc_location"] = envVars.SccLocation
 
 	// Resource Cleanup Configuration
 	options.SkipTestTearDown = true
@@ -266,7 +226,7 @@ func TestRunSCCWPAndCSPMEnabledClusterValidation(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting SCC configuration cluster deployment")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -274,7 +234,7 @@ func TestRunSCCWPAndCSPMEnabledClusterValidation(t *testing.T) {
 
 	// Post-deployment Validation
 	validationStart := time.Now()
-	lsf.ValidateBasicClusterConfigurationWithSCCWPAndCSPM(t, options, testLogger)
+	lsf.ValidateBasicClusterConfigurationWithSCC(t, options, testLogger)
 	testLogger.Info(t, fmt.Sprintf("Validation completed (duration: %v)", time.Since(validationStart)))
 
 	// Test Result Evaluation
@@ -324,7 +284,7 @@ func TestRunNoKMSAndHTOff(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting no-KMS/HT-off cluster deployment")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -352,7 +312,7 @@ func TestRunNoKMSAndHTOff(t *testing.T) {
 // - Valid IBM Cloud API key
 // - Permissions to create/delete KMS instances
 // - Proper test suite initialization
-func TestRunUsingExistingKMSInstanceAndExistingKey(t *testing.T) {
+func TestRunUsingExistingKMS(t *testing.T) {
 	t.Parallel()
 
 	// Initialization
@@ -420,7 +380,7 @@ func TestRunUsingExistingKMSInstanceAndExistingKey(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting KMS integration cluster deployment")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -440,14 +400,14 @@ func TestRunUsingExistingKMSInstanceAndExistingKey(t *testing.T) {
 	}
 }
 
-// TestRunUsingExistingKMSInstanceAndWithoutKey validates cluster creation with existing KMS instance but no key.
+// TestRunUsingExistingKMSInstanceIDAndWithoutKey validates cluster creation with existing KMS instance but no key.
 // Verifies proper handling of KMS instance without specified key.
 //
 // Prerequisites:
 // - Valid IBM Cloud API key
 // - Permissions to create/delete KMS instances
 // - Proper test suite initialization
-func TestRunUsingExistingKMSInstanceAndWithoutKey(t *testing.T) {
+func TestRunUsingExistingKMSInstanceIDAndWithoutKey(t *testing.T) {
 	t.Parallel()
 
 	// Initialization
@@ -514,7 +474,7 @@ func TestRunUsingExistingKMSInstanceAndWithoutKey(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting KMS integration cluster deployment (without key)")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -571,7 +531,6 @@ func TestRunWithExistingKMSInstanceAndKeyWithAuthorizationPolicy(t *testing.T) {
 	options.TerraformVars["kms_instance_name"] = envVars.KMSInstanceName
 	options.TerraformVars["kms_key_name"] = envVars.KMSKeyName
 	options.TerraformVars["skip_iam_share_authorization_policy"] = true
-	options.TerraformVars["skip_iam_block_storage_authorization_policy"] = true
 
 	// Cluster Teardown Configuration
 	options.SkipTestTearDown = true
@@ -579,7 +538,7 @@ func TestRunWithExistingKMSInstanceAndKeyWithAuthorizationPolicy(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting cluster deployment using existing KMS and key with authorization policy")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -634,9 +593,10 @@ func TestRunLSFClusterCreationWithZeroWorkerNodes(t *testing.T) {
 	// Cluster Profile Configuration
 	options.TerraformVars["static_compute_instances"] = []map[string]interface{}{
 		{
-			"profile": "bx2d-4x16",
-			"count":   0,
-			"image":   envVars.StaticComputeInstancesImage,
+			"profile":    "bx2d-4x16",
+			"count":      0,
+			"image":      envVars.StaticComputeInstancesImage,
+			"filesystem": "/gpfs/fs1",
 		},
 	}
 
@@ -654,7 +614,7 @@ func TestRunLSFClusterCreationWithZeroWorkerNodes(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting zero-worker-node cluster deployment")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -720,7 +680,7 @@ func TestRunLDAP(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting LDAP cluster deployment")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -824,12 +784,16 @@ func TestRunExistingLDAP(t *testing.T) {
 	options2.TerraformVars["vpc_cluster_private_subnets_cidr_blocks"] = CLUSTER_TWO_VPC_CLUSTER_PRIVATE_SUBNETS_CIDR_BLOCKS
 	options2.TerraformVars["vpc_cluster_login_private_subnets_cidr_blocks"] = CLUSTER_TWO_VPC_CLUSTER_LOGIN_PRIVATE_SUBNETS_CIDR_BLOCKS
 	dnsMap := map[string]string{
-		"compute": "comp2.com",
+		"compute":  "comp2.com",
+		"storage":  "strg2.com",
+		"protocol": "ces2.com",
+		"client":   "clnt2.com",
+		"gklm":     "gklm2.com",
 	}
 	dnsJSON, err := json.Marshal(dnsMap)
 	require.NoError(t, err, "Must convert  to JSON string")
 
-	options2.TerraformVars["dns_domain_name"] = string(dnsJSON)
+	options2.TerraformVars["dns_domain_names"] = string(dnsJSON)
 	options2.TerraformVars["dns_custom_resolver_id"] = customResolverID
 	options2.TerraformVars["enable_ldap"] = strings.ToLower(envVars.EnableLdap)
 	options2.TerraformVars["ldap_basedns"] = envVars.LdapBaseDns
@@ -842,7 +806,7 @@ func TestRunExistingLDAP(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting LDAP cluster deployment "+t.Name())
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options2, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -902,7 +866,7 @@ func TestRunCosAndVpcFlowLogs(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting cluster deployment with COS and VPC Flow Logs enabled")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -955,7 +919,7 @@ func TestRunLSFLogs(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting LSF logs cluster deployment")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -1006,9 +970,10 @@ func TestRunDedicatedHost(t *testing.T) {
 	options.TerraformVars["enable_dedicated_host"] = true
 	options.TerraformVars["static_compute_instances"] = []map[string]interface{}{
 		{
-			"profile": "bx2-2x8",
-			"count":   1,
-			"image":   envVars.StaticComputeInstancesImage,
+			"profile":    "bx2-2x8",
+			"count":      1,
+			"image":      envVars.StaticComputeInstancesImage,
+			"filesystem": "/gpfs/fs1",
 		},
 	}
 	options.TerraformVars["dynamic_compute_instances"] = []map[string]interface{}{
@@ -1025,7 +990,13 @@ func TestRunDedicatedHost(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting dedicated host cluster deployment")
+
+	WorkerNodeMinCount, err := utils.GetTotalStaticComputeCount(t, options.TerraformVars, testLogger)
+	require.NoError(t, err, "Error retrieving worker node total count")
+
+	fmt.Println(WorkerNodeMinCount)
+	fmt.Println(deploymentStart)
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -1082,8 +1053,8 @@ func TestObservabilityAllFeaturesDisabled(t *testing.T) {
 	defer options.TestTearDown()
 
 	// Cluster Deployment
+	testLogger.Info(t, "Starting cluster deployment with all observability features disabled")
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
 
 	err = lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, err, "Cluster creation validation failed")
@@ -1139,8 +1110,8 @@ func TestObservabilityLogsEnabledForManagementAndCompute(t *testing.T) {
 	defer options.TestTearDown()
 
 	// Cluster Deployment
+	testLogger.Info(t, "Starting cluster deployment with management + compute logs enabled")
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
 
 	err = lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, err, "Cluster creation validation failed")
@@ -1196,8 +1167,8 @@ func TestObservabilityMonitoringEnabledForManagementAndCompute(t *testing.T) {
 	defer options.TestTearDown()
 
 	// Cluster Deployment
+	testLogger.Info(t, "Starting monitoring validation for management and compute")
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
 
 	err = lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, err, "Cluster creation validation failed")
@@ -1217,114 +1188,18 @@ func TestObservabilityMonitoringEnabledForManagementAndCompute(t *testing.T) {
 	}
 }
 
-// TestObservabilityAtrackerLoggingMonitoring provisions LSF clusters with full observability configurations,
-// including logging, monitoring, and Atracker integration, to verify end-to-end behavior across different targets.
+// TestObservabilityAtrackerScenarios validates various cluster deployments with different Atracker
+// and observability configurations in parallel. Each test scenario provisions an LSF cluster with
+// specific logging and monitoring options enabled or disabled, and then verifies the expected behavior.
 //
-// Scenarios covered:
-// - Logging and monitoring enabled, Atracker targeting COS
-// - Logging and monitoring enabled, Atracker targeting Cloud Logs
+// Scenarios include:
+// - Atracker with COS only
+// - Full logging and monitoring with Atracker targeting COS
+// - Full logging and monitoring with Atracker targeting Cloud Logs
 //
-// Each test validates cluster creation and configuration integrity under the given observability setup.
-// Note: Due to Atracker's 1-target-per-region limit, COS and Cloud Logs scenarios are executed sequentially.
-
-func TestObservabilityAtrackerLoggingMonitoring(t *testing.T) {
-	t.Parallel()
-
-	setupTestSuite(t)
-	require.NotNil(t, testLogger, "Test logger must be initialized")
-
-	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Must load valid environment configuration")
-
-	scenarios := []struct {
-		name                string
-		logsForManagement   bool
-		logsForCompute      bool
-		platformLogs        bool
-		monitoring          bool
-		monitoringOnCompute bool
-		atrackerTargetType  string
-		validationFunc      func(t *testing.T, options *testhelper.TestOptions, testLogger *utils.AggregatedLogger)
-	}{
-
-		{
-			name:                "Logs_Monitoring_Atracker_COS",
-			logsForManagement:   true,
-			logsForCompute:      true,
-			platformLogs:        false,
-			monitoring:          true,
-			monitoringOnCompute: true,
-			atrackerTargetType:  "cos",
-			validationFunc:      lsf.ValidateBasicObservabilityClusterConfiguration,
-		},
-		{
-			name:                "Logs_Monitoring_Atracker_CloudLogs",
-			logsForManagement:   true,
-			logsForCompute:      true,
-			platformLogs:        true,
-			monitoring:          true,
-			monitoringOnCompute: true,
-			atrackerTargetType:  "cloudlogs",
-			validationFunc:      lsf.ValidateBasicObservabilityClusterConfiguration,
-		},
-	}
-
-	for _, sc := range scenarios {
-		scenario := sc // capture range variable
-
-		t.Run(scenario.name, func(t *testing.T) {
-
-			testLogger.Info(t, fmt.Sprintf("Scenario %s started", scenario.name))
-
-			clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-			testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
-
-			options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-			require.NoError(t, err, "Must initialize valid test options")
-
-			options.TerraformVars["observability_enable_platform_logs"] = scenario.platformLogs
-			options.TerraformVars["observability_logs_enable_for_management"] = scenario.logsForManagement
-			options.TerraformVars["observability_logs_enable_for_compute"] = scenario.logsForCompute
-			options.TerraformVars["observability_monitoring_enable"] = scenario.monitoring
-			options.TerraformVars["observability_monitoring_on_compute_nodes_enable"] = scenario.monitoringOnCompute
-			options.TerraformVars["observability_monitoring_plan"] = "graduated-tier"
-			options.TerraformVars["observability_atracker_enable"] = true
-			options.TerraformVars["observability_atracker_target_type"] = scenario.atrackerTargetType
-			options.TerraformVars["zones"] = utils.SplitAndTrim(envVars.AttrackerTestZone, ",")
-			options.SkipTestTearDown = true
-			defer options.TestTearDown()
-
-			testLogger.Info(t, fmt.Sprintf("Deploying cluster for: %s", scenario.name))
-			err = lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-			require.NoError(t, err, "Cluster creation failed")
-
-			testLogger.Info(t, "Starting validation...")
-			scenario.validationFunc(t, options, testLogger)
-
-			if t.Failed() {
-				testLogger.Error(t, fmt.Sprintf("Scenario %s failed", scenario.name))
-			} else {
-				testLogger.PASS(t, fmt.Sprintf("Scenario %s passed", scenario.name))
-			}
-		})
-	}
-}
-
-// TestObservabilityAtrackerCosAndCloudLogs provisions LSF clusters with different Atracker targets
-// (COS and Cloud Logs) and validates basic observability integration.
-//
-// Each scenario disables logging and monitoring features while testing Atracker routing separately.
-// This ensures that Atracker configurations function correctly, even when other observability
-// options are turned off.
-//
-// Scenarios:
-// - Atracker targeting COS
-// - Atracker targeting Cloud Logs
-//
-// Note: Atracker route target capacity is limited to 1 per region. These test cases are run in parallel
-// to validate coexistence across configurations within that constraint.
-
-func TestObservabilityAtrackerWithCosAndCloudLogs(t *testing.T) {
+// This test ensures compatibility and correctness of observability features across configurations.
+// Note: Atracker target route capacity is limited to 1 per region; test cases have been combined.
+func TestObservabilityAtrackerScenarios(t *testing.T) {
 	t.Parallel()
 
 	setupTestSuite(t)
@@ -1354,14 +1229,24 @@ func TestObservabilityAtrackerWithCosAndCloudLogs(t *testing.T) {
 			validationFunc:      lsf.ValidateBasicClusterConfigurationWithCloudAtracker,
 		},
 		{
-			name:                "Atracker_CloudLogs_Only",
-			logsForManagement:   false,
-			logsForCompute:      false,
+			name:                "Logs_Monitoring_Atracker_COS",
+			logsForManagement:   true,
+			logsForCompute:      true,
 			platformLogs:        false,
-			monitoring:          false,
-			monitoringOnCompute: false,
+			monitoring:          true,
+			monitoringOnCompute: true,
+			atrackerTargetType:  "cos",
+			validationFunc:      lsf.ValidateBasicObservabilityClusterConfiguration,
+		},
+		{
+			name:                "Logs_Monitoring_Atracker_CloudLogs",
+			logsForManagement:   true,
+			logsForCompute:      true,
+			platformLogs:        true,
+			monitoring:          true,
+			monitoringOnCompute: true,
 			atrackerTargetType:  "cloudlogs",
-			validationFunc:      lsf.ValidateBasicClusterConfigurationWithCloudAtracker,
+			validationFunc:      lsf.ValidateBasicObservabilityClusterConfiguration,
 		},
 	}
 
@@ -1370,6 +1255,7 @@ func TestObservabilityAtrackerWithCosAndCloudLogs(t *testing.T) {
 
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()
+
 			testLogger.Info(t, fmt.Sprintf("Scenario %s started", scenario.name))
 
 			clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
@@ -1386,7 +1272,7 @@ func TestObservabilityAtrackerWithCosAndCloudLogs(t *testing.T) {
 			options.TerraformVars["observability_monitoring_plan"] = "graduated-tier"
 			options.TerraformVars["observability_atracker_enable"] = true
 			options.TerraformVars["observability_atracker_target_type"] = scenario.atrackerTargetType
-			options.TerraformVars["zones"] = utils.SplitAndTrim(envVars.AttrackerTestZone, ",")
+
 			options.SkipTestTearDown = true
 			defer options.TestTearDown()
 
@@ -1453,7 +1339,7 @@ func TestRunInUsEastRegion(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting US East region cluster deployment")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -1519,7 +1405,7 @@ func TestRunInEuDeRegion(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting EU-DE region cluster deployment")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -1585,7 +1471,7 @@ func TestRunInUSSouthRegion(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting US South region cluster deployment")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -1651,7 +1537,7 @@ func TestRunInJPTokyoRegion(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting Japan Tokyo region cluster deployment")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -1672,6 +1558,313 @@ func TestRunInJPTokyoRegion(t *testing.T) {
 	}
 }
 
+// ******************* Existing VPC ***************************
+
+// TestRunCreateVpc as brand new
+func TestRunCreateVpc(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Set up the test suite and prepare the testing environment
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Brand new VPC creation initiated for "+t.Name())
+
+	// Generate Unique Cluster Prefix
+	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
+
+	// Get and validate environment variables
+	envVars, err := GetEnvVars()
+	require.NoError(t, err, "Failed to get environment variables")
+
+	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
+	options, err := setupOptionsVPC(t, clusterNamePrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroup)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	// Run the test
+	testLogger.Info(t, "Starting TestRunCreateVpc  deployment")
+
+	output, err := options.RunTest()
+	require.NoError(t, err, "Error running consistency test: %v", err)
+	require.NotNil(t, output, "Expected non-nil output, but got nil")
+
+	outputs := (options.LastTestTerraformOutputs)
+	vpcName := outputs["vpc_name"].(string)
+
+	bastionsubnetId, computesubnetIds := utils.GetSubnetIds(outputs)
+
+	RunExistingVpcCidr(t, vpcName)
+	RunExistingVpcSubnetIdCustomNullDnsNull(t, vpcName, bastionsubnetId, computesubnetIds)
+}
+
+// RunExistingVpcCidr with Cidr blocks
+func RunExistingVpcCidr(t *testing.T, vpcName string) {
+	fmt.Println("********* Started Executing RunExistingVpcCidr ********* ")
+	// Set up the test suite and prepare the testing environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate Unique Cluster Prefix
+	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
+
+	// Static values for CIDR other than default CIDR
+	// vpcClusterPrivateSubnetsCidrBlocks := "10.241.8.0/24"
+	// vpcClusterLoginPrivateSubnetsCidrBlocks := "10.241.16.16/28"
+	vpcClusterPrivateSubnetsCidrBlocks := "10.241.32.0/24"
+	vpcClusterLoginPrivateSubnetsCidrBlocks := "10.241.16.32/28"
+
+	// Get and validate environment variables
+	envVars, err := GetEnvVars()
+	require.NoError(t, err, "Failed to get environment variables")
+
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
+	options.TerraformVars["vpc_name"] = vpcName
+	options.TerraformVars["vpc_cluster_private_subnets_cidr_blocks"] = vpcClusterPrivateSubnetsCidrBlocks
+	options.TerraformVars["vpc_cluster_login_private_subnets_cidr_blocks"] = vpcClusterLoginPrivateSubnetsCidrBlocks
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	// Cluster Deployment
+	deploymentStart := time.Now()
+	testLogger.Info(t, "Starting deployment: RunExistingVpcCidr")
+
+	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
+	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
+	testLogger.Info(t, fmt.Sprintf("Cluster deployment completed (duration: %v)", time.Since(deploymentStart)))
+
+	lsf.ValidateClusterConfiguration(t, options, testLogger)
+	fmt.Println("********* Ended Executing RunExistingVpcCidr ********* ")
+	testLogger.Info(t, "Finished execution: RunExistingVpcCidr")
+}
+
+// RunExistingVpcSubnetIdCustomNullDnsNull with compute and login subnet id. Both custom_resolver and dns_instace null
+func RunExistingVpcSubnetIdCustomNullDnsNull(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string) {
+	fmt.Println("********* Started Executing RunExistingVpcSubnetIdCustomNullDnsNull ********* ")
+	// Set up the test suite and prepare the testing environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate Unique Cluster Prefix
+	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
+
+	// Get and validate environment variables
+	envVars, err := GetEnvVars()
+	require.NoError(t, err, "Failed to get environment variables")
+
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
+	options.TerraformVars["vpc_name"] = vpcName
+	options.TerraformVars["login_subnet_id"] = bastionsubnetId
+	options.TerraformVars["cluster_subnet_id"] = computesubnetIds
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	// Cluster Deployment
+	deploymentStart := time.Now()
+	testLogger.Info(t, "Starting deployment: RunExistingVpcSubnetIdCustomNullDnsNull")
+
+	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
+	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
+	testLogger.Info(t, fmt.Sprintf("Cluster deployment completed (duration: %v)", time.Since(deploymentStart)))
+
+	lsf.ValidateClusterConfiguration(t, options, testLogger)
+	fmt.Println("********* Ended Executing RunExistingVpcSubnetIdCustomNullDnsNull ********* ")
+	testLogger.Info(t, "Finished execution: RunExistingVpcSubnetIdCustomNullDnsNull")
+}
+
+// TestRunCreateVpcWithCustomDns brand new VPC with DNS
+func TestRunVpcWithCustomDns(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Set up the test suite and prepare the testing environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate Unique Cluster Prefix
+	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
+
+	// Get and validate environment variables
+	envVars, err := GetEnvVars()
+	require.NoError(t, err, "Failed to get environment variables")
+
+	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
+	options, err := setupOptionsVPC(t, clusterNamePrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroup)
+	options.TerraformVars["enable_hub"] = true
+	options.TerraformVars["dns_zone_name"] = "lsf.com"
+
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	// Run the test
+	testLogger.Info(t, "Starting TestRunVpcWithCustomDns deployment")
+	output, err := options.RunTest()
+	require.NoError(t, err, "Error running consistency test: %v", err)
+	require.NotNil(t, output, "Expected non-nil output, but got nil")
+
+	outputs := (options.LastTestTerraformOutputs)
+	vpcName := outputs["vpc_name"].(string)
+	instanceId, customResolverId := utils.GetDnsCustomResolverIds(outputs)
+	bastionsubnetId, computesubnetIds := utils.GetSubnetIds(outputs)
+
+	RunHpcExistingVpcBothCustomDnsExist(t, vpcName, bastionsubnetId, computesubnetIds, instanceId, customResolverId)
+	RunHpcExistingVpcCustomExistDnsNull(t, vpcName, bastionsubnetId, computesubnetIds, customResolverId)
+	RunHpcExistingVpcCustomNullDnsExist(t, instanceId)
+}
+
+// RunHpcExistingVpcCustomDns with existing custom_resolver_id and dns_instance_id
+func RunHpcExistingVpcBothCustomDnsExist(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string, instanceId string, customResolverId string) {
+	fmt.Println("********* Started Executing RunHpcExistingVpcBothCustomDnsExist ********* ")
+	// Set up the test suite and prepare the testing environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate Unique Cluster Prefix
+	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
+
+	// Get and validate environment variables
+	envVars, err := GetEnvVars()
+	require.NoError(t, err, "Failed to get environment variables")
+
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
+	options.TerraformVars["vpc_name"] = vpcName
+	options.TerraformVars["login_subnet_id"] = bastionsubnetId
+	options.TerraformVars["cluster_subnet_id"] = computesubnetIds
+	options.TerraformVars["dns_instance_id"] = instanceId
+	options.TerraformVars["dns_custom_resolver_id"] = customResolverId
+
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	// Cluster Deployment
+	deploymentStart := time.Now()
+	testLogger.Info(t, "Starting deployment: RunHpcExistingVpcBothCustomDnsExist")
+
+	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
+	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
+	testLogger.Info(t, fmt.Sprintf("Cluster deployment completed (duration: %v)", time.Since(deploymentStart)))
+
+	lsf.ValidateClusterConfiguration(t, options, testLogger)
+	fmt.Println("********* Ended Executing RunHpcExistingVpcBothCustomDnsExist ********* ")
+	testLogger.Info(t, "Finished execution: RunHpcExistingVpcBothCustomDnsExist")
+
+}
+
+// RunHpcExistingVpcCustomExistDnsNull with existing custom_resolver_id and new dns_instance_id
+func RunHpcExistingVpcCustomExistDnsNull(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string, customResolverId string) {
+	fmt.Println("********* Started Executing RunHpcExistingVpcCustomExistDnsNull ********* ")
+	// Set up the test suite and prepare the testing environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate Unique Cluster Prefix
+	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
+
+	// Get and validate environment variables
+	envVars, err := GetEnvVars()
+	require.NoError(t, err, "Failed to get environment variables")
+
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
+	options.TerraformVars["vpc_name"] = vpcName
+	options.TerraformVars["login_subnet_id"] = bastionsubnetId
+	options.TerraformVars["cluster_subnet_id"] = computesubnetIds
+	options.TerraformVars["dns_custom_resolver_id"] = customResolverId
+
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	// Cluster Deployment
+	deploymentStart := time.Now()
+	testLogger.Info(t, "Starting deployment: RunHpcExistingVpcCustomExistDnsNull")
+
+	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
+	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
+	testLogger.Info(t, fmt.Sprintf("Cluster deployment completed (duration: %v)", time.Since(deploymentStart)))
+
+	lsf.ValidateClusterConfiguration(t, options, testLogger)
+	fmt.Println("********* Ended Executing RunHpcExistingVpcCustomExistDnsNull ********* ")
+	testLogger.Info(t, "Finished execution: RunHpcExistingVpcCustomExistDnsNull")
+}
+
+// RunHpcExistingVpcCustomNullDnsExist with custom_resolver_id null and existing dns_instance_id
+func RunHpcExistingVpcCustomNullDnsExist(t *testing.T, instanceId string) {
+	fmt.Println("********* Started Executing RunHpcExistingVpcCustomNullDnsExist ********* ")
+	// Set up the test suite and prepare the testing environment
+	setupTestSuite(t)
+
+	// Log the initiation of the cluster creation process
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	// Generate Unique Cluster Prefix
+	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
+
+	// Get and validate environment variables
+	envVars, err := GetEnvVars()
+	require.NoError(t, err, "Failed to get environment variables")
+
+	// Set up the test options with the relevant parameters, including environment variables and resource group
+	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
+	options.TerraformVars["dns_instance_id"] = instanceId
+
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	// Skip test teardown for further inspection
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	// Cluster Deployment
+	deploymentStart := time.Now()
+	testLogger.Info(t, "Starting deployment: RunHpcExistingVpcCustomNullDnsExist")
+
+	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
+	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
+	testLogger.Info(t, fmt.Sprintf("Cluster deployment completed (duration: %v)", time.Since(deploymentStart)))
+
+	lsf.ValidateClusterConfiguration(t, options, testLogger)
+	fmt.Println("********* Ended Executing RunHpcExistingVpcCustomNullDnsExist ********* ")
+	testLogger.Info(t, "Finished execution: RunHpcExistingVpcCustomNullDnsExist")
+}
+
+// ******************* Existing VPC ***************************
 // TestRunCIDRsAsNonDefault validates that a cluster can be deployed using non-default
 // VPC and subnet CIDR blocks, ensuring isolation and custom networking flexibility.
 func TestRunCIDRsAsNonDefault(t *testing.T) {
@@ -1705,7 +1898,7 @@ func TestRunCIDRsAsNonDefault(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting CIDRs As Non Default deployment")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -1758,7 +1951,7 @@ func TestRunMultipleSSHKeys(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting multiple SSH keys cluster deployment")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -1805,26 +1998,28 @@ func TestRunMultiProfileStaticAndDynamic(t *testing.T) {
 		{
 			"profile": "bx2d-16x64",
 			"count":   1,
-			"image":   envVars.ManagementInstancesImage,
+			"image":   "hpc-lsf-fp14-rhel810-v1",
 		},
 		{
 			"profile": "bx2-2x8",
 			"count":   1,
-			"image":   envVars.ManagementInstancesImage,
+			"image":   "hpc-lsf-fp14-rhel810-v1",
 		},
 	}
 
 	// Define multiple static compute instances
 	options.TerraformVars["static_compute_instances"] = []map[string]interface{}{
 		{
-			"profile": "bx2d-4x16",
-			"count":   1,
-			"image":   envVars.StaticComputeInstancesImage,
+			"profile":    "bx2d-4x16",
+			"count":      1,
+			"image":      envVars.StaticComputeInstancesImage,
+			"filesystem": "/gpfs/fs1",
 		},
 		{
-			"profile": "bx2-2x8",
-			"count":   2,
-			"image":   envVars.StaticComputeInstancesImage,
+			"profile":    "bx2-2x8",
+			"count":      2,
+			"image":      envVars.StaticComputeInstancesImage,
+			"filesystem": "/gpfs/fs1",
 		},
 	}
 
@@ -1843,7 +2038,7 @@ func TestRunMultiProfileStaticAndDynamic(t *testing.T) {
 
 	// Cluster Deployment
 	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+	testLogger.Info(t, "Starting cluster deployment with multi-profile static and dynamic nodes")
 
 	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
 	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
@@ -1862,372 +2057,3 @@ func TestRunMultiProfileStaticAndDynamic(t *testing.T) {
 		testLogger.PASS(t, fmt.Sprintf("Test %s completed successfully", t.Name()))
 	}
 }
-
-// ******************* Existing VPC ***************************
-
-// TestRunCreateClusterWithExistingVPC as brand new
-func TestRunCreateClusterWithExistingVPC(t *testing.T) {
-	// Parallelize the test to run concurrently with others
-	t.Parallel()
-
-	// Set up the test suite and prepare the testing environment
-	setupTestSuite(t)
-
-	testLogger.Info(t, "Brand new VPC creation initiated for "+t.Name())
-
-	// Generate Unique Cluster Prefix
-	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
-
-	// Get and validate environment variables
-	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to get environment variables")
-
-	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
-	options, err := setupOptionsVPC(t, clusterNamePrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroup)
-	require.NoError(t, err, "Error setting up test options: %v", err)
-
-	// Skip test teardown for further inspection
-	options.SkipTestTearDown = true
-	defer options.TestTearDown()
-
-	// Cluster Deployment
-	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
-	output, err := options.RunTest()
-	require.NoError(t, err, "Error running consistency test: %v", err)
-	require.NotNil(t, output, "Expected non-nil output, but got nil")
-	testLogger.Info(t, fmt.Sprintf("Cluster deployment completed (duration: %v)", time.Since(deploymentStart)))
-
-	outputs := (options.LastTestTerraformOutputs)
-	vpcName := outputs["vpc_name"].(string)
-
-	bastionsubnetId, computesubnetIds := utils.GetSubnetIds(outputs)
-
-	RunCreateClusterWithExistingVpcCIDRs(t, vpcName)
-	RunCreateClusterWithExistingVpcSubnetsNoDns(t, vpcName, bastionsubnetId, computesubnetIds)
-
-	// Test Result Evaluation
-	if t.Failed() {
-		testLogger.Error(t, fmt.Sprintf("Test %s failed - inspect validation logs", t.Name()))
-	} else {
-		testLogger.PASS(t, fmt.Sprintf("Test %s completed successfully", t.Name()))
-	}
-}
-
-// RunCreateClusterWithExistingVpcCIDRs with Cidr blocks
-func RunCreateClusterWithExistingVpcCIDRs(t *testing.T, vpcName string) {
-
-	// Set up the test suite and prepare the testing environment
-	setupTestSuite(t)
-
-	// Log the initiation of the cluster creation process
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Generate Unique Cluster Prefix
-	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
-
-	// Static values for CIDR other than default CIDR
-	vpcClusterPrivateSubnetsCidrBlocks := "10.241.32.0/24"
-	vpcClusterLoginPrivateSubnetsCidrBlocks := "10.241.16.32/28"
-
-	// Get and validate environment variables
-	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to get environment variables")
-
-	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	options.TerraformVars["vpc_name"] = vpcName
-	options.TerraformVars["vpc_cluster_private_subnets_cidr_blocks"] = vpcClusterPrivateSubnetsCidrBlocks
-	options.TerraformVars["vpc_cluster_login_private_subnets_cidr_blocks"] = vpcClusterLoginPrivateSubnetsCidrBlocks
-	require.NoError(t, err, "Error setting up test options: %v", err)
-
-	// Skip test teardown for further inspection
-	options.SkipTestTearDown = true
-	defer options.TestTearDown()
-
-	// Cluster Deployment
-	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
-
-	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
-	testLogger.Info(t, fmt.Sprintf("Cluster deployment completed (duration: %v)", time.Since(deploymentStart)))
-
-	lsf.ValidateClusterConfiguration(t, options, testLogger)
-
-	testLogger.Info(t, fmt.Sprintf("Finished execution: %s", t.Name()))
-}
-
-// RunCreateClusterWithExistingVpcSubnetsNoDns with compute and login subnet id. Both custom_resolver and dns_instace null
-func RunCreateClusterWithExistingVpcSubnetsNoDns(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string) {
-
-	// Set up the test suite and prepare the testing environment
-	setupTestSuite(t)
-
-	// Log the initiation of the cluster creation process
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Generate Unique Cluster Prefix
-	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
-
-	// Get and validate environment variables
-	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to get environment variables")
-
-	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	options.TerraformVars["vpc_name"] = vpcName
-	options.TerraformVars["login_subnet_id"] = bastionsubnetId
-	options.TerraformVars["cluster_subnet_id"] = computesubnetIds
-	require.NoError(t, err, "Error setting up test options: %v", err)
-
-	// Skip test teardown for further inspection
-	options.SkipTestTearDown = true
-	defer options.TestTearDown()
-
-	// Cluster Deployment
-	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
-
-	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
-	testLogger.Info(t, fmt.Sprintf("Cluster deployment completed (duration: %v)", time.Since(deploymentStart)))
-
-	lsf.ValidateClusterConfiguration(t, options, testLogger)
-	testLogger.Info(t, fmt.Sprintf("Finished execution: %s", t.Name()))
-}
-
-// TestRunCreateVpcWithCustomDns brand new VPC with DNS
-func TestRunCreateVpcWithCustomDns(t *testing.T) {
-	// Parallelize the test to run concurrently with others
-	t.Parallel()
-
-	// Set up the test suite and prepare the testing environment
-	setupTestSuite(t)
-
-	// Log the initiation of the cluster creation process
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Generate Unique Cluster Prefix
-	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
-
-	// Get and validate environment variables
-	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to get environment variables")
-
-	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
-	options, err := setupOptionsVPC(t, clusterNamePrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroup)
-	options.TerraformVars["enable_hub"] = true
-	options.TerraformVars["dns_zone_name"] = "lsf.com"
-
-	require.NoError(t, err, "Error setting up test options: %v", err)
-
-	// Skip test teardown for further inspection
-	options.SkipTestTearDown = true
-	defer options.TestTearDown()
-
-	// Cluster Deployment
-	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
-	output, err := options.RunTest()
-	require.NoError(t, err, "Error running consistency test: %v", err)
-	require.NotNil(t, output, "Expected non-nil output, but got nil")
-	testLogger.Info(t, fmt.Sprintf("Cluster deployment completed (duration: %v)", time.Since(deploymentStart)))
-
-	outputs := (options.LastTestTerraformOutputs)
-	vpcName := outputs["vpc_name"].(string)
-	instanceId, customResolverId := utils.GetDnsCustomResolverIds(outputs)
-	bastionsubnetId, computesubnetIds := utils.GetSubnetIds(outputs)
-
-	RunCreateClusterWithDnsAndResolver(t, vpcName, bastionsubnetId, computesubnetIds, instanceId, customResolverId)
-	RunCreateClusterWithOnlyResolver(t, vpcName, bastionsubnetId, computesubnetIds, customResolverId)
-
-	// Test Result Evaluation
-	if t.Failed() {
-		testLogger.Error(t, fmt.Sprintf("Test %s failed - inspect validation logs", t.Name()))
-	} else {
-		testLogger.PASS(t, fmt.Sprintf("Test %s completed successfully", t.Name()))
-	}
-}
-
-// RunCreateClusterWithDnsAndResolver with existing custom_resolver_id and dns_instance_id
-func RunCreateClusterWithDnsAndResolver(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string, instanceId string, customResolverId string) {
-
-	// Set up the test suite and prepare the testing environment
-	setupTestSuite(t)
-
-	// Log the initiation of the cluster creation process
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Generate Unique Cluster Prefix
-	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
-
-	// Get and validate environment variables
-	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to get environment variables")
-
-	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	options.TerraformVars["vpc_name"] = vpcName
-	options.TerraformVars["login_subnet_id"] = bastionsubnetId
-	options.TerraformVars["cluster_subnet_id"] = computesubnetIds
-	options.TerraformVars["dns_instance_id"] = instanceId
-	options.TerraformVars["dns_custom_resolver_id"] = customResolverId
-
-	require.NoError(t, err, "Error setting up test options: %v", err)
-
-	// Skip test teardown for further inspection
-	options.SkipTestTearDown = true
-	defer options.TestTearDown()
-
-	// Cluster Deployment
-	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
-
-	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
-	testLogger.Info(t, fmt.Sprintf("Cluster deployment completed (duration: %v)", time.Since(deploymentStart)))
-
-	lsf.ValidateClusterConfiguration(t, options, testLogger)
-	testLogger.Info(t, fmt.Sprintf("Finished execution: %s", t.Name()))
-
-}
-
-// RunCreateClusterWithOnlyResolver with existing custom_resolver_id and new dns_instance_id
-func RunCreateClusterWithOnlyResolver(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string, customResolverId string) {
-
-	// Set up the test suite and prepare the testing environment
-	setupTestSuite(t)
-
-	// Log the initiation of the cluster creation process
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Generate Unique Cluster Prefix
-	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
-
-	// Get and validate environment variables
-	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to get environment variables")
-
-	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	options.TerraformVars["vpc_name"] = vpcName
-	options.TerraformVars["login_subnet_id"] = bastionsubnetId
-	options.TerraformVars["cluster_subnet_id"] = computesubnetIds
-	options.TerraformVars["dns_custom_resolver_id"] = customResolverId
-
-	require.NoError(t, err, "Error setting up test options: %v", err)
-
-	// Skip test teardown for further inspection
-	options.SkipTestTearDown = true
-	defer options.TestTearDown()
-
-	// Cluster Deployment
-	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
-
-	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
-	testLogger.Info(t, fmt.Sprintf("Cluster deployment completed (duration: %v)", time.Since(deploymentStart)))
-
-	lsf.ValidateClusterConfiguration(t, options, testLogger)
-	testLogger.Info(t, fmt.Sprintf("Finished execution: %s", t.Name()))
-}
-
-// TestRunCreateVpcWithCustomDnsOnlyDNS creates a new VPC and uses custom DNS (DNS-only scenario)
-func TestRunCreateVpcWithCustomDnsOnlyDNS(t *testing.T) {
-	// Parallelize the test to run concurrently with others
-	t.Parallel()
-
-	// Set up the test suite and prepare the testing environment
-	setupTestSuite(t)
-
-	// Log the initiation of the cluster creation process
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Generate Unique Cluster Prefix
-	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
-
-	// Get and validate environment variables
-	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to get environment variables")
-
-	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
-	options, err := setupOptionsVPC(t, clusterNamePrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroup)
-	options.TerraformVars["enable_hub"] = true
-	options.TerraformVars["dns_zone_name"] = "lsf.com"
-
-	require.NoError(t, err, "Error setting up test options: %v", err)
-
-	// Skip test teardown for further inspection
-	options.SkipTestTearDown = true
-	defer options.TestTearDown()
-
-	// Cluster Deployment
-	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
-	output, err := options.RunTest()
-	require.NoError(t, err, "Error running consistency test: %v", err)
-	require.NotNil(t, output, "Expected non-nil output, but got nil")
-	testLogger.Info(t, fmt.Sprintf("Cluster deployment completed (duration: %v)", time.Since(deploymentStart)))
-
-	outputs := (options.LastTestTerraformOutputs)
-	instanceId, _ := utils.GetDnsCustomResolverIds(outputs)
-
-	RunCreateClusterWithOnlyDns(t, instanceId)
-
-	// Test Result Evaluation
-	if t.Failed() {
-		testLogger.Error(t, fmt.Sprintf("Test %s failed - inspect validation logs", t.Name()))
-	} else {
-		testLogger.PASS(t, fmt.Sprintf("Test %s completed successfully", t.Name()))
-	}
-}
-
-// RunCreateClusterWithOnlyDns creates a cluster using existing DNS instance (custom_resolver_id = null)
-func RunCreateClusterWithOnlyDns(t *testing.T, instanceId string) {
-
-	// Set up the test suite and prepare the testing environment
-	setupTestSuite(t)
-
-	// Log the initiation of the cluster creation process
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Generate Unique Cluster Prefix
-	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
-
-	// Get and validate environment variables
-	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to get environment variables")
-
-	// Set up the test options with the relevant parameters, including environment variables and resource group
-	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	options.TerraformVars["dns_instance_id"] = instanceId
-
-	require.NoError(t, err, "Error setting up test options: %v", err)
-
-	// Skip test teardown for further inspection
-	options.SkipTestTearDown = true
-	defer options.TestTearDown()
-
-	// Cluster Deployment
-	deploymentStart := time.Now()
-	testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
-
-	clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-	require.NoError(t, clusterCreationErr, "Cluster creation validation failed")
-	testLogger.Info(t, fmt.Sprintf("Cluster deployment completed (duration: %v)", time.Since(deploymentStart)))
-
-	lsf.ValidateClusterConfiguration(t, options, testLogger)
-	testLogger.Info(t, fmt.Sprintf("Finished execution: %s", t.Name()))
-}
-
-// ******************* Existing VPC ***************************

@@ -14,6 +14,3 @@
 
 # Disable Hyperthreading
 - import_tasks: hyperthreading.yml
-
-# Disable Ansible repo
-- import_tasks: disable_ansible_repo.yml

@@ -56,6 +56,10 @@ locals {
     observability_logs_retention_period              = var.observability_logs_retention_period
     observability_monitoring_on_compute_nodes_enable = var.observability_monitoring_on_compute_nodes_enable
     observability_monitoring_plan                    = var.observability_monitoring_plan
+    scc_enable                                       = var.scc_enable
+    scc_profile                                      = var.scc_profile
+    scc_location                                     = var.scc_location
+    scc_event_notification_plan                      = var.scc_event_notification_plan
     skip_flowlogs_s2s_auth_policy                    = var.skip_flowlogs_s2s_auth_policy
     skip_iam_block_storage_authorization_policy      = var.skip_iam_block_storage_authorization_policy
     skip_kms_s2s_auth_policy                         = var.skip_kms_s2s_auth_policy
@@ -78,10 +82,7 @@ locals {
     existing_bastion_ssh_private_key                 = var.existing_bastion_ssh_private_key
     login_instance                                   = var.login_instance
     vpn_enabled                                      = var.vpn_enabled
-    sccwp_service_plan                               = var.sccwp_service_plan
-    sccwp_enable                                     = var.sccwp_enable
-    cspm_enabled                                     = var.cspm_enabled
-    app_config_plan                                  = var.app_config_plan
+    github_token                                     = var.github_token # Delete this variable before pushing to the public repository.
 
   }
 }
@@ -127,6 +128,10 @@ locals {
     observability_logs_retention_period              = lookup(local.override[local.override_type], "observability_logs_retention_period", local.config.observability_logs_retention_period)
     observability_monitoring_on_compute_nodes_enable = lookup(local.override[local.override_type], "observability_monitoring_on_compute_nodes_enable", local.config.observability_monitoring_on_compute_nodes_enable)
     observability_monitoring_plan                    = lookup(local.override[local.override_type], "observability_monitoring_plan", local.config.observability_monitoring_plan)
+    scc_enable                                       = lookup(local.override[local.override_type], "scc_enable", local.config.scc_enable)
+    scc_profile                                      = lookup(local.override[local.override_type], "scc_profile", local.config.scc_profile)
+    scc_location                                     = lookup(local.override[local.override_type], "scc_location", local.config.scc_location)
+    scc_event_notification_plan                      = lookup(local.override[local.override_type], "scc_event_notification_plan", local.config.scc_event_notification_plan)
     skip_flowlogs_s2s_auth_policy                    = lookup(local.override[local.override_type], "skip_flowlogs_s2s_auth_policy", local.config.skip_flowlogs_s2s_auth_policy)
     skip_iam_block_storage_authorization_policy      = lookup(local.override[local.override_type], "skip_iam_block_storage_authorization_policy", local.config.skip_iam_block_storage_authorization_policy)
     skip_kms_s2s_auth_policy                         = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
@@ -149,12 +154,10 @@ locals {
     existing_bastion_security_group_id               = lookup(local.override[local.override_type], "existing_bastion_security_group_id", local.config.existing_bastion_security_group_id)
     existing_bastion_ssh_private_key                 = lookup(local.override[local.override_type], "existing_bastion_ssh_private_key", local.config.existing_bastion_ssh_private_key)
     login_instance                                   = lookup(local.override[local.override_type], "login_instance", local.config.login_instance)
-    sccwp_enable                                     = lookup(local.override[local.override_type], "scc_wp_enable", local.config.sccwp_enable)
-    cspm_enable                                      = lookup(local.override[local.override_type], "cspm_enable", local.config.cspm_enabled)
-    sccwp_service_plan                               = lookup(local.override[local.override_type], "scc_wp_service_plan", local.config.sccwp_service_plan)
-    app_config_plan                                  = lookup(local.override[local.override_type], "app_config_plan", local.config.app_config_plan)
     # client_instances                                 = lookup(local.override[local.override_type], "client_instances", local.config.client_instances)
     # client_subnets_cidr                              = lookup(local.override[local.override_type], "client_subnets_cidr", local.config.client_subnets_cidr)
+
+    github_token = lookup(local.override[local.override_type], "github_token", local.config.github_token) # Delete this variable before pushing to the public repository.
   }
 }
 locals {

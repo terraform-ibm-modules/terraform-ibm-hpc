@@ -2,6 +2,7 @@ package tests
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	lsf "github.com/terraform-ibm-modules/terraform-ibm-hpc/lsf"
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/utilities"
 )
 
@@ -31,24 +33,12 @@ func getTerraformDirPath(t *testing.T) string {
 	return strings.ReplaceAll(absPath, testPathPrefix, "")
 }
 
-// getBaseVars returns common variables for tests
-func getBaseVars(t *testing.T) map[string]interface{} {
-	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to get environment variables")
-	return map[string]interface{}{
-		"cluster_prefix":          utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString()),
-		"ssh_keys":                utils.SplitAndTrim(envVars.SSHKeys, ","),
-		"zones":                   utils.SplitAndTrim(envVars.Zones, ","),
-		"remote_allowed_ips":      utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
-		"app_center_gui_password": APP_CENTER_GUI_PASSWORD, // pragma: allowlist secret
-	}
-}
-
-// TestInvalidRunLSFWithoutMandatory tests Terraform's behavior when mandatory variables are missing
-func TestInvalidRunLSFWithoutMandatory(t *testing.T) {
+// TestRunLSFWithoutMandatory tests Terraform's behavior when mandatory variables are missing
+func TestRunLSFWithoutMandatory(t *testing.T) {
 	t.Parallel()
 
 	setupTestSuite(t)
+
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
 	terraformDirPath := getTerraformDirPath(t)
@@ -61,527 +51,88 @@ func TestInvalidRunLSFWithoutMandatory(t *testing.T) {
 	UpgradeTerraformOnce(t, terraformOptions)
 
 	_, err := terraform.PlanE(t, terraformOptions)
-	require.Error(t, err, "Expected an error during plan")
+	if err != nil {
+		validationPassed :=
+			utils.VerifyDataContains(t, err.Error(), "remote_allowed_ips", testLogger)
 
-	validationPassed := utils.VerifyDataContains(t, err.Error(), "remote_allowed_ips", testLogger)
-	assert.True(t, validationPassed, "Should fail with missing mandatory variables")
-	testLogger.LogValidationResult(t, validationPassed, "Missing mandatory variables validation")
-}
-
-// TestInvalidEmptyIbmcloudApiKey validates cluster creation with empty IBM Cloud API key
-func TestInvalidEmptyIbmcloudApiKey(t *testing.T) {
-	t.Parallel()
-
-	setupTestSuite(t)
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Get base Terraform variables
-	terraformVars := getBaseVars(t)
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-	terraformVars["ibmcloud_api_key"] = "" // Empty API key //pragma: allowlist secret
-
-	terraformDirPath := getTerraformDirPath(t)
-	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir: terraformDirPath,
-		Vars:         terraformVars,
-	})
-
-	UpgradeTerraformOnce(t, terraformOptions)
-	_, err := terraform.PlanE(t, terraformOptions)
-
-	require.Error(t, err, "Expected an error during plan")
-	validationPassed := utils.VerifyDataContains(t, err.Error(), "The API key for IBM Cloud must be set", testLogger)
-	assert.True(t, validationPassed, "Should fail with empty API key error")
-	testLogger.LogValidationResult(t, validationPassed, "Empty IBM Cloud API key validation")
-}
-
-// TestInvalidLsfVersion validates cluster creation with invalid LSF version
-func TestInvalidLsfVersion(t *testing.T) {
-	t.Parallel()
-
-	setupTestSuite(t)
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Get base Terraform variables
-	terraformVars := getBaseVars(t)
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-	terraformVars["lsf_version"] = "invalid_version" // Invalid LSF version
-
-	terraformDirPath := getTerraformDirPath(t)
-	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir: terraformDirPath,
-		Vars:         terraformVars,
-	})
-
-	UpgradeTerraformOnce(t, terraformOptions)
-	_, err := terraform.PlanE(t, terraformOptions)
-
-	require.Error(t, err, "Expected an error during plan")
-	validationPassed := utils.VerifyDataContains(t, err.Error(), "Invalid LSF version. Allowed values are 'fixpack_14' and 'fixpack_15'", testLogger)
-	assert.True(t, validationPassed, "Should fail with invalid LSF version error")
-	testLogger.LogValidationResult(t, validationPassed, "Invalid LSF version validation")
-}
-
-// TestInvalidAppCenterPassword validates cluster creation with invalid App Center password
-func TestInvalidAppCenterPassword(t *testing.T) {
-	t.Parallel()
-
-	invalidPasswords := []string{
-		"weak",                          // Too short
-		"PasswoRD123",                   // Contains dictionary word // pragma: allowlist secret
-		"password123",                   // All lowercase            // pragma: allowlist secret
-		"Password@",                     // Missing numbers          // pragma: allowlist secret
-		"Password123",                   // Common password pattern   // pragma: allowlist secret
-		"password@12345678901234567890", // Too long                   // pragma: allowlist secret
-		"ValidPass123\\",                //Backslash not in allowed special chars  // pragma: allowlist secret
-		"Pass word@1",                   //Contains space       // pragma: allowlist secret
-	}
-
-	setupTestSuite(t)
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	for _, password := range invalidPasswords { // pragma: allowlist secret
-		password := password                 // create local copy for parallel tests    // pragma: allowlist secret
-		t.Run(password, func(t *testing.T) { // pragma: allowlist secret
-			t.Parallel()
-
-			// Get base Terraform variables
-			terraformVars := getBaseVars(t)
-			testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-			terraformVars["app_center_gui_password"] = password // Invalid password    // pragma: allowlist secret
-
-			terraformDirPath := getTerraformDirPath(t)
-			terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-				TerraformDir: terraformDirPath,
-				Vars:         terraformVars,
-			})
-
-			UpgradeTerraformOnce(t, terraformOptions)
-			_, err := terraform.PlanE(t, terraformOptions)
-
-			require.Error(t, err, "Expected an error during plan")
-			validationPassed := utils.VerifyDataContains(t, err.Error(), "The password must be at least 8 characters long", testLogger) // pragma: allowlist secret
-			assert.True(t, validationPassed, "Should fail with invalid password error")                                                 // pragma: allowlist secret
-			testLogger.LogValidationResult(t, validationPassed, "Invalid App Center password validation")                               // pragma: allowlist secret
-		})
+		assert.True(t, validationPassed)
+	} else {
+		testLogger.FAIL(t, "Expected error did not occur on LSF without mandatory")
+		t.Error("Expected error did not occur")
 	}
 }
 
-// TestInvalidMultipleZones validates cluster creation with multiple zones
-func TestInvalidMultipleZones(t *testing.T) {
+// TestRunInvalidSubnetCIDR validates cluster creation with invalid subnet CIDR ranges
+func TestRunInvalidSubnetCIDR(t *testing.T) {
 	t.Parallel()
 
 	setupTestSuite(t)
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// Get base Terraform variables
-	terraformVars := getBaseVars(t)
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-	terraformVars["zones"] = []string{"us-east-1", "us-east-2"} // Multiple zones
-
-	terraformDirPath := getTerraformDirPath(t)
-	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir: terraformDirPath,
-		Vars:         terraformVars,
-	})
-
-	UpgradeTerraformOnce(t, terraformOptions)
-	_, err := terraform.PlanE(t, terraformOptions)
-
-	require.Error(t, err, "Expected an error during plan")
-	validationPassed := utils.VerifyDataContains(t, err.Error(), "HPC product deployment supports only a single zone", testLogger)
-	assert.True(t, validationPassed, "Should fail with multiple zones error")
-	testLogger.LogValidationResult(t, validationPassed, "Multiple zones validation")
-}
-
-// TestInvalidClusterPrefix validates cluster creation with invalid cluster prefix
-func TestInvalidClusterPrefix(t *testing.T) {
-	t.Parallel()
-
-	setupTestSuite(t)
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Get base Terraform variables
-	terraformVars := getBaseVars(t)
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-	terraformVars["cluster_prefix"] = "--invalid-prefix--" // Invalid prefix
-
-	terraformDirPath := getTerraformDirPath(t)
-	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir: terraformDirPath,
-		Vars:         terraformVars,
-	})
-
-	UpgradeTerraformOnce(t, terraformOptions)
-	_, err := terraform.PlanE(t, terraformOptions)
-
-	require.Error(t, err, "Expected an error during plan")
-	validationPassed := utils.VerifyDataContains(t, err.Error(), "Prefix must start with a lowercase letter", testLogger)
-	assert.True(t, validationPassed, "Should fail with invalid prefix error")
-	testLogger.LogValidationResult(t, validationPassed, "Invalid cluster prefix validation")
-}
-
-// TestInvalidResourceGroup validates cluster creation with null resource group
-func TestInvalidResourceGroup(t *testing.T) {
-	t.Parallel()
-
-	setupTestSuite(t)
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Get base Terraform variables
-	terraformVars := getBaseVars(t)
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-	terraformVars["existing_resource_group"] = "Invalid" // Invalid resource group
-
-	terraformDirPath := getTerraformDirPath(t)
-	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir: terraformDirPath,
-		Vars:         terraformVars,
-	})
-
-	UpgradeTerraformOnce(t, terraformOptions)
-	_, err := terraform.PlanE(t, terraformOptions)
-
-	require.Error(t, err, "Expected an error during plan")
-	validationPassed := utils.VerifyDataContains(t, err.Error(), "Given Resource Group is not found in the account", testLogger)
-	assert.True(t, validationPassed, "Should fail with invalid resource group error")
-	testLogger.LogValidationResult(t, validationPassed, "Invalid resource group validation")
-}
-
-// TestInvalidLoginSubnet validates cluster creation with invalid subnet combination
-func TestInvalidLoginSubnet(t *testing.T) {
-	t.Parallel()
-
-	setupTestSuite(t)
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Get base Terraform variables
-	terraformVars := getBaseVars(t)
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-	terraformVars["login_subnet_id"] = "subnet-123" // Only providing login subnet
-
-	terraformDirPath := getTerraformDirPath(t)
-	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir: terraformDirPath,
-		Vars:         terraformVars,
-	})
-
-	UpgradeTerraformOnce(t, terraformOptions)
-	_, err := terraform.PlanE(t, terraformOptions)
-
-	require.Error(t, err, "Expected an error during plan")
-	validationPassed := utils.VerifyDataContains(t, err.Error(), "In case of existing subnets, provide both login_subnet_id and", testLogger)
-	assert.True(t, validationPassed, "Should fail with invalid subnet combination error")
-	testLogger.LogValidationResult(t, validationPassed, "Invalid subnet combination validation")
-}
-
-// TestInvalidDynamicComputeInstances validates cluster creation with multiple dynamic compute instances
-func TestInvalidDynamicComputeInstances(t *testing.T) {
-	t.Parallel()
-
-	setupTestSuite(t)
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Get base Terraform variables
-	terraformVars := getBaseVars(t)
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-	terraformVars["dynamic_compute_instances"] = []map[string]interface{}{
-		{
-			"profile": "bx2-4x16",
-			"count":   1024,
-			"image":   "hpc-lsf-fp15-compute-rhel810-v1",
-		},
-		{
-			"profile": "cx2-4x8",
-			"count":   1024,
-			"image":   "hpc-lsf-fp15-compute-rhel810-v1",
-		},
-	}
-
-	terraformDirPath := getTerraformDirPath(t)
-	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir: terraformDirPath,
-		Vars:         terraformVars,
-	})
-
-	UpgradeTerraformOnce(t, terraformOptions)
-	_, err := terraform.PlanE(t, terraformOptions)
-
-	require.Error(t, err, "Expected an error during plan")
-	validationPassed := utils.VerifyDataContains(t, err.Error(), "Only a single map (one instance profile) is allowed for dynamic compute", testLogger)
-	assert.True(t, validationPassed, "Should fail with multiple dynamic compute instances error")
-	testLogger.LogValidationResult(t, validationPassed, "Multiple dynamic compute instances validation")
-}
-
-// TestInvalidKmsKeyName validates cluster creation with KMS key name but no instance name
-func TestInvalidKmsKeyName(t *testing.T) {
-	t.Parallel()
-
-	setupTestSuite(t)
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Get base Terraform variables
-	terraformVars := getBaseVars(t)
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-	terraformVars["key_management"] = "key_protect"
-	terraformVars["kms_key_name"] = "my-key" // Key name without instance name
-
-	terraformDirPath := getTerraformDirPath(t)
-	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir: terraformDirPath,
-		Vars:         terraformVars,
-	})
-
-	UpgradeTerraformOnce(t, terraformOptions)
-	_, err := terraform.PlanE(t, terraformOptions)
-
-	require.Error(t, err, "Expected an error during plan")
-	validationPassed := utils.VerifyDataContains(t, err.Error(), "Please make sure you are passing the kms_instance_name", testLogger)
-	assert.True(t, validationPassed, "Should fail with missing KMS instance name error")
-	testLogger.LogValidationResult(t, validationPassed, "KMS key name without instance name validation")
-}
-
-// TestInvalidSshKeyFormat validates cluster creation with invalid SSH key format
-func TestInvalidSshKeyFormat(t *testing.T) {
-	t.Parallel()
-
-	setupTestSuite(t)
-	testLogger.Info(t, "Test: "+t.Name())
-
-	// Get base Terraform variables
-	terraformVars := getBaseVars(t)
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-	terraformVars["ssh_keys"] = []string{"invalid-key-with spaces"} // Invalid format
-
-	terraformDirPath := getTerraformDirPath(t)
-	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir: terraformDirPath,
-		Vars:         terraformVars,
-	})
-
-	UpgradeTerraformOnce(t, terraformOptions)
-	_, err := terraform.PlanE(t, terraformOptions)
-
-	require.Error(t, err, "Expected an error during plan")
-	assert.True(t,
-		strings.Contains(err.Error(), "Invalid SSH key") ||
-			strings.Contains(err.Error(), "No SSH Key found"),
-		"Error should be about SSH key validation. Got: %s", err.Error(),
-	)
-	testLogger.LogValidationResult(t, true, "Invalid SSH key format validation")
-}
-
-// TestInvalidZoneRegionCombination validates invalid zone/region combination
-func TestInvalidZoneRegionCombination(t *testing.T) {
-	t.Parallel()
-
-	setupTestSuite(t)
-	testLogger.Info(t, "Test: "+t.Name())
-
-	// Get base Terraform variables
-	terraformVars := getBaseVars(t)
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-	terraformVars["zones"] = []string{"eu-tok-1"} // Invalid for US region
-
-	terraformDirPath := getTerraformDirPath(t)
-	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir: terraformDirPath,
-		Vars:         terraformVars,
-	})
-
-	UpgradeTerraformOnce(t, terraformOptions)
-	_, err := terraform.PlanE(t, terraformOptions)
-
-	require.Error(t, err, "Expected an error during plan")
-	assert.True(t,
-		strings.Contains(err.Error(), "dial tcp: lookup eu-tok.iaas.cloud.ibm.com: no such host") ||
-			strings.Contains(err.Error(), "invalid zone"),
-		"Error should be about zone/region mismatch. Got: %s", err.Error(),
-	)
-	testLogger.LogValidationResult(t, true, "Invalid zone/region validation")
-}
-
-// TestExceedManagementNodeLimit validates exceeding management node limit
-func TestExceedManagementNodeLimit(t *testing.T) {
-	t.Parallel()
-
-	setupTestSuite(t)
-	testLogger.Info(t, "Test: "+t.Name())
-
-	// Get base Terraform variables
-	terraformVars := getBaseVars(t)
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-	terraformVars["management_instances"] = []map[string]interface{}{
-		{
-			"count":   11, // Exceeds limit of 10
-			"profile": "bx2-16x64",
-			"image":   "hpc-lsf-fp15-rhel810-v1",
-		},
-	}
-
-	terraformDirPath := getTerraformDirPath(t)
-	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir: terraformDirPath,
-		Vars:         terraformVars,
-	})
-
-	UpgradeTerraformOnce(t, terraformOptions)
-	_, err := terraform.PlanE(t, terraformOptions)
-
-	require.Error(t, err, "Expected an error during plan")
-	assert.True(t,
-		strings.Contains(err.Error(), "must not exceed") ||
-			strings.Contains(err.Error(), "limit of 10"),
-		"Error should be about management node limit. Got: %s", err.Error(),
-	)
-	testLogger.LogValidationResult(t, true, "Management node limit validation")
-}
-
-// TestInvalidFileShareConfiguration validates invalid file share config
-func TestInvalidFileShareConfiguration(t *testing.T) {
-	t.Parallel()
-
-	setupTestSuite(t)
-	testLogger.Info(t, "Test: "+t.Name())
-
-	// Get base Terraform variables
-	terraformVars := getBaseVars(t)
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-	terraformVars["custom_file_shares"] = []map[string]interface{}{
-		{
-			"mount_path": "/mnt/vpcstorage/tools",
-			"size":       5, // Below minimum 10GB
-			"iops":       2000,
-		},
-	}
-
-	terraformDirPath := getTerraformDirPath(t)
-	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir: terraformDirPath,
-		Vars:         terraformVars,
-	})
-
-	UpgradeTerraformOnce(t, terraformOptions)
-	_, err := terraform.PlanE(t, terraformOptions)
-
-	require.Error(t, err, "Expected an error during plan")
-	assert.True(t,
-		strings.Contains(err.Error(), "must be greater than or equal to 10"),
-		"Error should be about file share size. Got: %s", err.Error(),
-	)
-	testLogger.LogValidationResult(t, true, "File share size validation")
-}
-
-// TestInvalidDnsDomainName validates invalid DNS domain name
-func TestInvalidDnsDomainName(t *testing.T) {
-	t.Parallel()
-
-	setupTestSuite(t)
-	testLogger.Info(t, "Test: "+t.Name())
-
-	// Get base Terraform variables
-	terraformVars := getBaseVars(t)
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-	terraformVars["dns_domain_name"] = map[string]interface{}{
-		"compute": "invalid_domain", // Missing .com
-	}
-
-	terraformDirPath := getTerraformDirPath(t)
-	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir: terraformDirPath,
-		Vars:         terraformVars,
-	})
-
-	UpgradeTerraformOnce(t, terraformOptions)
-	_, err := terraform.PlanE(t, terraformOptions)
-
-	require.Error(t, err, "Expected an error during plan")
-	assert.True(t,
-		strings.Contains(err.Error(), "must be a valid FQDN"),
-		"Error should be about DNS domain format. Got: %s", err.Error(),
-	)
-	testLogger.LogValidationResult(t, true, "DNS domain validation")
-}
-
-// TestInvalidLdapServerIP validates cluster creation with invalid LDAP server IP
-func TestInvalidLdapServerIP(t *testing.T) {
-	t.Parallel()
-
-	setupTestSuite(t)
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Retrieve environment variables
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
 	envVars, err := GetEnvVars()
 	require.NoError(t, err, "Failed to get environment variables")
-	if strings.ToLower(envVars.EnableLdap) != "true" {
-		t.Skip("LDAP is not enabled. Set the 'enable_ldap' environment variable to 'true' to run this test.")
-	}
-
-	// Validate required LDAP credentials
-	if len(envVars.LdapAdminPassword) == 0 || len(envVars.LdapUserName) == 0 || len(envVars.LdapUserPassword) == 0 { // pragma: allowlist secret
-		t.Fatal("LDAP credentials are missing. Make sure LDAP admin password, LDAP user name, and LDAP user password are provided.")
-	}
-
-	// Get base Terraform variables
-
-	terraformVars := getBaseVars(t)
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-
-	// Set invalid LDAP server configuration
-	terraformVars["enable_ldap"] = true
-	terraformVars["ldap_server"] = "10.10.10.10" // Invalid IP
-	terraformVars["ldap_server_cert"] = "SampleTest"
-	terraformVars["ldap_admin_password"] = envVars.LdapAdminPassword // pragma: allowlist secret
 
 	terraformDirPath := getTerraformDirPath(t)
+
+	terraformVars := map[string]interface{}{
+		"cluster_prefix":     hpcClusterPrefix,
+		"ssh_keys":           utils.SplitAndTrim(envVars.SSHKeys, ","),
+		"zones":              utils.SplitAndTrim(envVars.Zones, ","),
+		"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+		"vpc_cluster_private_subnets_cidr_blocks": utils.SplitAndTrim(invalidSubnetCIDR1, ","),
+		// "bastion_subnets_cidr":            utils.SplitAndTrim(invalidSubnetCIDR1, ","),
+		// "client_subnets_cidr":             utils.SplitAndTrim(invalidSubnetCIDR2, ","),
+		// "compute_subnets_cidr":            utils.SplitAndTrim(invalidSubnetCIDR3, ","),
+		"scc_enable":                      false,
+		"observability_atracker_enable":   false,
+		"observability_monitoring_enable": false,
+	}
+
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: terraformDirPath,
 		Vars:         terraformVars,
 	})
 
 	UpgradeTerraformOnce(t, terraformOptions)
-	output, err := terraform.InitAndApplyE(t, terraformOptions)
+	_, err = terraform.InitAndApplyE(t, terraformOptions)
 
-	require.Error(t, err, "Expected an error during apply")
-	validationPassed := utils.VerifyDataContains(t, output, "Failed to connect to LDAP server at 10.10.10.10", testLogger)
-	assert.True(t, validationPassed, "Should fail with invalid LDAP server IP error")
-	testLogger.LogValidationResult(t, validationPassed, "Invalid LDAP server IP validation")
+	assert.Error(t, err, "Expected an error during apply")
+	if err != nil {
+		//const expectedError = "Key: 'SubnetTemplateOneOf.SubnetTemplate.CIDRBlock' Error:Field validation for 'CIDRBlock' failed on the 'validcidr' tag"
+		const expectedError = "\"ipv4_cidr_block\" must be a valid cidr address"
+		validationPassed := utils.VerifyDataContains(t, err.Error(), expectedError, testLogger)
+		assert.True(t, validationPassed)
+		testLogger.LogValidationResult(t, validationPassed, "Invalid Subnet CIDR range")
+	} else {
+		testLogger.FAIL(t, "Expected error did not occur on Invalid Subnet CIDR range")
+		t.Error("Expected error did not occur")
+	}
 
 	defer terraform.Destroy(t, terraformOptions)
 }
 
-// TestInvalidLdapServerCert validates cluster creation with invalid LDAP server certificate
-func TestInvalidLdapServerCert(t *testing.T) {
+// TestRunInvalidSshKeysAndRemoteAllowedIP validates cluster creation with invalid ssh keys and remote allowed IP
+func TestRunInvalidSshKeysAndRemoteAllowedIP(t *testing.T) {
 	t.Parallel()
 
 	setupTestSuite(t)
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// Retrieve environment variables
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
 	envVars, err := GetEnvVars()
 	require.NoError(t, err, "Failed to get environment variables")
 
-	if strings.ToLower(envVars.EnableLdap) != "true" {
-		t.Skip("LDAP is not enabled. Set the 'enable_ldap' environment variable to 'true' to run this test.")
-	}
-
-	// Validate required LDAP credentials
-	if len(envVars.LdapAdminPassword) == 0 || len(envVars.LdapUserName) == 0 || len(envVars.LdapUserPassword) == 0 { // pragma: allowlist secret
-		t.Fatal("LDAP credentials are missing. Make sure LDAP admin password, LDAP user name, and LDAP user password are provided.")
-	}
-
-	// Get base Terraform variables
-
-	terraformVars := getBaseVars(t)
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-
-	// Set invalid LDAP server certificate configuration
-	terraformVars["enable_ldap"] = true
-	terraformVars["ldap_server"] = "10.10.10.10"                     // Existing server
-	terraformVars["ldap_server_cert"] = ""                           // Missing certificate
-	terraformVars["ldap_admin_password"] = envVars.LdapAdminPassword // pragma: allowlist secret
-
 	terraformDirPath := getTerraformDirPath(t)
+
+	terraformVars := map[string]interface{}{
+		"cluster_prefix": hpcClusterPrefix,
+		"ssh_keys":       []string{""},
+		// "compute_ssh_keys": []string{""},
+		"zones":              utils.SplitAndTrim(envVars.Zones, ","),
+		"remote_allowed_ips": []string{""},
+	}
+
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: terraformDirPath,
 		Vars:         terraformVars,
@@ -590,609 +141,630 @@ func TestInvalidLdapServerCert(t *testing.T) {
 	UpgradeTerraformOnce(t, terraformOptions)
 	_, err = terraform.PlanE(t, terraformOptions)
 
-	require.Error(t, err, "Expected an error during plan")
-	validationPassed := utils.VerifyDataContains(t, err.Error(),
-		"Provide the current LDAP server certificate. This is required if",
-		testLogger) && utils.VerifyDataContains(t, err.Error(),
-		"'ldap_server' is set; otherwise, the LDAP configuration will not succeed.",
-		testLogger)
+	assert.Error(t, err, "Expected an error during plan")
+	if err != nil {
+		// validationPassed := utils.VerifyDataContains(t, err.Error(), "The provided IP address format is not valid", testLogger) &&
+		// 	utils.VerifyDataContains(t, err.Error(), "No SSH Key found with name", testLogger)
 
-	assert.True(t, validationPassed, "Should fail with missing LDAP server certificate error")
-	testLogger.LogValidationResult(t, validationPassed, "Invalid LDAP server certificate validation")
-
-}
-
-// TestInvalidLdapConfigurations validates various invalid LDAP configurations
-func TestInvalidLdapConfigurations(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		name           string
-		config         map[string]interface{}
-		expectedErrors []string
-		description    string
-	}{
-		// Username validation tests
-		{
-			name: "UsernameWithSpace",
-			config: map[string]interface{}{
-				"enable_ldap":         true,
-				"ldap_user_name":      "invalid user",
-				"ldap_user_password":  "ValidPass123!", // pragma: allowlist secret
-				"ldap_admin_password": "AdminPass123!", // pragma: allowlist secret
-			},
-			expectedErrors: []string{
-				"LDAP username must be between 4-32 characters",
-				"can only contain letters, numbers, hyphens, and underscores",
-				"Spaces are not permitted.",
-			},
-			description: "Username containing space should fail",
-		},
-		{
-			name: "UsernameTooShort",
-			config: map[string]interface{}{
-				"enable_ldap":         true,
-				"ldap_user_name":      "usr",
-				"ldap_user_password":  "ValidPass123!", // pragma: allowlist secret
-				"ldap_admin_password": "AdminPass123!", // pragma: allowlist secret
-			},
-			expectedErrors: []string{
-				"LDAP username must be between 4-32 characters long and can only contain",
-				"letters, numbers, hyphens, and underscores",
-			},
-			description: "Username shorter than 4 characters should fail",
-		},
-		{
-			name: "UsernameTooLong",
-			config: map[string]interface{}{
-				"enable_ldap":         true,
-				"ldap_user_name":      "thisusernameiswaytoolongandshouldfailvalidation",
-				"ldap_user_password":  "ValidPass123!", // pragma: allowlist secret
-				"ldap_admin_password": "AdminPass123!", // pragma: allowlist secret
-			},
-			expectedErrors: []string{
-				"LDAP username must be between 4-32 characters long and can only contain",
-				"letters, numbers, hyphens, and underscores",
-			},
-			description: "Username longer than 32 characters should fail",
-		},
-		{
-			name: "UsernameWithSpecialChars",
-			config: map[string]interface{}{
-				"enable_ldap":         true,
-				"ldap_user_name":      "user@name#",
-				"ldap_user_password":  "ValidPass123!", // pragma: allowlist secret
-				"ldap_admin_password": "AdminPass123!", // pragma: allowlist secret
-			},
-			expectedErrors: []string{
-				"LDAP username must be between 4-32 characters long and can only contain",
-				"letters, numbers, hyphens, and underscores. Spaces are not permitted.",
-			},
-			description: "Username with special characters should fail",
-		},
-
-		// Password validation tests
-		{
-			name: "PasswordTooShort",
-			config: map[string]interface{}{
-				"enable_ldap":         true,
-				"ldap_user_name":      "validuser",
-				"ldap_user_password":  "Short1!",       // pragma: allowlist secret
-				"ldap_admin_password": "AdminPass123!", // pragma: allowlist secret
-			},
-			expectedErrors: []string{
-				"must be 8 to 20 characters long",
-			},
-			description: "Password shorter than 8 characters should fail",
-		},
-		{
-			name: "PasswordTooLong",
-			config: map[string]interface{}{
-				"enable_ldap":         true,
-				"ldap_user_name":      "validuser",
-				"ldap_user_password":  "ThisPasswordIsWayTooLong123!", // pragma: allowlist secret
-				"ldap_admin_password": "AdminPass123!",                // pragma: allowlist secret
-			},
-			expectedErrors: []string{
-				"must be 8 to 20 characters long",
-			},
-			description: "Password longer than 20 characters should fail",
-		},
-		{
-			name: "PasswordMissingUppercase",
-			config: map[string]interface{}{
-				"enable_ldap":         true,
-				"ldap_user_name":      "validuser",
-				"ldap_user_password":  "missingupper1!", // pragma: allowlist secret
-				"ldap_admin_password": "AdminPass123!",  // pragma: allowlist secret
-			},
-			expectedErrors: []string{
-				"two alphabetic characters (with one uppercase and one lowercase)",
-			},
-			description: "Password missing uppercase letter should fail",
-		},
-		{
-			name: "PasswordMissingLowercase",
-			config: map[string]interface{}{
-				"enable_ldap":         true,
-				"ldap_user_name":      "validuser",
-				"ldap_user_password":  "MISSINGLOWER1!", // pragma: allowlist secret
-				"ldap_admin_password": "AdminPass123!",  // pragma: allowlist secret
-			},
-			expectedErrors: []string{
-				"two alphabetic characters (with one uppercase and one lowercase)",
-			},
-			description: "Password missing lowercase letter should fail",
-		},
-		{
-			name: "PasswordMissingNumber",
-			config: map[string]interface{}{
-				"enable_ldap":         true,
-				"ldap_user_name":      "validuser",
-				"ldap_user_password":  "MissingNumber!", // pragma: allowlist secret
-				"ldap_admin_password": "AdminPass123!",  // pragma: allowlist secret
-			},
-			expectedErrors: []string{
-				"two alphabetic characters (with one uppercase and one lowercase), one",
-				"number, and one special character",
-			},
-			description: "Password missing number should fail",
-		},
-		{
-			name: "PasswordMissingSpecialChar",
-			config: map[string]interface{}{
-				"enable_ldap":         true,
-				"ldap_user_name":      "validuser",
-				"ldap_user_password":  "MissingSpecial1", // pragma: allowlist secret
-				"ldap_admin_password": "AdminPass123!",   // pragma: allowlist secret
-			},
-			expectedErrors: []string{
-				"one special character",
-			},
-			description: "Password missing special character should fail",
-		},
-		{
-			name: "PasswordWithSpace",
-			config: map[string]interface{}{
-				"enable_ldap":         true,
-				"ldap_user_name":      "validuser",
-				"ldap_user_password":  "Invalid Pass123!", // pragma: allowlist secret
-				"ldap_admin_password": "AdminPass123!",    // pragma: allowlist secret
-			},
-			expectedErrors: []string{
-				"password must not contain the username or any spaces",
-			},
-			description: "Password containing space should fail",
-		},
-		{
-			name: "PasswordContainsUsername",
-			config: map[string]interface{}{
-				"enable_ldap":         true,
-				"ldap_user_name":      "Validuser",
-				"ldap_user_password":  "Validuser123!", // pragma: allowlist secret
-				"ldap_admin_password": "AdminPass123!", // pragma: allowlist secret
-			},
-			expectedErrors: []string{
-				"password must not contain the username or any spaces",
-			},
-			description: "Password containing username should fail",
-		},
-
-		// Admin password validation tests
-		{
-			name: "AdminPasswordMissing",
-			config: map[string]interface{}{
-				"enable_ldap":         true,
-				"ldap_user_name":      "validuser",
-				"ldap_user_password":  "ValidPass123!", // pragma: allowlist secret
-				"ldap_admin_password": "",              // pragma: allowlist secret
-			},
-			expectedErrors: []string{
-				"The LDAP admin password must be 8 to 20 characters long and include",
-				"least two alphabetic characters (with one uppercase and one lowercase)",
-			},
-			description: "Missing admin password should fail",
-		},
-		{
-			name: "AdminPasswordTooShort",
-			config: map[string]interface{}{
-				"enable_ldap":         true,
-				"ldap_user_name":      "validuser",
-				"ldap_user_password":  "ValidPass123!", // pragma: allowlist secret
-				"ldap_admin_password": "Short1!",       // pragma: allowlist secret
-			},
-			expectedErrors: []string{
-				"must be 8 to 20 characters long",
-			},
-			description: "Admin password too short should fail",
-		},
-
-		// Base DNS validation
-		{
-			name: "MissingBaseDNS",
-			config: map[string]interface{}{
-				"enable_ldap":         true,
-				"ldap_basedns":        "",
-				"ldap_user_name":      "validuser",
-				"ldap_user_password":  "ValidPass123!", // pragma: allowlist secret
-				"ldap_admin_password": "AdminPass123!", // pragma: allowlist secret
-			},
-			expectedErrors: []string{
-				"If LDAP is enabled, then the base DNS should not be empty or null.",
-			},
-			description: "Missing base DNS should fail",
-		},
-	}
-
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			setupTestSuite(t)
-			testLogger.Info(t, "Test: "+t.Name())
-
-			// Get base vars and merge with test case config
-			terraformVars := getBaseVars(t)
-			testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-			for k, v := range tc.config {
-				terraformVars[k] = v
-			}
-
-			terraformDirPath := getTerraformDirPath(t)
-			terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-				TerraformDir: terraformDirPath,
-				Vars:         terraformVars,
-			})
-
-			UpgradeTerraformOnce(t, terraformOptions)
-			_, err := terraform.PlanE(t, terraformOptions)
-
-			require.Error(t, err, "Expected an error during plan for: "+tc.description)
-
-			// Check if any of the expected error messages are present
-			var found bool
-			errorMsg := err.Error()
-			for _, expectedErr := range tc.expectedErrors {
-				if strings.Contains(errorMsg, expectedErr) {
-					found = true
-					break
-				}
-			}
-
-			assert.True(t, found,
-				"Expected error containing one of: %v\nBut got: %s",
-				tc.expectedErrors, errorMsg)
-
-			testLogger.LogValidationResult(t, found, tc.description)
-		})
+		validationPassed := utils.VerifyDataContains(t, err.Error(), "No SSH Key found with name", testLogger)
+		assert.True(t, validationPassed)
+		testLogger.LogValidationResult(t, validationPassed, "Invalid ssh keys and remote allowed IP")
+	} else {
+		testLogger.FAIL(t, "Expected error did not occur on Invalid ssh keys and remote allowed IP")
+		t.Error("Expected error did not occur")
 	}
 }
 
-// TestInvalidDeployerImage validates invalid deployer image configurations
-func TestInvalidDeployerImage(t *testing.T) {
-	t.Parallel()
-
-	setupTestSuite(t)
-	testLogger.Info(t, "Starting negative tests for deployer image validation")
-
-	invalidCases := []struct {
-		name          string
-		lsfVersion    string
-		deployerImage string
-		expectedError string
-	}{
-		{
-			name:          "FP14_LSF_with_FP15_Image",
-			lsfVersion:    "fixpack_14",
-			deployerImage: "hpc-lsf-fp15-deployer-rhel810-v1",
-			expectedError: "Mismatch between deployer_instance.image and lsf_version",
-		},
-		{
-			name:          "FP15_LSF_with_FP14_Image",
-			lsfVersion:    "fixpack_15",
-			deployerImage: "hpc-lsf-fp14-deployer-rhel810-v1",
-			expectedError: "Mismatch between deployer_instance.image and lsf_version",
-		},
-		{
-			name:          "Malformed_Image_Name",
-			lsfVersion:    "fixpack_15",
-			deployerImage: "custom-fp15-image",
-			expectedError: "Invalid deployer image. Allowed values",
-		},
-		{
-			name:          "Empty_Image_Name",
-			lsfVersion:    "fixpack_15",
-			deployerImage: "",
-			expectedError: "Invalid deployer image",
-		},
-		{
-			name:          "Unsupported_FP13_Deployer",
-			lsfVersion:    "fixpack_13",
-			deployerImage: "hpc-lsf-fp13-deployer-rhel810-v1",
-			expectedError: "Invalid LSF version. Allowed values are 'fixpack_14' and 'fixpack_15'",
-		},
-	}
-
-	for _, tc := range invalidCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			// Get base Terraform variables
-			terraformVars := getBaseVars(t)
-			testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-			terraformVars["lsf_version"] = tc.lsfVersion
-			terraformVars["deployer_instance"] = map[string]interface{}{
-				"image":   tc.deployerImage,
-				"profile": "bx2-8x32",
-			}
-
-			terraformDirPath := getTerraformDirPath(t)
-			terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-				TerraformDir: terraformDirPath,
-				Vars:         terraformVars,
-			})
-
-			_, err := terraform.PlanE(t, terraformOptions)
-			require.Error(t, err, "Expected '%s' to fail but it passed", tc.name)
-			assert.Contains(t, err.Error(), tc.expectedError,
-				"Expected error message mismatch for case: %s", tc.name)
-			testLogger.Info(t, fmt.Sprintf("Correctly blocked invalid case: %s", tc.name))
-		})
-	}
-}
-
-// TestInvalidSshKeys validates cluster creation with invalid ssh keys
-func TestInvalidSshKeys(t *testing.T) {
+// TestRunInvalidLDAPServerIP validates cluster creation with invalid LDAP server IP
+func TestRunInvalidLDAPServerIP(t *testing.T) {
 	t.Parallel()
 
 	setupTestSuite(t)
 	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	// Retrieve environment variables
-	_, err := GetEnvVars()
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+	envVars, err := GetEnvVars()
 	require.NoError(t, err, "Failed to get environment variables")
 
-	// Get base Terraform variables
-	terraformVars := getBaseVars(t)
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-
-	// Test cases for invalid SSH keys
-	testCases := []struct {
-		name        string
-		key         string
-		errorPhrase string
-	}{
-		{
-			name:        "Empty SSH key",
-			key:         "",
-			errorPhrase: "No SSH Key found with name",
-		},
-		{
-			name:        "Invalid key format",
-			key:         "invalid@key",
-			errorPhrase: "No SSH Key found with name",
-		},
+	if strings.ToLower(envVars.EnableLdap) != "true" {
+		require.FailNow(t, "LDAP is not enabled. Set the 'enable_ldap' environment variable to 'true' to enable LDAP.")
 	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			terraformVars["ssh_keys"] = []string{tc.key}
-
-			terraformDirPath := getTerraformDirPath(t)
-			terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-				TerraformDir: terraformDirPath,
-				Vars:         terraformVars,
-			})
-
-			UpgradeTerraformOnce(t, terraformOptions)
-			output, err := terraform.PlanE(t, terraformOptions)
-
-			require.Error(t, err, "Expected an error during plan")
-			validationPassed := utils.VerifyDataContains(t, output,
-				tc.errorPhrase,
-				testLogger)
-
-			assert.True(t, validationPassed, fmt.Sprintf("Should fail with %s", tc.name))
-			testLogger.LogValidationResult(t, validationPassed, fmt.Sprintf("%s validation", tc.name))
-		})
+	if len(envVars.LdapAdminPassword) == 0 || len(envVars.LdapUserName) == 0 || len(envVars.LdapUserPassword) == 0 {
+		require.FailNow(t, "LDAP credentials are missing. Make sure LDAP admin password, LDAP user name, and LDAP user password are provided.")
 	}
-}
-
-// TestInvalidRemoteAllowedIP validates cluster creation with invalid remote allowed IP
-func TestInvalidRemoteAllowedIP(t *testing.T) {
-	t.Parallel()
-
-	setupTestSuite(t)
-	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
-
-	// Get base Terraform variables
-	terraformVars := getBaseVars(t)
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-	terraformVars["remote_allowed_ips"] = []string{""}
 
 	terraformDirPath := getTerraformDirPath(t)
+
+	terraformVars := map[string]interface{}{
+		"cluster_prefix":                  hpcClusterPrefix,
+		"ssh_keys":                        utils.SplitAndTrim(envVars.SSHKeys, ","),
+		"zones":                           utils.SplitAndTrim(envVars.Zones, ","),
+		"remote_allowed_ips":              utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+		"enable_ldap":                     true,
+		"ldap_admin_password":             envVars.LdapAdminPassword, //pragma: allowlist secret
+		"ldap_server":                     invalidLDAPServerIP,
+		"ldap_server_cert":                "SampleTest",
+		"scc_enable":                      false,
+		"observability_monitoring_enable": false,
+		"observability_atracker_enable":   false,
+	}
+
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: terraformDirPath,
 		Vars:         terraformVars,
 	})
 
 	UpgradeTerraformOnce(t, terraformOptions)
-	output, err := terraform.PlanE(t, terraformOptions)
+	output, err := terraform.InitAndApplyE(t, terraformOptions)
 
-	require.Error(t, err, "Expected an error during plan")
-	validationPassed := utils.VerifyDataContains(t, output,
-		"The provided IP address format is not valid",
-		testLogger)
+	assert.Error(t, err, "Expected an error during apply")
+	if err != nil {
+		expectedError := fmt.Sprintf("The connection to the existing LDAP server %s failed", invalidLDAPServerIP)
+		validationPassed := utils.VerifyDataContains(t, output, expectedError, testLogger)
+		assert.True(t, validationPassed)
+		testLogger.LogValidationResult(t, validationPassed, "Invalid LDAP server IP")
+	} else {
+		testLogger.FAIL(t, "Expected error did not occur on Invalid LDAP Server IP")
+		t.Error("Expected error did not occur")
+	}
 
-	assert.True(t, validationPassed, "Should fail with invalid SSH keys and IP error")
-	testLogger.LogValidationResult(t, validationPassed, "Invalid SSH keys and remote allowed IP validation")
+	defer terraform.Destroy(t, terraformOptions)
 }
 
-// TestInvalidInstanceProfiles validates invalid instance profile configurations
-func TestInvalidInstanceProfiles(t *testing.T) {
+// TestRunInvalidLDAPServerCert validates cluster creation with invalid LDAP server Cert
+func TestRunInvalidLDAPServerCert(t *testing.T) {
 	t.Parallel()
 
 	setupTestSuite(t)
-	testLogger.Info(t, "Starting negative tests for instance profile validation")
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
 
-	invalidCases := []struct {
-		name            string
-		bastionProfile  string
-		deployerProfile string
-		loginProfile    string
-		mgmtProfile     string
-		staticProfile   string
-		dynamicProfile  string
-		expectedError   string
-	}{
-		{
-			name:            "Invalid_Bastion_Profile_Format",
-			bastionProfile:  "cx2-invalid",
-			deployerProfile: "bx2-8x32",
-			loginProfile:    "bx2-2x8",
-			mgmtProfile:     "bx2-16x64",
-			staticProfile:   "bx2-4x16",
-			dynamicProfile:  "bx2-4x16",
-			expectedError:   "The profile must be a valid virtual server instance profile",
-		},
-		{
-			name:            "Invalid_Deployer_Profile_Format",
-			bastionProfile:  "cx2-4x8",
-			deployerProfile: "bx2-invalid",
-			loginProfile:    "bx2-2x8",
-			mgmtProfile:     "bx2-16x64",
-			staticProfile:   "bx2-4x16",
-			dynamicProfile:  "bx2-4x16",
-			expectedError:   "The profile must be a valid virtual server instance profile",
-		},
-		{
-			name:            "Invalid_Login_Profile_Format",
-			bastionProfile:  "cx2-4x8",
-			deployerProfile: "bx2-8x32",
-			loginProfile:    "invalid-login-profile",
-			mgmtProfile:     "bx2-16x64",
-			staticProfile:   "bx2-4x16",
-			dynamicProfile:  "bx2-4x16",
-			expectedError:   "The profile must be a valid virtual server instance profile",
-		},
-		{
-			name:            "Invalid_Management_Profile_Format",
-			bastionProfile:  "cx2-4x8",
-			deployerProfile: "bx2-8x32",
-			loginProfile:    "bx2-2x8",
-			mgmtProfile:     "mgmt-invalid-format",
-			staticProfile:   "bx2-4x16",
-			dynamicProfile:  "bx2-4x16",
-			expectedError:   "The profile must be a valid virtual server instance profile",
-		},
-		{
-			name:            "Invalid_Static_Compute_Profile_Format",
-			bastionProfile:  "cx2-4x8",
-			deployerProfile: "bx2-8x32",
-			loginProfile:    "bx2-2x8",
-			mgmtProfile:     "bx2-16x64",
-			staticProfile:   "static-invalid",
-			dynamicProfile:  "bx2-4x16",
-			expectedError:   "The profile must be a valid virtual server instance profile",
-		},
-		{
-			name:            "Invalid_Dynamic_Compute_Profile_Format",
-			bastionProfile:  "cx2-4x8",
-			deployerProfile: "bx2-8x32",
-			loginProfile:    "bx2-2x8",
-			mgmtProfile:     "bx2-16x64",
-			staticProfile:   "bx2-4x16",
-			dynamicProfile:  "dynamic-invalid",
-			expectedError:   "The profile must be a valid virtual server instance profile",
-		},
-		{
-			name:            "Multiple_Dynamic_Compute_Profiles",
-			bastionProfile:  "cx2-4x8",
-			deployerProfile: "bx2-8x32",
-			loginProfile:    "bx2-2x8",
-			mgmtProfile:     "bx2-16x64",
-			staticProfile:   "bx2-4x16",
-			dynamicProfile:  "bx2-4x16",
-			expectedError:   "Only a single map (one instance profile) is allowed for dynamic compute",
-		},
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+	envVars, err := GetEnvVars()
+	require.NoError(t, err, "Failed to get environment variables")
+
+	if strings.ToLower(envVars.EnableLdap) != "true" {
+		require.FailNow(t, "LDAP is not enabled. Set the 'enable_ldap' environment variable to 'true' to enable LDAP.")
+	}
+	if len(envVars.LdapAdminPassword) == 0 || len(envVars.LdapUserName) == 0 || len(envVars.LdapUserPassword) == 0 {
+		require.FailNow(t, "LDAP credentials are missing. Make sure LDAP admin password, LDAP user name, and LDAP user password are provided.")
 	}
 
-	for _, tc := range invalidCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+	terraformDirPath := getTerraformDirPath(t)
 
-			// Get base Terraform variables
-			terraformVars := getBaseVars(t)
-			testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
+	terraformVars := map[string]interface{}{
+		"cluster_prefix": hpcClusterPrefix,
+		// "bastion_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
+		// "compute_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
+		"ssh_keys":            utils.SplitAndTrim(envVars.SSHKeys, ","),
+		"zones":               utils.SplitAndTrim(envVars.Zones, ","),
+		"remote_allowed_ips":  utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+		"enable_ldap":         true,
+		"ldap_admin_password": envVars.LdapAdminPassword, //pragma: allowlist secret
+		"ldap_server":         invalidLDAPServerIP,
+		"ldap_server_cert":    "",
+		"scc_enable":          false,
+	}
 
-			// Set instance profiles
-			terraformVars["bastion_instance"] = map[string]interface{}{
-				"image":   "ibm-ubuntu-22-04-5-minimal-amd64-3",
-				"profile": tc.bastionProfile,
-			}
-			terraformVars["deployer_instance"] = map[string]interface{}{
-				"image":   "hpc-lsf-fp15-deployer-rhel810-v1",
-				"profile": tc.deployerProfile,
-			}
-			terraformVars["login_instance"] = []map[string]interface{}{
-				{
-					"image":   "hpc-lsf-fp15-compute-rhel810-v1",
-					"profile": tc.loginProfile,
-				},
-			}
-			terraformVars["management_instances"] = []map[string]interface{}{
-				{
-					"image":   "hpc-lsf-fp15-rhel810-v1",
-					"profile": tc.mgmtProfile,
-					"count":   2,
-				},
-			}
-			terraformVars["static_compute_instances"] = []map[string]interface{}{
-				{
-					"image":   "hpc-lsf-fp15-compute-rhel810-v1",
-					"profile": tc.staticProfile,
-					"count":   1,
-				},
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terraformDirPath,
+		Vars:         terraformVars,
+	})
+
+	UpgradeTerraformOnce(t, terraformOptions)
+	_, err = terraform.InitAndPlanE(t, terraformOptions)
+
+	assert.Error(t, err, "Expected an error during plan")
+	if err != nil {
+		const expectedError = "Provide the current LDAP server certificate. This is required if 'ldap_server' is not set to 'null'"
+		validationPassed := utils.VerifyDataContains(t, err.Error(), expectedError, testLogger)
+		assert.True(t, validationPassed)
+		testLogger.LogValidationResult(t, validationPassed, "Invalid LDAP server Cert")
+	} else {
+		testLogger.FAIL(t, "Expected error did not occur on Invalid LDAP Server Cert")
+		t.Error("Expected error did not occur")
+	}
+
+	defer terraform.Destroy(t, terraformOptions)
+}
+
+// TestRunInvalidLDAPUsernamePassword tests invalid LDAP username and password combinations
+func TestRunInvalidLDAPUsernamePassword(t *testing.T) {
+	t.Parallel()
+
+	setupTestSuite(t)
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+	envVars, err := GetEnvVars()
+	require.NoError(t, err, "Failed to get environment variables")
+
+	invalidLDAPUsername := []string{
+		"usr",
+		"user@1234567890123456789012345678901",
+		"",
+		"user 1234",
+	}
+
+	invalidLDAPPassword := []string{
+		"password",
+		"PasswoRD123",
+		"password123",
+		"Password@",
+		"Password123",
+		"password@12345678901234567890",
+	}
+
+	terraformDirPath := getTerraformDirPath(t)
+
+	for _, username := range invalidLDAPUsername {
+		for _, password := range invalidLDAPPassword { //pragma: allowlist secret
+			terraformVars := map[string]interface{}{
+				"cluster_prefix": hpcClusterPrefix,
+				// "bastion_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
+				// "compute_ssh_keys":    utils.SplitAndTrim(envVars.SSHKey, ","),
+				// "zones":               utils.SplitAndTrim(envVars.Zones, ","),
+				// "allowed_cidr":        utils.SplitAndTrim(envVars.AllowedCidr, ","),
+				"ssh_keys":            utils.SplitAndTrim(envVars.SSHKeys, ","),
+				"zones":               utils.SplitAndTrim(envVars.Zones, ","),
+				"remote_allowed_ips":  utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+				"enable_ldap":         true,
+				"ldap_user_name":      username,
+				"ldap_user_password":  password,
+				"ldap_admin_password": password,
 			}
 
-			// Special case for multiple dynamic compute profiles
-			if tc.name == "Multiple_Dynamic_Compute_Profiles" {
-				terraformVars["dynamic_compute_instances"] = []map[string]interface{}{
-					{
-						"image":   "hpc-lsf-fp15-compute-rhel810-v1",
-						"profile": "bx2-4x16",
-						"count":   512,
-					},
-					{
-						"image":   "hpc-lsf-fp15-compute-rhel810-v1",
-						"profile": "bx2-8x32",
-						"count":   512,
-					},
-				}
-			} else {
-				terraformVars["dynamic_compute_instances"] = []map[string]interface{}{
-					{
-						"image":   "hpc-lsf-fp15-compute-rhel810-v1",
-						"profile": tc.dynamicProfile,
-						"count":   1024,
-					},
-				}
-			}
-
-			terraformDirPath := getTerraformDirPath(t)
 			terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 				TerraformDir: terraformDirPath,
 				Vars:         terraformVars,
 			})
 
+			UpgradeTerraformOnce(t, terraformOptions)
+			_, err = terraform.PlanE(t, terraformOptions)
+
+			if err != nil {
+				validationPassed := utils.VerifyDataContains(t, err.Error(), "ldap_user_name", testLogger) &&
+					utils.VerifyDataContains(t, err.Error(), "ldap_usr_pwd", testLogger) &&
+					utils.VerifyDataContains(t, err.Error(), "ldap_adm_pwd", testLogger)
+				assert.True(t, validationPassed)
+				testLogger.LogValidationResult(t, validationPassed, "Invalid LDAP credentials")
+			} else {
+				testLogger.FAIL(t, "Expected error did not contain required fields: ldap_user_name, ldap_user_password or ldap_admin_password")
+				t.Error("Expected error did not occur")
+			}
+		}
+	}
+}
+
+// TestRunInvalidAPPCenterPassword tests invalid values for app center password
+func TestRunInvalidAPPCenterPassword(t *testing.T) {
+	t.Parallel()
+
+	setupTestSuite(t)
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	invalidAPPCenterPwd := []string{
+		"pass@1234",
+		"Pass1234",
+		"Pas@12",
+		"",
+	}
+
+	for _, password := range invalidAPPCenterPwd { //pragma: allowlist secret
+		hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+		envVars, err := GetEnvVars()
+		require.NoError(t, err, "Failed to get environment variables")
+
+		terraformDirPath := getTerraformDirPath(t)
+
+		terraformVars := map[string]interface{}{
+			"cluster_prefix":     hpcClusterPrefix,
+			"ssh_keys":           utils.SplitAndTrim(envVars.SSHKeys, ","),
+			"zones":              utils.SplitAndTrim(envVars.Zones, ","),
+			"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+			"enable_app_center":  true,
+			"app_center_gui_pwd": password,
+		}
+
+		terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+			TerraformDir: terraformDirPath,
+			Vars:         terraformVars,
+		})
+
+		UpgradeTerraformOnce(t, terraformOptions)
+		_, err = terraform.PlanE(t, terraformOptions)
+
+		if err != nil {
+			validationPassed := utils.VerifyDataContains(t, err.Error(), "app_center_gui_pwd", testLogger)
+			assert.True(t, validationPassed)
+			testLogger.LogValidationResult(t, validationPassed, "Invalid Application Center Password")
+		} else {
+			testLogger.FAIL(t, "Expected error did not occur on Invalid Application Center Password")
+			t.Error("Expected error did not occur")
+		}
+	}
+}
+
+// TestRunInvalidDomainName validates cluster creation with invalid domain name
+func TestRunInvalidDomainName(t *testing.T) {
+	t.Parallel()
+
+	setupTestSuite(t)
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+	envVars, err := GetEnvVars()
+	require.NoError(t, err, "Failed to get environment variables")
+
+	terraformDirPath := getTerraformDirPath(t)
+
+	terraformVars := map[string]interface{}{
+		"cluster_prefix":     hpcClusterPrefix,
+		"ssh_keys":           utils.SplitAndTrim(envVars.SSHKeys, ","),
+		"zones":              utils.SplitAndTrim(envVars.Zones, ","),
+		"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+		"dns_domain_names": map[string]string{
+			"compute":  "comp",
+			"storage":  "strg",
+			"protocol": "ces",
+			"client":   "clnt",
+			"gklm":     "gklm",
+		},
+		"scc_enable":                      false,
+		"observability_monitoring_enable": false,
+		"observability_atracker_enable":   false,
+	}
+
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terraformDirPath,
+		Vars:         terraformVars,
+	})
+
+	UpgradeTerraformOnce(t, terraformOptions)
+	_, err = terraform.PlanE(t, terraformOptions)
+
+	assert.Error(t, err, "Expected an error during plan")
+	if err != nil {
+		const expectedError = "The domain name provided for compute is not a fully qualified domain name"
+		validationPassed := utils.VerifyDataContains(t, err.Error(), expectedError, testLogger)
+		assert.True(t, validationPassed)
+		testLogger.LogValidationResult(t, validationPassed, "Invalid domain name")
+	} else {
+		testLogger.FAIL(t, "Expected error did not occur on Invalid domain name")
+		t.Error("Expected error did not occur")
+	}
+}
+
+// TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue tests KMS instances and key names with invalid values
+func TestRunKMSInstanceNameAndKMSKeyNameWithInvalidValue(t *testing.T) {
+	t.Parallel()
+
+	setupTestSuite(t)
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	randomString := utils.GenerateRandomString()
+	kmsInstanceName := "cicd-" + randomString
+
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+	envVars, err := GetEnvVars()
+	require.NoError(t, err, "Failed to get environment variables")
+
+	err = lsf.CreateServiceInstanceAndKmsKey(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zones),
+		envVars.DefaultExistingResourceGroup, kmsInstanceName, KMS_KEY_NAME, testLogger)
+	require.NoError(t, err, "Failed to create service instance and KMS key")
+
+	defer lsf.DeleteServiceInstanceAndAssociatedKeys(t, os.Getenv("TF_VAR_ibmcloud_api_key"),
+		utils.GetRegion(envVars.Zones), envVars.DefaultExistingResourceGroup, kmsInstanceName, testLogger)
+
+	testLogger.Info(t, "Service instance and KMS key created successfully: "+t.Name())
+
+	terraformDirPath := getTerraformDirPath(t)
+
+	const (
+		noKeyErrorMsg        = "No keys with name " + invalidKMSKeyName
+		noInstanceErrorMsg   = "No resource instance found with name [" + invalidKMSInstance + "]"
+		noInstanceIDErrorMsg = "Please make sure you are passing the kms_instance_name if you are passing kms_key_name"
+	)
+
+	testCases := []struct {
+		name          string
+		instanceName  string
+		keyName       string
+		expectedError string
+	}{
+		{
+			name:          "Valid instance ID and invalid key name",
+			instanceName:  kmsInstanceName,
+			keyName:       invalidKMSKeyName,
+			expectedError: noKeyErrorMsg,
+		},
+		{
+			name:          "Invalid instance ID and valid key name",
+			instanceName:  invalidKMSInstance,
+			keyName:       KMS_KEY_NAME,
+			expectedError: noInstanceErrorMsg,
+		},
+		{
+			name:          "Without instance ID and valid key name",
+			instanceName:  "",
+			keyName:       KMS_KEY_NAME,
+			expectedError: noInstanceIDErrorMsg,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			terraformVars := map[string]interface{}{
+				"cluster_prefix":                  hpcClusterPrefix,
+				"ssh_keys":                        utils.SplitAndTrim(envVars.SSHKeys, ","),
+				"zones":                           utils.SplitAndTrim(envVars.Zones, ","),
+				"remote_allowed_ips":              utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+				"scc_enable":                      false,
+				"observability_monitoring_enable": false,
+				"observability_atracker_enable":   false,
+			}
+
+			if tc.instanceName != "" {
+				terraformVars["kms_instance_name"] = tc.instanceName
+			}
+			if tc.keyName != "" {
+				terraformVars["kms_key_name"] = tc.keyName
+			}
+
+			terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+				TerraformDir: terraformDirPath,
+				Vars:         terraformVars,
+			})
+
+			UpgradeTerraformOnce(t, terraformOptions)
 			_, err := terraform.PlanE(t, terraformOptions)
-			require.Error(t, err, "Expected '%s' to fail but it passed", tc.name)
-			assert.Contains(t, err.Error(), tc.expectedError,
-				"Expected error message mismatch for case: %s", tc.name)
-			testLogger.Info(t, fmt.Sprintf("Correctly blocked invalid case: %s", tc.name))
+
+			if err != nil {
+				validationPassed := utils.VerifyDataContains(t, err.Error(), tc.expectedError, testLogger)
+				assert.True(t, validationPassed)
+				testLogger.LogValidationResult(t, validationPassed, tc.name)
+			} else {
+				testLogger.FAIL(t, fmt.Sprintf("Expected error did not occur in case: %s", tc.name))
+				t.Error("Expected error did not occur")
+			}
 		})
 	}
+}
+
+// TestRunExistSubnetIDVpcNameAsNull verifies that existing subnet_id requires vpc_name
+func TestRunExistSubnetIDVpcNameAsNull(t *testing.T) {
+	// Parallelize the test to run concurrently with others
+	t.Parallel()
+
+	// Set up the test suite and prepare the testing environment
+	setupTestSuite(t)
+
+	testLogger.Info(t, "Brand new VPC creation initiated for "+t.Name())
+
+	// Generate Unique Cluster Prefix
+	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
+
+	// Get and validate environment variables
+	envVars, err := GetEnvVars()
+	require.NoError(t, err, "Failed to get environment variables")
+
+	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
+	options, err := setupOptionsVPC(t, clusterNamePrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroup)
+	require.NoError(t, err, "Error setting up test options: %v", err)
+
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	output, err := options.RunTest()
+	require.NoError(t, err, "Error running consistency test")
+	require.NotNil(t, output, "Expected non-nil output, but got nil")
+	outputs := (options.LastTestTerraformOutputs)
+
+	bastionsubnetId, computesubnetIds := utils.GetSubnetIds(outputs)
+	terraformDirPath := getTerraformDirPath(t)
+
+	terraformVars := map[string]interface{}{
+		"cluster_prefix":     clusterNamePrefix,
+		"ssh_keys":           utils.SplitAndTrim(envVars.SSHKeys, ","),
+		"zones":              utils.SplitAndTrim(envVars.Zones, ","),
+		"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+		"cluster_subnet_id":  utils.SplitAndTrim(computesubnetIds, ","),
+		"login_subnet_id":    bastionsubnetId,
+	}
+
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terraformDirPath,
+		Vars:         terraformVars,
+	})
+
+	UpgradeTerraformOnce(t, terraformOptions)
+	_, err = terraform.PlanE(t, terraformOptions)
+
+	assert.Error(t, err, "Expected an error during plan")
+	if err != nil {
+		expectedErrors := []string{
+			"If the cluster_subnet_id are provided, the user should also provide the vpc_name",
+			"Provided cluster subnets should be in appropriate zone",
+			"Provided login subnet should be within the vpc entered",
+			"Provided login subnet should be in appropriate zone",
+			"Provided cluster subnets should be within the vpc entered",
+			"Provided existing cluster_subnet_id should have public gateway attached",
+		}
+
+		validationPassed := true
+		for _, expected := range expectedErrors {
+			if !utils.VerifyDataContains(t, err.Error(), expected, testLogger) {
+				validationPassed = false
+				break
+			}
+		}
+
+		assert.True(t, validationPassed)
+		testLogger.LogValidationResult(t, validationPassed, "Without VPC name and with valid cluster_subnet_id and login_subnet_id")
+	} else {
+		testLogger.FAIL(t, "Expected error did not occur on Without VPC name and with valid cluster_subnet_id and login_subnet_id")
+		t.Error("Expected error did not occur")
+	}
+}
+
+// TestRunInvalidDedicatedHostConfigurationWithZeroWorkerNodes validates dedicated host with zero worker nodes
+func TestRunInvalidDedicatedHostConfigurationWithZeroWorkerNodes(t *testing.T) {
+	t.Parallel()
+
+	setupTestSuite(t)
+	hpcClusterPrefix := utils.GenerateRandomString()
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	envVars, err := GetEnvVars()
+	require.NoError(t, err, "Failed to get environment variables")
+
+	options, err := setupOptions(t, hpcClusterPrefix, terraformDir, envVars.DefaultExistingResourceGroup)
+	require.NoError(t, err, "Error setting up test options")
+
+	options.TerraformVars["enable_dedicated_host"] = true
+	options.TerraformVars["static_compute_instances"] = []map[string]interface{}{
+		{
+			"profile":    "cx2-2x4",
+			"count":      2,
+			"image":      "ibm-redhat-8-10-minimal-amd64-2",
+			"filesystem": "/gpfs/fs1",
+		},
+	}
+
+	options.SkipTestTearDown = true
+	defer options.TestTearDown()
+
+	lsf.ValidateBasicClusterConfigurationWithDedicatedHost(t, options, false, testLogger)
+}
+
+// TestRunInvalidDedicatedHostProfile validates cluster creation with an invalid instance profile
+func TestRunInvalidDedicatedHostProfile(t *testing.T) {
+	t.Parallel()
+
+	setupTestSuite(t)
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+	envVars, err := GetEnvVars()
+	require.NoError(t, err, "Failed to get environment variables")
+
+	terraformDirPath := getTerraformDirPath(t)
+
+	terraformVars := map[string]interface{}{
+		"cluster_prefix":        hpcClusterPrefix,
+		"ssh_keys":              utils.SplitAndTrim(envVars.SSHKeys, ","),
+		"zones":                 utils.SplitAndTrim(envVars.Zones, ","),
+		"remote_allowed_ips":    utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+		"enable_dedicated_host": true,
+		"static_compute_instances": []map[string]interface{}{
+			{
+				"profile":    "cx2-2x4",
+				"count":      2,
+				"image":      "ibm-redhat-8-10-minimal-amd64-2",
+				"filesystem": "/gpfs/fs1",
+			},
+		},
+		"dynamic_compute_instances": []map[string]interface{}{
+			{
+				"profile": "cx2-2x4",
+				"count":   1024,
+				"image":   "ibm-redhat-8-10-minimal-amd64-2",
+			},
+		},
+		"enable_cos_integration":          false,
+		"enable_vpc_flow_logs":            false,
+		"key_management":                  "null",
+		"scc_enable":                      false,
+		"observability_monitoring_enable": false,
+		"observability_atracker_enable":   false,
+	}
+
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terraformDirPath,
+		Vars:         terraformVars,
+	})
+
+	UpgradeTerraformOnce(t, terraformOptions)
+	_, err = terraform.InitAndPlanE(t, terraformOptions)
+
+	assert.Error(t, err, "Expected an error during plan")
+	if err != nil {
+		errMsg := err.Error()
+		containsWorkerNodeType := utils.VerifyDataContains(t, errMsg, "is list of object with 2 elements", testLogger)
+		containsDedicatedHost := utils.VerifyDataContains(t, errMsg, "'enable_dedicated_host' is true, only one profile should be specified", testLogger)
+
+		validationPassed := containsWorkerNodeType && containsDedicatedHost
+		assert.True(t, validationPassed)
+		testLogger.LogValidationResult(t, validationPassed, "Invalid Dedicated-Host instance profile")
+	} else {
+		testLogger.FAIL(t, "Expected validation error did not occur for Invalid Dedicated-Host instance profile.")
+		t.Error("Expected error did not occur")
+	}
+
+	defer terraform.Destroy(t, terraformOptions)
+}
+
+// TestRunInvalidMinWorkerNodeCountGreaterThanMax validates invalid worker node counts
+func TestRunInvalidMinWorkerNodeCountGreaterThanMax(t *testing.T) {
+	t.Parallel()
+
+	setupTestSuite(t)
+	testLogger.Info(t, "Cluster creation process initiated for "+t.Name())
+
+	hpcClusterPrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
+	envVars, err := GetEnvVars()
+	require.NoError(t, err, "Failed to get environment variables")
+
+	terraformDirPath := getTerraformDirPath(t)
+
+	terraformVars := map[string]interface{}{
+		"cluster_prefix":     hpcClusterPrefix,
+		"ssh_keys":           utils.SplitAndTrim(envVars.SSHKeys, ","),
+		"zones":              utils.SplitAndTrim(envVars.Zones, ","),
+		"remote_allowed_ips": utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+		"static_compute_instances": []map[string]interface{}{
+			{
+				"profile":    "cx2-2x4",
+				"count":      2,
+				"image":      envVars.StaticComputeInstancesImage,
+				"filesystem": "/gpfs/fs1",
+			},
+		},
+		"dynamic_compute_instances": []map[string]interface{}{
+			{
+				"profile": "cx2-2x4",
+				"count":   1,
+				"image":   envVars.DynamicComputeInstancesImage,
+			},
+		},
+
+		"scc_enable":                      false,
+		"observability_monitoring_enable": false,
+		"observability_atracker_enable":   false,
+		"enable_cos_integration":          false,
+		"enable_vpc_flow_logs":            false,
+		"key_management":                  "null",
+	}
+
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: terraformDirPath,
+		Vars:         terraformVars,
+	})
+
+	UpgradeTerraformOnce(t, terraformOptions)
+	_, err = terraform.InitAndPlanE(t, terraformOptions)
+
+	assert.Error(t, err, "Expected an error during plan")
+	if err != nil {
+		const expectedError = "If the solution is set as lsf, the worker min count cannot be greater than worker max count."
+		validationPassed := utils.VerifyDataContains(t, err.Error(), expectedError, testLogger)
+		assert.True(t, validationPassed)
+		testLogger.LogValidationResult(t, validationPassed, "Worker node count validation")
+	} else {
+		testLogger.FAIL(t, "Expected validation error did not occur for Invalid worker node count")
+		t.Error("Expected error did not occur")
+	}
+
+	defer terraform.Destroy(t, terraformOptions)
+	testLogger.Info(t, "TestRunInvalidMinWorkerNodeCountGreaterThanMax will execute If the solution is set as lsf")
 }

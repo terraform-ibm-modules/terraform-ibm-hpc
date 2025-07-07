@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"sync"
@@ -14,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
 
+	deploy "github.com/terraform-ibm-modules/terraform-ibm-hpc/deployment"
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/utilities"
 )
 
@@ -23,7 +25,7 @@ const (
 	terraformDir = "solutions/lsf"
 
 	// Default scheduler
-	Solution = "lsf"
+	solution = "lsf"
 
 	// Configuration files for each LSF version
 	lsfFP14ConfigFile = "lsf_fp14_config.yml"
@@ -55,13 +57,14 @@ type EnvVars struct {
 	LoginNodeInstanceType                       string
 	LoginNodeImageName                          string
 	ManagementInstances                         string
-	DeployerInstance                            string
+	DeployerImage                               string
+	DeployerInstanceProfile                     string
 	EnableVPCFlowLogs                           string
 	KeyManagement                               string
 	KMSInstanceName                             string
 	KMSKeyName                                  string
 	EnableHyperthreading                        string
-	DnsDomainName                               string
+	DnsDomainNames                              string
 	EnableAppCenter                             string
 	AppCenterGuiPassword                        string
 	EnableLdap                                  string
@@ -70,7 +73,7 @@ type EnvVars struct {
 	LdapAdminPassword                           string
 	LdapUserName                                string
 	LdapUserPassword                            string
-	LdapInstance                                string
+	LdapInstances                               string
 	USEastZone                                  string
 	USEastClusterName                           string
 	USEastReservationID                         string
@@ -88,10 +91,9 @@ type EnvVars struct {
 	WorkerNodeMaxCount                          string
 	StaticComputeInstances                      string
 	DynamicComputeInstances                     string
-	SccWPEnabled                                string
-	CspmEnabled                                 string
-	SccwpServicePlan                            string
-	AppConfigPlan                               string
+	SccEnabled                                  string
+	SccEventNotificationPlan                    string
+	SccLocation                                 string
 	ObservabilityMonitoringEnable               string
 	ObservabilityMonitoringOnComputeNodesEnable string
 	ObservabilityAtrackerEnable                 string
@@ -104,13 +106,12 @@ type EnvVars struct {
 	ObservabilityMonitoringPlan                 string
 	EnableCosIntegration                        string
 	CustomFileShares                            string
-	BastionInstance                             string
+	BastionInstanceProfile                      string
 	ManagementInstancesImage                    string
 	StaticComputeInstancesImage                 string
 	DynamicComputeInstancesImage                string
 	LsfVersion                                  string
 	LoginInstance                               string
-	AttrackerTestZone                           string
 }
 
 func GetEnvVars() (*EnvVars, error) {
@@ -122,15 +123,18 @@ func GetEnvVars() (*EnvVars, error) {
 		ClusterName:                     os.Getenv("CLUSTER_NAME"),
 		RemoteAllowedIPs:                os.Getenv("REMOTE_ALLOWED_IPS"),
 		SSHKeys:                         os.Getenv("SSH_KEYS"),
+		LoginNodeInstanceType:           os.Getenv("LOGIN_NODE_INSTANCE_TYPE"),
+		LoginNodeImageName:              os.Getenv("LOGIN_NODE_IMAGE_NAME"),
 		ManagementInstances:             os.Getenv("MANAGEMENT_INSTANCES"),
-		DeployerInstance:                os.Getenv("DEPLOYER_INSTANCE"),
-		BastionInstance:                 os.Getenv("BASTION_INSTANCE"),
+		DeployerImage:                   os.Getenv("DEPLOYER_IMAGE"),
+		DeployerInstanceProfile:         os.Getenv("DEPLOYER_INSTANCE_PROFILE"),
+		BastionInstanceProfile:          os.Getenv("BASTION_INSTANCE_PROFILE"),
 		EnableVPCFlowLogs:               os.Getenv("ENABLE_VPC_FLOW_LOGS"),
 		KeyManagement:                   os.Getenv("KEY_MANAGEMENT"),
 		KMSInstanceName:                 os.Getenv("KMS_INSTANCE_NAME"),
 		KMSKeyName:                      os.Getenv("KMS_KEY_NAME"),
 		EnableHyperthreading:            os.Getenv("ENABLE_HYPERTHREADING"),
-		DnsDomainName:                   os.Getenv("DNS_DOMAIN_NAME"),
+		DnsDomainNames:                  os.Getenv("DNS_DOMAIN_NAMES"),
 		AppCenterGuiPassword:            os.Getenv("APP_CENTER_GUI_PASSWORD"),
 		EnableLdap:                      os.Getenv("ENABLE_LDAP"),
 		LdapBaseDns:                     os.Getenv("LDAP_BASEDNS"),
@@ -138,7 +142,7 @@ func GetEnvVars() (*EnvVars, error) {
 		LdapAdminPassword:               os.Getenv("LDAP_ADMIN_PASSWORD"),
 		LdapUserName:                    os.Getenv("LDAP_USER_NAME"),
 		LdapUserPassword:                os.Getenv("LDAP_USER_PASSWORD"),
-		LdapInstance:                    os.Getenv("LDAP_INSTANCE"),
+		LdapInstances:                   os.Getenv("LDAP_INSTANCES"),
 		USEastZone:                      os.Getenv("US_EAST_ZONE"),
 		USEastClusterName:               os.Getenv("US_EAST_CLUSTER_NAME"),
 		USEastReservationID:             os.Getenv("US_EAST_RESERVATION_ID"),
@@ -156,10 +160,9 @@ func GetEnvVars() (*EnvVars, error) {
 		WorkerNodeMaxCount:              os.Getenv("WORKER_NODE_MAX_COUNT"),
 		StaticComputeInstances:          os.Getenv("STATIC_COMPUTE_INSTANCES"),
 		DynamicComputeInstances:         os.Getenv("DYNAMIC_COMPUTE_INSTANCES"),
-		SccWPEnabled:                    os.Getenv("SCCWP_ENABLED"),
-		CspmEnabled:                     os.Getenv("CSPM_ENABLED"),
-		SccwpServicePlan:                os.Getenv("SCCWP_SERVICE_PLAN"),
-		AppConfigPlan:                   os.Getenv("APP_CONFIG_PLAN"),
+		SccEnabled:                      os.Getenv("SCC_ENABLED"),
+		SccEventNotificationPlan:        os.Getenv("SCC_EVENT_NOTIFICATION_PLAN"),
+		SccLocation:                     os.Getenv("SCC_LOCATION"),
 		ObservabilityMonitoringEnable:   os.Getenv("OBSERVABILITY_MONITORING_ENABLE"),
 		ObservabilityMonitoringOnComputeNodesEnable: os.Getenv("OBSERVABILITY_MONITORING_ON_COMPUTE_NODES_ENABLE"),
 		ObservabilityAtrackerEnable:                 os.Getenv("OBSERVABILITY_ATRACKER_ENABLE"),
@@ -177,7 +180,6 @@ func GetEnvVars() (*EnvVars, error) {
 		DynamicComputeInstancesImage:                os.Getenv("DYNAMIC_COMPUTE_INSTANCES_IMAGE"),
 		LsfVersion:                                  os.Getenv("LSF_VERSION"),
 		LoginInstance:                               os.Getenv("LOGIN_INSTANCE"),
-		AttrackerTestZone:                           os.Getenv("ATTRACKER_TEST_ZONE"),
 	}
 
 	// Validate required fields
@@ -249,7 +251,7 @@ func UpgradeTerraformOnce(t *testing.T, terraformOptions *terraform.Options) {
 // checkRequiredEnvVars verifies that required environment variables are set.
 // Returns an error if any required env var is missing.
 func checkRequiredEnvVars() error {
-	required := []string{"TF_VAR_ibmcloud_api_key", "ZONES", "REMOTE_ALLOWED_IPS", "SSH_KEYS"}
+	required := []string{"TF_VAR_ibmcloud_api_key", "TF_VAR_github_token", "ZONES", "REMOTE_ALLOWED_IPS", "SSH_KEYS"}
 
 	for _, envVar := range required {
 		if os.Getenv(envVar) == "" {
@@ -314,19 +316,18 @@ func setupOptions(t *testing.T, clusterNamePrefix, terraformDir, existingResourc
 			"zones":                           utils.SplitAndTrim(envVars.Zones, ","),
 			"remote_allowed_ips":              utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
 			"existing_resource_group":         existingResourceGroup,
-			"deployer_instance":               envVars.DeployerInstance,
+			"deployer_image":                  envVars.DeployerImage,
 			"login_instance":                  envVars.LoginInstance,
 			"management_instances":            envVars.ManagementInstances,
 			"key_management":                  envVars.KeyManagement,
 			"enable_hyperthreading":           strings.ToLower(envVars.EnableHyperthreading),
 			"observability_atracker_enable":   false,
 			"observability_monitoring_enable": false,
-			"dns_domain_name":                 envVars.DnsDomainName,
+			"dns_domain_names":                envVars.DnsDomainNames,
 			"static_compute_instances":        envVars.StaticComputeInstances,
 			"dynamic_compute_instances":       envVars.DynamicComputeInstances,
-			"bastion_instance":                envVars.BastionInstance,
-			"sccwp_enable":                    false,
-			"cspm_enabled":                    false,
+			"bastion_instance_profile":        envVars.BastionInstanceProfile,
+			"scc_enable":                      false,
 			"custom_file_shares":              envVars.CustomFileShares,
 			"enable_cos_integration":          false,
 			"enable_vpc_flow_logs":            false,
@@ -379,13 +380,60 @@ func GetLSFVersionConfig() (string, error) {
 	return productFileName, nil
 }
 
-// DefaultTest validates creation and verification of an HPC cluster
+// TestMain is the entry point for all tests
+func TestMain(m *testing.M) {
+
+	productFileName, err := GetLSFVersionConfig()
+
+	if err != nil {
+		log.Fatalf("Unsupported solution specified: %s", solution)
+	}
+
+	// Load configuration from YAML
+	configFilePath, err := filepath.Abs("../data/" + productFileName)
+	if err != nil {
+		log.Fatalf("❌ Failed to get absolute path for config file: %v", err)
+	}
+
+	// Check if the file exists
+	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
+		log.Fatalf("❌ Configuration file not found: %s", configFilePath)
+	}
+
+	// Load the config
+	_, err = deploy.GetConfigFromYAML(configFilePath)
+	if err != nil {
+		log.Fatalf("❌ Failed to load configuration: %v", err)
+	}
+
+	log.Printf("✅ Successfully loaded configuration")
+
+	// Run tests
+	exitCode := m.Run()
+
+	// Generate HTML report if JSON log exists
+	if jsonFileName, ok := os.LookupEnv("LOG_FILE_NAME"); ok {
+		if _, err := os.Stat(jsonFileName); err == nil {
+			results, err := utils.ParseJSONFile(jsonFileName)
+			if err != nil {
+				log.Printf("Failed to parse JSON results: %v", err)
+			} else if err := utils.GenerateHTMLReport(results); err != nil {
+				log.Printf("Failed to generate HTML report: %v", err)
+			}
+		}
+	}
+
+	os.Exit(exitCode)
+}
+
+// TestRunDefault validates creation and verification of an HPC cluster
 // Tests:
 // - Successful cluster provisioning
 // - Valid output structure
 // - Resource cleanup
 
-func DefaultTest(t *testing.T) {
+func TestRunDefault(t *testing.T) {
+	t.Parallel()
 
 	// 1. Initialization
 	setupTestSuite(t)
@@ -411,7 +459,7 @@ func DefaultTest(t *testing.T) {
 	require.NoError(t, err, "Test options initialization failed")
 
 	// 3. Execution & Validation
-	output, err := options.RunTestConsistency()
+	output, err := options.RunTest()
 	if err != nil {
 		testLogger.FAIL(t, fmt.Sprintf("Provisioning failed: %v", err))
 	}

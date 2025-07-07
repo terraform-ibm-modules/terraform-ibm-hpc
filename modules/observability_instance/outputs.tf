@@ -35,11 +35,6 @@ output "cloud_monitoring_url" {
   description = "IBM Cloud Monitoring URL"
 }
 
-output "cloud_monitoring_crn" {
-  value       = var.cloud_monitoring_provision ? module.observability_instance.cloud_monitoring_crn : null
-  description = "IBM Cloud Monitoring URL"
-}
-
 output "cloud_logs_url" {
   value       = var.cloud_logs_provision ? "https://dashboard.${var.location}.logs.cloud.ibm.com/${module.observability_instance.cloud_logs_guid}" : null
   description = "IBM Cloud Logs URL"

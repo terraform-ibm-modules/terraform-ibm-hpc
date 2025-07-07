@@ -90,27 +90,27 @@
     - das_staging_area
   when: inventory_hostname == groups['management_nodes'][0]
 
-- name: LoginNode host entry | Read LSF hosts file from shared path
+- name: Read LSF hosts file from shared path
   slurp:
     src: "{{ SHARED_PATH }}/lsf/conf/hosts"
   register: lsf_hosts_file
   when: inventory_hostname == groups['login_node'][0]
 
-- name: LoginNode host entry | Append LSF Login hosts to /etc/hosts
+- name: Override system /etc/hosts with LSF Login hosts
   blockinfile:
     path: /etc/hosts
-    create: yes
+    block: "{{ lsf_hosts_file.content | b64decode }}"
     marker: "# {mark} LSF HOSTS BLOCK"
-    insertafter: EOF
-    block: |
-      {{ lsf_hosts_file.content | b64decode }}
+    create: yes
   become: yes
   when: inventory_hostname == groups['login_node'][0]
 
-- name: LoginNode host entry | Change ownership of /etc/hosts
-  ansible.builtin.file:
-    path: /etc/hosts
+- name: Copy Hosts | Copy LSF hosts file to /etc/hosts
+  ansible.builtin.copy:
+    src: "{{ SHARED_PATH }}/lsf/conf/hosts"
+    dest: /etc/hosts
     owner: lsfadmin
     group: root
-  become: yes
+    mode: preserve
+    remote_src: yes
   when: inventory_hostname == groups['login_node'][0]

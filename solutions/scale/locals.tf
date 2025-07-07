@@ -61,6 +61,10 @@ locals {
     observability_logs_retention_period              = var.observability_logs_retention_period
     observability_monitoring_on_compute_nodes_enable = var.observability_monitoring_on_compute_nodes_enable
     observability_monitoring_plan                    = var.observability_monitoring_plan
+    scc_enable                                       = var.scc_enable
+    scc_profile                                      = var.scc_profile
+    scc_location                                     = var.scc_location
+    scc_event_notification_plan                      = var.scc_event_notification_plan
     skip_flowlogs_s2s_auth_policy                    = var.skip_flowlogs_s2s_auth_policy
     skip_kms_s2s_auth_policy                         = var.skip_kms_s2s_auth_policy
     skip_iam_block_storage_authorization_policy      = var.skip_iam_block_storage_authorization_policy
@@ -84,11 +88,15 @@ locals {
     scale_encryption_admin_default_password          = var.scale_encryption_admin_default_password
     scale_encryption_admin_password                  = var.scale_encryption_admin_password
     scale_encryption_admin_username                  = var.scale_encryption_admin_username
+    key_protect_instance_id                          = var.key_protect_instance_id
     filesystem_config                                = var.filesystem_config
     existing_bastion_instance_name                   = var.existing_bastion_instance_name
     existing_bastion_instance_public_ip              = var.existing_bastion_instance_public_ip
     existing_bastion_security_group_id               = var.existing_bastion_security_group_id
     existing_bastion_ssh_private_key                 = var.existing_bastion_ssh_private_key
+    bms_boot_drive_encryption                        = var.bms_boot_drive_encryption
+    tie_breaker_bm_server                            = var.tie_breaker_bm_server
+    github_token                                     = var.github_token # Delete this variable before pushing to the public repository.
   }
 }
 
@@ -138,6 +146,10 @@ locals {
     observability_logs_retention_period              = lookup(local.override[local.override_type], "observability_logs_retention_period", local.config.observability_logs_retention_period)
     observability_monitoring_on_compute_nodes_enable = lookup(local.override[local.override_type], "observability_monitoring_on_compute_nodes_enable", local.config.observability_monitoring_on_compute_nodes_enable)
     observability_monitoring_plan                    = lookup(local.override[local.override_type], "observability_monitoring_plan", local.config.observability_monitoring_plan)
+    scc_enable                                       = lookup(local.override[local.override_type], "scc_enable", local.config.scc_enable)
+    scc_profile                                      = lookup(local.override[local.override_type], "scc_profile", local.config.scc_profile)
+    scc_location                                     = lookup(local.override[local.override_type], "scc_location", local.config.scc_location)
+    scc_event_notification_plan                      = lookup(local.override[local.override_type], "scc_event_notification_plan", local.config.scc_event_notification_plan)
     skip_flowlogs_s2s_auth_policy                    = lookup(local.override[local.override_type], "skip_flowlogs_s2s_auth_policy", local.config.skip_flowlogs_s2s_auth_policy)
     skip_kms_s2s_auth_policy                         = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
     skip_iam_block_storage_authorization_policy      = lookup(local.override[local.override_type], "skip_iam_block_storage_authorization_policy", local.config.skip_iam_block_storage_authorization_policy)
@@ -156,6 +168,7 @@ locals {
     scale_encryption_type                            = lookup(local.override[local.override_type], "scale_encryption_type", local.config.scale_encryption_type)
     gklm_instance_key_pair                           = lookup(local.override[local.override_type], "gklm_instance_key_pair", local.config.gklm_instance_key_pair)
     gklm_instances                                   = lookup(local.override[local.override_type], "gklm_instances", local.config.gklm_instances)
+    key_protect_instance_id                          = lookup(local.override[local.override_type], "key_protect_instance_id", local.config.key_protect_instance_id)
     storage_type                                     = lookup(local.override[local.override_type], "storage_type", local.config.storage_type)
     colocate_protocol_instances                      = lookup(local.override[local.override_type], "colocate_protocol_instances", local.config.colocate_protocol_instances)
     scale_encryption_admin_default_password          = lookup(local.override[local.override_type], "scale_encryption_admin_default_password", local.config.scale_encryption_admin_default_password)
@@ -166,5 +179,8 @@ locals {
     existing_bastion_instance_public_ip              = lookup(local.override[local.override_type], "existing_bastion_instance_public_ip", local.config.existing_bastion_instance_public_ip)
     existing_bastion_security_group_id               = lookup(local.override[local.override_type], "existing_bastion_security_group_id", local.config.existing_bastion_security_group_id)
     existing_bastion_ssh_private_key                 = lookup(local.override[local.override_type], "existing_bastion_ssh_private_key", local.config.existing_bastion_ssh_private_key)
+    bms_boot_drive_encryption                        = lookup(local.override[local.override_type], "bms_boot_drive_encryption", local.config.bms_boot_drive_encryption)
+    tie_breaker_bm_server                            = lookup(local.override[local.override_type], "tie_breaker_bm_server", local.config.tie_breaker_bm_server)
+    github_token                                     = lookup(local.override[local.override_type], "github_token", local.config.github_token) # Delete this variable before pushing to the public repository.
   }
 }

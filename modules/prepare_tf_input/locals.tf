@@ -7,6 +7,7 @@ locals {
   list_ssh_keys                      = jsonencode(var.ssh_keys)
   list_storage_instances             = jsonencode(var.storage_instances)
   list_storage_servers               = jsonencode(var.storage_servers)
+  list_tie_breaker_bm_server         = jsonencode(var.tie_breaker_bm_server)
   list_management_instances          = jsonencode(var.management_instances)
   list_protocol_instances            = jsonencode(var.protocol_instances)
   list_compute_instances             = jsonencode(var.static_compute_instances)
@@ -36,11 +37,13 @@ locals {
   list_gklm_instances                = jsonencode(var.gklm_instances)
   scale_encryption_type              = jsonencode(var.scale_encryption_type)
   filesystem_config                  = jsonencode(var.filesystem_config)
+  scale_encryption_admin_username     = jsonencode(var.scale_encryption_admin_username)
+  scale_encryption_admin_default_password = jsonencode(var.scale_encryption_admin_default_password)
   scale_encryption_admin_password    = jsonencode(var.scale_encryption_admin_password)
+  key_protect_instance_id            = jsonencode(var.key_protect_instance_id)
   custom_file_shares                 = jsonencode(var.custom_file_shares)
   resource_group_ids                 = jsonencode(var.resource_group_ids)
   existing_bastion_instance_name     = jsonencode(var.existing_bastion_instance_name == null ? null : var.existing_bastion_instance_name)
   existing_bastion_security_group_id = jsonencode(var.existing_bastion_security_group_id == null ? null : var.existing_bastion_security_group_id)
   login_instance                     = jsonencode(var.login_instance)
-
 }

@@ -33,6 +33,26 @@ output "storage_bms_data" {
   value       = flatten(module.storage_baremetal[*].list)
 }
 
+output "storage_bm_name_with_vol_mapping" {
+  description = "Storage BareMetal Server data"
+  value       = flatten(module.storage_baremetal[*].instance_ips_with_vol_mapping)
+}
+
+output "storage_tie_breaker_bms_data" {
+  description = "Storage Tie- Breaker BareMetal Server data"
+  value       = flatten(module.storage_baremetal_tie_breaker[*].list)
+}
+
+output "storage_tie_breaker_bms_name_with_vol_mapping" {
+  description = "Storage BareMetal Server data"
+  value       = flatten(module.storage_baremetal_tie_breaker[*].instance_ips_with_vol_mapping)
+}
+
+output "protocol_bms_data" {
+  description = "Protocol BareMetal Server data"
+  value       = flatten(module.protocol_baremetal_server[*].list)
+}
+
 output "storage_cluster_management_vsi" {
   description = "Storage Management VSI data"
   value       = module.storage_cluster_management_vsi[*]["list"]
@@ -58,6 +78,18 @@ output "compute_private_key_content" {
   description = "Compute private key content"
   sensitive   = true
   value       = one(module.compute_key[*].private_key_content)
+}
+
+output "client_public_key_content" {
+  description = "Client public key content"
+  sensitive   = true
+  value       = one(module.client_key[*].public_key_content)
+}
+
+output "client_private_key_content" {
+  description = "Client private key content"
+  sensitive   = true
+  value       = one(module.client_key[*].private_key_content)
 }
 
 output "afm_vsi_data" {

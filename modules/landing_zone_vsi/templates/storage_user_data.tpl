@@ -100,7 +100,6 @@ fi
 echo "DOMAIN=${storage_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${storage_interfaces}"
 echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${storage_interfaces}"
 chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
-sleep 120
 systemctl restart NetworkManager
 
 systemctl stop firewalld
@@ -126,8 +125,8 @@ if [ "${enable_protocol}" == true ]; then
     sec_interface=$(nmcli -t con show --active | grep eth1 | cut -d ':' -f 1)
     nmcli conn del "$sec_interface"
     nmcli con add type ethernet con-name eth1 ifname eth1
-    echo "DOMAIN=\"${protocol_dns_domain}\"" >> "/etc/sysconfig/network-scripts/ifcfg-eth1"
-    echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-eth1"
+    echo "DOMAIN=${protocol_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${protocol_interfaces}"
+    echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${protocol_interfaces}"
     systemctl restart NetworkManager
     ###### TODO: Fix Me ######
     echo 'export IC_REGION=${vpc_region}' >> /root/.bashrc

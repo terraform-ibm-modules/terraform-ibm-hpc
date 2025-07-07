@@ -189,7 +189,7 @@ locals {
 
   active_cos = [
     (
-      var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker || var.observability_logs_enable
+      var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker || var.scc_enable || var.observability_logs_enable
       ) ? {
       name                          = var.cos_instance_name == null ? "hpc-cos" : var.cos_instance_name
       resource_group                = local.service_resource_group
@@ -257,6 +257,18 @@ locals {
             enable  = true
             rule_id = "bucket-expire-rule"
           }
+        } : null,
+        var.scc_enable ? {
+          name          = "scc-bucket"
+          storage_class = "standard"
+          endpoint_type = "public"
+          force_delete  = true
+          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-scc-key", var.prefix) : var.kms_key_name) : null
+          expire_rule = {
+            days    = 30
+            enable  = true
+            rule_id = "bucket-expire-rule"
+          }
         } : null
       ]
     } : null
@@ -307,6 +319,9 @@ locals {
     } : null,
     var.enable_atracker ? {
       name = format("%s-atracker-key", var.prefix)
+    } : null,
+    var.scc_enable ? {
+      name = format("%s-scc-key", var.prefix)
     } : null
     ] : [
     {
@@ -315,11 +330,11 @@ locals {
     }
   ]) : null
 
-  key_management = var.key_management == "key_protect" ? {
+  key_management = var.key_management == "key_protect" || (var.scale_encryption_enabled && var.scale_encryption_type == "key_protect" && var.key_protect_instance_id == null) ? {
     name           = var.kms_instance_name != null ? var.kms_instance_name : format("%s-kms", var.prefix) # var.key_management == "hs_crypto" ? var.hpcs_instance_name : format("%s-kms", var.prefix)
     resource_group = local.service_resource_group
     use_hs_crypto  = false
-    keys           = [for each in local.active_keys : each if each != null]
+    keys = [for each in coalesce(local.active_keys, []) : each if each != null]
     use_data       = var.kms_instance_name != null ? true : false
     } : {
     name           = null
@@ -401,5 +416,6 @@ locals {
     f5_vsi                                 = local.f5_vsi
     f5_template_data                       = local.f5_template_data
     skip_kms_block_storage_s2s_auth_policy = local.skip_kms_block_storage_s2s_auth_policy
+
   }
 }

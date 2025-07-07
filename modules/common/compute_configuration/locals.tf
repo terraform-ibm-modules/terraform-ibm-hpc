@@ -10,6 +10,11 @@ locals {
   enable_mrot_conf         = var.enable_mrot_conf ? "True" : "False"
   enable_ces               = var.enable_ces ? "True" : "False"
   enable_afm               = var.enable_afm ? "True" : "False"
-  enable_key_protect       = var.enable_key_protect == "key_protect" ? "True" : "False"
+  enable_key_protect              = var.scale_encryption_enabled && var.enable_key_protect == "True" ? "True" : "False"
   ldap_server              = jsonencode(var.ldap_server)
+  scale_hostentry_playbook_path = format("%s/%s/scale_host_entry_play.yml", var.clone_path, "ibm-spectrum-scale-install-infra")
+  scale_cluster_hosts = format("%s/%s/scale_cluster_hosts.yml", var.clone_path, "ibm-spectrum-scale-install-infra")
+  scale_all_inventory = format("%s/%s/scale_all_inventory.ini", var.clone_path, "ibm-spectrum-scale-install-infra")
+  remove_hostentry_playbooks_path = format("%s/%s/remove_host_entry_play.yml", var.clone_path, "ibm-spectrum-scale-install-infra")
+  dns_names = jsonencode(var.domain_names)
 }

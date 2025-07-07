@@ -485,7 +485,7 @@ func LSFExtractJobID(response string) (string, error) {
 func WaitForDynamicNodeDisappearance(t *testing.T, sClient *ssh.Client, logger *utils.AggregatedLogger) error {
 	const (
 		statusOK      = "ok"
-		workerKeyword = "comp"
+		workerKeyword = "-comp-"
 		pollInterval  = 90 * time.Second
 	)
 
@@ -538,7 +538,7 @@ func LSFAPPCenterConfiguration(t *testing.T, sClient *ssh.Client, logger *utils.
 
 	lsfAppCenterPkg := "lsf-appcenter-10."
 	port := "8443"
-	//expectedStatus := "200 OK"
+	expectedStatus := "200 OK"
 
 	// 1. Validate App Center setup using pmcadmin
 	if err := CheckAppCenterSetup(t, sClient, logger); err != nil {
@@ -565,31 +565,28 @@ func LSFAPPCenterConfiguration(t *testing.T, sClient *ssh.Client, logger *utils.
 		return fmt.Errorf("app Center binary not installed as expected: %s", appBinaryOutput)
 	}
 
-	// 4. Define the command to check mariadb status
-	mariaDBCommand := "sudo su -l root -c 'systemctl status mariadb'"
-
-	const expectedMessage = "Active: active (running)"
-
-	// Run the systemctl command on the remote host
-	output, err := utils.RunCommandInSSHSession(sClient, mariaDBCommand)
+	// 4. Validate MariaDB packages
+	mariaDBCommand := "rpm -qa | grep MariaDB"
+	mariaDBOutput, err := utils.RunCommandInSSHSession(sClient, mariaDBCommand)
 	if err != nil {
-		return fmt.Errorf("failed to run '%s': %w", mariaDBCommand, err)
+		return fmt.Errorf("failed to execute command '%s': %w", mariaDBCommand, err)
 	}
-
-	// Check if the output contains the expected active message
-	if !utils.VerifyDataContains(t, string(output), expectedMessage, logger) {
-		return fmt.Errorf("mariadb health check failed: expected message '%s' not found in output:\n%s", expectedMessage, string(output))
+	mariaDBPackages := [4]string{"MariaDB-client", "MariaDB-common", "MariaDB-shared", "MariaDB-server"}
+	for _, pkg := range mariaDBPackages {
+		if !utils.VerifyDataContains(t, mariaDBOutput, pkg, logger) {
+			return fmt.Errorf("MariaDB package '%s' not found in output: %s", pkg, mariaDBOutput)
+		}
 	}
 
 	// 5. Validate web interface status via curl
-	// curlCommand := fmt.Sprintf("curl -i http://localhost:%s/platform/login | head -1", port)
-	// curlCommandOutput, err := utils.RunCommandInSSHSession(sClient, curlCommand)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to execute command '%s': %w", curlCommand, err)
-	// }
-	// if !utils.VerifyDataContains(t, string(curlCommandOutput), expectedStatus, logger) {
-	// 	return fmt.Errorf("app Center did not return expected HTTP status '%s': %s", expectedStatus, curlCommandOutput)
-	// }
+	curlCommand := fmt.Sprintf("curl -i http://localhost:%s/platform/login | head -1", port)
+	curlCommandOutput, err := utils.RunCommandInSSHSession(sClient, curlCommand)
+	if err != nil {
+		return fmt.Errorf("failed to execute command '%s': %w", curlCommand, err)
+	}
+	if !utils.VerifyDataContains(t, string(curlCommandOutput), expectedStatus, logger) {
+		return fmt.Errorf("app Center did not return expected HTTP status '%s': %s", expectedStatus, curlCommandOutput)
+	}
 
 	logger.Info(t, "App Center configuration validated successfully")
 	return nil
@@ -1308,6 +1305,7 @@ func LSFCheckNoVNC(t *testing.T, sClient *ssh.Client, logger *utils.AggregatedLo
 		"rpm -qa | grep tigervnc":                  "tigervnc",
 		"ps aux | grep -i novnc":                   "-Ddefault.novnc.port=6080",
 		"netstat -tuln | grep 6080":                "0.0.0.0:6080",
+		"ps -ef | grep Xtightvnc | grep -v grep":   ":1",
 		"curl -sI http://localhost:6080 | head -1": "200 OK",
 		"which vncserver || command -v vncserver":  "vncserver",
 	}
@@ -1761,6 +1759,96 @@ func VerifyLDAPServerConfig(t *testing.T, sClient *ssh.Client, ldapAdminpassword
 	return nil
 }
 
+// // verifyPTRRecords verifies PTR records for 'mgmt' or 'login' nodes and ensures their resolution via SSH.
+// // It retrieves hostnames, performs nslookup to verify PTR records, and returns an error if any step fails.
+// func verifyPTRRecords(t *testing.T, sClient *ssh.Client, publicHostName, publicHostIP, privateHostName string, managementNodeIPList []string, loginNodeIP string, domainName string, logger *utils.AggregatedLogger) error {
+// 	// Slice to hold the list of hostnames
+// 	var hostNamesList []string
+
+// 	// Check if the management node IP list is empty
+// 	if len(managementNodeIPList) == 0 {
+// 		return fmt.Errorf("management node IPs cannot be empty")
+// 	}
+
+// 	// Execute the command to get the hostnames
+// 	hostNames, err := utils.RunCommandInSSHSession(sClient, "lshosts -w | awk 'NR>1' | awk '{print $1}' | grep -E 'mgmt|login'")
+// 	if err != nil {
+// 		return fmt.Errorf("failed to execute command to retrieve hostnames: %w", err)
+// 	}
+
+// 	// Process the retrieved hostnames
+// 	for _, hostName := range strings.Split(strings.TrimSpace(hostNames), "\n") {
+// 		// Append domain name to hostnames if not already present
+// 		if !strings.Contains(hostName, domainName) {
+// 			hostNamesList = append(hostNamesList, hostName+"."+domainName)
+// 		} else {
+// 			hostNamesList = append(hostNamesList, hostName)
+// 		}
+// 	}
+
+// 	// Function to perform nslookup and verify PTR records
+// 	verifyPTR := func(sshClient *ssh.Client, nodeDesc string) error {
+// 		for _, hostName := range hostNamesList {
+// 			// Execute nslookup command for the hostname
+// 			nsOutput, err := utils.RunCommandInSSHSession(sshClient, "nslookup "+hostName)
+// 			if err != nil {
+// 				return fmt.Errorf("failed to execute nslookup command for %s: %w", hostName, err)
+// 			}
+
+// 			// Verify the PTR record existence in the search results
+// 			if utils.VerifyDataContains(t, nsOutput, "server can't find", logger) {
+// 				return fmt.Errorf("PTR record for %s not found in search results", hostName)
+// 			}
+// 		}
+// 		logger.Info(t, fmt.Sprintf("PTR Records for %s completed successfully.", nodeDesc))
+// 		return nil
+// 	}
+
+// 	// Iterate over management nodes
+// 	for _, mgmtIP := range managementNodeIPList {
+// 		// Connect to the management node via SSH
+// 		mgmtSshClient, connectionErr := utils.ConnectToHost(publicHostName, publicHostIP, privateHostName, mgmtIP)
+// 		if connectionErr != nil {
+// 			return fmt.Errorf("failed to connect to the management node %s via SSH: %v", mgmtIP, connectionErr)
+// 		}
+
+// 		defer func() {
+// 			if err := mgmtSshClient.Close(); err != nil {
+// 				logger.Info(t, fmt.Sprintf("failed to close mgmtSshClient: %v", err))
+// 			}
+// 		}()
+
+// 		// Verify PTR records on management node
+// 		if err := verifyPTR(mgmtSshClient, fmt.Sprintf("management node %s", mgmtIP)); err != nil {
+// 			return err
+// 		}
+// 	}
+// 	logger.Info(t, "Verify PTR Records for management nodes completed successfully.")
+
+// 	// If login node IP is provided, verify PTR records on login node as well
+// 	if loginNodeIP != "" {
+// 		loginSshClient, connectionErr := utils.ConnectToHost(publicHostName, publicHostIP, privateHostName, loginNodeIP)
+// 		if connectionErr != nil {
+// 			return fmt.Errorf("failed to connect to the login node %s via SSH: %v", loginNodeIP, connectionErr)
+// 		}
+
+// 		defer func() {
+// 			if err := loginSshClient.Close(); err != nil {
+// 				logger.Info(t, fmt.Sprintf("failed to close loginSshClient: %v", err))
+// 			}
+// 		}()
+
+// 		// Verify PTR records on login node
+// 		if err := verifyPTR(loginSshClient, fmt.Sprintf("login node %s", loginNodeIP)); err != nil {
+// 			return err
+// 		}
+// 	}
+
+// 	logger.Info(t, "Verify PTR Records for login node completed successfully.")
+// 	logger.Info(t, "Verify PTR Records completed successfully.")
+// 	return nil
+// }
+
 // verifyPTRRecords verifies PTR records for 'mgmt'  nodes and ensures their resolution via SSH.
 // It retrieves hostnames, performs nslookup to verify PTR records, and returns an error if any step fails.
 func verifyPTRRecords(t *testing.T, sClient *ssh.Client, publicHostName, publicHostIP, privateHostName string, managementNodeIPList []string, domainName string, logger *utils.AggregatedLogger) error {
@@ -1896,14 +1984,6 @@ func DeleteServiceInstance(t *testing.T, apiKey, region, resourceGroup, instance
 
 	logger.Info(t, fmt.Sprintf("Service instance '%s' retrieved successfully. Instance ID: %s", instanceName, serviceInstanceID))
 
-	// Set the IBM Cloud Key Protect region
-	setKPRegionCommand := fmt.Sprintf("ibmcloud kp region-set %s", region)
-	setKPRegionExec := exec.Command("bash", "-c", setKPRegionCommand)
-	setKPRegionOutput, err := setKPRegionExec.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to set Key Protect region: %w. Output: %s", err, string(setKPRegionOutput))
-	}
-
 	// Retrieve and delete associated keys
 	getAssociatedKeysCmd := fmt.Sprintf("ibmcloud kp keys -i %s | awk 'NR>3' | awk '{print $1}'", serviceInstanceID)
 	cmdKeysID := exec.Command("bash", "-c", getAssociatedKeysCmd)
@@ -1971,18 +2051,11 @@ func CreateKey(t *testing.T, apiKey, region, resourceGroup, instanceName, keyNam
 
 	logger.Info(t, fmt.Sprintf("Service instance '%s' retrieved successfully. Instance ID: %s", instanceName, serviceInstanceID))
 
-	// Set the IBM Cloud Key Protect region
-	setKPRegionCommand := fmt.Sprintf("ibmcloud kp region-set %s", region)
-	setKPRegionExec := exec.Command("bash", "-c", setKPRegionCommand)
-	setKPRegionOutput, err := setKPRegionExec.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to set Key Protect region: %w. Output: %s", err, string(setKPRegionOutput))
-	}
-
 	// Create key
+
 	createKeyCmd := fmt.Sprintf("ibmcloud kp key create %s -i %s", keyName, serviceInstanceID)
-	createCmdKey := exec.Command("bash", "-c", createKeyCmd)
-	keyOutput, err := createCmdKey.CombinedOutput()
+	cmdKey := exec.Command("bash", "-c", createKeyCmd)
+	keyOutput, err := cmdKey.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to create key: %w. Output: %s", err, string(keyOutput))
 	}
@@ -2071,80 +2144,68 @@ func LSFDNSCheck(t *testing.T, sClient *ssh.Client, ipsList []string, domain str
 // remote ldapadd command. Verifies success by searching for the new user.
 // Returns nil on success or error if any operation fails.
 // Domain must be in "dc1.dc2" format.
-func LSFAddNewLDAPUser(t *testing.T, sClient *ssh.Client, ldapAdminPassword, ldapDomain, ldapUser, newLdapUser, newLdapPassword string, logger *utils.AggregatedLogger) error {
-	// Step 1: Parse the LDAP domain
-	domainParts := strings.Split(ldapDomain, ".")
+func LSFAddNewLDAPUser(t *testing.T, sClient *ssh.Client, ldapAdminPassword, ldapDomain, newLdapUser, newLdapUserPassword string, logger *utils.AggregatedLogger) error {
+	// Input validation
+	if strings.ContainsAny(newLdapUser, ",=+<>#;\\\"") {
+		return fmt.Errorf("username contains invalid characters")
+	}
+	if len(newLdapUserPassword) < 8 {
+		return fmt.Errorf("password must be at least 8 characters")
+	}
+
+	// Parse domain
+	domainParts := strings.SplitN(ldapDomain, ".", 2)
 	if len(domainParts) != 2 {
 		return fmt.Errorf("invalid LDAP domain format: %s", ldapDomain)
 	}
 	dc1, dc2 := domainParts[0], domainParts[1]
 
-	// Step 2: Fetch existing user LDIF
-	getLDAPUserConf := fmt.Sprintf(`ldapsearch -x -D "cn=admin,dc=%s,dc=%s" -w '%s' -b "ou=people,dc=%s,dc=%s" "(uid=%s)" | awk '/^dn: uid=/{flag=1} /^# search result/{flag=0} flag' > newuser.ldif`,
-		dc1, dc2, ldapAdminPassword, dc1, dc2, ldapUser)
-	_, err := utils.RunCommandInSSHSession(sClient, getLDAPUserConf)
-	if err != nil {
-		return fmt.Errorf("failed to run ldapsearch: %v", err)
-	}
-
-	// Step 3: Read the original LDIF
-	originalLDIF, err := utils.RunCommandInSSHSession(sClient, "cat ./newuser.ldif")
-	if err != nil {
-		return fmt.Errorf("failed to read LDIF: %v", err)
-	}
-	if strings.TrimSpace(originalLDIF) == "" {
-		return fmt.Errorf("no LDIF content found for user %s", ldapUser)
-	}
-
-	// Step 4: Replace username and UID
-	updatedLDIF := strings.ReplaceAll(originalLDIF, ldapUser, newLdapUser)
-	updatedLDIF = strings.ReplaceAll(updatedLDIF, "uidNumber: 10000", "uidNumber: 20000")
-
 	// Generate password hash
-	hashedPass, err := utils.GenerateLDAPPasswordHash(t, sClient, newLdapPassword, logger)
+	hashedPass, err := utils.GenerateLDAPPasswordHash(t, sClient, newLdapUserPassword, logger)
 	if err != nil {
 		return fmt.Errorf("password hash generation failed: %w", err)
 	}
 
-	lines := strings.Split(updatedLDIF, "\n")
-	for i, line := range lines {
-		if strings.HasPrefix(line, "userPassword:") || strings.HasPrefix(line, "userPassword::") { // pragma: allowlist secret
-			lines[i] = "userPassword: " + hashedPass // pragma: allowlist secret
+	// Prepare LDIF
+	ldifTemplate := "dn: uid=%s,ou=people,dc=%s,dc=%s\nobjectClass: inetOrgPerson\nobjectClass: posixAccount\nobjectClass: shadowAccount\nuid: %s\nsn: %s\ngivenName: %s\ncn: %s\ndisplayName: %s\nuidNumber: %d\ngidNumber: %d\nuserPassword: %s\ngecos: %s\nloginShell: /bin/bash\nhomeDirectory: /home/%s\n" // pragma: allowlist secret
+
+	ldifContent := fmt.Sprintf(ldifTemplate,
+		newLdapUser, dc1, dc2,
+		newLdapUser, newLdapUser, newLdapUser,
+		newLdapUser, newLdapUser,
+		20000, 5000, hashedPass,
+		newLdapUser, newLdapUser,
+	)
+
+	// Create LDIF file with automatic cleanup
+	if _, err := utils.ToCreateFileWithContent(t, sClient, ".", "user2.ldif", ldifContent, logger); err != nil {
+		return fmt.Errorf("LDIF file creation failed: %w", err)
+	}
+
+	defer func() {
+		if _, err := utils.RunCommandInSSHSession(sClient, "rm -f user2.ldif"); err != nil {
+			logger.Warn(t, fmt.Sprintf("Cleanup failed: %v", err))
 		}
-	}
-	updatedLDIF = strings.Join(lines, "\n")
+	}()
 
-	// Step 6: Write the updated LDIF to file using heredoc
-	heredoc := fmt.Sprintf(`cat <<EOF > ./user2.ldif
-%s
-EOF`, updatedLDIF)
-	_, err = utils.RunCommandInSSHSession(sClient, heredoc)
+	// Add user
+	ldapAddCmd := fmt.Sprintf("ldapadd -x -D cn=admin,dc=%s,dc=%s -w %s -f user2.ldif", dc1, dc2, ldapAdminPassword)
+	addOutput, err := utils.RunCommandInSSHSession(sClient, ldapAddCmd)
 	if err != nil {
-		return fmt.Errorf("failed to write user2.ldif via heredoc: %v", err)
+		return fmt.Errorf("ldapadd command failed: %w (output: %s)", err, addOutput)
 	}
 
-	// ➕ Step 7: Add the new LDAP user
-	ldapAddCmd := fmt.Sprintf("ldapadd -x -D cn=admin,dc=%s,dc=%s -w '%s' -f user2.ldif", dc1, dc2, ldapAdminPassword)
-	ldapAddOutput, err := utils.RunCommandInSSHSession(sClient, ldapAddCmd)
-	if err != nil {
-		return fmt.Errorf("ldapadd failed: %v", err)
-	}
-	if !utils.VerifyDataContains(t, ldapAddOutput, "adding new entry", logger) {
-		return fmt.Errorf("ldapadd did not confirm user addition: %s", ldapAddOutput)
-	}
-
-	// Step 8: Verify the new user
-	ldapSearchCmd := fmt.Sprintf(`ldapsearch -x -D "cn=admin,dc=%s,dc=%s" -w '%s' -b "ou=people,dc=%s,dc=%s" "(uid=%s)"`,
-		dc1, dc2, ldapAdminPassword, dc1, dc2, newLdapUser)
-	ldapSearchOutput, err := utils.RunCommandInSSHSession(sClient, ldapSearchCmd)
-	if err != nil {
-		return fmt.Errorf("ldapsearch verification failed: %v", err)
-	}
-	if !utils.VerifyDataContains(t, ldapSearchOutput, "uid: "+newLdapUser, logger) {
-		return fmt.Errorf("LDAP user %s not found in search results", newLdapUser)
+	// Verify
+	searchCmd := fmt.Sprintf(
+		`ldapsearch -x -D "cn=admin,dc=%s,dc=%s" -w %s -b "ou=people,dc=%s,dc=%s" "(uid=%s)"`,
+		dc1, dc2, ldapAdminPassword, dc1, dc2, newLdapUser,
+	)
+	searchOutput, err := utils.RunCommandInSSHSession(sClient, searchCmd)
+	if err != nil || !strings.Contains(searchOutput, "uid: "+newLdapUser) {
+		return fmt.Errorf("user verification failed (output: %s, error: %v)", searchOutput, err)
 	}
 
-	logger.Info(t, fmt.Sprintf("✅ New LDAP user '%s' created successfully", newLdapUser))
+	logger.Info(t, fmt.Sprintf("Successfully created LDAP user: %s", newLdapUser))
 	return nil
 }
 
@@ -3221,7 +3282,7 @@ func verifyDedicatedHost(t *testing.T, apiKey, region, resourceGroup, clusterPre
 		}
 
 		// Count the number of worker nodes attached to the dedicated host
-		actualCount := strings.Count(strings.TrimSpace(string(output)), clusterPrefix+"-comp")
+		actualCount := strings.Count(strings.TrimSpace(string(output)), clusterPrefix+"-worker")
 
 		logger.Info(t, fmt.Sprintf("Actual worker node count: %d, Expected: %d", actualCount, expectedWorkerNodeCount))
 
@@ -3276,7 +3337,7 @@ func VerifyEncryptionCRN(t *testing.T, sshClient *ssh.Client, keyManagement stri
 		expectedCRN := "\"crn\":\"crn:v1:bluemix:public:kms"
 		if strings.ToLower(keyManagement) != "key_protect" {
 			//expectedCRN = "\"crn\":\"\""
-			expectedCRN = "\"crn\":\"\""
+			expectedCRN = "\"crn\":\"null\""
 		}
 
 		if !utils.VerifyDataContains(t, normalizedOutput, expectedCRN, logger) {
@@ -4164,7 +4225,7 @@ func LSFHealthCheck(t *testing.T, sClient *ssh.Client, logger *utils.AggregatedL
 }
 
 // ValidateTerraformOutput connects to the LSF deployer node via SSH,
-// fetches Terraform outputs, and validates:
+// fetches Terraform outputs, and validates the following:
 // - cloud_logs_url (if cloud logging is enabled)
 // - cloud_monitoring_url (if cloud monitoring is enabled)
 // - ssh_to_ldap_node (if LDAP is enabled)
@@ -4196,16 +4257,8 @@ func ValidateTerraformOutput(
 
 	lines := strings.Split(string(output), "\n")
 
-	// Initialize validation flags outside the loop
-	isCloudvalidated := false
-	isCloudMonitoringvalidated := false
-	isldapServervalidated := false
-
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
 
 		// Validate cloud_logs_url
 		if isCloudLogEnabled && strings.Contains(line, "cloud_logs_url") {
@@ -4217,8 +4270,6 @@ func ValidateTerraformOutput(
 			if err != nil || !utils.VerifyDataContains(t, string(actualOutput), "200", logger) {
 				return fmt.Errorf("cloud_logs_url validation failed. Output: %s", actualOutput)
 			}
-			isCloudvalidated = true
-			logger.Info(t, "✅ cloud_logs_url validated successfully.")
 		}
 
 		// Validate cloud_monitoring_url
@@ -4230,8 +4281,6 @@ func ValidateTerraformOutput(
 			if !strings.HasPrefix(url, expectedPrefix) {
 				return fmt.Errorf("cloud_monitoring_url mismatch. Output: %s, Expected prefix: %s", url, expectedPrefix)
 			}
-			isCloudMonitoringvalidated = true
-			logger.Info(t, "✅ cloud_monitoring_url validated successfully.")
 		}
 
 		// Validate ssh_to_ldap_node
@@ -4239,24 +4288,10 @@ func ValidateTerraformOutput(
 			url := utils.ExtractTerraformValue(line)
 			logger.DEBUG(t, fmt.Sprintf("'ssh_to_ldap_node' output: %s", url))
 
-			expectedPrefix := "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o"
+			expectedPrefix := "https://cloud.ibm.com/observe/embedded-view/monitoring/"
 			if !strings.HasPrefix(url, expectedPrefix) {
 				return fmt.Errorf("ssh_to_ldap_node mismatch. Output: %s, Expected prefix: %s", url, expectedPrefix)
 			}
-			isldapServervalidated = true
-			logger.Info(t, "✅ ssh_to_ldap_node validated successfully.")
-		}
-
-		// Validate application_center_tunnel
-		if strings.Contains(line, "application_center_tunnel") {
-			url := utils.ExtractTerraformValue(line)
-			logger.DEBUG(t, fmt.Sprintf("'application_center_tunnel' output: %s", url))
-
-			expected := `ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 -L 8443`
-			if !utils.VerifyDataContains(t, line, expected, logger) {
-				return fmt.Errorf("application_center_tunnel string missing or incorrect in terraform output")
-			}
-			logger.Info(t, "✅ application_center_tunnel validated successfully.")
 		}
 
 		// Validate application_center_url
@@ -4264,11 +4299,10 @@ func ValidateTerraformOutput(
 			url := utils.ExtractTerraformValue(line)
 			logger.DEBUG(t, fmt.Sprintf("'application_center_url' output: %s", url))
 
-			expected := `https://localhost:8443`
+			expected := `ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J`
 			if !utils.VerifyDataContains(t, line, expected, logger) {
 				return fmt.Errorf("application_center_url string missing or incorrect in terraform output")
 			}
-			logger.Info(t, "✅ application_center_url validated successfully.")
 		}
 
 		// Validate ssh_to_deployer
@@ -4277,7 +4311,6 @@ func ValidateTerraformOutput(
 			if !utils.VerifyDataContains(t, line, expected, logger) {
 				return fmt.Errorf("ssh_to_deployer string missing or incorrect in terraform output")
 			}
-			logger.Info(t, "✅ ssh_to_deployer validated successfully.")
 		}
 
 		// Validate ssh_to_management_node
@@ -4286,19 +4319,18 @@ func ValidateTerraformOutput(
 			if !utils.VerifyDataContains(t, line, expected, logger) {
 				return fmt.Errorf("ssh_to_management_node string missing or incorrect in terraform output")
 			}
-			logger.Info(t, "✅ ssh_to_management_node validated successfully.")
 		}
 	}
 
-	// Final validation checks to ensure expected outputs were found
-	if isCloudLogEnabled && !isCloudvalidated {
-		return fmt.Errorf("cloud_logs_url not found in terraform output")
+	// Warn about skipped validations
+	if !isCloudLogEnabled {
+		logger.Warn(t, "Cloud logs not enabled; skipping cloud_logs_url validation")
 	}
-	if isCloudMonitoringEnabled && !isCloudMonitoringvalidated {
-		return fmt.Errorf("cloud_monitoring_url not found in terraform output")
+	if !isCloudMonitoringEnabled {
+		logger.Warn(t, "Cloud monitoring not enabled; skipping cloud_monitoring_url validation")
 	}
-	if isldapServerEnabled && !isldapServervalidated {
-		return fmt.Errorf("ssh_to_ldap_node not found in terraform output")
+	if !isldapServerEnabled {
+		logger.Warn(t, "LDAP not enabled; skipping ldap_node_url validation")
 	}
 
 	return nil

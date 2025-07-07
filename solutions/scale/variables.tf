@@ -24,6 +24,13 @@ variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
 }
 
+# Delete this variable before pushing to the public repository.
+variable "github_token" {
+  type        = string
+  default     = null
+  description = "Provide your GitHub token to download the HPCaaS code into the Deployer node"
+}
+
 ##############################################################################
 # Cluster Level Variables
 ##############################################################################
@@ -196,7 +203,7 @@ variable "compute_instances" {
     profile    = "cx2-2x4"
     count      = 3
     image      = "ibm-redhat-8-10-minimal-amd64-4"
-    filesystem = "/ibm/fs1"
+    filesystem = "/gpfs/fs1"
   }]
   description = "Total Number of instances to be launched for compute cluster."
 }
@@ -237,7 +244,7 @@ variable "storage_instances" {
     profile    = "bx2-2x8"
     count      = 0
     image      = "ibm-redhat-8-10-minimal-amd64-4"
-    filesystem = "/ibm/fs1"
+    filesystem = "/gpfs/fs1"
   }]
   description = "Number of instances to be launched for storage cluster."
 }
@@ -258,6 +265,24 @@ variable "storage_servers" {
     filesystem = "/gpfs/fs1"
   }]
   description = "Number of BareMetal Servers to be launched for storage cluster."
+}
+
+variable "tie_breaker_bm_server" {
+  type = list(
+    object({
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = string
+    })
+  )
+  default = [{
+    profile    = "cx2d-metal-96x192"
+    count      = 1
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "/gpfs/fs1"
+  }]
+  description = "BareMetal Server to be launched for Tie Breaker."
 }
 
 variable "protocol_subnets_cidr" {
@@ -319,7 +344,7 @@ variable "filesystem_config" {
     default_metadata_replica = 2
     max_data_replica         = 3
     max_metadata_replica     = 3
-    mount_point              = "/ibm/fs1"
+    mount_point              = "/gpfs/fs1"
   }]
   description = "File system configurations."
 }
@@ -335,7 +360,7 @@ variable "filesystem_config" {
 #   default = [{
 #     fileset           = "fileset1"
 #     filesystem        = "fs1"
-#     junction_path     = "/ibm/fs1/fileset1"
+#     junction_path     = "/gpfs/fs1/fileset1"
 #     client_mount_path = "/mnt"
 #     quota             = 100
 #   }]
@@ -569,6 +594,11 @@ variable "scale_encryption_type" {
   type        = string
   default     = null
   description = "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled"
+
+  validation {
+    condition     = var.scale_encryption_type == "key_protect" || var.scale_encryption_type == "gklm" || var.scale_encryption_type == "null"
+    error_message = "Invalid value: scale_encryption_type must be 'key_protect', 'gklm', or 'null'"
+  }
 }
 
 variable "gklm_instance_key_pair" {
@@ -588,14 +618,14 @@ variable "gklm_instances" {
   default = [{
     profile = "bx2-2x8"
     count   = 2
-    image   = "ibm-redhat-8-10-minimal-amd64-4"
+    image   = "hpcc-scale-gklm4202-v2-5-2"
   }]
-  description = "Number of instances to be launched for client."
+  description = "Number of GKLM instances to be launched for scale cluster."
 }
 
 variable "scale_encryption_admin_default_password" {
   type        = string
-  default     = null
+  default     = "SKLM@dmin123"
   description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
 }
 
@@ -609,6 +639,14 @@ variable "scale_encryption_admin_password" {
   type        = string
   default     = null
   description = "Password that is used for performing administrative operations for the GKLM.The password must contain at least 8 characters and at most 20 characters. For a strong password, at least three alphabetic characters are required, with at least one uppercase and one lowercase letter.  Two numbers, and at least one special character from this(~@_+:). Make sure that the password doesn't include the username. Visit this [page](https://www.ibm.com/docs/en/gklm/3.0.1?topic=roles-password-policy) to know more about password policy of GKLM. "
+}
+
+# Existing Key Protect Instance Details
+
+variable "key_protect_instance_id" {
+  type        = string
+  default     = null
+  description = "An existing Key Protect instance used for filesystem encryption"
 }
 
 variable "storage_type" {
@@ -713,6 +751,46 @@ variable "observability_monitoring_plan" {
   }
 }
 
+##############################################################################
+# SCC Variables
+##############################################################################
+
+variable "scc_enable" {
+  type        = bool
+  default     = true
+  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+}
+
+variable "scc_profile" {
+  type        = string
+  default     = "CIS IBM Cloud Foundations Benchmark v1.1.0"
+  description = "Profile to be set on the SCC Instance (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')"
+  validation {
+    condition     = can(regex("^(|CIS IBM Cloud Foundations Benchmark v1.1.0|IBM Cloud Framework for Financial Services)$", var.scc_profile))
+    error_message = "Provide SCC Profile Name to be used (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')."
+  }
+}
+
+variable "scc_location" {
+  description = "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
+  type        = string
+  default     = "us-south"
+  validation {
+    condition     = can(regex("^(|us-south|eu-de|ca-tor|eu-es)$", var.scc_location))
+    error_message = "Provide region where it's possible to deploy an SCC Instance (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es') or leave blank and it will default to 'us-south'."
+  }
+}
+
+variable "scc_event_notification_plan" {
+  type        = string
+  default     = "lite"
+  description = "Event Notifications Instance plan to be used (it's used with S.C.C. instance), possible values 'lite' and 'standard'."
+  validation {
+    condition     = can(regex("^(|lite|standard)$", var.scc_event_notification_plan))
+    error_message = "Provide Event Notification instance plan to be used (accepting 'lite' and 'standard', defaulting to 'lite'). This instance is used in conjuction with S.C.C. one."
+  }
+}
+
 variable "skip_flowlogs_s2s_auth_policy" {
   type        = bool
   default     = false
@@ -758,4 +836,10 @@ variable "existing_bastion_ssh_private_key" {
   sensitive   = true
   default     = null
   description = "Provide the private SSH key (named id_rsa) used during the creation and configuration of the bastion server to securely authenticate and connect to the bastion server. This allows access to internal network resources from a secure entry point. Note: The corresponding public SSH key (named id_rsa.pub) must already be available in the ~/.ssh/authorized_keys file on the bastion host to establish authentication."
+}
+
+variable "bms_boot_drive_encryption" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the boot drive of bare metal server. Select true or false"
 }

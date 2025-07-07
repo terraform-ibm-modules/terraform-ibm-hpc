@@ -93,7 +93,7 @@ git submodule update --init
 Navigate to the test directory:
 
 ```sh
-cd HPCaaS/tests
+cd HPCaaS/tests/lsf_tests
 ```
 
 ---
@@ -118,7 +118,7 @@ If you want to override the values in `lsf_config.yml`, you can pass the input p
 export TF_VAR_ibmcloud_api_key=your_api_key  # pragma: allowlist secret
 export TF_VAR_github_token=your_github_token
 export LOG_FILE_NAME="filename.json"
-SSH_KEYS=your_ssh_key ZONES=your_zone EXISTING_RESOURCE_GROUP=your_existing_resource_group SOLUTION=your_solution go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee -a $LOG_FILE_NAME
+SSH_KEY=your_ssh_key ZONES=your_zone EXISTING_RESOURCE_GROUP=your_existing_resource_group SOLUTION=your_solution go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee -a $LOG_FILE_NAME
 ```
 
 Replace placeholders (e.g., `your_ssh_key`, `your_zone`, etc.) with actual values.
@@ -131,7 +131,7 @@ Replace placeholders (e.g., `your_ssh_key`, `your_zone`, etc.) with actual value
 export TF_VAR_ibmcloud_api_key=your_api_key # pragma: allowlist secret
 export TF_VAR_github_token=your_github_token
 export LOG_FILE_NAME="filename.json"
-SSH_KEYS=your_ssh_key go test -v -timeout=900m -parallel 10 -run="^TestRunBasic$" | tee -a $LOG_FILE_NAME
+SSH_KEY=your_ssh_key go test -v -timeout=900m -parallel 10 -run="^TestRunBasic$" | tee -a $LOG_FILE_NAME
 ```
 
 ---
@@ -153,7 +153,7 @@ Example:
 
 ```sh
 LSF_VERSION=your_lsf_version \
-SSH_KEYS=your_ssh_key \
+SSH_KEY=your_ssh_key \
 ZONES=your_zone \
 IMAGE_NAME=your_image_name \
 DEFAULT_EXISTING_RESOURCE_GROUP=your_default_existing_resource_group \
@@ -276,6 +276,13 @@ export TF_VAR_github_token="your_github_token"
 │   ├── cluster_validation.go
 │   └── constants.go
 │
+├── lsf_tests/                      # All test case implementations
+│   ├── constants.go
+│   ├── lsf_pr_test.go              # PR-level minimal test
+│   ├── lsf_e2e_test.go             # Full end-to-end test
+│   ├── lsf_negative_test.go        # Negative test scenarios
+│   └── README.md                   # Instructions for running tests
+│
 ├── utilities/                      # Shared utils across modules
 │   ├── api_utils.go                # IBM Cloud API interaction helpers
 │   ├── fileops.go                  # File read/write utilities
@@ -285,18 +292,7 @@ export TF_VAR_github_token="your_github_token"
 │   ├── resources.go                # Resource-specific helpers
 │   └── ssh.go                      # SSH connection + command execution
 │
-├── lsf_tests/
-│   ├── lsf_e2e_test.go             # Full end-to-end test
-│   ├── lsf_negative_test.go        # Negative test scenarios
-│   ├── lsf_setup.go
-│   ├── lsf_constants.go
-│   ├── resource_exemptions.go
-│   └── README.md                   # Instructions for running tests
-|
 ├── go.mod                          # Go module file
-├── go.sum                          # Go module file
-│── pr_test.go                  # PR-level minimal test
-
 ```
 
 ---

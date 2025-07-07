@@ -118,9 +118,9 @@ func GetManagementNodeIPsFromIni(t *testing.T, filePath string, logger *Aggregat
 // GetLoginNodeIP retrieves the IP address from the LoginServer section in the specified INI file.
 func GetLoginNodeIPFromIni(t *testing.T, filePath string, logger *AggregatedLogger) (string, error) {
 
-	value, err := GetValueFromIniFile(filepath.Join(filePath, "login_host.ini"))
+	value, err := GetValueFromIniFile(filepath.Join(filePath, "login_hosts.ini"))
 	if err != nil {
-		return "", fmt.Errorf("failed to get value from login_host.ini : %w", err)
+		return "", fmt.Errorf("failed to get value from login_hosts.ini : %w", err)
 	}
 	logger.Info(t, fmt.Sprintf("Login Server IP: %s", value[0]))
 	return value[0], nil
@@ -225,11 +225,12 @@ func LSFGetClusterIPs(t *testing.T, options *testhelper.TestOptions, logger *Agg
 		return "", nil, "", nil, fmt.Errorf("error getting management node IPs: %v", err)
 	}
 
-	// Get login node IP and handle errors
-	loginNodeIP, err = GetLoginNodeIPFromIni(t, filePath, logger)
-	if err != nil {
-		return "", nil, "", nil, fmt.Errorf("error getting login node IP: %v", err)
-	}
+	//DEBUGGING
+	// // Get login node IP and handle errors
+	// loginNodeIP, err = GetLoginNodeIPFromIni(t, filePath, logger)
+	// if err != nil {
+	// 	return "", nil, "", nil, fmt.Errorf("error getting login node IP: %v", err)
+	// }
 
 	// Get Worker Node IPs and handle errors
 	workerNodeIPList, err = GetWorkerNodeIPsFromIni(t, filePath, logger)
@@ -237,7 +238,7 @@ func LSFGetClusterIPs(t *testing.T, options *testhelper.TestOptions, logger *Agg
 		return "", nil, "", nil, fmt.Errorf("error getting worker node IPs: %v", err)
 	}
 
-	return bastionIP, managementNodeIPList, loginNodeIP, workerNodeIPList, nil
+	return bastionIP, managementNodeIPList, "10.0.0.0", workerNodeIPList, nil
 }
 
 // LSFGetClusterIPsWithLDAP retrieves the IP addresses of various servers, including the LDAP server,
@@ -267,11 +268,12 @@ func LSFGetClusterIPsWithLDAP(t *testing.T, options *testhelper.TestOptions, log
 		return "", nil, "", nil, "", fmt.Errorf("failed to get management node IPs: %v", err)
 	}
 
-	// Get login node IP and handle errors
-	loginNodeIP, err = GetLoginNodeIPFromIni(t, filePath, logger)
-	if err != nil {
-		return "", nil, "", nil, "", fmt.Errorf("failed to get login node IPs: %v", err)
-	}
+	//DEBUGGING
+	// // Get login node IP and handle errors
+	// loginNodeIP, err = GetLoginNodeIPFromIni(t, filePath, logger)
+	// if err != nil {
+	// 	return "", nil, "", nil, "", fmt.Errorf("failed to get login node IPs: %v", err)
+	// }
 
 	// Get worker node IPs and handle errors.
 	workerNodeIPList, err = GetWorkerNodeIPsFromIni(t, filePath, logger)
@@ -286,7 +288,7 @@ func LSFGetClusterIPsWithLDAP(t *testing.T, options *testhelper.TestOptions, log
 	}
 
 	// Return the retrieved IP addresses and any error.
-	return bastionIP, managementNodeIPList, loginNodeIP, workerNodeIPList, ldapIP, nil
+	return bastionIP, managementNodeIPList, "10.0.0.0", workerNodeIPList, ldapIP, nil
 }
 
 // Getting BastionID and ComputeID from separately created brand new VPC

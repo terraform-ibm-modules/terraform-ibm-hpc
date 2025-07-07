@@ -247,7 +247,7 @@ variable "storage_instances" {
     profile    = "bx2-2x8"
     count      = 0
     image      = "ibm-redhat-8-10-minimal-amd64-4"
-    filesystem = "/ibm/fs1"
+    filesystem = "/gpfs/fs1"
   }]
   description = "Number of instances to be launched for storage cluster."
 }

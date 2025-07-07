@@ -6,14 +6,12 @@ cluster_name: HPC-LSF-1
 ssh_keys: geretain-hpc
 default_existing_resource_group: HPCC
 non_default_existing_resource_group: Default
-dns_domain_name:
+dns_domain_names:
   compute: comp.com
-bastion_instance:
-  profile:  cx2-4x8
-  image: ibm-ubuntu-22-04-5-minimal-amd64-3
-deployer_instance:
-  profile:  bx2-8x32
-  image: hpc-lsf-fp15-deployer-rhel810-v1
+bastion_image: ibm-ubuntu-22-04-3-minimal-amd64-1
+bastion_instance_profile: cx2-4x8
+deployer_image: hpc-lsf-fp14-deployer-rhel810-v1
+deployer_instance_profile: bx2-8x32
 enable_cos_integration: false
 enable_vpc_flow_logs: false
 custom_file_shares:
@@ -53,17 +51,16 @@ observability_enable_platform_logs: true
 observability_enable_metrics_routing: true
 observability_logs_retention_period: 7
 observability_monitoring_plan: graduated-tier
-sccwp_enable: true
-cspm_enabled: true
-sccwp_service_plan: graduated-tier
-app_config_plan: standardv2
+scc_enable: true
+scc_location: us-south
+scc_event_notification_plan: standard
 enable_hyperthreading: true
 enable_ldap: true
 ldap_basedns: cicdldap.com
 ldap_admin_password: Pass@123  # pragma: allowlist secret
 ldap_user_name: tester
 ldap_user_password: Pass@123    # pragma: allowlist secret
-ldap_instance:
+ldap_instances:
   - profile: cx2-2x4
     image: ibm-ubuntu-22-04-5-minimal-amd64-1
     count: 1
@@ -75,7 +72,7 @@ us_south_zone: us-south-1
 us_south_cluster_name: HPC-LSF-2
 jp_tok_zone: jp-tok-1
 jp_tok_cluster_name: HPC-LSF-2
-attracker_test_zone: eu-de-1  #added for testing purpose
+attracker_test_zone: eu-de-3  #added for testing purpose
 management_instances_image: hpc-lsf-fp15-rhel810-v1   #added for testing purpose
 static_compute_instances_image: hpc-lsf-fp15-compute-rhel810-v1 #added for testing purpose
 dynamic_compute_instances_image: hpc-lsf-fp15-compute-rhel810-v1 #added for testing purpose

@@ -155,3 +155,21 @@ variable "enable_key_protect" {
   type        = string
   description = "Enable Key Protect."
 }
+
+variable "domain_names" {
+  type = object({
+    compute  = string
+    storage  = optional(string)
+    protocol = optional(string)
+    client   = optional(string)
+    gklm     = optional(string)
+  })
+  default = {
+    compute  = "comp.com"
+    storage  = "strg.com"
+    protocol = "ces.com"
+    client   = "clnt.com"
+    gklm     = "gklm.com"
+  }
+  description = "IBM Cloud HPC DNS domain names."
+}

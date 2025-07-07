@@ -76,17 +76,18 @@ locals {
   # TODO: Fix the logic
   # enable_load_balancer = false
 
-  client_node_name             = format("%s-%s", local.prefix, "client")
-  management_node_name         = format("%s-%s", local.prefix, "mgmt")
-  compute_node_name            = format("%s-%s", local.prefix, "comp")
-  storage_node_name            = format("%s-%s", local.prefix, "strg")
-  protocol_node_name           = format("%s-%s", local.prefix, "proto")
-  storage_management_node_name = format("%s-%s", local.prefix, "strg-mgmt")
-  ldap_node_name               = format("%s-%s", local.prefix, "ldap")
-  afm_node_name                = format("%s-%s", local.prefix, "afm")
-  gklm_node_name               = format("%s-%s", local.prefix, "gklm")
-  cpmoute_management_node_name = format("%s-%s", local.prefix, "comp-mgmt")
-  login_node_name              = format("%s-%s", local.prefix, "login")
+  client_node_name              = format("%s-%s", local.prefix, "client")
+  management_node_name          = format("%s-%s", local.prefix, "mgmt")
+  compute_node_name             = format("%s-%s", local.prefix, "comp")
+  storage_node_name             = format("%s-%s", local.prefix, "strg")
+  storage_tie_breaker_node_name = format("%s-%s", local.prefix, "strg-tie")
+  protocol_node_name            = format("%s-%s", local.prefix, "proto")
+  storage_management_node_name  = format("%s-%s", local.prefix, "strg-mgmt")
+  ldap_node_name                = format("%s-%s", local.prefix, "ldap")
+  afm_node_name                 = format("%s-%s", local.prefix, "afm")
+  gklm_node_name                = format("%s-%s", local.prefix, "gklm")
+  compute_management_node_name  = format("%s-%s", local.prefix, "comp-mgmt")
+  login_node_name               = format("%s-%s", local.prefix, "login")
 
   # Future use
   /*
@@ -158,6 +159,24 @@ locals {
 
   compute_public_key_content  = one(module.compute_key[*].public_key_content)
   compute_private_key_content = one(module.compute_key[*].private_key_content)
+
+  client_public_key_content  = one(module.client_key[*].public_key_content)
+  client_private_key_content = one(module.client_key[*].private_key_content)
+
+  protocol_vsi_profile = var.protocol_instances[*]["profile"]
+  ces_server_type      = strcontains(local.protocol_vsi_profile[0], "metal")
+
+  user_data_vars = {
+    dns_domain                 = var.dns_domain_names["storage"],
+    enable_protocol            = local.enable_protocol,
+    protocol_domain            = var.dns_domain_names["protocol"],
+    vpc_region                 = var.vpc_region,
+    protocol_subnet_id         = length(var.protocol_subnets) == 0 ? "" : var.protocol_subnets[0].id,
+    resource_group_id          = var.resource_group,
+    bastion_public_key_content = base64encode(var.bastion_public_key_content != null ? var.bastion_public_key_content : ""),
+    vsi_meta_private_key       = base64encode(module.storage_key[0].private_key_content),
+    vsi_meta_public_key        = base64encode(module.storage_key[0].public_key_content)
+  }
 
   # Security Groups
   protocol_secondary_security_group = flatten([
@@ -277,23 +296,32 @@ locals {
       { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "client-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
       { name = "client-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
-      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr }
+      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
+      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" },
+      { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
     ] :
     [
       { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "client-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
-      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr }
+      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
+      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
     ]
     ) : (local.enable_compute ?
     [
       { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "client-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
-      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr }
+      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" },
+      { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
     ]
     :
     [
       { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
-      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr }
+      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
+      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
     ]
   )
 
@@ -311,7 +339,7 @@ locals {
       { name = "compute-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
       { name = "compute-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
       { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
-      { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+      { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" },
     ]
     ) : (local.enable_storage ?
     [
@@ -362,22 +390,32 @@ locals {
       { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "storage-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
       { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
-      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr }
+      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "client-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
+      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
     ] :
     [
       { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "storage-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
-      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr }
+      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" },
+      { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+
     ]
     ) : (local.enable_storage ?
     [
       { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
-      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr }
+      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "client-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
+      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
     ] :
     [
       { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
-      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr }
+      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" },
+      { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+
     ]
   )
 
