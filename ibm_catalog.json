@@ -752,7 +752,7 @@
             ]
         },
         {
-            "name": "terraform-ibm-modules-terraform-ibm-hpc-scale",
+            "name": "deploy-arch-ibm-storage-scale",
             "label": "IBM Storage Scale",
             "product_kind": "solution",
             "tags": [
