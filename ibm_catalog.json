@@ -795,7 +795,7 @@
             "flavors": [
                 {
                     "label": "IBM Storage Scale",
-                    "name": "scale",
+                    "name": "Cluster-with-Scale",
                     "install_type": "fullstack",
                     "working_directory": "solutions/scale",
                     "compliance": {
