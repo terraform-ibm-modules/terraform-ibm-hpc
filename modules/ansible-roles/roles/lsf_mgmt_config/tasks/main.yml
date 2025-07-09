@@ -8,4 +8,6 @@
 
 - import_tasks: app_center_configure.yml
 
+- import_tasks: web_services.yml
+
 - import_tasks: configure_dynamic_nodes_templates.yml
