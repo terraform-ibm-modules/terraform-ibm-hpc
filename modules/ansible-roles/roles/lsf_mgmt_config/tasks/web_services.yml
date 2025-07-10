@@ -6,9 +6,11 @@
   register: https_enable_result
   changed_when: "'already enabled' not in https_enable_result.stdout"
   no_log: true
+  run_once: true
 
 - name: Web Services | Restart lwsd service if HTTPS was enabled
   ansible.builtin.systemd:
     name: lwsd
     state: restarted
   when: "'already enabled' not in https_enable_result.stdout"
+  run_once: true
