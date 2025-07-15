@@ -8,6 +8,13 @@ variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
 }
 
+# Delete this variable before pushing to the public repository.
+variable "github_token" {
+  type        = string
+  default     = null
+  description = "Provide your GitHub token to download the HPCaaS code into the Deployer node"
+}
+
 variable "lsf_version" {
   type        = string
   default     = "fixpack_15"
@@ -157,6 +164,24 @@ variable "storage_servers" {
   description = "Number of BareMetal Servers to be launched for storage cluster."
 }
 
+variable "tie_breaker_bm_server" {
+  type = list(
+    object({
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = string
+    })
+  )
+  default = [{
+    profile    = "cx2d-metal-96x192"
+    count      = 1
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "fs1"
+  }]
+  description = "BareMetal Server to be launched for Tie Breaker."
+}
+
 variable "protocol_instances" {
   type = list(
     object({
@@ -248,6 +273,9 @@ variable "enable_vpc_flow_logs" {
   description = "Enable Activity tracker"
 }
 
+##############################################################################
+# SCC Variables
+##############################################################################
 variable "enable_atracker" {
   type        = bool
   default     = false
@@ -284,6 +312,46 @@ variable "bastion_fip" {
   description = "bastion node fip"
 }
 
+##############################################################################
+# SCC Variables
+##############################################################################
+
+variable "scc_enable" {
+  type        = bool
+  default     = true
+  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+}
+
+variable "scc_profile" {
+  type        = string
+  default     = "CIS IBM Cloud Foundations Benchmark v1.1.0"
+  description = "Profile to be set on the SCC Instance (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')"
+  validation {
+    condition     = can(regex("^(|CIS IBM Cloud Foundations Benchmark v1.1.0|IBM Cloud Framework for Financial Services)$", var.scc_profile))
+    error_message = "Provide SCC Profile Name to be used (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')."
+  }
+}
+
+variable "scc_location" {
+  description = "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
+  type        = string
+  default     = "us-south"
+  validation {
+    condition     = can(regex("^(|us-south|eu-de|ca-tor|eu-es)$", var.scc_location))
+    error_message = "Provide region where it's possible to deploy an SCC Instance (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es') or leave blank and it will default to 'us-south'."
+  }
+}
+
+variable "scc_event_notification_plan" {
+  type        = string
+  default     = "lite"
+  description = "Event Notifications Instance plan to be used (it's used with S.C.C. instance), possible values 'lite' and 'standard'."
+  validation {
+    condition     = can(regex("^(|lite|standard)$", var.scc_event_notification_plan))
+    error_message = "Provide Event Notification instance plan to be used (accepting 'lite' and 'standard', defaulting to 'lite'). This instance is used in conjuction with S.C.C. one."
+  }
+}
+
 variable "cloud_logs_data_bucket" {
   type        = any
   default     = null
@@ -294,6 +362,18 @@ variable "cloud_metrics_data_bucket" {
   type        = any
   default     = null
   description = "cloud metrics data bucket"
+}
+
+variable "scc_cos_bucket" {
+  type        = string
+  default     = null
+  description = "scc cos bucket"
+}
+
+variable "scc_cos_instance_crn" {
+  type        = string
+  default     = null
+  description = "scc cos instance crn"
 }
 
 ##############################################################################
@@ -499,22 +579,28 @@ variable "gklm_instances" {
   description = "Number of instances to be launched for client."
 }
 
-# variable "scale_encryption_admin_default_password" {
-#   type        = string
-#   default     = null
-#   description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
-# }
+variable "scale_encryption_admin_default_password" {
+  type        = string
+  default     = "SKLM@dmin123"
+  description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
+}
 
-# variable "scale_encryption_admin_username" {
-#   type        = string
-#   default     = null
-#   description = "The default Admin username for Security Key Lifecycle Manager(GKLM)."
-# }
+variable "scale_encryption_admin_username" {
+  type        = string
+  default     = "SKLMAdmin"
+  description = "The default Admin username for Security Key Lifecycle Manager(GKLM)."
+}
 
 variable "scale_encryption_admin_password" {
   type        = string
   default     = null
   description = "Password that is used for performing administrative operations for the GKLM.The password must contain at least 8 characters and at most 20 characters. For a strong password, at least three alphabetic characters are required, with at least one uppercase and one lowercase letter.  Two numbers, and at least one special character from this(~@_+:). Make sure that the password doesn't include the username. Visit this [page](https://www.ibm.com/docs/en/gklm/3.0.1?topic=roles-password-policy) to know more about password policy of GKLM. "
+}
+
+variable "key_protect_instance_id" {
+  type        = string
+  default     = null
+  description = "An existing Key Protect instance used for filesystem encryption"
 }
 
 variable "storage_type" {
@@ -647,6 +733,13 @@ variable "custom_file_shares" {
   }))
   default     = [{ mount_path = "/mnt/vpcstorage/tools", size = 100, iops = 2000 }, { mount_path = "/mnt/vpcstorage/data", size = 100, iops = 6000 }, { mount_path = "/mnt/scale/tools", nfs_share = "" }]
   description = "Provide details for customizing your shared file storage layout, including mount points, sizes (in GB), and IOPS ranges for up to five file shares if using VPC file storage as the storage option.If using IBM Storage Scale as an NFS mount, update the appropriate mount path and nfs_share values created from the Storage Scale cluster. Note that VPC file storage supports attachment to a maximum of 256 nodes. Exceeding this limit may result in mount point failures due to attachment restrictions.For more information, see [Storage options](https://test.cloud.ibm.com/docs/hpc-ibm-spectrumlsf?topic=hpc-ibm-spectrumlsf-integrating-scale#integrate-scale-and-hpc)."
+}
+
+
+variable "bms_boot_drive_encryption" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the boot drive of bare metal server. Select true or false"
 }
 
 ###########################################################################

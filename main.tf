@@ -1,6 +1,7 @@
 module "landing_zone" {
   source                                        = "./modules/landing_zone"
   enable_landing_zone                           = var.enable_landing_zone
+  scheduler                                     = var.scheduler
   vpc_cluster_private_subnets_cidr_blocks       = [var.vpc_cluster_private_subnets_cidr_blocks]
   cos_instance_name                             = var.cos_instance_name
   bastion_subnet_id                             = local.bastion_subnet_id
@@ -29,10 +30,17 @@ module "landing_zone" {
   client_subnets_cidr                           = var.client_subnets_cidr
   vpc_name                                      = var.vpc_name
   zones                                         = var.zones
+  scc_enable                                    = var.scc_enable
   enable_vpn                                    = var.vpn_enabled
   skip_flowlogs_s2s_auth_policy                 = var.skip_flowlogs_s2s_auth_policy
   skip_kms_s2s_auth_policy                      = var.skip_kms_s2s_auth_policy
   observability_logs_enable                     = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || (var.observability_atracker_enable && var.observability_atracker_target_type == "cloudlogs") ? true : false
+  scale_encryption_type                         = var.scale_encryption_type
+  scale_encryption_enabled                      = var.scale_encryption_enabled
+  key_protect_instance_id                       = var.key_protect_instance_id
+  afm_instances                                 = var.afm_instances
+  afm_cos_config                                = var.afm_cos_config
+  filesystem_config                             = var.filesystem_config
   # hpcs_instance_name            = var.hpcs_instance_name
   # clusters                      = var.clusters
 }
@@ -111,6 +119,8 @@ module "landing_zone_vsi" {
   login_instance              = var.login_instance
   bastion_subnets             = local.login_subnets
   cluster_cidr                = local.cluster_cidr
+  bms_boot_drive_encryption   = var.bms_boot_drive_encryption
+  tie_breaker_bm_server       = var.tie_breaker_bm_server
 }
 
 module "prepare_tf_input" {
@@ -160,6 +170,12 @@ module "prepare_tf_input" {
   bastion_security_group_id                        = local.bastion_security_group_id
   deployer_hostname                                = local.deployer_hostname
   enable_hyperthreading                            = var.enable_hyperthreading
+  scc_enable                                       = var.scc_enable
+  scc_profile                                      = var.scc_profile
+  scc_location                                     = var.scc_location
+  scc_cos_bucket                                   = local.scc_cos_bucket
+  scc_cos_instance_crn                             = local.scc_cos_instance_crn
+  scc_event_notification_plan                      = var.scc_event_notification_plan
   cloud_logs_data_bucket                           = local.cloud_logs_data_bucket
   cloud_metrics_data_bucket                        = local.cloud_metrics_data_bucket
   observability_logs_enable_for_management         = var.observability_logs_enable_for_management
@@ -187,8 +203,12 @@ module "prepare_tf_input" {
   gklm_instances                                   = var.gklm_instances
   scale_encryption_type                            = var.scale_encryption_type
   filesystem_config                                = var.filesystem_config
+  scale_encryption_admin_default_password          = var.scale_encryption_admin_default_password
+  scale_encryption_admin_username                  = var.scale_encryption_admin_username
   scale_encryption_admin_password                  = var.scale_encryption_admin_password
   scale_encryption_enabled                         = var.scale_encryption_enabled
+  key_protect_instance_id                          = var.key_protect_instance_id
+  github_token                                     = var.github_token
   storage_security_group_id                        = var.storage_security_group_id
   custom_file_shares                               = var.custom_file_shares
   existing_bastion_instance_name                   = var.existing_bastion_instance_name
@@ -199,6 +219,7 @@ module "prepare_tf_input" {
   cspm_enabled                                     = var.cspm_enabled
   app_config_plan                                  = var.app_config_plan
   existing_resource_group                          = var.existing_resource_group
+  tie_breaker_bm_server                            = var.tie_breaker_bm_server
   depends_on                                       = [module.deployer]
 }
 
@@ -221,6 +242,7 @@ module "resource_provisioner" {
   bastion_private_key_content    = local.bastion_ssh_private_key != null ? local.bastion_ssh_private_key : local.bastion_private_key_content
   deployer_ip                    = local.deployer_ip
   scheduler                      = var.scheduler
+  github_token                   = var.github_token
   existing_bastion_instance_name = var.existing_bastion_instance_name
   bastion_public_key_content     = local.bastion_public_key_content
   depends_on                     = [module.deployer, module.prepare_tf_input, module.validate_ldap_server_connection]
@@ -245,7 +267,7 @@ module "cos" {
 }
 
 module "file_storage" {
-  count                               = var.enable_deployer == false ? 1 : 0
+  count                               = var.enable_deployer == false && local.static_compute_instance_count > 0 && var.scheduler != "Scale" ? 1 : 0
   source                              = "./modules/file_storage"
   zone                                = var.zones[0] # always the first zone
   resource_group_id                   = var.resource_group_ids["workload_rg"]
@@ -406,7 +428,7 @@ module "write_compute_scale_cluster_inventory" {
   afm_cos_bucket_details                           = []
   afm_config_details                               = []
   afm_cluster_instance_names                       = []
-  filesystem_mountpoint                            = var.scale_encryption_type == "key_protect" ? (var.storage_instances[*]["filesystem"] != "" ? var.storage_instances[*]["filesystem"] : jsonencode(var.filesystem_config[0]["filesystem"])) : jsonencode("")
+  filesystem_mountpoint                            = local.filesystem_mountpoint
   depends_on                                       = [time_sleep.wait_60_seconds]
 }
 
@@ -429,9 +451,9 @@ module "write_storage_scale_cluster_inventory" {
   compute_cluster_instance_private_ips             = []
   compute_cluster_instance_private_dns_ip_map      = {}
   compute_cluster_instance_names                   = []
-  storage_cluster_instance_ids                     = var.storage_type == "persistent" ? concat(local.baremetal_cluster_instance_ids, local.strg_mgmtt_instance_ids, local.tie_breaker_storage_instance_ids) : concat(local.storage_cluster_instance_ids, local.strg_mgmtt_instance_ids, local.tie_breaker_storage_instance_ids)
-  storage_cluster_instance_private_ips             = var.storage_type == "persistent" ? concat(local.baremetal_cluster_instance_private_ips, local.strg_mgmt_instance_private_ips, local.tie_breaker_storage_instance_private_ips) : concat(local.storage_cluster_instance_private_ips, local.strg_mgmt_instance_private_ips, local.tie_breaker_storage_instance_private_ips)
-  storage_cluster_instance_names                   = var.storage_type == "persistent" ? concat(local.baremetal_cluster_instance_names, local.strg_mgmt_instance_names, local.tie_breaker_storage_instance_names) : concat(local.storage_cluster_instance_names, local.strg_mgmt_instance_names, local.tie_breaker_storage_instance_names)
+  storage_cluster_instance_ids                     = var.storage_type == "persistent" ? concat(local.baremetal_cluster_instance_ids, local.strg_mgmtt_instance_ids, local.bm_tie_breaker_ids) : concat(local.storage_cluster_instance_ids, local.strg_mgmtt_instance_ids, local.tie_breaker_storage_instance_ids)
+  storage_cluster_instance_private_ips             = var.storage_type == "persistent" ? concat(local.baremetal_cluster_instance_private_ips, local.strg_mgmt_instance_private_ips, local.bm_tie_breaker_private_ips) : concat(local.storage_cluster_instance_private_ips, local.strg_mgmt_instance_private_ips, local.tie_breaker_storage_instance_private_ips)
+  storage_cluster_instance_names                   = var.storage_type == "persistent" ? concat(local.baremetal_cluster_instance_names, local.strg_mgmt_instance_names, local.bm_tie_breaker_names) : concat(local.storage_cluster_instance_names, local.strg_mgmt_instance_names, local.tie_breaker_storage_instance_names)
   storage_cluster_with_data_volume_mapping         = local.storage_ips_with_vol_mapping[0]
   storage_cluster_instance_private_dns_ip_map      = {}
   storage_cluster_desc_instance_private_ips        = local.strg_tie_breaker_private_ips
@@ -439,7 +461,7 @@ module "write_storage_scale_cluster_inventory" {
   storage_cluster_desc_data_volume_mapping         = local.tie_breaker_ips_with_vol_mapping[0]
   storage_cluster_desc_instance_private_dns_ip_map = {}
   storage_subnet_cidr                              = local.enable_mrot_conf ? local.storage_subnet_cidr : jsonencode("")
-  compute_subnet_cidr                              = local.enable_mrot_conf ? local.cluster_subnet_cidr : local.scale_ces_enabled == true ? local.client_subnet_cidr : jsonencode("")
+  compute_subnet_cidr                              = local.enable_mrot_conf ? local.cluster_subnet_cidr : local.scale_ces_enabled == true && local.client_instance_count > 0 ? local.client_subnet_cidr : jsonencode("")
   scale_remote_cluster_clustername                 = local.enable_mrot_conf ? jsonencode(format("%s.%s", var.cluster_prefix, var.dns_domain_names["compute"])) : jsonencode("")
   protocol_cluster_instance_names                  = local.scale_ces_enabled == true ? local.protocol_cluster_instance_names : []
   client_cluster_instance_names                    = []
@@ -456,7 +478,7 @@ module "write_storage_scale_cluster_inventory" {
   afm_cos_bucket_details                           = local.enable_afm == true ? local.afm_cos_bucket_details : []
   afm_config_details                               = local.enable_afm == true ? local.afm_cos_config : []
   afm_cluster_instance_names                       = local.afm_instance_names
-  filesystem_mountpoint                            = var.scale_encryption_type == "key_protect" ? (var.storage_instances[*]["filesystem"] != "" ? var.storage_instances[*]["filesystem"] : jsonencode(var.filesystem_config[0]["filesystem"])) : jsonencode("")
+  filesystem_mountpoint                            = local.filesystem_mountpoint
   depends_on                                       = [time_sleep.wait_60_seconds]
 }
 
@@ -509,6 +531,16 @@ module "write_client_scale_cluster_inventory" {
   filesystem_mountpoint                            = jsonencode("")
 }
 
+module "key_protect_scale" {
+  count                          = var.scale_encryption_enabled == true && var.scale_encryption_type == "key_protect" && var.enable_deployer == false ? 1 : 0
+  source                         = "./modules/key_protect"
+  key_protect_instance_id        = var.key_protect_instance_id != null ? var.key_protect_instance_id : var.existing_kms_instance_guid
+  resource_prefix                = var.cluster_prefix
+  vpc_region                     = local.region
+  scale_config_path              = format("%s/key_protect", var.scale_config_path)
+  vpc_storage_cluster_dns_domain = var.dns_domain_names["storage"]
+}
+
 module "compute_cluster_configuration" {
   count                           = var.scheduler == "Scale" && var.enable_deployer == false ? 1 : 0
   source                          = "./modules/common/compute_configuration"
@@ -536,14 +568,14 @@ module "compute_cluster_configuration" {
   enable_ces                      = false
   enable_afm                      = false
   scale_encryption_enabled        = var.scale_encryption_enabled
-  scale_encryption_admin_password = var.scale_encryption_admin_password
+  scale_encryption_admin_password = var.scale_encryption_admin_password == null ? "null" : var.scale_encryption_admin_password
   scale_encryption_servers        = var.scale_encryption_enabled && var.scale_encryption_type == "gklm" ? local.gklm_instance_private_ips : []
   enable_ldap                     = var.enable_ldap
   ldap_basedns                    = var.ldap_basedns
   ldap_server                     = var.enable_ldap ? local.ldap_instance_private_ips[0] : null
   ldap_admin_password             = local.ldap_admin_password == "" ? jsonencode(null) : local.ldap_admin_password
-  enable_key_protect              = var.scale_encryption_type
-  depends_on                      = [module.write_compute_scale_cluster_inventory]
+  enable_key_protect              = var.scale_encryption_type == "key_protect" ? "True" : "False"
+  depends_on                      = [module.write_compute_scale_cluster_inventory, module.key_protect_scale]
 }
 
 module "storage_cluster_configuration" {
@@ -555,6 +587,7 @@ module "storage_cluster_configuration" {
   inventory_format                = var.inventory_format
   create_scale_cluster            = var.create_scale_cluster
   clone_path                      = var.scale_ansible_repo_clone_path
+  scale_config_path               = var.scale_config_path
   inventory_path                  = format("%s/storage_cluster_inventory.json", var.scale_ansible_repo_clone_path)
   using_packer_image              = var.using_packer_image
   using_jumphost_connection       = var.using_jumphost_connection
@@ -596,15 +629,15 @@ module "storage_cluster_configuration" {
   enable_afm                      = local.enable_afm
   scale_encryption_enabled        = var.scale_encryption_enabled
   scale_encryption_type           = var.scale_encryption_type != null ? var.scale_encryption_type : null
-  scale_encryption_admin_password = var.scale_encryption_admin_password
+  scale_encryption_admin_password = var.scale_encryption_admin_password == null ? "null" : var.scale_encryption_admin_password
   scale_encryption_servers        = var.scale_encryption_enabled && var.scale_encryption_type == "gklm" ? local.gklm_instance_private_ips : []
   enable_ldap                     = var.enable_ldap
   ldap_basedns                    = var.ldap_basedns
   ldap_server                     = var.enable_ldap ? local.ldap_instance_private_ips[0] : null
   ldap_admin_password             = local.ldap_admin_password == "" ? jsonencode(null) : local.ldap_admin_password
   ldap_server_cert                = local.ldap_server_cert
-  enable_key_protect              = var.scale_encryption_type
-  depends_on                      = [module.write_storage_scale_cluster_inventory]
+  enable_key_protect              = var.scale_encryption_type == "key_protect" ? "True" : "False"
+  depends_on                      = [module.write_storage_scale_cluster_inventory, module.key_protect_scale]
 }
 
 module "client_configuration" {
@@ -619,7 +652,7 @@ module "client_configuration" {
   bastion_user                    = jsonencode(var.bastion_user)
   bastion_instance_public_ip      = jsonencode(local.bastion_fip)
   bastion_ssh_private_key         = var.bastion_ssh_private_key
-  client_meta_private_key         = module.landing_zone_vsi[0].compute_private_key_content
+  client_meta_private_key         = module.landing_zone_vsi[0].client_private_key_content
   write_inventory_complete        = module.write_storage_scale_cluster_inventory[0].write_scale_inventory_complete
   enable_ldap                     = var.enable_ldap
   ldap_basedns                    = var.ldap_basedns
@@ -650,6 +683,50 @@ module "remote_mount_configuration" {
   compute_cluster_create_complete = var.enable_deployer ? false : module.compute_cluster_configuration[0].compute_cluster_create_complete
   storage_cluster_create_complete = var.enable_deployer ? false : module.storage_cluster_configuration[0].storage_cluster_create_complete
   depends_on                      = [module.compute_cluster_configuration, module.storage_cluster_configuration]
+}
+
+module "encryption_configuration" {
+  source                                  = "./modules/common/encryption_configuration"
+  count                                   = var.scheduler == "Scale" && var.enable_deployer == false && var.scale_encryption_enabled && var.scale_encryption_type == "gklm" ? 1 : 0
+  turn_on                                 = (var.create_separate_namespaces == true && local.storage_instance_count > 0) ? true : false
+  clone_path                              = var.scale_ansible_repo_clone_path
+  create_scale_cluster                    = var.create_scale_cluster
+  meta_private_key                        = module.landing_zone_vsi[0].storage_private_key_content
+  scale_encryption_type                   = var.scale_encryption_type != null ? var.scale_encryption_type : null
+  scale_encryption_admin_password         = var.scale_encryption_admin_password
+  scale_encryption_servers                = var.scale_encryption_enabled && var.scale_encryption_type == "gklm" ? local.gklm_instance_private_ips : []
+  scale_encryption_servers_dns            = var.scale_encryption_type == "gklm" ? jsonencode([for instance in local.gklm_instances : instance.name]) : jsonencode([])
+  scale_cluster_clustername               = var.cluster_prefix
+  scale_encryption_admin_default_password = var.scale_encryption_admin_default_password
+  scale_encryption_admin_username         = var.scale_encryption_admin_username
+  compute_cluster_create_complete         = module.compute_cluster_configuration[0].compute_cluster_create_complete
+  storage_cluster_create_complete         = module.storage_cluster_configuration[0].storage_cluster_create_complete
+  remote_mount_create_complete            = module.remote_mount_configuration[0].remote_mount_create_complete
+  compute_cluster_encryption              = (var.create_separate_namespaces == true && local.static_compute_instance_count > 0) ? true : false
+  storage_cluster_encryption              = (var.create_separate_namespaces == true && local.storage_instance_count > 0) ? true : false
+  depends_on                              = [module.client_configuration, module.compute_cluster_configuration, module.storage_cluster_configuration]
+}
+
+module "ldap_configuration" {
+  count                      = var.scheduler == "Scale" && var.enable_deployer == false ? 1 : 0
+  source                     = "./modules/common/ldap_configuration"
+  turn_on                    = var.enable_ldap && var.ldap_server == "null"
+  clone_path                 = var.scale_ansible_repo_clone_path
+  create_scale_cluster       = var.create_scale_cluster
+  bastion_user               = jsonencode(var.bastion_user)
+  write_inventory_complete   = module.write_storage_scale_cluster_inventory[0].write_scale_inventory_complete
+  ldap_cluster_prefix        = var.cluster_prefix
+  script_path                = format("%s/modules/common/scripts/prepare_ldap_inv.py", var.scale_ansible_repo_clone_path)
+  using_jumphost_connection  = var.using_jumphost_connection
+  bastion_instance_public_ip = local.bastion_fip
+  bastion_ssh_private_key    = local.bastion_ssh_private_key != null ? local.bastion_ssh_private_key : local.bastion_private_key_content
+  ldap_basedns               = var.ldap_basedns
+  ldap_admin_password        = var.ldap_admin_password
+  ldap_user_name             = var.ldap_user_name
+  ldap_user_password         = var.ldap_user_password
+  ldap_server                = local.ldap_server
+  meta_private_key           = module.landing_zone_vsi[0].storage_private_key_content
+  depends_on                 = [module.validate_ldap_server_connection]
 }
 
 module "compute_inventory" {
@@ -700,7 +777,7 @@ module "ldap_inventory" {
 }
 
 module "mgmt_inventory_hosts" {
-  count          = var.enable_deployer == false ? 1 : 0
+  count          = var.enable_deployer == false && var.scheduler == "LSF" ? 1 : 0
   source         = "./modules/inventory_hosts"
   hosts          = local.mgmt_hosts_ips
   inventory_path = local.mgmt_hosts_inventory_path
@@ -709,12 +786,12 @@ module "mgmt_inventory_hosts" {
 module "compute_inventory_hosts" {
   count          = var.enable_deployer == false ? 1 : 0
   source         = "./modules/inventory_hosts"
-  hosts          = local.compute_hosts_ips
+  hosts          = var.scheduler == "Scale" ? local.all_compute_hosts : local.compute_hosts_ips
   inventory_path = local.compute_hosts_inventory_path
 }
 
 module "login_inventory_host" {
-  count          = var.enable_deployer == false ? 1 : 0
+  count          = var.enable_deployer == false && var.scheduler == "LSF" ? 1 : 0
   source         = "./modules/inventory_hosts"
   hosts          = local.login_host_ip
   inventory_path = local.login_host_inventory_path
@@ -739,6 +816,41 @@ module "ldap_inventory_hosts" {
   source         = "./modules/inventory_hosts"
   hosts          = local.ldap_hosts
   inventory_path = local.ldap_hosts_inventory_path
+}
+
+module "client_inventory_hosts" {
+  count          = var.enable_deployer == false && var.scheduler == "Scale" ? 1 : 0
+  source         = "./modules/inventory_hosts"
+  hosts          = local.client_hosts
+  inventory_path = local.client_hosts_inventory_path
+}
+
+module "protocol_inventory_hosts" {
+  count          = var.enable_deployer == false && var.scheduler == "Scale" ? 1 : 0
+  source         = "./modules/inventory_hosts"
+  hosts          = local.protocol_hosts
+  inventory_path = local.protocol_hosts_inventory_path
+}
+
+module "afm_inventory_hosts" {
+  count          = var.enable_deployer == false && var.scheduler == "Scale" ? 1 : 0
+  source         = "./modules/inventory_hosts"
+  hosts          = local.afm_hosts
+  inventory_path = local.afm_hosts_inventory_path
+}
+
+module "gklm_inventory_hosts" {
+  count          = var.enable_deployer == false && var.scheduler == "Scale" ? 1 : 0
+  source         = "./modules/inventory_hosts"
+  hosts          = local.gklm_hosts
+  inventory_path = local.gklm_hosts_inventory_path
+}
+
+module "storage_inventory_hosts" {
+  count          = var.enable_deployer == false && var.scheduler == "Scale" ? 1 : 0
+  source         = "./modules/inventory_hosts"
+  hosts          = local.all_storage_hosts
+  inventory_path = local.storage_hosts_inventory_path
 }
 
 module "compute_playbook" {
@@ -788,6 +900,20 @@ module "cloud_monitoring_instance_creation" {
   cloud_logs_data_bucket         = var.cloud_logs_data_bucket
   cloud_metrics_data_bucket      = var.cloud_metrics_data_bucket
   tags                           = ["lsf", var.cluster_prefix]
+}
+
+# Code for SCC Instance
+module "scc_instance_and_profile" {
+  count                   = var.enable_deployer == false && var.scc_enable ? 1 : 0
+  source                  = "./modules/security/scc"
+  location                = var.scc_location != "" ? var.scc_location : "us-south"
+  rg                      = var.resource_group_ids["service_rg"]
+  scc_profile             = var.scc_enable ? var.scc_profile : ""
+  event_notification_plan = var.scc_event_notification_plan
+  tags                    = ["lsf", var.cluster_prefix]
+  prefix                  = var.cluster_prefix
+  cos_bucket              = var.scc_cos_bucket
+  cos_instance_crn        = var.scc_cos_instance_crn
 }
 
 module "scc_workload_protection" {

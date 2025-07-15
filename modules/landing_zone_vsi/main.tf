@@ -4,6 +4,12 @@ module "compute_key" {
   # private_key_path = "./../../modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
 }
 
+module "client_key" {
+  count  = local.enable_client ? 1 : 0
+  source = "./../key"
+  # private_key_path = "./../../modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
+}
+
 resource "null_resource" "entitlement_check" {
   count = var.scheduler == "Scale" && var.storage_type != "evaluation" ? 1 : 0
   provisioner "local-exec" {
@@ -212,9 +218,9 @@ module "compute_cluster_management_vsi" {
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
-  image_id                      = data.ibm_is_image.compute_stock_image[0].id
+  image_id                      = local.compute_image_found_in_map ? local.new_compute_image_id : data.ibm_is_image.compute_stock_image[0].id
   machine_type                  = var.static_compute_instances[count.index]["profile"]
-  prefix                        = count.index == 0 ? local.cpmoute_management_node_name : format("%s-%s", local.cpmoute_management_node_name, count.index)
+  prefix                        = count.index == 0 ? local.compute_management_node_name : format("%s-%s", local.compute_management_node_name, count.index)
   resource_group_id             = var.resource_group
   enable_floating_ip            = false
   security_group_ids            = module.compute_sg[*].security_group_id
@@ -349,9 +355,9 @@ module "client_vsi" {
 }
 
 module "protocol_vsi" {
-  count                         = var.colocate_protocol_instances == true ? 0 : length(var.protocol_instances)
+  count                         = (local.enable_protocol && var.colocate_protocol_instances == false && local.ces_server_type == false) ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.0.0"
+  version                       = "5.1.20"
   vsi_per_subnet                = var.protocol_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -369,16 +375,16 @@ module "protocol_vsi" {
   kms_encryption_enabled        = var.kms_encryption_enabled
   skip_iam_authorization_policy = local.skip_iam_authorization_policy
   boot_volume_encryption_key    = var.boot_volume_encryption_key
-  existing_kms_instance_guid    = var.existing_kms_instance_guid
+  # existing_kms_instance_guid    = var.existing_kms_instance_guid
   # Bug: 5847 - LB profile & subnets are not configurable
   # load_balancers        = local.enable_load_balancer ? local.load_balancers : []
-  secondary_allow_ip_spoofing     = true
-  secondary_security_groups       = local.protocol_secondary_security_group
-  secondary_subnets               = local.protocol_subnets
-  placement_group_id              = var.placement_group_ids
-  manage_reserved_ips             = true
-  primary_vni_additional_ip_count = var.protocol_instances[count.index]["count"]
-  depends_on                      = [resource.null_resource.entitlement_check]
+  secondary_allow_ip_spoofing = true
+  secondary_security_groups   = local.protocol_secondary_security_group
+  secondary_subnets           = local.protocol_subnets
+  # placement_group_id          = var.placement_group_ids
+  manage_reserved_ips = true
+  # primary_vni_additional_ip_count = var.protocol_instances[count.index]["count"]
+  depends_on = [resource.null_resource.entitlement_check]
   # placement_group_id = var.placement_group_ids[(var.protocol_instances[count.index]["count"])%(length(var.placement_group_ids))]
 }
 
@@ -421,7 +427,7 @@ module "gklm_vsi" {
   resource_group_id             = var.resource_group
   enable_floating_ip            = false
   security_group_ids            = module.storage_sg[*].security_group_id
-  ssh_key_ids                   = local.gklm_ssh_keys
+  ssh_key_ids                   = local.ssh_keys
   subnets                       = local.storage_subnets
   tags                          = local.tags
   user_data                     = data.template_file.gklm_user_data.rendered
@@ -445,7 +451,7 @@ module "ldap_vsi" {
   resource_group_id             = var.resource_group
   enable_floating_ip            = false
   security_group_ids            = local.products == "lsf" ? module.compute_sg[*].security_group_id : module.storage_sg[*].security_group_id
-  ssh_key_ids                   = local.products == "lsf" ? local.ssh_keys : local.ldap_ssh_keys
+  ssh_key_ids                   = local.ssh_keys
   subnets                       = local.products == "lsf" ? local.cluster_subnet_id : [local.storage_subnets[0]]
   tags                          = local.tags
   user_data                     = data.template_file.ldap_user_data.rendered
@@ -480,14 +486,66 @@ module "dedicated_host" {
 ########################################################################
 
 module "storage_baremetal" {
+  count                        = length(var.storage_servers) > 0 && var.storage_type == "persistent" ? 1 : 0
+  source                       = "../baremetal"
+  existing_resource_group      = var.resource_group
+  prefix                       = count.index == 0 ? local.storage_node_name : format("%s-%s", local.storage_node_name, count.index)
+  storage_subnets              = [for subnet in local.storage_subnets : subnet.id]
+  storage_ssh_keys             = local.ssh_keys
+  storage_servers              = var.storage_servers
+  security_group_ids           = module.storage_sg[*].security_group_id
+  bastion_public_key_content   = var.bastion_public_key_content
+  storage_public_key_content   = local.enable_storage ? module.storage_key[0].public_key_content : ""
+  storage_private_key_content  = local.enable_storage ? module.storage_key[0].private_key_content : ""
+  bms_boot_drive_encryption    = var.bms_boot_drive_encryption
+  user_data                    = var.bms_boot_drive_encryption == false ? data.template_file.storage_bm_user_data.rendered : templatefile("${path.module}/templates/storage_bootdrive_user_data/cloud_init.yml", local.user_data_vars)
+  secondary_vni_enabled        = local.enable_protocol && var.colocate_protocol_instances ? true : false
+  protocol_subnets             = local.enable_protocol && var.colocate_protocol_instances ? local.protocol_subnets : []
+  secondary_security_group_ids = local.enable_protocol && var.colocate_protocol_instances ? module.storage_sg[*].security_group_id : []
+  protocol_instances           = var.protocol_instances
+  vpc_region                   = var.vpc_region
 
-  count                      = length(var.storage_servers) > 0 && var.storage_type == "persistent" ? 1 : 0
-  source                     = "../baremetal"
-  existing_resource_group    = var.resource_group
-  prefix                     = var.prefix
-  storage_subnets            = [for subnet in local.storage_subnets : subnet.id]
-  storage_ssh_keys           = local.ssh_keys
-  storage_servers            = var.storage_servers
-  security_group_ids         = module.storage_sg[*].security_group_id
-  bastion_public_key_content = var.bastion_public_key_content
+}
+
+module "storage_baremetal_tie_breaker" {
+  count                        = length(var.storage_servers) > 0 && var.storage_type == "persistent" ? 1 : 0
+  source                       = "../baremetal"
+  existing_resource_group      = var.resource_group
+  prefix                       = count.index == 0 ? local.storage_tie_breaker_node_name : format("%s-%s", local.storage_tie_breaker_node_name, count.index)
+  storage_subnets              = [for subnet in local.storage_subnets : subnet.id]
+  storage_ssh_keys             = local.ssh_keys
+  storage_servers              = var.tie_breaker_bm_server
+  security_group_ids           = module.storage_sg[*].security_group_id
+  bastion_public_key_content   = var.bastion_public_key_content
+  storage_public_key_content   = local.enable_storage ? module.storage_key[0].public_key_content : ""
+  storage_private_key_content  = local.enable_storage ? module.storage_key[0].private_key_content : ""
+  bms_boot_drive_encryption    = var.bms_boot_drive_encryption
+  user_data                    = var.bms_boot_drive_encryption == false ? data.template_file.storage_bm_user_data.rendered : templatefile("${path.module}/templates/storage_bootdrive_user_data/cloud_init.yml", local.user_data_vars)
+  secondary_vni_enabled        = false
+  protocol_subnets             = local.protocol_subnets
+  secondary_security_group_ids = []
+  protocol_instances           = var.protocol_instances
+  vpc_region                   = var.vpc_region
+
+}
+
+module "protocol_baremetal_server" {
+  count                        = (var.colocate_protocol_instances == false && local.ces_server_type == true && local.enable_protocol) ? 1 : 0
+  source                       = "../baremetal"
+  existing_resource_group      = var.resource_group
+  prefix                       = count.index == 0 ? local.protocol_node_name : format("%s-%s", local.protocol_node_name, count.index)
+  storage_subnets              = [for subnet in local.storage_subnets : subnet.id]
+  storage_ssh_keys             = local.ssh_keys
+  storage_servers              = var.protocol_instances
+  protocol_instances           = var.protocol_instances
+  security_group_ids           = module.storage_sg[*].security_group_id
+  bastion_public_key_content   = var.bastion_public_key_content
+  storage_public_key_content   = local.enable_storage ? module.storage_key[0].public_key_content : ""
+  storage_private_key_content  = local.enable_storage ? module.storage_key[0].private_key_content : ""
+  bms_boot_drive_encryption    = var.bms_boot_drive_encryption
+  user_data                    = var.bms_boot_drive_encryption == false ? data.template_file.protocol_bm_user_data.rendered : templatefile("${path.module}/templates/protocol_bootdrive_user_data/cloud_init.yml", local.user_data_vars)
+  secondary_vni_enabled        = true
+  protocol_subnets             = local.protocol_subnets
+  secondary_security_group_ids = module.storage_sg[*].security_group_id
+  vpc_region                   = var.vpc_region
 }

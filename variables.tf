@@ -8,6 +8,13 @@ variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
 }
 
+# Delete this variable before pushing to the public repository.
+variable "github_token" {
+  type        = string
+  default     = null
+  description = "Provide your GitHub token to download the HPCaaS code into the Deployer node"
+}
+
 variable "lsf_version" {
   type        = string
   default     = "fixpack_15"
@@ -20,7 +27,7 @@ variable "lsf_version" {
 variable "scheduler" {
   type        = string
   default     = null
-  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+  description = "Select one of the scheduler (Scale/LSF/Symphony/Slurm/null)"
 }
 
 variable "ibm_customer_number" {
@@ -315,6 +322,24 @@ variable "storage_servers" {
   description = "Number of BareMetal Servers to be launched for storage cluster."
 }
 
+variable "tie_breaker_bm_server" {
+  type = list(
+    object({
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = string
+    })
+  )
+  default = [{
+    profile    = "cx2d-metal-96x192"
+    count      = 1
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "fs1"
+  }]
+  description = "BareMetal Server to be launched for Tie Breaker."
+}
+
 variable "protocol_subnets" {
   type        = list(string)
   default     = null
@@ -480,6 +505,12 @@ variable "existing_kms_instance_guid" {
   description = "The existing KMS instance guid."
 }
 
+variable "key_protect_instance_id" {
+  type        = string
+  default     = null
+  description = "An existing Key Protect instance used for filesystem encryption"
+}
+
 # variable "hpcs_instance_name" {
 #   type        = string
 #   default     = null
@@ -593,16 +624,17 @@ variable "afm_cos_config" {
       bucket_storage_class = string
     })
   )
-  default = [{
-    afm_fileset          = "afm_fileset"
-    mode                 = "iw"
-    cos_instance         = ""
-    bucket_name          = ""
-    bucket_region        = "us-south"
-    cos_service_cred_key = ""
-    bucket_storage_class = "smart"
-    bucket_type          = "region_location"
-  }]
+  default = null
+  # default = [{
+  #   afm_fileset          = "afm_fileset"
+  #   mode                 = "iw"
+  #   cos_instance         = ""
+  #   bucket_name          = ""
+  #   bucket_region        = "us-south"
+  #   cos_service_cred_key = ""
+  #   bucket_storage_class = "smart"
+  #   bucket_type          = "region_location"
+  # }]
   # default = [{
   #   afm_fileset          = "afm_fileset"
   #   mode                 = "iw"
@@ -742,6 +774,46 @@ variable "observability_monitoring_plan" {
   }
 }
 
+##############################################################################
+# SCC Variables
+##############################################################################
+
+variable "scc_enable" {
+  type        = bool
+  default     = false
+  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+}
+
+variable "scc_profile" {
+  type        = string
+  default     = "CIS IBM Cloud Foundations Benchmark v1.1.0"
+  description = "Profile to be set on the SCC Instance (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')"
+  validation {
+    condition     = can(regex("^(|CIS IBM Cloud Foundations Benchmark v1.1.0|IBM Cloud Framework for Financial Services)$", var.scc_profile))
+    error_message = "Provide SCC Profile Name to be used (accepting empty, 'CIS IBM Cloud Foundations Benchmark' and 'IBM Cloud Framework for Financial Services')."
+  }
+}
+
+variable "scc_location" {
+  description = "Location where the SCC instance is provisioned (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es')"
+  type        = string
+  default     = "us-south"
+  validation {
+    condition     = can(regex("^(|us-south|eu-de|ca-tor|eu-es)$", var.scc_location))
+    error_message = "Provide region where it's possible to deploy an SCC Instance (possible choices 'us-south', 'eu-de', 'ca-tor', 'eu-es') or leave blank and it will default to 'us-south'."
+  }
+}
+
+variable "scc_event_notification_plan" {
+  type        = string
+  default     = "lite"
+  description = "Event Notifications Instance plan to be used (it's used with S.C.C. instance), possible values 'lite' and 'standard'."
+  validation {
+    condition     = can(regex("^(|lite|standard)$", var.scc_event_notification_plan))
+    error_message = "Provide Event Notification instance plan to be used (accepting 'lite' and 'standard', defaulting to 'lite'). This instance is used in conjuction with S.C.C. one."
+  }
+}
+
 variable "enable_landing_zone" {
   type        = bool
   default     = true
@@ -784,28 +856,28 @@ variable "cloud_metrics_data_bucket" {
   description = "cloud metrics data bucket"
 }
 
-# variable "scc_cos_bucket" {
-#   type        = string
-#   default     = null
-#   description = "scc cos bucket"
-# }
+variable "scc_cos_bucket" {
+  type        = string
+  default     = null
+  description = "scc cos bucket"
+}
 
-# variable "scc_cos_instance_crn" {
-#   type        = string
-#   default     = null
-#   description = "scc cos instance crn"
-# }
+variable "scc_cos_instance_crn" {
+  type        = string
+  default     = null
+  description = "scc cos instance crn"
+}
 
 #############################################################################
 # VARIABLES TO BE CHECKED
 ##############################################################################
 
 
-
-
-
-
-
+variable "sccwp_enable" {
+  type        = bool
+  default     = false
+  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+}
 
 #############################################################################
 # LDAP variables
@@ -907,22 +979,22 @@ variable "gklm_instances" {
   default = [{
     profile = "bx2-2x8"
     count   = 2
-    image   = "ibm-redhat-8-10-minimal-amd64-4"
+    image   = "hpcc-scale-gklm4202-v2-5-2"
   }]
-  description = "Number of instances to be launched for client."
+  description = "Number of GKLM instances to be launched for scale cluster."
 }
 
-# variable "scale_encryption_admin_default_password" {
-#   type        = string
-#   default     = null
-#   description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
-# }
+variable "scale_encryption_admin_default_password" {
+  type        = string
+  default     = "SKLM@dmin123"
+  description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
+}
 
-# variable "scale_encryption_admin_username" {
-#   type        = string
-#   default     = null
-#   description = "The default Admin username for Security Key Lifecycle Manager(GKLM)."
-# }
+variable "scale_encryption_admin_username" {
+  type        = string
+  default     = null
+  description = "The default Admin username for Security Key Lifecycle Manager(GKLM)."
+}
 
 variable "scale_encryption_admin_password" {
   type        = string
@@ -933,6 +1005,12 @@ variable "scale_encryption_admin_password" {
 variable "scale_ansible_repo_clone_path" {
   type        = string
   default     = "/opt/ibm/ibm-spectrumscale-cloud-deploy"
+  description = "Path to clone github.com/IBM/ibm-spectrum-scale-install-infra."
+}
+
+variable "scale_config_path" {
+  type        = string
+  default     = "/opt/IBM/ibm-spectrumscale-cloud-deploy"
   description = "Path to clone github.com/IBM/ibm-spectrum-scale-install-infra."
 }
 
@@ -1057,6 +1135,7 @@ variable "resource_group_ids" {
   default     = null
   description = "Map describing resource groups to create or reference"
 }
+
 ##############################################################################
 # Login Variables
 ##############################################################################
@@ -1071,7 +1150,7 @@ variable "login_instance" {
     profile = "bx2-2x8"
     image   = "hpcaas-lsf10-rhel810-compute-v8"
   }]
-  description = "Specify the list of login node configurations, including instance profile, image name. By default, login node is created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures."
+  description = "Number of instances to be launched for login node."
 }
 
 ##############################################################################
@@ -1113,7 +1192,7 @@ variable "sccwp_service_plan" {
   }
 }
 
-variable "sccwp_enable" {
+variable "bms_boot_drive_encryption" {
   type        = bool
   default     = true
   description = "Set this flag to true to create an instance of IBM Security and Compliance Center (SCC) Workload Protection. When enabled, it provides tools to discover and prioritize vulnerabilities, monitor for security threats, and enforce configuration, permission, and compliance policies across the full lifecycle of your workloads. To view the data on the dashboard, enable the cspm to create the app configuration and required trusted profile policies.[Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
@@ -1127,7 +1206,7 @@ variable "cspm_enabled" {
 }
 
 variable "app_config_plan" {
-  description = "Specify the IBM service pricing plan for the app configuration. Allowed values are 'basic', 'lite', 'standardv2', 'enterprise'."
+  description = "To enable the encryption for the boot drive of bare metal server. Select true or false"
   type        = string
   default     = "basic"
   validation {

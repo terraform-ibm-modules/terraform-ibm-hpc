@@ -25,7 +25,7 @@ output "ssh_to_deployer" {
 
 output "ssh_to_management_node" {
   description = "SSH command to connect to the management node"
-  value       = var.scheduler == "LSF" && (var.enable_deployer == false) && length(local.mgmt_hosts_ips) > 0 ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J ubuntu@${var.bastion_fip} lsfadmin@${local.mgmt_hosts_ips[0]}" : null
+  value       = var.scheduler == "LSF" && (var.enable_deployer == false) && length(local.mgmt_hosts_ips) > 0 ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J ubuntu@${var.bastion_fip} vpcuser@${local.mgmt_hosts_ips[0]}" : null
 }
 
 output "ssh_to_login_node" {

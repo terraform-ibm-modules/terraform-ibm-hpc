@@ -5,12 +5,7 @@
 # Licensed under the Apache License v2.0
 ###################################################
 
-##################################################################################################################
-# Scale Compute Cluter User Data
-##################################################################################################################
-
 #!/usr/bin/env bash
-
 exec > >(tee /var/log/ibm_spectrumscale_user-data.log)
 
 if grep -E -q "CentOS|Red Hat" /etc/os-release
@@ -20,23 +15,24 @@ elif grep -q "Ubuntu" /etc/os-release
 then
     USER=ubuntu
 fi
-
 sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo \'Please client as the user \\\\\"$USER\\\\\" rather than the user \\\\\"root\\\\\".\';echo;sleep 5; exit 142\" /" /root/.ssh/authorized_keys
 
 # input parameters
 echo "${bastion_public_key_content}" >> ~/.ssh/authorized_keys
-echo "${compute_public_key_content}" >> ~/.ssh/authorized_keys
+echo "${storage_public_key_content}" >> ~/.ssh/authorized_keys
 echo "StrictHostKeyChecking no" >> ~/.ssh/config
-echo "${compute_private_key_content}" > ~/.ssh/id_rsa
+echo "${storage_private_key_content}" > ~/.ssh/id_rsa
 chmod 600 ~/.ssh/id_rsa
 
-if grep -q "Red Hat" /etc/os-release
+# if grep -q "Red Hat" /etc/os-release
+if grep -q "CentOS|Red Hat" /etc/os-release
 then
     USER=vpcuser
     REQ_PKG_INSTALLED=0
     if grep -q "platform:el9" /etc/os-release
     then
         PACKAGE_MGR=dnf
+        subscription-manager repos --enable=rhel-9-for-x86_64-supplementary-eus-rpms
         package_list="python3 kernel-devel-$(uname -r) kernel-headers-$(uname -r) firewalld numactl make gcc-c++ elfutils-libelf-devel bind-utils iptables-nft nfs-utils elfutils elfutils-devel python3-dnf-plugin-versionlock"
     elif grep -q "platform:el8" /etc/os-release
     then
@@ -44,7 +40,7 @@ then
         package_list="python38 kernel-devel-$(uname -r) kernel-headers-$(uname -r) firewalld numactl jq make gcc-c++ elfutils-libelf-devel bind-utils iptables nfs-utils elfutils elfutils-devel python3-dnf-plugin-versionlock"
     else
         PACKAGE_MGR=yum
-        package_list="python3 kernel-devel-$(uname -r) kernel-headers-$(uname -r) rsync firewalld numactl make gcc-c++ elfutils-libelf-devel bind-utils iptables nfs-utils elfutils elfutils-devel yum-plugin-versionlock"
+        package_list="python3 kernel-devel-$(uname -r) kernel-headers-$(uname -r) firewalld numactl make gcc-c++ elfutils-libelf-devel bind-utils iptables nfs-utils elfutils elfutils-devel yum-plugin-versionlock"
     fi
 
     RETRY_LIMIT=5
@@ -85,22 +81,30 @@ then
 fi
 
 yum update --security -y
-yum versionlock add $package_list
+yum versionlock $package_list
 yum versionlock list
 echo 'export PATH=$PATH:/usr/lpp/mmfs/bin' >> /root/.bashrc
 
-echo "DOMAIN=${compute_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
-echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
+echo "###########################################################################################" >> /etc/motd
+echo "# You have logged in to Storage BareMetal Server.                                         #" >> /etc/motd
+echo "#   - Server storage is temporary storage that's available only while your Baremetal      #" >> /etc/motd
+echo "#     server is running.                                                                  #" >> /etc/motd
+echo "#   - Data on the drive is unrecoverable after server shutdown, disruptive maintenance,   #" >> /etc/motd
+echo "#     or hardware failure.                                                                #" >> /etc/motd
+echo "#                                                                                         #" >> /etc/motd
+echo "# Refer: https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-storage              #" >> /etc/motd
+echo "###########################################################################################" >> /etc/motd
+
+echo "DOMAIN=${storage_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${storage_interfaces}"
+echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${storage_interfaces}"
+sed -i -e "s#QUEUE_COUNT=3#QUEUE_COUNT=\`ethtool -l \$iface | echo \$(awk '\$1 ~ /Combined:/ {print \$2;exit}')\`#g" /var/lib/cloud/scripts/per-boot/iface-config
+ethtool -L eth0 combined 16
 chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
+sleep 120
 systemctl restart NetworkManager
 
 systemctl stop firewalld
 firewall-offline-cmd --zone=public --add-port=1191/tcp
-firewall-offline-cmd --zone=public --add-port=60000-61000/tcp
-firewall-offline-cmd --zone=public --add-port=47080/tcp
-firewall-offline-cmd --zone=public --add-port=47080/udp
-firewall-offline-cmd --zone=public --add-port=47443/tcp
-firewall-offline-cmd --zone=public --add-port=47443/udp
 firewall-offline-cmd --zone=public --add-port=4444/tcp
 firewall-offline-cmd --zone=public --add-port=4444/udp
 firewall-offline-cmd --zone=public --add-port=4739/udp
@@ -109,6 +113,24 @@ firewall-offline-cmd --zone=public --add-port=9084/tcp
 firewall-offline-cmd --zone=public --add-port=9085/tcp
 firewall-offline-cmd --zone=public --add-service=http
 firewall-offline-cmd --zone=public --add-service=https
-
+firewall-offline-cmd --zone=public --add-port=2049/tcp
+firewall-offline-cmd --zone=public --add-port=2049/udp
+firewall-offline-cmd --zone=public --add-port=111/tcp
+firewall-offline-cmd --zone=public --add-port=111/udp
+firewall-offline-cmd --zone=public --add-port=30000-61000/tcp
+firewall-offline-cmd --zone=public --add-port=30000-61000/udp
 systemctl start firewalld
 systemctl enable firewalld
+
+if [ "${enable_protocol}" == true ]; then
+    sec_interface=$(nmcli -t con show --active | grep eth1 | cut -d ':' -f 1)
+    nmcli conn del "$sec_interface"
+    nmcli con add type ethernet con-name eth1 ifname eth1
+    echo "DOMAIN=${protocol_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${protocol_interfaces}"
+    echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${protocol_interfaces}"
+    systemctl restart NetworkManager
+    ###### TODO: Fix Me ######
+    echo 'export IC_REGION=${vpc_region}' >> /root/.bashrc
+    echo 'export IC_SUBNET=${protocol_subnets}' >> /root/.bashrc
+    echo 'export IC_RG=${resource_group_id}' >> /root/.bashrc
+fi

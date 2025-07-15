@@ -45,6 +45,10 @@ module "scale" {
   observability_logs_retention_period              = local.env.observability_logs_retention_period
   observability_monitoring_on_compute_nodes_enable = local.env.observability_monitoring_on_compute_nodes_enable
   observability_monitoring_plan                    = local.env.observability_monitoring_plan
+  sccwp_enable                                     = local.env.sccwp_enable
+  sccwp_service_plan                               = local.env.sccwp_service_plan
+  cspm_enabled                                     = local.env.cspm_enable
+  app_config_plan                                  = local.env.app_config_plan
   skip_flowlogs_s2s_auth_policy                    = local.env.skip_flowlogs_s2s_auth_policy
   skip_kms_s2s_auth_policy                         = local.env.skip_kms_s2s_auth_policy
   skip_iam_block_storage_authorization_policy      = local.env.skip_iam_block_storage_authorization_policy
@@ -64,14 +68,19 @@ module "scale" {
   gklm_instance_key_pair                           = local.env.gklm_instance_key_pair
   gklm_instances                                   = local.env.gklm_instances
   storage_type                                     = local.env.storage_type
+  scale_encryption_admin_username                  = local.env.scale_encryption_admin_username
+  scale_encryption_admin_default_password          = local.env.scale_encryption_admin_default_password
   scale_encryption_admin_password                  = local.env.scale_encryption_admin_password
+  key_protect_instance_id                          = local.env.key_protect_instance_id
   filesystem_config                                = local.env.filesystem_config
   existing_bastion_instance_name                   = local.env.existing_bastion_instance_name
   existing_bastion_instance_public_ip              = local.env.existing_bastion_instance_public_ip
   existing_bastion_security_group_id               = local.env.existing_bastion_security_group_id
   existing_bastion_ssh_private_key                 = local.env.existing_bastion_ssh_private_key
   client_subnets_cidr                              = [local.env.client_subnets_cidr]
+  bms_boot_drive_encryption                        = local.env.bms_boot_drive_encryption
+  tie_breaker_bm_server                            = local.env.tie_breaker_bm_server
   # hpcs_instance_name                               = local.env.hpcs_instance_name
-  # scale_encryption_admin_username         = local.env.scale_encryption_admin_username
-  # scale_encryption_admin_default_password = local.env.scale_encryption_admin_default_password
+
+  github_token = local.env.github_token # Delete this variable before pushing to the public repository.
 }

@@ -89,7 +89,7 @@ data "ibm_is_image" "afm" {
 }
 
 data "ibm_is_image" "gklm" {
-  count = length(var.gklm_instances)
+  count = var.scale_encryption_enabled && var.scale_encryption_type == "gklm" && length(var.gklm_instances) > 0 ? 1 : 0
   name  = var.gklm_instances[count.index]["image"]
 }
 

@@ -30,7 +30,7 @@ output "bastion_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-lsf-bastion-subnet")
+    } if strcontains(subnet["name"], "-${local.name}-bastion-subnet")
   ]
 }
 
@@ -41,7 +41,7 @@ output "client_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-lsf-client-subnet")
+    } if strcontains(subnet["name"], "-${local.name}-client-subnet")
   ]
 }
 
@@ -52,7 +52,7 @@ output "compute_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-lsf-compute-subnet-zone-")
+    } if strcontains(subnet["name"], "-${local.name}-compute-subnet-zone-")
   ]
 }
 
@@ -63,7 +63,7 @@ output "storage_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-lsf-storage-subnet-zone-")
+    } if strcontains(subnet["name"], "-${local.name}-storage-subnet-zone-")
   ]
 }
 
@@ -74,7 +74,7 @@ output "protocol_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-lsf-protocol-subnet-zone-")
+    } if strcontains(subnet["name"], "-${local.name}-protocol-subnet-zone-")
   ]
 }
 
@@ -91,7 +91,7 @@ output "boot_volume_encryption_key" {
 
 output "key_management_guid" {
   description = "GUID for KMS instance"
-  value       = var.enable_landing_zone ? var.key_management != null ? module.landing_zone[0].key_management_guid : null : null
+  value       = var.enable_landing_zone ? var.key_management != null || (var.scale_encryption_enabled && var.scale_encryption_type == "key_protect" && var.key_protect_instance_id == null) ? module.landing_zone[0].key_management_guid : null : null
 }
 
 output "cos_buckets_data" {

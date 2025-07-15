@@ -77,8 +77,7 @@ data "ibm_is_instance_profile" "storage_profile" {
 }
 
 data "ibm_is_bare_metal_server_profile" "storage_bms_profile" {
-  count = var.scheduler == "Scale" ? 1 : 0
-  name  = local.storage_bms_profile[0]
+  name = local.storage_bms_profile[0]
 }
 
 data "ibm_is_instance_profile" "management_profile" {
@@ -90,8 +89,13 @@ data "ibm_is_instance_profile" "protocol_profile" {
   name  = local.protocol_vsi_profile[0]
 }
 
+data "ibm_is_bare_metal_server_profile" "protocol_bm_profile" {
+  count = local.ces_server_type == true && (local.scale_ces_enabled == true && var.colocate_protocol_instances == false) ? 1 : 0
+  name  = local.protocol_vsi_profile[0]
+}
+
 data "ibm_is_subnet_reserved_ips" "protocol_subnet_reserved_ips" {
-  count  = local.scale_ces_enabled == true ? 1 : 0
+  count  = var.enable_deployer == false && local.scale_ces_enabled == true ? 1 : 0
   subnet = local.protocol_subnet_id
 }
 

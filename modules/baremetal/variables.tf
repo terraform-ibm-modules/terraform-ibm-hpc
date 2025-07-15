@@ -49,7 +49,7 @@ variable "storage_servers" {
       profile    = string
       count      = number
       image      = string
-      filesystem = string
+      filesystem = optional(string)
     })
   )
   default = [{
@@ -59,6 +59,22 @@ variable "storage_servers" {
     filesystem = "/gpfs/fs1"
   }]
   description = "Number of BareMetal Servers to be launched for storage cluster."
+}
+
+variable "protocol_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  default = [{
+    profile = "bx2-2x8"
+    count   = 2
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
+  }]
+  description = "Number of instances to be launched for protocol hosts."
 }
 
 variable "bandwidth" {
@@ -106,4 +122,59 @@ variable "dns_domain_names" {
     protocol = "ces.com"
   }
   description = "IBM Cloud HPC DNS domain names."
+}
+
+variable "storage_public_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Storage nodes public key content."
+}
+
+variable "storage_private_key_content" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "Storage nodes private key content."
+}
+
+variable "bms_boot_drive_encryption" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the boot drive of bare metal server. Select true or false"
+}
+
+variable "secondary_vni_enabled" {
+  description = "Whether to enable a secondary virtual network interface"
+  type        = bool
+  default     = false
+}
+
+variable "secondary_security_group_ids" {
+  description = "List of security group IDs for the secondary VNI"
+  type        = list(string)
+  default     = null
+}
+
+variable "user_data" {
+  description = "User Data script path"
+  type        = string
+  default     = null
+}
+
+variable "vpc_region" {
+  type        = string
+  default     = null
+  description = "vpc region"
+}
+
+variable "protocol_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the bastion host."
 }

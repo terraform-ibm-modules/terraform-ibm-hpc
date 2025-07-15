@@ -9,6 +9,15 @@ variable "enable_landing_zone" {
 }
 
 ##############################################################################
+# Offering Variations
+##############################################################################
+variable "scheduler" {
+  type        = string
+  default     = null
+  description = "Select one of the scheduler (Scale/LSF/Symphony/Slurm/null)"
+}
+
+##############################################################################
 # Resource Groups Variables
 ##############################################################################
 
@@ -162,13 +171,17 @@ variable "storage_subnets_cidr" {
 variable "storage_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = string
     })
   )
   default = [{
-    profile = "bx2-2x8"
-    count   = 3
+    profile    = "bx2d-2x8"
+    count      = 2
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "/ibm/fs1"
   }]
   description = "Number of instances to be launched for storage cluster."
 }
@@ -207,6 +220,64 @@ variable "protocol_instances" {
   description = "Number of instances to be launched for protocol hosts."
 }
 
+variable "afm_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  default = [{
+    profile = "bx2-32x128"
+    count   = 1
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
+  }]
+  description = "Number of instances to be launched for afm hosts."
+}
+
+variable "filesystem_config" {
+  type = list(
+    object({
+      filesystem               = string
+      block_size               = string
+      default_data_replica     = number
+      default_metadata_replica = number
+      max_data_replica         = number
+      max_metadata_replica     = number
+      mount_point              = string
+    })
+  )
+  default     = null
+  description = "File system configurations."
+}
+
+variable "afm_cos_config" {
+  type = list(
+    object({
+      afm_fileset          = string,
+      mode                 = string,
+      cos_instance         = string,
+      bucket_name          = string,
+      bucket_region        = string,
+      cos_service_cred_key = string,
+      bucket_type          = string,
+      bucket_storage_class = string
+    })
+  )
+  default = null
+  # default = [{
+  #   afm_fileset          = "afm_fileset"
+  #   mode                 = "iw"
+  #   cos_instance         = null
+  #   bucket_name          = null
+  #   bucket_region        = "us-south"
+  #   cos_service_cred_key = ""
+  #   bucket_storage_class = "smart"
+  #   bucket_type          = "region_location"
+  # }]
+  description = "AFM configurations."
+}
 ##############################################################################
 # Observability Variables
 ##############################################################################
@@ -257,6 +328,27 @@ variable "kms_key_name" {
   description = "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. (for example kms_key_name: my-encryption-key)."
 }
 
+
+##Scale Encryption Variables
+
+variable "scale_encryption_enabled" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the filesystem. Select true or false"
+}
+
+variable "scale_encryption_type" {
+  type        = string
+  default     = null
+  description = "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled"
+}
+
+variable "key_protect_instance_id" {
+  type        = string
+  default     = null
+  description = "An existing Key Protect instance used for filesystem encryption"
+}
+
 # variable "hpcs_instance_name" {
 #   type        = string
 #   default     = null
@@ -278,6 +370,12 @@ variable "skip_kms_s2s_auth_policy" {
 ##############################################################################
 # Observability Variables
 ##############################################################################
+
+variable "scc_enable" {
+  type        = bool
+  default     = false
+  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
+}
 
 variable "observability_logs_enable" {
   description = "Set false to disable IBM Cloud Logs integration. If enabled, infrastructure and LSF application logs from Management/Compute Nodes will be ingested under COS bucket."
