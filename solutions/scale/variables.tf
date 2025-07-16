@@ -377,7 +377,7 @@ variable "storage_gui_username" {
 variable "storage_gui_password" {
   type        = string
   sensitive   = true
-  description = "The storage cluster GUI password is used for logging in to the storage cluster through the GUI. The password should contain a minimum of 8 characters. For a strong password, use a combination of uppercase and lowercase letters, one number, and a special character. Make sure that the password doesn't contain the username and it should not start with a special character."
+  description = "The storage cluster GUI password is required to access the storage cluster through its graphical interface. The password must be at least 8 characters long. For enhanced security, it should include a mix of uppercase and lowercase letters, at least one number, and a special character. Ensure the password does not include the username and does not begin with a special character."
   validation {
     condition     = can(regex("^.{8,}$", var.storage_gui_password) != "") && can(regex("[0-9]{1,}", var.storage_gui_password) != "") && can(regex("[a-z]{1,}", var.storage_gui_password) != "") && can(regex("[A-Z]{1,}", var.storage_gui_password) != "") && can(regex("[!@#$%^&*()_+=-]{1,}", var.storage_gui_password) != "") && trimspace(var.storage_gui_password) != "" && can(regex("^[!@#$%^&*()_+=-]", var.storage_gui_password)) == false
     error_message = "The storage cluster GUI Password should contain minimum of 8 characters and for strong password it must be a combination of uppercase letter, lowercase letter, one number and a special character. Ensure password doesn't comprise with username and it should not start with a special character."

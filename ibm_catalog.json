@@ -814,14 +814,6 @@
                             "required": true
                         },
                         {
-                            "key": "storage_gui_username",
-                            "required": true
-                        },
-                        {
-                            "key": "storage_gui_password",
-                            "required": true
-                        },
-                        {
                             "key": "ibmcloud_api_key",
                             "required": true
                         },
@@ -1015,29 +1007,46 @@
                             "required": true
                         },
                         {
-                            "key": "cluster_prefix"
+                            "key": "storage_gui_username",
+                            "required": true
+                        },
+                        {
+                            "key": "storage_gui_password",
+                            "required": true
                         },
                         {
                             "key": "existing_resource_group",
                             "required": true
                         },
                         {
+                            "key": "cluster_prefix"
+                        },
+                        {
+                            "key": "storage_type"
+                        },
+                        {
+                            "key": "enable_vpc_flow_logs"
+                        },
+                        {
+                            "key": "skip_flowlogs_s2s_auth_policy"
+                        },
+                        {
                             "key": "vpc_cidr"
-                        },
-                        {
-                            "key": "vpc_name"
-                        },
-                        {
-                            "key": "client_subnets_cidr"
-                        },
-                        {
-                            "key": "vpc_cluster_private_subnets_cidr_blocks"
                         },
                         {
                             "key": "storage_subnets_cidr"
                         },
                         {
+                            "key": "client_subnets_cidr"
+                        },
+                        {
                             "key": "protocol_subnets_cidr"
+                        },
+                        {
+                            "key": "vpc_cluster_private_subnets_cidr_blocks"
+                        },
+                        {
+                            "key": "vpc_name"
                         },
                         {
                             "key": "placement_strategy"
@@ -1127,6 +1136,9 @@
                             }
                         },
                         {
+                            "key": "bms_boot_drive_encryption"
+                        },
+                        {
                             "key": "tie_breaker_bm_server",
                             "type": "object",
                             "default_value": "[\n  {\n    \"count\": 1,\n    \"profile\": \"cx2d-metal-96x192\",\n    \"image\": \"ibm-redhat-8-10-minimal-amd64-4\"\n  }\n]",
@@ -1169,6 +1181,9 @@
                             }
                         },
                         {
+                            "key": "colocate_protocol_instances"
+                        },
+                        {
                             "key": "filesystem_config",
                             "type": "object",
                             "default_value": "[\n  {\n    \"filesystem\": \"fs1\",\n    \"block_size\": \"4M\",\n    \"mount_point\": \"/ibm/fs1\",\n \"default_data_replica\": 2,\n \"default_metadata_replica\": 2,\n \"max_data_replica \": 3,\n \"count\": 3\n  }\n]",
@@ -1203,22 +1218,161 @@
                             "key": "compute_gui_password"
                         },
                         {
-                            "key": "colocate_protocol_instances"
+                            "key": "dns_domain_names"
                         },
                         {
                             "key": "dns_instance_id"
                         },
                         {
-                            "key": "dns_domain_names"
-                        },
-                        {
                             "key": "dns_custom_resolver_id"
                         },
                         {
-                            "key": "key_management"
+                            "key": "scale_encryption_enabled"
                         },
                         {
-                            "key": "hpcs_instance_name"
+                            "key": "scale_encryption_type"
+                        },
+                        {
+                            "key": "gklm_instance_key_pair",
+                            "type": "array",
+                            "required": true,
+                            "custom_config": {
+                                "type": "vpc_ssh_key",
+                                "grouping": "deployment",
+                                "original_grouping": "deployment",
+                                "config_constraints": {
+                                    "selection": "multi_select",
+                                    "valueType": "name"
+                                }
+                            }
+                        },
+                        {
+                            "key": "gklm_instances",
+                            "type": "object",
+                            "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"hpcc-scale-gklm4202-v2-5-2\"\n  }\n]",
+                            "required": false,
+                            "custom_config": {
+                                "type": "json_editor",
+                                "grouping": "deployment",
+                                "original_grouping": "deployment",
+                                "config_constraints": {
+                                    "type": "mixed"
+                                }
+                            }
+                        },
+                        {
+                            "key": "scale_encryption_admin_password"
+                        },
+                        {
+                            "key": "key_protect_instance_id"
+                        },
+                        {
+                            "key": "enable_cos_integration"
+                        },
+                        {
+                            "key": "cos_instance_name"
+                        },
+                        {
+                            "key": "enable_ldap"
+                        },
+                        {
+                            "key": "ldap_basedns"
+                        },
+                        {
+                            "key": "ldap_server"
+                        },
+                        {
+                            "key": "ldap_admin_password"
+                        },
+                        {
+                            "key": "ldap_user_name"
+                        },
+                        {
+                            "key": "ldap_user_password"
+                        },
+                        {
+                            "key": "ldap_instance",
+                            "type": "array",
+                            "default_value": "[\n  {\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-3\"\n  }\n]",
+                            "required": false,
+                            "custom_config": {
+                                "type": "json_editor",
+                                "grouping": "deployment",
+                                "original_grouping": "deployment",
+                                "config_constraints": {
+                                    "type": "mixed"
+                                }
+                            }
+                        },
+                        {
+                            "key": "ldap_server_cert"
+                        },
+                        {
+                            "key": "observability_atracker_enable"
+                        },
+                        {
+                            "key": "observability_atracker_target_type"
+                        },
+                        {
+                            "key": "sccwp_enable"
+                        },
+                        {
+                            "key": "sccwp_service_plan",
+                            "default_value": "free-trial",
+                            "options": [
+                                {
+                                    "displayname": "free-trial",
+                                    "value": "free-trial"
+                                },
+                                {
+                                    "displayname": "graduated-tier",
+                                    "value": "graduated-tier"
+                                }
+                            ]
+                        },
+                        {
+                            "key": "cspm_enabled"
+                        },
+                        {
+                            "key": "app_config_plan",
+                            "default_value": "basic",
+                            "options": [
+                                {
+                                    "displayname": "basic",
+                                    "value": "basic"
+                                },
+                                {
+                                    "displayname": "lite",
+                                    "value": "lite"
+                                },
+                                {
+                                    "displayname": "standardv2",
+                                    "value": "standardv2"
+                                },
+                                {
+                                    "displayname": "enterprise",
+                                    "value": "enterprise"
+                                }
+                            ]
+                        },
+                        {
+                            "key": "existing_bastion_instance_name"
+                        },
+                        {
+                            "key": "existing_bastion_instance_public_ip"
+                        },
+                        {
+                            "key": "existing_bastion_security_group_id"
+                        },
+                        {
+                            "key": "existing_bastion_ssh_private_key",
+                            "type": "multiline_secure_value",
+                            "required": false,
+                            "custom_config": {
+                                "grouping": "deployment",
+                                "original_grouping": "deployment",
+                                "type": "multiline_secure_value"
+                            }
                         }
                     ],
                     "iam_permissions": [
