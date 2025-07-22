@@ -2,7 +2,7 @@
 ---
 
 - name: Web Services | Enable HTTPS with lwsadmin
-  ansible.builtin.shell: lwsadmin https enable --password {{ app_center_gui_password }}
+  ansible.builtin.shell: lwsadmin https enable --password {{ app_center_gui_password }} --validhosts {{ lsf_masters[0] }},localhost
   register: https_enable_result
   changed_when: "'already enabled' not in https_enable_result.stdout"
   no_log: true
