@@ -121,3 +121,9 @@
   args:
     warn: false
   when: inventory_hostname in groups['management_nodes']
+
+# Remove Duplicate Logs
+- name: Force remove all logs (not idempotent)
+  shell: rm -rf /opt/ibm/lsflogs/*
+  become: true
+  ignore_errors: true
