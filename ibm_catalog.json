@@ -94,111 +94,165 @@
                             "options": [
                                 {
                                     "displayname": "Washington DC 1",
-                                    "value": ["us-east-1"]
+                                    "value": [
+                                        "us-east-1"
+                                    ]
                                 },
                                 {
                                     "displayname": "Washington DC 2",
-                                    "value": ["us-east-2"]
+                                    "value": [
+                                        "us-east-2"
+                                    ]
                                 },
                                 {
                                     "displayname": "Washington DC 3",
-                                    "value": ["us-east-3"]
+                                    "value": [
+                                        "us-east-3"
+                                    ]
                                 },
                                 {
                                     "displayname": "Frankfurt 1",
-                                    "value": ["eu-de-1"]
+                                    "value": [
+                                        "eu-de-1"
+                                    ]
                                 },
                                 {
                                     "displayname": "Frankfurt 2",
-                                    "value": ["eu-de-2"]
+                                    "value": [
+                                        "eu-de-2"
+                                    ]
                                 },
                                 {
                                     "displayname": "Frankfurt 3",
-                                    "value": ["eu-de-3"]
+                                    "value": [
+                                        "eu-de-3"
+                                    ]
                                 },
                                 {
                                     "displayname": "Dallas 1",
-                                    "value": ["us-south-1"]
+                                    "value": [
+                                        "us-south-1"
+                                    ]
                                 },
                                 {
                                     "displayname": "Dallas 2",
-                                    "value": ["us-south-2"]
+                                    "value": [
+                                        "us-south-2"
+                                    ]
                                 },
                                 {
                                     "displayname": "Dallas 3",
-                                    "value": ["us-south-3"]
+                                    "value": [
+                                        "us-south-3"
+                                    ]
                                 },
                                 {
                                     "displayname": "Toronto 1",
-                                    "value": ["ca-tor-1"]
+                                    "value": [
+                                        "ca-tor-1"
+                                    ]
                                 },
                                 {
                                     "displayname": "Toronto 2",
-                                    "value": ["ca-tor-2"]
+                                    "value": [
+                                        "ca-tor-2"
+                                    ]
                                 },
                                 {
                                     "displayname": "Toronto 3",
-                                    "value": ["ca-tor-3"]
+                                    "value": [
+                                        "ca-tor-3"
+                                    ]
                                 },
                                 {
                                     "displayname": "Tokyo 1",
-                                    "value": ["jp-tok-1"]
+                                    "value": [
+                                        "jp-tok-1"
+                                    ]
                                 },
                                 {
                                     "displayname": "Tokyo 2",
-                                    "value": ["jp-tok-2"]
+                                    "value": [
+                                        "jp-tok-2"
+                                    ]
                                 },
                                 {
                                     "displayname": "Tokyo 3",
-                                    "value": ["jp-tok-3"]
+                                    "value": [
+                                        "jp-tok-3"
+                                    ]
                                 },
                                 {
                                     "displayname": "London 1",
-                                    "value": ["eu-gb-1"]
+                                    "value": [
+                                        "eu-gb-1"
+                                    ]
                                 },
                                 {
                                     "displayname": "London 2",
-                                    "value": ["eu-gb-2"]
+                                    "value": [
+                                        "eu-gb-2"
+                                    ]
                                 },
                                 {
                                     "displayname": "London 3",
-                                    "value": ["eu-gb-3"]
+                                    "value": [
+                                        "eu-gb-3"
+                                    ]
                                 },
                                 {
                                     "displayname": "Sydney 1",
-                                    "value": ["au-syd-1"]
+                                    "value": [
+                                        "au-syd-1"
+                                    ]
                                 },
                                 {
                                     "displayname": "Sydney 2",
-                                    "value": ["au-syd-2"]
+                                    "value": [
+                                        "au-syd-2"
+                                    ]
                                 },
                                 {
                                     "displayname": "Syndney 3",
-                                    "value": ["au-syd-3"]
+                                    "value": [
+                                        "au-syd-3"
+                                    ]
                                 },
                                 {
                                     "displayname": "Osaka 1",
-                                    "value": ["jp-osa-1"]
+                                    "value": [
+                                        "jp-osa-1"
+                                    ]
                                 },
                                 {
                                     "displayname": "Osaka 2",
-                                    "value": ["jp-osa-2"]
+                                    "value": [
+                                        "jp-osa-2"
+                                    ]
                                 },
                                 {
                                     "displayname": "Osaka 3",
-                                    "value": ["jp-osa-3"]
+                                    "value": [
+                                        "jp-osa-3"
+                                    ]
                                 },
                                     {
                                     "displayname": "Sao Paulo 1",
-                                    "value": ["br-sao-1"]
+                                    "value": [
+                                        "br-sao-1"
+                                    ]
                                 },
                                 {
                                     "displayname": "Sao Paulo 2",
-                                    "value": ["br-sao-2"]
+                                    "value": [
+                                        "br-sao-2"
+                                    ]
                                 },
                                 {
                                     "displayname": "Sao Paulo 3",
-                                    "value": ["br-sao-3"]
+                                    "value": [
+                                        "br-sao-3"
+                                    ]
                                 }
                             ]
                         },
@@ -768,111 +822,165 @@
                             "options": [
                                 {
                                     "displayname": "Washington DC 1",
-                                    "value": ["us-east-1"]
+                                    "value": [
+                                        "us-east-1"
+                                    ]
                                 },
                                 {
                                     "displayname": "Washington DC 2",
-                                    "value": ["us-east-2"]
+                                    "value": [
+                                        "us-east-2"
+                                    ]
                                 },
                                 {
                                     "displayname": "Washington DC 3",
-                                    "value": ["us-east-3"]
+                                    "value": [
+                                        "us-east-3"
+                                    ]
                                 },
                                 {
                                     "displayname": "Frankfurt 1",
-                                    "value": ["eu-de-1"]
+                                    "value": [
+                                        "eu-de-1"
+                                    ]
                                 },
                                 {
                                     "displayname": "Frankfurt 2",
-                                    "value": ["eu-de-2"]
+                                    "value": [
+                                        "eu-de-2"
+                                    ]
                                 },
                                 {
                                     "displayname": "Frankfurt 3",
-                                    "value": ["eu-de-3"]
+                                    "value": [
+                                        "eu-de-3"
+                                    ]
                                 },
                                 {
                                     "displayname": "Dallas 1",
-                                    "value": ["us-south-1"]
+                                    "value": [
+                                        "us-south-1"
+                                    ]
                                 },
                                 {
                                     "displayname": "Dallas 2",
-                                    "value": ["us-south-2"]
+                                    "value": [
+                                        "us-south-2"
+                                    ]
                                 },
                                 {
                                     "displayname": "Dallas 3",
-                                    "value": ["us-south-3"]
+                                    "value": [
+                                        "us-south-3"
+                                    ]
                                 },
                                 {
                                     "displayname": "Toronto 1",
-                                    "value": ["ca-tor-1"]
+                                    "value": [
+                                        "ca-tor-1"
+                                    ]
                                 },
                                 {
                                     "displayname": "Toronto 2",
-                                    "value": ["ca-tor-2"]
+                                    "value": [
+                                        "ca-tor-2"
+                                    ]
                                 },
                                 {
                                     "displayname": "Toronto 3",
-                                    "value": ["ca-tor-3"]
+                                    "value": [
+                                        "ca-tor-3"
+                                    ]
                                 },
                                 {
                                     "displayname": "Tokyo 1",
-                                    "value": ["jp-tok-1"]
+                                    "value": [
+                                        "jp-tok-1"
+                                    ]
                                 },
                                 {
                                     "displayname": "Tokyo 2",
-                                    "value": ["jp-tok-2"]
+                                    "value": [
+                                        "jp-tok-2"
+                                    ]
                                 },
                                 {
                                     "displayname": "Tokyo 3",
-                                    "value": ["jp-tok-3"]
+                                    "value": [
+                                        "jp-tok-3"
+                                    ]
                                 },
                                 {
                                     "displayname": "London 1",
-                                    "value": ["eu-gb-1"]
+                                    "value": [
+                                        "eu-gb-1"
+                                    ]
                                 },
                                 {
                                     "displayname": "London 2",
-                                    "value": ["eu-gb-2"]
+                                    "value": [
+                                        "eu-gb-2"
+                                    ]
                                 },
                                 {
                                     "displayname": "London 3",
-                                    "value": ["eu-gb-3"]
+                                    "value": [
+                                        "eu-gb-3"
+                                    ]
                                 },
                                 {
                                     "displayname": "Sydney 1",
-                                    "value": ["au-syd-1"]
+                                    "value": [
+                                        "au-syd-1"
+                                    ]
                                 },
                                 {
                                     "displayname": "Sydney 2",
-                                    "value": ["au-syd-2"]
+                                    "value": [
+                                        "au-syd-2"
+                                    ]
                                 },
                                 {
                                     "displayname": "Syndney 3",
-                                    "value": ["au-syd-3"]
+                                    "value": [
+                                        "au-syd-3"
+                                    ]
                                 },
                                 {
                                     "displayname": "Osaka 1",
-                                    "value": ["jp-osa-1"]
+                                    "value": [
+                                        "jp-osa-1"
+                                    ]
                                 },
                                 {
                                     "displayname": "Osaka 2",
-                                    "value": ["jp-osa-2"]
+                                    "value": [
+                                        "jp-osa-2"
+                                    ]
                                 },
                                 {
                                     "displayname": "Osaka 3",
-                                    "value": ["jp-osa-3"]
+                                    "value": [
+                                        "jp-osa-3"
+                                    ]
                                 },
                                     {
                                     "displayname": "Sao Paulo 1",
-                                    "value": ["br-sao-1"]
+                                    "value": [
+                                        "br-sao-1"
+                                    ]
                                 },
                                 {
                                     "displayname": "Sao Paulo 2",
-                                    "value": ["br-sao-2"]
+                                    "value": [
+                                        "br-sao-2"
+                                    ]
                                 },
                                 {
                                     "displayname": "Sao Paulo 3",
-                                    "value": ["br-sao-3"]
+                                    "value": [
+                                        "br-sao-3"
+                                    ]
                                 }
                             ]
                         },
