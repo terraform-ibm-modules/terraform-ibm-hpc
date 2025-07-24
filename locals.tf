@@ -4,17 +4,16 @@ locals {
   region = join("-", slice(split("-", var.zones[0]), 0, 2))
 
   # Scheduler name change in lower_case
-  scheduler_lowcase = lower(var.scheduler)
+  scheduler_lowcase = var.scheduler != null ? lower(var.scheduler) : "null"
 
   # SSH key calculations
   # Combining the common ssh keys with host specific ssh keys
-  gklm_instance_key_pair = distinct(concat(coalesce(var.gklm_instance_key_pair, []), coalesce(var.ssh_keys, [])))
-  ldap_instance_key_pair = distinct(concat(coalesce(var.ldap_instance_key_pair, []), coalesce(var.ssh_keys, [])))
-  ssh_keys               = distinct(coalesce(var.ssh_keys, []))
-  key_management         = var.key_management == "null" ? null : var.key_management
-  ldap_server            = var.ldap_server == null ? "null" : var.ldap_server
-  ldap_admin_password    = var.ldap_admin_password == null ? "" : var.ldap_admin_password
-  ldap_server_cert       = var.ldap_server_cert == null ? "null" : var.ldap_server_cert
+  #  ldap_instance_key_pair = distinct(concat(coalesce(var.ldap_instance_key_pair, []), coalesce(var.ssh_keys, [])))
+  ssh_keys            = distinct(coalesce(var.ssh_keys, []))
+  key_management      = var.key_management == "null" ? null : var.key_management
+  ldap_server         = var.ldap_server == null ? "null" : var.ldap_server
+  ldap_admin_password = var.ldap_admin_password == null ? "" : var.ldap_admin_password
+  ldap_server_cert    = var.ldap_server_cert == null ? "null" : var.ldap_server_cert
 }
 
 # locals needed for deployer
@@ -26,13 +25,27 @@ locals {
   boot_volume_encryption_key = local.key_management != null && var.enable_deployer ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   existing_kms_instance_guid = local.key_management != null || (var.scale_encryption_enabled && var.scale_encryption_type == "key_protect" && var.key_protect_instance_id == null) ? module.landing_zone.key_management_guid : null
 
-  filesystem_mountpoint = jsonencode(
+  encryption_filesystem_mountpoint = jsonencode(
     var.scale_encryption_type == "key_protect" ? (
       try(var.storage_instances[0].filesystem, "") != "" ?
-      element(split("/", var.storage_instances[0].filesystem), length(split("/", var.storage_instances[0].filesystem)) - 1) :
-      element(split("/", var.filesystem_config[0].mount_point), length(split("/", var.filesystem_config[0].mount_point)) - 1)
+      element(
+        split("/", var.storage_instances[0].filesystem),
+        length(split("/", var.storage_instances[0].filesystem)) - 1
+      ) :
+      try(var.storage_servers[0].filesystem, "") != "" ?
+      element(
+        split("/", var.storage_servers[0].filesystem),
+        length(split("/", var.storage_servers[0].filesystem)) - 1
+      ) :
+      element(
+        split("/", var.filesystem_config[0].filesystem),
+        length(split("/", var.filesystem_config[0].filesystem)) - 1
+      )
     ) : ""
   )
+
+  filesystem_mountpoint = var.storage_type == "persistent" ? (var.storage_servers[0]["filesystem"] != "" && var.storage_servers[0]["filesystem"] != null ? var.storage_servers[0]["filesystem"] : var.filesystem_config[0]["filesystem"]) : (var.storage_instances[0]["filesystem"] != "" && var.storage_instances[0]["filesystem"] != null ? var.storage_instances[0]["filesystem"] : var.filesystem_config[0]["filesystem"])
+
   cos_data = module.landing_zone.cos_buckets_data
   # Future use
   # When we implement the existing bastion concept we need the changes to implemented like below. Which is already there on our LSF DA
@@ -68,9 +81,10 @@ locals {
 # locals needed for landing_zone_vsi
 locals {
   # dependency: landing_zone -> deployer -> landing_zone_vsi
-  bastion_security_group_id   = module.deployer.bastion_security_group_id
-  bastion_public_key_content  = module.deployer.bastion_public_key_content
-  bastion_private_key_content = module.deployer.bastion_private_key_content
+  login_security_group_name_id = var.login_security_group_name != null ? data.ibm_is_security_group.login_security_group[*].id : []
+  bastion_security_group_id    = var.login_security_group_name == null ? module.deployer.bastion_security_group_id : local.login_security_group_name_id[0]
+  bastion_public_key_content   = module.deployer.bastion_public_key_content
+  bastion_private_key_content  = module.deployer.bastion_private_key_content
 
   deployer_hostname = var.enable_deployer ? flatten(module.deployer.deployer_vsi_data[*].list)[0].name : ""
   deployer_ip       = module.deployer.deployer_ip
@@ -127,18 +141,33 @@ locals {
   ]
 
   # dependency: landing_zone -> landing_zone_vsi
-  client_subnets   = var.vpc_name != null && var.client_subnets != null ? local.existing_client_subnets : module.landing_zone.client_subnets
-  cluster_subnets  = var.vpc_name != null && var.cluster_subnet_id != null ? local.existing_cluster_subnets : module.landing_zone.compute_subnets
-  storage_subnets  = var.vpc_name != null && var.storage_subnets != null ? local.existing_storage_subnets : module.landing_zone.storage_subnets
-  protocol_subnets = var.vpc_name != null && var.protocol_subnets != null ? local.existing_protocol_subnets : module.landing_zone.protocol_subnets
-  login_subnets    = var.vpc_name != null && var.login_subnet_id != null ? local.existing_login_subnets : module.landing_zone.bastion_subnets
+  use_existing_client_subnets   = var.vpc_name != null && var.client_subnet_id != null
+  use_existing_cluster_subnets  = var.vpc_name != null && var.cluster_subnet_id != null
+  use_existing_storage_subnets  = var.vpc_name != null && var.storage_subnet_id != null
+  use_existing_protocol_subnets = var.vpc_name != null && var.protocol_subnet_id != null
+  use_existing_login_subnets    = var.vpc_name != null && var.login_subnet_id != null
 
-  storage_subnet     = [for subnet in local.storage_subnets : subnet.name]
-  protocol_subnet    = [for subnet in local.protocol_subnets : subnet.name]
-  protocol_subnet_id = var.enable_deployer ? "" : local.protocol_instance_count > 0 ? [for subnet in local.protocol_subnets : subnet.id][0] : ""
-  cluster_subnet     = [for subnet in local.cluster_subnets : subnet.id][0]
-  client_subnet      = [for subnet in local.client_subnets : subnet.name]
-  login_subnet       = [for subnet in local.login_subnets : subnet.id][0]
+  client_subnets = (var.vpc_name == null ? module.landing_zone.client_subnets :
+  (local.use_existing_client_subnets ? local.existing_client_subnets : module.landing_zone.client_subnets))
+
+  cluster_subnets = (var.vpc_name == null ? module.landing_zone.compute_subnets :
+  (local.use_existing_cluster_subnets ? local.existing_cluster_subnets : module.landing_zone.compute_subnets))
+
+  storage_subnets = (var.vpc_name == null ? module.landing_zone.storage_subnets :
+  (local.use_existing_storage_subnets ? local.existing_storage_subnets : module.landing_zone.storage_subnets))
+
+  protocol_subnets = (var.vpc_name == null ? module.landing_zone.protocol_subnets :
+  (local.use_existing_protocol_subnets ? local.existing_protocol_subnets : module.landing_zone.protocol_subnets))
+
+  login_subnets = (var.vpc_name == null ? module.landing_zone.bastion_subnets :
+  (local.use_existing_login_subnets ? local.existing_login_subnets : module.landing_zone.bastion_subnets))
+
+  # update the subnet_id
+  storage_subnet  = length(local.storage_subnets) > 0 ? [for subnet in local.storage_subnets : subnet.id][0] : ""
+  protocol_subnet = length(local.protocol_subnets) > 0 ? [for subnet in local.protocol_subnets : subnet.id][0] : ""
+  cluster_subnet  = length(local.cluster_subnets) > 0 ? [for subnet in local.cluster_subnets : subnet.id][0] : ""
+  client_subnet   = length(local.client_subnets) > 0 ? [for subnet in local.client_subnets : subnet.id][0] : ""
+  login_subnet    = length(local.login_subnets) > 0 ? [for subnet in local.login_subnets : subnet.id][0] : ""
 
   #boot_volume_encryption_key = local.key_management != null ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
   #skip_iam_authorization_policy = true
@@ -147,9 +176,11 @@ locals {
 # locals needed for file-storage
 locals {
   # dependency: landing_zone_vsi -> file-share
-  compute_subnet_id         = (var.vpc_name == null && var.cluster_subnet_id == null ? local.cluster_subnets[0].id : (var.vpc_name != null && var.cluster_subnet_id != null ? [for subnet in data.ibm_is_subnet.existing_cluster_subnets : subnet.id][0] : (var.vpc_name != null && var.cluster_subnet_id == null ? local.cluster_subnets[0].id : "")))
+  compute_subnet_id         = (var.enable_deployer && var.vpc_name != null && var.cluster_subnet_id != null) ? local.existing_cluster_subnets[0].id : ""
   bastion_subnet_id         = (var.enable_deployer && var.vpc_name != null && var.login_subnet_id != null) ? local.existing_login_subnets[0].id : ""
-  subnet_id                 = (var.enable_deployer && var.vpc_name != null && var.cluster_subnet_id != null) ? local.existing_cluster_subnets[0].id : ""
+  protocol_subnet_id        = (var.enable_deployer && var.vpc_name != null && var.protocol_subnet_id != null) ? local.existing_protocol_subnets[0].id : ""
+  client_subnet_id          = (var.enable_deployer && var.vpc_name != null && var.client_subnet_id != null) ? local.existing_client_subnets[0].id : ""
+  storage_subnet_id         = (var.enable_deployer && var.vpc_name != null && var.storage_subnet_id != null) ? local.existing_storage_subnets[0].id : ""
   compute_security_group_id = var.enable_deployer ? [] : module.landing_zone_vsi[0].compute_sg_id
 
   nfs_shares_map = {
@@ -158,7 +189,7 @@ locals {
     if share.nfs_share != "" && share.nfs_share != null
   }
 
-  fileset_size_map = try({ for details in var.custom_file_shares : details.mount_path => details.size }, {})
+  fileset_size_map = try({ for details in var.filesets_config : details.client_mount_path => details.quota }, {})
 
   # Original file share map from module
   original_map = var.enable_deployer ? {} : local.static_compute_instance_count > 0 && var.scheduler != "Scale" ? module.file_storage[0].name_mount_path_map : {}
@@ -368,10 +399,10 @@ locals {
   client_hosts                  = try([for instance in local.client_instances : instance["ipv4_address"]], [])
   afm_hosts                     = try([for instance in local.afm_instances : instance["ipv4_address"]], [])
   gklm_hosts                    = try([for instance in local.gklm_instances : instance["ipv4_address"]], [])
-  storage_hosts                 = try([for instance in local.storage_instances : instance["ipv4_address"]], []) 
+  storage_hosts                 = try([for instance in local.storage_instances : instance["ipv4_address"]], [])
   strg_mgmt_hosts               = try([for instance in local.strg_mgmt_instances : instance["ipv4_address"]], [])
   all_storage_hosts             = concat(local.storage_hosts, local.strg_mgmt_hosts)
-  protocol_hosts                = try([for instance in local.protocol_instances : instance["ipv4_address"]], [])  
+  protocol_hosts                = try([for instance in local.protocol_instances : instance["ipv4_address"]], [])
   login_host_ip                 = try([for instance in local.login_instance : instance["ipv4_address"]], [])
   compute_inventory_path        = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/compute.ini" : "${path.root}/modules/ansible-roles/compute.ini"
   compute_hosts_inventory_path  = var.enable_deployer ? "${path.root}/../../solutions/${local.scheduler_lowcase}/compute_hosts.ini" : "${path.root}/solutions/${local.scheduler_lowcase}/compute_hosts.ini"
@@ -380,10 +411,10 @@ locals {
   deployer_hosts_inventory_path = var.enable_deployer ? "${path.root}/../../solutions/${local.scheduler_lowcase}/deployer_hosts.ini" : "${path.root}/solutions/${local.scheduler_lowcase}/deployer_hosts.ini"
   ldap_hosts_inventory_path     = var.enable_deployer ? "${path.root}/../../solutions/${local.scheduler_lowcase}/ldap_hosts.ini" : "${path.root}/solutions/${local.scheduler_lowcase}/ldap_hosts.ini"
   client_hosts_inventory_path   = var.enable_deployer ? "${path.root}/../../solutions/${local.scheduler_lowcase}/client_hosts.ini" : "${path.root}/solutions/${local.scheduler_lowcase}/client_hosts.ini"
-  storage_hosts_inventory_path   = var.enable_deployer ? "${path.root}/../../solutions/${local.scheduler_lowcase}/storage_hosts.ini" : "${path.root}/solutions/${local.scheduler_lowcase}/storage_hosts.ini"
-  afm_hosts_inventory_path   = var.enable_deployer ? "${path.root}/../../solutions/${local.scheduler_lowcase}/afm_hosts.ini" : "${path.root}/solutions/${local.scheduler_lowcase}/afm_hosts.ini"
-  gklm_hosts_inventory_path   = var.enable_deployer ? "${path.root}/../../solutions/${local.scheduler_lowcase}/gklm_hosts.ini" : "${path.root}/solutions/${local.scheduler_lowcase}/gklm_hosts.ini"
-  protocol_hosts_inventory_path = var.enable_deployer ? "${path.root}/../../solutions/${local.scheduler_lowcase}/protocol_hosts.ini" : "${path.root}/solutions/${local.scheduler_lowcase}/protocol_hosts.ini"  
+  storage_hosts_inventory_path  = var.enable_deployer ? "${path.root}/../../solutions/${local.scheduler_lowcase}/storage_hosts.ini" : "${path.root}/solutions/${local.scheduler_lowcase}/storage_hosts.ini"
+  afm_hosts_inventory_path      = var.enable_deployer ? "${path.root}/../../solutions/${local.scheduler_lowcase}/afm_hosts.ini" : "${path.root}/solutions/${local.scheduler_lowcase}/afm_hosts.ini"
+  gklm_hosts_inventory_path     = var.enable_deployer ? "${path.root}/../../solutions/${local.scheduler_lowcase}/gklm_hosts.ini" : "${path.root}/solutions/${local.scheduler_lowcase}/gklm_hosts.ini"
+  protocol_hosts_inventory_path = var.enable_deployer ? "${path.root}/../../solutions/${local.scheduler_lowcase}/protocol_hosts.ini" : "${path.root}/solutions/${local.scheduler_lowcase}/protocol_hosts.ini"
   login_host_inventory_path     = var.enable_deployer ? "${path.root}/../../solutions/${local.scheduler_lowcase}/login_host.ini" : "${path.root}/solutions/${local.scheduler_lowcase}/login_host.ini"
   # storage_inventory_path = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/storage.ini" : "${path.root}/modules/ansible-roles/storage.ini"
 }
@@ -406,19 +437,19 @@ locals {
 
 # details needed for json file
 locals {
-  compute_instances_data = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_vsi_data])
-  compute_hosts_ips      = var.enable_deployer ? [] : local.compute_instances_data[*]["ipv4_address"]
+  compute_instances_data      = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_vsi_data])
+  compute_hosts_ips           = var.enable_deployer ? [] : local.compute_instances_data[*]["ipv4_address"]
   compute_mgmt_instances_data = var.scheduler == "Scale" ? var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_management_vsi_data]) : []
   compute_mgmt_hosts_ips      = var.scheduler == "Scale" ? var.enable_deployer ? [] : local.compute_mgmt_instances_data[*]["ipv4_address"] : []
-  all_compute_hosts = concat(local.compute_hosts_ips, local.compute_mgmt_hosts_ips)
-  bastion_hosts_ips   = var.enable_deployer ? [module.deployer.bastion_fip] : []
-  deployer_hosts_ips  = var.enable_deployer ? [module.deployer.deployer_ip] : []
-  mgmt_instances_data = var.scheduler == "LSF" ? var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data]) : []
-  mgmt_hosts_ips      = var.scheduler == "LSF" ? var.enable_deployer ? [] : local.mgmt_instances_data[*]["ipv4_address"] : []
-  ldap_hosts_ips      = var.scheduler == "LSF" ? var.enable_deployer ? [] : (var.enable_ldap == true ? (var.ldap_server == "null" ? local.ldap_instances[*]["ipv4_address"] : [var.ldap_server]) : []) : []
-  json_inventory_path = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json"
-  management_nodes    = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"] : []
-  login_host          = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].login_vsi_data]))[*]["name"] : []
+  all_compute_hosts           = concat(local.compute_hosts_ips, local.compute_mgmt_hosts_ips)
+  bastion_hosts_ips           = var.enable_deployer ? [module.deployer.bastion_fip] : []
+  deployer_hosts_ips          = var.enable_deployer ? [module.deployer.deployer_ip] : []
+  mgmt_instances_data         = var.scheduler == "LSF" ? var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data]) : []
+  mgmt_hosts_ips              = var.scheduler == "LSF" ? var.enable_deployer ? [] : local.mgmt_instances_data[*]["ipv4_address"] : []
+  ldap_hosts_ips              = var.scheduler == "LSF" ? var.enable_deployer ? [] : (var.enable_ldap == true ? (var.ldap_server == "null" ? local.ldap_instances[*]["ipv4_address"] : [var.ldap_server]) : []) : []
+  json_inventory_path         = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json"
+  management_nodes            = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"] : []
+  login_host                  = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].login_vsi_data]))[*]["name"] : []
   compute_nodes = var.scheduler == "LSF" ? (
     var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_vsi_data])[*]["name"]
   ) : []
@@ -458,8 +489,6 @@ locals {
     bucket_crn      = local.cloud_metrics_bucket.crn
     bucket_endpoint = local.cloud_metrics_bucket.s3_endpoint_direct
   } : null)
-  scc_cos_bucket       = length(module.landing_zone.cos_buckets_names) > 0 && var.scc_enable ? [for name in module.landing_zone.cos_buckets_names : name if strcontains(name, "scc-bucket")][0] : ""
-  scc_cos_instance_crn = length(module.landing_zone.cos_instance_crns) > 0 && var.scc_enable ? module.landing_zone.cos_instance_crns[0] : ""
 
   compute_subnet_crn          = var.enable_deployer ? "" : data.ibm_is_subnet.compute_subnet_crn[0].crn
   ssh_keys_ids                = var.enable_deployer ? [] : [for name in var.ssh_keys : data.ibm_is_ssh_key.ssh_keys[name].id]
@@ -473,9 +502,9 @@ locals {
 }
 
 locals {
-  # gpfs_base_rpm_path  = fileset(var.spectrumscale_rpms_path, "gpfs.base-*")
-  # scale_org_version   = regex("gpfs.base-(.*).x86_64.rpm", tolist(local.gpfs_base_rpm_path)[0])[0]
-  scale_version = "5.2.2.1" #replace(local.scale_org_version, "-", ".")
+  gpfs_base_rpm_path = var.enable_deployer ? [] : fileset(var.spectrumscale_rpms_path, "gpfs.base-*")
+  scale_org_version  = var.enable_deployer ? "" : regex("gpfs.base-(.*).x86_64.rpm", tolist(local.gpfs_base_rpm_path)[0])[0]
+  scale_version      = var.enable_deployer ? "" : replace(local.scale_org_version, "-", ".")
 
   compute_vsi_profile    = var.static_compute_instances[*]["profile"]
   storage_vsi_profile    = var.storage_instances[*]["profile"]
@@ -587,9 +616,9 @@ locals {
   tie_breaker_storage_instance_names       = var.storage_type != "persistent" ? local.strg_tie_breaker_instance_names : local.bm_tie_breaker_names
   tie_breaker_ips_with_vol_mapping         = var.storage_type != "persistent" ? module.landing_zone_vsi[*].instance_ips_with_vol_mapping_tie_breaker : local.storage_tie_breaker_bms_name_with_vol_mapping
 
-  storage_subnet_cidr = var.enable_deployer ? "" : local.storage_instance_count > 0 ? jsonencode((data.ibm_is_subnet.existing_storage_subnets[*].ipv4_cidr_block)[0]) : ""
-  cluster_subnet_cidr = var.enable_deployer ? "" : local.static_compute_instance_count > 0 ? jsonencode((data.ibm_is_subnet.existing_cluster_subnets[*].ipv4_cidr_block)[0]) : ""
-  client_subnet_cidr  = var.enable_deployer ? "" : local.client_instance_count > 0 ? jsonencode((data.ibm_is_subnet.existing_client_subnets[*].ipv4_cidr_block)[0]) : ""
+  storage_subnet_cidr = local.storage_instance_count > 0 && var.storage_subnet_id != null ? jsonencode((data.ibm_is_subnet.existing_storage_subnets[*].ipv4_cidr_block)[0]) : ""
+  cluster_subnet_cidr = local.static_compute_instance_count > 0 && var.cluster_subnet_id != null ? jsonencode((data.ibm_is_subnet.existing_cluster_subnets[*].ipv4_cidr_block)[0]) : ""
+  client_subnet_cidr  = local.client_instance_count > 0 && var.client_subnet_id != null ? jsonencode((data.ibm_is_subnet.existing_client_subnets[*].ipv4_cidr_block)[0]) : ""
 
   compute_memory               = data.ibm_is_instance_profile.compute_profile.memory[0].value
   compute_vcpus_count          = data.ibm_is_instance_profile.compute_profile.vcpu_count[0].value
@@ -639,6 +668,11 @@ locals {
   ssh_jump_host    = var.enable_deployer ? "" : var.scheduler == "LSF" ? local.bastion_instance_public_ip != null ? local.bastion_instance_public_ip : var.bastion_fip : ""
   ssh_jump_option  = var.enable_deployer ? "" : var.scheduler == "LSF" ? "-J ubuntu@${local.ssh_jump_host}" : ""
   ssh_cmd          = var.enable_deployer ? "" : var.scheduler == "LSF" ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 ${local.ssh_forwards} ${local.ssh_jump_option} lsfadmin@${join(",", local.login_host_ip)}" : ""
+}
+
+locals {
+  scale_encryption_admin_username         = "SKLMAdmin"    # pragma: allowlist secret
+  scale_encryption_admin_default_password = "SKLM@dmin123" # pragma: allowlist secret
 }
 
 #locals {

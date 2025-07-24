@@ -47,6 +47,14 @@ locals {
       "au-syd"   = "r026-11aee148-c938-4524-91e6-8e6da5933a42"
       "br-sao"   = "r042-5cb62448-e771-4caf-a556-28fdf88acab9"
       "ca-tor"   = "r038-fa815ec1-d52e-42b2-8221-5b8c2145a248"
+    },
+    "hpcc-scale5232-rhel810-v1" = {
+      "jp-tok" = "r022-f2349717-ac91-4dda-8096-fc0c7377301a"
+    }
+  }
+  storage_image_region_map = {
+    "hpcc-scale5232-rhel810-v1" = {
+      "jp-tok" = "r022-f2349717-ac91-4dda-8096-fc0c7377301a"
     }
   }
 }

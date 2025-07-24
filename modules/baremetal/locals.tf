@@ -1,21 +1,15 @@
 # define variables
 locals {
-  prefix            = var.prefix
-  storage_image_id  = data.ibm_is_image.storage[*].id
-  storage_node_name = format("%s-%s", local.prefix, "strg")
+  storage_image_id = data.ibm_is_image.storage[*].id
   # resource_group_id = data.ibm_resource_group.existing_resource_group.id
   # bms_interfaces    = ["ens1", "ens2"]
-  bms_interfaces = ["eth0", "eth1"]
+  # bms_interfaces = ["eth0", "eth1"]
   # storage_ssh_keys  = [for name in var.storage_ssh_keys : data.ibm_is_ssh_key.storage[name].id]
 
   # TODO: explore (DA always keep it true)
   #skip_iam_authorization_policy = true
-  storage_server_count    = sum(var.storage_servers[*]["count"])
-  protocol_instance_count = sum(var.protocol_instances[*]["count"])
-  enable_storage          = local.storage_server_count > 0
-  enable_protocol         = local.storage_server_count > 0 && local.protocol_instance_count > 0
-
-  # sapphire_rapids_profile_check = strcontains(var.vsi_profile, "3-metal") || strcontains(var.vsi_profile, "3d-metal")
+  storage_server_count = sum(var.storage_servers[*]["count"])
+  #enable_storage       = local.storage_server_count > 0
 
   raw_bm_details = flatten([
     for module_instance in module.storage_baremetal : [
@@ -32,7 +26,7 @@ locals {
   ])
 
   bm_server_name = flatten(local.raw_bm_details[*].name)
-  bm_server_ips  = flatten(local.raw_bm_details[*].ipv4_address)
+  bm_serve_ips   = flatten([for server in local.raw_bm_details : server[*].ipv4_address])
 
   disk0_interface_type = (data.ibm_is_bare_metal_server_profile.itself[*].disks[0].supported_interface_types[0].default)[0]
   disk_count           = (data.ibm_is_bare_metal_server_profile.itself[*].disks[1].quantity[0].value)[0]

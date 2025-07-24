@@ -66,6 +66,24 @@ variable "ext_cluster_subnet_id" {
   description = "Name of an existing subnets in which the bastion and cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
 }
 
+variable "ext_client_subnet_id" {
+  type        = string
+  default     = null
+  description = "Name of an existing subnets in which the bastion and cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+}
+
+variable "ext_storage_subnet_id" {
+  type        = string
+  default     = null
+  description = "Name of an existing subnets in which the bastion and cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+}
+
+variable "ext_protocol_subnet_id" {
+  type        = string
+  default     = null
+  description = "Name of an existing subnets in which the bastion and cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+}
+
 ##############################################################################
 # Offering Variations
 ##############################################################################
@@ -193,4 +211,43 @@ variable "existing_bastion_security_group_id" {
 variable "zones" {
   description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
   type        = list(string)
+}
+
+variable "storage_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the storage host."
+}
+
+variable "client_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the client host."
+}
+
+variable "protocol_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the protocol host."
+}
+
+variable "login_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the bastion node. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the bastion node to function properly."
 }

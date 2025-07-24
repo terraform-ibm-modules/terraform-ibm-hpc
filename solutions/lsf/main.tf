@@ -65,5 +65,5 @@ module "lsf" {
   sccwp_service_plan                               = local.env.sccwp_service_plan
   cspm_enabled                                     = var.cspm_enabled
   app_config_plan                                  = var.app_config_plan
-  github_token = local.env.github_token # Delete this variable before pushing to the public repository.  
+  github_token                                     = local.env.github_token # Delete this variable before pushing to the public repository.
 }

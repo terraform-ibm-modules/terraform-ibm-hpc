@@ -62,7 +62,7 @@ resource "null_resource" "ext_bastion_access" {
 }
 
 resource "null_resource" "fetch_host_details_from_deployer" {
-  count = var.enable_deployer == true && var.scheduler == "LSF" ? 1 : 0
+  count = var.enable_deployer == true ? 1 : 0
 
   provisioner "local-exec" {
     command = <<EOT
@@ -78,6 +78,7 @@ resource "null_resource" "fetch_host_details_from_deployer" {
           vpcuser@${var.deployer_ip}:/opt/ibm/terraform-ibm-hpc/solutions/${local.products}/*.ini \
           "${path.root}/../../solutions/${local.products}/"
     EOT
+    quiet   = true
   }
   depends_on = [resource.null_resource.tf_resource_provisioner]
 }

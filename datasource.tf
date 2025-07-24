@@ -38,19 +38,20 @@ data "ibm_is_subnet" "existing_cluster_subnets" {
   identifier = var.cluster_subnet_id
 }
 
+
 data "ibm_is_subnet" "existing_storage_subnets" {
-  count = var.vpc_name != null && var.storage_subnets != null ? 1 : 0
-  name  = var.storage_subnets[count.index]
+  count      = var.vpc_name != null && var.storage_subnet_id != null ? 1 : 0
+  identifier = var.storage_subnet_id
 }
 
 data "ibm_is_subnet" "existing_protocol_subnets" {
-  count = var.vpc_name != null && var.protocol_subnets != null ? 1 : 0
-  name  = var.protocol_subnets[count.index]
+  count      = var.vpc_name != null && var.protocol_subnet_id != null ? 1 : 0
+  identifier = var.protocol_subnet_id
 }
 
 data "ibm_is_subnet" "existing_client_subnets" {
-  count = var.vpc_name != null && var.client_subnets != null ? 1 : 0
-  name  = var.client_subnets[count.index]
+  count      = var.vpc_name != null && var.client_subnet_id != null ? 1 : 0
+  identifier = var.client_subnet_id
 }
 
 data "ibm_is_subnet" "existing_login_subnets" {
@@ -65,7 +66,7 @@ data "ibm_is_ssh_key" "ssh_keys" {
 
 data "ibm_is_subnet" "compute_subnet_crn" {
   count      = var.vpc_name != null && var.cluster_subnet_id != null ? 1 : 0
-  identifier = local.compute_subnet_id
+  identifier = local.cluster_subnet
 }
 
 data "ibm_is_instance_profile" "compute_profile" {
@@ -96,10 +97,15 @@ data "ibm_is_bare_metal_server_profile" "protocol_bm_profile" {
 
 data "ibm_is_subnet_reserved_ips" "protocol_subnet_reserved_ips" {
   count  = var.enable_deployer == false && local.scale_ces_enabled == true ? 1 : 0
-  subnet = local.protocol_subnet_id
+  subnet = local.protocol_subnet
 }
 
 data "ibm_is_instance_profile" "afm_server_profile" {
   count = local.afm_server_type == false ? 1 : 0
   name  = local.afm_vsi_profile[0]
+}
+
+data "ibm_is_security_group" "login_security_group" {
+  count = var.login_security_group_name != null ? 1 : 0
+  name  = var.login_security_group_name
 }

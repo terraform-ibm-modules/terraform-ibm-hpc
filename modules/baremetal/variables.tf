@@ -18,6 +18,10 @@ variable "prefix" {
   }
 }
 
+variable "image_id" {
+  description = "This is the image id required for baremetal"
+  type = string
+}
 ##############################################################################
 # Scale Storage Variables
 ##############################################################################
@@ -61,26 +65,10 @@ variable "storage_servers" {
   description = "Number of BareMetal Servers to be launched for storage cluster."
 }
 
-variable "protocol_instances" {
-  type = list(
-    object({
-      profile = string
-      count   = number
-      image   = string
-    })
-  )
-  default = [{
-    profile = "bx2-2x8"
-    count   = 2
-    image   = "ibm-redhat-8-10-minimal-amd64-4"
-  }]
-  description = "Number of instances to be launched for protocol hosts."
-}
-
-variable "bandwidth" {
-  description = "The allocated bandwidth (in Mbps) for the bare metal server to manage network traffic. If unset, default values apply."
-  type        = number
-  default     = 100000
+variable "sapphire_rapids_profile_check" {
+  type        = bool
+  default     = false
+  description = "Check whether the profile uses Cascade Lake processors (x2) or Intel Sapphire Rapids processors (x3)."
 }
 
 variable "allowed_vlan_ids" {
@@ -93,42 +81,6 @@ variable "security_group_ids" {
   description = "A list of security group ID's"
   type        = list(string)
   default     = []
-}
-
-##############################################################################
-# Access Variables
-##############################################################################
-
-variable "bastion_public_key_content" {
-  type        = string
-  sensitive   = true
-  default     = null
-  description = "Bastion security group id."
-}
-
-##############################################################################
-# DNS Template Variables
-##############################################################################
-
-variable "dns_domain_names" {
-  type = object({
-    compute  = string
-    storage  = string
-    protocol = string
-  })
-  default = {
-    compute  = "comp.com"
-    storage  = "strg.com"
-    protocol = "ces.com"
-  }
-  description = "IBM Cloud HPC DNS domain names."
-}
-
-variable "storage_public_key_content" {
-  type        = string
-  sensitive   = true
-  default     = null
-  description = "Storage nodes public key content."
 }
 
 variable "storage_private_key_content" {
@@ -150,22 +102,10 @@ variable "secondary_vni_enabled" {
   default     = false
 }
 
-variable "secondary_security_group_ids" {
-  description = "List of security group IDs for the secondary VNI"
-  type        = list(string)
-  default     = null
-}
-
 variable "user_data" {
   description = "User Data script path"
   type        = string
   default     = null
-}
-
-variable "vpc_region" {
-  type        = string
-  default     = null
-  description = "vpc region"
 }
 
 variable "protocol_subnets" {

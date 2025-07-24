@@ -4,7 +4,6 @@
 variable "ibm_customer_number" {
   type        = string
   sensitive   = true
-  default     = null
   description = "Comma-separated list of the IBM Customer Number(s) (ICN) that is used for the Bring Your Own License (BYOL) entitlement check. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
   validation {
     condition = (
@@ -12,6 +11,10 @@ variable "ibm_customer_number" {
       can(regex("^[0-9A-Za-z]+(,[0-9A-Za-z]+)*$", var.ibm_customer_number))
     )
     error_message = "The IBM customer number input value cannot have special characters."
+  }
+  validation {
+    condition     = var.storage_type == "evaluation" || var.ibm_customer_number != ""
+    error_message = "The IBM customer number cannot be empty when storage_type is not 'evaluation'."
   }
 }
 
@@ -21,7 +24,7 @@ variable "ibm_customer_number" {
 variable "ibmcloud_api_key" {
   type        = string
   sensitive   = true
-  description = "This is the IBM Cloud API key for the IBM Cloud account where the IBM Storage Scale cluster needs to be deployed. For more information on how to create an API key, see [Managing user API keys](https://cloud.ibm.com/docs/account?topic=account-userapikey&interface=ui)."
+  description = "Provide the IBM Cloud API key for the account where the IBM Storage Scale cluster will be deployed. For instructions on creating an API key, see [Managing user API keys](https://cloud.ibm.com/docs/account?topic=account-userapikey&interface=ui)."
 }
 
 # Delete this variable before pushing to the public repository.
@@ -40,19 +43,19 @@ variable "zones" {
   default     = ["us-east-1"]
   validation {
     condition     = length(var.zones) == 1
-    error_message = "HPC product deployment supports only a single zone. Provide a value for a single zone from the supported regions: eu-de-2 or eu-de-3 for eu-de, us-east-1 or us-east-3 for us-east, and us-south-1 for us-south."
+    error_message = "Provide a value for a single zone from the supported regions."
   }
 }
 
 variable "ssh_keys" {
   type        = list(string)
   default     = null
-  description = "Provide the list of SSH key names already configured in your IBM Cloud account to establish a connection to the storage scale nodes. Solution does not create new SSH keys, provide the existing keys. Make sure the SSH key exists in the same resource group and region where the cluster is being provisioned. To pass multiple SSH keys, use the format [\"key-name-1\", \"key-name-2\"]. If you don't have an SSH key in your IBM Cloud account, you can create one by following the provided .[SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
+  description = "Specify the names of the SSH keys already configured in your IBM Cloud account to enable access to the Storage Scale nodes. The solution does not create new SSH keys, so ensure you provide existing ones. These keys must reside in the same resource group and region as the cluster being provisioned.To provide multiple SSH keys, use a comma-separated list in the format: [\"key-name-1\", \"key-name-2\"]. If you do not have an SSH key in your IBM Cloud account, you can create one by following the instructions [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
 }
 
 variable "remote_allowed_ips" {
   type        = list(string)
-  description = "Comma-separated list of IP addresses that can access the IBM Spectrum LSF cluster instance through an SSH interface. For security purposes, provide the public IP addresses assigned to the devices that are authorized to establish SSH connections (for example, [\"169.45.117.34\"]). To fetch the IP address of the device, use [https://ipv4.icanhazip.com/](https://ipv4.icanhazip.com/)."
+  description = "To ensure secure access to the IBM Storage Scale cluster via SSH, you must specify the public IP addresses of the devices that are permitted to connect. These IPs will be used to configure access restrictions and protect the environment from unauthorized connections. To allow access from multiple devices, provide the IP addresses as a comma-separated list in the format: [\"169.45.117.34\", \"203.0.113.25\"]. Identify your current public IP address, you can visit: https://ipv4.icanhazip.com."
   validation {
     condition = alltrue([
       for o in var.remote_allowed_ips : !contains(["0.0.0.0/0", "0.0.0.0"], o)
@@ -70,7 +73,7 @@ variable "remote_allowed_ips" {
 variable "cluster_prefix" {
   type        = string
   default     = "scale"
-  description = "Prefix that is used to name the IBM Cloud resources that are provisioned to build the Storage Scale cluster. Make sure that the prefix is unique since you cannot create multiple resources with the same name. The maximum length of supported characters is 64. Must begin with a letter and end with a letter or number."
+  description = "Prefix that is used to name the IBM Cloud resources that are provisioned to build the Storage Scale cluster. Make sure that the prefix is unique, since you cannot create multiple resources with the same name. The maximum length of supported characters is 64. Must begin with a letter and end with a letter or number."
   validation {
     error_message = "Prefix must begin and end with a letter and contain only letters, numbers, and - characters."
     condition     = can(regex("^([A-z]|[a-z][-a-z0-9]*[a-z0-9])$", var.cluster_prefix))
@@ -100,7 +103,7 @@ variable "existing_resource_group" {
 variable "vpc_name" {
   type        = string
   default     = null
-  description = "Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc). If your VPC has an existing DNS service ensure the name of the DNS Service ends with prefix scale-scaledns [Example: cluster-name-scale-scaledns]"
+  description = "Provide the name of an existing VPC in which the cluster resources will be deployed. If no value is given, solution provisions a new VPC. [Learn more](https://cloud.ibm.com/docs/vpc). If a custom DNS resolver is already configured for your VPC, specify its ID under the dns_custom_resolver_id input value."
 }
 
 variable "vpc_cidr" {
@@ -130,21 +133,21 @@ variable "bastion_instance" {
     profile = string
   })
   default = {
-    image   = "ibm-ubuntu-22-04-5-minimal-amd64-3"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-5"
     profile = "cx2-4x8"
+  }
+  validation {
+    condition     = can(regex("^ibm-ubuntu", var.bastion_instance.image))
+    error_message = "Only IBM Ubuntu stock images are supported for the Bastion node."
+  }
+
+  validation {
+    condition     = can(regex("^[^\\s]+-[0-9]+x[0-9]+", var.bastion_instance.profile))
+    error_message = "The profile must be a valid virtual server instance profile."
   }
   description = "Configuration for the bastion node, including the image and instance profile. Only Ubuntu 22.04 stock images are supported."
 }
 
-variable "vpc_cluster_login_private_subnets_cidr_blocks" {
-  type        = string
-  default     = "10.241.16.0/28"
-  description = "Provide the CIDR block required for the creation of the login cluster's private subnet. Only one CIDR block is needed. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Since the login subnet is used only for the creation of login virtual server instances, provide a CIDR range of /28."
-  validation {
-    condition     = tonumber(regex("^.*?/(\\d+)$", var.vpc_cluster_login_private_subnets_cidr_blocks)[0]) <= 28
-    error_message = "This subnet is used to create only a login virtual server instance. Providing a larger CIDR size will waste the usage of available IPs. A CIDR range of /28 is sufficient for the creation of the login subnet."
-  }
-}
 
 ##############################################################################
 # Deployer Variables
@@ -159,22 +162,106 @@ variable "deployer_instance" {
     image   = "jay-lsf-new-image"
     profile = "mx2-4x32"
   }
-  description = "Name of the custom image that you would like to use to create the Bootstrap node for the Storage Scale cluster. The solution supports only the default custom image that has been provided."
   validation {
-    condition = alltrue([
-      for inst in var.deployer_instance : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
-    ])
-    error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
+    condition     = can(regex("^(b|c|m)x[0-9]+d?-[0-9]+x[0-9]+$", var.deployer_instance.profile))
+    error_message = "The profile must be a valid virtual server instance profile."
   }
+  description = "Configuration for the deployer node, including the custom image and instance profile. By default, uses fixpack_15 image and a bx2-8x32 profile."
 }
 
 ##############################################################################
 # Compute Variables
 ##############################################################################
+variable "login_subnets_cidr" {
+  type        = string
+  default     = "10.241.16.0/28"
+  description = "Provide the CIDR block required for the creation of the login cluster's private subnet. Only one CIDR block is needed. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Since the login subnet is used only for the creation of login virtual server instances, provide a CIDR range of /28."
+  validation {
+    condition     = tonumber(regex("^.*?/(\\d+)$", var.login_subnets_cidr)[0]) <= 28
+    error_message = "This subnet is used to create only a login virtual server instance. Providing a larger CIDR size will waste the usage of available IPs. A CIDR range of /28 is sufficient for the creation of the login subnet."
+  }
+}
+
+variable "compute_subnets_cidr" {
+  type        = string
+  default     = "10.241.0.0/20"
+  description = "Provide the CIDR block required for the creation of the compute private subnet. One CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Ensure the selected CIDR block size can accommodate the maximum number of scale compute nodes expected in your cluster. For more information on CIDR block size selection, refer to the documentation, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
+}
+
+variable "storage_subnets_cidr" {
+  type        = string
+  default     = "10.241.30.0/24"
+  description = "Provide the CIDR block required for the creation of the storage private subnet. One CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Ensure the selected CIDR block size can accommodate the maximum number of scale storage nodes expected in your cluster. For more information on CIDR block size selection, refer to the documentation, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
+}
+
+variable "protocol_subnets_cidr" {
+  type        = string
+  default     = "10.241.40.0/24"
+  description = "Provide the CIDR block required for the creation of the protocal private subnet. One CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Ensure the selected CIDR block size can accommodate the maximum number of scale storage nodes expected in your cluster. For more information on CIDR block size selection, refer to the documentation, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
+}
+
 variable "client_subnets_cidr" {
   type        = string
   default     = "10.241.50.0/24"
-  description = "Subnet CIDR block to launch the client host."
+  description = "Provide the CIDR block required for the creation of the client private subnet. One CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Ensure the selected CIDR block size can accommodate the maximum number of scale client nodes expected in your cluster. For more information on CIDR block size selection, refer to the documentation, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
+}
+
+variable "compute_gui_username" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "GUI username to perform system management and monitoring tasks on the compute cluster. The Username should be at least 4 characters, (any combination of lowercase and uppercase letters)."
+  validation {
+    condition     = sum([for inst in var.compute_instances : inst.count]) == 0 || (length(var.compute_gui_username) >= 4 && length(var.compute_gui_username) <= 32 && trimspace(var.compute_gui_username) != "")
+    error_message = "Specified input for \"compute_gui_username\" is not valid. Username should be greater or equal to 4 letters and less than equal to 32."
+  }
+}
+
+variable "compute_gui_password" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Password for logging in to the compute cluster GUI. Must be at least 8 characters long and include a combination of uppercase and lowercase letters, a number, and a special character. It must not contain the username or start with a special character."
+
+  #  validation {
+  #    condition = (
+  #      sum([for inst in var.compute_instances : inst.count]) > 0 || can(regex("^.{8,}$", var.compute_gui_password) != "") && can(regex("[0-9]{1,}", var.compute_gui_password) != "") && can(regex("[a-z]{1,}", var.compute_gui_password) != "") && can(regex("[A-Z]{1,}", var.compute_gui_password) != "") && can(regex("[!@#$%^&*()_+=-]{1,}", var.compute_gui_password) != "") && trimspace(var.compute_gui_password) != "" && can(regex("^[!@#$%^&*()_+=-]", var.compute_gui_password)) == false
+  #    )
+  #    error_message = "The compute cluster GUI password is used for logging in to the compute cluster through the GUI. The password should contain a minimum of 8 characters.  For a strong password, use a combination of uppercase and lowercase letters, one number and a special character. Make sure that the password doesn't contain the username and it should not start with a special character."
+  #  }
+  validation {
+    condition = (
+      sum([for inst in var.compute_instances : inst.count]) == 0 || can(regex("^.{8,}$", var.compute_gui_password) != "") && can(regex("[0-9]{1,}", var.compute_gui_password) != "") && can(regex("[a-z]{1,}", var.compute_gui_password) != "") && can(regex("[A-Z]{1,}", var.compute_gui_password) != "") && can(regex("[!@#$%^&*()_+=-]{1,}", var.compute_gui_password) != "") && trimspace(var.compute_gui_password) != "" && can(regex("^[!@#$%^&*()_+=-]", var.compute_gui_password)) == false
+    )
+    error_message = "If compute instances are used, the GUI password must be at least 8 characters long, include upper/lowercase letters, a number, a special character, must not start with a special character, and must not contain the username."
+  }
+}
+
+##############################################################################
+# Storage Scale Variables
+##############################################################################
+variable "compute_instances" {
+  type = list(
+    object({
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = optional(string)
+    })
+  )
+  default = [{
+    profile    = "cx2-2x4"
+    count      = 0
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "/gpfs/fs1"
+  }]
+  validation {
+    condition = alltrue([
+      for inst in var.compute_instances : can(regex("^(b|c|m)x[0-9]+d?-[0-9]+x[0-9]+$", inst.profile))
+    ])
+    error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
+  }
+  description = "Specifies the list of virtual server instances to be provisioned as compute nodes in the cluster. Each object in the list defines the instance profile (machine type), the count (number of instances), the image (OS image to use), and an optional filesystem mount path. This configuration allows you to customize the compute tier of the cluster based on your performance and workload requirements. For more details, refer [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
 }
 
 variable "client_instances" {
@@ -190,74 +277,14 @@ variable "client_instances" {
     count   = 2
     image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
-  description = "The virtual server instance profile type name to be used to create the client cluster nodes. For more information, see [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
   validation {
     condition = alltrue([
-      for inst in var.client_instances : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
+      for inst in var.client_instances : can(regex("^(b|c|m)x[0-9]+d?-[0-9]+x[0-9]+$", inst.profile))
     ])
     error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
   }
-}
+  description = "Defines the list of virtual server instances to be provisioned as client nodes in the cluster. Each object in the list specifies the instance profile (machine type), the count (number of instances), and the image (OS image to use). This allows you to customize the hardware configuration and image for the client nodes based on your workload requirements. The profile must match a valid IBM Cloud VPC Gen2 instance profile format. For more details, refer [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
 
-variable "vpc_cluster_private_subnets_cidr_blocks" {
-  type        = string
-  default     = "10.241.0.0/20"
-  description = "Provide the CIDR block required for the creation of the compute cluster's private subnet. One CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Ensure the selected CIDR block size can accommodate the maximum number of management and dynamic compute nodes expected in your cluster. For more information on CIDR block size selection, refer to the documentation, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
-  validation {
-    condition     = length(var.vpc_cluster_private_subnets_cidr_blocks) <= 1
-    error_message = "Our Automation supports only a single AZ to deploy resources. Provide one CIDR range of subnet creation."
-  }
-}
-
-variable "compute_instances" {
-  type = list(
-    object({
-      profile    = string
-      count      = number
-      image      = string
-      filesystem = string
-    })
-  )
-  default = [{
-    profile    = "cx2-2x4"
-    count      = 3
-    image      = "ibm-redhat-8-10-minimal-amd64-4"
-    filesystem = "/gpfs/fs1"
-  }]
-  description = "Specify the list of static compute node configurations, including instance profile, image name, filesystem and count. The solution allows customization of instance profiles and counts, but mixing custom images and IBM stock images across instances is not supported. If using IBM stock images, only Red Hat-based images are allowed.."
-  validation {
-    condition = alltrue([
-      for inst in var.compute_instances : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
-    ])
-    error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
-  }
-}
-
-variable "compute_gui_username" {
-  type        = string
-  default     = "admin"
-  sensitive   = true
-  description = "GUI username to perform system management and monitoring tasks on the compute cluster. The Username should be at least 4 characters, (any combination of lowercase and uppercase letters)."
-}
-
-variable "compute_gui_password" {
-  type        = string
-  default     = "hpc@IBMCloud"
-  sensitive   = true
-  description = "The compute cluster GUI password is used for logging in to the compute cluster through the GUI. The password should contain a minimum of 8 characters.  For a strong password, use a combination of uppercase and lowercase letters, one number and a special character. Make sure that the password doesn't contain the username and it should not start with a special character."
-}
-
-##############################################################################
-# Storage Scale Variables
-##############################################################################
-variable "storage_subnets_cidr" {
-  type        = string
-  default     = "10.241.30.0/24"
-  description = "The CIDR block that's required for the creation of the storage cluster private subnet. Modify the CIDR block if it has already been reserved or used for other applications within the VPC or conflicts with any on-premises CIDR blocks when using a hybrid environment. Provide only one CIDR block for the creation of the storage subnet."
-  validation {
-    condition     = length(var.storage_subnets_cidr) <= 1
-    error_message = "Our Automation supports only a single AZ to deploy resources. Provide one CIDR range of subnet creation."
-  }
 }
 
 variable "storage_instances" {
@@ -266,22 +293,22 @@ variable "storage_instances" {
       profile    = string
       count      = number
       image      = string
-      filesystem = string
+      filesystem = optional(string)
     })
   )
   default = [{
-    profile    = "bx2d-2x8"
-    count      = 0
+    profile    = "bx2d-32x128"
+    count      = 2
     image      = "ibm-redhat-8-10-minimal-amd64-4"
     filesystem = "/ibm/fs1"
   }]
-  description = "Specify the list of static compute node configurations, including instance profile, image name, filesystem and count. The solution allows customization of instance profiles and counts, but mixing custom images and IBM stock images across instances is not supported. If using IBM stock images, only Red Hat-based images are allowed."
   validation {
     condition = alltrue([
-      for inst in var.storage_instances : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
+      for inst in var.storage_instances : can(regex("^(b|c|m)x[0-9]+d?-[0-9]+x[0-9]+$", inst.profile))
     ])
     error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
   }
+  description = "Specifies the list of virtual server instances to be provisioned as storage nodes in the cluster. Each object in the list defines the instance profile (machine type), the count (number of instances), the image (OS image to use), and an optional filesystem mount path. This configuration allows you to customize the compute tier of the cluster based on your performance and workload requirements. For more details, refer [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
 }
 
 variable "storage_servers" {
@@ -290,7 +317,7 @@ variable "storage_servers" {
       profile    = string
       count      = number
       image      = string
-      filesystem = string
+      filesystem = optional(string)
     })
   )
   default = [{
@@ -299,130 +326,20 @@ variable "storage_servers" {
     image      = "ibm-redhat-8-10-minimal-amd64-4"
     filesystem = "/gpfs/fs1"
   }]
-  description = "Specify the bare metal server profile type name to be used to create the bare metal storage nodes.."
   validation {
     condition = alltrue([
-      for inst in var.storage_servers : can(regex("^[b|c|m]x[0-9]+d?-[0-9]+x[0-9]+", inst.profile))
+      for inst in var.storage_servers : can(regex("^[b|c|m]x[0-9]+d?-[a-z]+-[0-9]+x[0-9]+", inst.profile))
     ])
     error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
   }
+  description = "Specify the list of bare metal servers to be provisioned for the storage cluster. Each object in the list specifies the server profile (hardware configuration), the count (number of servers), the image (OS image to use), and an optional filesystem mount path. This configuration allows flexibility in scaling and customizing the storage cluster based on performance and capacity requirements. Only valid bare metal profiles supported in IBM Cloud VPC should be used. For available bare metal profiles, refer to the [Baremetal Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-profile&interface=ui)."
 }
 
-variable "tie_breaker_bm_server" {
-  type = list(
-    object({
-      profile    = string
-      count      = number
-      image      = string
-      filesystem = string
-    })
-  )
-  default = [{
-    profile    = "cx2d-metal-96x192"
-    count      = 1
-    image      = "ibm-redhat-8-10-minimal-amd64-4"
-    filesystem = "/gpfs/fs1"
-  }]
-  description = "Specify the bare metal server profile type name to be used for creating the bare metal Tie breaker node. If no value is provided, the storage bare metal server profile will be used as the default. For more information, see [bare metal server profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-profile&interface=ui). [Tie Breaker Node](https://www.ibm.com/docs/en/storage-scale/5.2.2?topic=quorum-node-tiebreaker-disks)."
-}
-
-variable "protocol_subnets_cidr" {
+variable "tie_breaker_bm_server_profile" {
   type        = string
-  default     = "10.241.40.0/24"
-  description = "The CIDR block that's required for the creation of the protocol nodes private subnet."
-  validation {
-    condition     = length(var.protocol_subnets_cidr) <= 1
-    error_message = "Our Automation supports only a single AZ to deploy resources. Provide one CIDR range of subnet creation."
-  }
+  default     = null
+  description = "Specify the bare metal server profile type name to be used for creating the bare metal Tie breaker node. If no value is provided, the storage bare metal server profile will be used as the default. For more information, see [bare metal server profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-profile&interface=ui). [Tie Breaker Node](https://www.ibm.com/docs/en/storage-scale/5.2.2?topic=quorum-node-tiebreaker-disks)"
 }
-
-variable "protocol_instances" {
-  type = list(
-    object({
-      profile = string
-      count   = number
-      image   = string
-    })
-  )
-  default = [{
-    profile = "bx2-2x8"
-    count   = 2
-    image   = "ibm-redhat-8-10-minimal-amd64-4"
-  }]
-  description = "Specify the list of static compute node configurations, including instance profile, image name, filesystem and count. The solution allows customization of instance profiles and counts, but mixing custom images and IBM stock images across instances is not supported. If using IBM stock images, only Red Hat-based images are allowed."
-  validation {
-    condition = alltrue([
-      for inst in var.protocol_instances : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
-    ])
-    error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
-  }
-}
-
-variable "colocate_protocol_instances" {
-  type        = bool
-  default     = true
-  description = "Enable it to use storage instances as protocol instances"
-}
-
-variable "storage_gui_username" {
-  type        = string
-  sensitive   = true
-  description = "GUI username to perform system management and monitoring tasks on the storage cluster. Note: Username should be at least 4 characters, (any combination of lowercase and uppercase letters)."
-  validation {
-    condition     = var.storage_gui_username == "" || (length(var.storage_gui_username) >= 4 && length(var.storage_gui_username) <= 32)
-    error_message = "Specified input for \"storage_cluster_gui_username\" is not valid. username should be greater or equal to 4 letters."
-  }
-}
-
-variable "storage_gui_password" {
-  type        = string
-  sensitive   = true
-  description = "The storage cluster GUI password is required to access the storage cluster through its graphical interface. The password must be at least 8 characters long. For enhanced security, it should include a mix of uppercase and lowercase letters, at least one number, and a special character. Ensure the password does not include the username and does not begin with a special character."
-  validation {
-    condition     = can(regex("^.{8,}$", var.storage_gui_password) != "") && can(regex("[0-9]{1,}", var.storage_gui_password) != "") && can(regex("[a-z]{1,}", var.storage_gui_password) != "") && can(regex("[A-Z]{1,}", var.storage_gui_password) != "") && can(regex("[!@#$%^&*()_+=-]{1,}", var.storage_gui_password) != "") && trimspace(var.storage_gui_password) != "" && can(regex("^[!@#$%^&*()_+=-]", var.storage_gui_password)) == false
-    error_message = "The storage cluster GUI Password should contain minimum of 8 characters and for strong password it must be a combination of uppercase letter, lowercase letter, one number and a special character. Ensure password doesn't comprise with username and it should not start with a special character."
-  }
-}
-
-variable "filesystem_config" {
-  type = list(object({
-    filesystem               = string
-    block_size               = string
-    default_data_replica     = number
-    default_metadata_replica = number
-    max_data_replica         = number
-    max_metadata_replica     = number
-    mount_point              = string
-  }))
-  default = [{
-    filesystem               = "fs1"
-    block_size               = "4M"
-    default_data_replica     = 2
-    default_metadata_replica = 2
-    max_data_replica         = 3
-    max_metadata_replica     = 3
-    mount_point              = "/ibm/fs1"
-  }]
-  description = "List of file system configuration objects defining filesystem name, block size, data/metadata replica counts, and mount point for storage setup."
-}
-
-# variable "filesets_config" {
-#   type = list(object({
-#     fileset           = string
-#     filesystem        = string
-#     junction_path     = string
-#     client_mount_path = string
-#     quota             = number
-#   }))
-#   default = [{
-#     fileset           = "fileset1"
-#     filesystem        = "fs1"
-#     junction_path     = "/gpfs/fs1/fileset1"
-#     client_mount_path = "/mnt"
-#     quota             = 100
-#   }]
-#   description = "Fileset configurations."
-# }
 
 variable "afm_instances" {
   type = list(
@@ -437,11 +354,102 @@ variable "afm_instances" {
     count   = 0
     image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
-  description = "Number of instances to be launched for afm hosts."
   validation {
-    condition     = element((split("x", var.afm_instances)), length(split("x", var.afm_instances)) - 1) >= 128
-    error_message = "Minimum 128 GB of memory is needed for the AFM gateway node"
+    condition = alltrue([
+      for inst in var.afm_instances : can(regex("^(b|c|m)x[0-9]+d?-[0-9]+x[0-9]+$", inst.profile))
+    ])
+    error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
   }
+  description = "Specify the list of virtual server instances to be provisioned as afm nodes in the cluster. Each object in the list defines the instance profile (machine type), the count (number of instances), the image (OS image to use), and an optional filesystem mount path. This configuration allows you to customize the compute tier of the cluster based on your performance and workload requirements. For more details, refer [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
+}
+
+
+variable "protocol_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  default = [{
+    profile = "bx2-2x8"
+    count   = 2
+    image   = "ibm-redhat-8-10-minimal-amd64-4"
+  }]
+  validation {
+    condition = alltrue([
+      for inst in var.protocol_instances : can(regex("^(b|c|m)x[0-9]+d?-[0-9]+x[0-9]+$", inst.profile))
+    ])
+    error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
+  }
+  description = "Specify the list of virtual server instances to be provisioned as protocol nodes in the cluster. Each object in the list defines the instance profile (machine type), the count (number of instances), the image (OS image to use), and an optional filesystem mount path. This configuration allows you to customize the compute tier of the cluster based on your performance and workload requirements. For more details, refer [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
+}
+
+variable "colocate_protocol_instances" {
+  type        = bool
+  default     = true
+  description = "Enable it to use storage instances as protocol instances."
+}
+
+variable "storage_gui_username" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "GUI username to perform system management and monitoring tasks on the storage cluster. Note: Username should be at least 4 characters, (any combination of lowercase and uppercase letters)."
+  validation {
+    condition     = var.storage_gui_username == "" || (length(var.storage_gui_username) >= 4 && length(var.storage_gui_username) <= 32)
+    error_message = "Specified input for \"storage_cluster_gui_username\" is not valid. Username should be greater or equal to 4 letters and less that or equal to 32."
+  }
+}
+
+variable "storage_gui_password" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Password for storage cluster GUI"
+  validation {
+    condition     = can(regex("^.{8,}$", var.storage_gui_password) != "") && can(regex("[0-9]{1,}", var.storage_gui_password) != "") && can(regex("[a-z]{1,}", var.storage_gui_password) != "") && can(regex("[A-Z]{1,}", var.storage_gui_password) != "") && can(regex("[!@#$%^&*()_+=-]{1,}", var.storage_gui_password) != "") && trimspace(var.storage_gui_password) != "" && can(regex("^[!@#$%^&*()_+=-]", var.storage_gui_password)) == false
+    error_message = "The storage cluster GUI Password should contain minimum of 8 characters and for strong password it must be a combination of uppercase letter, lowercase letter, one number and a special character. Ensure password doesn't comprise with username and it should not start with a special character."
+  }
+}
+
+variable "filesystem_config" {
+  type = list(object({
+    filesystem               = string
+    block_size               = string
+    default_data_replica     = number
+    default_metadata_replica = number
+    max_data_replica         = number
+    max_metadata_replica     = number
+  }))
+  default = [{
+    filesystem               = "/ibm/fs1"
+    block_size               = "4M"
+    default_data_replica     = 2
+    default_metadata_replica = 2
+    max_data_replica         = 3
+    max_metadata_replica     = 3
+  }]
+  description = "Specify the configuration parameters for one or more IBM Storage Scale (GPFS) filesystems. Each object in the list includes the filesystem mount point, block size, and replica settings for both data and metadata. These settings determine how data is distributed and replicated across the cluster for performance and fault tolerance."
+}
+
+variable "filesets_config" {
+  type = list(object({
+    client_mount_path = string
+    quota             = number
+  }))
+  default = [
+    {
+      client_mount_path = "/mnt/scale/tools"
+      quota             = 0
+    },
+    {
+      client_mount_path = "/mnt/scale/data"
+      quota             = 0
+    }
+  ]
+  description = "Specify a list of filesets with client mount paths and optional storage quotas (0 means no quota) to be created within the IBM Storage Scale filesystem.."
 }
 
 variable "afm_cos_config" {
@@ -465,49 +473,18 @@ variable "afm_cos_config" {
     bucket_storage_class = "smart"
     bucket_type          = "region_location"
   }]
-  description = "Please provide details for the Cloud Object Storage (COS) instance, including information about the COS bucket, service credentials (HMAC key), AFM fileset, mode (such as Read-only (RO), Single writer (SW), Local updates (LU), and Independent writer (IW)), storage class (standard, vault, cold, or smart), and bucket type (single_site_location, region_location, cross_region_location). Note : The 'afm_cos_config' can contain up to 5 entries. For further details on COS bucket locations, refer to the relevant documentation https://cloud.ibm.com/docs/cloud-object-storage/basics?topic=cloud-object-storage-endpoints."
-  validation {
-    condition     = length([for item in var.afm_cos_config : item ]) <= 5
-    error_message = "The length of \"afm_cos_config\" must be less than or equal to 5."
-  }
-  validation {
-    condition     = alltrue([for item in var.afm_cos_config : item.mode != ""])
-    error_message = "The \"mode\" field must not be empty."
-  }
-  validation {
-    condition     = length(distinct([for item in var.afm_cos_config : item.afm_fileset])) == length(var.afm_cos_config)
-    error_message = "The \"afm_fileset\" name should be unique for each AFM COS bucket relation."
-  }
-  validation {
-    condition     = alltrue([for item in var.afm_cos_config : item.afm_fileset != ""])
-    error_message = "The \"afm_fileset\" field must not be empty."
-  }
-  validation {
-    condition     = alltrue([for config in var.afm_cos_config : !(config.bucket_type == "single_site_location") || contains(["ams03", "che01", "mil01", "mon01", "par01", "sjc04", "sng01"], config.bucket_region)])
-    error_message = "When 'bucket_type' is 'single_site_location', 'bucket_region' must be one of ['ams03', 'che01', 'mil01', 'mon01', 'par01', 'sjc04', 'sng01']."
-  }
-  validation {
-    condition     = alltrue([for config in var.afm_cos_config : !(config.bucket_type == "cross_region_location") || contains(["us", "eu", "ap"], config.bucket_region)])
-    error_message = "When 'bucket_type' is 'cross_region_location', 'bucket_region' must be one of ['us', 'eu', 'ap']."
-  }
-  validation {
-    condition     = alltrue([for config in var.afm_cos_config : !(config.bucket_type == "region_location") || contains(["us-south", "us-east", "eu-gb", "eu-de", "jp-tok", "au-syd", "jp-osa", "ca-tor", "br-sao", "eu-es"], config.bucket_region)])
-    error_message = "When 'bucket_type' is 'region_location', 'bucket_region' must be one of ['us-south', 'us-east', 'eu-gb', 'eu-de', 'jp-tok', 'au-syd', 'jp-osa', 'ca-tor', 'br-sao', 'eu-es']."
-  }
-  validation {
-  condition     = alltrue([for item in var.afm_cos_config : (item.bucket_type == "" || contains(["cross_region_location", "single_site_location", "region_location"], item.bucket_type))])
-  error_message = "Each 'bucket_type' must be either empty or one of 'region_location', 'single_site_location', 'cross_region_location'."
-  }
-  validation {
-  condition     = alltrue([for item in var.afm_cos_config : (item.bucket_storage_class == "" || (can(regex("^[a-z]+$", item.bucket_storage_class)) && contains(["smart", "standard", "cold", "vault"], item.bucket_storage_class)))])
-  error_message = "Each 'bucket_storage_class' must be either empty or one of 'smart', 'standard', 'cold', or 'vault', and all in lowercase."
-  }
-  validation {
-    condition     = alltrue([for item in var.afm_cos_config : item.bucket_region != ""])
-    error_message = "The \"bucket_region\" field must not be empty."
-  }
+  # default = [{
+  #   afm_fileset          = "afm_fileset"
+  #   mode                 = "iw"
+  #   cos_instance         = null
+  #   bucket_name          = null
+  #   bucket_region        = "us-south"
+  #   cos_service_cred_key = ""
+  #   bucket_storage_class = "smart"
+  #   bucket_type          = "region_location"
+  # }]
+  description = "AFM configurations."
 }
-
 
 ##############################################################################
 # DNS Variables
@@ -516,13 +493,17 @@ variable "afm_cos_config" {
 variable "dns_instance_id" {
   type        = string
   default     = null
-  description = "Name of an existing dns resource instance. If no value is given, a new dns resource instance will be created"
+  description = "Specify the ID of an existing IBM Cloud DNS service instance. When provided, domain names are created within the specified instance. If set to null, a new DNS service instance is created, and the required DNS zones are associated with it."
 }
 
 variable "dns_custom_resolver_id" {
   type        = string
   default     = null
-  description = "Name of an existing dns custom resolver. If no value is given, a new dns custom resolver will be created."
+  description = "Specify the ID of an existing IBM Cloud DNS custom resolver to avoid creating a new one. If set to null, a new custom resolver will be created and associated with the VPC. Note: A VPC can be associated with only one custom resolver. When using an existing VPC, if a custom resolver is already associated and this ID is not provided, the deployment will fail."
+  validation {
+    condition     = var.vpc_name != null || var.dns_custom_resolver_id == null
+    error_message = "If this is a new VPC deployment (vpc_name is null), do not provide dns_custom_resolver_id, as it may impact name resolution."
+  }
 }
 
 variable "dns_domain_names" {
@@ -544,43 +525,18 @@ variable "dns_domain_names" {
 }
 
 ##############################################################################
-# Encryption Variables
-##############################################################################
-variable "key_management" {
-  type        = string
-  default     = "key_protect"
-  description = "Set the value as key_protect to enable customer managed encryption for boot volume and file share. If the key_management is set as null, IBM Cloud resources will be always be encrypted through provider managed."
-  validation {
-    condition     = var.key_management == "null" || var.key_management == null || var.key_management == "key_protect"
-    error_message = "key_management must be either 'null' or 'key_protect'."
-  }
-}
-
-variable "hpcs_instance_name" {
-  type        = string
-  default     = null
-  description = "Hyper Protect Crypto Service instance"
-}
-
-##############################################################################
 # Observability Variables
 ##############################################################################
 variable "enable_cos_integration" {
   type        = bool
   default     = true
-  description = "Integrate COS with HPC solution"
+  description = "Set to true to create an extra cos bucket to integrate with scale cluster deployment."
 }
 
 variable "cos_instance_name" {
   type        = string
   default     = null
-  description = "Exiting COS instance name"
-}
-
-variable "enable_atracker" {
-  type        = bool
-  default     = true
-  description = "Activity Tracker Event Routing to configure how to route auditing events. While multiple Activity Tracker instances can be created, only one tracker is needed to capture all events. Creating additional trackers is unnecessary if an existing Activity Tracker is already integrated with a COS bucket. In such cases, set the value to false, as all events can be monitored and accessed through the existing Activity Tracker."
+  description = "Provide the name of the existing COS instance where the logs for the enabled functionalities will be stored."
 }
 
 variable "enable_vpc_flow_logs" {
@@ -611,7 +567,7 @@ variable "override_json_string" {
 variable "enable_ldap" {
   type        = bool
   default     = false
-  description = "Set this option to true to enable LDAP for IBM Cloud HPC, with the default value set to false."
+  description = "Set this option to true to enable LDAP for IBM Spectrum LSF, with the default value set to false."
 }
 
 variable "ldap_basedns" {
@@ -628,20 +584,32 @@ variable "ldap_server" {
   type        = string
   default     = null
   description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
+  validation {
+    condition     = var.enable_ldap == false || var.ldap_server == null || (var.ldap_server != null ? (length(trimspace(var.ldap_server)) > 0 && var.ldap_server != "null") : true)
+    error_message = "If LDAP is enabled, an existing LDAP server IP should be provided."
+  }
 }
 
 variable "ldap_server_cert" {
   type        = string
   sensitive   = true
   default     = null
-  description = "Provide the existing LDAP server certificate. This value is required if the 'ldap_server' variable is not set to null. If the certificate is not provided or is invalid, the LDAP configuration may fail."
+  description = "Provide the existing LDAP server certificate. This value is required if the 'ldap_server' variable is not set to null. If the certificate is not provided or is invalid, the LDAP configuration may fail. For more information on how to create or obtain the certificate, please refer [existing LDAP server certificate](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-integrating-openldap)."
+  validation {
+    condition     = var.enable_ldap == false || var.ldap_server == null || (var.ldap_server_cert != null ? (length(trimspace(var.ldap_server_cert)) > 0 && var.ldap_server_cert != "null") : false)
+    error_message = "Provide the current LDAP server certificate. This is required if 'ldap_server' is set; otherwise, the LDAP configuration will not succeed."
+  }
 }
 
 variable "ldap_admin_password" {
   type        = string
   sensitive   = true
   default     = null
-  description = "The LDAP administrative password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required. It is important to avoid including the username in the password for enhanced security."
+  description = "The LDAP admin password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces. [This value is ignored for an existing LDAP server]."
+  validation {
+    condition     = (!var.enable_ldap || var.ldap_server != null || can(var.ldap_admin_password != null && length(var.ldap_admin_password) >= 8 && length(var.ldap_admin_password) <= 20 && regex(".*[0-9].*", var.ldap_admin_password) != "" && regex(".*[A-Z].*", var.ldap_admin_password) != "" && regex(".*[a-z].*", var.ldap_admin_password) != "" && regex(".*[!@#$%^&*()_+=-].*", var.ldap_admin_password) != "" && !can(regex(".*\\s.*", var.ldap_admin_password))))
+    error_message = "The LDAP admin password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces."
+  }
 }
 
 variable "ldap_user_name" {
@@ -658,18 +626,12 @@ variable "ldap_user_password" {
   type        = string
   sensitive   = true
   default     = ""
-  description = "The LDAP user password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required.It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
+  description = "The LDAP user password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one numeric digit, and at least one special character from the set (!@#$%^&*()_+=-). Spaces are not allowed. The password must not contain the username for enhanced security. [This value is ignored for an existing LDAP server]."
   validation {
     condition     = !var.enable_ldap || var.ldap_server != null || ((replace(lower(var.ldap_user_password), lower(var.ldap_user_name), "") == lower(var.ldap_user_password)) && length(var.ldap_user_password) >= 8 && length(var.ldap_user_password) <= 20 && can(regex("^(.*[0-9]){1}.*$", var.ldap_user_password))) && can(regex("^(.*[A-Z]){1}.*$", var.ldap_user_password)) && can(regex("^(.*[a-z]){1}.*$", var.ldap_user_password)) && can(regex("^.*[!@#$%^&*()_+=-].*$", var.ldap_user_password)) && !can(regex(".*\\s.*", var.ldap_user_password))
     error_message = "The LDAP user password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces."
   }
 }
-
-# variable "ldap_instance_key_pair" {
-#   type        = list(string)
-#   default     = null
-#   description = "Name of the SSH key configured in your IBM Cloud account that is used to establish a connection to the LDAP Server. Make sure that the SSH key is present in the same resource group and region where the LDAP Servers are provisioned. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
-# }
 
 variable "ldap_instance" {
   type = list(
@@ -682,14 +644,15 @@ variable "ldap_instance" {
     profile = "cx2-2x4"
     image   = "ibm-ubuntu-22-04-5-minimal-amd64-1"
   }]
-  description = "Specify the compute instance profile and image to be used for deploying LDAP instances. Only Debian-based operating systems, such as Ubuntu, are supported for LDAP functionality."
   validation {
     condition = alltrue([
-      for inst in var.ldap_instance : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
+      for inst in var.ldap_instance : can(regex("^(b|c|m)x[0-9]+d?-[0-9]+x[0-9]+$", inst.profile))
     ])
-    error_message = "The profile must be a valid virtual server instance profile."
+    error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
   }
+  description = "Specify the list of virtual server instances to be provisioned as ldap nodes in the cluster. Each object in the list defines the instance profile (machine type), the count (number of instances), the image (OS image to use), and an optional filesystem mount path. This configuration allows you to customize the compute tier of the cluster based on your performance and workload requirements. For more details, refer [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
 }
+
 
 ##############################################################################
 # GKLM variables
@@ -711,12 +674,6 @@ variable "scale_encryption_type" {
   }
 }
 
-variable "gklm_instance_key_pair" {
-  type        = list(string)
-  default     = null
-  description = "Specify the name of the SSH key in your IBM Cloud account for connecting to the Scale Encryption keyserver nodes when scale_encryption_type is set to gklm. Ensure the SSH key is in the same resource group and region as the keyservers. Only one SSH key is supported for the keyserver nodes. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
-}
-
 variable "gklm_instances" {
   type = list(
     object({
@@ -730,25 +687,22 @@ variable "gklm_instances" {
     count   = 2
     image   = "hpcc-scale-gklm4202-v2-5-2"
   }]
-  description = "Number of GKLM instances to be launched for scale cluster."
-   validation {
-    condition = alltrue([
-      for inst in var.gklm_instances : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
-    ])
-    error_message = "The profile must be a valid virtual server instance profile."
+  validation {
+    condition = (
+      var.scale_encryption_type != "gklm" ||
+      alltrue([
+        for inst in var.gklm_instances : can(regex("^(b|c|m)x[0-9]+d?-[0-9]+x[0-9]+$", inst.profile))
+      ])
+    )
+    error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
   }
-}
+  validation {
+    condition = (var.scale_encryption_type != "gklm" || (sum([for inst in var.gklm_instances : inst.count]) >= 2 && sum([for inst in var.gklm_instances : inst.count]) <= 5))
+    #condition   = (sum([for inst in var.gklm_instances : inst.count]) == 0 || (sum([for inst in var.gklm_instances : inst.count]) >= 2 && sum([for inst in var.gklm_instances : inst.count]) <= 5))
+    error_message = "For High availability the GKLM instance type should be greater than 2 or less than 5"
+  }
+  description = "Specify the list of virtual server instances to be provisioned as ldap nodes in the cluster. Each object in the list defines the instance profile (machine type), the count (number of instances), the image (OS image to use), and an optional filesystem mount path. This configuration allows you to customize the compute tier of the cluster based on your performance and workload requirements. For more details, refer [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
 
-variable "scale_encryption_admin_default_password" {
-  type        = string
-  default     = "SKLM@dmin123"
-  description = "The password for administrative operations in KeyProtect or GKLM must be between 8 and 20 characters long. It must include at least three alphabetic characters (one uppercase and one lowercase), two numbers, and one special character from the set (~@_+:). The password should not contain the username. For more information, see [GKLM password policy](https://www.ibm.com/docs/en/sgklm/4.2?topic=manager-password-policy)"
-}
-
-variable "scale_encryption_admin_username" {
-  type        = string
-  default     = "SKLMAdmin"
-  description = "The default Admin username for Security Key Lifecycle Manager(GKLM)."
 }
 
 variable "scale_encryption_admin_password" {
@@ -770,9 +724,12 @@ variable "storage_type" {
   default     = "scratch"
   description = "Select the Storage Scale file system deployment method. Note: The Storage Scale scratch and evaluation type deploys the Storage Scale file system on virtual server instances, and the persistent type deploys the Storage Scale file system on bare metal servers."
   validation {
-    condition = can(regex("^(scratch|persistent|evaluation)$", lower(var.storage_type)))
-    #condition     = contains(["scratch", "persistent"], lower(var.storage_type))
+    condition     = can(regex("^(scratch|persistent|evaluation)$", lower(var.storage_type)))
     error_message = "The solution only support scratch, evaluation, and persistent; provide any one of the value."
+  }
+  validation {
+    condition     = var.storage_type == "persistent" ? contains(["us-south-1", "us-south-2", "us-south-3", "us-east-1", "us-east-2", "eu-de-1", "eu-de-2", "eu-de-3", "eu-gb-1", "eu-es-3", "eu-es-1", "jp-tok-2", "jp-tok-3", "ca-tor-2", "ca-tor-3"], join(",", var.zones)) : true
+    error_message = "The solution supports bare metal server creation in only given availability zones i.e. us-south-1, us-south-3, us-south-2, eu-de-1, eu-de-2, eu-de-3, jp-tok-2, eu-gb-1, us-east-1, us-east-2, eu-es-3, eu-es-1, jp-tok-3, jp-tok-2, ca-tor-2 and ca-tor-3. To deploy persistent storage provide any one of the supported availability zones."
   }
 }
 
@@ -782,7 +739,7 @@ variable "storage_type" {
 
 variable "observability_atracker_enable" {
   type        = bool
-  default     = true
+  default     = false
   description = "Activity Tracker Event Routing to configure how to route auditing events. While multiple Activity Tracker instances can be created, only one tracker is needed to capture all events. Creating additional trackers is unnecessary if an existing Activity Tracker is already integrated with a COS bucket. In such cases, set the value to false, as all events can be monitored and accessed through the existing Activity Tracker."
 }
 
@@ -796,64 +753,8 @@ variable "observability_atracker_target_type" {
   }
 }
 
-variable "observability_monitoring_enable" {
-  description = "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure and LSF application metrics from Management Nodes will be ingested."
-  type        = bool
-  default     = true
-}
-
-variable "observability_logs_enable_for_management" {
-  description = "Set false to disable IBM Cloud Logs integration. If enabled, infrastructure and LSF application logs from Management Nodes will be ingested."
-  type        = bool
-  default     = false
-}
-
-variable "observability_logs_enable_for_compute" {
-  description = "Set false to disable IBM Cloud Logs integration. If enabled, infrastructure and LSF application logs from Compute Nodes will be ingested."
-  type        = bool
-  default     = false
-}
-
-variable "observability_enable_platform_logs" {
-  description = "Setting this to true will create a tenant in the same region that the Cloud Logs instance is provisioned to enable platform logs for that region. NOTE: You can only have 1 tenant per region in an account."
-  type        = bool
-  default     = false
-}
-
-variable "observability_enable_metrics_routing" {
-  description = "Enable metrics routing to manage metrics at the account-level by configuring targets and routes that define where data points are routed."
-  type        = bool
-  default     = false
-}
-
-variable "observability_logs_retention_period" {
-  description = "The number of days IBM Cloud Logs will retain the logs data in Priority insights. Allowed values: 7, 14, 30, 60, 90."
-  type        = number
-  default     = 7
-  validation {
-    condition     = contains([7, 14, 30, 60, 90], var.observability_logs_retention_period)
-    error_message = "Allowed values for cloud logs retention period is 7, 14, 30, 60, 90."
-  }
-}
-
-variable "observability_monitoring_on_compute_nodes_enable" {
-  description = "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure metrics from Compute Nodes will be ingested."
-  type        = bool
-  default     = false
-}
-
-variable "observability_monitoring_plan" {
-  description = "Type of service plan for IBM Cloud Monitoring instance. You can choose one of the following: lite, graduated-tier. For all details visit [IBM Cloud Monitoring Service Plans](https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans)."
-  type        = string
-  default     = "graduated-tier"
-  validation {
-    condition     = can(regex("lite|graduated-tier", var.observability_monitoring_plan))
-    error_message = "Please enter a valid plan for IBM Cloud Monitoring, for all details visit https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans."
-  }
-}
-
 ##############################################################################
-# SCC Variables
+# SCC Workload Protection Variables
 ##############################################################################
 
 variable "sccwp_service_plan" {
@@ -901,18 +802,6 @@ variable "skip_flowlogs_s2s_auth_policy" {
   description = "Skip auth policy between flow logs service and COS instance, set to true if this policy is already in place on account."
 }
 
-variable "skip_kms_s2s_auth_policy" {
-  type        = bool
-  default     = false
-  description = "Skip auth policy between KMS service and COS instance, set to true if this policy is already in place on account."
-}
-
-variable "skip_iam_block_storage_authorization_policy" {
-  type        = bool
-  default     = false
-  description = "When using an existing KMS instance name, set this value to true if authorization is already enabled between KMS instance and the block storage volume. Otherwise, default is set to false. Ensuring proper authorization avoids access issues during deployment.For more information on how to create authorization policy manually, see [creating authorization policies for block storage volume](https://cloud.ibm.com/docs/vpc?topic=vpc-block-s2s-auth&interface=ui)."
-}
-
 ###########################################################################
 # Existing Bastion Support variables
 ###########################################################################
@@ -946,4 +835,141 @@ variable "bms_boot_drive_encryption" {
   type        = bool
   default     = false
   description = "To enable the encryption for the boot drive of bare metal server. Select true or false"
+}
+
+##############################################################################
+# Existing VPC Storage Security Variables
+##############################################################################
+variable "enable_sg_validation" {
+  type        = bool
+  default     = true
+  description = "Enable or disable security group validation. Security group validation ensures that the specified security groups are properly assigned"
+}
+
+variable "login_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the existing security group name to provision the bastion node. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the bastion node to function properly."
+  validation {
+    condition     = anytrue([var.vpc_name != null && var.login_security_group_name != null, var.login_security_group_name == null])
+    error_message = "If the login_security_group_name are provided, the user should also provide the vpc_name."
+  }
+}
+
+variable "storage_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the storage nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the storage nodes to function properly."
+  validation {
+    condition     = anytrue([var.vpc_name != null && var.storage_security_group_name != null, var.storage_security_group_name == null])
+    error_message = "If the storage_security_group_name are provided, the user should also provide the vpc_name."
+  }
+}
+
+variable "cluster_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the compute nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the compute nodes to function properly."
+  validation {
+    condition     = anytrue([var.vpc_name != null && var.cluster_security_group_name != null, var.cluster_security_group_name == null])
+    error_message = "If the cluster_security_group_name are provided, the user should also provide the vpc_name."
+  }
+}
+
+variable "client_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the gklm nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the gklm nodes to function properly."
+  validation {
+    condition     = anytrue([var.vpc_name != null && var.client_security_group_name != null, var.client_security_group_name == null])
+    error_message = "If the client_security_group_name are provided, the user should also provide the vpc_name."
+  }
+}
+
+variable "gklm_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the gklm nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the gklm nodes to function properly."
+  validation {
+    condition     = anytrue([var.vpc_name != null && var.gklm_security_group_name != null, var.gklm_security_group_name == null])
+    error_message = "If the gklm_security_group_name are provided, the user should also provide the vpc_name."
+  }
+}
+
+variable "ldap_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the ldap nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the ldap nodes to function properly."
+  validation {
+    condition     = anytrue([var.vpc_name != null && var.ldap_security_group_name != null, var.ldap_security_group_name == null])
+    error_message = "If the ldap_security_group_name are provided, the user should also provide the vpc_name."
+  }
+}
+
+variable "login_subnet_id" {
+  type        = string
+  default     = null
+  description = "Provide the ID of an existing subnet to deploy cluster resources, this is used only for provisioning bastion, deployer, and login nodes. If not provided, new subnet will be created.[Learn more](https://cloud.ibm.com/docs/vpc)."
+  validation {
+    condition     = anytrue([var.vpc_name != null && var.login_subnet_id != null, var.login_subnet_id == null])
+    error_message = "If the login_subnet_id are provided, the user should also provide the vpc_name."
+  }
+}
+
+variable "cluster_subnet_id" {
+  type        = string
+  default     = null
+  description = "Provide the ID of an existing subnet to deploy cluster resources; this is used only for provisioning VPC file storage shares, management, and compute nodes. If not provided, a new subnet will be created. Ensure that a public gateway is attached to enable VPC API communication. [Learn more](https://cloud.ibm.com/docs/vpc)."
+  validation {
+    condition     = anytrue([var.vpc_name != null && var.cluster_subnet_id != null, var.cluster_subnet_id == null])
+    error_message = "If the cluster_subnet_id are provided, the user should also provide the vpc_name."
+  }
+}
+
+variable "storage_subnet_id" {
+  type        = string
+  description = "Name of an existing subnet for storage nodes. If no value is given, a new subnet will be created"
+  default     = null
+  validation {
+    condition     = anytrue([var.vpc_name != null && var.storage_subnet_id != null, var.storage_subnet_id == null])
+    error_message = "If the storage_subnet_id are provided, the user should also provide the vpc_name."
+  }
+}
+
+variable "protocol_subnet_id" {
+  type        = string
+  description = "Name of an existing subnet for protocol nodes. If no value is given, a new subnet will be created"
+  default     = null
+  validation {
+    condition     = anytrue([var.vpc_name != null && var.protocol_subnet_id != null, var.protocol_subnet_id == null])
+    error_message = "If the protocol_subnet_id are provided, the user should also provide the vpc_name."
+  }
+}
+
+variable "client_subnet_id" {
+  type        = string
+  description = "Name of an existing subnet for protocol nodes. If no value is given, a new subnet will be created"
+  default     = null
+  validation {
+    condition     = anytrue([var.vpc_name != null && var.client_subnet_id != null, var.client_subnet_id == null])
+    error_message = "If the client_subnet_id are provided, the user should also provide the vpc_name."
+  }
+}
+
+# tflint-ignore: all
+variable "TF_VERSION" {
+  type        = string
+  default     = "1.9"
+  description = "The version of the Terraform engine that's used in the Schematics workspace."
+}
+
+# tflint-ignore: all
+variable "TF_PARALLELISM" {
+  type        = string
+  default     = "250"
+  description = "Parallelism/ concurrent operations limit. Valid values are between 1 and 256, both inclusive. [Learn more](https://www.terraform.io/docs/internals/graph.html#walking-the-graph)."
+  validation {
+    condition     = 1 <= var.TF_PARALLELISM && var.TF_PARALLELISM <= 256
+    error_message = "Input \"TF_PARALLELISM\" must be greater than or equal to 1 and less than or equal to 256."
+  }
 }

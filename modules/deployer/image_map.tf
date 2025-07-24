@@ -25,6 +25,9 @@ locals {
       "br-sao"   = "r042-93c1a769-c138-4765-91d2-5796965b6a98"
       "ca-tor"   = "r038-9448213f-22ce-4a6a-b6b0-22dd6ed9fbb3"
       "ca-mon"   = "r058-b3211406-9eec-4148-aafb-d6ab7c26a6eb"
+    },
+    "hpcc-scale-deployer-v1-1" = {
+      "jp-tok" = "r022-aec43257-1a07-409a-af6f-42e1d68153de"
     }
   }
 }

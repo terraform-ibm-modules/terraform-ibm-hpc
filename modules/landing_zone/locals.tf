@@ -62,13 +62,13 @@ locals {
         public_gateway = true
         no_addr_prefix = true
       } : null,
-      {
+      local.static_compute_instance_count != 0 ? {
         name           = "compute-subnet-${zone}"
         acl_name       = "hpc-acl"
         cidr           = var.vpc_cluster_private_subnets_cidr_blocks[index(local.active_zones, zone)]
         public_gateway = true
         no_addr_prefix = true
-      },
+      } : null,
       local.storage_instance_count != 0 ? {
         name           = "storage-subnet-${zone}"
         acl_name       = "hpc-acl"
@@ -84,7 +84,7 @@ locals {
         no_addr_prefix = true
       } : null,
       zone == local.active_zones[0] ? {
-        name           = "bastion-subnet"
+        name           = "bastion-subnet-${zone}"
         acl_name       = "hpc-acl"
         cidr           = var.vpc_cluster_login_private_subnets_cidr_blocks
         public_gateway = true
@@ -133,16 +133,28 @@ locals {
   vpcs = [
     {
       existing_vpc_id = var.vpc_name == null ? null : data.ibm_is_vpc.existing_vpc[0].id
-      existing_subnets = (var.vpc_name != null && length(var.compute_subnet_id) > 0) ? [
-        {
+      existing_subnets = var.vpc_name != null ? flatten([
+        var.compute_subnet_id != "" && var.compute_subnet_id != null ? [{
           id             = var.compute_subnet_id
           public_gateway = false
-        },
-        {
+        }] : [],
+        var.bastion_subnet_id != "" && var.bastion_subnet_id != null ? [{
           id             = var.bastion_subnet_id
           public_gateway = false
-        }
-      ] : null
+        }] : [],
+        var.storage_subnet_id != "" && var.storage_subnet_id != null ? [{
+          id             = var.storage_subnet_id
+          public_gateway = false
+        }] : [],
+        var.protocol_subnet_id != "" && var.protocol_subnet_id != null ? [{
+          id             = var.protocol_subnet_id
+          public_gateway = false
+        }] : [],
+        var.client_subnet_id != "" && var.client_subnet_id != null ? [{
+          id             = var.client_subnet_id
+          public_gateway = false
+        }] : []
+      ]) : null
       prefix                       = local.name
       resource_group               = var.existing_resource_group == "null" ? "${local.prefix}-workload-rg" : var.existing_resource_group
       clean_default_security_group = true
@@ -191,15 +203,15 @@ locals {
   # AFM Related Calculation
   ##############################################################################################################
 
-  enable_afm                      = sum(var.afm_instances[*]["count"]) > 0 ? true : false
-  new_instance_bucket_hmac        = var.scheduler == "Scale" ? [for details in var.afm_cos_config : details if(details.cos_instance == "" && details.bucket_name == "" && details.cos_service_cred_key == "")] : []
-  exstng_instance_new_bucket_hmac = var.scheduler == "Scale" ? [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name == "" && details.cos_service_cred_key == "")] : []
-  exstng_instance_bucket_new_hmac = var.scheduler == "Scale" ? [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name != "" && details.cos_service_cred_key == "")] : []
-  exstng_instance_hmac_new_bucket = var.scheduler == "Scale" ? [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name == "" && details.cos_service_cred_key != "")] : []
-  exstng_instance_bucket_hmac     = var.scheduler == "Scale" ? [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name != "" && details.cos_service_cred_key != "")] : []
+  enable_afm               = sum(var.afm_instances[*]["count"]) > 0 ? true : false
+  new_instance_bucket_hmac = var.scheduler == "Scale" ? [for details in var.afm_cos_config : details if(details.cos_instance == "" && details.bucket_name == "" && details.cos_service_cred_key == "")] : []
+  #exstng_instance_new_bucket_hmac = var.scheduler == "Scale" ? [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name == "" && details.cos_service_cred_key == "")] : []
+  #exstng_instance_bucket_new_hmac = var.scheduler == "Scale" ? [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name != "" && details.cos_service_cred_key == "")] : []
+  #exstng_instance_hmac_new_bucket = var.scheduler == "Scale" ? [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name == "" && details.cos_service_cred_key != "")] : []
+  #exstng_instance_bucket_hmac     = var.scheduler == "Scale" ? [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name != "" && details.cos_service_cred_key != "")] : []
 
-  path_elements    = split("/", var.storage_instances[0]["filesystem"] != "" ? var.storage_instances[0]["filesystem"] : var.filesystem_config[0]["filesystem"])
-  filesystem       = element(local.path_elements, length(local.path_elements) - 1)
+  # path_elements    = split("/", var.storage_instances[0]["filesystem"] != "" ? var.storage_instances[0]["filesystem"] : var.filesystem_config[0]["filesystem"])
+  # filesystem       = element(local.path_elements, length(local.path_elements) - 1)
   new_cos_instance = var.scheduler == "Scale" ? distinct([for instance in local.new_instance_bucket_hmac : instance.cos_instance])[0] : ""
 
   ##############################################################################################################
@@ -242,7 +254,6 @@ locals {
       plan                          = "standard"
       random_suffix                 = true
       use_data                      = var.cos_instance_name == null ? false : true
-      keys                          = []
       skip_flowlogs_s2s_auth_policy = var.skip_flowlogs_s2s_auth_policy
       skip_kms_s2s_auth_policy      = var.skip_kms_s2s_auth_policy
 
@@ -293,7 +304,7 @@ locals {
 
     ################################################################################################################
 
-    (var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker || var.scc_enable || var.observability_logs_enable) ? {
+    (var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker || var.observability_logs_enable) ? {
       name                          = var.cos_instance_name == null ? "hpc-cos" : var.cos_instance_name
       resource_group                = local.service_resource_group
       plan                          = "standard"
@@ -360,18 +371,6 @@ locals {
             enable  = true
             rule_id = "bucket-expire-rule"
           }
-        } : null,
-        var.scc_enable ? {
-          name          = "scc-bucket"
-          storage_class = "standard"
-          endpoint_type = "public"
-          force_delete  = true
-          kms_key       = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-scc-key", var.prefix) : var.kms_key_name) : null
-          expire_rule = {
-            days    = 30
-            enable  = true
-            rule_id = "bucket-expire-rule"
-          }
         } : null
       ]
     } : null
@@ -422,9 +421,6 @@ locals {
     } : null,
     var.enable_atracker ? {
       name = format("%s-atracker-key", var.prefix)
-    } : null,
-    var.scc_enable ? {
-      name = format("%s-scc-key", var.prefix)
     } : null
     ] : [
     {

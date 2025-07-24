@@ -141,13 +141,17 @@ variable "management_instances" {
 variable "compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = optional(string)
     })
   )
   default = [{
-    profile = "cx2-2x4"
-    count   = 0
+    profile    = "cx2-2x4"
+    count      = 0
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "/ibm/fs1"
   }]
   description = "Min Number of instances to be launched for compute cluster."
 }
@@ -174,12 +178,12 @@ variable "storage_instances" {
       profile    = string
       count      = number
       image      = string
-      filesystem = string
+      filesystem = optional(string)
     })
   )
   default = [{
-    profile    = "bx2d-2x8"
-    count      = 2
+    profile    = "bx2d-32x128"
+    count      = 0
     image      = "ibm-redhat-8-10-minimal-amd64-4"
     filesystem = "/ibm/fs1"
   }]
@@ -189,15 +193,19 @@ variable "storage_instances" {
 variable "storage_servers" {
   type = list(
     object({
-      profile = string
-      count   = number
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = optional(string)
     })
   )
   default = [{
-    profile = "cx2d-metal-96x192"
-    count   = 2
+    profile    = "cx2d-metal-96x192"
+    count      = 0
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "/ibm/fs1"
   }]
-  description = "Number of Bareemetal servers to be launched for storage cluster."
+  description = "Number of BareMetal Servers to be launched for storage cluster."
 }
 
 variable "protocol_subnets_cidr" {
@@ -236,21 +244,20 @@ variable "afm_instances" {
   description = "Number of instances to be launched for afm hosts."
 }
 
-variable "filesystem_config" {
-  type = list(
-    object({
-      filesystem               = string
-      block_size               = string
-      default_data_replica     = number
-      default_metadata_replica = number
-      max_data_replica         = number
-      max_metadata_replica     = number
-      mount_point              = string
-    })
-  )
-  default     = null
-  description = "File system configurations."
-}
+# variable "filesystem_config" {
+#   type = list(
+#     object({
+#       filesystem               = string
+#       block_size               = string
+#       default_data_replica     = number
+#       default_metadata_replica = number
+#       max_data_replica         = number
+#       max_metadata_replica     = number
+#     })
+#   )
+#   default     = null
+#   description = "File system configurations."
+# }
 
 variable "afm_cos_config" {
   type = list(
@@ -371,12 +378,6 @@ variable "skip_kms_s2s_auth_policy" {
 # Observability Variables
 ##############################################################################
 
-variable "scc_enable" {
-  type        = bool
-  default     = false
-  description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
-}
-
 variable "observability_logs_enable" {
   description = "Set false to disable IBM Cloud Logs integration. If enabled, infrastructure and LSF application logs from Management/Compute Nodes will be ingested under COS bucket."
   type        = bool
@@ -387,6 +388,27 @@ variable "enable_vpn" {
   type        = bool
   default     = false
   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN, set this value to true."
+}
+
+##############################################################################
+# Subnet_id Variables
+##############################################################################
+variable "client_subnet_id" {
+  type        = string
+  description = "Name of an existing subnet for protocol nodes. If no value is given, a new subnet will be created"
+  default     = null
+}
+
+variable "storage_subnet_id" {
+  type        = string
+  description = "Name of an existing subnet for storage nodes. If no value is given, a new subnet will be created"
+  default     = null
+}
+
+variable "protocol_subnet_id" {
+  type        = string
+  description = "Name of an existing subnet for protocol nodes. If no value is given, a new subnet will be created"
+  default     = null
 }
 ##############################################################################
 # Landing Zone Variables

@@ -17,4 +17,5 @@ echo "${storage_public_key_content}" >> ~/.ssh/authorized_keys
 echo "StrictHostKeyChecking no" >> ~/.ssh/config
 echo "${storage_private_key_content}" > ~/.ssh/id_rsa
 chmod 600 ~/.ssh/id_rsa
+hostnamectl set-hostname "$(hostname).${domain_name}"
 reboot

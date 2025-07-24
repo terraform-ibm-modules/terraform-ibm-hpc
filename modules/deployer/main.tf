@@ -1,12 +1,30 @@
 resource "ibm_is_subnet_public_gateway_attachment" "zone_1_attachment" {
-  count          = (var.ext_vpc_name != null && var.ext_cluster_subnet_id == null) ? 1 : 0
+  count          = (var.ext_vpc_name != null && var.ext_cluster_subnet_id == null && length(var.cluster_subnets) > 0) ? 1 : 0
   subnet         = var.cluster_subnets[0].id
   public_gateway = length(local.zone_1_pgw_ids) > 0 ? local.zone_1_pgw_ids[0] : ""
 }
 
 resource "ibm_is_subnet_public_gateway_attachment" "bastion_attachment" {
-  count          = (var.ext_vpc_name != null && var.ext_login_subnet_id == null) ? 1 : 0
+  count          = (var.ext_vpc_name != null && var.ext_login_subnet_id == null && length(var.bastion_subnets) > 0) ? 1 : 0
   subnet         = local.bastion_subnets[0].id
+  public_gateway = length(local.zone_1_pgw_ids) > 0 ? local.zone_1_pgw_ids[0] : ""
+}
+
+resource "ibm_is_subnet_public_gateway_attachment" "storage_attachment" {
+  count          = (var.ext_vpc_name != null && var.ext_storage_subnet_id == null && length(var.storage_subnets) > 0) ? 1 : 0
+  subnet         = var.storage_subnets[0].id
+  public_gateway = length(local.zone_1_pgw_ids) > 0 ? local.zone_1_pgw_ids[0] : ""
+}
+
+resource "ibm_is_subnet_public_gateway_attachment" "client_attachment" {
+  count          = (var.ext_vpc_name != null && var.ext_client_subnet_id == null && length(var.client_subnets) > 0) ? 1 : 0
+  subnet         = var.client_subnets[0].id
+  public_gateway = length(local.zone_1_pgw_ids) > 0 ? local.zone_1_pgw_ids[0] : ""
+}
+
+resource "ibm_is_subnet_public_gateway_attachment" "protocol_attachment" {
+  count          = (var.ext_vpc_name != null && var.ext_protocol_subnet_id == null && length(var.protocol_subnets) > 0) ? 1 : 0
+  subnet         = var.protocol_subnets[0].id
   public_gateway = length(local.zone_1_pgw_ids) > 0 ? local.zone_1_pgw_ids[0] : ""
 }
 
@@ -17,7 +35,7 @@ module "ssh_key" {
 }
 
 module "bastion_sg" {
-  count                        = var.enable_deployer ? 1 : 0
+  count                        = var.enable_deployer && var.login_security_group_name == null ? 1 : 0
   source                       = "terraform-ibm-modules/security-group/ibm"
   version                      = "2.6.2"
   add_ibm_cloud_internal_rules = true
@@ -39,7 +57,7 @@ module "bastion_vsi" {
   prefix                        = local.bastion_node_name
   resource_group_id             = var.resource_group
   enable_floating_ip            = true
-  security_group_ids            = module.bastion_sg[*].security_group_id
+  security_group_ids            = var.login_security_group_name == null ? module.bastion_sg[*].security_group_id : local.login_security_group_name_id
   ssh_key_ids                   = local.bastion_ssh_keys
   subnets                       = local.bastion_subnets
   tags                          = local.tags
@@ -63,7 +81,7 @@ module "deployer_vsi" {
   prefix                        = local.deployer_node_name
   resource_group_id             = var.resource_group
   enable_floating_ip            = false
-  security_group_ids            = module.bastion_sg[*].security_group_id
+  security_group_ids            = var.login_security_group_name == null ? module.bastion_sg[*].security_group_id : local.login_security_group_name_id
   ssh_key_ids                   = local.bastion_ssh_keys
   subnets                       = local.bastion_subnets
   tags                          = local.tags

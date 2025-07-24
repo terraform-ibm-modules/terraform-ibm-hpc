@@ -90,171 +90,115 @@
                         {
                             "key": "zones",
                             "required": true,
-                            "default_value": [
-                                "us-east-1"
-                            ],
+                            "default_value": ["us-east-1"],
                             "options": [
                                 {
                                     "displayname": "Washington DC 1",
-                                    "value": [
-                                        "us-east-1"
-                                    ]
+                                    "value": ["us-east-1"]
                                 },
                                 {
                                     "displayname": "Washington DC 2",
-                                    "value": [
-                                        "us-east-2"
-                                    ]
+                                    "value": ["us-east-2"]
                                 },
                                 {
                                     "displayname": "Washington DC 3",
-                                    "value": [
-                                        "us-east-3"
-                                    ]
+                                    "value": ["us-east-3"]
                                 },
                                 {
                                     "displayname": "Frankfurt 1",
-                                    "value": [
-                                        "eu-de-1"
-                                    ]
+                                    "value": ["eu-de-1"]
                                 },
                                 {
                                     "displayname": "Frankfurt 2",
-                                    "value": [
-                                        "eu-de-2"
-                                    ]
+                                    "value": ["eu-de-2"]
                                 },
                                 {
                                     "displayname": "Frankfurt 3",
-                                    "value": [
-                                        "eu-de-3"
-                                    ]
+                                    "value": ["eu-de-3"]
                                 },
                                 {
                                     "displayname": "Dallas 1",
-                                    "value": [
-                                        "us-south-1"
-                                    ]
+                                    "value": ["us-south-1"]
                                 },
                                 {
                                     "displayname": "Dallas 2",
-                                    "value": [
-                                        "us-south-2"
-                                    ]
+                                    "value": ["us-south-2"]
                                 },
                                 {
                                     "displayname": "Dallas 3",
-                                    "value": [
-                                        "us-south-3"
-                                    ]
+                                    "value": ["us-south-3"]
                                 },
                                 {
                                     "displayname": "Toronto 1",
-                                    "value": [
-                                        "ca-tor-1"
-                                    ]
+                                    "value": ["ca-tor-1"]
                                 },
                                 {
                                     "displayname": "Toronto 2",
-                                    "value": [
-                                        "ca-tor-2"
-                                    ]
+                                    "value": ["ca-tor-2"]
                                 },
                                 {
                                     "displayname": "Toronto 3",
-                                    "value": [
-                                        "ca-tor-3"
-                                    ]
+                                    "value": ["ca-tor-3"]
                                 },
                                 {
                                     "displayname": "Tokyo 1",
-                                    "value": [
-                                        "jp-tok-1"
-                                    ]
+                                    "value": ["jp-tok-1"]
                                 },
                                 {
                                     "displayname": "Tokyo 2",
-                                    "value": [
-                                        "jp-tok-2"
-                                    ]
+                                    "value": ["jp-tok-2"]
                                 },
                                 {
                                     "displayname": "Tokyo 3",
-                                    "value": [
-                                        "jp-tok-3"
-                                    ]
+                                    "value": ["jp-tok-3"]
                                 },
                                 {
                                     "displayname": "London 1",
-                                    "value": [
-                                        "eu-gb-1"
-                                    ]
+                                    "value": ["eu-gb-1"]
                                 },
                                 {
                                     "displayname": "London 2",
-                                    "value": [
-                                        "eu-gb-2"
-                                    ]
+                                    "value": ["eu-gb-2"]
                                 },
                                 {
                                     "displayname": "London 3",
-                                    "value": [
-                                        "eu-gb-3"
-                                    ]
+                                    "value": ["eu-gb-3"]
                                 },
                                 {
                                     "displayname": "Sydney 1",
-                                    "value": [
-                                        "au-syd-1"
-                                    ]
+                                    "value": ["au-syd-1"]
                                 },
                                 {
                                     "displayname": "Sydney 2",
-                                    "value": [
-                                        "au-syd-2"
-                                    ]
+                                    "value": ["au-syd-2"]
                                 },
                                 {
                                     "displayname": "Syndney 3",
-                                    "value": [
-                                        "au-syd-3"
-                                    ]
+                                    "value": ["au-syd-3"]
                                 },
                                 {
                                     "displayname": "Osaka 1",
-                                    "value": [
-                                        "jp-osa-1"
-                                    ]
+                                    "value": ["jp-osa-1"]
                                 },
                                 {
                                     "displayname": "Osaka 2",
-                                    "value": [
-                                        "jp-osa-2"
-                                    ]
+                                    "value": ["jp-osa-2"]
                                 },
                                 {
                                     "displayname": "Osaka 3",
-                                    "value": [
-                                        "jp-osa-3"
-                                    ]
+                                    "value": ["jp-osa-3"]
                                 },
-                                {
+                                    {
                                     "displayname": "Sao Paulo 1",
-                                    "value": [
-                                        "br-sao-1"
-                                    ]
+                                    "value": ["br-sao-1"]
                                 },
                                 {
                                     "displayname": "Sao Paulo 2",
-                                    "value": [
-                                        "br-sao-2"
-                                    ]
+                                    "value": ["br-sao-2"]
                                 },
                                 {
                                     "displayname": "Sao Paulo 3",
-                                    "value": [
-                                        "br-sao-3"
-                                    ]
+                                    "value": ["br-sao-3"]
                                 }
                             ]
                         },
@@ -397,12 +341,12 @@
                             "default_value": "{\n  \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-3\",\n  \"profile\": \"cx2-4x8\"\n}",
                             "required": false,
                             "custom_config": {
-                                "type": "json_editor",
-                                "grouping": "deployment",
-                                "original_grouping": "deployment",
-                                "config_constraints": {
-                                    "type": "mixed"
-                                }
+                              "type": "json_editor",
+                              "grouping": "deployment",
+                              "original_grouping": "deployment",
+                              "config_constraints": {
+                                "type": "mixed"
+                              }
                             }
                         },
                         {
@@ -411,12 +355,12 @@
                             "default_value": "{\n  \"image\": \"hpc-lsf-fp15-deployer-rhel810-v1\",\n  \"profile\": \"bx2-8x32\"\n}",
                             "required": false,
                             "custom_config": {
-                                "type": "json_editor",
-                                "grouping": "deployment",
-                                "original_grouping": "deployment",
-                                "config_constraints": {
-                                    "type": "mixed"
-                                }
+                              "type": "json_editor",
+                              "grouping": "deployment",
+                              "original_grouping": "deployment",
+                              "config_constraints": {
+                                "type": "mixed"
+                              }
                             }
                         },
                         {
@@ -774,22 +718,22 @@
                 "terraform",
                 "solution"
             ],
-            "short_description": "Deploy your high performance computing (HPC) cluster with IBM scheduling software for compute intensive workloads.",
-            "long_description": "**Before you begin deploying IBM Cloud HPC, make sure that you meet the prerequisites listed in [the step-by-step guide](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-before-you-begin-deploying).**\n\nIBM Cloud HPC is a deployable architecture where you can deploy both cloud compute resources (vCPU resources) and HPC scheduling software for your compute-intensive HPC workloads. You can reserve capacity on a recurring hourly basis from a dedicated IBM Cloud HPC resource pool.",
+            "short_description": "Deploy your HPC cluster with IBM Storage Scale for high performance, highly available, clustered file system.",
+            "long_description": "**Before you begin deploying IBM Storage Scale, make sure that you meet the prerequisites listed in [the step-by-step guide](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-before-you-begin-deploying).**\n\nIBM Storage Scale is a deployable architecture where you can deploy dedicated Storage Scale cluster. Storage Scale supports the configuration of both compute and storage nodes, allowing you to build a complete, end-to-end Storage cluster.",
             "provider_name": "IBM",
             "offering_docs_url": "https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-overview",
             "features": [
                 {
-                    "title": "Reserve HPC compute on an hourly basis",
-                    "description": "Reserve HPC compute capacity on a recurring hourly basis. This reserved time slot and capacity cannot be preempted by IBM."
+                    "title": "Cluster file system",
+                    "description": "IBM Storage scale is clustered file system that provides concurrent access to a single file system or set of file systems from multiple nodes. It's designed for high-performance, scalable storage solutions, particularly for I/O-intensive applications and large-scale data environments."
                 },
                 {
-                    "title": "HPC infrastructure bundled with LSF scheduling software",
-                    "description": "Create a cluster with IBM Spectrum LSF in its own subnet and security group for HPC administrators to log in, submit, and manage HPC jobs."
+                    "title": "Data intensive workflows",
+                    "description": "Create a cluster with IBM Storage Scale with its high-performance, distributed file system, IBM Storage Scale accelerates data-intensive workflows by providing fast, concurrent access to massive datasets."
                 },
                 {
-                    "title": "Automatic compute scaling with LSF resource connector",
-                    "description": "Automatically scale up compute resources based on workload demand. Compute resources are automatically scaled down when no longer required."
+                    "title": "Unified storage for files and objects",
+                    "description": "Unified storage allows simultaneous access to the same data as both files and objects, simplifying data management and enabling seamless workflows across traditional and cloud-native applications."
                 }
             ],
             "flavors": [
@@ -820,171 +764,115 @@
                         {
                             "key": "zones",
                             "required": true,
-                            "default_value": [
-                                "us-east-1"
-                            ],
+                            "default_value": ["us-east-1"],
                             "options": [
                                 {
                                     "displayname": "Washington DC 1",
-                                    "value": [
-                                        "us-east-1"
-                                    ]
+                                    "value": ["us-east-1"]
                                 },
                                 {
                                     "displayname": "Washington DC 2",
-                                    "value": [
-                                        "us-east-2"
-                                    ]
+                                    "value": ["us-east-2"]
                                 },
                                 {
                                     "displayname": "Washington DC 3",
-                                    "value": [
-                                        "us-east-3"
-                                    ]
+                                    "value": ["us-east-3"]
                                 },
                                 {
                                     "displayname": "Frankfurt 1",
-                                    "value": [
-                                        "eu-de-1"
-                                    ]
+                                    "value": ["eu-de-1"]
                                 },
                                 {
                                     "displayname": "Frankfurt 2",
-                                    "value": [
-                                        "eu-de-2"
-                                    ]
+                                    "value": ["eu-de-2"]
                                 },
                                 {
                                     "displayname": "Frankfurt 3",
-                                    "value": [
-                                        "eu-de-3"
-                                    ]
+                                    "value": ["eu-de-3"]
                                 },
                                 {
                                     "displayname": "Dallas 1",
-                                    "value": [
-                                        "us-south-1"
-                                    ]
+                                    "value": ["us-south-1"]
                                 },
                                 {
                                     "displayname": "Dallas 2",
-                                    "value": [
-                                        "us-south-2"
-                                    ]
+                                    "value": ["us-south-2"]
                                 },
                                 {
                                     "displayname": "Dallas 3",
-                                    "value": [
-                                        "us-south-3"
-                                    ]
+                                    "value": ["us-south-3"]
                                 },
                                 {
                                     "displayname": "Toronto 1",
-                                    "value": [
-                                        "ca-tor-1"
-                                    ]
+                                    "value": ["ca-tor-1"]
                                 },
                                 {
                                     "displayname": "Toronto 2",
-                                    "value": [
-                                        "ca-tor-2"
-                                    ]
+                                    "value": ["ca-tor-2"]
                                 },
                                 {
                                     "displayname": "Toronto 3",
-                                    "value": [
-                                        "ca-tor-3"
-                                    ]
+                                    "value": ["ca-tor-3"]
                                 },
                                 {
                                     "displayname": "Tokyo 1",
-                                    "value": [
-                                        "jp-tok-1"
-                                    ]
+                                    "value": ["jp-tok-1"]
                                 },
                                 {
                                     "displayname": "Tokyo 2",
-                                    "value": [
-                                        "jp-tok-2"
-                                    ]
+                                    "value": ["jp-tok-2"]
                                 },
                                 {
                                     "displayname": "Tokyo 3",
-                                    "value": [
-                                        "jp-tok-3"
-                                    ]
+                                    "value": ["jp-tok-3"]
                                 },
                                 {
                                     "displayname": "London 1",
-                                    "value": [
-                                        "eu-gb-1"
-                                    ]
+                                    "value": ["eu-gb-1"]
                                 },
                                 {
                                     "displayname": "London 2",
-                                    "value": [
-                                        "eu-gb-2"
-                                    ]
+                                    "value": ["eu-gb-2"]
                                 },
                                 {
                                     "displayname": "London 3",
-                                    "value": [
-                                        "eu-gb-3"
-                                    ]
+                                    "value": ["eu-gb-3"]
                                 },
                                 {
                                     "displayname": "Sydney 1",
-                                    "value": [
-                                        "au-syd-1"
-                                    ]
+                                    "value": ["au-syd-1"]
                                 },
                                 {
                                     "displayname": "Sydney 2",
-                                    "value": [
-                                        "au-syd-2"
-                                    ]
+                                    "value": ["au-syd-2"]
                                 },
                                 {
                                     "displayname": "Syndney 3",
-                                    "value": [
-                                        "au-syd-3"
-                                    ]
+                                    "value": ["au-syd-3"]
                                 },
                                 {
                                     "displayname": "Osaka 1",
-                                    "value": [
-                                        "jp-osa-1"
-                                    ]
+                                    "value": ["jp-osa-1"]
                                 },
                                 {
                                     "displayname": "Osaka 2",
-                                    "value": [
-                                        "jp-osa-2"
-                                    ]
+                                    "value": ["jp-osa-2"]
                                 },
                                 {
                                     "displayname": "Osaka 3",
-                                    "value": [
-                                        "jp-osa-3"
-                                    ]
+                                    "value": ["jp-osa-3"]
                                 },
-                                {
+                                    {
                                     "displayname": "Sao Paulo 1",
-                                    "value": [
-                                        "br-sao-1"
-                                    ]
+                                    "value": ["br-sao-1"]
                                 },
                                 {
                                     "displayname": "Sao Paulo 2",
-                                    "value": [
-                                        "br-sao-2"
-                                    ]
+                                    "value": ["br-sao-2"]
                                 },
                                 {
                                     "displayname": "Sao Paulo 3",
-                                    "value": [
-                                        "br-sao-3"
-                                    ]
+                                    "value": ["br-sao-3"]
                                 }
                             ]
                         },
@@ -1034,6 +922,12 @@
                             "key": "vpc_cidr"
                         },
                         {
+                            "key": "login_subnets_cidr"
+                        },
+                        {
+                            "key": "compute_subnets_cidr"
+                        },
+                        {
                             "key": "storage_subnets_cidr"
                         },
                         {
@@ -1043,10 +937,43 @@
                             "key": "protocol_subnets_cidr"
                         },
                         {
-                            "key": "vpc_cluster_private_subnets_cidr_blocks"
+                            "key": "vpc_name"
                         },
                         {
-                            "key": "vpc_name"
+                            "key": "login_subnet_id"
+                        },
+                        {
+                            "key": "cluster_subnet_id"
+                        },
+                        {
+                            "key": "storage_subnet_id"
+                        },
+                        {
+                            "key": "protocol_subnet_id"
+                        },
+                        {
+                            "key": "client_subnet_id"
+                        },
+                        {
+                            "key": "enable_sg_validation"
+                        },
+                        {
+                            "key": "login_security_group_name"
+                        },
+                        {
+                            "key": "storage_security_group_name"
+                        },
+                        {
+                            "key": "cluster_security_group_name"
+                        },
+                        {
+                            "key": "client_security_group_name"
+                        },
+                        {
+                            "key": "gklm_security_group_name"
+                        },
+                        {
+                            "key": "ldap_security_group_name"
                         },
                         {
                             "key": "placement_strategy"
@@ -1139,7 +1066,7 @@
                             "key": "bms_boot_drive_encryption"
                         },
                         {
-                            "key": "tie_breaker_bm_server",
+                            "key": "tie_breaker_bm_server_profile",
                             "type": "object",
                             "default_value": "[\n  {\n    \"count\": 1,\n    \"profile\": \"cx2d-metal-96x192\",\n    \"image\": \"ibm-redhat-8-10-minimal-amd64-4\"\n  }\n]",
                             "required": false,
@@ -1184,9 +1111,46 @@
                             "key": "colocate_protocol_instances"
                         },
                         {
+                            "key": "scale_encryption_enabled"
+                        },
+                        {
+                            "key": "scale_encryption_type"
+                        },
+                        {
+                            "key": "gklm_instances",
+                            "type": "object",
+                            "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"hpcc-scale-gklm4202-v2-5-2\"\n  }\n]",
+                            "required": false,
+                            "custom_config": {
+                                "type": "json_editor",
+                                "grouping": "deployment",
+                                "original_grouping": "deployment",
+                                "config_constraints": {
+                                    "type": "mixed"
+                                }
+                            }
+                        },
+                        {
+                            "key": "scale_encryption_admin_password"
+                        },
+                        {
                             "key": "filesystem_config",
                             "type": "object",
-                            "default_value": "[\n  {\n    \"filesystem\": \"fs1\",\n    \"block_size\": \"4M\",\n    \"mount_point\": \"/ibm/fs1\",\n \"default_data_replica\": 2,\n \"default_metadata_replica\": 2,\n \"max_data_replica \": 3,\n \"count\": 3\n  }\n]",
+                            "default_value": "[\n  {\n    \"filesystem\": \"/ibm/fs1\",\n    \"block_size\": \"4M\",\n    \"mount_point\": \"/ibm/fs1\",\n \"default_data_replica\": 2,\n \"default_metadata_replica\": 2,\n \"max_data_replica \": 3\n }\n]",
+                            "required": false,
+                            "custom_config": {
+                                "type": "json_editor",
+                                "grouping": "deployment",
+                                "original_grouping": "deployment",
+                                "config_constraints": {
+                                    "type": "mixed"
+                                }
+                            }
+                        },
+                        {
+                            "key": "filesets_config",
+                            "type": "object",
+                            "default_value": "[\n  {\n    \"client_mount_path\": \"/mnt/scale/tools\",\n    \"quota\": 0\n  },\n  {\n    \"client_mount_path\": \"/mnt/scale/data\",\n    \"quota\": 0\n  }\n]",
                             "required": false,
                             "custom_config": {
                                 "type": "json_editor",
@@ -1225,43 +1189,6 @@
                         },
                         {
                             "key": "dns_custom_resolver_id"
-                        },
-                        {
-                            "key": "scale_encryption_enabled"
-                        },
-                        {
-                            "key": "scale_encryption_type"
-                        },
-                        {
-                            "key": "gklm_instance_key_pair",
-                            "type": "array",
-                            "required": true,
-                            "custom_config": {
-                                "type": "vpc_ssh_key",
-                                "grouping": "deployment",
-                                "original_grouping": "deployment",
-                                "config_constraints": {
-                                    "selection": "multi_select",
-                                    "valueType": "name"
-                                }
-                            }
-                        },
-                        {
-                            "key": "gklm_instances",
-                            "type": "object",
-                            "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"hpcc-scale-gklm4202-v2-5-2\"\n  }\n]",
-                            "required": false,
-                            "custom_config": {
-                                "type": "json_editor",
-                                "grouping": "deployment",
-                                "original_grouping": "deployment",
-                                "config_constraints": {
-                                    "type": "mixed"
-                                }
-                            }
-                        },
-                        {
-                            "key": "scale_encryption_admin_password"
                         },
                         {
                             "key": "key_protect_instance_id"
@@ -1373,15 +1300,25 @@
                                 "original_grouping": "deployment",
                                 "type": "multiline_secure_value"
                             }
+                        },
+                        {
+                            "hidden": true,
+                            "key": "TF_VERSION"
+                        },
+                        {
+                            "hidden": true,
+                            "key": "TF_PARALLELISM"
+                        },
+                        {
+                            "hidden": true,
+                            "key": "override"
+                        },
+                        {
+                            "hidden": true,
+                            "key": "override_json_string"
                         }
                     ],
                     "iam_permissions": [
-                        {
-                            "role_crns": [
-                                "crn:v1:bluemix:public:iam::::serviceRole:Manager"
-                            ],
-                            "service_name": "appid"
-                        },
                         {
                             "role_crns": [
                                 "crn:v1:bluemix:public:iam::::serviceRole:Manager"
@@ -1390,9 +1327,10 @@
                         },
                         {
                             "role_crns": [
-                                "crn:v1:bluemix:public:iam::::serviceRole:Manager"
+                                "crn:v1:bluemix:public:iam::::serviceRole:Manager",
+                                "crn:v1:bluemix:public:iam::::role:Editor"
                             ],
-                            "service_name": "hs-crypto"
+                            "service_name": "dns-svcs"
                         },
                         {
                             "role_crns": [
@@ -1401,16 +1339,43 @@
                             "service_name": "iam-identity"
                         },
                         {
+                            "service_name": "kms",
                             "role_crns": [
-                                "crn:v1:bluemix:public:iam::::serviceRole:Manager"
-                            ],
-                            "service_name": "kms"
+                                "crn:v1:bluemix:public:iam::::serviceRole:Manager",
+                                "crn:v1:bluemix:public:iam::::role:ConfigReader"
+                            ]
+                        },
+                        {
+                            "service_name": "Security and Compliance Center Workload Protection",
+                            "role_crns": [
+                                "crn:v1:bluemix:public:iam::::role:Administrator"
+                            ]
                         },
                         {
                             "role_crns": [
                                 "crn:v1:bluemix:public:iam::::role:Administrator"
                             ],
                             "service_name": "is.vpc"
+                        },
+                        {
+                            "service_name": "All Identity and Access enabled services",
+                            "role_crns": [
+                                "crn:v1:bluemix:public:iam::::serviceRole:Manager",
+                                "crn:v1:bluemix:public:iam::::role:Administrator"
+                            ]
+                        },
+                        {
+                            "service_name": "apprapp",
+                            "role_crns": [
+                                "crn:v1:bluemix:public:iam::::serviceRole:Manager",
+                                "crn:v1:bluemix:public:iam::::role:Administrator"
+                            ]
+                        },
+                        {
+                            "service_name": "is.flow-log-collector",
+                            "role_crns": [
+                                "crn:v1:bluemix:public:iam::::role:Editor"
+                            ]
                         }
                     ],
                     "architecture": {
@@ -1425,12 +1390,12 @@
                                 "description": "Yes"
                             },
                             {
-                                "title": "Increases security with Key Management",
+                                "title": "Increases security with Key Protect",
                                 "description": "Yes"
                             },
                             {
                                 "title": "Reduces failure events by using multizone regions",
-                                "description": "Yes"
+                                "description": "No"
                             },
                             {
                                 "title": "Collects and stores Internet Protocol (IP) traffic information with Activity Tracker and Flow Logs",
