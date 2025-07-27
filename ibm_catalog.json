@@ -90,7 +90,7 @@
                         {
                             "key": "zones",
                             "required": true,
-                            "default_value": ["us-east-1"],
+                            "default_value": ["jp-tok-1"],
                             "options": [
                                 {
                                     "displayname": "Washington DC 1",
@@ -818,7 +818,7 @@
                         {
                             "key": "zones",
                             "required": true,
-                            "default_value": ["us-east-1"],
+                            "default_value": ["jp-tok-1"],
                             "options": [
                                 {
                                     "displayname": "Washington DC 1",
