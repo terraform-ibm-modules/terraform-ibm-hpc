@@ -199,7 +199,8 @@ variable "deployer_instance" {
   validation {
     condition = contains([
       "hpc-lsf-fp15-deployer-rhel810-v1",
-      "hpc-lsf-fp14-deployer-rhel810-v1"
+      "hpc-lsf-fp14-deployer-rhel810-v1",
+      "anand-novnc-custom-image"
     ], var.deployer_instance.image)
     error_message = "Invalid deployer image. Allowed values for fixpack_15 is 'hpc-lsf-fp15-deployer-rhel810-v1' and for fixpack_14 is 'hpc-lsf-fp14-deployer-rhel810-v1'."
   }

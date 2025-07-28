@@ -18,6 +18,7 @@ resource "null_resource" "tf_resource_provisioner" {
 
   provisioner "remote-exec" {
     inline = [
+      "sudo yum install git -y",
       # Remove and re-clone the remote terraform path repo
       # "if [ -d ${local.remote_terraform_path} ]; then echo 'Removing existing repository at ${local.remote_terraform_path}' && sudo rm -rf ${local.remote_terraform_path}; fi",
       # "echo 'Cloning repository with tag: ${local.da_hpc_repo_tag}' && sudo git clone -b ${local.da_hpc_repo_tag} https://${var.github_token}@${local.da_hpc_repo_url} ${local.remote_terraform_path}",
