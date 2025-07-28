@@ -1103,7 +1103,7 @@
                         {
                             "key": "deployer_instance",
                             "type": "object",
-                            "default_value": "{\n  \"image\": \"jay-lsf-new-image\",\n  \"profile\": \"mx2-4x32\"\n}",
+                            "default_value": "{\n  \"image\": \"hpcc-scale-deployer-v1-1\",\n  \"profile\": \"mx2-4x32\"\n}",
                             "required": false,
                             "custom_config": {
                                 "type": "json_editor",
@@ -1117,7 +1117,7 @@
                         {
                             "key": "client_instances",
                             "type": "object",
-                            "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-redhat-8-10-minimal-amd64-4\"\n  }\n]",
+                            "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"hpcc-scale5232-rhel810-v1\"\n  }\n]",
                             "required": false,
                             "custom_config": {
                                 "type": "json_editor",
@@ -1131,7 +1131,7 @@
                         {
                             "key": "compute_instances",
                             "type": "object",
-                            "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-redhat-8-10-minimal-amd64-4\"\n  }\n]",
+                            "default_value": "[\n  {\n    \"count\": 3,\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"hpcc-scale5232-rhel810-v1\"\n  }\n]",
                             "required": false,
                             "custom_config": {
                                 "type": "json_editor",
@@ -1145,7 +1145,7 @@
                         {
                             "key": "storage_instances",
                             "type": "object",
-                            "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-redhat-8-10-minimal-amd64-4\"\n  }\n]",
+                            "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"hpcc-scale5232-rhel810-v1\"\n  }\n]",
                             "required": false,
                             "custom_config": {
                                 "type": "json_editor",
@@ -1159,7 +1159,7 @@
                         {
                             "key": "storage_servers",
                             "type": "object",
-                            "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"cx2d-metal-96x192\",\n    \"image\": \"ibm-redhat-8-10-minimal-amd64-4\"\n  }\n]",
+                            "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"cx2d-metal-96x192\",\n    \"image\": \"hpcc-scale5232-rhel810-v1\"\n  }\n]",
                             "required": false,
                             "custom_config": {
                                 "type": "json_editor",
@@ -1176,7 +1176,7 @@
                         {
                             "key": "tie_breaker_bm_server_profile",
                             "type": "object",
-                            "default_value": "[\n  {\n    \"count\": 1,\n    \"profile\": \"cx2d-metal-96x192\",\n    \"image\": \"ibm-redhat-8-10-minimal-amd64-4\"\n  }\n]",
+                            "default_value": "[\n  {\n    \"count\": 1,\n    \"profile\": \"cx2d-metal-96x192\",\n    \"image\": \"hpcc-scale5232-rhel810-v1\"\n  }\n]",
                             "required": false,
                             "custom_config": {
                                 "type": "json_editor",
@@ -1190,7 +1190,7 @@
                         {
                             "key": "afm_instances",
                             "type": "object",
-                            "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"ibm-redhat-8-10-minimal-amd64-4\"\n  }\n]",
+                            "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"hpcc-scale5232-rhel810-v1\"\n  }\n]",
                             "required": false,
                             "custom_config": {
                                 "type": "json_editor",
@@ -1204,7 +1204,7 @@
                         {
                             "key": "protocol_instances",
                             "type": "object",
-                            "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"ibm-redhat-8-10-minimal-amd64-4\"\n  }\n]",
+                            "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"hpcc-scale5232-rhel810-v1\"\n  }\n]",
                             "required": false,
                             "custom_config": {
                                 "type": "json_editor",
