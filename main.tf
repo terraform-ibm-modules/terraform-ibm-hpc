@@ -210,7 +210,6 @@ module "prepare_tf_input" {
   scale_encryption_admin_password         = var.scale_encryption_admin_password
   scale_encryption_enabled                = var.scale_encryption_enabled
   key_protect_instance_id                 = var.key_protect_instance_id
-  github_token                            = var.github_token
   storage_security_group_id               = var.storage_security_group_id
   custom_file_shares                      = var.custom_file_shares
   existing_bastion_instance_name          = var.existing_bastion_instance_name

@@ -28,11 +28,11 @@ variable "ibmcloud_api_key" {
 }
 
 # Delete this variable before pushing to the public repository.
-variable "github_token" {
-  type        = string
-  default     = null
-  description = "Provide your GitHub token to download the HPCaaS code into the Deployer node"
-}
+#variable "github_token" {
+#  type        = string
+#  default     = null
+#  description = "Provide your GitHub token to download the HPCaaS code into the Deployer node"
+#}
 
 ##############################################################################
 # Cluster Level Variables
@@ -159,7 +159,7 @@ variable "deployer_instance" {
     profile = string
   })
   default = {
-    image   = "jay-lsf-new-image"
+    image   = "hpcc-scale-deployer-v1-1"
     profile = "mx2-4x32"
   }
   validation {
@@ -252,7 +252,7 @@ variable "compute_instances" {
   default = [{
     profile    = "cx2-2x4"
     count      = 0
-    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    image      = "hpcc-scale5232-rhel810-v1"
     filesystem = "/gpfs/fs1"
   }]
   validation {
@@ -275,7 +275,7 @@ variable "client_instances" {
   default = [{
     profile = "cx2-2x4"
     count   = 2
-    image   = "ibm-redhat-8-10-minimal-amd64-4"
+    image   = "hpcc-scale5232-rhel810-v1"
   }]
   validation {
     condition = alltrue([
@@ -299,7 +299,7 @@ variable "storage_instances" {
   default = [{
     profile    = "bx2d-32x128"
     count      = 2
-    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    image      = "hpcc-scale5232-rhel810-v1"
     filesystem = "/ibm/fs1"
   }]
   validation {
@@ -323,7 +323,7 @@ variable "storage_servers" {
   default = [{
     profile    = "cx2d-metal-96x192"
     count      = 0
-    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    image      = "hpcc-scale5232-rhel810-v1"
     filesystem = "/gpfs/fs1"
   }]
   validation {
@@ -352,7 +352,7 @@ variable "afm_instances" {
   default = [{
     profile = "bx2-2x8"
     count   = 0
-    image   = "ibm-redhat-8-10-minimal-amd64-4"
+    image   = "hpcc-scale5232-rhel810-v1"
   }]
   validation {
     condition = alltrue([
@@ -375,7 +375,7 @@ variable "protocol_instances" {
   default = [{
     profile = "bx2-2x8"
     count   = 2
-    image   = "ibm-redhat-8-10-minimal-amd64-4"
+    image   = "hpcc-scale5232-rhel810-v1"
   }]
   validation {
     condition = alltrue([

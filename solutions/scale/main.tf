@@ -76,5 +76,4 @@ module "scale" {
   storage_subnet_id                             = local.env.storage_subnet_id
   protocol_subnet_id                            = local.env.protocol_subnet_id
   client_subnet_id                              = local.env.client_subnet_id
-  github_token                                  = local.env.github_token # Delete this variable before pushing to the public repository.
 }

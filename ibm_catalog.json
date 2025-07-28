@@ -1244,7 +1244,7 @@
                         {
                             "key": "filesystem_config",
                             "type": "object",
-                            "default_value": "[\n  {\n    \"filesystem\": \"/ibm/fs1\",\n    \"block_size\": \"4M\",\n    \"mount_point\": \"/ibm/fs1\",\n \"default_data_replica\": 2,\n \"default_metadata_replica\": 2,\n \"max_data_replica \": 3\n }\n]",
+                            "default_value": "[\n  {\n    \"filesystem\": \"/ibm/fs1\",\n  \"block_size\": \"4M\",\n   \"mount_point\": \"/ibm/fs1\",\n \"default_data_replica\": 2,\n \"default_metadata_replica\": 2,\n \"max_data_replica\": 3,\n \"max_metadata_replica\": 3 }\n]",
                             "required": false,
                             "custom_config": {
                                 "type": "json_editor",
@@ -1272,7 +1272,7 @@
                         {
                             "key": "afm_cos_config",
                             "type": "object",
-                            "default_value": "[\n  {\n    \"afm_fileset\": \"afm_fileset\",\n    \"mode\": \"iw\",\n    \"cos_instance\": \"\",\n \"bucket_name\": \"\",\n \"bucket_region\": \"us-south\",\n \"cos_service_cred_key \": \"\",\n \"bucket_storage_class\": \"\",\n \"bucket_type\": \"region_location\"\n  }\n]",
+                            "default_value": "[\n  {\n    \"afm_fileset\": \"afm_fileset\",\n    \"mode\": \"iw\",\n    \"cos_instance\": \"\",\n \"bucket_name\": \"\",\n \"bucket_region\": \"us-south\",\n \"cos_service_cred_key\": \"\",\n \"bucket_storage_class\": \"\",\n \"bucket_type\": \"region_location\"\n  }\n]",
                             "required": false,
                             "custom_config": {
                                 "type": "json_editor",
