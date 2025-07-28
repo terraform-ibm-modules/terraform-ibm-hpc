@@ -250,7 +250,6 @@ module "resource_provisioner" {
   bastion_private_key_content    = local.bastion_ssh_private_key != null ? local.bastion_ssh_private_key : local.bastion_private_key_content
   deployer_ip                    = local.deployer_ip
   scheduler                      = var.scheduler
-  github_token                   = var.github_token
   existing_bastion_instance_name = var.existing_bastion_instance_name
   bastion_public_key_content     = local.bastion_public_key_content
   depends_on                     = [module.deployer, module.prepare_tf_input, module.validate_ldap_server_connection]
