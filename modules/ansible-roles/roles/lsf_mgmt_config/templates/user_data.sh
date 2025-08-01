@@ -210,10 +210,22 @@ LSB_GPU_NEW_SYNTAX=extend
 EOF
 
 # Support rc_account resource to enable RC_ACCOUNT policy
-sed -i '$ a LSF_LOCAL_RESOURCES=\"[resource icgen2host]\"' $LSF_CONF_FILE
 if [ -n "${rc_account}" ]; then
   sed -i "s/\(LSF_LOCAL_RESOURCES=.*\)\"/\1 [resourcemap ${rc_account}*rc_account]\"/" $LSF_CONF_FILE
-  echo "Update LSF_LOCAL_RESOURCES lsf.conf successfully, add [resourcemap ${rc_account}*rc_account]" >>"$logfile"
+  echo "Update LSF_LOCAL_RESOURCES lsf.conf successfully, add [resourcemap ${rc_account}*rc_account]" >> "$logfile"
+fi
+# Support for multiprofiles for the Job submission
+if [ -n "${family}" ]; then
+  sed -i "s/\(LSF_LOCAL_RESOURCES=.*\)\"/\1 [resourcemap ${family}*family]\"/" $LSF_CONF_FILE
+  echo "update LSF_LOCAL_RESOURCES lsf.conf successfully, add [resourcemap ${pricing}*family]" >> "$logfile"
+fi
+# Add additional local resources if needed
+instance_id=$(dmidecode | grep Family | cut -d ' ' -f 2 |head -1)
+if [ -n "$instance_id" ]; then
+  sed -i "s/\(LSF_LOCAL_RESOURCES=.*\)\"/\1 [resourcemap $instance_id*instanceID]\"/" $LSF_CONF_FILE
+  echo "Update LSF_LOCAL_RESOURCES in $LSF_CONF_FILE successfully, add [resourcemap ${instance_id}*instanceID]" >> "$logfile"
+else
+  echo "Can not get instance ID" >> $logfile
 fi
 
 # source profile.lsf
