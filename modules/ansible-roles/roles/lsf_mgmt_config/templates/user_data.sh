@@ -209,6 +209,13 @@ LSF_GPU_AUTOCONFIG=Y
 LSB_GPU_NEW_SYNTAX=extend
 EOF
 
+# Support rc_account resource to enable RC_ACCOUNT policy
+sed -i '$ a LSF_LOCAL_RESOURCES=\"[resource icgen2host]\"' $LSF_CONF_FILE
+if [ -n "${rc_account}" ]; then
+  sed -i "s/\(LSF_LOCAL_RESOURCES=.*\)\"/\1 [resourcemap ${rc_account}*rc_account]\"/" $LSF_CONF_FILE
+  echo "Update LSF_LOCAL_RESOURCES lsf.conf successfully, add [resourcemap ${rc_account}*rc_account]" >>"$logfile"
+fi
+
 # source profile.lsf
 echo "source ${LSF_CONF}/profile.lsf" >>~/.bashrc
 echo "source ${LSF_CONF}/profile.lsf" >>"$LDAP_DIR"/.bashrc
