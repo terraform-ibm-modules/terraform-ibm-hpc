@@ -1,6 +1,6 @@
 module "landing_zone" {
   source                                 = "terraform-ibm-modules/landing-zone/ibm"
-  version                                = "7.4.4"
+  version                                = "8.4.3"
   prefix                                 = local.prefix
   region                                 = local.region
   tags                                   = local.tags
