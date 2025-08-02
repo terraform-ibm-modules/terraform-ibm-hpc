@@ -1038,7 +1038,7 @@
                         {
                             "key": "compute_instances",
                             "type": "object",
-                            "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2d-16x64\",\n    \"image\": \"hpcc-scale5232-rhel810-v1\"\n  }\n]",
+                            "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2d-16x64\",\n  \"filesystem\": \"/gpfs/fs1\",\n  \"image\": \"hpcc-scale5232-rhel810-v1\"\n  }\n]",
                             "required": false,
                             "custom_config": {
                                 "type": "json_editor",
@@ -1052,7 +1052,7 @@
                         {
                             "key": "storage_instances",
                             "type": "object",
-                            "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"bx2d-32x128\",\n    \"image\": \"hpcc-scale5232-rhel810-v1\"\n  }\n]",
+                            "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2d-32x128\",\n  \"filesystem\": \"/ibm/fs1\",\n  \"image\": \"hpcc-scale5232-rhel810-v1\"\n  }\n]",
                             "required": false,
                             "custom_config": {
                                 "type": "json_editor",
@@ -1066,7 +1066,7 @@
                         {
                             "key": "storage_baremetal_server",
                             "type": "object",
-                            "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"cx2d-metal-96x192\",\n    \"image\": \"hpcc-scale5232-rhel810-v1\"\n  }\n]",
+                            "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"cx2d-metal-96x192\",\n  \"filesystem\": \"/ibm/fs1\",\n  \"image\": \"hpcc-scale5232-rhel810-v1\"\n  }\n]",
                             "required": false,
                             "custom_config": {
                                 "type": "json_editor",
@@ -1081,18 +1081,7 @@
                             "key": "bms_boot_drive_encryption"
                         },
                         {
-                            "key": "tie_breaker_baremetal_server_profile",
-                            "type": "object",
-                            "default_value": "[\n  {\n    \"count\": 1,\n    \"profile\": \"cx2d-metal-96x192\",\n    \"image\": \"hpcc-scale5232-rhel810-v1\"\n  }\n]",
-                            "required": false,
-                            "custom_config": {
-                                "type": "json_editor",
-                                "grouping": "deployment",
-                                "original_grouping": "deployment",
-                                "config_constraints": {
-                                    "type": "mixed"
-                                }
-                            }
+                            "key": "tie_breaker_baremetal_server_profile"
                         },
                         {
                             "key": "afm_instances",
