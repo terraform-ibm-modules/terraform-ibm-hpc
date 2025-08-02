@@ -1,12 +1,12 @@
 # define variables
 locals {
   # Future use
-  # products       = "scale"
-  name           = "lsf"
+  name           = lower(var.scheduler)
   prefix         = var.prefix
   tags           = [local.prefix, local.name]
   vsi_interfaces = ["eth0", "eth1"]
-  bms_interfaces = ["ens1", "ens2"]
+  bms_interfaces = ["eth0", "eth1"]
+  # bms_interfaces = ["ens1", "ens2"]
   # TODO: explore (DA always keep it true)
   skip_iam_authorization_policy = true
   # Region and Zone calculations
@@ -28,6 +28,9 @@ locals {
   login_image_found_in_map = contains(keys(local.image_region_map), var.login_instance[0]["image"])
   # If not found, assume the name is the id already (customer provided image)
   new_login_image_id = local.login_image_found_in_map ? local.image_region_map[var.login_instance[0]["image"]][local.region] : "Image not found with the given name"
+
+  scale_storage_image_found_in_map = contains(keys(local.image_region_map), var.storage_instances[0]["image"])
+  new_storage_image_id = local.scale_storage_image_found_in_map ? local.storage_image_region_map[var.storage_instances[0]["image"]][local.region]: "Image not found with the given name"
 
   products = var.scheduler == "Scale" ? "scale" : "lsf"
   block_storage_volumes = [for volume in coalesce(var.nsd_details, []) : {
@@ -76,17 +79,18 @@ locals {
   # TODO: Fix the logic
   # enable_load_balancer = false
 
-  client_node_name             = format("%s-%s", local.prefix, "client")
-  management_node_name         = format("%s-%s", local.prefix, "mgmt")
-  compute_node_name            = format("%s-%s", local.prefix, "comp")
-  storage_node_name            = format("%s-%s", local.prefix, "strg")
-  protocol_node_name           = format("%s-%s", local.prefix, "proto")
-  storage_management_node_name = format("%s-%s", local.prefix, "strg-mgmt")
-  ldap_node_name               = format("%s-%s", local.prefix, "ldap")
-  afm_node_name                = format("%s-%s", local.prefix, "afm")
-  gklm_node_name               = format("%s-%s", local.prefix, "gklm")
-  cpmoute_management_node_name = format("%s-%s", local.prefix, "comp-mgmt")
-  login_node_name              = format("%s-%s", local.prefix, "login")
+  client_node_name              = format("%s-%s", local.prefix, "client")
+  management_node_name          = format("%s-%s", local.prefix, "mgmt")
+  compute_node_name             = format("%s-%s", local.prefix, "comp")
+  storage_node_name             = format("%s-%s", local.prefix, "strg")
+  storage_tie_breaker_node_name = format("%s-%s", local.prefix, "strg-tie")
+  protocol_node_name            = format("%s-%s", local.prefix, "proto")
+  storage_management_node_name  = format("%s-%s", local.prefix, "strg-mgmt")
+  ldap_node_name                = format("%s-%s", local.prefix, "ldap")
+  afm_node_name                 = format("%s-%s", local.prefix, "afm")
+  gklm_node_name                = format("%s-%s", local.prefix, "gklm")
+  compute_management_node_name  = format("%s-%s", local.prefix, "comp-mgmt")
+  login_node_name               = format("%s-%s", local.prefix, "login")
 
   # Future use
   /*
@@ -115,9 +119,9 @@ locals {
   afm_image_id      = data.ibm_is_image.afm[*].id
   gklm_image_id     = data.ibm_is_image.gklm[*].id
 
-  ssh_keys      = [for name in var.ssh_keys : data.ibm_is_ssh_key.ssh_keys[name].id]
-  ldap_ssh_keys = [for name in var.ldap_instance_key_pair : data.ibm_is_ssh_key.ldap[name].id]
-  gklm_ssh_keys = [for name in var.gklm_instance_key_pair : data.ibm_is_ssh_key.gklm[name].id]
+  ssh_keys = [for name in var.ssh_keys : data.ibm_is_ssh_key.ssh_keys[name].id]
+  #ldap_ssh_keys = [for name in var.ldap_instance_key_pair : data.ibm_is_ssh_key.ldap[name].id]
+  # gklm_ssh_keys = [for name in var.gklm_instance_key_pair : data.ibm_is_ssh_key.gklm[name].id]
 
   # Future use
   /*
@@ -152,18 +156,48 @@ locals {
   # TODO: Multi-zone multi-vNIC VSIs deployment support (bug #https://github.ibm.com/GoldenEye/issues/issues/5830)
   # Findings: Singe zone multi-vNICs VSIs deployment & multi-zone single vNIC VSIs deployment are supported.
   client_subnets    = var.client_subnets
-  cluster_subnet_id = var.cluster_subnet_id
+  compute_subnet_id = var.compute_subnet_id
   storage_subnets   = var.storage_subnets
   protocol_subnets  = var.protocol_subnets
 
   compute_public_key_content  = one(module.compute_key[*].public_key_content)
   compute_private_key_content = one(module.compute_key[*].private_key_content)
 
+  storage_public_key_content  = one(module.storage_key[*].public_key_content)
+  storage_private_key_content = one(module.storage_key[*].private_key_content)
+
+  client_public_key_content  = one(module.client_key[*].public_key_content)
+  client_private_key_content = one(module.client_key[*].private_key_content)
+
+  protocol_vsi_profile = var.protocol_instances[*]["profile"]
+  ces_server_type      = strcontains(local.protocol_vsi_profile[0], "metal")
+
+  sapphire_rapids_profile_check = strcontains(local.protocol_vsi_profile[0], "3-metal") || strcontains(local.protocol_vsi_profile[0], "3d-metal")
+
+  tie_breaker_bm_server = [{
+    profile    = var.tie_breaker_bm_server_profile == null ? (var.storage_servers[*]["profile"])[0] : var.tie_breaker_bm_server_profile
+    count      = 1
+    image      = (var.storage_servers[*]["image"])[0]
+    filesystem = (var.storage_servers[*]["filesystem"])[0]
+  }]
+
+  user_data_vars = {
+    dns_domain                 = var.dns_domain_names["storage"],
+    enable_protocol            = local.enable_protocol,
+    protocol_domain            = var.dns_domain_names["protocol"],
+    vpc_region                 = var.vpc_region,
+    protocol_subnet_id         = length(var.protocol_subnets) == 0 ? "" : var.protocol_subnets[0].id,
+    resource_group_id          = var.resource_group,
+    bastion_public_key_content = base64encode(var.bastion_public_key_content != null ? var.bastion_public_key_content : ""),
+    vsi_meta_private_key       = var.scheduler == "Scale" ? base64encode(module.storage_key[0].private_key_content) : "",
+    vsi_meta_public_key        = var.scheduler == "Scale" ? base64encode(module.storage_key[0].public_key_content) : ""
+  }
+
   # Security Groups
   protocol_secondary_security_group = flatten([
     for subnet_index, subnet in local.protocol_subnets : [
       for i in range(var.protocol_instances[subnet_index]["count"]) : {
-        security_group_id = one(module.storage_sg[*].security_group_id)
+        security_group_id = one(var.storage_security_group_name == null ? module.storage_sg[*].security_group_id : local.storage_security_group_name_id)
         interface_name    = "${subnet["name"]}-${i}"
       }
     ]
@@ -268,32 +302,39 @@ locals {
 
   bastion_security_group = var.bastion_security_group_id
   # Security group id
-  client_security_group  = local.enable_client ? module.client_sg[0].security_group_id_for_ref : null
-  compute_security_group = local.enable_compute ? module.compute_sg[0].security_group_id_for_ref : null
-  storage_security_group = local.enable_storage ? module.storage_sg[0].security_group_id_for_ref : null
+  client_security_group  = local.client_instance_count > 0 ? (local.enable_client && var.client_security_group_name == null ? module.client_sg[0].security_group_id_for_ref : local.client_security_group_name_id[0]) : ""
+  compute_security_group = local.static_compute_instance_count > 0 ? (local.enable_compute && var.compute_security_group_name == null ? module.compute_sg[0].security_group_id_for_ref : local.compute_security_group_name_id[0]) : ""
+  storage_security_group = local.storage_instance_count > 0 ? (local.enable_storage && var.storage_security_group_name == null ? module.storage_sg[0].security_group_id_for_ref : local.storage_security_group_name_id[0]) : ""
 
   client_security_group_rules = local.enable_client ? (local.enable_compute ?
     [
       { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "client-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
       { name = "client-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
-      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr }
+      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
+      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
     ] :
     [
       { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "client-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
-      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr }
+      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
+      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
     ]
     ) : (local.enable_compute ?
     [
       { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "client-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
-      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr }
+      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
     ]
     :
     [
       { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
-      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr }
+      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
+      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
     ]
   )
 
@@ -311,7 +352,7 @@ locals {
       { name = "compute-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
       { name = "compute-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
       { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
-      { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+      { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" },
     ]
     ) : (local.enable_storage ?
     [
@@ -362,22 +403,32 @@ locals {
       { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "storage-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
       { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
-      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr }
+      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "client-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
+      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
     ] :
     [
       { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "storage-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
-      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr }
+      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" },
+      { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+
     ]
     ) : (local.enable_storage ?
     [
       { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
-      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr }
+      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "client-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
+      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
     ] :
     [
       { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
-      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr }
+      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" },
+      { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+
     ]
   )
 
@@ -396,4 +447,12 @@ locals {
       ] : (local.enable_client ? [
       { name = "bastion-allow-client-sg", direction = "inbound", remote = local.client_security_group }] : []
   ))
+}
+
+locals {
+  storage_security_group_name_id = var.storage_security_group_name != null ? data.ibm_is_security_group.storage_security_group[*].id : []
+  client_security_group_name_id  = var.client_security_group_name != null ? data.ibm_is_security_group.client_security_group[*].id : []
+  gklm_security_group_name_id    = var.gklm_security_group_name != null ? data.ibm_is_security_group.gklm_security_group[*].id : []
+  ldap_security_group_name_id    = var.ldap_security_group_name != null ? data.ibm_is_security_group.ldap_security_group[*].id : []
+  compute_security_group_name_id = var.compute_security_group_name != null ? data.ibm_is_security_group.compute_security_group[*].id : []
 }

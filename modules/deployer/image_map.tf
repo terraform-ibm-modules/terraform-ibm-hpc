@@ -25,6 +25,18 @@ locals {
       "br-sao"   = "r042-93c1a769-c138-4765-91d2-5796965b6a98"
       "ca-tor"   = "r038-9448213f-22ce-4a6a-b6b0-22dd6ed9fbb3"
       "ca-mon"   = "r058-b3211406-9eec-4148-aafb-d6ab7c26a6eb"
+    },
+    "hpcc-scale-deployer-v1" = {
+      "eu-es"   = "r050-9ae3a0b4-6353-4c8e-84eb-c3b1cd4255fa"
+      "eu-gb"   = "r018-73480732-827e-440f-82aa-9cd2221b71ee"
+      "eu-de"   = "r010-0a275d00-6d18-49b1-a961-3082e5376864"
+      "us-east" = "r014-7304cbc7-61f8-43cf-9098-ebdef3287b81"
+      "us-south"= "r006-be93bb57-4226-49c1-8089-d6ed95df071d"
+      "jp-tok"  = "r022-e84d39a4-0726-467e-aa1c-d482665ecc6f"
+      "jp-osa"  = "r034-6900c41a-b3f8-4c57-ae1a-fc54de86668f"
+      "au-syd"  = "r026-0f3084e9-53eb-4a32-8b7f-2e222ce843cd"
+      "br-sao"  = "r042-a97879cb-1e8a-4b9a-ba80-adcf7b8b37e7"
+      "ca-tor"  = "r038-73dfb66d-b9c3-4fbf-a6fe-8cd7c81325c6"
     }
   }
 }

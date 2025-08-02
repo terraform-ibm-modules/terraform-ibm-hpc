@@ -24,6 +24,11 @@ variable "inventory_path" {
   description = "Scale JSON inventory path"
 }
 
+variable "scale_config_path" {
+  type        = string
+  description = "Path to clone github.com/IBM/ibm-spectrum-scale-install-infra."
+}
+
 variable "inventory_format" {
   type        = string
   description = "Scale inventory format"

@@ -10,9 +10,13 @@ terraform {
       source  = "IBM-Cloud/ibm"
       version = ">= 1.68.1, < 2.0.0"
     }
-    template = {
-      source  = "hashicorp/template"
-      version = "~> 2"
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.12.0"
+    }
+    null = {
+      source  = "hashicorp/null"
+      version = ">= 3.0.0"
     }
   }
 }

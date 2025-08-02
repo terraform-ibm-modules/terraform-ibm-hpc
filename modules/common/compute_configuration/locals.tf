@@ -10,6 +10,6 @@ locals {
   enable_mrot_conf         = var.enable_mrot_conf ? "True" : "False"
   enable_ces               = var.enable_ces ? "True" : "False"
   enable_afm               = var.enable_afm ? "True" : "False"
-  enable_key_protect       = var.enable_key_protect == "key_protect" ? "True" : "False"
+  enable_key_protect       = var.scale_encryption_enabled && var.enable_key_protect == "True" ? "True" : "False"
   ldap_server              = jsonencode(var.ldap_server)
 }

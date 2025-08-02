@@ -43,7 +43,7 @@ variable "cluster_cidr" {
   default     = "10.241.0.0/18"
 }
 
-variable "cluster_subnets" {
+variable "compute_subnets" {
   type = list(object({
     name = string
     id   = string
@@ -60,7 +60,25 @@ variable "ext_login_subnet_id" {
   description = "Name of an existing subnets in which the bastion and cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
 }
 
-variable "ext_cluster_subnet_id" {
+variable "ext_compute_subnet_id" {
+  type        = string
+  default     = null
+  description = "Name of an existing subnets in which the bastion and cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+}
+
+variable "ext_client_subnet_id" {
+  type        = string
+  default     = null
+  description = "Name of an existing subnets in which the bastion and cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+}
+
+variable "ext_storage_subnet_id" {
+  type        = string
+  default     = null
+  description = "Name of an existing subnets in which the bastion and cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+}
+
+variable "ext_protocol_subnet_id" {
   type        = string
   default     = null
   description = "Name of an existing subnets in which the bastion and cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
@@ -72,7 +90,7 @@ variable "ext_cluster_subnet_id" {
 variable "scheduler" {
   type        = string
   default     = null
-  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+  description = "Select one of the scheduler (Scale/LSF/Symphony/Slurm/null)"
 }
 
 ##############################################################################
@@ -147,12 +165,6 @@ variable "boot_volume_encryption_key" {
   description = "CRN of boot volume encryption key"
 }
 
-variable "existing_kms_instance_guid" {
-  type        = string
-  default     = null
-  description = "GUID of boot volume encryption key"
-}
-
 variable "skip_iam_authorization_policy" {
   type        = bool
   default     = true
@@ -193,4 +205,43 @@ variable "existing_bastion_security_group_id" {
 variable "zones" {
   description = "Region where VPC will be created. To find your VPC region, use `ibmcloud is regions` command to find available regions."
   type        = list(string)
+}
+
+variable "storage_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the storage host."
+}
+
+variable "client_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the client host."
+}
+
+variable "protocol_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the protocol host."
+}
+
+variable "login_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the bastion node. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the bastion node to function properly."
 }

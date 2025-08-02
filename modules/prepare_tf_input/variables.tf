@@ -8,6 +8,13 @@ variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
 }
 
+# Delete this variable before pushing to the public repository.
+variable "github_token" {
+  type        = string
+  default     = null
+  description = "Provide your GitHub token to download the HPCaaS code into the Deployer node"
+}
+
 variable "lsf_version" {
   type        = string
   default     = "fixpack_15"
@@ -47,11 +54,6 @@ variable "resource_group_ids" {
 ##############################################################################
 # Compute Variables
 ##############################################################################
-variable "client_subnets" {
-  type        = list(string)
-  default     = null
-  description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
-}
 
 variable "ssh_keys" {
   type        = list(string)
@@ -70,7 +72,7 @@ variable "client_instances" {
   description = "Number of instances to be launched for client."
 }
 
-variable "cluster_subnet_id" {
+variable "compute_subnet_id" {
   type        = string
   default     = null
   description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
@@ -90,9 +92,10 @@ variable "management_instances" {
 variable "static_compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = optional(string)
     })
   )
   description = "Min Number of instances to be launched for compute cluster."
@@ -121,11 +124,6 @@ variable "login_subnet_id" {
 ##############################################################################
 # Storage Variables
 ##############################################################################
-variable "storage_subnets" {
-  type        = list(string)
-  default     = null
-  description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
-}
 
 variable "storage_instances" {
   type = list(
@@ -136,6 +134,12 @@ variable "storage_instances" {
       filesystem = optional(string)
     })
   )
+  default = [{
+    profile         = "bx2d-32x128"
+    count           = 0
+    image           = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem_name = "fs1"
+  }]
   description = "Number of instances to be launched for storage cluster."
 }
 
@@ -145,7 +149,7 @@ variable "storage_servers" {
       profile    = string
       count      = number
       image      = string
-      filesystem = string
+      filesystem = optional(string)
     })
   )
   default = [{
@@ -155,6 +159,12 @@ variable "storage_servers" {
     filesystem = "/gpfs/fs1"
   }]
   description = "Number of BareMetal Servers to be launched for storage cluster."
+}
+
+variable "tie_breaker_bm_server_profile" {
+  type        = string
+  default     = null
+  description = "Specify the bare metal server profile type name to be used for creating the bare metal Tie breaker node. If no value is provided, the storage bare metal server profile will be used as the default. For more information, see [bare metal server profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-profile&interface=ui). [Tie Breaker Node](https://www.ibm.com/docs/en/storage-scale/5.2.2?topic=quorum-node-tiebreaker-disks)"
 }
 
 variable "protocol_instances" {
@@ -168,10 +178,36 @@ variable "protocol_instances" {
   description = "Number of instances to be launched for protocol hosts."
 }
 
-variable "protocol_subnets" {
-  type        = list(string)
-  default     = null
-  description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+##############################################################################
+# Scale GUI Variables
+##############################################################################
+
+variable "storage_gui_username" {
+  type        = string
+  default     = "null"
+  sensitive   = true
+  description = "GUI user to perform system management and monitoring tasks on storage cluster."
+}
+
+variable "storage_gui_password" {
+  type        = string
+  default     = "null"
+  sensitive   = true
+  description = "Password for storage cluster GUI"
+}
+
+variable "compute_gui_username" {
+  type        = string
+  default     = "null"
+  sensitive   = true
+  description = "GUI user to perform system management and monitoring tasks on compute cluster."
+}
+
+variable "compute_gui_password" {
+  type        = string
+  default     = "null"
+  sensitive   = true
+  description = "Password for compute cluster GUI"
 }
 
 ##############################################################################
@@ -248,6 +284,9 @@ variable "enable_vpc_flow_logs" {
   description = "Enable Activity tracker"
 }
 
+##############################################################################
+# SCC Variables
+##############################################################################
 variable "enable_atracker" {
   type        = bool
   default     = false
@@ -283,6 +322,10 @@ variable "bastion_fip" {
   default     = null
   description = "bastion node fip"
 }
+
+##############################################################################
+# SCC Variables
+##############################################################################
 
 variable "cloud_logs_data_bucket" {
   type        = any
@@ -442,11 +485,11 @@ variable "ldap_user_password" {
   description = "The LDAP user password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required.It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
 }
 
-variable "ldap_instance_key_pair" {
-  type        = list(string)
-  default     = null
-  description = "Name of the SSH key configured in your IBM Cloud account that is used to establish a connection to the LDAP Server. Make sure that the SSH key is present in the same resource group and region where the LDAP Servers are provisioned. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
-}
+# variable "ldap_instance_key_pair" {
+#   type        = list(string)
+#   default     = null
+#   description = "Name of the SSH key configured in your IBM Cloud account that is used to establish a connection to the LDAP Server. Make sure that the SSH key is present in the same resource group and region where the LDAP Servers are provisioned. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
+# }
 
 variable "ldap_instance" {
   type = list(
@@ -477,12 +520,6 @@ variable "scale_encryption_type" {
   description = "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled"
 }
 
-variable "gklm_instance_key_pair" {
-  type        = list(string)
-  default     = null
-  description = "The key pair to use to launch the GKLM host."
-}
-
 variable "gklm_instances" {
   type = list(
     object({
@@ -499,22 +536,16 @@ variable "gklm_instances" {
   description = "Number of instances to be launched for client."
 }
 
-# variable "scale_encryption_admin_default_password" {
-#   type        = string
-#   default     = null
-#   description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
-# }
-
-# variable "scale_encryption_admin_username" {
-#   type        = string
-#   default     = null
-#   description = "The default Admin username for Security Key Lifecycle Manager(GKLM)."
-# }
-
 variable "scale_encryption_admin_password" {
   type        = string
   default     = null
   description = "Password that is used for performing administrative operations for the GKLM.The password must contain at least 8 characters and at most 20 characters. For a strong password, at least three alphabetic characters are required, with at least one uppercase and one lowercase letter.  Two numbers, and at least one special character from this(~@_+:). Make sure that the password doesn't include the username. Visit this [page](https://www.ibm.com/docs/en/gklm/3.0.1?topic=roles-password-policy) to know more about password policy of GKLM. "
+}
+
+variable "key_protect_instance_id" {
+  type        = string
+  default     = null
+  description = "An existing Key Protect instance used for filesystem encryption"
 }
 
 variable "storage_type" {
@@ -557,6 +588,28 @@ variable "afm_cos_config" {
   description = "AFM configurations."
 }
 
+variable "scale_afm_bucket_config_details" {
+  description = "Scale AFM COS Bucket and Configuration Details"
+  type = list(object({
+    bucket     = string
+    endpoint   = string
+    fileset    = string
+    filesystem = string
+    mode       = string
+  }))
+  default = null
+}
+
+variable "scale_afm_cos_hmac_key_params" {
+  description = "Scale AFM COS HMAC Key Details"
+  type = list(object({
+    akey   = string
+    bucket = string
+    skey   = string
+  }))
+  default = null
+}
+
 variable "filesystem_config" {
   type = list(
     object({
@@ -566,11 +619,21 @@ variable "filesystem_config" {
       default_metadata_replica = number
       max_data_replica         = number
       max_metadata_replica     = number
-      mount_point              = string
     })
   )
   default     = null
   description = "File system configurations."
+}
+
+variable "filesets_config" {
+  type = list(
+    object({
+      client_mount_path = string
+      quota             = number
+    })
+  )
+  default     = null
+  description = "Fileset configurations."
 }
 
 variable "scheduler" {
@@ -647,6 +710,13 @@ variable "custom_file_shares" {
   }))
   default     = [{ mount_path = "/mnt/vpcstorage/tools", size = 100, iops = 2000 }, { mount_path = "/mnt/vpcstorage/data", size = 100, iops = 6000 }, { mount_path = "/mnt/scale/tools", nfs_share = "" }]
   description = "Provide details for customizing your shared file storage layout, including mount points, sizes (in GB), and IOPS ranges for up to five file shares if using VPC file storage as the storage option.If using IBM Storage Scale as an NFS mount, update the appropriate mount path and nfs_share values created from the Storage Scale cluster. Note that VPC file storage supports attachment to a maximum of 256 nodes. Exceeding this limit may result in mount point failures due to attachment restrictions.For more information, see [Storage options](https://test.cloud.ibm.com/docs/hpc-ibm-spectrumlsf?topic=hpc-ibm-spectrumlsf-integrating-scale#integrate-scale-and-hpc)."
+}
+
+
+variable "bms_boot_drive_encryption" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the boot drive of bare metal server. Select true or false"
 }
 
 ###########################################################################
@@ -734,4 +804,58 @@ variable "app_config_plan" {
       var.app_config_plan
     )
   }
+}
+
+variable "protocol_subnet_id" {
+  type        = string
+  description = "Name of an existing subnet for protocol nodes. If no value is given, a new subnet will be created"
+  default     = null
+}
+
+variable "client_subnet_id" {
+  type        = string
+  description = "Name of an existing subnet for client nodes. If no value is given, a new subnet will be created"
+  default     = null
+}
+
+variable "storage_subnet_id" {
+  type        = string
+  description = "Name of an existing subnet for storage nodes. If no value is given, a new subnet will be created"
+  default     = null
+}
+
+variable "login_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the bastion node. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the bastion node to function properly."
+}
+
+variable "storage_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the storage nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the storage nodes to function properly."
+}
+
+variable "compute_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the compute nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the compute nodes to function properly."
+}
+
+variable "client_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the gklm nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the gklm nodes to function properly."
+}
+
+variable "gklm_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the gklm nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the gklm nodes to function properly."
+}
+
+variable "ldap_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the ldap nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the ldap nodes to function properly."
 }

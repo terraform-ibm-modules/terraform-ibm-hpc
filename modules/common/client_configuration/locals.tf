@@ -5,4 +5,5 @@ locals {
   scripts_path            = replace(path.module, "client_configuration", "scripts")
   ansible_inv_script_path = format("%s/prepare_client_inv.py", local.scripts_path)
   client_private_key      = format("%s/client_key/id_rsa", var.clone_path)
+  ldap_server             = jsonencode(var.ldap_server)
 }

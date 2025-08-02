@@ -111,7 +111,7 @@ resource "null_resource" "perform_scale_deployment" {
   count = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true && tobool(var.create_scale_cluster) == true) ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -f 32 -i ${local.storage_inventory_path} ${local.storage_playbook_path} --extra-vars \"scale_version=${var.scale_version}\" --extra-vars \"scale_install_directory_pkg_path=${var.spectrumscale_rpms_path}\""
+    command     = "sudo ansible-playbook -f 32 -i ${local.storage_inventory_path} ${local.storage_playbook_path} --extra-vars \"scale_version=${var.scale_version}\" --extra-vars \"scale_install_directory_pkg_path=${var.spectrumscale_rpms_path}\""
   }
   depends_on = [time_sleep.wait_60_seconds, null_resource.wait_for_ssh_availability, null_resource.prepare_ansible_inventory, null_resource.prepare_ansible_inventory_using_jumphost_connection, null_resource.prepare_ansible_inventory, null_resource.prepare_ansible_inventory_using_jumphost_connection]
   triggers = {
