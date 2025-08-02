@@ -91,7 +91,6 @@ locals {
     storage_subnet_id                    = var.storage_subnet_id
     protocol_subnet_id                   = var.protocol_subnet_id
     client_subnet_id                     = var.client_subnet_id
-    github_token                         = var.github_token # Delete this variable before pushing to the public repository.
   }
 }
 
@@ -172,6 +171,5 @@ locals {
     storage_subnet_id                    = lookup(local.override[local.override_type], "storage_subnet_id", local.config.storage_subnet_id)
     protocol_subnet_id                   = lookup(local.override[local.override_type], "protocol_subnet_id", local.config.protocol_subnet_id)
     client_subnet_id                     = lookup(local.override[local.override_type], "client_subnet_id", local.config.client_subnet_id)
-    github_token                         = lookup(local.override[local.override_type], "github_token", local.config.github_token) # Delete this variable before pushing to the public repository.
   }
 }

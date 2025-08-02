@@ -6,7 +6,6 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "ibmcloud_api_key": "${var.ibmcloud_api_key}",
   "app_center_gui_password": "${var.app_center_gui_password}",
   "lsf_version": "${var.lsf_version}",
-  "github_token": "${var.github_token}",
   "resource_group_ids": ${local.resource_group_ids},
   "cluster_prefix": "${var.cluster_prefix}",
   "zones": ${local.zones},

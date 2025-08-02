@@ -9,11 +9,6 @@ variable "ibmcloud_api_key" {
 }
 
 # Delete this variable before pushing to the public repository.
-variable "github_token" {
-  type        = string
-  default     = null
-  description = "Provide your GitHub token to download the HPCaaS code into the Deployer node"
-}
 
 ##############################################################################
 # Cluster Level Variables

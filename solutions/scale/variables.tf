@@ -27,13 +27,6 @@ variable "ibmcloud_api_key" {
   description = "Provide the IBM Cloud API key for the account where the IBM Storage Scale cluster will be deployed. For instructions on creating an API key, see [Managing user API keys](https://cloud.ibm.com/docs/account?topic=account-userapikey&interface=ui)."
 }
 
-# Delete this variable before pushing to the public repository.
-variable "github_token" {
-  type        = string
-  default     = null
-  description = "Provide your GitHub token to download the HPCaaS code into the Deployer node"
-}
-
 ##############################################################################
 # Cluster Level Variables
 ##############################################################################
