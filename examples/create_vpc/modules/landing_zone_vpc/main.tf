@@ -1,6 +1,6 @@
 module "create_vpc" {
   source                      = "terraform-ibm-modules/landing-zone-vpc/ibm"
-  version                     = "7.23.6"
+  version                     = "7.25.13"
   prefix                      = local.prefix
   region                      = local.region
   tags                        = local.tags

@@ -19,7 +19,7 @@ module "ssh_key" {
 module "bastion_sg" {
   count                        = var.enable_deployer ? 1 : 0
   source                       = "terraform-ibm-modules/security-group/ibm"
-  version                      = "2.6.2"
+  version                      = "2.7.0"
   add_ibm_cloud_internal_rules = true
   resource_group               = var.resource_group
   security_group_name          = format("%s-bastion-sg", local.prefix)
@@ -30,7 +30,7 @@ module "bastion_sg" {
 module "bastion_vsi" {
   count                         = (var.enable_deployer && var.bastion_instance_name == null) ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.0.0"
+  version                       = "5.4.9"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -54,7 +54,7 @@ module "bastion_vsi" {
 module "deployer_vsi" {
   count                         = local.enable_deployer ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.0.0"
+  version                       = "5.4.9"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null

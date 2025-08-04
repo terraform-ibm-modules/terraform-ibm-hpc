@@ -5,7 +5,7 @@ module "storage_key" {
 
 module "storage_baremetal" {
   source                = "terraform-ibm-modules/bare-metal-vpc/ibm"
-  version               = "1.1.0"
+  version               = "1.2.0"
   count                 = length(var.storage_servers)
   server_count          = var.storage_servers[count.index]["count"]
   prefix                = count.index == 0 ? local.storage_node_name : format("%s-%s", local.storage_node_name, count.index)
