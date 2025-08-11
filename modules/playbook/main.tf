@@ -200,7 +200,7 @@ resource "null_resource" "lsf_host_play" {
 }
 
 resource "local_file" "create_common_config_playbook" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  count    = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
   content  = <<EOT
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
@@ -228,7 +228,7 @@ EOT
 }
 
 resource "null_resource" "run_common_config_playbook" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.common_config_playbook}"
@@ -240,7 +240,7 @@ resource "null_resource" "run_common_config_playbook" {
 }
 
 resource "local_file" "create_pre_lsf_config_playbook" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  count    = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
   content  = <<EOT
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
@@ -267,7 +267,7 @@ EOT
 }
 
 resource "null_resource" "run_pre_lsf_config_playbook" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.pre_lsf_config_playbook}"
@@ -279,7 +279,7 @@ resource "null_resource" "run_pre_lsf_config_playbook" {
 }
 
 resource "local_file" "lsf_prerequesite_playbook" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" && var.enable_dedicated_host ? 1 : 0
+  count    = var.inventory_path != null && var.scheduler == "LSF" && var.enable_dedicated_host ? 0 : 0
   content  = <<EOT
 ---
 - name: Install bc package on RHEL 8/9 hosts
@@ -324,7 +324,7 @@ EOT
 }
 
 resource "null_resource" "lsf_prerequesite_play" {
-  count = var.inventory_path != null && var.scheduler == "LSF" && var.enable_dedicated_host ? 1 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" && var.enable_dedicated_host ? 0 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo ansible-playbook -f 50 -i ${var.inventory_path} '${local.lsf_prerequesite_playbook_path}'"
@@ -337,7 +337,7 @@ resource "null_resource" "lsf_prerequesite_play" {
 }
 
 resource "null_resource" "run_lsf_playbooks" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -356,7 +356,7 @@ resource "null_resource" "run_lsf_playbooks" {
 }
 
 resource "local_file" "create_playbook_for_mgmt_config" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  count    = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
   content  = <<EOT
 - name: Prerequisite Configuration
   hosts: [mgmt_compute_nodes]
@@ -382,7 +382,7 @@ EOT
 
 
 resource "null_resource" "run_playbook_for_mgmt_config" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${var.lsf_mgmt_playbooks_path}"
@@ -394,7 +394,7 @@ resource "null_resource" "run_playbook_for_mgmt_config" {
 }
 
 resource "local_file" "create_playbook_for_login_node_config" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  count    = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
   content  = <<EOT
 - name: Prerequisite Configuration
   hosts: [login_node]
@@ -420,7 +420,7 @@ EOT
 
 
 resource "null_resource" "run_playbook_for_login_node_config" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.login_node_playbook}"
@@ -432,7 +432,7 @@ resource "null_resource" "run_playbook_for_login_node_config" {
 }
 
 resource "local_file" "create_playbook_for_post_deploy_config" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  count    = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
   content  = <<EOT
 - name: Prerequisite Configuration
   hosts: all
@@ -458,7 +458,7 @@ EOT
 
 
 resource "null_resource" "run_playbook_post_deploy_config" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.lsf_post_config_playbook}"
@@ -492,7 +492,7 @@ EOT
 }
 
 resource "null_resource" "configure_ldap_server_playbook" {
-  count = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" && var.scheduler == "LSF" ? 1 : 0
+  count = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" && var.scheduler == "LSF" ? 0 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -505,7 +505,7 @@ resource "null_resource" "configure_ldap_server_playbook" {
 }
 
 resource "local_file" "prepare_ldap_client_playbook" {
-  count    = var.inventory_path != null && var.enable_ldap && var.scheduler == "LSF" ? 1 : 0
+  count    = var.inventory_path != null && var.enable_ldap && var.scheduler == "LSF" ? 0 : 0
   content  = <<EOT
 - name: LDAP Server Configuration
   hosts: all
@@ -527,7 +527,7 @@ EOT
 }
 
 resource "null_resource" "run_ldap_client_playbooks" {
-  count = var.inventory_path != null && var.enable_ldap && var.scheduler == "LSF" ? 1 : 0
+  count = var.inventory_path != null && var.enable_ldap && var.scheduler == "LSF" ? 0 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -540,7 +540,7 @@ resource "null_resource" "run_ldap_client_playbooks" {
 }
 
 resource "null_resource" "export_api" {
-  count = (var.cloudlogs_provision && var.scheduler == "LSF") || var.scheduler == "Scale" ? 1 : 0
+  count = (var.cloudlogs_provision && var.scheduler == "LSF") || var.scheduler == "Scale" ? 0 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<EOT
