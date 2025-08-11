@@ -555,7 +555,7 @@ resource "null_resource" "export_api" {
 }
 
 resource "local_file" "create_observability_playbook" {
-  count    = var.inventory_path != null && var.observability_provision && var.scheduler == "LSF" ? 1 : 0
+  count    = var.inventory_path != null && var.observability_provision && var.scheduler == "LSF" ? 0 : 0
   content  = <<EOT
 - name: Cloud Logs Configuration
   hosts: [mgmt_compute_nodes]
@@ -593,7 +593,7 @@ EOT
 }
 
 resource "null_resource" "run_observability_playbooks" {
-  count = var.inventory_path != null && var.observability_provision && var.scheduler == "LSF" ? 1 : 0
+  count = var.inventory_path != null && var.observability_provision && var.scheduler == "LSF" ? 0 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -606,7 +606,7 @@ resource "null_resource" "run_observability_playbooks" {
 }
 
 resource "local_file" "remove_host_entry_playbook" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  count    = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
   content  = <<EOT
 ---
 - name: Remove managed host entries from /etc/hosts
@@ -628,7 +628,7 @@ EOT
 
 
 resource "null_resource" "remove_host_entry_play" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo ansible-playbook -i ${var.inventory_path} ${local.remove_hostentry_playbooks_path}"
