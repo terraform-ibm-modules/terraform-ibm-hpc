@@ -200,7 +200,7 @@ resource "null_resource" "lsf_host_play" {
 }
 
 resource "local_file" "create_common_config_playbook" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
+  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
@@ -228,7 +228,7 @@ EOT
 }
 
 resource "null_resource" "run_common_config_playbook" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.common_config_playbook}"
@@ -240,7 +240,7 @@ resource "null_resource" "run_common_config_playbook" {
 }
 
 resource "local_file" "create_pre_lsf_config_playbook" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
+  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
 # Ensure provisioned VMs are up and Passwordless SSH setup has been established
 
@@ -267,7 +267,7 @@ EOT
 }
 
 resource "null_resource" "run_pre_lsf_config_playbook" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.pre_lsf_config_playbook}"
@@ -279,7 +279,7 @@ resource "null_resource" "run_pre_lsf_config_playbook" {
 }
 
 resource "local_file" "lsf_prerequesite_playbook" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" && var.enable_dedicated_host ? 0 : 0
+  count    = var.inventory_path != null && var.scheduler == "LSF" && var.enable_dedicated_host ? 1 : 0
   content  = <<EOT
 ---
 - name: Install bc package on RHEL 8/9 hosts
@@ -324,7 +324,7 @@ EOT
 }
 
 resource "null_resource" "lsf_prerequesite_play" {
-  count = var.inventory_path != null && var.scheduler == "LSF" && var.enable_dedicated_host ? 0 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" && var.enable_dedicated_host ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo ansible-playbook -f 50 -i ${var.inventory_path} '${local.lsf_prerequesite_playbook_path}'"
