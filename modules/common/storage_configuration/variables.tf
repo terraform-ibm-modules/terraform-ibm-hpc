@@ -24,6 +24,11 @@ variable "inventory_path" {
   description = "Scale JSON inventory path"
 }
 
+variable "scale_config_path" {
+  type        = string
+  description = "Path to clone github.com/IBM/ibm-spectrum-scale-install-infra."
+}
+
 variable "inventory_format" {
   type        = string
   description = "Scale inventory format"
@@ -275,4 +280,22 @@ variable "afm_vcpus_count" {
 variable "afm_bandwidth" {
   type        = string
   description = "AFM node bandwidth"
+}
+
+variable "domain_names" {
+  type = object({
+    compute  = string
+    storage  = optional(string)
+    protocol = optional(string)
+    client   = optional(string)
+    gklm     = optional(string)
+  })
+  default = {
+    compute  = "comp.com"
+    storage  = "strg.com"
+    protocol = "ces.com"
+    client   = "clnt.com"
+    gklm     = "gklm.com"
+  }
+  description = "IBM Cloud HPC DNS domain names."
 }

@@ -73,3 +73,21 @@ variable "client_meta_private_key" {
   type        = string
   description = "Client SSH private key path, which will be used to login to client host."
 }
+
+variable "domain_names" {
+  type = object({
+    compute  = string
+    storage  = optional(string)
+    protocol = optional(string)
+    client   = optional(string)
+    gklm     = optional(string)
+  })
+  default = {
+    compute  = "comp.com"
+    storage  = "strg.com"
+    protocol = "ces.com"
+    client   = "clnt.com"
+    gklm     = "gklm.com"
+  }
+  description = "IBM Cloud HPC DNS domain names."
+}

@@ -11,6 +11,13 @@ variable "ibmcloud_api_key" {
   }
 }
 
+# Delete this variable before pushing to the public repository.
+variable "github_token" {
+  type        = string
+  default     = null
+  description = "Provide your GitHub token to download the HPCaaS code into the Deployer node"
+}
+
 variable "lsf_version" {
   type        = string
   default     = "fixpack_15"
@@ -146,18 +153,18 @@ variable "login_subnet_id" {
   default     = null
   description = "Provide the ID of an existing subnet to deploy cluster resources, this is used only for provisioning bastion, deployer, and login nodes. If not provided, new subnet will be created.When providing an existing subnet ID, make sure that the subnet has an associated public gateway..[Learn more](https://cloud.ibm.com/docs/vpc)."
   validation {
-    condition     = (var.cluster_subnet_id == null && var.login_subnet_id == null) || (var.cluster_subnet_id != null && var.login_subnet_id != null)
-    error_message = "In case of existing subnets, provide both login_subnet_id and cluster_subnet_id."
+    condition     = (var.compute_subnet_id == null && var.login_subnet_id == null) || (var.compute_subnet_id != null && var.login_subnet_id != null)
+    error_message = "In case of existing subnets, provide both login_subnet_id and compute_subnet_id."
   }
 }
 
-variable "cluster_subnet_id" {
+variable "compute_subnet_id" {
   type        = string
   default     = null
   description = "Provide the ID of an existing subnet to deploy cluster resources; this is used only for provisioning VPC file storage shares, management, and compute nodes. If not provided, a new subnet will be created. Ensure that a public gateway is attached to enable VPC API communication. [Learn more](https://cloud.ibm.com/docs/vpc)."
   validation {
-    condition     = anytrue([var.vpc_name != null && var.cluster_subnet_id != null, var.cluster_subnet_id == null])
-    error_message = "If the cluster_subnet_id are provided, the user should also provide the vpc_name."
+    condition     = anytrue([var.vpc_name != null && var.compute_subnet_id != null, var.compute_subnet_id == null])
+    error_message = "If the compute_subnet_id are provided, the user should also provide the vpc_name."
   }
 }
 ##############################################################################

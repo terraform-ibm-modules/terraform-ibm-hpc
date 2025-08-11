@@ -5,11 +5,23 @@ resource "local_sensitive_file" "write_client_meta_private_key" {
   file_permission = "0600"
 }
 
+resource "null_resource" "scale_host_play" {
+  count = (tobool(var.turn_on) == true && tobool(var.storage_cluster_create_complete) == true && tobool(var.create_scale_cluster) == true) ? 1 : 0
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "sudo ansible-playbook -f 50 -i ${local.scale_all_inventory} -l 'client' -e @${local.scale_cluster_hosts} -e 'domain_names=${local.dns_names}' ${local.scale_hostentry_playbook_path}"
+  }
+
+  triggers = {
+    build = timestamp()
+  }
+}
+
 resource "null_resource" "prepare_client_inventory_using_jumphost_connection" {
   count = (tobool(var.turn_on) == true && tobool(var.storage_cluster_create_complete) == true && tobool(var.using_jumphost_connection) == true && tobool(var.create_scale_cluster) == true) ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "python3 ${local.ansible_inv_script_path} --client_tf_inv_path ${var.client_inventory_path} --install_infra_path ${var.clone_path} --instance_private_key ${local.client_private_key} --bastion_user ${var.bastion_user} --bastion_ip ${var.bastion_instance_public_ip} --bastion_ssh_private_key ${var.bastion_ssh_private_key} --enable_ldap ${var.enable_ldap} --ldap_basedns ${var.ldap_basedns} --ldap_server ${var.ldap_server} --ldap_admin_password ${var.ldap_admin_password}"
+    command     = "python3 ${local.ansible_inv_script_path} --client_tf_inv_path ${var.client_inventory_path} --install_infra_path ${var.clone_path} --instance_private_key ${local.client_private_key} --bastion_user ${var.bastion_user} --bastion_ip ${var.bastion_instance_public_ip} --bastion_ssh_private_key ${var.bastion_ssh_private_key} --enable_ldap ${var.enable_ldap} --ldap_basedns ${var.ldap_basedns} --ldap_server ${local.ldap_server} --ldap_admin_password ${var.ldap_admin_password}"
   }
   triggers = {
     build = timestamp()
@@ -21,7 +33,7 @@ resource "null_resource" "prepare_client_inventory" {
   count = (tobool(var.turn_on) == true && tobool(var.storage_cluster_create_complete) == true && tobool(var.using_jumphost_connection) == false && tobool(var.create_scale_cluster) == true) ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "python3 ${local.ansible_inv_script_path} --client_tf_inv_path ${var.client_inventory_path} --install_infra_path ${var.clone_path} --instance_private_key ${local.client_private_key} --enable_ldap ${var.enable_ldap} --ldap_basedns ${var.ldap_basedns} --ldap_server ${var.ldap_server} --ldap_admin_password ${var.ldap_admin_password}"
+    command     = "python3 ${local.ansible_inv_script_path} --client_tf_inv_path ${var.client_inventory_path} --install_infra_path ${var.clone_path} --instance_private_key ${local.client_private_key} --enable_ldap ${var.enable_ldap} --ldap_basedns ${var.ldap_basedns} --ldap_server ${local.ldap_server} --ldap_admin_password ${var.ldap_admin_password}"
   }
   triggers = {
     build = timestamp()
@@ -33,7 +45,7 @@ resource "null_resource" "perform_client_configuration" {
   count = (tobool(var.turn_on) == true && tobool(var.storage_cluster_create_complete) == true && tobool(var.create_scale_cluster) == true) ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -i ${local.client_inventory_path} ${local.client_playbook}"
+    command     = "sudo ansible-playbook -i ${local.client_inventory_path} ${local.client_playbook}"
   }
   triggers = {
     build = timestamp()
