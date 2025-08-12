@@ -41,10 +41,9 @@ localhost
 # by using both its public IP address and the host
 # name reported by the hostname command and vice versa.
 [GUI_Hosts]
-{% for host in gui_hosts %}
+{% for host in db_hosts %}
 {{ host }}
 {% endfor %}
-
 
 # DB_HOST is optional, and is the machine that hosts the database
 # used by the Application Center component in LSF Suite.
@@ -53,13 +52,13 @@ localhost
 # and configure it to be HA-ready, then set the JDBC_string parameter
 # in the /opt/ibm/lsf_installer/playbook/lsf-config.yml file to specify the database connection.
 [DB_Host]
-{% for host in gui_hosts %}
+{% for host in db_hosts %}
 {{ host }}
 {% endfor %}
 
 # LSF_WebService is an optional role for hosts LSF will use to run the
 # LSF Web Service. The default is for the primary host to be the LWS host.
 [LSF_WebService]
-{% for host in gui_hosts %}
+{% for host in db_hosts %}
 {{ host }}
 {% endfor %}
