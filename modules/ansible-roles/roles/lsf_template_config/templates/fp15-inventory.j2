@@ -53,7 +53,7 @@ localhost
 # and configure it to be HA-ready, then set the JDBC_string parameter
 # in the /opt/ibm/lsf_installer/playbook/lsf-config.yml file to specify the database connection.
 [DB_Host]
-{% for host in db_hosts %}
+{% for host in gui_hosts %}
 {{ host }}
 {% endfor %}
 
