@@ -21,7 +21,7 @@
   when: inventory_hostname == groups['management_nodes'][0]
 
 - name: Cluster Status | Fetch node status using bhosts
-  ansible.builtin.shell: bhosts -w
+  ansible.builtin.shell: su - lsfadmin -c 'bhosts -w'
   register: cluster_status_output
   changed_when: false
   when: inventory_hostname == groups['management_nodes'][0]
@@ -33,7 +33,7 @@
 
 - name: Cluster Health | Restart lsfd if any node is unreach or unavail
   ansible.builtin.shell: |
-    if bhosts -w | grep -Eq 'unreach|unavail'; then
+    if su - lsfadmin -c 'bhosts -w' | grep -Eq 'unreach|unavail'; then
       systemctl restart lsfd
       sleep 5
       echo "lsfd restarted"

@@ -384,9 +384,6 @@ locals {
   ) : []
 
   client_nodes          = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].client_vsi_data]))[*]["name"] : []
-  # gui_hosts             = var.scheduler == "LSF" ? var.enable_deployer ? [] : [local.management_nodes[1]] : [] # Without Pac HA
-  # db_hosts              = var.scheduler == "LSF" ? var.enable_deployer ? [] : [local.management_nodes[1]] : [] # Without Pac HA
-  # gui_hosts             = var.scheduler == "LSF" ? (var.enable_deployer ? [] : (length(local.management_nodes) == 1 ? [local.management_nodes[0]] : [local.management_nodes[1]])) : []
   gui_hosts             = var.scheduler == "LSF" ? (var.enable_deployer ? [] : [format("%s.%s",length(local.management_nodes) == 1 ? local.management_nodes[0] : local.management_nodes[1], var.dns_domain_names["compute"])]) : []
   db_hosts              = var.scheduler == "LSF" ? (var.enable_deployer ? [] : (length(local.management_nodes) == 1 ? [local.management_nodes[0]] : [local.management_nodes[1]])) : []
   ha_shared_dir         = var.scheduler == "LSF" ? "/mnt/lsf" : ""
@@ -568,7 +565,8 @@ locals {
 
 # locals needed for ssh connection
 locals {
-  ssh_forward_host = var.enable_deployer ? "" : local.mgmt_hosts_ips[0]
+  # ssh_forward_host = var.enable_deployer ? "" : local.mgmt_hosts_ips[0]
+  ssh_forward_host = var.enable_deployer ? "" : (length(local.mgmt_hosts_ips) == 1 ? local.mgmt_hosts_ips[0] : local.mgmt_hosts_ips[1])
   ssh_forwards     = var.enable_deployer ? "" : "-L 8443:${local.ssh_forward_host}:8443 -L 6080:${local.ssh_forward_host}:6080 -L 8444:${local.ssh_forward_host}:8444"
   ssh_jump_host    = var.enable_deployer ? "" : local.bastion_instance_public_ip != null ? local.bastion_instance_public_ip : var.bastion_fip
   ssh_jump_option  = var.enable_deployer ? "" : "-J ubuntu@${local.ssh_jump_host}"
