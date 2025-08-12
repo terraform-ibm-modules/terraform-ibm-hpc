@@ -356,7 +356,7 @@ resource "null_resource" "run_lsf_playbooks" {
 }
 
 resource "local_file" "create_playbook_for_mgmt_config" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
+  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
 - name: Prerequisite Configuration
   hosts: [mgmt_compute_nodes]
@@ -394,7 +394,7 @@ resource "null_resource" "run_playbook_for_mgmt_config" {
 }
 
 resource "local_file" "create_playbook_for_login_node_config" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
+  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
 - name: Prerequisite Configuration
   hosts: [login_node]
@@ -432,7 +432,7 @@ resource "null_resource" "run_playbook_for_login_node_config" {
 }
 
 resource "local_file" "create_playbook_for_post_deploy_config" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
+  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
 - name: Prerequisite Configuration
   hosts: all
@@ -492,7 +492,7 @@ EOT
 }
 
 resource "null_resource" "configure_ldap_server_playbook" {
-  count = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" && var.scheduler == "LSF" ? 0 : 0
+  count = local.ldap_server_inventory != null && var.enable_ldap && var.ldap_server == "null" && var.scheduler == "LSF" ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -505,7 +505,7 @@ resource "null_resource" "configure_ldap_server_playbook" {
 }
 
 resource "local_file" "prepare_ldap_client_playbook" {
-  count    = var.inventory_path != null && var.enable_ldap && var.scheduler == "LSF" ? 0 : 0
+  count    = var.inventory_path != null && var.enable_ldap && var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
 - name: LDAP Server Configuration
   hosts: all
@@ -540,7 +540,7 @@ resource "null_resource" "run_ldap_client_playbooks" {
 }
 
 resource "null_resource" "export_api" {
-  count = (var.cloudlogs_provision && var.scheduler == "LSF") || var.scheduler == "Scale" ? 0 : 0
+  count = (var.cloudlogs_provision && var.scheduler == "LSF") || var.scheduler == "Scale" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<EOT
@@ -555,7 +555,7 @@ resource "null_resource" "export_api" {
 }
 
 resource "local_file" "create_observability_playbook" {
-  count    = var.inventory_path != null && var.observability_provision && var.scheduler == "LSF" ? 0 : 0
+  count    = var.inventory_path != null && var.observability_provision && var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
 - name: Cloud Logs Configuration
   hosts: [mgmt_compute_nodes]
@@ -593,7 +593,7 @@ EOT
 }
 
 resource "null_resource" "run_observability_playbooks" {
-  count = var.inventory_path != null && var.observability_provision && var.scheduler == "LSF" ? 0 : 0
+  count = var.inventory_path != null && var.observability_provision && var.scheduler == "LSF" ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -606,7 +606,7 @@ resource "null_resource" "run_observability_playbooks" {
 }
 
 resource "local_file" "remove_host_entry_playbook" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
+  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
 ---
 - name: Remove managed host entries from /etc/hosts
