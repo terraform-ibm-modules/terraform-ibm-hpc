@@ -337,7 +337,7 @@ resource "null_resource" "lsf_prerequesite_play" {
 }
 
 resource "null_resource" "run_lsf_playbooks" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -382,7 +382,7 @@ EOT
 
 
 resource "null_resource" "run_playbook_for_mgmt_config" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${var.lsf_mgmt_playbooks_path}"
@@ -420,7 +420,7 @@ EOT
 
 
 resource "null_resource" "run_playbook_for_login_node_config" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.login_node_playbook}"
@@ -458,7 +458,7 @@ EOT
 
 
 resource "null_resource" "run_playbook_post_deploy_config" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.lsf_post_config_playbook}"
@@ -527,7 +527,7 @@ EOT
 }
 
 resource "null_resource" "run_ldap_client_playbooks" {
-  count = var.inventory_path != null && var.enable_ldap && var.scheduler == "LSF" ? 0 : 0
+  count = var.inventory_path != null && var.enable_ldap && var.scheduler == "LSF" ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -628,7 +628,7 @@ EOT
 
 
 resource "null_resource" "remove_host_entry_play" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 0 : 0
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo ansible-playbook -i ${var.inventory_path} ${local.remove_hostentry_playbooks_path}"
