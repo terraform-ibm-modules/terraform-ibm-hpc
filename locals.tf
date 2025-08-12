@@ -386,7 +386,8 @@ locals {
   client_nodes          = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].client_vsi_data]))[*]["name"] : []
   # gui_hosts             = var.scheduler == "LSF" ? var.enable_deployer ? [] : [local.management_nodes[1]] : [] # Without Pac HA
   # db_hosts              = var.scheduler == "LSF" ? var.enable_deployer ? [] : [local.management_nodes[1]] : [] # Without Pac HA
-  gui_hosts             = var.scheduler == "LSF" ? (var.enable_deployer ? [] : (length(local.management_nodes) == 1 ? [local.management_nodes[0]] : [local.management_nodes[1]])) : []
+  # gui_hosts             = var.scheduler == "LSF" ? (var.enable_deployer ? [] : (length(local.management_nodes) == 1 ? [local.management_nodes[0]] : [local.management_nodes[1]])) : []
+  gui_hosts             = var.scheduler == "LSF" ? (var.enable_deployer ? [] : [format("%s.%s",length(local.management_nodes) == 1 ? local.management_nodes[0] : local.management_nodes[1], var.dns_domain_names["compute"])]) : []
   db_hosts              = var.scheduler == "LSF" ? (var.enable_deployer ? [] : (length(local.management_nodes) == 1 ? [local.management_nodes[0]] : [local.management_nodes[1]])) : []
   ha_shared_dir         = var.scheduler == "LSF" ? "/mnt/lsf" : ""
   nfs_install_dir       = var.scheduler == "LSF" ? "none" : ""
