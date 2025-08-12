@@ -657,6 +657,7 @@ module "compute_inventory" {
   source                              = "./modules/inventory"
   scheduler                           = var.scheduler
   hosts                               = local.compute_hosts
+  gui_hosts                           = local.gui_hosts
   login_host                          = local.login_host
   inventory_path                      = local.compute_inventory_path
   name_mount_path_map                 = local.fileshare_name_mount_path_map

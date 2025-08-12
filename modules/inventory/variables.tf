@@ -4,6 +4,12 @@ variable "hosts" {
   default     = ["localhost"]
 }
 
+variable "gui_hosts" {
+  description = "GUI Hosts"
+  type        = list(string)
+  default     = ["localhost"]
+}
+
 variable "login_host" {
   description = "Login node host"
   type        = list(string)
