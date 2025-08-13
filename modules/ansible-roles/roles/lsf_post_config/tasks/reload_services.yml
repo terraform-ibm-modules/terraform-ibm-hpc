@@ -5,10 +5,11 @@
   service:
     name: lsfd
     state: restarted
-  when: inventory_hostname == groups['management_nodes']
+  when: inventory_hostname in groups['mgmt_compute_nodes']
 
 # Restart the NetworkManager service on all nodes
 - name: Restart NetworkManager
   service:
     name: NetworkManager
     state: restarted
+  ignore_errors: true
