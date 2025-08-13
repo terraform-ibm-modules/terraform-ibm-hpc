@@ -1344,7 +1344,7 @@
                             "role_crns": [
                                 "crn:v1:bluemix:public:iam::::role:Administrator"
                             ],
-                            "service_name": "is.vpc"
+                            "service_name": "is"
                         },
                         {
                             "service_name": "All Identity and Access enabled services",
@@ -1360,12 +1360,6 @@
                                 "crn:v1:bluemix:public:iam::::role:Administrator"
                             ]
                         },
-                        {
-                            "service_name": "is.flow-log-collector",
-                            "role_crns": [
-                                "crn:v1:bluemix:public:iam::::role:Editor"
-                            ]
-                        }
                     ],
                     "architecture": {
                         "descriptions": "",
