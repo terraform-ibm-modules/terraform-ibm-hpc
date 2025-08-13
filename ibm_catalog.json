@@ -1335,7 +1335,7 @@
                             ]
                         },
                         {
-                            "service_name": "Security and Compliance Center Workload Protection",
+                            "service_name": "sysdig-secure",
                             "role_crns": [
                                 "crn:v1:bluemix:public:iam::::role:Administrator"
                             ]
@@ -1344,7 +1344,7 @@
                             "role_crns": [
                                 "crn:v1:bluemix:public:iam::::role:Administrator"
                             ],
-                            "service_name": "is"
+                            "service_name": "VPC Infrastructure Services"
                         },
                         {
                             "service_name": "All Identity and Access enabled services",
