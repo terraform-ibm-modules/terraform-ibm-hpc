@@ -21,7 +21,6 @@ locals {
   scale_baremetal_bootdrive_playbook_path    = format("%s/%s/scale_baremetal_bootdrive.yml", var.clone_path, "ibm-spectrum-scale-install-infra")
   scale_baremetal_prerequesite_vars          = format("%s/%s/scale_baremetal_vars.yml", var.clone_path, "ibm-spectrum-scale-install-infra")
   scale_baremetal_prerequesite_playbook_path = format("%s/%s/scale_baremetal_prerequesite.yml", var.clone_path, "ibm-spectrum-scale-install-infra")
-  scale_baremetal_bootdrive_playbook_path    = format("%s/%s/scale_baremetal_bootdrive.yml", var.clone_path, "ibm-spectrum-scale-install-infra")
   scale_hostentry_playbook_path              = format("%s/%s/scale_host_entry_play.yml", var.clone_path, "ibm-spectrum-scale-install-infra")
   scale_cluster_hosts                        = format("%s/%s/scale_cluster_hosts.yml", var.clone_path, "ibm-spectrum-scale-install-infra")
   scale_all_inventory                        = format("%s/%s/scale_all_inventory.ini", var.clone_path, "ibm-spectrum-scale-install-infra")

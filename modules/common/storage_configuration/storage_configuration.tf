@@ -77,18 +77,6 @@ resource "null_resource" "scale_baremetal_prerequesite_play" {
   }
 }
 
-resource "null_resource" "scale_baremetal_bootdrive_play" {
-  count = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true && tobool(var.create_scale_cluster) == true) && var.storage_type == "persistent" && tobool(var.bms_boot_drive_encryption) == true ? 1 : 0
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -f 50 -i ${local.scale_all_inventory} -l 'storage' -e @${local.scale_baremetal_prerequesite_vars} -e @${local.scale_cluster_hosts} ${local.scale_baremetal_bootdrive_playbook_path}"
-  }
-
-  triggers = {
-    build = timestamp()
-  }
-}
-
 resource "null_resource" "prepare_ansible_inventory_using_jumphost_connection" {
   count = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true && tobool(var.using_jumphost_connection) == true && tobool(var.scale_encryption_enabled) == false) && var.bastion_instance_public_ip != null && var.bastion_ssh_private_key != null ? 1 : 0
   provisioner "local-exec" {

@@ -694,7 +694,6 @@ module "storage_cluster_configuration" {
   ldap_server_cert                = local.ldap_server_cert
   enable_key_protect              = var.scale_encryption_type == "key_protect" ? "True" : "False"
   storage_type                    = var.storage_type
-  bms_boot_drive_encryption       = var.bms_boot_drive_encryption
   depends_on                      = [module.write_storage_scale_cluster_inventory, module.key_protect_scale, module.ldap_configuration, module.host_resolution_add]
 }
 
