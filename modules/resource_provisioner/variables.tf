@@ -8,6 +8,13 @@ variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
 }
 
+# Delete this variable before pushing to the public repository.
+variable "github_token" {
+  type        = string
+  default     = null
+  description = "Provide your GitHub token to download the HPCaaS code into the Deployer node"
+}
+
 ##############################################################################
 # Cluster Level Variables
 ##############################################################################
@@ -42,7 +49,7 @@ variable "deployer_ip" {
 variable "scheduler" {
   type        = string
   default     = null
-  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+  description = "Select one of the scheduler (Scale/LSF/Symphony/Slurm/null)"
 }
 
 ##############################################################################

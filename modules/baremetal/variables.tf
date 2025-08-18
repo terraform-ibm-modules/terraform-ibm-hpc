@@ -18,6 +18,10 @@ variable "prefix" {
   }
 }
 
+variable "image_id" {
+  description = "This is the image id required for baremetal"
+  type        = string
+}
 ##############################################################################
 # Scale Storage Variables
 ##############################################################################
@@ -49,7 +53,7 @@ variable "storage_servers" {
       profile    = string
       count      = number
       image      = string
-      filesystem = string
+      filesystem = optional(string)
     })
   )
   default = [{
@@ -61,10 +65,10 @@ variable "storage_servers" {
   description = "Number of BareMetal Servers to be launched for storage cluster."
 }
 
-variable "bandwidth" {
-  description = "The allocated bandwidth (in Mbps) for the bare metal server to manage network traffic. If unset, default values apply."
-  type        = number
-  default     = 100000
+variable "sapphire_rapids_profile_check" {
+  type        = bool
+  default     = false
+  description = "Check whether the profile uses Cascade Lake processors (x2) or Intel Sapphire Rapids processors (x3)."
 }
 
 variable "allowed_vlan_ids" {
@@ -79,31 +83,31 @@ variable "security_group_ids" {
   default     = []
 }
 
-##############################################################################
-# Access Variables
-##############################################################################
-
-variable "bastion_public_key_content" {
-  type        = string
-  sensitive   = true
-  default     = null
-  description = "Bastion security group id."
+variable "secondary_security_group_ids" {
+  description = "A list of secondary security group ID's"
+  type        = list(string)
+  default     = []
 }
 
-##############################################################################
-# DNS Template Variables
-##############################################################################
+variable "secondary_vni_enabled" {
+  description = "Whether to enable a secondary virtual network interface"
+  type        = bool
+  default     = false
+}
 
-variable "dns_domain_names" {
-  type = object({
-    compute  = string
-    storage  = string
-    protocol = string
-  })
-  default = {
-    compute  = "comp.com"
-    storage  = "strg.com"
-    protocol = "ces.com"
-  }
-  description = "IBM Cloud HPC DNS domain names."
+variable "user_data" {
+  description = "User Data script path"
+  type        = string
+  default     = null
+}
+
+variable "protocol_subnets" {
+  type = list(object({
+    name = string
+    id   = string
+    zone = string
+    cidr = string
+  }))
+  default     = []
+  description = "Subnets to launch the bastion host."
 }

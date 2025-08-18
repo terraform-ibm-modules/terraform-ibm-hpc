@@ -152,5 +152,5 @@ variable "ha_shared_dir" {
 variable "scheduler" {
   default     = null
   type        = string
-  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+  description = "Select one of the scheduler (Scale/LSF/Symphony/Slurm/null)"
 }
