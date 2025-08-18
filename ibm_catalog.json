@@ -1441,7 +1441,7 @@
                             {
                                 "diagram": {
                                     "caption": "IBM Storage Scale",
-                                    "url": "https://raw.githubusercontent.com/terraform-ibm-modules/terraform-ibm-hpc/refs/heads/14-july-scale/IBM_Spectrum_Scale.drawio.svg",
+                                    "url": "https://raw.githubusercontent.com/terraform-ibm-modules/terraform-ibm-hpc/refs/heads/18-aug-scale/DA_Scale_24July.drawio.svg",
                                     "type": "image/svg+xml"
                                 },
                                 "description": "The HPC variation of the deployable architecture is based on the IBM Cloud for Financial Services reference architecture. The architecture creates a customizable and secure infrastructure, with virtual servers, to run your workloads with a Virtual Private Cloud (VPC) in multizone regions."
