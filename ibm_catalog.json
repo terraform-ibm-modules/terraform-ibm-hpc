@@ -938,7 +938,22 @@
                             "key": "cluster_prefix"
                         },
                         {
-                            "key": "storage_type"
+                            "key": "storage_type",
+                            "default_value": "scratch",
+                            "options": [
+                                {
+                                    "displayname": "scratch",
+                                    "value": "scratch"
+                                },
+                                {
+                                    "displayname": "persistent",
+                                    "value": "persistent"
+                                },
+                                {
+                                    "displayname": "evaluation",
+                                    "value": "evaluation"
+                                }
+                            ]
                         },
                         {
                             "key": "ibm_customer_number"
@@ -1049,7 +1064,7 @@
                         {
                             "key": "client_instances",
                             "type": "object",
-                            "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"hpcc-scale5232-rhel810-v1\"\n  }\n]",
+                            "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-redhat-8-10-minimal-amd64-6\"\n  }\n]",
                             "required": false,
                             "custom_config": {
                                 "type": "json_editor",

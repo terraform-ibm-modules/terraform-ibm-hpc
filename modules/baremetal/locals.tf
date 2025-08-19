@@ -1,6 +1,6 @@
 # define variables
 locals {
-  storage_image_id = data.ibm_is_image.storage[*].id
+#  storage_image_id = data.ibm_is_image.storage[*].id
   # resource_group_id = data.ibm_resource_group.existing_resource_group.id
   # bms_interfaces    = ["ens1", "ens2"]
   # bms_interfaces = ["eth0", "eth1"]
