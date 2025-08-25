@@ -506,7 +506,7 @@
               "default_value": "[\n  {\n    \"mount_path\": \"/mnt/vpcstorage/tools\",\n    \"size\": 100,\n    \"iops\": 2000\n  },\n  {\n    \"mount_path\": \"/mnt/vpcstorage/data\",\n    \"size\": 100,\n    \"iops\": 6000\n  },\n  {\n    \"mount_path\": \"/mnt/scale/tools\",\n    \"nfs_share\": \"\"\n  }\n]\n",
               "required": false,
               "custom_config": {
-                "type": "json_editor",
+                "type": "code_editor",
                 "grouping": "deployment",
                 "original_grouping": "deployment",
                 "config_constraints": {
