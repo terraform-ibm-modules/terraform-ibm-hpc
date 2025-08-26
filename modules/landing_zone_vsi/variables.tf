@@ -111,7 +111,7 @@ variable "client_instances" {
   description = "Number of instances to be launched for client."
 }
 
-variable "cluster_subnet_id" {
+variable "compute_subnet_id" {
   type = list(object({
     name = string
     id   = string
@@ -215,8 +215,8 @@ variable "storage_instances" {
     })
   )
   default = [{
-    profile         = "bx2-2x8"
-    count           = 2
+    profile         = "bx2d-32x128"
+    count           = 0
     image           = "ibm-redhat-8-10-minimal-amd64-4"
     filesystem_name = "fs1"
   }]
@@ -229,7 +229,7 @@ variable "storage_servers" {
       profile    = string
       count      = number
       image      = string
-      filesystem = string
+      filesystem = optional(string)
     })
   )
   default = [{
@@ -239,6 +239,17 @@ variable "storage_servers" {
     filesystem = "fs1"
   }]
   description = "Number of BareMetal Servers to be launched for storage cluster."
+}
+
+variable "tie_breaker_bm_server_profile" {
+  type        = string
+  default     = null
+  description = "Specify the bare metal server profile type name to be used for creating the bare metal Tie breaker node. If no value is provided, the storage bare metal server profile will be used as the default. For more information, see [bare metal server profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-profile&interface=ui). [Tie Breaker Node](https://www.ibm.com/docs/en/storage-scale/5.2.2?topic=quorum-node-tiebreaker-disks)"
+}
+
+variable "scale_management_vsi_profile" {
+  type        = string
+  description = "The virtual server instance profile type name to be used to create the Management node. For more information, see [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
 }
 
 variable "protocol_subnets" {
@@ -257,13 +268,11 @@ variable "protocol_instances" {
     object({
       profile = string
       count   = number
-      image   = string
     })
   )
   default = [{
     profile = "bx2-2x8"
     count   = 2
-    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "Number of instances to be launched for protocol hosts."
 }
@@ -325,12 +334,6 @@ variable "boot_volume_encryption_key" {
   description = "CRN of boot volume encryption key"
 }
 
-variable "existing_kms_instance_guid" {
-  type        = string
-  default     = null
-  description = "The existing KMS instance guid."
-}
-
 ##############################################################################
 # TODO: Auth Server (LDAP/AD) Variables
 ##############################################################################
@@ -370,11 +373,11 @@ variable "ldap_server" {
   description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
 }
 
-variable "ldap_instance_key_pair" {
-  type        = list(string)
-  default     = null
-  description = "Name of the SSH key configured in your IBM Cloud account that is used to establish a connection to the LDAP Server. Make sure that the SSH key is present in the same resource group and region where the LDAP Servers are provisioned. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
-}
+# variable "ldap_instance_key_pair" {
+#   type        = list(string)
+#   default     = null
+#   description = "Name of the SSH key configured in your IBM Cloud account that is used to establish a connection to the LDAP Server. Make sure that the SSH key is present in the same resource group and region where the LDAP Servers are provisioned. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
+# }
 
 variable "ldap_instances" {
   type = list(
@@ -395,13 +398,11 @@ variable "afm_instances" {
     object({
       profile = string
       count   = number
-      image   = string
     })
   )
   default = [{
     profile = "bx2-32x128"
     count   = 1
-    image   = "ibm-redhat-8-10-minimal-amd64-4"
   }]
   description = "Number of instances to be launched for afm hosts."
 }
@@ -419,12 +420,6 @@ variable "scale_encryption_type" {
   type        = string
   default     = null
   description = "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled"
-}
-
-variable "gklm_instance_key_pair" {
-  type        = list(string)
-  default     = null
-  description = "The key pair to use to launch the GKLM host."
 }
 
 variable "gklm_instances" {
@@ -452,7 +447,7 @@ variable "vpc_region" {
 variable "scheduler" {
   type        = string
   default     = null
-  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+  description = "Select one of the scheduler (Scale/LSF/Symphony/Slurm/null)"
 }
 
 variable "ibm_customer_number" {
@@ -498,4 +493,46 @@ variable "bastion_subnets" {
   }))
   default     = []
   description = "Subnets to launch the bastion host."
+}
+
+variable "bms_boot_drive_encryption" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the boot drive of bare metal server. Select true or false"
+}
+
+variable "login_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the bastion node. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the bastion node to function properly."
+}
+
+variable "storage_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the storage nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the storage nodes to function properly."
+}
+
+variable "compute_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the compute nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the compute nodes to function properly."
+}
+
+variable "client_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the gklm nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the gklm nodes to function properly."
+}
+
+variable "gklm_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the gklm nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the gklm nodes to function properly."
+}
+
+variable "ldap_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the ldap nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the ldap nodes to function properly."
 }

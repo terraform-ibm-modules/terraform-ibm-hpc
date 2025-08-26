@@ -41,3 +41,12 @@
   register: lsfd_restart_result
   changed_when: "'lsfd restarted' in lsfd_restart_result.stdout"
   when: inventory_hostname == groups['management_nodes'][0]
+
+- name: Duplicate Logs | Remove duplicate logs from LSF log directory if not deleted
+  shell: |
+    rm -rf /opt/ibm/lsflogs/* /opt/ibm/lsflogs/.* 2>/dev/null || true
+  args:
+    warn: false
+  ignore_errors: true
+  become: true
+  when: inventory_hostname in groups['management_nodes']

@@ -147,7 +147,7 @@
         },
         {
           "name": "dns_domain_name",
-          "value": "{compute= \"lsf.com\"}",
+          "value": "{compute= \"hpc.local\"}",
           "type": "object({compute = string})",
           "secure": false,
           "description": "IBM Cloud DNS Services domain name to be used for the IBM Cloud HPC cluster."
@@ -287,7 +287,7 @@
         },
         {
           "name": "ldap_basedns",
-          "value": "lsf.com",
+          "value": "hpc.local",
           "type": "string",
           "secure": false,
           "description": "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."

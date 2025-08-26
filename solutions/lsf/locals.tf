@@ -23,7 +23,7 @@ locals {
     ssh_keys                                      = var.ssh_keys
     vpc_cluster_login_private_subnets_cidr_blocks = var.vpc_cluster_login_private_subnets_cidr_blocks
     vpc_cluster_private_subnets_cidr_blocks       = var.vpc_cluster_private_subnets_cidr_blocks
-    cluster_subnet_id                             = var.cluster_subnet_id
+    compute_subnet_id                             = var.compute_subnet_id
     cos_instance_name                             = var.cos_instance_name
     dns_custom_resolver_id                        = var.dns_custom_resolver_id
     dns_instance_id                               = var.dns_instance_id
@@ -82,6 +82,7 @@ locals {
     sccwp_enable                                     = var.sccwp_enable
     cspm_enabled                                     = var.cspm_enabled
     app_config_plan                                  = var.app_config_plan
+    github_token                                     = var.github_token
 
   }
 }
@@ -95,7 +96,7 @@ locals {
     vpc_cluster_login_private_subnets_cidr_blocks = lookup(local.override[local.override_type], "vpc_cluster_login_private_subnets_cidr_blocks", local.config.vpc_cluster_login_private_subnets_cidr_blocks)
     login_subnet_id                               = lookup(local.override[local.override_type], "login_subnet_id", local.config.login_subnet_id)
     vpc_cluster_private_subnets_cidr_blocks       = lookup(local.override[local.override_type], "vpc_cluster_private_subnets_cidr_blocks", local.config.vpc_cluster_private_subnets_cidr_blocks)
-    cluster_subnet_id                             = lookup(local.override[local.override_type], "cluster_subnet_id", local.config.cluster_subnet_id)
+    compute_subnet_id                             = lookup(local.override[local.override_type], "compute_subnet_id", local.config.compute_subnet_id)
     cos_instance_name                             = lookup(local.override[local.override_type], "cos_instance_name", local.config.cos_instance_name)
     dns_custom_resolver_id                        = lookup(local.override[local.override_type], "dns_custom_resolver_id", local.config.dns_custom_resolver_id)
     dns_instance_id                               = lookup(local.override[local.override_type], "dns_instance_id", local.config.dns_instance_id)
@@ -153,6 +154,7 @@ locals {
     cspm_enable                                      = lookup(local.override[local.override_type], "cspm_enable", local.config.cspm_enabled)
     sccwp_service_plan                               = lookup(local.override[local.override_type], "scc_wp_service_plan", local.config.sccwp_service_plan)
     app_config_plan                                  = lookup(local.override[local.override_type], "app_config_plan", local.config.app_config_plan)
+    github_token                                     = lookup(local.override[local.override_type], "app_config_plan", local.config.github_token)
     # client_instances                                 = lookup(local.override[local.override_type], "client_instances", local.config.client_instances)
     # client_subnets_cidr                              = lookup(local.override[local.override_type], "client_subnets_cidr", local.config.client_subnets_cidr)
   }

@@ -47,6 +47,48 @@ locals {
       "au-syd"   = "r026-11aee148-c938-4524-91e6-8e6da5933a42"
       "br-sao"   = "r042-5cb62448-e771-4caf-a556-28fdf88acab9"
       "ca-tor"   = "r038-fa815ec1-d52e-42b2-8221-5b8c2145a248"
+    },
+  }
+  storage_image_region_map = {
+    "hpcc-scale5232-rhel810-v1" = {
+      "eu-es"    = "r050-7f28959f-74a4-4ad7-be30-8107da85406f"
+      "eu-gb"    = "r018-5286d07b-527f-49a2-b0a7-2c88278349e8"
+      "eu-de"    = "r010-1e558d55-bc2e-4e96-9164-b4b1139ba06b"
+      "us-east"  = "r014-8befe151-c36d-4056-9955-3480210adf98"
+      "us-south" = "r006-7ab41080-5af0-47e5-ad44-abc18589197a"
+      "jp-tok"   = "r022-d60e9e5f-264d-4e37-9fc0-9ad6270a054e"
+      "jp-osa"   = "r034-eac88b73-0978-4340-9188-e28e99aeae2a"
+      "au-syd"   = "r026-221f1bb0-1ba3-40c3-a83f-59334a2fda4b"
+      "br-sao"   = "r042-e3d377a0-69f6-4079-9cbe-021021fb4a84"
+      "ca-tor"   = "r038-73809daf-d414-4319-bc46-1bdd26a8e85d"
+    }
+  }
+  evaluation_image_region_map = {
+    "hpcc-scale5232-dev-rhel810" = {
+      "eu-es"    = "r050-eb14661e-8290-4c03-a198-3e65a1b17a6b"
+      "eu-gb"    = "r018-46ec71d2-2137-48c1-b348-a2ff0a671d91"
+      "eu-de"    = "r010-cf5e0560-cbbf-43a6-9ba7-39fb4d4e82ff"
+      "us-east"  = "r014-27ceeecc-c5bc-461e-a687-11e5b843274d"
+      "us-south" = "r006-12668685-f580-4cc8-86c5-335f1a979278"
+      "jp-tok"   = "r022-bfe30f3f-c68f-4f61-ba90-7fbaa1a29665"
+      "jp-osa"   = "r034-320617e2-b565-4843-bd8d-9f4bd2dd4641"
+      "au-syd"   = "r026-ad179ec6-37a0-4d0c-9816-d065768414cf"
+      "br-sao"   = "r042-ed759187-cd74-4d13-b475-bd0ed443197b"
+      "ca-tor"   = "r038-90ca620e-5bf9-494e-a6ba-7e5ee663a54b"
+    }
+  }
+  encryption_image_region_map = {
+    "hpcc-scale-gklm4202-v2-5-3" = {
+      "eu-es"    = "r050-fda24f7a-f395-487f-8179-d3c505d7fa8b"
+      "eu-gb"    = "r018-74d533de-03b6-43ea-9f3f-dcd0d76ebb94"
+      "eu-de"    = "r010-a5ff7b80-8ccc-451d-b384-e14bc119200f"
+      "us-east"  = "r014-23d9f6b8-5c3f-43c5-8953-6e4cbbc01b47"
+      "us-south" = "r006-e12a939e-cd76-4394-bc38-4166d4df5818"
+      "jp-tok"   = "r022-e27ef40e-82b2-481c-86c6-53032d8bda38"
+      "jp-osa"   = "r034-a42046c2-60c3-4a43-9234-c06edd27dd84"
+      "au-syd"   = "r026-5f90526b-5da6-4fae-ad16-33bbb5448cfc"
+      "br-sao"   = "r042-a9a29acf-6810-4749-9c4e-757c7abb7c59"
+      "ca-tor"   = "r038-95be651c-35a4-4b41-a629-dc46efe38442"
     }
   }
 }
