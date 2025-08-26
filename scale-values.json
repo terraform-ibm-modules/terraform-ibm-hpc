@@ -1,5 +1,5 @@
 {
-    "name": "scale-test-1",
+    "name": "scale-test-2",
     "type": [
     "terraform_v1.9"
     ],
@@ -70,7 +70,7 @@
                 },
                 {
                     "name": "cluster_prefix",
-                    "value": "scale-new-poc",
+                    "value": "scale-26",
                     "type": "string",
                     "secure": false,
                     "description": "Prefix that is used to name the IBM Cloud resources that are provisioned to build the Storage Scale cluster. Make sure that the prefix is unique, since you cannot create multiple resources with the same name. The maximum length of supported characters is 64. Must begin with a letter and end with a letter or number."
@@ -371,7 +371,7 @@
                 },
                 {
                     "name": "scale_encryption_enabled",
-                    "value": "false",
+                    "value": "true",
                     "type": "bool",
                     "secure": false,
                     "description": "To enable the encryption for the filesystem. Select true or false"

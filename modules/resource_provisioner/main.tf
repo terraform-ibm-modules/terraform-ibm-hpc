@@ -19,7 +19,7 @@ resource "null_resource" "tf_resource_provisioner" {
   provisioner "remote-exec" {
     inline = [
       # Conditionally clone "terraform-ibm-hpc" repository from TIM
-      "if [ -f ${local.remote_terraform_path} ]; then sudo rm -f ${local.remote_terraform_path}; fi && if [ ! -d ${local.remote_terraform_path} ]; then echo 'Cloning repository with tag: ${local.da_hpc_repo_tag}' && sudo git clone -b ${local.da_hpc_repo_tag} https://${var.github_token}@${local.da_hpc_repo_url} ${local.remote_terraform_path}; fi",
+      "if [ -f ${local.remote_terraform_path} ]; then sudo rm -f ${local.remote_terraform_path}; fi && if [ ! -d ${local.remote_terraform_path} ]; then echo 'Cloning repository with tag: ${local.da_hpc_repo_tag}' && sudo git clone -b ${local.da_hpc_repo_tag} https://${local.da_hpc_repo_url} ${local.remote_terraform_path}; fi",
 
       # Clone Spectrum Scale collection if it doesn't exist
       "if [ \"${var.scheduler}\" = \"Scale\" ]; then if [ ! -d ${local.remote_ansible_path}/${local.scale_cloud_infra_repo_name}/collections/ansible_collections/ibm/spectrum_scale ]; then sudo git clone -b ${local.scale_cloud_infra_repo_tag} ${local.scale_cloud_infra_repo_url} ${local.remote_ansible_path}/${local.scale_cloud_infra_repo_name}/collections/ansible_collections/ibm/spectrum_scale; fi; fi",
