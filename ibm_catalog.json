@@ -47,7 +47,7 @@
                     "name": "Cluster-with-LSF",
                     "install_type": "fullstack",
                     "working_directory": "solutions/lsf",
-                    "terraform_version": ">= 1.9.0",
+                    "terraform_version": "1.9.0",
                     "compliance": {
                         "authority": "scc-v3",
                         "profiles": [
@@ -751,7 +751,7 @@
                     "name": "Cluster-with-Scale",
                     "install_type": "fullstack",
                     "working_directory": "solutions/scale",
-                    "terraform_version": ">= 1.9.0",
+                    "terraform_version": "1.9.0",
                     "compliance": {
                         "authority": "scc-v3",
                         "profiles": [
