@@ -15,4 +15,5 @@ CRA_TARGETS:
       TF_VAR_ssh_keys: "[\"geretain-hpc\"]"
       TF_VAR_remote_allowed_ips: "[\"49.207.216.50\"]"
       TF_VAR_storage_gui_username: "storagegui"
-      TF_VAR_storage_gui_password: "Storagegui@123" #pragma: allowlist secret
+      TF_VAR_storage_type: "evaluation"
+      TF_VAR_storage_gui_password: "Stor@ge1234" #pragma: allowlist secret
