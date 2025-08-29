@@ -18,7 +18,8 @@ sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=
 #input parameters
 # input parameters
 echo "${bastion_public_key_content}" >> ~/.ssh/authorized_keys
-echo "${compute_public_key_content}" >> ~/.ssh/authorized_keys
+echo "${cluster_public_key_content}" >> ~/.ssh/authorized_keys
 echo "StrictHostKeyChecking no" >> ~/.ssh/config
-echo "${compute_private_key_content}" > ~/.ssh/id_rsa
+echo "${cluster_private_key_content}" > ~/.ssh/id_rsa
+hostnamectl set-hostname "$(hostname).${cluster_dns_domain}"
 chmod 600 ~/.ssh/id_rsa

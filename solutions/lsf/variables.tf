@@ -146,18 +146,18 @@ variable "login_subnet_id" {
   default     = null
   description = "Provide the ID of an existing subnet to deploy cluster resources, this is used only for provisioning bastion, deployer, and login nodes. If not provided, new subnet will be created.When providing an existing subnet ID, make sure that the subnet has an associated public gateway..[Learn more](https://cloud.ibm.com/docs/vpc)."
   validation {
-    condition     = (var.cluster_subnet_id == null && var.login_subnet_id == null) || (var.cluster_subnet_id != null && var.login_subnet_id != null)
-    error_message = "In case of existing subnets, provide both login_subnet_id and cluster_subnet_id."
+    condition     = (var.compute_subnet_id == null && var.login_subnet_id == null) || (var.compute_subnet_id != null && var.login_subnet_id != null)
+    error_message = "In case of existing subnets, provide both login_subnet_id and compute_subnet_id."
   }
 }
 
-variable "cluster_subnet_id" {
+variable "compute_subnet_id" {
   type        = string
   default     = null
   description = "Provide the ID of an existing subnet to deploy cluster resources; this is used only for provisioning VPC file storage shares, management, and compute nodes. If not provided, a new subnet will be created. Ensure that a public gateway is attached to enable VPC API communication. [Learn more](https://cloud.ibm.com/docs/vpc)."
   validation {
-    condition     = anytrue([var.vpc_name != null && var.cluster_subnet_id != null, var.cluster_subnet_id == null])
-    error_message = "If the cluster_subnet_id are provided, the user should also provide the vpc_name."
+    condition     = anytrue([var.vpc_name != null && var.compute_subnet_id != null, var.compute_subnet_id == null])
+    error_message = "If the compute_subnet_id are provided, the user should also provide the vpc_name."
   }
 }
 ##############################################################################
@@ -435,12 +435,12 @@ variable "dns_domain_name" {
     compute = string
   })
   default = {
-    compute = "lsf.com"
+    compute = "hpc.local"
   }
   description = "IBM Cloud DNS Services domain name to be used for the IBM Spectrum LSF cluster."
   validation {
-    condition     = can(regex("^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.com$", var.dns_domain_name.compute))
-    error_message = "The compute domain name must be a valid FQDN ending in '.com'. It may include letters, digits, hyphens, and must start and end with an alphanumeric character."
+    condition     = can(regex("^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\\.[a-zA-Z]{2,})+$", var.dns_domain_name.compute))
+    error_message = "The compute domain name must be a valid FQDN. It may include letters, digits, hyphens, and must start and end with an alphanumeric character."
   }
 }
 
@@ -499,7 +499,7 @@ variable "enable_ldap" {
 
 variable "ldap_basedns" {
   type        = string
-  default     = "lsf.com"
+  default     = "hpc.local"
   description = "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."
   validation {
     condition     = var.enable_ldap == false || (var.ldap_basedns != null ? (length(trimspace(var.ldap_basedns)) > 0 && var.ldap_basedns != "null") : false)
@@ -831,9 +831,9 @@ variable "app_config_plan" {
   type        = string
   default     = "basic"
   validation {
-    error_message = "Plan for App configuration can only be basic, lite, standardv2, enterprise.."
+    error_message = "Plan for App configuration can only be basic, standardv2, enterprise.."
     condition = contains(
-      ["basic", "lite", "standardv2", "enterprise"],
+      ["basic", "standardv2", "enterprise"],
       var.app_config_plan
     )
   }
