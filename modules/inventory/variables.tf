@@ -106,7 +106,7 @@ variable "ldap_server" {
 
 variable "ldap_basedns" {
   type        = string
-  default     = "lsf.com"
+  default     = "hpc.local"
   description = "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."
 }
 
@@ -152,5 +152,5 @@ variable "ha_shared_dir" {
 variable "scheduler" {
   default     = null
   type        = string
-  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+  description = "Select one of the scheduler (Scale/LSF/Symphony/Slurm/null)"
 }

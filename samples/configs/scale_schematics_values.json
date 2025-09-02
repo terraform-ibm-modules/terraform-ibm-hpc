@@ -1,0 +1,599 @@
+{
+    "name": "scale-test",
+    "type": [
+    "terraform_v1.9"
+    ],
+    "location": "eu-de",
+    "resource_group": "Default",
+    "description": "",
+    "tags": [],
+    "template_repo": {
+        "url": "https://github.com/terraform-ibm-modules/terraform-ibm-hpc",
+        "branch": "11-aug-scale"
+    },
+    "template_data": [
+        {
+            "folder": "solutions/scale",
+            "type": "terraform_v1.9",
+            "env_values": [
+                {
+                    "TF_CLI_ARGS_apply": "-parallelism=250"
+                },
+                {
+                    "TF_CLI_ARGS_plan": "-parallelism=250"
+                },
+                {
+                    "TF_CLI_ARGS_destroy": "-parallelism=100"
+                },
+                {
+                    "VAR1": "<val1>"
+                },
+                {
+                    "VAR2": "<val2>"
+                }
+            ],
+            "variablestore": [
+                {
+                    "name": "ibm_customer_number",
+                    "value": "Please fill here",
+                    "type": "string",
+                    "secure": true,
+                    "description": "IBM Customer Number (ICN) used for Bring Your Own License (BYOL) entitlement check and not required if storage_type is evaluation, but must be provided if storage_type is scratch or persistent. Failing to provide an ICN will cause the deployment to fail to decrypt the packages. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
+                },
+                {
+                    "name": "ibmcloud_api_key",
+                    "value": "Please fill here",
+                    "type": "string",
+                    "secure": true,
+                    "description": "Provide the IBM Cloud API key for the account where the IBM Storage Scale cluster will be deployed, this is a required value that must be provided as it is used to authenticate and authorize access during the deployment. For instructions on creating an API key, see [Managing user API keys](https://cloud.ibm.com/docs/account?topic=account-userapikey&interface=ui)."
+                },
+                {
+                    "name": "zones",
+                    "value": "[\"us-east-1\"]",
+                    "type": "list(string)",
+                    "secure": false,
+                    "description": "Specify the IBM Cloud zone within the chosen region where the IBM Storage scale cluster will be deployed. A single zone input is required, (for example, [\"us-east-1\"]) all the cluster nodes will all be provisioned in this zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
+                },
+                {
+                    "name": "ssh_keys",
+                    "value": "[\"Please fill here\"]",
+                    "type": "list(string)",
+                    "secure": false,
+                    "description": "Provide the names of the SSH keys already configured in your IBM Cloud account to enable access to the Storage Scale nodes. The solution does not create new SSH keys, so ensure you provide existing ones. These keys must reside in the same resource group and region as the cluster being provisioned.To provide multiple SSH keys, use a comma-separated list in the format: [\"key-name-1\", \"key-name-2\"]. If you do not have an SSH key in your IBM Cloud account, you can create one by following the instructions [SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
+                },
+                {
+                    "name": "remote_allowed_ips",
+                    "value": "[\"Please fill here\"]",
+                    "type": "list(string)",
+                    "secure": false,
+                    "description": "To ensure secure access to the IBM Storage Scale cluster via SSH, you must specify the public IP addresses of the devices that are permitted to connect. These IPs will be used to configure access restrictions and protect the environment from unauthorized connections. To allow access from multiple devices, provide the IP addresses as a comma-separated list in the format: [\"169.45.117.34\", \"203.0.113.25\"]. Identify your current public IP address, you can visit: https://ipv4.icanhazip.com."
+                },
+                {
+                    "name": "cluster_prefix",
+                    "value": "scale",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Prefix that is used to name the IBM Cloud resources that are provisioned to build the Storage Scale cluster. Make sure that the prefix is unique, since you cannot create multiple resources with the same name. The maximum length of supported characters is 64. Preifx must begin with a letter and end with a letter or number."
+                },
+                {
+                    "name": "existing_resource_group",
+                    "value": "Default",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Specify the name of the existing resource group in your IBM Cloud account where cluster resources will be deployed. By default, the resource group is set to 'Default.' In some older accounts, it may be 'default,' so please verify the resource group name before proceeding. If the value is set to \"null\", the automation will create two separate resource groups: 'workload-rg' and 'service-rg.' For more details, see [Managing resource groups](https://cloud.ibm.com/docs/account?topic=account-rgs&interface=ui)."
+                },
+                {
+                    "name": "vpc_name",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide the name of an existing VPC in which the cluster resources will be deployed. If no value is given, the solution provisions a new VPC. [Learn more](https://cloud.ibm.com/docs/vpc). You can also choose to use existing subnets under this VPC or let the solution create new subnets as part of the deployment. If a custom DNS resolver is already configured for your VPC, specify its ID under the dns_custom_resolver_id input value."
+                },
+                {
+                    "name": "vpc_cidr",
+                    "value": "10.241.0.0/18",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide an address prefix to create a new VPC when the vpc_name variable is set to null. VPC will be created using this address prefix, and subnets can then be defined within it using the specified subnet CIDR blocks. For more information on address prefix, see [Setting IP ranges](https://cloud.ibm.com/docs/vpc?topic=vpc-vpc-addressing-plan-design)."
+                },
+                {
+                    "name": "bastion_instance",
+                    "value": "{image = \"ibm-ubuntu-22-04-5-minimal-amd64-5\", profile = \"cx2-4x8\"}",
+                    "type": "object({ image = string, profile = string })",
+                    "secure": false,
+                    "description": "Bastion node functions as a jump server to enable secure SSH access to cluster nodes, ensuring controlled connectivity within the private network. Specify the configuration details for the bastion node, including the image and instance profile. Only Ubuntu 22.04 stock images are supported."
+                },
+                {
+                    "name": "deployer_instance",
+                    "value": "{image = \"hpcc-scale-deployer-v1\", profile = \"mx2-4x32\"}",
+                    "type": "object({ image = string, profile = string })",
+                    "secure": false,
+                    "description": "A deployer node is a dedicated virtual machine or server instance used to automate the deployment and configuration of infrastructure and applications for HPC cluster components. Specify the configuration for the deployer node, including the custom image and virtual server instance profile."
+                },
+                {
+                    "name": "login_subnets_cidr",
+                    "value": "10.241.16.0/28",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide the CIDR block required for the creation of the login cluster private subnet. Single CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Since the login subnet is used only for the creation of login virtual server instances, provide a CIDR range of /28."
+                },
+                {
+                    "name": "compute_subnets_cidr",
+                    "value": "10.241.0.0/20",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide the CIDR block required for the creation of the compute private subnet. Single CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Ensure the selected CIDR block size can accommodate the maximum number of scale compute nodes expected in your cluster. For more information on CIDR block size selection, refer to the documentation, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
+                },
+                {
+                    "name": "storage_subnets_cidr",
+                    "value": "10.241.30.0/24",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide the CIDR block required for the creation of the storage private subnet. Single CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Ensure the selected CIDR block size can accommodate the maximum number of scale storage nodes expected in your cluster. For more information on CIDR block size selection, refer to the documentation, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
+                },
+                {
+                    "name": "protocol_subnets_cidr",
+                    "value": "10.241.40.0/24",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide the CIDR block required for the creation of the protocol private subnet. Single CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Ensure the selected CIDR block size can accommodate the maximum number of protocol nodes expected in your cluster. For more information on CIDR block size selection, refer to the documentation, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
+                },
+                {
+                    "name": "client_subnets_cidr",
+                    "value": "10.241.50.0/24",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide the CIDR block required for the creation of the client private subnet. Single CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Ensure the selected CIDR block size can accommodate the maximum number of scale client nodes expected in your cluster. For more information on CIDR block size selection, refer to the documentation, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
+                },
+                {
+                    "name": "compute_gui_username",
+                    "value": "",
+                    "type": "string",
+                    "secure": true,
+                    "description": "GUI username to perform system management and monitoring tasks on the compute cluster. The Username should be at least 4 characters, (any combination of lowercase and uppercase letters)."
+                },
+                {
+                    "name": "compute_gui_password",
+                    "value": "",
+                    "type": "string",
+                    "secure": true,
+                    "description": "Password for logging in to the compute cluster GUI. Must be at least 8 characters long and include a combination of uppercase and lowercase letters, a number, and a special character. It must not contain the username or start with a special character."
+                },
+                {
+                    "name": "compute_instances",
+                    "value": "[{ profile = \"cx2-2x4\", count = 0, image = \"hpcc-scale5232-rhel810-v1\", filesystem = \"/gpfs/fs1\" }]",
+                    "type": "list(object({ profile = string, count = number, image = string, filesystem = optional(string) }))",
+                    "secure": false,
+                    "description": "Specify the list of virtual server instances to be provisioned as compute nodes in the cluster. Each object includes the instance profile (machine type), number of instances (count), OS image to use, and an optional filesystem mount path. This configuration allows customization of the compute tier to suit specific performance and workload requirements. The profile must match a valid IBM Cloud VPC Gen2 instance profile format. A minimum of 3 compute nodes is required to form a cluster, and a maximum of 64 nodes is supported. For more details, refer[Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
+                },
+                {
+                    "name": "client_instances",
+                    "value": "[{ profile = \"cx2-2x4\", count = 0, image = \"ibm-redhat-8-10-minimal-amd64-6\" }]",
+                    "type": "list(object({ profile = string, count = number, image = string }))",
+                    "secure": false,
+                    "description": "Specify the list of virtual server instances to be provisioned as client nodes in the cluster. Each object includes the instance profile (machine type), number of instances (count), OS image to use. This configuration allows customization of the compute tier to suit specific performance and workload requirements. The profile must match a valid IBM Cloud VPC Gen2 instance profile format. For more details, refer [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
+                },
+                {
+                    "name": "storage_instances",
+                    "value": "[{ profile = \"bx2d-32x128\", count = 2, image = \"hpcc-scale5232-rhel810-v1\", filesystem = \"/gpfs/fs1\" }]",
+                    "type": "list(object({ profile = string, count = number, image = string, filesystem = optional(string) }))",
+                    "secure": false,
+                    "description": "Specify the list of virtual server instances to be provisioned as storage nodes in the cluster. Each object includes the instance profile (machine type), number of instances (count), OS image to use, and an optional filesystem mount path. This configuration allows customization of the storage tier to suit specific storage performance cluster. The profile must match a valid IBM Cloud VPC Gen2 instance profile format. A minimum of 2 storage nodes is required to form a cluster, and a maximum of 64 nodes is supported. For more details, refer[Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
+                },
+                {
+                    "name": "storage_baremetal_server",
+                    "value": "[{ profile = \"cx2d-metal-96x192\", count = 2, image = \"hpcc-scale5232-rhel810-v1\", filesystem = \"/gpfs/fs1\" }]",
+                    "type": "list(object({ profile = string, count = number, image = string, filesystem = optional(string) }))",
+                    "secure": false,
+                    "description":  "Specify the list of bare metal servers to be provisioned for the storage cluster. Each object in the list specifies the server profile (hardware configuration), the count (number of servers), the image (OS image to use), and an optional filesystem mount path. This configuration allows flexibility in scaling and customizing the storage cluster based on performance and capacity requirements. Only valid bare metal profiles supported in IBM Cloud VPC should be used. A minimum of 2 baremetal storage nodes is required to form a cluster, and a maximum of 64 nodes is supported For available bare metal profiles, refer to the [Baremetal Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-profile&interface=ui)."
+                },
+                {
+                    "name": "tie_breaker_baremetal_server_profile",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Specify the bare metal server profile type name to be used for creating the bare metal Tie breaker node. If no value is provided, the storage bare metal server profile will be used as the default. For more information, see [bare metal server profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-profile&interface=ui). [Tie Breaker Node](https://www.ibm.com/docs/en/storage-scale/5.2.2?topic=quorum-node-tiebreaker-disks)"
+                },
+                {
+                    "name": "scale_management_vsi_profile",
+                    "value": "bx2-8x32",
+                    "type": "string",
+                    "secure": false,
+                    "description": "The virtual server instance profile type name to be used to create the Management node. For more information, see [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
+                },
+                {
+                    "name": "afm_instances",
+                    "value": "[{ profile = \"bx2d-32x128\", count = 0}]",
+                    "type": "list(object({ profile = string, count = number}))",
+                    "secure": false,
+                    "description": "Specify the list of virtual server instances to be provisioned as AFM nodes in the cluster. Each object in the list includes the instance profile (machine type), the count (number of instances), the image (OS image to use). This configuration allows you to access remote data  and high-performance computing needs.This input can be used to provision virtual server instances (VSI). If persistent, high-throughput storage is required, consider using bare metal instances instead. Ensure you provide valid instance profiles. Maximum of 16 afm nodes is supported. For more details, refer to [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
+                },
+                {
+                    "name": "protocol_instances",
+                    "value": "[{ profile = \"cx2-32x64\", count = 2}]",
+                    "type": "list(object({ profile = string, count = number}))",
+                    "secure": false,
+                    "description": "Specify the list of virtual server instances to be provisioned as protocol nodes in the cluster. Each object in the list includes the instance profile (machine type), the count (number of instances), the image (OS image to use). This configuration allows allows for a unified data management solution, enabling different clients to access the same data using NFS protocol.This input can be used to provision virtual server instances (VSI). If persistent, high-throughput storage is required, consider using bare metal instances instead. Ensure you provide valid instance profiles. Maximum of 32 VSI or baremetal nodes are supported. For more details, refer to [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
+                },
+                {
+                    "name": "colocate_protocol_instances",
+                    "value": "true",
+                    "type": "bool",
+                    "secure": false,
+                    "description": "Enable this option to colocate protocol services on the same virtual server instances used for storage. When set to true, the storage nodes will also act as protocol nodes for reducing the need for separate infrastructure. This can optimize resource usage and simplify the cluster setup, especially for smaller environments or cost-sensitive deployments. For larger or performance-intensive workloads, consider deploying dedicated protocol instances instead."
+                },
+                {
+                    "name": "storage_gui_username",
+                    "value": "",
+                    "type": "string",
+                    "secure": true,
+                    "description": "GUI username to perform system management and monitoring tasks on the storage cluster. Note: Username should be at least 4 characters, (any combination of lowercase and uppercase letters)."
+                },
+                {
+                    "name": "storage_gui_password",
+                    "value": "",
+                    "type": "string",
+                    "secure": true,
+                    "description": "The storage cluster GUI password is used for logging in to the storage cluster through the GUI. The password should contain a minimum of 8 characters. For a strong password, use a combination of uppercase and lowercase letters, one number, and a special character. Make sure that the password doesn't contain the username and it should not start with a special character."
+                },
+                {
+                    "name": "filesystem_config",
+                    "value": "[{ filesystem = \"/gpfs/fs1\", block_size = \"4M\", default_data_replica = 2, default_metadata_replica = 2, max_data_replica = 3, max_metadata_replica = 3 }]",
+                    "type": "list(object({ filesystem = string, block_size = string, default_data_replica = number, default_metadata_replica = number, max_data_replica = number, max_metadata_replica = number }))",
+                    "secure": false,
+                    "description": "Specify the configuration parameters for one or more IBM Storage Scale (GPFS) filesystems. Each object in the list includes the filesystem mount point, block size, and replica settings for both data and metadata. These settings determine how data is distributed and replicated across the cluster for performance and fault tolerance."
+                },
+                {
+                    "name": "filesets_config",
+                    "value": "[{ client_mount_path = \"/mnt/scale/tools\", quota = 0 } , { client_mount_path = \"/mnt/scale/data\", quota = 0 }]",
+                    "type": "list(object({ client_mount_path = string, quota = number}))",
+                    "secure": false,
+                    "description": "Specify a list of filesets with client mount paths and optional storage quotas (0 means no quota) to be created within the IBM Storage Scale filesystem.."
+                },
+                {
+                    "name": "afm_cos_config",
+                    "value": "[{ afm_fileset = \"afm_fileset\", mode = \"iw\", cos_instance = \"\", bucket_name = \"\", bucket_region = \"us-south\", cos_service_cred_key = \"\", bucket_storage_class = \"smart\", bucket_type = \"region_location\" }]",
+                    "type": "list(object({afm_fileset = string, mode = string, cos_instance = string, bucket_name = string, bucket_region = string, cos_service_cred_key = string, bucket_type = string, bucket_storage_class = string }))",
+                    "secure": false,
+                    "description": "Please provide details for the Cloud Object Storage (COS) instance, including information about the COS bucket, service credentials (HMAC key), AFM fileset, mode (such as Read-only (RO), Single writer (SW), Local updates (LU), and Independent writer (IW)), storage class (standard, vault, cold, or smart), and bucket type (single_site_location, region_location, cross_region_location). Note : The 'afm_cos_config' can contain up to 5 entries. For further details on COS bucket locations, refer to the relevant documentation https://cloud.ibm.com/docs/cloud-object-storage/basics?topic=cloud-object-storage-endpoints."
+                },
+                {
+                    "name": "dns_instance_id",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Specify the ID of an existing IBM Cloud DNS service instance. When provided, domain names are created within the specified instance. If set to null, a new DNS service instance is created, and the required DNS zones are associated with it."
+                },
+                {
+                    "name": "dns_custom_resolver_id",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Specify the ID of an existing IBM Cloud DNS custom resolver to avoid creating a new one. If set to null, a new custom resolver will be created and associated with the VPC. Note: A VPC can be associated with only one custom resolver. When using an existing VPC, if a custom resolver is already associated and this ID is not provided, the deployment will fail."
+                },
+                {
+                    "name": "dns_domain_names",
+                    "value": "{ compute = \"comp.com\", storage = \"strg.com\", protocol = \"ces.com\", client = \"clnt.com\", gklm = \"gklm.com\"}",
+                    "type": "object({ compute = string, storage = string, protocol = string, client = string, gklm = string })",
+                    "secure": false,
+                    "description": "DNS domain names are user-friendly addresses that map to systems within a network, making them easier to identify and access. Provide the DNS domain names for IBM Cloud HPC components: compute, storage, protocol, client, and GKLM. These domains will be assigned to the respective nodes that are part of the scale cluster."
+                },
+                {
+                    "name": "enable_cos_integration",
+                    "value": "true",
+                    "type": "bool",
+                    "secure": false,
+                    "description": "Set to true to create an extra cos bucket to integrate with scale cluster deployment."
+                },
+                {
+                    "name": "cos_instance_name",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide the name of the existing COS instance where the logs for the enabled functionalities will be stored."
+                },
+                {
+                    "name": "enable_vpc_flow_logs",
+                    "value": "true",
+                    "type": "bool",
+                    "secure": false,
+                    "description": "This flag determines whether VPC flow logs are enabled. When set to true, a flow log collector will be created to capture and monitor network traffic data within the VPC. Enabling flow logs provides valuable insights for troubleshooting, performance monitoring, and security auditing by recording information about the traffic passing through your VPC. Consider enabling this feature to enhance visibility and maintain robust network management practices."
+                },
+                {
+                    "name": "override",
+                    "value": "false",
+                    "type": "bool",
+                    "secure": false,
+                    "description": "Override default values with custom JSON template. This uses the file `override.json` to allow users to create a fully customized environment."
+                },
+                {
+                    "name": "override_json_string",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Override default values with a JSON object. Any JSON other than an empty string overrides other configuration changes."
+                },
+                {
+                    "name": "enable_ldap",
+                    "value": "false",
+                    "type": "bool",
+                    "secure": false,
+                    "description": "Set this option to true to enable LDAP for IBM Spectrum Scale (GPFS), with the default value set to false."
+                },
+                {
+                    "name": "ldap_basedns",
+                    "value": "ldapscale.com",
+                    "type": "string",
+                    "secure": false,
+                    "description": "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."
+                },
+                {
+                    "name": "ldap_server",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
+                },
+                {
+                    "name": "ldap_server_cert",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": true,
+                    "description": "Provide the existing LDAP server certificate. This value is required if the 'ldap_server' variable is not set to null. If the certificate is not provided or is invalid, the LDAP configuration may fail. For more information on how to create or obtain the certificate, please refer [existing LDAP server certificate](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-integrating-openldap)."
+                },
+                {
+                    "name": "ldap_admin_password",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": true,
+                    "description": "The LDAP admin password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces. [This value is ignored for an existing LDAP server]."
+                },
+                {
+                    "name": "ldap_user_name",
+                    "value": "",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Custom LDAP User for performing cluster operations. Note: Username should be between 4 to 32 characters, (any combination of lowercase and uppercase letters).[This value is ignored for an existing LDAP server]"
+                },
+                {
+                    "name": "ldap_user_password",
+                    "value": "",
+                    "type": "string",
+                    "secure": true,
+                    "description": "The LDAP user password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one numeric digit, and at least one special character from the set (!@#$%^&*()_+=-). Spaces are not allowed. The password must not contain the username for enhanced security. [This value is ignored for an existing LDAP server]."
+                },
+                {
+                    "name": "ldap_instance",
+                    "value": "[{ profile = \"cx2-2x4\", image = \"ibm-ubuntu-22-04-5-minimal-amd64-1\" }]",
+                    "type": "list(object({ profile = string, image = string }))",
+                    "secure": false,
+                    "description": "Specify the list of virtual server instances to be provisioned as ldap nodes in the cluster. Each object in the list defines the instance profile (machine type), the count (number of instances), the image (OS image to use). This configuration allows you to customize the server for setting up ldap server. The profile must match a valid IBM Cloud VPC Gen2 instance profile format. For more details, refer [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
+                },
+                {
+                    "name": "scale_encryption_enabled",
+                    "value": "false",
+                    "type": "bool",
+                    "secure": false,
+                    "description": "Encryption ensures that data stored in the filesystem is protected from unauthorized access and secures sensitive information at rest. To enable the encryption for the filesystem. Select true or false"
+                },
+                {
+                    "name": "scale_encryption_type",
+                    "value": "null",
+                    "type": "string",
+                    "secure": false,
+                    "description": "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled"
+                },
+                {
+                    "name": "gklm_instances",
+                    "value": "[{ profile = \"bx2-2x8\", count = 2, image = \"hpcc-scale-gklm4202-v2-5-3\" }]",
+                    "type": "list(object({ profile = string, count = number, image = string }))",
+                    "secure": false,
+                    "description": "Specify the list of virtual server instances to be provisioned as GKLM (Guardium Key Lifecycle Manager) nodes in the cluster. Each object in the list includes the instance profile (machine type), the count (number of instances), and the image (OS image to use).  This configuration allows you to  manage and securely store encryption keys used across the cluster components. The profile must match a valid IBM Cloud VPC Gen2 instance profile format. A minimum of 2 and maximum of 5 gklm nodes are supported. For more details, refer[Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
+                },
+                {
+                    "name": "scale_encryption_admin_password",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": true,
+                    "description": "Specifies the administrator password for GKLM-based encryption. This is required when encryption is enabled for IBM Spectrum Scale (GPFS) and the encryption type is set to 'gklm'. The password is used to authenticate administrative access to the Guardium Key Lifecycle Manager (GKLM) for managing encryption keys. Ensure the password meets your organization's security standards."
+                },
+                {
+                    "name": "key_protect_instance_id",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide the ID of an existing IBM Key Protect instance to be used for filesystem encryption in IBM Storage Scale. If this value is provided, the automation will use the existing Key Protect instance and create a new encryption key within it. If not provided, a new Key Protect instance will be created automatically during deployment."
+                },
+                {
+                    "name": "storage_type",
+                    "value": "scratch",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Select the Storage Scale file system deployment method. Note: The Storage Scale scratch and evaluation type deploys the Storage Scale file system on virtual server instances, and the persistent type deploys the Storage Scale file system on bare metal servers."
+                },
+                {
+                    "name": "observability_atracker_enable",
+                    "value": "false",
+                    "type": "bool",
+                    "secure": false,
+                    "description": "Activity Tracker Event Routing to configure how to route auditing events. While multiple Activity Tracker instances can be created, only one tracker is needed to capture all events. Creating additional trackers is unnecessary if an existing Activity Tracker is already integrated with a COS bucket. In such cases, set the value to false, as all events can be monitored and accessed through the existing Activity Tracker."
+                },
+                {
+                    "name": "observability_atracker_target_type",
+                    "value": "cloudlogs",
+                    "type": "string",
+                    "secure": false,
+                    "description": "All the events will be stored in either COS bucket or Cloud Logs on the basis of user input, so customers can retrieve or ingest them in their system."
+                },
+                {
+                    "name": "sccwp_service_plan",
+                    "value": "free-trial",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Specify the plan type for the Security and Compliance Center (SCC) Workload Protection instance. Valid values are free-trial and graduated-tier only."
+                },
+                {
+                    "name": "sccwp_enable",
+                    "value": "false",
+                    "type": "bool",
+                    "secure": false,
+                    "description": "Set this flag to true to create an instance of IBM Security and Compliance Center (SCC) Workload Protection. When enabled, it provides tools to discover and prioritize vulnerabilities, monitor for security threats, and enforce configuration, permission, and compliance policies across the full lifecycle of your workloads. To view the data on the dashboard, enable the cspm to create the app configuration and required trusted profile policies.[Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
+                },
+                {
+                    "name": "cspm_enabled",
+                    "value": "true",
+                    "type": "bool",
+                    "secure": false,
+                    "description": "CSPM (Cloud Security Posture Management) is a set of tools and practices that continuously monitor and secure cloud infrastructure. When enabled, it creates a trusted profile with viewer access to the App Configuration and Enterprise services for the SCC Workload Protection instance. Make sure the required IAM permissions are in place, as missing permissions will cause deployment to fail. If CSPM is disabled, dashboard data will not be available.[Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
+                },
+                {
+                    "name": "app_config_plan",
+                    "value": "basic",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Specify the IBM service pricing plan for the app configuration. Allowed values are 'basic', 'lite', 'standardv2', 'enterprise'."
+                },
+                {
+                    "name": "skip_flowlogs_s2s_auth_policy",
+                    "value": "false",
+                    "type": "bool",
+                    "secure": false,
+                    "description": "Skip auth policy between flow logs service and COS instance, set to true if this policy is already in place on account."
+                },
+                {
+                    "name": "existing_bastion_instance_name",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide the name of the bastion instance. If none given then new bastion will be created."
+                },
+                {
+                    "name": "existing_bastion_instance_public_ip",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description":  "Provide the public ip address of the bastion instance to establish the remote connection."
+                },
+                {
+                    "name": "existing_bastion_security_group_id",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Specify the security group ID for the bastion server. This ID will be added as an allowlist rule on the HPC cluster nodes to facilitate secure SSH connections through the bastion node. By restricting access through a bastion server, this setup enhances security by controlling and monitoring entry points into the cluster environment. Ensure that the specified security group is correctly configured to permit only authorized traffic for secure and efficient management of cluster resources."
+                },
+                {
+                    "name": "existing_bastion_ssh_private_key",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": true,
+                    "description": "Provide the private SSH key (named id_rsa) used during the creation and configuration of the bastion server to securely authenticate and connect to the bastion server. This allows access to internal network resources from a secure entry point. Note: The corresponding public SSH key (named id_rsa.pub) must already be available in the ~/.ssh/authorized_keys file on the bastion host to establish authentication."
+                },
+                {
+                    "name": "bms_boot_drive_encryption",
+                    "value": "false",
+                    "type": "bool",
+                    "secure": false,
+                    "description": "Enable or disable encryption for the boot drive of bare metal servers. When set to true, the boot drive will be encrypted to enhance data security, protecting the operating system and any sensitive information stored on the root volume. This is especially recommended for workloads with strict compliance or security requirements. Set to false to disable boot drive encryption."
+                },
+                {
+                    "name": "enable_sg_validation",
+                    "value": "true",
+                    "type": "bool",
+                    "secure": false,
+                    "description": "Enable or disable security group validation. Security group validation ensures that the specified security groups are properly assigned"
+                },
+                {
+                    "name": "login_security_group_name",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide the existing security group name to provision the bastion node. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the bastion node to function properly."
+                },
+                {
+                    "name": "storage_security_group_name",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide the security group name to provision the storage nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the storage nodes to function properly. When using existing security groups, you must provide the corresponding group names for all other associated components as well."
+                },
+                {
+                    "name": "compute_security_group_name",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide the security group name to provision the compute nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the storage nodes to function properly. When using existing security groups, you must provide the corresponding group names for all other associated components as well"
+                },
+                {
+                    "name": "client_security_group_name",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide the security group name to provision the client nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the storage nodes to function properly. When using existing security groups, you must provide the corresponding group names for all other associated components as well"
+                },
+                {
+                    "name": "gklm_security_group_name",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide the security group name to provision the gklm nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the storage nodes to function properly. When using existing security groups, you must provide the corresponding group names for all other associated components as well"
+                },
+                {
+                    "name": "ldap_security_group_name",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide the security group name to provision the ldap nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the storage nodes to function properly. When using existing security groups, you must provide the corresponding group names for all other associated components as well"
+                },
+                {
+                    "name": "login_subnet_id",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide ID of an existing subnet to be used for provisioning bastion/deployer node. This is required only when deploying into an existing VPC (i.e., when a value is provided for `vpc_name`). When specifying an existing subnet, ensure that a public gateway is attached to the subnet to enable outbound internet access if required. Additionally, if this subnet ID is provided, you must also provide subnet IDs for all other applicable components (e.g., storage , compute, client, protocol, gklm) to maintain consistency across the deployment."
+                },
+                {
+                    "name": "compute_subnet_id",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide ID of an existing subnet to be used for provisioning compute nodes. This is required only when deploying into an existing VPC (i.e., when a value is provided for `vpc_name`). When specifying an existing subnet, ensure that a public gateway is attached to the subnet to enable outbound internet access if required. Additionally, if this subnet ID is provided, you must also provide subnet IDs for all other applicable components (e.g., storage , protocol, client, login, gklm) to maintain consistency across the deployment."
+                },
+                {
+                    "name": "storage_subnet_id",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide ID of an existing subnet to be used for storage nodes. This is required only when deploying into an existing VPC (i.e., when a value is provided for `vpc_name`). When specifying an existing subnet, ensure that a public gateway is attached to the subnet to enable outbound internet access if required. Additionally, if this subnet ID is provided, you must also provide subnet IDs for all other applicable components (e.g., compute , protocol, client, login, gklm) to maintain consistency across the deployment."
+                },
+                {
+                    "name": "protocol_subnet_id",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide ID of an existing subnet to be used for protocol nodes. This is required only when deploying into an existing VPC (i.e., when a value is provided for `vpc_name`). When specifying an existing subnet, ensure that a public gateway is attached to the subnet to enable outbound internet access if required. Additionally, if this subnet ID is provided, you must also provide subnet IDs for all other applicable components (e.g., storage , compute, client, login, gklm) to maintain consistency across the deployment."
+                },
+                {
+                    "name": "client_subnet_id",
+                    "value": "__NULL__",
+                    "type": "string",
+                    "secure": false,
+                    "description": "Provide ID of an existing subnet to be used for client nodes. This is required only when deploying into an existing VPC (i.e., when a value is provided for `vpc_name`). When specifying an existing subnet, ensure that a public gateway is attached to the subnet to enable outbound internet access if required. Additionally, if this subnet ID is provided, you must also provide subnet IDs for all other applicable components (e.g., storage , compute, protocol, login, gklm) to maintain consistency across the deployment."
+                },
+                {
+                    "name": "TF_VERSION",
+                    "value": "1.9",
+                    "type": "string",
+                    "secure": false,
+                    "description": "The version of the Terraform engine that's used in the Schematics workspace."
+                },
+                {
+                    "name": "TF_PARALLELISM",
+                    "value": "250",
+                    "type": "string",
+                    "secure": false,
+                    "description":  "Parallelism/ concurrent operations limit. Valid values are between 1 and 256, both inclusive. [Learn more](https://www.terraform.io/docs/internals/graph.html#walking-the-graph)."
+                }
+            ]
+        }
+    ]
+}
