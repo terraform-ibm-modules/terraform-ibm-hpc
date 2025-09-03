@@ -11,9 +11,9 @@ variable "ibm_customer_number" {
   validation {
     condition = (
       var.ibm_customer_number == null ||
-      can(regex("^[0-9A-Za-z]+(,[0-9A-Za-z]+)*$", var.ibm_customer_number))
+      can(regex("^[0-9]+(,[0-9]+)*$", var.ibm_customer_number))
     )
-    error_message = "The IBM customer number must be a comma-separated list of alphanumeric values with no special characters."
+    error_message = "The IBM customer number must be a comma-separated list of numeric values with no alphabets and special characters."
   }
 
   # Presence validation - Must be set when storage_type is not evaluation
@@ -69,7 +69,8 @@ variable "remote_allowed_ips" {
   }
   validation {
     condition = alltrue([
-      for a in var.remote_allowed_ips : can(regex("^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(/(3[0-2]|2[0-9]|1[0-9]|[0-9]))?$", a))
+      for a in var.remote_allowed_ips : can(regex("^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])(/(3[0-2]|2[0-9]|1[0-9]|[0-9]))?$", a))
+
     ])
     error_message = "The provided IP address format is not valid. Check if the IP address contains a comma instead of a dot, and ensure there are double quotation marks between each IP address range if using multiple IP ranges. For multiple IP address, use the format [\"169.45.117.34\",\"128.122.144.145\"]."
   }
@@ -80,11 +81,11 @@ variable "cluster_prefix" {
   default     = "scale"
   description = "Prefix that is used to name the IBM Cloud resources that are provisioned to build the Storage Scale cluster. Make sure that the prefix is unique, since you cannot create multiple resources with the same name. The maximum length of supported characters is 64. Preifx must begin with a letter and end with a letter or number."
   validation {
-    error_message = "Prefix must begin and end with a letter and contain only letters, numbers, and - characters."
+    error_message = "Prefix must begin with a lower case letter, should not end with '-' and contain only lower case letters, numbers, and '-' characters."
     condition     = can(regex("^[a-z](?:[a-z0-9]*(-[a-z0-9]+)*)?$", var.cluster_prefix))
   }
   validation {
-    condition     = length(trimspace(var.cluster_prefix)) > 0 && length(var.cluster_prefix) <= 64
+    condition     = length(trimspace(var.cluster_prefix)) > 0 && length(var.cluster_prefix) <= 16
     error_message = "The cluster_prefix must be 64 characters or fewer. No spaces allowed. "
   }
 }
@@ -156,7 +157,7 @@ variable "deployer_instance" {
   }
   validation {
     condition     = can(regex("^(b|c|m)x[0-9]+d?-[0-9]+x[0-9]+$", var.deployer_instance.profile))
-    error_message = "The profile must be a valid virtual server instance profile."
+    error_message = "The profile must be a valid virtual server instance profile and must be from the Balanced, Compute, Memory Categories"
   }
   description = "A deployer node is a dedicated virtual machine or server instance used to automate the deployment and configuration of infrastructure and applications for HPC cluster components. Specify the configuration for the deployer node, including the custom image and virtual server instance profile."
 }
@@ -169,7 +170,22 @@ variable "login_subnets_cidr" {
   default     = "10.241.16.0/28"
   description = "Provide the CIDR block required for the creation of the login cluster private subnet. Single CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Since the login subnet is used only for the creation of login virtual server instances, provide a CIDR range of /28."
   validation {
-    condition     = tonumber(regex("^.*?/(\\d+)$", var.login_subnets_cidr)[0]) <= 28
+    condition = (
+      can(
+        regex(
+          "^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])/(3[0-2]|[12]?[0-9])$", trimspace(var.login_subnets_cidr)
+        )
+      )
+    )
+    error_message = "login_node_cidr must be a valid IPv4 CIDR (e.g., 192.168.1.0/28)."
+  }
+
+  validation {
+      condition = can(
+      regex(
+        "^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])/(2[8-9]|3[0-2])$",  trimspace(var.login_subnets_cidr)
+      )
+    )
     error_message = "This subnet is used to create only a login virtual server instance. Providing a larger CIDR size will waste the usage of available IPs. A CIDR range of /28 is sufficient for the creation of the login subnet."
   }
 }
@@ -204,8 +220,14 @@ variable "compute_gui_username" {
   sensitive   = true
   description = "GUI username to perform system management and monitoring tasks on the compute cluster. The Username should be at least 4 characters, (any combination of lowercase and uppercase letters)."
   validation {
-    condition     = sum([for inst in var.compute_instances : inst.count]) == 0 || (length(var.compute_gui_username) >= 4 && length(var.compute_gui_username) <= 32 && trimspace(var.compute_gui_username) != "")
-    error_message = "Specified input for \"compute_gui_username\" is not valid. Username should be greater or equal to 4 letters and less than equal to 32."
+    condition     = sum([for inst in var.compute_instances : inst.count]) == 0 || (length(var.compute_gui_username) >= 4 && length(var.compute_gui_username) <= 30 && trimspace(var.compute_gui_username) != "" )
+    error_message = "Specified input for \"compute_gui_username\" is not valid. Username should be greater or equal to 4 letters and less than equal to 30."
+  }
+  validation {
+    # Structural check
+    condition = can(regex("^[A-Za-z0-9]([._]?[A-Za-z0-9])*$", var.compute_gui_username))
+
+    error_message = "Specified input for \"compute_gui_username\" is not valid. Username should only have alphanumerics, dot(.) and underscore(_). No consecutive dots or underscores"
   }
 }
 
@@ -244,7 +266,7 @@ variable "compute_instances" {
     condition = alltrue([
       for inst in var.compute_instances : can(regex("^(b|c|m)x[0-9]+d?-[0-9]+x[0-9]+$", inst.profile))
     ])
-    error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
+    error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name and must be from the Balanced, Compute, Memory Categories [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
   }
   validation {
     condition = alltrue([
@@ -272,13 +294,13 @@ variable "client_instances" {
     condition = alltrue([
       for inst in var.client_instances : can(regex("^(b|c|m)x[0-9]+d?-[0-9]+x[0-9]+$", inst.profile))
     ])
-    error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name (e.g., bx2-4x16, cx2d-16x64). [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)"
+    error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name and must be from the Balanced, Compute, Memory Categories (e.g., bx2-4x16, cx2d-16x64). [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)"
   }
   validation {
     condition = alltrue([
       for inst in var.client_instances : inst.count >= 0 && inst.count <= 2000
     ])
-    error_message = "Each 'count' value must be between 2 and 64."
+    error_message = "client_instances 'count' value must be between 0 and 2000."
   }
 
   description = "Specify the list of virtual server instances to be provisioned as client nodes in the cluster. Each object includes the instance profile (machine type), number of instances (count), OS image to use. This configuration allows customization of the compute tier to suit specific performance and workload requirements. The profile must match a valid IBM Cloud VPC Gen2 instance profile format. For more details, refer [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
@@ -301,9 +323,9 @@ variable "storage_instances" {
   }]
   validation {
     condition = alltrue([
-      for inst in var.storage_instances : can(regex("^(b|c|m)x[0-9]+d(-[a-z]+)?-[0-9]+x[0-9]+$", inst.profile))
+      for inst in var.storage_instances : can(regex("^(b|c|m)x[0-9]+d-[0-9]+x[0-9]+$", inst.profile))
     ])
-    error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name (e.g., bx2-4x16, cx2d-16x64). [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)"
+    error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name and must be from the Balanced, Compute, Memory Categories (e.g., bx2d-4x16, cx2d-16x64). [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)"
   }
   validation {
     condition = alltrue([
@@ -315,7 +337,7 @@ variable "storage_instances" {
     condition = alltrue([
       for inst in var.storage_instances : inst.count >= 2 && inst.count <= 64
     ])
-    error_message = "Each 'count' value must be in range 2 to 64."
+    error_message = "storage_instances 'count' value must be in range 2 to 64."
   }
   description = "Specify the list of virtual server instances to be provisioned as storage nodes in the cluster. Each object includes the instance profile (machine type), number of instances (count), OS image to use, and an optional filesystem mount path. This configuration allows customization of the storage tier to suit specific storage performance cluster. The profile must match a valid IBM Cloud VPC Gen2 instance profile format. A minimum of 2 storage nodes is required to form a cluster, and a maximum of 64 nodes is supported. For more details, refer[Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
 }
@@ -348,7 +370,7 @@ variable "storage_baremetal_server" {
     condition = var.storage_type == "persistent" ? alltrue([
       for inst in var.storage_baremetal_server : inst.count >= 2 && inst.count <= 64
     ]) : true
-    error_message = "Each 'count' value must be between 2 and 64."
+    error_message = "Each storage_baremetal_server 'count' value must be between 2 and 64."
   }
 
   description = "Specify the list of bare metal servers to be provisioned for the storage cluster. Each object in the list specifies the server profile (hardware configuration), the count (number of servers), the image (OS image to use), and an optional filesystem mount path. This configuration allows flexibility in scaling and customizing the storage cluster based on performance and capacity requirements. Only valid bare metal profiles supported in IBM Cloud VPC should be used. A minimum of 2 baremetal storage nodes is required to form a cluster, and a maximum of 64 nodes is supported For available bare metal profiles, refer to the [Baremetal Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-profile&interface=ui)."
@@ -383,15 +405,15 @@ variable "afm_instances" {
   }]
   validation {
     condition = alltrue([
-      for inst in var.afm_instances : can(regex("^[bcm]x[0-9]+d(-[a-z]+)?-[0-9]+x[0-9]+$", inst.profile))
+      for inst in var.afm_instances : can(regex("^[bcm]x[0-9]+d?-[0-9]+x[0-9]+$", inst.profile))
     ])
-    error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
+    error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name and must be from the Balanced, Compute, Memory Categories [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
   }
   validation {
     condition = alltrue([
       for inst in var.afm_instances : inst.count >= 0 && inst.count <= 16
     ])
-    error_message = "Each 'count' value must be between 0 and 16."
+    error_message = "afm_instances 'count' value must be between 0 and 16."
   }
   description = "Specify the list of virtual server instances to be provisioned as AFM nodes in the cluster. Each object in the list includes the instance profile (machine type), the count (number of instances), the image (OS image to use). This configuration allows you to access remote data  and high-performance computing needs.This input can be used to provision virtual server instances (VSI). If persistent, high-throughput storage is required, consider using bare metal instances instead. Ensure you provide valid instance profiles. Maximum of 16 afm nodes is supported. For more details, refer to [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
 }
@@ -418,7 +440,7 @@ variable "protocol_instances" {
     condition = alltrue([
       for inst in var.protocol_instances : inst.count >= 0 && inst.count <= 32
     ])
-    error_message = "Each 'count' value must be between 0 and 32."
+    error_message = "protocol_instances 'count' value must be between 0 and 32."
   }
   description = "Specify the list of virtual server instances to be provisioned as protocol nodes in the cluster. Each object in the list includes the instance profile (machine type), the count (number of instances), the image (OS image to use). This configuration allows allows for a unified data management solution, enabling different clients to access the same data using NFS protocol.This input can be used to provision virtual server instances (VSI). If persistent, high-throughput storage is required, consider using bare metal instances instead. Ensure you provide valid instance profiles. Maximum of 32 VSI or baremetal nodes are supported. For more details, refer to [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
 }
@@ -439,8 +461,14 @@ variable "storage_gui_username" {
   sensitive   = true
   description = "GUI username to perform system management and monitoring tasks on the storage cluster. Note: Username should be at least 4 characters, (any combination of lowercase and uppercase letters)."
   validation {
-    condition     = (length(var.storage_gui_username) >= 4 && length(var.storage_gui_username) <= 32)
-    error_message = "Specified input for \"storage_cluster_gui_username\" is not valid. Username should be greater or equal to 4 letters and less that or equal to 32."
+    condition     = length(var.storage_gui_username) >= 4 && length(var.storage_gui_username) <= 30 && trimspace(var.storage_gui_username) != "" 
+    error_message = "Specified input for \"storage_gui_username\" is not valid. Username should be greater or equal to 4 letters and less than equal to 30."
+  }
+  validation {
+    # Structural check
+    condition = can(regex("^[A-Za-z0-9]([._]?[A-Za-z0-9])*$", var.storage_gui_username))
+
+    error_message = "Specified input for \"storage_gui_username\" is not valid. Username should only have alphanumerics, dot(.) and underscore(_). No consecutive dots or underscores"
   }
 }
 
@@ -679,7 +707,21 @@ variable "ldap_admin_password" {
   default     = null
   description = "The LDAP admin password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces. [This value is ignored for an existing LDAP server]."
   validation {
-    condition     = (!var.enable_ldap || var.ldap_server != null || (var.ldap_admin_password != null && length(var.ldap_admin_password) >= 8 && length(var.ldap_admin_password) <= 20 && can(regex(".*[0-9].*", var.ldap_admin_password)) && regex(".*[0-9].*", var.ldap_admin_password) != "" && can(regex(".*[A-Z].*", var.ldap_admin_password)) && regex(".*[A-Z].*", var.ldap_admin_password) != "" && can(regex(".*[a-z].*", var.ldap_admin_password)) && regex(".*[a-z].*", var.ldap_admin_password) != "" && can(regex(".*[!@#$%^&*()_+=-].*", var.ldap_admin_password)) && regex(".*[!@#$%^&*()_+=-].*", var.ldap_admin_password) != "" && (can(regex(".*\\s.*", var.ldap_admin_password)) ? regex(".*\\s.*", var.ldap_admin_password) == "" : true)))
+    condition = (
+      var.enable_ldap ? (
+        var.ldap_server == null ? (
+          var.ldap_admin_password != null ? (
+            try(length(var.ldap_admin_password)) >= 8 &&
+            try(length(var.ldap_admin_password)) <= 20 &&
+            try(can(regex(".*[0-9].*", var.ldap_admin_password)), false) && 
+            try(can(regex(".*[A-Z].*", var.ldap_admin_password)), false) && 
+            try(can(regex(".*[a-z].*", var.ldap_admin_password)), false) && 
+            try(can(regex(".*[!@#$%^&*()_+=-].*", var.ldap_admin_password)), false) && 
+            !try(can(regex(".*\\s.*", var.ldap_admin_password)), false)
+          ) : false
+        ) : true
+      ) : true
+    )
     error_message = "The LDAP admin password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain any spaces."
   }
 }
