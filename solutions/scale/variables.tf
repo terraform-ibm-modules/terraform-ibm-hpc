@@ -225,7 +225,7 @@ variable "compute_gui_username" {
   }
   validation {
     # Structural check
-    condition = can(regex("^[A-Za-z0-9]([._]?[A-Za-z0-9])*$", var.compute_gui_username))
+    condition = sum([for inst in var.compute_instances : inst.count]) == 0 || can(regex("^[A-Za-z0-9]([._]?[A-Za-z0-9])*$", var.compute_gui_username))
 
     error_message = "Specified input for \"compute_gui_username\" is not valid. Username should only have alphanumerics, dot(.) and underscore(_). No consecutive dots or underscores"
   }
