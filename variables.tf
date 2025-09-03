@@ -133,9 +133,9 @@ variable "vpc_cluster_login_private_subnets_cidr_blocks" {
   default     = "10.241.16.0/28"
   description = "Provide the CIDR block required for the creation of the login cluster's private subnet. Only one CIDR block is needed. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Since the login subnet is used only for the creation of login virtual server instances, provide a CIDR range of /28."
   validation {
-      condition = can(
+    condition = can(
       regex(
-        "^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])/(2[8-9]|3[0-2])$",  trimspace(var.vpc_cluster_login_private_subnets_cidr_blocks)
+        "^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])/(2[8-9]|3[0-2])$", trimspace(var.vpc_cluster_login_private_subnets_cidr_blocks)
       )
     )
     error_message = "This subnet is used to create only a login virtual server instance. Providing a larger CIDR size will waste the usage of available IPs. A CIDR range of /28 is sufficient for the creation of the login subnet."

@@ -181,9 +181,9 @@ variable "login_subnets_cidr" {
   }
 
   validation {
-      condition = can(
+    condition = can(
       regex(
-        "^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])/(2[8-9]|3[0-2])$",  trimspace(var.login_subnets_cidr)
+        "^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])/(2[8-9]|3[0-2])$", trimspace(var.login_subnets_cidr)
       )
     )
     error_message = "This subnet is used to create only a login virtual server instance. Providing a larger CIDR size will waste the usage of available IPs. A CIDR range of /28 is sufficient for the creation of the login subnet."
@@ -220,7 +220,7 @@ variable "compute_gui_username" {
   sensitive   = true
   description = "GUI username to perform system management and monitoring tasks on the compute cluster. The Username should be at least 4 characters, (any combination of lowercase and uppercase letters)."
   validation {
-    condition     = sum([for inst in var.compute_instances : inst.count]) == 0 || (length(var.compute_gui_username) >= 4 && length(var.compute_gui_username) <= 30 && trimspace(var.compute_gui_username) != "" )
+    condition     = sum([for inst in var.compute_instances : inst.count]) == 0 || (length(var.compute_gui_username) >= 4 && length(var.compute_gui_username) <= 30 && trimspace(var.compute_gui_username) != "")
     error_message = "Specified input for \"compute_gui_username\" is not valid. Username should be greater or equal to 4 letters and less than equal to 30."
   }
   validation {
@@ -461,7 +461,7 @@ variable "storage_gui_username" {
   sensitive   = true
   description = "GUI username to perform system management and monitoring tasks on the storage cluster. Note: Username should be at least 4 characters, (any combination of lowercase and uppercase letters)."
   validation {
-    condition     = length(var.storage_gui_username) >= 4 && length(var.storage_gui_username) <= 30 && trimspace(var.storage_gui_username) != "" 
+    condition     = length(var.storage_gui_username) >= 4 && length(var.storage_gui_username) <= 30 && trimspace(var.storage_gui_username) != ""
     error_message = "Specified input for \"storage_gui_username\" is not valid. Username should be greater or equal to 4 letters and less than equal to 30."
   }
   validation {
@@ -713,10 +713,10 @@ variable "ldap_admin_password" {
           var.ldap_admin_password != null ? (
             try(length(var.ldap_admin_password)) >= 8 &&
             try(length(var.ldap_admin_password)) <= 20 &&
-            try(can(regex(".*[0-9].*", var.ldap_admin_password)), false) && 
-            try(can(regex(".*[A-Z].*", var.ldap_admin_password)), false) && 
-            try(can(regex(".*[a-z].*", var.ldap_admin_password)), false) && 
-            try(can(regex(".*[!@#$%^&*()_+=-].*", var.ldap_admin_password)), false) && 
+            try(can(regex(".*[0-9].*", var.ldap_admin_password)), false) &&
+            try(can(regex(".*[A-Z].*", var.ldap_admin_password)), false) &&
+            try(can(regex(".*[a-z].*", var.ldap_admin_password)), false) &&
+            try(can(regex(".*[!@#$%^&*()_+=-].*", var.ldap_admin_password)), false) &&
             !try(can(regex(".*\\s.*", var.ldap_admin_password)), false)
           ) : false
         ) : true
