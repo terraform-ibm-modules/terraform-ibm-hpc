@@ -23,7 +23,7 @@ locals {
     ssh_keys                                      = var.ssh_keys
     vpc_cluster_login_private_subnets_cidr_blocks = var.vpc_cluster_login_private_subnets_cidr_blocks
     vpc_cluster_private_subnets_cidr_blocks       = var.vpc_cluster_private_subnets_cidr_blocks
-    cluster_subnet_id                             = var.cluster_subnet_id
+    compute_subnet_id                             = var.compute_subnet_id
     cos_instance_name                             = var.cos_instance_name
     dns_custom_resolver_id                        = var.dns_custom_resolver_id
     dns_instance_id                               = var.dns_instance_id
@@ -95,7 +95,7 @@ locals {
     vpc_cluster_login_private_subnets_cidr_blocks = lookup(local.override[local.override_type], "vpc_cluster_login_private_subnets_cidr_blocks", local.config.vpc_cluster_login_private_subnets_cidr_blocks)
     login_subnet_id                               = lookup(local.override[local.override_type], "login_subnet_id", local.config.login_subnet_id)
     vpc_cluster_private_subnets_cidr_blocks       = lookup(local.override[local.override_type], "vpc_cluster_private_subnets_cidr_blocks", local.config.vpc_cluster_private_subnets_cidr_blocks)
-    cluster_subnet_id                             = lookup(local.override[local.override_type], "cluster_subnet_id", local.config.cluster_subnet_id)
+    compute_subnet_id                             = lookup(local.override[local.override_type], "compute_subnet_id", local.config.compute_subnet_id)
     cos_instance_name                             = lookup(local.override[local.override_type], "cos_instance_name", local.config.cos_instance_name)
     dns_custom_resolver_id                        = lookup(local.override[local.override_type], "dns_custom_resolver_id", local.config.dns_custom_resolver_id)
     dns_instance_id                               = lookup(local.override[local.override_type], "dns_instance_id", local.config.dns_instance_id)

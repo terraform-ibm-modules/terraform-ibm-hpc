@@ -209,6 +209,21 @@ LSF_GPU_AUTOCONFIG=Y
 LSB_GPU_NEW_SYNTAX=extend
 EOF
 
+# Support rc_account resource to enable RC_ACCOUNT policy
+sed -i '$ a LSF_LOCAL_RESOURCES=\"[resource icgen2host]\"' $LSF_CONF_FILE
+
+# shellcheck disable=SC2154
+sed -i "s/\(LSF_LOCAL_RESOURCES=.*\)\"/\1 [resourcemap ${rc_account}*rc_account]\"/" $LSF_CONF_FILE
+
+# Add additional local resources if needed
+instance_id=$(dmidecode | grep Family | cut -d ' ' -f 2 |head -1)
+if [ -n "$instance_id" ]; then
+  sed -i "s/\(LSF_LOCAL_RESOURCES=.*\)\"/\1 [resourcemap ${instance_id}\*instanceID]\"/" "$LSF_CONF_FILE"
+  echo "Update LSF_LOCAL_RESOURCES in $LSF_CONF_FILE successfully, add [resourcemap ${instance_id}*instanceID]" >> "$logfile"
+else
+  echo "Can not get instance ID" >> $logfile
+fi
+
 # source profile.lsf
 echo "source ${LSF_CONF}/profile.lsf" >>~/.bashrc
 echo "source ${LSF_CONF}/profile.lsf" >>"$LDAP_DIR"/.bashrc
