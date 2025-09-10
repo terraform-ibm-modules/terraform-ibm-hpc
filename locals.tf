@@ -727,7 +727,7 @@ locals {
 
 # locals needed for ssh connection
 locals {
-  ssh_forward_host        = var.enable_deployer ? "" : (length(local.mgmt_hosts_ips) == 1 ? local.mgmt_hosts_ips[0] : local.mgmt_hosts_ips[1])
+  ssh_forward_host        = var.enable_deployer ? "" : var.scheduler == "LSF" ? (length(local.mgmt_hosts_ips) == 1 ? local.mgmt_hosts_ips[0] : local.mgmt_hosts_ips[1]) : ""
   ssh_forwards            = var.enable_deployer ? "" : var.scheduler == "LSF" ? "-L 8443:${local.ssh_forward_host}:8443 -L 6080:${local.ssh_forward_host}:6080 -L 8444:${local.ssh_forward_host}:8444" : ""
   ssh_jump_host           = var.enable_deployer ? "" : var.scheduler == "LSF" ? local.bastion_instance_public_ip != null ? local.bastion_instance_public_ip : var.bastion_fip : ""
   ssh_jump_option         = var.enable_deployer ? "" : var.scheduler == "LSF" ? "-J ubuntu@${local.ssh_jump_host}" : ""
