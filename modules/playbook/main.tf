@@ -92,7 +92,16 @@ resource "null_resource" "deploy_host_playbook" {
   count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -f 200 -e 'mgmnt_hosts=${local.mgmnt_hosts}' -e 'comp_hosts=${local.comp_hosts}' -e 'login_host=${local.login_host}' -e 'domain_name=${var.domain_name}' '${local.deployer_hostentry_playbook_path}'"
+    command     = <<EOT
+echo "Step 1: Deploy Host configuration started at: $(date '+%Y-%m-%d %H:%M:%S')"
+START_TS=$(date +%s)
+
+sudo ansible-playbook -f 200 -e 'mgmnt_hosts=${local.mgmnt_hosts}' -e 'comp_hosts=${local.comp_hosts}' -e 'login_host=${local.login_host}' -e 'domain_name=${var.domain_name}' '${local.deployer_hostentry_playbook_path}'
+
+END_TS=$(date +%s)
+echo "Step 2: Deploy Host configuration completed at: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Total time taken: $((END_TS - START_TS)) seconds"
+EOT
   }
 
   triggers = {
@@ -190,7 +199,16 @@ resource "null_resource" "lsf_host_play" {
   count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -f 50 -e 'deployer_host=${local.deployer_host}' -e 'mgmnt_hosts=${local.mgmnt_hosts}' -e 'comp_hosts=${local.comp_hosts}' -e 'login_host=${local.login_host}' -e 'domain_name=${var.domain_name}' -i ${var.inventory_path} '${local.lsf_hostentry_playbook_path}'"
+    command     = <<EOT
+echo "Step 1: LSF host configuration started at: $(date '+%Y-%m-%d %H:%M:%S')"
+START_TS=$(date +%s)
+
+sudo ansible-playbook -f 50 -e 'deployer_host=${local.deployer_host}' -e 'mgmnt_hosts=${local.mgmnt_hosts}' -e 'comp_hosts=${local.comp_hosts}' -e 'login_host=${local.login_host}' -e 'domain_name=${var.domain_name}' -i ${var.inventory_path} '${local.lsf_hostentry_playbook_path}'
+
+END_TS=$(date +%s)
+echo "Step 2: LSF host configuration completed at: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Total time taken: $((END_TS - START_TS)) seconds"
+EOT
   }
 
   triggers = {
@@ -231,7 +249,16 @@ resource "null_resource" "run_common_config_playbook" {
   count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.common_config_playbook}"
+    command     = <<EOT
+echo "Step 1: Run common configuration started at: $(date '+%Y-%m-%d %H:%M:%S')"
+START_TS=$(date +%s)
+
+sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.common_config_playbook}
+
+END_TS=$(date +%s)
+echo "Step 2: Run common configuration completed at: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Total time taken: $((END_TS - START_TS)) seconds"
+EOT
   }
   triggers = {
     build = timestamp()
@@ -270,7 +297,16 @@ resource "null_resource" "run_pre_lsf_config_playbook" {
   count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.pre_lsf_config_playbook}"
+    command     = <<EOT
+echo "Step 1: Run Pre LSF configuration started at: $(date '+%Y-%m-%d %H:%M:%S')"
+START_TS=$(date +%s)
+
+sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.pre_lsf_config_playbook}
+
+END_TS=$(date +%s)
+echo "Step 2: Run Run Pre LSF configuration completed at: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Total time taken: $((END_TS - START_TS)) seconds"
+EOT
   }
   triggers = {
     build = timestamp()
@@ -327,7 +363,16 @@ resource "null_resource" "lsf_prerequesite_play" {
   count = var.inventory_path != null && var.scheduler == "LSF" && var.enable_dedicated_host ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -f 50 -i ${var.inventory_path} '${local.lsf_prerequesite_playbook_path}'"
+    command     = <<EOT
+echo "Step 1: LSF Prerequisite configuration started at: $(date '+%Y-%m-%d %H:%M:%S')"
+START_TS=$(date +%s)
+
+sudo ansible-playbook -f 50 -i ${var.inventory_path} '${local.lsf_prerequesite_playbook_path}'
+
+END_TS=$(date +%s)
+echo "Step 2: LSF Prerequisite configuration completed at: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Total time taken: $((END_TS - START_TS)) seconds"
+EOT
   }
 
   triggers = {
@@ -342,10 +387,33 @@ resource "null_resource" "run_lsf_playbooks" {
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<EOT
-      sudo ansible-playbook -f 200 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml &&
-      sudo ansible-playbook -f 200 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml &&
-      sudo ansible-playbook -f 200 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml
-    EOT
+echo "Step 1: lsf-config-test playbook started at: $(date '+%Y-%m-%d %H:%M:%S')"
+START_CONFIG=$(date +%s)
+
+sudo ansible-playbook -f 200 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml
+
+END_CONFIG=$(date +%s)
+echo "Step 1: lsf-config-test playbook completed at: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Duration: $((END_CONFIG - START_CONFIG)) seconds"
+
+echo "Step 2: lsf-predeploy-test playbook started at: $(date '+%Y-%m-%d %H:%M:%S')"
+START_PREDEPLOY=$(date +%s)
+
+sudo ansible-playbook -f 200 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml
+
+END_PREDEPLOY=$(date +%s)
+echo "Step 2: lsf-predeploy-test playbook completed at: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Duration: $((END_PREDEPLOY - START_PREDEPLOY)) seconds"
+
+echo "Step 3: lsf-deploy playbook started at: $(date '+%Y-%m-%d %H:%M:%S')"
+START_DEPLOY=$(date +%s)
+
+sudo ansible-playbook -f 200 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml
+
+END_DEPLOY=$(date +%s)
+echo "Step 3: lsf-deploy playbook completed at: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Duration: $((END_DEPLOY - START_DEPLOY)) seconds"
+EOT
   }
 
   triggers = {
@@ -385,7 +453,15 @@ resource "null_resource" "run_playbook_for_mgmt_config" {
   count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${var.lsf_mgmt_playbooks_path}"
+    command     = <<EOT
+echo "Step 1: Run playbook for management configuration started at: $(date '+%Y-%m-%d %H:%M:%S')"
+START_TS=$(date +%s)
+
+sudo ansible-playbook -f 200 -i ${var.inventory_path} ${var.lsf_mgmt_playbooks_path}
+END_TS=$(date +%s)
+echo "Step 2: Run playbook for management configuration completed at: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Total time taken: $((END_TS - START_TS)) seconds"
+EOT
   }
   triggers = {
     build = timestamp()
@@ -423,7 +499,15 @@ resource "null_resource" "run_playbook_for_login_node_config" {
   count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.login_node_playbook}"
+    command     = <<EOT
+echo "Step 1: Run playbook for login node configuration started at: $(date '+%Y-%m-%d %H:%M:%S')"
+START_TS=$(date +%s)
+
+sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.login_node_playbook}
+END_TS=$(date +%s)
+echo "Step 2: Run playbook for login node configuration completed at: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Total time taken: $((END_TS - START_TS)) seconds"
+EOT
   }
   triggers = {
     build = timestamp()
@@ -461,7 +545,15 @@ resource "null_resource" "run_playbook_post_deploy_config" {
   count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.lsf_post_config_playbook}"
+    command     = <<EOT
+echo "Step 1: Run playbook for post deploy configuration started at: $(date '+%Y-%m-%d %H:%M:%S')"
+START_TS=$(date +%s)
+
+sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.lsf_post_config_playbook}
+END_TS=$(date +%s)
+echo "Step 2: Run playbook for post deploy configuration completed at: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Total time taken: $((END_TS - START_TS)) seconds"
+EOT
   }
   triggers = {
     build = timestamp()
@@ -496,7 +588,15 @@ resource "null_resource" "configure_ldap_server_playbook" {
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -i ${local.ldap_server_inventory} ${local.prepare_ldap_server}"
+    command     = <<EOT
+echo "Step 1: Run playbook for LSF server configuration started at: $(date '+%Y-%m-%d %H:%M:%S')"
+START_TS=$(date +%s)
+
+sudo ansible-playbook -i ${local.ldap_server_inventory} ${local.prepare_ldap_server}
+END_TS=$(date +%s)
+echo "Step 2: Run playbook for LSF server configuration completed at: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Total time taken: $((END_TS - START_TS)) seconds"
+EOT
   }
   triggers = {
     build = timestamp()
@@ -531,7 +631,15 @@ resource "null_resource" "run_ldap_client_playbooks" {
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.configure_ldap_client}"
+    command     = <<EOT
+echo "Step 1: Run Ldap client configuration started at: $(date '+%Y-%m-%d %H:%M:%S')"
+START_TS=$(date +%s)
+
+sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.configure_ldap_client}
+END_TS=$(date +%s)
+echo "Step 2: Run Ldap client configuration completed at: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Total time taken: $((END_TS - START_TS)) seconds"
+EOT
   }
   triggers = {
     build = timestamp()
@@ -597,7 +705,16 @@ resource "null_resource" "run_observability_playbooks" {
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${var.observability_playbook_path}"
+    command     = <<EOT
+echo "Step 1: Ansible observability configuration started at: $(date '+%Y-%m-%d %H:%M:%S')"
+START_TS=$(date +%s)
+
+sudo ansible-playbook -f 200 -i ${var.inventory_path} ${var.observability_playbook_path}
+
+END_TS=$(date +%s)
+echo "Step 2: Ansible observability configuration completed at: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Total time taken: $((END_TS - START_TS)) seconds"
+EOT
   }
   triggers = {
     build = timestamp()
@@ -631,7 +748,15 @@ resource "null_resource" "remove_host_entry_play" {
   count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -i ${var.inventory_path} ${local.remove_hostentry_playbooks_path}"
+    command     = <<EOT
+echo "Step 1: Remove host entry configuration started at: $(date '+%Y-%m-%d %H:%M:%S')"
+START_TS=$(date +%s)
+
+sudo ansible-playbook -i ${var.inventory_path} ${local.remove_hostentry_playbooks_path}
+END_TS=$(date +%s)
+echo "Step 2: Remove host entry configuration completed at: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Total time taken: $((END_TS - START_TS)) seconds"
+EOT
   }
   triggers = {
     build = timestamp()

@@ -26,3 +26,8 @@ data "ibm_is_instance" "bastion_instance_name" {
 data "ibm_is_public_gateways" "public_gateways" {
   count = var.ext_vpc_name != null ? 1 : 0
 }
+
+data "ibm_is_security_group" "login_security_group" {
+  count = var.login_security_group_name != null ? 1 : 0
+  name  = var.login_security_group_name
+}
