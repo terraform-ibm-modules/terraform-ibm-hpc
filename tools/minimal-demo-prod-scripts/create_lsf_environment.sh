@@ -29,25 +29,25 @@ fi
 
 REMOTE_IP=$(curl -s https://ipv4.icanhazip.com/)
 
-sed s/XX_PREFIX_XX/$1/g $TEMPLATE_FILE | \
-sed s/XX_API_KEY_XX/$API_KEY/g | \
-sed s/XX_RESOURCE_GROUP_XX/$RESOURCE_GROUP/g | \
-sed s/XX_SSH_KEY_XX/$SSH_KEY/g | \
-sed s/XX_ZONES_XX/$ZONES/g | \
-sed s/XX_REMOTE_IP_XX/$REMOTE_IP/g | \
-sed s/XX_APP_CENTER_GUI_PASSWORD_XX/$APP_CENTER_GUI_PASSWORD/g > environment_values_$1.json
+sed s/XX_PREFIX_XX/"$1"/g "$TEMPLATE_FILE" | \
+sed s/XX_API_KEY_XX/"$API_KEY"/g | \
+sed s/XX_RESOURCE_GROUP_XX/"$RESOURCE_GROUP"/g | \
+sed s/XX_SSH_KEY_XX/"$SSH_KEY"/g | \
+sed s/XX_ZONES_XX/"$ZONES"/g | \
+sed s/XX_REMOTE_IP_XX/"$REMOTE_IP"/g | \
+sed s/XX_APP_CENTER_GUI_PASSWORD_XX/"$APP_CENTER_GUI_PASSWORD"/g > environment_values_"$1".json
 
-ibmcloud login -a cloud.ibm.com --apikey $API_KEY -r $REGION -g $RESOURCE_GROUP
-ibmcloud target -r $REGION
+ibmcloud login -a cloud.ibm.com --apikey "$API_KEY" -r "$REGION" -g "$RESOURCE_GROUP"
+ibmcloud target -r "$REGION"
 
 # Run install and capture output
 INSTALL_LOG=$(mktemp)
 if ! ibmcloud catalog install --timeout 3600 \
-  --vl $LSF_TILE_VERSION \
-  --override-values environment_values_$1.json \
-  --workspace-region $REGION \
-  --workspace-rg-id $RESOURCE_GROUP \
-  --workspace-name $1 \
+  --vl "$LSF_TILE_VERSION" \
+  --override-values environment_values_"$1".json \
+  --workspace-region "$REGION" \
+  --workspace-rg-id "$RESOURCE_GROUP" \
+  --workspace-name "$1" \
   --workspace-tf-version 1.9 | tee "$INSTALL_LOG"; then
   echo "Install command failed to start"
   exit 1
@@ -67,13 +67,13 @@ if grep -q "FAILED" "$INSTALL_LOG"; then
 fi
 
 # If success, print the Output IPs
-BASTION_IP=$(ibmcloud is ips | grep $1-bastion | grep 001-fip | awk '{print $2}')
+BASTION_IP=$(ibmcloud is ips | grep "$1"-bastion | grep 001-fip | awk '{print $2}')
 echo "Bastion IP: $BASTION_IP"
 
-LOGIN_IP=$(ibmcloud is instances | grep $1-login | grep 001 | awk '{print $4}')
+LOGIN_IP=$(ibmcloud is instances | grep "$1"-login | grep 001 | awk '{print $4}')
 echo "Login IP:   $LOGIN_IP"
 
-LSF_IP=$(ibmcloud is instances | grep $1-mgmt-1 | grep 001 | awk '{print $4}')
+LSF_IP=$(ibmcloud is instances | grep "$1"-mgmt-1 | grep 001 | awk '{print $4}')
 echo "LSF IP:     $LSF_IP"
 
 echo ""

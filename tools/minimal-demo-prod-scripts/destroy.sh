@@ -13,16 +13,15 @@ fi
 CURRENT_ACCOUNT_GUID=$(ibmcloud target --output json | jq -r '.account.guid')
 if [ "$CURRENT_ACCOUNT_GUID" != "$ACCOUNT_GUID" ]
   then
-    ibmcloud login -a cloud.ibm.com --apikey $API_KEY -r $REGION -g $RESOURCE_GROUP
+    ibmcloud login -a cloud.ibm.com --apikey "$API_KEY" -r "$REGION" -g "$RESOURCE_GROUP"
 fi
 
-CURRENT_ACCOUNT_NAME=$(ibmcloud target --output json | jq -r '.account.name')
 echo "target account $CURRENT_ACCOUNT_GUID"
 
 CURRENT_REGION=$(ibmcloud target --output json | jq -r '.region.name')
 if [ "$CURRENT_REGION" != "$REGION" ]
   then
-    ibmcloud target -r $REGION
+    ibmcloud target -r "$REGION"
 fi
 echo "target region $REGION"
 
@@ -33,7 +32,7 @@ WORKSPACE_ID=$(ibmcloud schematics workspace list --output json \
 
 ibmcloud schematics workspace get --id "$WORKSPACE_ID"
 
-read -p "Do you want to destroy? (yes/no) " yn
+read -r -p "Do you want to destroy? (yes/no) " yn
 
 case $yn in
        yes ) echo ok, we will proceed;;
@@ -43,6 +42,6 @@ case $yn in
                exit 1;;
 esac
 
-rm environment_values_$1.json
+rm environment_values_"$1".json
 
-ibmcloud schematics destroy --id $WORKSPACE_ID -f
+ibmcloud schematics destroy --id "$WORKSPACE_ID" -f
