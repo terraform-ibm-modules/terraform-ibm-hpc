@@ -5,6 +5,8 @@
 How to run:
 
 ```
+ibmcloud login --apikey <YOUR_API_KEY> -g <RESOURCE_GROUP>
+
 chmod +x permissions.sh
 
 ./permissions.sh

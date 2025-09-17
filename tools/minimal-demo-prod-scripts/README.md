@@ -94,3 +94,10 @@ sh submit.sh
 bjobs
 lshosts -w
 ```
+
+#### 5. To destroy the created infrastructure
+
+```
+chmod +x destroy.sh
+ ./destroy.sh <cluster_prefix>
+```
