@@ -48,13 +48,30 @@ echo "🔍 Checking if $ADMIN_EMAIL can assign IAM permissions..."
 has_permission=false
 
 check_policies() {
-  echo "$1" | jq -e '
-    .[]? |
-    select(.roles[]?.display_name == "Administrator") |
-    select(.resources[]?.attributes[]? | select(.name == "serviceName" and .value == "iam-identity")) |
-    select(.resources[]?.attributes[]?.name == "accountId") |
-    select(all(.resources[]?.attributes[]?.name; . != "resourceGroupId"))
-  ' >/dev/null
+  local policies="$1"
+
+  # Check Administrator role for serviceType=service
+  local has_admin
+  has_admin=$(echo "$policies" | jq -e '
+    .[] |
+    select(.roles? != null) |
+    select(any(.roles[]?.display_name; . == "Administrator")) |
+    select(any(.resources[].attributes[]?; .name == "accountId")) |
+    select(any(.resources[].attributes[]?; .name == "serviceType" and .value == "service"))
+  ' >/dev/null 2>&1 && echo "true" || echo "false")
+
+  # Check role for serviceType=platform_service (Viewer, Editor, or Administrator)
+  local has_platform_role
+  has_platform_role=$(echo "$policies" | jq -e '
+    .[] |
+    select(.roles? != null) |
+    select(any(.roles[]?.display_name; . == "Viewer" or . == "Editor" or . == "Administrator")) |
+    select(any(.resources[].attributes[]?; .name == "accountId")) |
+    select(any(.resources[].attributes[]?; .name == "serviceType" and .value == "platform_service"))
+  ' >/dev/null 2>&1 && echo "true" || echo "false")
+
+  # Return true only if both checks pass
+  [[ "$has_admin" == "true" && "$has_platform_role" == "true" ]]
 }
 
 USER_POLICIES=$(ibmcloud iam user-policies "$ADMIN_EMAIL" --output json 2>/dev/null || echo "[]")
@@ -64,25 +81,27 @@ if echo "$USER_POLICIES" | jq empty 2>/dev/null; then
   fi
 fi
 
-ACCESS_GROUPS_FOR_ADMIN=$(ibmcloud iam access-groups --ibm-id "$ADMIN_EMAIL" --output json 2>/dev/null || echo "[]")
-if echo "$ACCESS_GROUPS_FOR_ADMIN" | jq empty 2>/dev/null; then
-  for GROUP_ID in $(echo "$ACCESS_GROUPS_FOR_ADMIN" | jq -r '.[].id // empty'); do
-    GROUP_POLICIES=$(ibmcloud iam access-group-policies "$GROUP_ID" --output json 2>/dev/null || echo "[]")
-    if echo "$GROUP_POLICIES" | jq empty 2>/dev/null; then
-      if check_policies "$GROUP_POLICIES"; then
-        has_permission=true
-        break
-      fi
-    fi
-  done
+if [ "$has_permission" != true ]; then
+  ACCESS_GROUPS_FOR_ADMIN=$(ibmcloud iam access-groups -u "$ADMIN_EMAIL" --output json 2>/dev/null || echo "[]")
+
+  # Collect all policies from all access groups into a single array
+  ALL_GROUP_POLICIES="[]"
+  while IFS= read -r GROUP_NAME; do
+    GROUP_POLICIES=$(ibmcloud iam access-group-policies "$GROUP_NAME" --output json 2>/dev/null || echo "[]")
+    ALL_GROUP_POLICIES=$(echo "$ALL_GROUP_POLICIES $GROUP_POLICIES" | jq -s 'add')
+  done < <(echo "$ACCESS_GROUPS_FOR_ADMIN" | jq -r '.[].name // empty')
+  # Check all group policies at once
+  if check_policies "$ALL_GROUP_POLICIES"; then
+    has_permission=true
+  fi
 fi
 
 if [ "$has_permission" != true ]; then
-  echo "❌ $ADMIN_EMAIL does NOT have account-level iam-identity Administrator rights — cannot assign permissions."
+  echo "❌ $ADMIN_EMAIL does NOT have account-level Administrator rights — cannot assign permissions."
   exit 1
 fi
 
-echo "✅ $ADMIN_EMAIL has account-level iam-identity Administrator rights — proceeding."
+echo "✅ $ADMIN_EMAIL has account-level Administrator rights — proceeding."
 
 #####################################
 # 3. Role assignment definitions
@@ -94,7 +113,6 @@ sysdig-monitor|Administrator|Manager
 kms|Service Configuration Reader|Manager
 secrets-manager|Administrator|Manager
 sysdig-secure|Administrator|
-iam-identity|Administrator|
 is|Editor|"
 
 # New friendly names list (service|friendly name)
@@ -105,7 +123,6 @@ sysdig-monitor|Cloud Monitoring
 kms|Key Protect
 secrets-manager|Secrets Manager
 sysdig-secure|Security and Compliance Center Workload Protection
-iam-identity|IAM Identity Service
 is|VPC Infrastructure Services"
 
 get_friendly_name() {
