@@ -70,7 +70,6 @@ check_policies() {
     select(any(.resources[].attributes[]?; .name == "serviceType" and .value == "platform_service"))
   ' >/dev/null 2>&1 && echo "true" || echo "false")
 
-  # Return success only if both checks pass
   [[ "$has_admin" == "true" && "$has_platform_role" == "true" ]]
 }
 
@@ -84,13 +83,11 @@ fi
 if [ "$has_permission" != true ]; then
   ACCESS_GROUPS_FOR_ADMIN=$(ibmcloud iam access-groups -u "$ADMIN_EMAIL" --output json 2>/dev/null || echo "[]")
 
-  # Collect all policies from all access groups into a single array
   ALL_GROUP_POLICIES="[]"
   while IFS= read -r GROUP_NAME; do
     GROUP_POLICIES=$(ibmcloud iam access-group-policies "$GROUP_NAME" --output json 2>/dev/null || echo "[]")
     ALL_GROUP_POLICIES=$(echo "$ALL_GROUP_POLICIES $GROUP_POLICIES" | jq -s 'add')
   done < <(echo "$ACCESS_GROUPS_FOR_ADMIN" | jq -r '.[].name // empty')
-  # Check all group policies at once
   if check_policies "$ALL_GROUP_POLICIES"; then
     has_permission=true
   fi
@@ -115,7 +112,6 @@ secrets-manager|Administrator|Manager
 sysdig-secure|Administrator|
 is|Editor|"
 
-# New friendly names list (service|friendly name)
 FRIENDLY_NAMES="apprapp|App Configuration
 cloud-object-storage|Cloud Object Storage
 dns-svcs|DNS Services
@@ -136,44 +132,10 @@ get_friendly_name() {
 }
 
 #####################################
-# 4. Helper to check if policy exists
+# 4. Role normalization helper
 #####################################
-policy_exists() {
-  local SERVICE="$1"
-  local ROLES="$2"
-  local RG_ID="$3"
-  local ACCOUNT_ID="$4"
-
-  local existing_policies
-  if [ -n "$ACCESS_GROUP" ]; then
-    existing_policies=$(ibmcloud iam access-group-policies "$ACCESS_GROUP" --output json 2>/dev/null || echo "[]")
-  elif [ -n "$USER_EMAIL" ]; then
-    existing_policies=$(ibmcloud iam user-policies "$USER_EMAIL" --output json 2>/dev/null || echo "[]")
-  else
-    echo "❗ ERROR: Neither ACCESS_GROUP nor USER_EMAIL is set in policy_exists"
-    return 1
-  fi
-
-  echo "$existing_policies" | jq -e \
-    --arg service "$SERVICE" \
-    --arg roles "$ROLES" \
-    --arg rg_id "$RG_ID" \
-    --arg account_id "$ACCOUNT_ID" '
-    .[] |
-    select(([.roles[].display_name] | sort) | contains($roles | split(",") | sort)) |
-    if $service == "" then
-      select(any(.resources[].attributes[]?;
-                 .name == "resourceGroupId" and .value == $rg_id)) |
-      select(all(.resources[].attributes[]?.name; . != "serviceName"))
-    else
-      select(any(.resources[].attributes[]?;
-                 .name == "resourceGroupId" and .value == $rg_id)) |
-      select(any(.resources[].attributes[]?;
-                 .name == "serviceName" and .value == $service)) |
-      select([.resources[].attributes[]?.name] | unique | sort
-             == ["accountId","resourceGroupId","serviceName"])
-    end
-  ' >/dev/null
+normalize_roles() {
+  echo "$1" | tr ',' '\n' | sed 's/^ *//;s/ *$//' | sort -u | paste -sd, -
 }
 
 #####################################
@@ -186,24 +148,71 @@ if [ -n "$ACCESS_GROUP" ] && [ -z "$USER_EMAIL" ]; then
     fname=$(get_friendly_name "$SERVICE_NAME")
     [ -n "$fname" ] && DISPLAY_NAME="$SERVICE_NAME ($fname)" || DISPLAY_NAME="$SERVICE_NAME"
 
-    if ! policy_exists "$SERVICE_NAME" "$ROLES" "$RESOURCE_GROUP_ID" "$ACCOUNT_ID"; then
-      echo "Assigning roles '$ROLES' for service $DISPLAY_NAME"
+    existing_policies=$(ibmcloud iam access-group-policies "$ACCESS_GROUP" --output json 2>/dev/null || echo "[]")
+
+    POLICY_ID=$(echo "$existing_policies" | jq -r \
+      --arg service "$SERVICE_NAME" \
+      --arg rg_id "$RESOURCE_GROUP_ID" '
+      .[] | select(any(.resources[].attributes[]?;
+                      .name == "resourceGroupId" and .value == $rg_id)) |
+            select(any(.resources[].attributes[]?;
+                      .name == "serviceName" and .value == $service)) |
+      .id' | head -n1)
+
+    if [ -n "$POLICY_ID" ] && [ "$POLICY_ID" != "null" ]; then
+      EXISTING_ROLES=$(echo "$existing_policies" | jq -r --arg id "$POLICY_ID" '
+        .[] | select(.id == $id) | [.roles[].display_name] | join(",")')
+
+      EXISTING_SORTED=$(normalize_roles "$EXISTING_ROLES")
+      MERGED_SORTED=$(normalize_roles "$EXISTING_ROLES,$ROLES")
+
+      if [ "$MERGED_SORTED" = "$EXISTING_SORTED" ]; then
+        echo "✅ Policy already exists with required roles for $DISPLAY_NAME"
+      else
+        echo "🔄 Updating existing policy $POLICY_ID for $DISPLAY_NAME"
+        ibmcloud iam access-group-policy-update "$ACCESS_GROUP" "$POLICY_ID" \
+          --roles "$MERGED_SORTED" \
+          --resource-group-id "$RESOURCE_GROUP_ID" \
+          --service-name "$SERVICE_NAME" || echo "⚠️ Failed to update roles for $DISPLAY_NAME"
+      fi
+    else
+      echo "➕ Creating new policy for $DISPLAY_NAME"
       ibmcloud iam access-group-policy-create "$ACCESS_GROUP" \
         --roles "$ROLES" \
         --service-name "$SERVICE_NAME" \
         --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed to assign $ROLES for $DISPLAY_NAME"
-    else
-      echo "✅ Policy already exists for $DISPLAY_NAME"
     fi
   done
 
-  if ! policy_exists "" "Administrator,Manager" "$RESOURCE_GROUP_ID" "$ACCOUNT_ID"; then
-    echo "Assigning global Administrator,Manager roles to access group: $ACCESS_GROUP"
+  echo "🔍 Checking global Administrator/Manager policy for access group: $ACCESS_GROUP"
+  existing_policies=$(ibmcloud iam access-group-policies "$ACCESS_GROUP" --output json 2>/dev/null || echo "[]")
+  POLICY_ID=$(echo "$existing_policies" | jq -r --arg rg_id "$RESOURCE_GROUP_ID" '
+    .[] |
+    select(any(.resources[].attributes[]?;
+               .name == "resourceGroupId" and .value == $rg_id)) |
+    select(all(.resources[].attributes[]?.name; . != "serviceName")) |
+    .id' | head -n1)
+
+  if [ -n "$POLICY_ID" ] && [ "$POLICY_ID" != "null" ]; then
+    EXISTING_ROLES=$(echo "$existing_policies" | jq -r --arg id "$POLICY_ID" '
+      .[] | select(.id == $id) | [.roles[].display_name] | join(",")')
+
+    EXISTING_SORTED=$(normalize_roles "$EXISTING_ROLES")
+    MERGED_SORTED=$(normalize_roles "$EXISTING_ROLES,Administrator,Manager")
+
+    if [ "$MERGED_SORTED" = "$EXISTING_SORTED" ]; then
+      echo "✅ Global Administrator/Manager policy already present with required roles for access group: $ACCESS_GROUP"
+    else
+      echo "🔄 Updating global policy $POLICY_ID for access group: $ACCESS_GROUP"
+      ibmcloud iam access-group-policy-update "$ACCESS_GROUP" "$POLICY_ID" \
+        --roles "$MERGED_SORTED" \
+        --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed to update global Administrator/Manager roles for access group: $ACCESS_GROUP"
+    fi
+  else
+    echo "➕ Creating new global Administrator/Manager policy for access group: $ACCESS_GROUP"
     ibmcloud iam access-group-policy-create "$ACCESS_GROUP" \
       --roles "Administrator,Manager" \
-      --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed to assign Administrator,Manager roles for All Identity and Access enabled services to access group: $ACCESS_GROUP"
-  else
-    echo "✅ All Identity and Access enabled services Administrator/Manager policy already exists for access group"
+      --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed to assign global Administrator/Manager roles for access group: $ACCESS_GROUP"
   fi
 
 elif [ -z "$ACCESS_GROUP" ] && [ -n "$USER_EMAIL" ]; then
@@ -213,28 +222,74 @@ elif [ -z "$ACCESS_GROUP" ] && [ -n "$USER_EMAIL" ]; then
     fname=$(get_friendly_name "$SERVICE_NAME")
     [ -n "$fname" ] && DISPLAY_NAME="$SERVICE_NAME ($fname)" || DISPLAY_NAME="$SERVICE_NAME"
 
-    if ! policy_exists "$SERVICE_NAME" "$ROLES" "$RESOURCE_GROUP_ID" "$ACCOUNT_ID"; then
-      echo "Assigning roles '$ROLES' for service $DISPLAY_NAME"
+    existing_policies=$(ibmcloud iam user-policies "$USER_EMAIL" --output json 2>/dev/null || echo "[]")
+
+    POLICY_ID=$(echo "$existing_policies" | jq -r \
+      --arg service "$SERVICE_NAME" \
+      --arg rg_id "$RESOURCE_GROUP_ID" '
+      .[] | select(any(.resources[].attributes[]?;
+                      .name == "resourceGroupId" and .value == $rg_id)) |
+            select(any(.resources[].attributes[]?;
+                      .name == "serviceName" and .value == $service)) |
+      .id' | head -n1)
+
+    if [ -n "$POLICY_ID" ] && [ "$POLICY_ID" != "null" ]; then
+      EXISTING_ROLES=$(echo "$existing_policies" | jq -r --arg id "$POLICY_ID" '
+        .[] | select(.id == $id) | [.roles[].display_name] | join(",")')
+
+      EXISTING_SORTED=$(normalize_roles "$EXISTING_ROLES")
+      MERGED_SORTED=$(normalize_roles "$EXISTING_ROLES,$ROLES")
+
+      if [ "$MERGED_SORTED" = "$EXISTING_SORTED" ]; then
+        echo "✅ Policy already exists with required roles for $DISPLAY_NAME"
+      else
+        echo "🔄 Updating existing policy $POLICY_ID for $DISPLAY_NAME"
+        ibmcloud iam user-policy-update "$USER_EMAIL" "$POLICY_ID" \
+          --roles "$MERGED_SORTED" \
+          --resource-group-id "$RESOURCE_GROUP_ID" \
+          --service-name "$SERVICE_NAME" || echo "⚠️ Failed to update roles for $DISPLAY_NAME"
+      fi
+    else
+      echo "➕ Creating new policy for $DISPLAY_NAME"
       ibmcloud iam user-policy-create "$USER_EMAIL" \
         --roles "$ROLES" \
         --service-name "$SERVICE_NAME" \
         --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed to assign $ROLES for $DISPLAY_NAME"
-    else
-      echo "✅ Policy already exists for $DISPLAY_NAME"
     fi
   done
 
-  if ! policy_exists "" "Administrator,Manager" "$RESOURCE_GROUP_ID" "$ACCOUNT_ID"; then
-    echo "Assigning global Administrator,Manager roles to $USER_EMAIL"
+  echo "🔍 Checking global Administrator/Manager policy for $USER_EMAIL"
+  existing_policies=$(ibmcloud iam user-policies "$USER_EMAIL" --output json 2>/dev/null || echo "[]")
+  POLICY_ID=$(echo "$existing_policies" | jq -r --arg rg_id "$RESOURCE_GROUP_ID" '
+    .[] |
+    select(any(.resources[].attributes[]?;
+               .name == "resourceGroupId" and .value == $rg_id)) |
+    select(all(.resources[].attributes[]?.name; . != "serviceName")) |
+    .id' | head -n1)
+
+  if [ -n "$POLICY_ID" ] && [ "$POLICY_ID" != "null" ]; then
+    EXISTING_ROLES=$(echo "$existing_policies" | jq -r --arg id "$POLICY_ID" '
+      .[] | select(.id == $id) | [.roles[].display_name] | join(",")')
+
+    EXISTING_SORTED=$(normalize_roles "$EXISTING_ROLES")
+    MERGED_SORTED=$(normalize_roles "$EXISTING_ROLES,Administrator,Manager")
+
+    if [ "$MERGED_SORTED" = "$EXISTING_SORTED" ]; then
+      echo "✅ Global Administrator/Manager policy already present with required roles for $USER_EMAIL"
+    else
+      echo "🔄 Updating global policy $POLICY_ID for $USER_EMAIL"
+      ibmcloud iam user-policy-update "$USER_EMAIL" "$POLICY_ID" \
+        --roles "$MERGED_SORTED" \
+        --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed to update global Administrator/Manager roles for user: $USER_EMAIL"
+    fi
+  else
+    echo "➕ Creating new global Administrator/Manager policy for $USER_EMAIL"
     ibmcloud iam user-policy-create "$USER_EMAIL" \
       --roles "Administrator,Manager" \
-      --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed to assign Administrator,Manager roles for All Identity and Access enabled services to user: $USER_EMAIL"
-  else
-    echo "✅ All Identity and Access enabled services Administrator/Manager policy already exists"
+      --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed to assign global Administrator/Manager roles for user: $USER_EMAIL"
   fi
 
 else
   echo "❗ Please choose either Access Group or User."
   exit 1
 fi
-
