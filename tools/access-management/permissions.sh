@@ -70,7 +70,7 @@ check_policies() {
     select(any(.resources[].attributes[]?; .name == "serviceType" and .value == "platform_service"))
   ' >/dev/null 2>&1 && echo "true" || echo "false")
 
-  # Return true only if both checks pass
+  # Return success only if both checks pass
   [[ "$has_admin" == "true" && "$has_platform_role" == "true" ]]
 }
 
@@ -160,7 +160,7 @@ policy_exists() {
     --arg rg_id "$RG_ID" \
     --arg account_id "$ACCOUNT_ID" '
     .[] |
-    select(([.roles[].display_name] | sort) == ($roles | split(",") | sort)) |
+    select(([.roles[].display_name] | sort) | contains($roles | split(",") | sort)) |
     if $service == "" then
       select(any(.resources[].attributes[]?;
                  .name == "resourceGroupId" and .value == $rg_id)) |
@@ -201,7 +201,7 @@ if [ -n "$ACCESS_GROUP" ] && [ -z "$USER_EMAIL" ]; then
     echo "Assigning global Administrator,Manager roles to access group: $ACCESS_GROUP"
     ibmcloud iam access-group-policy-create "$ACCESS_GROUP" \
       --roles "Administrator,Manager" \
-      --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed for all-service Admin/Manager (access group)"
+      --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed to assign Administrator,Manager roles for All Identity and Access enabled services to access group: $ACCESS_GROUP"
   else
     echo "✅ All Identity and Access enabled services Administrator/Manager policy already exists for access group"
   fi
@@ -228,7 +228,7 @@ elif [ -z "$ACCESS_GROUP" ] && [ -n "$USER_EMAIL" ]; then
     echo "Assigning global Administrator,Manager roles to $USER_EMAIL"
     ibmcloud iam user-policy-create "$USER_EMAIL" \
       --roles "Administrator,Manager" \
-      --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed for all-service Admin/Manager"
+      --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed to assign Administrator,Manager roles for All Identity and Access enabled services to user: $USER_EMAIL"
   else
     echo "✅ All Identity and Access enabled services Administrator/Manager policy already exists"
   fi
@@ -237,3 +237,4 @@ else
   echo "❗ Please choose either Access Group or User."
   exit 1
 fi
+
