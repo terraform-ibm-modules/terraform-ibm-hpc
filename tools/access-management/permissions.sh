@@ -169,7 +169,14 @@ if [ -n "$ACCESS_GROUP" ] && [ -z "$USER_EMAIL" ]; then
       if [ "$MERGED_SORTED" = "$EXISTING_SORTED" ]; then
         echo "✅ Policy already exists with required roles for $DISPLAY_NAME"
       else
+        NEW_ROLES=$(comm -13 \
+          <(echo "$EXISTING_SORTED" | tr ',' '\n' | sort) \
+          <(echo "$MERGED_SORTED" | tr ',' '\n' | sort) | paste -sd, -)
+
         echo "🔄 Updating existing policy $POLICY_ID for $DISPLAY_NAME"
+        echo "   • Current roles : $EXISTING_SORTED"
+        echo "   • Adding roles  : $NEW_ROLES"
+
         ibmcloud iam access-group-policy-update "$ACCESS_GROUP" "$POLICY_ID" \
           --roles "$MERGED_SORTED" \
           --resource-group-id "$RESOURCE_GROUP_ID" \
@@ -203,16 +210,23 @@ if [ -n "$ACCESS_GROUP" ] && [ -z "$USER_EMAIL" ]; then
     if [ "$MERGED_SORTED" = "$EXISTING_SORTED" ]; then
       echo "✅ Global Administrator/Manager policy already present with required roles for access group: $ACCESS_GROUP"
     else
+      NEW_ROLES=$(comm -13 \
+        <(echo "$EXISTING_SORTED" | tr ',' '\n' | sort) \
+        <(echo "$MERGED_SORTED" | tr ',' '\n' | sort) | paste -sd, -)
+
       echo "🔄 Updating global policy $POLICY_ID for access group: $ACCESS_GROUP"
+      echo "   • Current roles : $EXISTING_SORTED"
+      echo "   • Adding roles  : $NEW_ROLES"
+
       ibmcloud iam access-group-policy-update "$ACCESS_GROUP" "$POLICY_ID" \
         --roles "$MERGED_SORTED" \
-        --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed to update global Administrator/Manager roles for access group: $ACCESS_GROUP"
+        --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed to update Administrator,Manager roles for All Identity and Access enabled services to access group: $ACCESS_GROUP"
     fi
   else
     echo "➕ Creating new global Administrator/Manager policy for access group: $ACCESS_GROUP"
     ibmcloud iam access-group-policy-create "$ACCESS_GROUP" \
       --roles "Administrator,Manager" \
-      --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed to assign global Administrator/Manager roles for access group: $ACCESS_GROUP"
+      --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed to assign Administrator,Manager roles for All Identity and Access enabled services to access group: $ACCESS_GROUP"
   fi
 
 elif [ -z "$ACCESS_GROUP" ] && [ -n "$USER_EMAIL" ]; then
@@ -243,7 +257,14 @@ elif [ -z "$ACCESS_GROUP" ] && [ -n "$USER_EMAIL" ]; then
       if [ "$MERGED_SORTED" = "$EXISTING_SORTED" ]; then
         echo "✅ Policy already exists with required roles for $DISPLAY_NAME"
       else
+        NEW_ROLES=$(comm -13 \
+          <(echo "$EXISTING_SORTED" | tr ',' '\n' | sort) \
+          <(echo "$MERGED_SORTED" | tr ',' '\n' | sort) | paste -sd, -)
+
         echo "🔄 Updating existing policy $POLICY_ID for $DISPLAY_NAME"
+        echo "   • Current roles : $EXISTING_SORTED"
+        echo "   • Adding roles  : $NEW_ROLES"
+
         ibmcloud iam user-policy-update "$USER_EMAIL" "$POLICY_ID" \
           --roles "$MERGED_SORTED" \
           --resource-group-id "$RESOURCE_GROUP_ID" \
@@ -277,16 +298,23 @@ elif [ -z "$ACCESS_GROUP" ] && [ -n "$USER_EMAIL" ]; then
     if [ "$MERGED_SORTED" = "$EXISTING_SORTED" ]; then
       echo "✅ Global Administrator/Manager policy already present with required roles for $USER_EMAIL"
     else
+      NEW_ROLES=$(comm -13 \
+        <(echo "$EXISTING_SORTED" | tr ',' '\n' | sort) \
+        <(echo "$MERGED_SORTED" | tr ',' '\n' | sort) | paste -sd, -)
+
       echo "🔄 Updating global policy $POLICY_ID for $USER_EMAIL"
+      echo "   • Current roles : $EXISTING_SORTED"
+      echo "   • Adding roles  : $NEW_ROLES"
+
       ibmcloud iam user-policy-update "$USER_EMAIL" "$POLICY_ID" \
         --roles "$MERGED_SORTED" \
-        --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed to update global Administrator/Manager roles for user: $USER_EMAIL"
+        --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed to update Administrator,Manager roles for All Identity and Access enabled services to user: $USER_EMAIL"
     fi
   else
     echo "➕ Creating new global Administrator/Manager policy for $USER_EMAIL"
     ibmcloud iam user-policy-create "$USER_EMAIL" \
       --roles "Administrator,Manager" \
-      --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed to assign global Administrator/Manager roles for user: $USER_EMAIL"
+      --resource-group-id "$RESOURCE_GROUP_ID" || echo "⚠️ Failed to assign Administrator,Manager roles for All Identity and Access enabled services to user: $USER_EMAIL"
   fi
 
 else
