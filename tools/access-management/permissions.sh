@@ -49,6 +49,7 @@ has_permission=false
 
 check_policies() {
   local policies="$1"
+  local scope="$2"
 
   # Check Administrator role for serviceType=service
   local has_admin
@@ -70,12 +71,25 @@ check_policies() {
     select(any(.resources[].attributes[]?; .name == "serviceType" and .value == "platform_service"))
   ' >/dev/null 2>&1 && echo "true" || echo "false")
 
+  # Debug printing
+  if [ "$has_admin" = "true" ]; then
+    echo "✅ $scope: Has Administrator for All Identity and Access enabled service"
+  else
+    echo "❌ $scope: Missing Administrator for All Identity and Access enabled service"
+  fi
+
+  if [ "$has_platform_role" = "true" ]; then
+    echo "✅ $scope: Has Viewer/Editor/Administrator for All Account Management services"
+  else
+    echo "❌ $scope: Missing Viewer/Editor/Administrator for All Account Management services"
+  fi
+
   [[ "$has_admin" == "true" && "$has_platform_role" == "true" ]]
 }
 
 USER_POLICIES=$(ibmcloud iam user-policies "$ADMIN_EMAIL" --output json 2>/dev/null || echo "[]")
 if echo "$USER_POLICIES" | jq empty 2>/dev/null; then
-  if check_policies "$USER_POLICIES"; then
+  if check_policies "$USER_POLICIES" "User"; then
     has_permission=true
   fi
 fi
@@ -88,13 +102,14 @@ if [ "$has_permission" != true ]; then
     GROUP_POLICIES=$(ibmcloud iam access-group-policies "$GROUP_NAME" --output json 2>/dev/null || echo "[]")
     ALL_GROUP_POLICIES=$(echo "$ALL_GROUP_POLICIES $GROUP_POLICIES" | jq -s 'add')
   done < <(echo "$ACCESS_GROUPS_FOR_ADMIN" | jq -r '.[].name // empty')
-  if check_policies "$ALL_GROUP_POLICIES"; then
+  # echo $ALL_GROUP_POLICIES
+  if check_policies "$ALL_GROUP_POLICIES" "Access Group"; then
     has_permission=true
   fi
 fi
 
 if [ "$has_permission" != true ]; then
-  echo "❌ $ADMIN_EMAIL does NOT have account-level Administrator rights — cannot assign permissions."
+  echo "❌ $ADMIN_EMAIL lacks required account-level Administrator rights (checked User & Access Groups policies)."
   exit 1
 fi
 
