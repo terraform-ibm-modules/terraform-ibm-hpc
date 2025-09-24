@@ -33,17 +33,21 @@ chmod +x permissions.sh
 ```
 
 3. Enter the admin email or IBMid.
+
 4. Enter the Resource group and Account ID.
 
 For the Account ID, login to the IBM Cloud account by using your unique credentials. Go to Manage > Account > Account settings. You will find the Account ID.
 
 5. You will be asked to assign the roles:
 
-a. Access Group - Select this option, if you want to assign the access to the entire access group.
-b. User - Select this option, if you want to assign the access to an individual user.
+```
+Access Group - Select this option, if you want to assign the access to the entire access group.
+User - Select this option, if you want to assign the access to an individual user.
 Select the required option.
+```
 
 6. Enter the target user email, if you select the option 2.
+
 7. User policy is successfully created.
 
 If the user skips to enter the RESOURCE_GROUP_ID or the ACCOUNT_ID, then script displays the error message:
