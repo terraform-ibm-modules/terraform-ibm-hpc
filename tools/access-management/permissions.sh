@@ -73,15 +73,15 @@ check_policies() {
 
   # Debug printing
   if [ "$has_admin" = "true" ]; then
-    echo "✅ $scope: Has Administrator for All Identity and Access enabled service"
+    echo "✅ At $scope policy level: Has Administrator for All Identity and Access enabled service"
   else
-    echo "❌ $scope: Missing Administrator for All Identity and Access enabled service"
+    echo "❌ At $scope policy level: Missing Administrator for All Identity and Access enabled service"
   fi
 
   if [ "$has_platform_role" = "true" ]; then
-    echo "✅ $scope: Has Viewer/Editor/Administrator for All Account Management services"
+    echo "✅ At $scope policy level: Has Viewer/Editor/Administrator for All Account Management services"
   else
-    echo "❌ $scope: Missing Viewer/Editor/Administrator for All Account Management services"
+    echo "❌ At $scope policy level: Missing Viewer/Editor/Administrator for All Account Management services"
   fi
 
   [[ "$has_admin" == "true" && "$has_platform_role" == "true" ]]
@@ -109,11 +109,11 @@ if [ "$has_permission" != true ]; then
 fi
 
 if [ "$has_permission" != true ]; then
-  echo "❌ $ADMIN_EMAIL lacks required account-level Administrator rights (checked User & Access Groups policies)."
+  echo "❌ $ADMIN_EMAIL lacks required Administrator rights (checked User & Access Group policies) — cannot assign permissions."
   exit 1
 fi
 
-echo "✅ $ADMIN_EMAIL has account-level Administrator rights — proceeding."
+echo "✅ $ADMIN_EMAIL has Administrator rights (verified from User & Access Group policies) — proceeding with permission assignment."
 
 #####################################
 # 3. Role assignment definitions
@@ -182,7 +182,7 @@ if [ -n "$ACCESS_GROUP" ] && [ -z "$USER_EMAIL" ]; then
       MERGED_SORTED=$(normalize_roles "$EXISTING_ROLES,$ROLES")
 
       if [ "$MERGED_SORTED" = "$EXISTING_SORTED" ]; then
-        echo "✅ Policy already exists with required roles for $DISPLAY_NAME"
+        echo "✅ Policy for $DISPLAY_NAME already includes required roles: $EXISTING_SORTED"
       else
         NEW_ROLES=$(comm -13 \
           <(echo "$EXISTING_SORTED" | tr ',' '\n' | sort) \
@@ -270,7 +270,7 @@ elif [ -z "$ACCESS_GROUP" ] && [ -n "$USER_EMAIL" ]; then
       MERGED_SORTED=$(normalize_roles "$EXISTING_ROLES,$ROLES")
 
       if [ "$MERGED_SORTED" = "$EXISTING_SORTED" ]; then
-        echo "✅ Policy already exists with required roles for $DISPLAY_NAME"
+        echo "✅ Policy for $DISPLAY_NAME already includes required roles: $EXISTING_SORTED"
       else
         NEW_ROLES=$(comm -13 \
           <(echo "$EXISTING_SORTED" | tr ',' '\n' | sort) \
