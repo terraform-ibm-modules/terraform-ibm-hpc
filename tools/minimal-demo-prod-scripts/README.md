@@ -2,17 +2,17 @@
 
 The current LSF setup is designed for production grade deployments. This approach is high-priced for trying before-you-buy option and demonstration use cases. As a solution, now users can select the deployment options using three different t-shirt sizes - Small, Medium, and Large. This solution has the ability to deploy a smaller and less expensive environment on IBM Cloud to try the capability or to provide a demonstration.
 
-### Deployment Types:
+## Deployment Types:
 
 You will be able to choose from these 3 deployment size options:
 
-#### Small (Minimal):
+### Small (Minimal):
 This deploys the smallest possible environment (a single management instance) for the fastest setup. All optional services like observability, logging, SCC, Atracker, and LDAP are disabled.
 
-#### Medium (Demo):
+### Medium (Demo):
 This displays the full set of capabilities. All optional services like observability, logging, and SCC are enabled. The deployment takes longer compared to minimal.
 
-#### Large (Production):
+### Large (Production):
 This option allows customization for production grade deployments. The optional services like observability, logging, and SCC are enabled by default but can be changed as required.
 
 All the JSON files are customizable (users can make configuration changes as needed).
@@ -93,9 +93,9 @@ create_lsf_environment - This script automates the end-to-end deployment of an I
 
 Now that your environment is set up, you can connect to the LSF cluster and perform operations such as submitting jobs, monitoring workloads, viewing infrastructure details.
 
-Using Utility Scripts
+### Using Utility Scripts
 
-1. Run the following command to view the infra details:
+#### 1. Run the following command to view the infra details:
 
 ```
 chmod +x show.sh
@@ -104,7 +104,7 @@ chmod +x show.sh
 
 show.sh - This script retrieves details of the Schematics workspace for a given LSF cluster prefix. It ensures you are logged into the correct account and region, locates the workspace, and then displays its full configuration and state.
 
-2. Copy the job submission script to the cluster by using the command:
+#### 2. Copy the job submission script to the cluster by using the command:
 
 ```
 chmod +x cp.sh
@@ -121,7 +121,7 @@ Command (for example, replace sleep 30 with their own workload).
 
 This serves as a template for testing job submission and can be adapted for real workloads.
 
-3. Run the following command to jump to the LSF environment:
+#### 3. Run the following command to jump to the LSF environment:
 
 ```
 chmod +x jump.sh
@@ -130,7 +130,7 @@ chmod +x jump.sh
 
 jump.sh - This script connects you directly to the LSF login node. It ensures you are targeting the right IBM Cloud account/region, fetches the bastion, login, and management IPs, and then uses SSH (with bastion as a jump host) to securely log into the LSF login node.
 
-4. Run the following commands to submit the jobs:
+#### 4. Run the following commands to submit the jobs:
 
 ```
 sh submit.sh
