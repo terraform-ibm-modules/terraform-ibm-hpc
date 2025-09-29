@@ -76,5 +76,4 @@ module "scale" {
   protocol_subnet_id                            = local.env.protocol_subnet_id
   client_subnet_id                              = local.env.client_subnet_id
   scale_management_vsi_profile                  = local.env.scale_management_vsi_profile
-  github_token                                  = local.env.github_token # Delete this variable before pushing to the public repository.
 }
