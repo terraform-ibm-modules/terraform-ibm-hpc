@@ -7,7 +7,6 @@ from ibm_botocore.client import ClientError, Config
 
 
 class DownloadFromCOS:
-
     def upload_file(self, bucket_name, file_path, filename):
         print(f"-- working on file {filename}")
         try:
@@ -16,10 +15,10 @@ class DownloadFromCOS:
             )
             print(f"--- {filename} successfully uploaded in {file_path}!")
         except ClientError as be:
-            print("[CLIENT ERROR]: {0}\n".format(be))
+            print(f"[CLIENT ERROR]: {be}\n")
             self.return_code += 1
         except Exception as e:
-            print("[CLIENT ERROR] Unable to upload file to COS: {0}".format(e))
+            print(f"[CLIENT ERROR] Unable to upload file to COS: {e}")
             self.return_code += 1
 
     def upload_multiple_files(self, FILE_NAME_FULLPATH, bucket_name, file_path):
@@ -35,10 +34,10 @@ class DownloadFromCOS:
             )
             print(f"--- {filename} successfully downloaded!")
         except ClientError as be:
-            print("[CLIENT ERROR]: {0}\n".format(be))
+            print(f"[CLIENT ERROR]: {be}\n")
             self.return_code += 1
         except Exception as e:
-            print("[CLIENT ERROR] Unable to download file from COS: {0}".format(e))
+            print(f"[CLIENT ERROR] Unable to download file from COS: {e}")
             self.return_code += 1
 
     def delete_file(self, bucket_name, filename):
@@ -47,10 +46,10 @@ class DownloadFromCOS:
             self.client.delete_object(Bucket=bucket_name, Key=filename)
             print(f"--- {filename} successfully deleted!")
         except ClientError as be:
-            print("[CLIENT ERROR]: {0}\n".format(be))
+            print(f"[CLIENT ERROR]: {be}\n")
             self.return_code += 1
         except Exception as e:
-            print("[CLIENT ERROR] Unable to download file from COS: {0}".format(e))
+            print(f"[CLIENT ERROR] Unable to download file from COS: {e}")
             self.return_code += 1
 
     def main(self):
