@@ -175,7 +175,7 @@ if __name__ == "__main__":
         "%s/%s/%s_mount_cloud_playbook.yaml"
         % (ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra", "client")
     )
-    # Step-3: Cleanup the Clinet inventory file
+    # Step-3: Cleanup the Client inventory file
     cleanup(
         "%s/%s/%s_mount_inventory.ini"
         % (ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra", "client")

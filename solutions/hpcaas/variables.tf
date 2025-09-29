@@ -240,7 +240,7 @@ variable "storage_instances" {
       profile    = string
       count      = number
       image      = string
-      filesystem = string
+      filesystem = optional(string)
     })
   )
   default = [{

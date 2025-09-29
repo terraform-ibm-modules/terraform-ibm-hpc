@@ -1,5 +1,5 @@
 /*
-    Excutes ansible playbook to configure remote mount between IBM Spectrum Scale compute and storage cluster.
+    Executes ansible playbook to configure remote mount between IBM Spectrum Scale compute and storage cluster.
 */
 
 resource "null_resource" "prepare_remote_mnt_inventory_using_jumphost_connection" {
@@ -24,7 +24,7 @@ resource "null_resource" "prepare_remote_mnt_inventory" {
   }
 }
 
-resource "time_sleep" "wait_for_gui_db_initializion" {
+resource "time_sleep" "wait_for_gui_db_initialization" {
   count           = (tobool(var.turn_on) == true && tobool(var.storage_cluster_create_complete) == true && tobool(var.create_scale_cluster) == true) ? 1 : 0
   create_duration = "180s"
   depends_on      = [null_resource.prepare_remote_mnt_inventory, null_resource.prepare_remote_mnt_inventory_using_jumphost_connection]
@@ -34,9 +34,9 @@ resource "null_resource" "perform_scale_deployment" {
   count = (tobool(var.turn_on) == true && tobool(var.compute_cluster_create_complete) == true && tobool(var.storage_cluster_create_complete) == true && tobool(var.create_scale_cluster) == true) ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -i ${local.remote_mnt_inventory_path} ${local.remote_mnt_playbook_path}"
+    command     = "sudo ansible-playbook -i ${local.remote_mnt_inventory_path} ${local.remote_mnt_playbook_path}"
   }
-  depends_on = [time_sleep.wait_for_gui_db_initializion, null_resource.prepare_remote_mnt_inventory, null_resource.prepare_remote_mnt_inventory_using_jumphost_connection]
+  depends_on = [time_sleep.wait_for_gui_db_initialization, null_resource.prepare_remote_mnt_inventory, null_resource.prepare_remote_mnt_inventory_using_jumphost_connection]
   triggers = {
     build = timestamp()
   }
