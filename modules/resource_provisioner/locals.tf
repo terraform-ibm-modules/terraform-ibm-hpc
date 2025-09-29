@@ -5,7 +5,7 @@ locals {
   remote_terraform_path  = format("%s/terraform-ibm-hpc", local.deployer_path)
   # da_hpc_repo_url        = "github.ibm.com/workload-eng-services/HPCaaS.git"
   da_hpc_repo_url             = "github.com/terraform-ibm-modules/terraform-ibm-hpc.git"
-  da_hpc_repo_tag             = "develop-da-longterm" ###### change it to main in future
+  da_hpc_repo_tag             = "29-sept" ###### change it to main in future
   remote_ansible_path         = format("%s/ibm-spectrumscale-cloud-deploy", local.deployer_path)
   scale_cloud_infra_repo_url  = "https://github.com/jayeshh123/ibm-spectrum-scale-install-infra"
   scale_cloud_infra_repo_name = "ibm-spectrum-scale-install-infra"
