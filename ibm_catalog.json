@@ -762,7 +762,7 @@
               {
                 "diagram": {
                   "caption": "IBM Spectrum LSF",
-                  "url": "https://raw.githubusercontent.com/terraform-ibm-modules/terraform-ibm-hpc/main/LSF_DA_New.drawio.svg",
+                  "url": "https://raw.githubusercontent.com/terraform-ibm-modules/terraform-ibm-hpc/main/LSF-DA-Architecture.drawio.svg",
                   "type": "image/svg+xml"
                 },
                 "description": "This deployable architecture sets up a VPC on IBM Cloud to run HPC workloads within a single zone. A login node is deployed in a dedicated subnet and security group to facilitate secure access to the HPC environment. The HPC management nodes and static compute nodes reside in a separate subnet and security group.\nClusters of virtual server instances are provisioned with the IBM Spectrum LSF scheduler pre-installed for HPC workload job management. The LSF scheduler dynamically provisions compute nodes as needed and removes them once jobs are completed.\nThe solution supports either IBM Cloud File Storage for VPC or a dedicated clustered shared file system using IBM Storage Scale which is a high performance, highly available, clustered file system with advanced features like File Audit Logging for security and Active File Management for hybrid cloud connectivity. IBM Storage Scale provides more performance and scalability than standard file storage solutions."
@@ -1609,10 +1609,10 @@
               {
                 "diagram": {
                   "caption": "IBM Storage Scale",
-                  "url": "https://raw.githubusercontent.com/terraform-ibm-modules/terraform-ibm-hpc/refs/heads/26-aug-scale/DA_Scale_24July.drawio.svg",
+                  "url": "https://raw.githubusercontent.com/terraform-ibm-modules/terraform-ibm-hpc/refs/heads/main/Scale-DA-Architecture.drawio.svg",
                   "type": "image/svg+xml"
                 },
-                "description": "The HPC variation of the deployable architecture is based on the IBM Cloud for Financial Services reference architecture. The architecture creates a customizable and secure infrastructure, with virtual servers, to run your workloads with a Virtual Private Cloud (VPC) in multizone regions."
+                "description": "This deployable architecture provisions a VPC on IBM Cloud to run a clustered file system within a single availability zone. A Bastion node is deployed in a dedicated subnet and security group to enable secure access to the storage environment. The IBM Spectrum Scale (GPFS) storage nodes and compute nodes are hosted in a separate subnet and security group\n. Each GPFS storage node operates as part of the Spectrum Scale cluster, contributing to the system’s high-performance, distributed storage by adding capacity and enabling application access through the compute nodes. The NFS server, running on a protocol node, interacts with the underlying distributed file system to serve client requests. By separating storage management from protocol services, the NFS storage node acts as an intelligent gateway, translating NFS client requests into operations on the highly scalable and resilient Spectrum Scale backend file system."
               }
             ]
           }
