@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Copyright IBM Corporation 2018
 
@@ -39,12 +38,11 @@ def read_json_file(json_path):
                 tf_inv = json.load(json_handler)
             except json.decoder.JSONDecodeError:
                 print(
-                    "Provided terraform inventory file (%s) is not a valid json."
-                    % json_path
+                    f"Provided terraform inventory file ({json_path}) is not a valid json."
                 )
                 sys.exit(1)
     except OSError:
-        print("Provided terraform inventory file (%s) does not exist." % json_path)
+        print(f"Provided terraform inventory file ({json_path}) does not exist.")
         sys.exit(1)
 
     return tf_inv
@@ -191,18 +189,18 @@ if __name__ == "__main__":
     # Step-1: Read the inventory file
     COMP_TF = read_json_file(ARGUMENTS.compute_tf_inv_path)
     if ARGUMENTS.verbose:
-        print("Parsed compute terraform output: %s" % json.dumps(COMP_TF, indent=4))
+        print(f"Parsed compute terraform output: {json.dumps(COMP_TF, indent=4)}")
     STRG_TF = read_json_file(ARGUMENTS.storage_tf_inv_path)
     if ARGUMENTS.verbose:
-        print("Parsed storage terraform output: %s" % json.dumps(STRG_TF, indent=4))
+        print(f"Parsed storage terraform output: {json.dumps(STRG_TF, indent=4)}")
 
     # Step-2: Read the GUI inventory file
     COMP_GUI = read_json_file(ARGUMENTS.compute_gui_inv_path)
     if ARGUMENTS.verbose:
-        print("Parsed compute terraform output: %s" % json.dumps(COMP_GUI, indent=4))
+        print(f"Parsed compute terraform output: {json.dumps(COMP_GUI, indent=4)}")
     STRG_GUI = read_json_file(ARGUMENTS.storage_gui_inv_path)
     if ARGUMENTS.verbose:
-        print("Parsed storage terraform output: %s" % json.dumps(STRG_GUI, indent=4))
+        print(f"Parsed storage terraform output: {json.dumps(STRG_GUI, indent=4)}")
 
     # Step-3: Create playbook
     remote_mount = {}
@@ -222,8 +220,9 @@ if __name__ == "__main__":
 
     playbook_content = prepare_remote_mount_playbook("scale_nodes", remote_mount)
     write_to_file(
-        "%s/%s/remote_mount_cloud_playbook.yaml"
-        % (ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"),
+        "{}/{}/remote_mount_cloud_playbook.yaml".format(
+            ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"
+        ),
         playbook_content,
     )
 
@@ -250,8 +249,9 @@ if __name__ == "__main__":
             node_template = node_template + each_entry + "\n"
 
     with open(
-        "%s/%s/remote_mount_inventory.ini"
-        % (ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"),
+        "{}/{}/remote_mount_inventory.ini".format(
+            ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"
+        ),
         "w",
     ) as configfile:
         configfile.write("[scale_nodes]" + "\n")

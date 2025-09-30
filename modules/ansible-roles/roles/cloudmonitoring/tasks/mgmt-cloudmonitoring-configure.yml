@@ -211,13 +211,13 @@
   when:
     - monitoring_enable_for_management | bool
 
-- name: Restart lsfd service to apply scheduler metric changes
-  ansible.builtin.systemd:
-    name: lsfd
-    state: restarted
-    enabled: yes
-  when:
-    - monitoring_enable_for_management | bool
+# - name: Restart lsfd service to apply scheduler metric changes
+#   ansible.builtin.systemd:
+#     name: lsfd
+#     state: restarted
+#     enabled: yes
+#   when:
+#     - monitoring_enable_for_management | bool
 
 - name: Reload systemd and start Prometheus Agent
   ansible.builtin.systemd:

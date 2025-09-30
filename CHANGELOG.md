@@ -13,7 +13,7 @@
 - Support for creation of New resource groups.
 
 ## **1.3.1**
-- Bug Fixes for the support of ldap users to access Aplication centre URL.
+- Bug Fixes for the support of ldap users to access Application centre URL.
 
 ## **1.3.0**
 - Support for dedicate LSF login client node to monitor/manage LSF cluster.

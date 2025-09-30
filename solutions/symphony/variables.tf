@@ -240,11 +240,11 @@ variable "storage_instances" {
       profile    = string
       count      = number
       image      = string
-      filesystem = string
+      filesystem = optional(string)
     })
   )
   default = [{
-    profile    = "bx2-2x8"
+    profile    = "bx2d-32x128"
     count      = 0
     image      = "ibm-redhat-8-10-minimal-amd64-4"
     filesystem = "/ibm/fs1"

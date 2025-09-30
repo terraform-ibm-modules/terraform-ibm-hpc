@@ -40,7 +40,7 @@ localhost
 # by using both its public IP address and the host
 # name reported by the hostname command and vice versa.
 [GUI_Hosts]
-{% for host in gui_hosts %}
+{% for host in db_hosts %}
 {{ host }}
 {% endfor %}
 
