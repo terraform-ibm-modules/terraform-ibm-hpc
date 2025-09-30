@@ -125,4 +125,3 @@ if [ ! -d "$(pwd)/go" ]; then
     echo "export GOROOT=$(pwd)/go" >> ~/.bashrc
     source ~/.bashrc
 fi
-
