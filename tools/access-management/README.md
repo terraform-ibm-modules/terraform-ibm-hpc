@@ -8,7 +8,7 @@ For example, for the App configuration service, the user requires Administrator 
 
 ### Benefits of the scripts:
 
-#### Interactive input collection - The script prompts for the IBMid (admin email), Resource Group ID, Account ID, and target (User or Access Group).
+#### Interactive input collection - The script prompts for the IBMid (admin email), Account ID, and target (User or Access Group).
 
 #### Permission check - The script verifies that the admin has account-level Administrator rights which is required to assign policies.
 
@@ -34,7 +34,7 @@ chmod +x permissions.sh
 
 3. Enter the admin email or IBMid.
 
-4. Enter the Resource group and Account ID.
+4. Enter the Account ID.
 
 For the Account ID, login to the IBM Cloud account by using your unique credentials. Go to Manage > Account > Account settings. You will find the Account ID.
 
@@ -50,10 +50,9 @@ Select the required option.
 
 7. User policy is successfully created.
 
-If the user skips to enter the RESOURCE_GROUP_ID or the ACCOUNT_ID, then script displays the error message:
+If the user skips to enter the ACCOUNT_ID, then script displays the error message:
 
 ```
-:x: RESOURCE_GROUP_ID is required.
 :x: ACCOUNT_ID is required.
 ```
 
