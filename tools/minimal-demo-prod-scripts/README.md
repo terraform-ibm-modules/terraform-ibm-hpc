@@ -42,7 +42,7 @@ TEMPLATE_FILE="catalog_values_minimal_deployment.json"
 LSF_TILE_VERSION="1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc.92fba4af-b0dd-4b22-9415-9a5465ee9795-global"
 
 # App Center GUI password
-# Rules: Minimum 8 characters, at least 1 uppercase, 1 lowercase, 1 number,
+# Rules: Minimum 15 characters, at least 1 uppercase, 1 lowercase, 1 number,
 # and 1 special character (!@#$%^&*()_+=-). No spaces allowed.
 APP_CENTER_GUI_PASSWORD="APP_CENTER_GUI_PASSWORD"
 ```
