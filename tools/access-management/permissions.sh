@@ -223,7 +223,7 @@ if [ -n "$ACCESS_GROUP" ] && [ -z "$USER_EMAIL" ]; then
   existing_policies=$(ibmcloud iam access-group-policies "$ACCESS_GROUP" --output json 2>/dev/null || echo "[]")
   POLICY_ID=$(echo "$existing_policies" | jq -r '
     .[] |
-    select(all(.resources[].attributes[]?.name; . != "serviceName")) |
+    select(any(.resources[].attributes[]?; .name == "serviceType" and .value == "service")) |
     .id' | head -n1)
 
   if [ -n "$POLICY_ID" ] && [ "$POLICY_ID" != "null" ]; then
@@ -303,9 +303,8 @@ elif [ -z "$ACCESS_GROUP" ] && [ -n "$USER_EMAIL" ]; then
   existing_policies=$(ibmcloud iam user-policies "$USER_EMAIL" --output json 2>/dev/null || echo "[]")
   POLICY_ID=$(echo "$existing_policies" | jq -r '
     .[] |
-    select(all(.resources[].attributes[]?.name; . != "serviceName")) |
+    select(any(.resources[].attributes[]?; .name == "serviceType" and .value == "service")) |
     .id' | head -n1)
-
   if [ -n "$POLICY_ID" ] && [ "$POLICY_ID" != "null" ]; then
     EXISTING_ROLES=$(echo "$existing_policies" | jq -r --arg id "$POLICY_ID" '
       .[] | select(.id == $id) | [.roles[].display_name] | join(",")')
