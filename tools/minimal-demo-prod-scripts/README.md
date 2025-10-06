@@ -39,10 +39,10 @@ SSH_KEY="SSH_KEY"
 TEMPLATE_FILE="catalog_values_minimal_deployment.json"
 
 # LSF tile version locator
-LSF_TILE_VERSION="1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc.2ad06fe1-6125-45c5-b8b6-6454eb4907e6-global"
+LSF_TILE_VERSION="1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc.92fba4af-b0dd-4b22-9415-9a5465ee9795-global"
 
 # App Center GUI password
-# Rules: Minimum 8 characters, at least 1 uppercase, 1 lowercase, 1 number,
+# Rules: Minimum 15 characters, at least 1 uppercase, 1 lowercase, 1 number,
 # and 1 special character (!@#$%^&*()_+=-). No spaces allowed.
 APP_CENTER_GUI_PASSWORD="APP_CENTER_GUI_PASSWORD"
 ```

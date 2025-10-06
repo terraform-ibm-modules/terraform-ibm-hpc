@@ -31,7 +31,7 @@
   "observability_monitoring_plan": "graduated-tier",
   "lsf_version": "fixpack_15",
   "vpc_name": "__NULL__",
-  "cluster_subnet_id": "__NULL__",
+  "compute_subnet_id": "__NULL__",
   "login_subnet_id": "__NULL__",
   "vpc_cidr": "10.241.0.0/18",
   "vpc_cluster_private_subnets_cidr_blocks": "10.241.0.0/20",
