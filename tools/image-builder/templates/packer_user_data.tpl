@@ -64,7 +64,7 @@ echo "======================Cloning HPC public repo====================="
 sudo yum install git -y
 mkdir /HPCaaS
 cd /HPCaaS
-git clone https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git - b  gabor-image-test
+git clone https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git -b  gabor-image-test
 cd /HPCaaS/terraform-ibm-hpc/solutions/hpc
 
 echo "======================Installing terraform====================="
