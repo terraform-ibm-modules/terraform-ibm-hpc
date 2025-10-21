@@ -145,7 +145,7 @@ locals {
   fileset_size_map = try({ for details in var.custom_file_shares : details.mount_path => details.size }, {})
 
   # Original file share map from module
-  original_map = var.enable_deployer ? {} : module.file_storage[0].name_mount_path_map
+  original_map = var.enable_deployer ? {} : var.scheduler == "LSF" ? module.file_storage[0].name_mount_path_map : {}
 
   # Extract keyword-to-target mapping from file share names
   keyword_to_target_map = var.enable_deployer ? {} : {

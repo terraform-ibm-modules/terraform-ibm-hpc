@@ -245,14 +245,14 @@ module "cos" {
 }
 
 module "file_storage" {
-  count                               = var.enable_deployer == false ? 1 : 0
+  count                               = var.enable_deployer == false && var.scheduler == "LSF" ? 1 : 0
   source                              = "./modules/file_storage"
   zone                                = var.zones[0] # always the first zone
   resource_group_id                   = var.resource_group_ids["workload_rg"]
   file_shares                         = local.file_shares
   encryption_key_crn                  = var.boot_volume_encryption_key
   security_group_ids                  = local.compute_security_group_id
-  subnet_id                           = local.compute_subnet_id
+  subnet_id                           = local.compute_subnet
   existing_kms_instance_guid          = var.existing_kms_instance_guid
   skip_iam_share_authorization_policy = var.skip_iam_share_authorization_policy
   kms_encryption_enabled              = local.kms_encryption_enabled

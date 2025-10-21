@@ -50,7 +50,7 @@ output "cloud_logs_url" {
 
 output "application_center_tunnel" {
   description = "Available if IBM Spectrum LSF Application Center GUI is installed"
-  value       = var.scheduler == "LSF" && var.enable_deployer == false ? local.ssh_cmd : null
+  value       = var.scheduler == "LSF" && (var.enable_deployer == false) ? local.ssh_cmd : null
 }
 
 output "application_center_url" {
