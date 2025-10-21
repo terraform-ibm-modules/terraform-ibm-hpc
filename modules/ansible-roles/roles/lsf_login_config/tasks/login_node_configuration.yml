@@ -43,7 +43,7 @@
 - name: Ensure login node entry exists in LSF hosts file
   lineinfile:
     path: /mnt/lsf/lsf/conf/hosts
-    line: "{{ ip_result.stdout }} {{ login_node_host }}.{{ dns_domain_names }}"
+    line: "{{ ip_result.stdout }} {{ login_node_host }}"
     state: present
     insertafter: EOF
     create: yes
@@ -52,7 +52,7 @@
   lineinfile:
     path: "{{ LSF_CLUSTER_FILE }}"
     insertafter: "^#prune"
-    line: "{{ login_node_host }}.{{ dns_domain_names }} Intel_E5 X86_64 0 ()"
+    line: "{{ login_node_host }} Intel_E5 X86_64 0 ()"
     state: present
 
 - name: Ensure LSF profile is sourced in root's .bashrc

@@ -10,6 +10,12 @@ variable "login_host" {
   default     = []
 }
 
+variable "gui_hosts" {
+  description = "GUI Hosts"
+  type        = list(string)
+  default     = ["localhost"]
+}
+
 variable "inventory_path" {
   description = "Inventory file path"
   type        = string
@@ -106,7 +112,7 @@ variable "ldap_server" {
 
 variable "ldap_basedns" {
   type        = string
-  default     = "lsf.com"
+  default     = "hpc.local"
   description = "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."
 }
 

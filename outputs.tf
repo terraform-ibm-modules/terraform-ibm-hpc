@@ -20,7 +20,7 @@ output "remote_allowed_cidr" {
 
 output "ssh_to_deployer" {
   description = "SSH command to connect to the deployer"
-  value       = (var.enable_deployer == false) ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J ubuntu@${var.bastion_fip} vpcuser@${var.deployer_ip}" : null
+  value       = (var.enable_deployer == false) ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -J ubuntu@${var.bastion_fip} lsfadmin@${var.deployer_ip}" : null
 }
 
 output "ssh_to_management_node" {
@@ -50,10 +50,15 @@ output "cloud_logs_url" {
 
 output "application_center_tunnel" {
   description = "Available if IBM Spectrum LSF Application Center GUI is installed"
-  value       = var.enable_deployer ? "" : local.ssh_cmd
+  value       = var.scheduler == "LSF" && var.enable_deployer == false ? local.ssh_cmd : null
 }
 
 output "application_center_url" {
   description = "Available if IBM Spectrum LSF Application Center GUI is installed"
   value       = "https://localhost:8443"
+}
+
+output "web_service_tunnel" {
+  description = "SSH command to connect to the LSF WebServices"
+  value       = var.scheduler == "LSF" && var.lsf_version == "fixpack_15" && var.enable_deployer == false ? local.webservice_ssh_cmd : null
 }

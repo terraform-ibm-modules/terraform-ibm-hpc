@@ -26,18 +26,18 @@ variable "app_center_gui_password" {
   type        = string
   default     = ""
   sensitive   = true
-  description = "Password required to access the IBM Spectrum LSF Application Center (App Center) GUI, which is enabled by default in both Fix Pack 15 and Fix Pack 14 with HTTPS. This is a mandatory value and omitting it will result in deployment failure. The password must meet the following requirements, at least 8 characters in length, and must include one uppercase letter, one lowercase letter, one number, and one special character. Spaces are not allowed."
+  description = "Password required to access the IBM Spectrum LSF Application Center (App Center) GUI, which is enabled by default in both Fix Pack 15 and Fix Pack 14 with HTTPS. This is a mandatory value and omitting it will result in deployment failure. The password must meet the following requirements, at least 15 characters in length, and must include one uppercase letter, one lowercase letter, one number, and one special character. Spaces are not allowed."
 
   validation {
     condition = (
-      can(regex("^.{8,}$", var.app_center_gui_password)) &&
+      can(regex("^.{15,}$", var.app_center_gui_password)) &&
       can(regex("[0-9]", var.app_center_gui_password)) &&
       can(regex("[a-z]", var.app_center_gui_password)) &&
       can(regex("[A-Z]", var.app_center_gui_password)) &&
       can(regex("[!@#$%^&*()_+=-]", var.app_center_gui_password)) &&
       !can(regex(".*\\s.*", var.app_center_gui_password))
     )
-    error_message = "The password must be at least 8 characters long and include at least one lowercase letter, one uppercase letter, one number, and one special character (!@#$%^&*()_+=-). Spaces are not allowed."
+    error_message = "The password must be at least 15 characters long and include at least one lowercase letter, one uppercase letter, one number, and one special character (!@#$%^&*()_+=-). Spaces are not allowed."
   }
 }
 
@@ -262,7 +262,7 @@ variable "management_instances" {
     count   = 2
     image   = "hpc-lsf-fp15-rhel810-v1"
   }]
-  description = "Specify the list of management node configurations, including instance profile, image name, and count. By default, all management nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. The solution allows customization of instance profiles and counts, but mixing custom images and IBM stock images across instances is not supported. If using IBM stock images, only Red Hat-based images are allowed."
+  description = "Specify the list of management node configurations, including instance profile, image name, and count. By default, all management nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. The solution allows customization of instance profiles and counts, but mixing custom images and IBM stock images across instances is not supported. If using IBM stock images, only Red Hat-based images are allowed. Management nodes must have a minimum of 9 GB RAM. Select a profile with 9 GB or higher."
   validation {
     condition     = alltrue([for inst in var.management_instances : !contains([for i in var.management_instances : can(regex("^ibm", i.image))], true) || can(regex("^ibm-redhat", inst.image))])
     error_message = "When defining management_instances, all instances must either use custom images or IBM stock images exclusively — mixing the two is not supported. If stock images are used, only Red Hat-based IBM images (e.g., ibm-redhat-*) are allowed."
@@ -285,6 +285,13 @@ variable "management_instances" {
       )
     ])
     error_message = "Mismatch between management_instances image and lsf_version. Use an image with 'fp14' only when lsf_version is fixpack_14, and 'fp15' only with fixpack_15."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.management_instances :
+      tonumber(regex("\\d+$", inst.profile)) >= 9
+    ])
+    error_message = "Management node memory requirement not met. Minimum: 9 GB RAM. Please select a profile with 9 GB or higher."
   }
 }
 
@@ -435,12 +442,12 @@ variable "dns_domain_name" {
     compute = string
   })
   default = {
-    compute = "lsf.com"
+    compute = "hpc.local"
   }
   description = "IBM Cloud DNS Services domain name to be used for the IBM Spectrum LSF cluster."
   validation {
-    condition     = can(regex("^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.com$", var.dns_domain_name.compute))
-    error_message = "The compute domain name must be a valid FQDN ending in '.com'. It may include letters, digits, hyphens, and must start and end with an alphanumeric character."
+    condition     = can(regex("^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\\.[a-zA-Z]{2,})+$", var.dns_domain_name.compute))
+    error_message = "The compute domain name must be a valid FQDN. It may include letters, digits, hyphens, and must start and end with an alphanumeric character."
   }
 }
 
@@ -499,7 +506,7 @@ variable "enable_ldap" {
 
 variable "ldap_basedns" {
   type        = string
-  default     = "lsf.com"
+  default     = "hpc.local"
   description = "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."
   validation {
     condition     = var.enable_ldap == false || (var.ldap_basedns != null ? (length(trimspace(var.ldap_basedns)) > 0 && var.ldap_basedns != "null") : false)
@@ -513,7 +520,7 @@ variable "ldap_server" {
   description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
   validation {
     condition     = var.enable_ldap == false || var.ldap_server == null || (var.ldap_server != null ? (length(trimspace(var.ldap_server)) > 0 && var.ldap_server != "null") : true)
-    error_message = "If LDAP is enabled, an existing LDAP server IP should be provided."
+    error_message = "If LDAP is enabled and you choose to use an existing server, you must provide a valid LDAP server IP address."
   }
 }
 
@@ -532,10 +539,24 @@ variable "ldap_admin_password" {
   type        = string
   sensitive   = true
   default     = null
-  description = "The LDAP admin password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces. [This value is ignored for an existing LDAP server]."
+  description = "The LDAP admin password must be 15 to 32 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces. [This value is ignored for an existing LDAP server]."
   validation {
-    condition     = (!var.enable_ldap || var.ldap_server != null || can(var.ldap_admin_password != null && length(var.ldap_admin_password) >= 8 && length(var.ldap_admin_password) <= 20 && regex(".*[0-9].*", var.ldap_admin_password) != "" && regex(".*[A-Z].*", var.ldap_admin_password) != "" && regex(".*[a-z].*", var.ldap_admin_password) != "" && regex(".*[!@#$%^&*()_+=-].*", var.ldap_admin_password) != "" && !can(regex(".*\\s.*", var.ldap_admin_password))))
-    error_message = "The LDAP admin password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces."
+    condition = (
+      var.enable_ldap ? (
+        var.ldap_server == null ? (
+          var.ldap_admin_password != null ? (
+            try(length(var.ldap_admin_password)) >= 15 &&
+            try(length(var.ldap_admin_password)) <= 32 &&
+            try(can(regex(".*[0-9].*", var.ldap_admin_password)), false) &&
+            try(can(regex(".*[A-Z].*", var.ldap_admin_password)), false) &&
+            try(can(regex(".*[a-z].*", var.ldap_admin_password)), false) &&
+            try(can(regex(".*[!@#$%^&*()_+=-].*", var.ldap_admin_password)), false) &&
+            !try(can(regex(".*\\s.*", var.ldap_admin_password)), false)
+          ) : false
+        ) : true
+      ) : true
+    )
+    error_message = "The LDAP admin password must be 15 to 32 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain any spaces."
   }
 }
 
@@ -553,10 +574,10 @@ variable "ldap_user_password" {
   type        = string
   sensitive   = true
   default     = ""
-  description = "The LDAP user password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one numeric digit, and at least one special character from the set (!@#$%^&*()_+=-). Spaces are not allowed. The password must not contain the username for enhanced security. [This value is ignored for an existing LDAP server]."
+  description = "The LDAP user password must be 15 to 32 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one numeric digit, and at least one special character from the set (!@#$%^&*()_+=-). Spaces are not allowed. The password must not contain the username for enhanced security. [This value is ignored for an existing LDAP server]."
   validation {
-    condition     = !var.enable_ldap || var.ldap_server != null || ((replace(lower(var.ldap_user_password), lower(var.ldap_user_name), "") == lower(var.ldap_user_password)) && length(var.ldap_user_password) >= 8 && length(var.ldap_user_password) <= 20 && can(regex("^(.*[0-9]){1}.*$", var.ldap_user_password))) && can(regex("^(.*[A-Z]){1}.*$", var.ldap_user_password)) && can(regex("^(.*[a-z]){1}.*$", var.ldap_user_password)) && can(regex("^.*[!@#$%^&*()_+=-].*$", var.ldap_user_password)) && !can(regex(".*\\s.*", var.ldap_user_password))
-    error_message = "The LDAP user password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces."
+    condition     = !var.enable_ldap || var.ldap_server != null || ((replace(lower(var.ldap_user_password), lower(var.ldap_user_name), "") == lower(var.ldap_user_password)) && length(var.ldap_user_password) >= 15 && length(var.ldap_user_password) <= 32 && can(regex("^(.*[0-9]){1}.*$", var.ldap_user_password))) && can(regex("^(.*[A-Z]){1}.*$", var.ldap_user_password)) && can(regex("^(.*[a-z]){1}.*$", var.ldap_user_password)) && can(regex("^.*[!@#$%^&*()_+=-].*$", var.ldap_user_password)) && !can(regex(".*\\s.*", var.ldap_user_password))
+    error_message = "The LDAP user password must be 15 to 32 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces."
   }
 }
 

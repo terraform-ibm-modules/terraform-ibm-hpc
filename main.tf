@@ -250,7 +250,7 @@ module "file_storage" {
   zone                                = var.zones[0] # always the first zone
   resource_group_id                   = var.resource_group_ids["workload_rg"]
   file_shares                         = local.file_shares
-  encryption_key_crn                  = local.boot_volume_encryption_key
+  encryption_key_crn                  = var.boot_volume_encryption_key
   security_group_ids                  = local.compute_security_group_id
   subnet_id                           = local.compute_subnet_id
   existing_kms_instance_guid          = var.existing_kms_instance_guid
@@ -657,6 +657,7 @@ module "compute_inventory" {
   source                              = "./modules/inventory"
   scheduler                           = var.scheduler
   hosts                               = local.compute_hosts
+  gui_hosts                           = local.gui_hosts
   login_host                          = local.login_host
   inventory_path                      = local.compute_inventory_path
   name_mount_path_map                 = local.fileshare_name_mount_path_map

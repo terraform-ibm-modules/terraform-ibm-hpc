@@ -2022,7 +2022,7 @@ func TestRunCreateVpcWithCustomDns(t *testing.T) {
 	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
 	options, err := setupOptionsVPC(t, clusterNamePrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroup)
 	options.TerraformVars["enable_hub"] = true
-	options.TerraformVars["dns_zone_name"] = "lsf.com"
+	options.TerraformVars["dns_zone_name"] = "hpc.local"
 
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
@@ -2162,7 +2162,7 @@ func TestRunCreateVpcWithCustomDnsOnlyDNS(t *testing.T) {
 	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
 	options, err := setupOptionsVPC(t, clusterNamePrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroup)
 	options.TerraformVars["enable_hub"] = true
-	options.TerraformVars["dns_zone_name"] = "lsf.com"
+	options.TerraformVars["dns_zone_name"] = "hpc.local"
 
 	require.NoError(t, err, "Error setting up test options: %v", err)
 

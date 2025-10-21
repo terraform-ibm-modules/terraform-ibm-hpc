@@ -361,7 +361,7 @@ locals {
   ldap_hosts_ips      = var.scheduler == "LSF" ? var.enable_deployer ? [] : (var.enable_ldap == true ? (var.ldap_server == "null" ? local.ldap_instances[*]["ipv4_address"] : [var.ldap_server]) : []) : []
   json_inventory_path = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json"
   management_nodes    = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"] : []
-  login_host          = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].login_vsi_data]))[*]["name"] : []
+  login_host          = var.scheduler == "LSF" ? var.enable_deployer ? [] : try([for name in local.login_instance[*]["name"] : "${name}.${var.dns_domain_names["compute"]}"], []) : []
   compute_nodes = var.scheduler == "LSF" ? (
     var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_vsi_data])[*]["name"]
   ) : []
@@ -370,7 +370,7 @@ locals {
     var.enable_deployer ? [] : (
       length(local.compute_nodes) == 0 ? [] : distinct(flatten([
         for prefix, nodes in {
-          for node in local.compute_nodes :
+          for node in sort(local.compute_nodes) :
           join("-", slice(split("-", node), 0, length(split("-", node)) - 1)) => node...
         } : length(nodes) > 1 ?
         [format(
@@ -384,8 +384,8 @@ locals {
   ) : []
 
   client_nodes          = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].client_vsi_data]))[*]["name"] : []
-  gui_hosts             = var.scheduler == "LSF" ? var.enable_deployer ? [] : [local.management_nodes[0]] : [] # Without Pac HA
-  db_hosts              = var.scheduler == "LSF" ? var.enable_deployer ? [] : [local.management_nodes[0]] : [] # Without Pac HA
+  gui_hosts             = var.scheduler == "LSF" ? (var.enable_deployer ? [] : [format("%s.%s", length(local.management_nodes) == 1 ? local.management_nodes[0] : local.management_nodes[1], var.dns_domain_names["compute"])]) : []
+  db_hosts              = var.scheduler == "LSF" ? (var.enable_deployer ? [] : (length(local.management_nodes) == 1 ? [local.management_nodes[0]] : [local.management_nodes[1]])) : []
   ha_shared_dir         = var.scheduler == "LSF" ? "/mnt/lsf" : ""
   nfs_install_dir       = var.scheduler == "LSF" ? "none" : ""
   enable_monitoring     = var.scheduler == "LSF" ? false : false
@@ -565,11 +565,13 @@ locals {
 
 # locals needed for ssh connection
 locals {
-  ssh_forward_host = var.enable_deployer ? "" : local.mgmt_hosts_ips[0]
-  ssh_forwards     = var.enable_deployer ? "" : "-L 8443:${local.ssh_forward_host}:8443 -L 6080:${local.ssh_forward_host}:6080 -L 8444:${local.ssh_forward_host}:8444"
-  ssh_jump_host    = var.enable_deployer ? "" : local.bastion_instance_public_ip != null ? local.bastion_instance_public_ip : var.bastion_fip
-  ssh_jump_option  = var.enable_deployer ? "" : "-J ubuntu@${local.ssh_jump_host}"
-  ssh_cmd          = var.enable_deployer ? "" : "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 ${local.ssh_forwards} ${local.ssh_jump_option} lsfadmin@${join(",", local.login_host_ip)}"
+  ssh_forward_host        = var.enable_deployer ? "" : var.scheduler == "LSF" ? (length(local.mgmt_hosts_ips) == 1 ? local.mgmt_hosts_ips[0] : local.mgmt_hosts_ips[1]) : ""
+  ssh_forwards            = var.enable_deployer ? "" : var.scheduler == "LSF" ? "-L 8443:localhost:8443 -L 6080:localhost:6080 -L 8444:localhost:8444" : ""
+  ssh_jump_host           = var.enable_deployer ? "" : var.scheduler == "LSF" ? local.bastion_instance_public_ip != null ? local.bastion_instance_public_ip : var.bastion_fip : ""
+  ssh_jump_option         = var.enable_deployer ? "" : var.scheduler == "LSF" ? "-J ubuntu@${local.ssh_jump_host}" : ""
+  ssh_cmd                 = var.enable_deployer ? "" : var.scheduler == "LSF" ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 ${local.ssh_forwards} ${local.ssh_jump_option} lsfadmin@${local.ssh_forward_host}" : ""
+  webservice_ssh_forwards = var.enable_deployer ? "" : var.scheduler == "LSF" && var.lsf_version == "fixpack_15" ? "-L 8448:localhost:8448" : ""
+  webservice_ssh_cmd      = var.enable_deployer ? "" : var.scheduler == "LSF" && var.lsf_version == "fixpack_15" ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 ${local.webservice_ssh_forwards} ${local.ssh_jump_option} lsfadmin@${local.ssh_forward_host}" : ""
 }
 
 #locals {
