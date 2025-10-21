@@ -18,11 +18,13 @@ resource "null_resource" "tf_resource_provisioner" {
 
   provisioner "remote-exec" {
     inline = [
-      # Conditionally clone "terraform-ibm-hpc" repository from TIM
-      "if [ -f ${local.remote_terraform_path} ]; then sudo rm -f ${local.remote_terraform_path}; fi && if [ ! -d ${local.remote_terraform_path} ]; then echo 'Cloning repository with tag: ${local.da_hpc_repo_tag}' && sudo git clone -b ${local.da_hpc_repo_tag} https://${local.da_hpc_repo_url} ${local.remote_terraform_path}; fi",
+      # Remove and re-clone the remote terraform path repo
+      # "if [ -d ${local.remote_terraform_path} ]; then echo 'Removing existing repository at ${local.remote_terraform_path}' && sudo rm -rf ${local.remote_terraform_path}; fi",
+      # "echo 'Cloning repository with tag: ${local.da_hpc_repo_tag}' && sudo git clone -b ${local.da_hpc_repo_tag} https://${var.github_token}@${local.da_hpc_repo_url} ${local.remote_terraform_path}",
+      "if [ ! -d ${local.remote_terraform_path} ]; then echo 'Cloning repository with tag: ${local.da_hpc_repo_tag}' && sudo git clone -b ${local.da_hpc_repo_tag} https://${local.da_hpc_repo_url} ${local.remote_terraform_path}; fi",
 
       # Clone Spectrum Scale collection if it doesn't exist
-      "if [ \"${var.scheduler}\" = \"Scale\" ]; then if [ ! -d ${local.remote_ansible_path}/${local.scale_cloud_infra_repo_name}/collections/ansible_collections/ibm/spectrum_scale ]; then sudo git clone -b ${local.scale_cloud_infra_repo_tag} ${local.scale_cloud_infra_repo_url} ${local.remote_ansible_path}/${local.scale_cloud_infra_repo_name}/collections/ansible_collections/ibm/spectrum_scale; fi; fi",
+      "if [ ! -d ${local.remote_ansible_path}/${local.scale_cloud_infra_repo_name}/collections/ansible_collections/ibm/spectrum_scale ]; then sudo git clone -b ${local.scale_cloud_infra_repo_tag} ${local.scale_cloud_infra_repo_url} ${local.remote_ansible_path}/${local.scale_cloud_infra_repo_name}/collections/ansible_collections/ibm/spectrum_scale; fi",
 
       # Ensure ansible-playbook is available
       "sudo ln -fs /usr/local/bin/ansible-playbook /usr/bin/ansible-playbook",
@@ -60,7 +62,7 @@ resource "null_resource" "ext_bastion_access" {
 }
 
 resource "null_resource" "fetch_host_details_from_deployer" {
-  count = var.enable_deployer == true ? 1 : 0
+  count = var.enable_deployer == true && var.scheduler == "LSF" ? 1 : 0
 
   provisioner "local-exec" {
     command = <<EOT
@@ -76,13 +78,12 @@ resource "null_resource" "fetch_host_details_from_deployer" {
           vpcuser@${var.deployer_ip}:/opt/ibm/terraform-ibm-hpc/solutions/${local.products}/*.ini \
           "${path.root}/../../solutions/${local.products}/"
     EOT
-    quiet   = true
   }
   depends_on = [resource.null_resource.tf_resource_provisioner]
 }
 
 resource "null_resource" "cleanup_ini_files" {
-  count = var.enable_deployer == true ? 1 : 0
+  count = var.enable_deployer == true && var.scheduler == "LSF" ? 1 : 0
 
   triggers = {
     products = local.products
@@ -125,7 +126,7 @@ resource "null_resource" "cluster_destroyer" {
     when       = destroy
     on_failure = fail
     inline = [
-      "if [ -d \"${self.triggers.conn_remote_terraform_path}\" ]; then export TF_LOG=${self.triggers.conn_terraform_log_level} && sudo -E terraform -chdir=${self.triggers.conn_remote_terraform_path} destroy -auto-approve -lock=false; else echo \"Skipping destroy because ${self.triggers.conn_remote_terraform_path} is not a directory.\"; fi"
+      "export TF_LOG=${self.triggers.conn_terraform_log_level} && sudo -E terraform -chdir=${self.triggers.conn_remote_terraform_path} destroy -auto-approve -lock=false"
     ]
   }
 }

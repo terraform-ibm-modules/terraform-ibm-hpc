@@ -11,7 +11,6 @@ locals {
   lsf_hostentry_playbook_path      = format("%s/lsf_host_entry_play.yml", var.playbooks_path)
   remove_hostentry_playbooks_path  = format("%s/remove_host_entry_play.yml", var.playbooks_path)
   lsf_prerequesite_playbook_path   = format("%s/lsf_prerequesite_play.yml", var.playbooks_path)
-  lsfd_self_healing_playbook_path  = format("%s/lsfd_self_healing_playbook_path.yml", var.playbooks_path)
   deployer_host                    = jsonencode(var.deployer_host)
   mgmnt_hosts                      = jsonencode(var.mgmnt_hosts)
   comp_hosts                       = jsonencode(var.comp_hosts)
@@ -105,7 +104,7 @@ resource "null_resource" "deploy_host_playbook" {
 resource "local_file" "lsf_host_entry_playbook" {
   count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
-# Adding Host entries to all LSF Management and Compute nodes
+# Adding Host entries to all LSF Mangement and Compute nodes
 
 - name: Check passwordless SSH connection is setup
   hosts: all
@@ -279,7 +278,7 @@ resource "null_resource" "run_pre_lsf_config_playbook" {
   depends_on = [local_file.create_pre_lsf_config_playbook, null_resource.run_common_config_playbook]
 }
 
-resource "local_file" "lsf_prerequisite_playbook" {
+resource "local_file" "lsf_prerequesite_playbook" {
   count    = var.inventory_path != null && var.scheduler == "LSF" && var.enable_dedicated_host ? 1 : 0
   content  = <<EOT
 ---
@@ -324,7 +323,7 @@ EOT
   filename = local.lsf_prerequesite_playbook_path
 }
 
-resource "null_resource" "lsf_prerequisite_play" {
+resource "null_resource" "lsf_prerequesite_play" {
   count = var.inventory_path != null && var.scheduler == "LSF" && var.enable_dedicated_host ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -334,7 +333,7 @@ resource "null_resource" "lsf_prerequisite_play" {
   triggers = {
     build = timestamp()
   }
-  depends_on = [null_resource.run_pre_lsf_config_playbook, local_file.lsf_prerequisite_playbook]
+  depends_on = [null_resource.run_pre_lsf_config_playbook, local_file.lsf_prerequesite_playbook]
 }
 
 resource "null_resource" "run_lsf_playbooks" {
@@ -353,7 +352,7 @@ resource "null_resource" "run_lsf_playbooks" {
     build = timestamp()
   }
 
-  depends_on = [null_resource.lsf_prerequisite_play]
+  depends_on = [null_resource.lsf_prerequesite_play]
 }
 
 resource "local_file" "create_playbook_for_mgmt_config" {
@@ -623,21 +622,6 @@ resource "local_file" "remove_host_entry_playbook" {
         path: "{{ hosts_file }}"
         marker: "# === ANSIBLE MANAGED HOSTS {mark} ==="
         state: absent
-
-# Playbook to restart the lsfd service after all playbooks finish, ensuring all nodes are healthy.
-- name: Sleep and restart lsfd on all nodes
-  hosts: mgmt_compute_nodes
-  become: yes
-  gather_facts: false
-  tasks:
-    - name: Restart lsfd service
-      ansible.builtin.service:
-        name: lsfd
-        state: restarted
-
-    - name: Pause for 20s
-      ansible.builtin.pause:
-        seconds: 20
 EOT
   filename = local.remove_hostentry_playbooks_path
 }
@@ -652,59 +636,5 @@ resource "null_resource" "remove_host_entry_play" {
   triggers = {
     build = timestamp()
   }
-  depends_on = [local_file.remove_host_entry_playbook, null_resource.run_playbook_for_mgmt_config, null_resource.run_ldap_client_playbooks, null_resource.run_observability_playbooks]
-}
-
-resource "local_file" "lsfd_self_healing_playbook" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
-  content  = <<EOT
----
-- name: Deploy self-healing LSFD cron job
-  hosts: mgmt_compute_nodes
-  become: yes
-  gather_facts: false
-  tasks:
-    - name: Create check_lsfd.sh script
-      ansible.builtin.copy:
-        dest: /home/lsfadmin/check_lsfd.sh
-        content: |
-          #!/bin/bash
-          HOSTNAME=$(hostname)
-          LOGFILE="/home/lsfadmin/lsfd-restart.log"
-
-          source /opt/ibm/lsfsuite/lsf/conf/profile.lsf
-
-          # Check if this host is unavail or unreach
-          if bhosts -w | grep -q "$HOSTNAME.*\(unavail\|unreach\)"; then
-              echo "$(date) - $HOSTNAME is in UNAVAIL/UNREACH state. Restarting lsfd..." >> "$LOGFILE"
-              sudo systemctl restart lsfd
-              crontab -l | grep -v "check_lsfd.sh" | crontab -
-          fi
-        owner: lsfadmin
-        group: lsfadmin
-        mode: '0755'
-
-    - name: Schedule cron job for self-healing
-      ansible.builtin.cron:
-        name: "LSFD Self-Healing"
-        user: lsfadmin
-        minute: "*/2"
-        job: /home/lsfadmin/check_lsfd.sh
-EOT
-  filename = local.lsfd_self_healing_playbook_path
-}
-
-resource "null_resource" "execute_lsfd_self_healing" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -i ${var.inventory_path} ${local.lsfd_self_healing_playbook_path}"
-  }
-  triggers = {
-    build = timestamp()
-  }
-  depends_on = [
-    local_file.lsfd_self_healing_playbook,
-    null_resource.remove_host_entry_play
-  ]
+  depends_on = [local_file.remove_host_entry_playbook, null_resource.run_playbook_for_mgmt_config, null_resource.run_ldap_client_playbooks]
 }

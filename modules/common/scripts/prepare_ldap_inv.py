@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Copyright IBM Corporation 2023
 
@@ -126,9 +127,8 @@ if __name__ == "__main__":
     if ARGUMENTS.ldap_basedns != "null":
         ldap_playbook_content = prepare_ansible_playbook_ldap_server("ldap_nodes")
         write_to_file(
-            "{}/{}/ldap_configure_playbook.yaml".format(
-                ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"
-            ),
+            "%s/%s/ldap_configure_playbook.yaml"
+            % (ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"),
             ldap_playbook_content,
         )
     if ARGUMENTS.verbose:
@@ -155,9 +155,8 @@ if __name__ == "__main__":
             node_template = node_template + each_entry + "\n"
 
     with open(
-        "{}/{}/ldap_inventory.ini".format(
-            ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"
-        ),
+        "%s/%s/ldap_inventory.ini"
+        % (ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"),
         "w",
     ) as configfile:
         configfile.write("[ldap_nodes]" + "\n")
@@ -171,9 +170,8 @@ if __name__ == "__main__":
         ARGUMENTS.ldap_user_password,
     )
     with open(
-        "{}/{}/ldap_inventory.ini".format(
-            ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"
-        ),
+        "%s/%s/ldap_inventory.ini"
+        % (ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"),
         "w",
     ) as configfile:
         configfile.write("[ldap_nodes]" + "\n")

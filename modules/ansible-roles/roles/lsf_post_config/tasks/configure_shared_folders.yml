@@ -1,5 +1,11 @@
 ---
 
+# - name: Log directories | Remove duplicate logs
+#   ansible.builtin.shell: >
+#     find /opt/ibm/lsflogs -type f ! -name "*.{{ dns_domain_names }}" ! -name "ibmcloudgen2*" -delete
+#   become: true
+#   when: inventory_hostname in groups['management_nodes']
+
 - name: Log directories | Setup shared base directories
   file:
     path: "{{ item.path }}"
@@ -108,31 +114,3 @@
     group: root
   become: yes
   when: inventory_hostname == groups['login_node'][0]
-
-- name: Duplicate Logs | Remove duplicate logs from LSF log directory
-  shell: |
-    rm -rf /opt/ibm/lsflogs/* /opt/ibm/lsflogs/.* 2>/dev/null || true
-  args:
-    warn: false
-  ignore_errors: true
-  become: true
-  when: inventory_hostname in groups['management_nodes']
-
-- name: Set permissions on LSF event file
-  ansible.builtin.file:
-    path: "{{ LSF_EVENT }}"
-    mode: '0644'
-    owner: lsfadmin
-    group: lsfadmin
-    state: file
-  ignore_errors: true
-  when: inventory_hostname in groups['management_nodes']
-
-- name: Change ownership and permissions of PEM directory using shell
-  ansible.builtin.shell: |
-    chown lsfadmin:lsfadmin /tmp/.pem.{{ prefix }} && chmod 775 /tmp/.pem.{{ prefix }}
-  become: yes
-  args:
-    warn: false
-  ignore_errors: true
-  when: inventory_hostname in groups['management_nodes']

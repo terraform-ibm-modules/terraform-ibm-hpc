@@ -42,7 +42,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("❌ Config file not accessible: %v", err)
 	}
 
-	if _, err := deploy.GetLSFConfigFromYAML(configFilePath); err != nil {
+	if _, err := deploy.GetConfigFromYAML(configFilePath); err != nil {
 		log.Fatalf("❌ Config load failed: %v", err)
 	}
 	log.Printf("✅ Configuration loaded successfully from %s", filepath.Base(configFilePath))
@@ -253,16 +253,6 @@ func TestRunSCCWPAndCSPMEnabledClusterValidation(t *testing.T) {
 
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
 	require.NoError(t, err, "Failed to initialize test options")
-
-	// Define multiple management instances
-	options.TerraformVars["management_instances"] = []map[string]interface{}{
-
-		{
-			"profile": "bx2-4x16",
-			"count":   1,
-			"image":   envVars.ManagementInstancesImage,
-		},
-	}
 
 	// SCCWP Specific Configuration
 	options.TerraformVars["sccwp_enable"] = envVars.SccWPEnabled
@@ -1813,12 +1803,12 @@ func TestRunMultiProfileStaticAndDynamic(t *testing.T) {
 	options.TerraformVars["management_instances"] = []map[string]interface{}{
 
 		{
-			"profile": "bx2d-4x16",
+			"profile": "bx2d-16x64",
 			"count":   1,
 			"image":   envVars.ManagementInstancesImage,
 		},
 		{
-			"profile": "bx2-4x16",
+			"profile": "bx2-2x8",
 			"count":   1,
 			"image":   envVars.ManagementInstancesImage,
 		},
@@ -1970,7 +1960,7 @@ func RunCreateClusterWithExistingVpcCIDRs(t *testing.T, vpcName string) {
 	testLogger.Info(t, fmt.Sprintf("Finished execution: %s", t.Name()))
 }
 
-// RunCreateClusterWithExistingVpcSubnetsNoDns with compute and login subnet id. Both custom_resolver and dns_instance null
+// RunCreateClusterWithExistingVpcSubnetsNoDns with compute and login subnet id. Both custom_resolver and dns_instace null
 func RunCreateClusterWithExistingVpcSubnetsNoDns(t *testing.T, vpcName string, bastionsubnetId string, computesubnetIds string) {
 
 	// Set up the test suite and prepare the testing environment
@@ -1991,7 +1981,7 @@ func RunCreateClusterWithExistingVpcSubnetsNoDns(t *testing.T, vpcName string, b
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
 	options.TerraformVars["vpc_name"] = vpcName
 	options.TerraformVars["login_subnet_id"] = bastionsubnetId
-	options.TerraformVars["compute_subnet_id"] = computesubnetIds
+	options.TerraformVars["cluster_subnet_id"] = computesubnetIds
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
 	// Skip test teardown for further inspection
@@ -2032,7 +2022,7 @@ func TestRunCreateVpcWithCustomDns(t *testing.T) {
 	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
 	options, err := setupOptionsVPC(t, clusterNamePrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroup)
 	options.TerraformVars["enable_hub"] = true
-	options.TerraformVars["dns_zone_name"] = "hpc.local"
+	options.TerraformVars["dns_zone_name"] = "lsf.com"
 
 	require.NoError(t, err, "Error setting up test options: %v", err)
 
@@ -2085,7 +2075,7 @@ func RunCreateClusterWithDnsAndResolver(t *testing.T, vpcName string, bastionsub
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
 	options.TerraformVars["vpc_name"] = vpcName
 	options.TerraformVars["login_subnet_id"] = bastionsubnetId
-	options.TerraformVars["compute_subnet_id"] = computesubnetIds
+	options.TerraformVars["cluster_subnet_id"] = computesubnetIds
 	options.TerraformVars["dns_instance_id"] = instanceId
 	options.TerraformVars["dns_custom_resolver_id"] = customResolverId
 
@@ -2129,7 +2119,7 @@ func RunCreateClusterWithOnlyResolver(t *testing.T, vpcName string, bastionsubne
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
 	options.TerraformVars["vpc_name"] = vpcName
 	options.TerraformVars["login_subnet_id"] = bastionsubnetId
-	options.TerraformVars["compute_subnet_id"] = computesubnetIds
+	options.TerraformVars["cluster_subnet_id"] = computesubnetIds
 	options.TerraformVars["dns_custom_resolver_id"] = customResolverId
 
 	require.NoError(t, err, "Error setting up test options: %v", err)
@@ -2172,7 +2162,7 @@ func TestRunCreateVpcWithCustomDnsOnlyDNS(t *testing.T) {
 	// Set up the test options with the relevant parameters, including environment variables and resource group, set up test environment
 	options, err := setupOptionsVPC(t, clusterNamePrefix, createVpcTerraformDir, envVars.DefaultExistingResourceGroup)
 	options.TerraformVars["enable_hub"] = true
-	options.TerraformVars["dns_zone_name"] = "hpc.local"
+	options.TerraformVars["dns_zone_name"] = "lsf.com"
 
 	require.NoError(t, err, "Error setting up test options: %v", err)
 

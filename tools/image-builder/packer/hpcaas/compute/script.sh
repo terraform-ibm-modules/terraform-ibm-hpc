@@ -83,25 +83,56 @@ curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
 pip3 install ibm-vpc==0.10.0
 pip3 install ibm-cloud-networking-services ibm-cloud-sdk-core selinux
 ibmcloud plugin install vpc-infrastructure DNS
+echo 'LS_Standard  10.1  ()  ()  ()  ()  18b1928f13939bd17bf25e09a2dd8459f238028f' > ${LSF_PACKAGES_PATH}/ls.entitlement
+echo 'LSF_Standard  10.1  ()  ()  ()  pa  3f08e215230ffe4608213630cd5ef1d8c9b4dfea' > ${LSF_PACKAGES_PATH}/lsf.entitlement
 echo "======================Installation of IBMCloud Plugins completed====================="
 
 
-hostnamectl
-hostnamectl set-hostname lsfservers
+hostname lsfservers
 # Installation of LSF base packages on compute node
 cd "${LSF_PACKAGES_PATH}" || exit
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-conf-10.1.0.15-25050119.noarch.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-man-pages-10.1.0.15-25050119.noarch.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-client-10.1.0.15-25050119.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-server-10.1.0.15-25050119.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-integrations-10.1.0.15-25050118.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-ego-server-10.1.0.15-25050118.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-devel-10.1.0.15-25050119.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-data-mgr-10.1.0.15-25050119.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-ls-client-10.1.0.15-25050119.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/ibm-jre-1.8.0-25041010.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-pm-client-10.2.0.15-25050118.x86_64.rpm
+zcat lsf*lsfinstall_linux_x86_64.tar.Z | tar xvf -
+cd lsf*_lsfinstall || exit
+sed -e '/show_copyright/ s/^#*/#/' -i lsfinstall
+cat <<EOT >> install.config
+LSF_TOP="/opt/ibm/lsf"
+LSF_ADMINS="lsfadmin"
+LSF_CLUSTER_NAME="HPCCluster"
+LSF_MASTER_LIST="lsfservers"
+LSF_ENTITLEMENT_FILE="${LSF_PACKAGES_PATH}/lsf.entitlement"
+CONFIGURATION_TEMPLATE="DEFAULT"
+ENABLE_DYNAMIC_HOSTS="Y"
+ENABLE_EGO="N"
+ACCEPT_LICENSE="Y"
+SILENT_INSTALL="Y"
+LSF_SILENT_INSTALL_TARLIST="ALL"
+EOT
+bash lsfinstall -f install.config
+echo $?
+cat Install.log
 echo "========================LSF 10.1 installation completed====================="
+
+
+hostname lsfservers
+# Installation of Resource connector configuration on compute nodes
+cd "${LSF_PACKAGES_PATH}" || exit
+cd lsf*_lsfinstall || exit
+cat <<EOT >> server.config
+LSF_TOP="/opt/ibm/lsf_worker"
+LSF_ADMINS="lsfadmin"
+LSF_ENTITLEMENT_FILE="${LSF_PACKAGES_PATH}/lsf.entitlement"
+LSF_SERVER_HOSTS="lsfservers"
+LSF_LOCAL_RESOURCES="[resource cloudhpchost]"
+ACCEPT_LICENSE="Y"
+SILENT_INSTALL="Y"
+EOT
+bash lsfinstall -s -f server.config
+echo $?
+cat Install.log
+rm -rf /opt/ibm/lsf_worker/10.1
+ln -s /opt/ibm/lsf/10.1 /opt/ibm/lsf_worker
+echo "==================LSF 10.1 Resource connector installation completed==============="
+
 
 # Installation Of OpenMPI
 cd "${LSF_PACKAGES_PATH}" || exit
@@ -162,18 +193,6 @@ if [ "${INSTALL_SYSDIG}" = true ]; then
 else
   echo "INSTALL_SYDIG is set as false and the sysdig agent is not installed on compute node image"
 fi
-
-#Cloud Log Agent Installation
-echo "Cloud logs agent installation started"
-pwd
-wget https://logs-router-agent-install-packages.s3.us.cloud-object-storage.appdomain.cloud/logs-router-agent-rhel8-1.3.1.rpm.sha256
-wget https://logs-router-agent-install-packages.s3.us.cloud-object-storage.appdomain.cloud/logs-router-agent-rhel8-1.3.1.rpm
-sha256sum -c logs-router-agent-rhel8-1.3.1.rpm.sha256
-rpm -ivh logs-router-agent-rhel8-1.3.1.rpm
-rpm -qa | grep logs-router-agent
-wget -O /root/post-config.sh https://logs-router-agent-config.s3.us.cloud-object-storage.appdomain.cloud/post-config.sh
-ls -a /root
-echo "Cloud logs agent installated"
 
 # Security approach to delete unwanted ssh keys and host file entries
 rm -rf "${LSF_PACKAGES_PATH}"

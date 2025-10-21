@@ -60,10 +60,6 @@
     path: "{{ LSF_HOSTS_FILE }}"
   register: lsf_hosts_stat
 
-- name: Management Config | Pause for 5 seconds
-  ansible.builtin.pause:
-    seconds: 5
-
 - name: Management Config | Restore LSF hosts file if missing
   copy:
     src: "{{ HA_shared_dir }}/lsf/conf/hosts"

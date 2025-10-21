@@ -110,11 +110,6 @@ variable "scale_encryption_enabled" {
   description = "To enable the encryption for the filesystem. Select true or false"
 }
 
-variable "scale_encryption_type" {
-  type        = string
-  description = "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled"
-}
-
 variable "scale_encryption_admin_password" {
   type        = string
   description = "Password that is used for performing administrative operations for the GKLM.The password must contain at least 8 characters and at most 20 characters. For a strong password, at least three alphabetic characters are required, with at least one uppercase and one lowercase letter.  Two numbers, and at least one special character from this(~@_+:). Make sure that the password doesn't include the username. Visit this [page](https://www.ibm.com/docs/en/gklm/3.0.1?topic=roles-password-policy) to know more about password policy of GKLM. "

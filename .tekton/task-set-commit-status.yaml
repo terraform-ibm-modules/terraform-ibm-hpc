@@ -226,7 +226,7 @@ spec:
         import urllib.request
         import urllib.parse
 
-        # extract the previously properties found in previous step
+        # extract the previouly properties found in previous step
         previous_step={}
         if os.environ["PIPELINE_DEBUG"] == "1":
           print("previous step properties:")
@@ -257,7 +257,7 @@ spec:
           print("Looking for state in $(params.build-properties)")
           state = build["$(params.state-var)"]
 
-        # If state is one of PipelineRun Task execution status convert it to a generic state one
+        # If state is one of PipelineRun Taks execution status convert it to a generic state one
         if state == "Succeeded":
           state = "success"
         elif state == "Failed":

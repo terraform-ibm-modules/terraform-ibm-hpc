@@ -7,9 +7,5 @@
 - import_tasks: hosts_file_update.yml
 
 - import_tasks: app_center_configure.yml
-  when: inventory_hostname in groups['gui_hosts']
-
-- import_tasks: web_services.yml
-  when: lsf_version == "fixpack_15" and inventory_hostname in groups['gui_hosts']
 
 - import_tasks: configure_dynamic_nodes_templates.yml

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Copyright IBM Corporation 2023
 
@@ -37,11 +38,12 @@ def read_json_file(json_path):
                 tf_inv = json.load(json_handler)
             except json.decoder.JSONDecodeError:
                 print(
-                    f"Provided terraform inventory file ({json_path}) is not a valid json."
+                    "Provided terraform inventory file (%s) is not a valid json."
+                    % json_path
                 )
                 sys.exit(1)
     except OSError:
-        print(f"Provided terraform inventory file ({json_path}) does not exist.")
+        print("Provided terraform inventory file (%s) does not exist." % json_path)
         sys.exit(1)
 
     return tf_inv
@@ -55,7 +57,7 @@ def write_to_file(filepath, filecontent):
 
 def prepare_ansible_playbook_mount_fileset_client(hosts_config):
     """Write to playbook"""
-    content = f"""---
+    content = """---
 # Mounting mount filesets on client nodes
 - hosts: {hosts_config}
   collections:
@@ -66,7 +68,9 @@ def prepare_ansible_playbook_mount_fileset_client(hosts_config):
      - nfs_client_prepare
      - nfs_client_configure
      - {{ role: auth_configure, when: enable_ldap }}
-"""
+""".format(
+        hosts_config=hosts_config
+    )
     return content
 
 
@@ -164,27 +168,24 @@ if __name__ == "__main__":
     # Step-1: Read the inventory file
     STRG_TF = read_json_file(ARGUMENTS.client_tf_inv_path)
     if ARGUMENTS.verbose:
-        print(f"Parsed storage terraform output: {json.dumps(STRG_TF, indent=4)}")
+        print("Parsed storage terraform output: %s" % json.dumps(STRG_TF, indent=4))
 
     # Step-2: Cleanup the Client Playbook file
     cleanup(
-        "{}/{}/{}_mount_cloud_playbook.yaml".format(
-            ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra", "client"
-        )
+        "%s/%s/%s_mount_cloud_playbook.yaml"
+        % (ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra", "client")
     )
-    # Step-3: Cleanup the Client inventory file
+    # Step-3: Cleanup the Clinet inventory file
     cleanup(
-        "{}/{}/{}_mount_inventory.ini".format(
-            ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra", "client"
-        )
+        "%s/%s/%s_mount_inventory.ini"
+        % (ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra", "client")
     )
 
     # Step-4: Create playbook
     playbook_content = prepare_ansible_playbook_mount_fileset_client("client_nodes")
     write_to_file(
-        "{}/{}/client_cloud_playbook.yaml".format(
-            ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"
-        ),
+        "%s/%s/client_cloud_playbook.yaml"
+        % (ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"),
         playbook_content,
     )
 
@@ -210,9 +211,8 @@ if __name__ == "__main__":
             node_template = node_template + each_entry + "\n"
 
     with open(
-        "{}/{}/client_inventory.ini".format(
-            ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"
-        ),
+        "%s/%s/client_inventory.ini"
+        % (ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"),
         "w",
     ) as configfile:
         configfile.write("[client_nodes]" + "\n")
@@ -228,9 +228,8 @@ if __name__ == "__main__":
         ARGUMENTS.ldap_admin_password,
     )
     with open(
-        "{}/{}/client_inventory.ini".format(
-            ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"
-        ),
+        "%s/%s/client_inventory.ini"
+        % (ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra"),
         "w",
     ) as configfile:
         configfile.write("[client_nodes]" + "\n")

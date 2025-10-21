@@ -32,7 +32,7 @@
       # ANSIBLE MANAGED: QUEUE_NAME added
       Begin Queue
       QUEUE_NAME=das_q
-      DATA_TRANSFER=N
+      DATA_TRANSFER=Y
       RC_HOSTS=all
       HOSTS=all
       RES_REQ=type==any

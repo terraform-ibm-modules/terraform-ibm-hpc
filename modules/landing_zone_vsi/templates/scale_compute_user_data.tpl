@@ -1,17 +1,25 @@
-#!/usr/bin/bash
-
 ###################################################
 # Copyright (C) IBM Corp. 2023 All Rights Reserved.
 # Licensed under the Apache License v2.0
 ###################################################
 
+##################################################################################################################
+# Scale Compute Cluter User Data
+##################################################################################################################
+
 #!/usr/bin/env bash
 
 exec > >(tee /var/log/ibm_spectrumscale_user-data.log)
 
-sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo \'Please client as the user \\\\\"$USER\\\\\" rather than the user \\\\\"root\\\\\".\';echo;sleep 5; exit 142\" /" /root/.ssh/authorized_keys
+if grep -E -q "CentOS|Red Hat" /etc/os-release
+then
+    USER=vpcuser
+elif grep -q "Ubuntu" /etc/os-release
+then
+    USER=ubuntu
+fi
 
-# input parameters
+sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo \'Please login as the user \\\\\"$USER\\\\\" rather than the user \\\\\"root\\\\\".\';echo;sleep 10; exit 142\" /" ~/.ssh/authorized_keys
 echo "${bastion_public_key_content}" >> ~/.ssh/authorized_keys
 echo "${compute_public_key_content}" >> ~/.ssh/authorized_keys
 echo "StrictHostKeyChecking no" >> ~/.ssh/config
@@ -80,8 +88,8 @@ echo 'export PATH=$PATH:/usr/lpp/mmfs/bin' >> /root/.bashrc
 echo "DOMAIN=${compute_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
 echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
 chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
+sleep 120
 systemctl restart NetworkManager
-hostnamectl set-hostname "$(hostname).${compute_dns_domain}"
 
 systemctl stop firewalld
 firewall-offline-cmd --zone=public --add-port=1191/tcp
@@ -101,12 +109,3 @@ firewall-offline-cmd --zone=public --add-service=https
 
 systemctl start firewalld
 systemctl enable firewalld
-
-if [ "${enable_sec_interface_compute}" == true ]; then
-    sec_interface=$(nmcli -t con show --active | grep eth1 | cut -d ':' -f 1)
-    nmcli conn del "$sec_interface"
-    nmcli con add type ethernet con-name eth1 ifname eth1
-    echo "DOMAIN=\"${storage_dns_domain}\"" >> "/etc/sysconfig/network-scripts/ifcfg-${protocol_interfaces}"
-    echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${protocol_interfaces}"
-    systemctl restart NetworkManager
-fi

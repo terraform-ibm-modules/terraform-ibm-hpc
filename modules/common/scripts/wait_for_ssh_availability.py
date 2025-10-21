@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Copyright IBM Corporation 2018
 
@@ -30,11 +31,12 @@ def read_json_file(json_path):
                 tf_inv = json.load(json_handler)
             except json.decoder.JSONDecodeError:
                 print(
-                    f"Provided terraform inventory file ({json_path}) is not a valid json."
+                    "Provided terraform inventory file (%s) is not a valid json."
+                    % json_path
                 )
                 sys.exit(1)
     except OSError:
-        print(f"Provided terraform inventory file ({json_path}) does not exist.")
+        print("Provided terraform inventory file (%s) does not exist." % json_path)
         sys.exit(1)
 
     return tf_inv
@@ -61,7 +63,7 @@ def aws_ec2_wait_running(instance_ids, region):
     Wait for EC2 instances to obtain running-ok state.
     :args: region(string), instance_ids(list)
     """
-    print(f"Waiting for instance's ({instance_ids}) to obtain running-ok state.")
+    print("Waiting for instance's (%s) to obtain running-ok state." % instance_ids)
     command = [
         "aws",
         "ec2",
@@ -75,7 +77,7 @@ def aws_ec2_wait_running(instance_ids, region):
 
     if code:
         print("Instance's did not obtain running-ok state. Existing!")
-        print("{}: {} {}: {}".format("stdout", out, "stderr", err))
+        print("%s: %s %s: %s" % ("stdout", out, "stderr", err))
         sys.exit(1)
 
 
@@ -97,7 +99,7 @@ if __name__ == "__main__":
     # Step-1: Read the inventory file
     TF = read_json_file(ARGUMENTS.tf_inv_path)
     if ARGUMENTS.verbose:
-        print(f"Parsed terraform output: {json.dumps(TF, indent=4)}")
+        print("Parsed terraform output: %s" % json.dumps(TF, indent=4))
 
     # Step-2: Identify instance id's based cluster_type
     target_instance_ids = []

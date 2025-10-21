@@ -9,7 +9,7 @@ module "lsf" {
   vpc_cluster_login_private_subnets_cidr_blocks    = local.env.vpc_cluster_login_private_subnets_cidr_blocks
   login_subnet_id                                  = local.env.login_subnet_id
   vpc_cluster_private_subnets_cidr_blocks          = local.env.vpc_cluster_private_subnets_cidr_blocks
-  compute_subnet_id                                = local.env.compute_subnet_id
+  cluster_subnet_id                                = local.env.cluster_subnet_id
   cos_instance_name                                = local.env.cos_instance_name
   dns_custom_resolver_id                           = local.env.dns_custom_resolver_id
   dns_instance_id                                  = local.env.dns_instance_id

@@ -8,6 +8,11 @@ variable "clone_path" {
   description = "Scale repo clone path"
 }
 
+variable "script_path" {
+  type        = string
+  description = "Python script path"
+}
+
 variable "create_scale_cluster" {
   type        = string
   description = "It enables scale cluster configuration."

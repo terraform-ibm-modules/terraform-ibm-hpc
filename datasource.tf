@@ -33,25 +33,24 @@ data "ibm_is_subnet" "subnet" {
 #   name  = var.existing_resource_group
 # }
 
-data "ibm_is_subnet" "existing_compute_subnets" {
-  count      = var.vpc_name != null && var.compute_subnet_id != null ? 1 : 0
-  identifier = var.compute_subnet_id
+data "ibm_is_subnet" "existing_cluster_subnets" {
+  count      = var.vpc_name != null && var.cluster_subnet_id != null ? 1 : 0
+  identifier = var.cluster_subnet_id
 }
 
-
 data "ibm_is_subnet" "existing_storage_subnets" {
-  count      = var.vpc_name != null && var.storage_subnet_id != null ? 1 : 0
-  identifier = var.storage_subnet_id
+  count = var.vpc_name != null && var.storage_subnets != null ? 1 : 0
+  name  = var.storage_subnets[count.index]
 }
 
 data "ibm_is_subnet" "existing_protocol_subnets" {
-  count      = var.vpc_name != null && var.protocol_subnet_id != null ? 1 : 0
-  identifier = var.protocol_subnet_id
+  count = var.vpc_name != null && var.protocol_subnets != null ? 1 : 0
+  name  = var.protocol_subnets[count.index]
 }
 
 data "ibm_is_subnet" "existing_client_subnets" {
-  count      = var.vpc_name != null && var.client_subnet_id != null ? 1 : 0
-  identifier = var.client_subnet_id
+  count = var.vpc_name != null && var.client_subnets != null ? 1 : 0
+  name  = var.client_subnets[count.index]
 }
 
 data "ibm_is_subnet" "existing_login_subnets" {
@@ -65,8 +64,8 @@ data "ibm_is_ssh_key" "ssh_keys" {
 }
 
 data "ibm_is_subnet" "compute_subnet_crn" {
-  count      = var.vpc_name != null && var.compute_subnet_id != null ? 1 : 0
-  identifier = local.compute_subnet
+  count      = var.vpc_name != null && var.cluster_subnet_id != null ? 1 : 0
+  identifier = local.compute_subnet_id
 }
 
 data "ibm_is_instance_profile" "compute_profile" {
@@ -78,7 +77,7 @@ data "ibm_is_instance_profile" "storage_profile" {
 }
 
 data "ibm_is_bare_metal_server_profile" "storage_bms_profile" {
-  count = var.scheduler == "Scale" && var.storage_type == "persistent" ? 1 : 0
+  count = var.scheduler == "Scale" ? 1 : 0
   name  = local.storage_bms_profile[0]
 }
 
@@ -91,27 +90,12 @@ data "ibm_is_instance_profile" "protocol_profile" {
   name  = local.protocol_vsi_profile[0]
 }
 
-data "ibm_is_bare_metal_server_profile" "protocol_bm_profile" {
-  count = local.ces_server_type == true && (local.scale_ces_enabled == true && var.colocate_protocol_instances == false) ? 1 : 0
-  name  = local.protocol_vsi_profile[0]
-}
-
 data "ibm_is_subnet_reserved_ips" "protocol_subnet_reserved_ips" {
-  count  = var.enable_deployer == false && local.scale_ces_enabled == true ? 1 : 0
-  subnet = local.protocol_subnet
+  count  = local.scale_ces_enabled == true ? 1 : 0
+  subnet = local.protocol_subnet_id
 }
 
 data "ibm_is_instance_profile" "afm_server_profile" {
   count = local.afm_server_type == false ? 1 : 0
   name  = local.afm_vsi_profile[0]
-}
-
-data "ibm_is_bare_metal_server_profile" "afm_bm_profile" {
-  count = local.afm_server_type == true ? 1 : 0
-  name  = local.afm_vsi_profile[0]
-}
-
-data "ibm_is_security_group" "login_security_group" {
-  count = var.login_security_group_name != null ? 1 : 0
-  name  = var.login_security_group_name
 }

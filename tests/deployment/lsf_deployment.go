@@ -135,8 +135,8 @@ type Config struct {
 	AttrackerTestZone                           string                    `yaml:"attracker_test_zone"`
 }
 
-// GetLSFConfigFromYAML reads a YAML file and populates the Config struct.
-func GetLSFConfigFromYAML(filePath string) (*Config, error) {
+// GetConfigFromYAML reads a YAML file and populates the Config struct.
+func GetConfigFromYAML(filePath string) (*Config, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open YAML file %s: %w", filePath, err)

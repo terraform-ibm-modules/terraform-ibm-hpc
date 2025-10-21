@@ -98,6 +98,10 @@
    "observability_logs_retention_period": 7,
    "observability_monitoring_on_compute_nodes_enable": false,
    "observability_monitoring_plan": "graduated-tier",
+   "scc_enable": true,
+   "scc_profile": "CIS IBM Cloud Foundations Benchmark v1.1.0",
+   "scc_location": "us-south",
+   "scc_event_notification_plan": "lite",
    "skip_flowlogs_s2s_auth_policy": false,
    "skip_kms_s2s_auth_policy": false,
    "skip_iam_authorization_policy": false
