@@ -21,7 +21,7 @@ variable "existing_resource_group" {
   type        = string
   default     = "Default"
   validation {
-    condition     = var.existing_resource_group != null
+    condition     = var.resource_group != null
     error_message = "If you want to provide null for resource_group variable, it should be within double quotes."
   }
 }
@@ -194,6 +194,17 @@ variable "cluster_name" {
   validation {
     condition     = 0 < length(var.cluster_name) && length(var.cluster_name) < 40 && can(regex("^[a-zA-Z0-9_.-]+$", var.cluster_name))
     error_message = "The Cluster ID can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. Other special characters and spaces are not allowed."
+  }
+}
+
+# tflint-ignore: terraform_unused_declarations
+variable "reservation_id" {
+  type        = string
+  sensitive   = true
+  description = "Ensure that you have received the reservation ID from IBM technical sales. Reservation ID is a unique identifier to distinguish different IBM Cloud HPC service agreements. It must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_)."
+  validation {
+    condition     = can(regex("^[a-zA-Z][a-zA-Z0-9-_]*$", var.reservation_id))
+    error_message = "Reservation ID must start with a letter and can only contain letters, numbers, hyphens (-), or underscores (_)."
   }
 }
 

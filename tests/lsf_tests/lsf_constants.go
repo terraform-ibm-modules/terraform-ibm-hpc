@@ -13,10 +13,10 @@ const (
 	CLUSTER_ONE_VPC_CIDR                                      = "10.241.0.0/18"
 	CLUSTER_ONE_VPC_CLUSTER_PRIVATE_SUBNETS_CIDR_BLOCKS       = "10.241.0.0/20"
 	CLUSTER_ONE_VPC_CLUSTER_LOGIN_PRIVATE_SUBNETS_CIDR_BLOCKS = "10.241.16.0/28"
-	CLUSTER_TWO_VPC_CLUSTER_PRIVATE_SUBNETS_CIDR_BLOCKS       = "10.241.61.0/24"
-	CLUSTER_TWO_VPC_CLUSTER_LOGIN_PRIVATE_SUBNETS_CIDR_BLOCKS = "10.241.16.16/28"
+	CLUSTER_TWO_VPC_CLUSTER_PRIVATE_SUBNETS_CIDR_BLOCKS       = "10.241.17.0/24"
+	CLUSTER_TWO_VPC_CLUSTER_LOGIN_PRIVATE_SUBNETS_CIDR_BLOCKS = "10.241.18.0/24"
 	CLUSTER_TWO_DNS_DOMAIN_NAME                               = "clustertwo.com"
 	KMS_KEY_INSTANCE_NAME                                     = "cicd-key-instance"
 	KMS_KEY_NAME                                              = "cicd-key-name"
-	APP_CENTER_GUI_PASSWORD                                   = "Password@123456" // pragma: allowlist secret
+	APP_CENTER_GUI_PASSWORD                                   = "Admin@1234" // pragma: allowlist secret
 )

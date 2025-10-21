@@ -28,7 +28,7 @@ login_instance:
   - profile:  bx2-2x8
     image: hpc-lsf-fp15-compute-rhel810-v1
 management_instances:
-  - profile:  bx2-4x16
+  - profile:  bx2d-4x16
     count: 2
     image: hpc-lsf-fp15-rhel810-v1
 static_compute_instances:
@@ -42,7 +42,7 @@ dynamic_compute_instances:
 placement_strategy: spread
 kms_instance_name: cicd-lsf-dnd-kms-instance
 kms_key_name: cicd-lsf-dnd-kms-key
-app_center_gui_password: Password@123456  # pragma: allowlist secret
+app_center_gui_password: Pass@1234  # pragma: allowlist secret
 observability_atracker_enable: true
 observability_atracker_target_type: cloudlogs
 observability_monitoring_enable: true
@@ -60,9 +60,9 @@ app_config_plan: standardv2
 enable_hyperthreading: true
 enable_ldap: true
 ldap_basedns: cicdldap.com
-ldap_admin_password: Password@123456  # pragma: allowlist secret
+ldap_admin_password: Pass@123  # pragma: allowlist secret
 ldap_user_name: tester
-ldap_user_password: Password@123456    # pragma: allowlist secret
+ldap_user_password: Pass@123    # pragma: allowlist secret
 ldap_instance:
   - profile: cx2-2x4
     image: ibm-ubuntu-22-04-5-minimal-amd64-1

@@ -5,15 +5,16 @@
       "label": "IBM Spectrum LSF",
       "product_kind": "solution",
       "tags": [
+        "ibm_created",
+        "target_terraform",
+        "terraform",
+        "solution",
         "Deployable Architecture",
         "DA",
         "LSF",
         "Spectrum LSF",
-        "ibm_created",
-        "target_terraform",
-        "terraform",
         "reference_architecture",
-        "solution"
+        "converged_infra"
       ],
       "keywords": [
         "LSF",
@@ -216,7 +217,7 @@
                   ]
                 },
                 {
-                  "displayname": "Sydney 3",
+                  "displayname": "Syndney 3",
                   "value": [
                     "au-syd-3"
                   ]
@@ -255,42 +256,6 @@
                   "displayname": "Sao Paulo 3",
                   "value": [
                     "br-sao-3"
-                  ]
-                },
-                {
-                  "displayname": "Montreal 1",
-                  "value": [
-                    "ca-mon-1"
-                  ]
-                },
-                {
-                  "displayname": "Montreal 2",
-                  "value": [
-                    "ca-mon-2"
-                  ]
-                },
-                {
-                  "displayname": "Montreal 3",
-                  "value": [
-                    "ca-mon-3"
-                  ]
-                },
-                {
-                  "displayname": "Madrid 1",
-                  "value": [
-                    "eu-es-1"
-                  ]
-                },
-                {
-                  "displayname": "Madrid 2",
-                  "value": [
-                    "eu-es-2"
-                  ]
-                },
-                {
-                  "displayname": "Madrid 3",
-                  "value": [
-                    "eu-es-3"
                   ]
                 }
               ]
@@ -415,6 +380,10 @@
                   "value": "basic"
                 },
                 {
+                  "displayname": "lite",
+                  "value": "lite"
+                },
+                {
                   "displayname": "standardv2",
                   "value": "standardv2"
                 },
@@ -465,7 +434,7 @@
               "key": "vpc_name"
             },
             {
-              "key": "compute_subnet_id"
+              "key": "cluster_subnet_id"
             },
             {
               "key": "login_subnet_id"
@@ -603,7 +572,7 @@
             {
               "key": "ldap_instance",
               "type": "array",
-              "default_value": "[\n  {\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-5\"\n  }\n]",
+              "default_value": "[\n  {\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-3\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -689,6 +658,12 @@
               ]
             },
             {
+              "service_name": "is.share",
+              "role_crns": [
+                "crn:v1:bluemix:public:iam::::role:Editor"
+              ]
+            },
+            {
               "service_name": "All Identity and Access enabled services",
               "role_crns": [
                 "crn:v1:bluemix:public:iam::::serviceRole:Manager",
@@ -712,10 +687,16 @@
               "role_crns": [
                 "crn:v1:bluemix:public:iam::::role:Editor"
               ],
-              "service_name": "VPC Infrastructure Services"
+              "service_name": "is.vpc"
             },
             {
-              "service_name": "Cloud Monitoring",
+              "service_name": "is.flow-log-collector",
+              "role_crns": [
+                "crn:v1:bluemix:public:iam::::role:Editor"
+              ]
+            },
+            {
+              "service_name": "sysdig-monitor",
               "role_crns": [
                 "crn:v1:bluemix:public:iam::::serviceRole:Manager",
                 "crn:v1:bluemix:public:iam::::role:Administrator"
@@ -762,851 +743,10 @@
               {
                 "diagram": {
                   "caption": "IBM Spectrum LSF",
-                  "url": "https://raw.githubusercontent.com/terraform-ibm-modules/terraform-ibm-hpc/main/LSF-DA-Architecture.drawio.svg",
+                  "url": "https://raw.githubusercontent.com/terraform-ibm-modules/terraform-ibm-hpc/main/LSF_DA_New.drawio.svg",
                   "type": "image/svg+xml"
                 },
                 "description": "This deployable architecture sets up a VPC on IBM Cloud to run HPC workloads within a single zone. A login node is deployed in a dedicated subnet and security group to facilitate secure access to the HPC environment. The HPC management nodes and static compute nodes reside in a separate subnet and security group.\nClusters of virtual server instances are provisioned with the IBM Spectrum LSF scheduler pre-installed for HPC workload job management. The LSF scheduler dynamically provisions compute nodes as needed and removes them once jobs are completed.\nThe solution supports either IBM Cloud File Storage for VPC or a dedicated clustered shared file system using IBM Storage Scale which is a high performance, highly available, clustered file system with advanced features like File Audit Logging for security and Active File Management for hybrid cloud connectivity. IBM Storage Scale provides more performance and scalability than standard file storage solutions."
-              }
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "deploy-arch-ibm-storage-scale",
-      "label": "IBM Storage Scale",
-      "product_kind": "solution",
-      "tags": [
-        "Deployable Architecture",
-        "DA",
-        "HPC",
-        "IBM Storage Scale",
-        "ibm_created",
-        "target_terraform",
-        "terraform",
-        "reference_architecture",
-        "solution"
-      ],
-      "keywords": [
-        "scale",
-        "vpc",
-        "DA",
-        "Deployable Architecture",
-        "terraform",
-        "solution"
-      ],
-      "short_description": "Deploy your HPC cluster with IBM Storage Scale for high performance, highly available, clustered file system.",
-      "long_description": "**Before you begin deploying IBM Storage Scale, make sure that you meet the prerequisites listed in [the step-by-step guide](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-before-you-begin-deploying).**\n\nIBM Storage Scale is a deployable architecture where you can deploy dedicated Storage Scale cluster. Storage Scale supports the configuration of both compute and storage nodes, allowing you to build a complete, end-to-end Storage cluster.",
-      "provider_name": "IBM",
-      "offering_docs_url": "https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-overview",
-      "features": [
-        {
-          "title": "Cluster file system",
-          "description": "IBM Storage scale is clustered file system that provides concurrent access to a single file system or set of file systems from multiple nodes. It's designed for high-performance, scalable storage solutions, particularly for I/O-intensive applications and large-scale data environments."
-        },
-        {
-          "title": "Data intensive workflows",
-          "description": "Create a cluster with IBM Storage Scale with its high-performance, distributed file system, IBM Storage Scale accelerates data-intensive workflows by providing fast, concurrent access to massive datasets."
-        },
-        {
-          "title": "Unified storage for files and objects",
-          "description": "Unified storage allows simultaneous access to the same data as both files and objects, simplifying data management and enabling seamless workflows across traditional and cloud-native applications."
-        }
-      ],
-      "flavors": [
-        {
-          "label": "IBM Storage Scale",
-          "name": "Cluster-with-Scale",
-          "install_type": "fullstack",
-          "working_directory": "solutions/scale",
-          "terraform_version": "1.10.5",
-          "compliance": {
-            "authority": "scc-v3",
-            "profiles": [
-              {
-                "profile_name": "IBM Cloud Framework for Financial Services",
-                "profile_version": "1.5.0"
-              }
-            ]
-          },
-          "release_notes_url": "https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-release-notes",
-          "configuration": [
-            {
-              "key": "ibmcloud_api_key",
-              "required": true
-            },
-            {
-              "key": "zones",
-              "required": true,
-              "default_value": [
-                "us-east-1"
-              ],
-              "options": [
-                {
-                  "displayname": "Washington DC 1",
-                  "value": [
-                    "us-east-1"
-                  ]
-                },
-                {
-                  "displayname": "Washington DC 2",
-                  "value": [
-                    "us-east-2"
-                  ]
-                },
-                {
-                  "displayname": "Washington DC 3",
-                  "value": [
-                    "us-east-3"
-                  ]
-                },
-                {
-                  "displayname": "Frankfurt 1",
-                  "value": [
-                    "eu-de-1"
-                  ]
-                },
-                {
-                  "displayname": "Frankfurt 2",
-                  "value": [
-                    "eu-de-2"
-                  ]
-                },
-                {
-                  "displayname": "Frankfurt 3",
-                  "value": [
-                    "eu-de-3"
-                  ]
-                },
-                {
-                  "displayname": "Dallas 1",
-                  "value": [
-                    "us-south-1"
-                  ]
-                },
-                {
-                  "displayname": "Dallas 2",
-                  "value": [
-                    "us-south-2"
-                  ]
-                },
-                {
-                  "displayname": "Dallas 3",
-                  "value": [
-                    "us-south-3"
-                  ]
-                },
-                {
-                  "displayname": "Toronto 1",
-                  "value": [
-                    "ca-tor-1"
-                  ]
-                },
-                {
-                  "displayname": "Toronto 2",
-                  "value": [
-                    "ca-tor-2"
-                  ]
-                },
-                {
-                  "displayname": "Toronto 3",
-                  "value": [
-                    "ca-tor-3"
-                  ]
-                },
-                {
-                  "displayname": "Tokyo 1",
-                  "value": [
-                    "jp-tok-1"
-                  ]
-                },
-                {
-                  "displayname": "Tokyo 2",
-                  "value": [
-                    "jp-tok-2"
-                  ]
-                },
-                {
-                  "displayname": "Tokyo 3",
-                  "value": [
-                    "jp-tok-3"
-                  ]
-                },
-                {
-                  "displayname": "London 1",
-                  "value": [
-                    "eu-gb-1"
-                  ]
-                },
-                {
-                  "displayname": "London 2",
-                  "value": [
-                    "eu-gb-2"
-                  ]
-                },
-                {
-                  "displayname": "London 3",
-                  "value": [
-                    "eu-gb-3"
-                  ]
-                },
-                {
-                  "displayname": "Sydney 1",
-                  "value": [
-                    "au-syd-1"
-                  ]
-                },
-                {
-                  "displayname": "Sydney 2",
-                  "value": [
-                    "au-syd-2"
-                  ]
-                },
-                {
-                  "displayname": "Sydney 3",
-                  "value": [
-                    "au-syd-3"
-                  ]
-                },
-                {
-                  "displayname": "Osaka 1",
-                  "value": [
-                    "jp-osa-1"
-                  ]
-                },
-                {
-                  "displayname": "Osaka 2",
-                  "value": [
-                    "jp-osa-2"
-                  ]
-                },
-                {
-                  "displayname": "Osaka 3",
-                  "value": [
-                    "jp-osa-3"
-                  ]
-                },
-                {
-                  "displayname": "Sao Paulo 1",
-                  "value": [
-                    "br-sao-1"
-                  ]
-                },
-                {
-                  "displayname": "Sao Paulo 2",
-                  "value": [
-                    "br-sao-2"
-                  ]
-                },
-                {
-                  "displayname": "Sao Paulo 3",
-                  "value": [
-                    "br-sao-3"
-                  ]
-                },
-                {
-                  "displayname": "Montreal 1",
-                  "value": [
-                    "ca-mon-1"
-                  ]
-                },
-                {
-                  "displayname": "Montreal 2",
-                  "value": [
-                    "ca-mon-2"
-                  ]
-                },
-                {
-                  "displayname": "Montreal 3",
-                  "value": [
-                    "ca-mon-3"
-                  ]
-                },
-                {
-                  "displayname": "Madrid 1",
-                  "value": [
-                    "eu-es-1"
-                  ]
-                },
-                {
-                  "displayname": "Madrid 2",
-                  "value": [
-                    "eu-es-2"
-                  ]
-                },
-                {
-                  "displayname": "Madrid 3",
-                  "value": [
-                    "eu-es-3"
-                  ]
-                }
-              ]
-            },
-            {
-              "key": "ssh_keys",
-              "type": "array",
-              "required": true,
-              "custom_config": {
-                "type": "vpc_ssh_key",
-                "grouping": "deployment",
-                "original_grouping": "deployment",
-                "config_constraints": {
-                  "selection": "multi_select",
-                  "valueType": "name"
-                }
-              }
-            },
-            {
-              "key": "remote_allowed_ips",
-              "required": true
-            },
-            {
-              "key": "storage_gui_username",
-              "required": true
-            },
-            {
-              "key": "storage_gui_password",
-              "required": true
-            },
-            {
-              "key": "existing_resource_group",
-              "required": true
-            },
-            {
-              "key": "cluster_prefix"
-            },
-            {
-              "key": "storage_type",
-              "default_value": "scratch",
-              "options": [
-                {
-                  "displayname": "scratch",
-                  "value": "scratch"
-                },
-                {
-                  "displayname": "persistent",
-                  "value": "persistent"
-                },
-                {
-                  "displayname": "evaluation",
-                  "value": "evaluation"
-                }
-              ]
-            },
-            {
-              "key": "ibm_customer_number"
-            },
-            {
-              "key": "vpc_cidr"
-            },
-            {
-              "key": "login_subnets_cidr"
-            },
-            {
-              "key": "compute_subnets_cidr"
-            },
-            {
-              "key": "storage_subnets_cidr"
-            },
-            {
-              "key": "client_subnets_cidr"
-            },
-            {
-              "key": "protocol_subnets_cidr"
-            },
-            {
-              "key": "enable_vpc_flow_logs"
-            },
-            {
-              "key": "skip_flowlogs_s2s_auth_policy"
-            },
-            {
-              "key": "vpc_name"
-            },
-            {
-              "key": "login_subnet_id"
-            },
-            {
-              "key": "compute_subnet_id"
-            },
-            {
-              "key": "storage_subnet_id"
-            },
-            {
-              "key": "protocol_subnet_id"
-            },
-            {
-              "key": "client_subnet_id"
-            },
-            {
-              "key": "enable_sg_validation"
-            },
-            {
-              "key": "login_security_group_name"
-            },
-            {
-              "key": "storage_security_group_name"
-            },
-            {
-              "key": "compute_security_group_name"
-            },
-            {
-              "key": "client_security_group_name"
-            },
-            {
-              "key": "gklm_security_group_name"
-            },
-            {
-              "key": "ldap_security_group_name"
-            },
-            {
-              "key": "dns_domain_names"
-            },
-            {
-              "key": "dns_instance_id"
-            },
-            {
-              "key": "dns_custom_resolver_id"
-            },
-            {
-              "key": "scale_management_vsi_profile"
-            },
-            {
-              "key": "bastion_instance",
-              "type": "object",
-              "default_value": "{\n  \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-5\",\n  \"profile\": \"cx2-4x8\"\n}",
-              "required": false,
-              "custom_config": {
-                "type": "json_editor",
-                "grouping": "deployment",
-                "original_grouping": "deployment",
-                "config_constraints": {
-                  "type": "mixed"
-                }
-              }
-            },
-            {
-              "key": "deployer_instance",
-              "type": "object",
-              "default_value": "{\n  \"image\": \"hpcc-scale-deployer-v1\",\n  \"profile\": \"bx2-8x32\"\n}",
-              "required": false,
-              "custom_config": {
-                "type": "json_editor",
-                "grouping": "deployment",
-                "original_grouping": "deployment",
-                "config_constraints": {
-                  "type": "mixed"
-                }
-              }
-            },
-            {
-              "key": "client_instances",
-              "type": "object",
-              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-redhat-8-10-minimal-amd64-6\"\n  }\n]",
-              "required": false,
-              "custom_config": {
-                "type": "json_editor",
-                "grouping": "deployment",
-                "original_grouping": "deployment",
-                "config_constraints": {
-                  "type": "mixed"
-                }
-              }
-            },
-            {
-              "key": "compute_gui_username"
-            },
-            {
-              "key": "compute_gui_password"
-            },
-            {
-              "key": "compute_instances",
-              "type": "object",
-              "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"bx2-2x8\",\n  \"filesystem\": \"/gpfs/fs1\",\n  \"image\": \"hpcc-scale5232-rhel810-v1\"\n  }\n]",
-              "required": false,
-              "custom_config": {
-                "type": "json_editor",
-                "grouping": "deployment",
-                "original_grouping": "deployment",
-                "config_constraints": {
-                  "type": "mixed"
-                }
-              }
-            },
-            {
-              "key": "storage_instances",
-              "type": "object",
-              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2d-32x128\",\n  \"filesystem\": \"/gpfs/fs1\",\n  \"image\": \"hpcc-scale5232-rhel810-v1\"\n  }\n]",
-              "required": false,
-              "custom_config": {
-                "type": "json_editor",
-                "grouping": "deployment",
-                "original_grouping": "deployment",
-                "config_constraints": {
-                  "type": "mixed"
-                }
-              }
-            },
-            {
-              "key": "storage_baremetal_server",
-              "type": "object",
-              "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"cx2d-metal-96x192\",\n  \"filesystem\": \"/gpfs/fs1\",\n  \"image\": \"hpcc-scale5232-rhel810-v1\"\n  }\n]",
-              "required": false,
-              "custom_config": {
-                "type": "json_editor",
-                "grouping": "deployment",
-                "original_grouping": "deployment",
-                "config_constraints": {
-                  "type": "mixed"
-                }
-              }
-            },
-            {
-              "key": "bms_boot_drive_encryption"
-            },
-            {
-              "key": "tie_breaker_baremetal_server_profile"
-            },
-            {
-              "key": "afm_instances",
-              "type": "object",
-              "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"bx2-32x128\"\n  }\n]",
-              "required": false,
-              "custom_config": {
-                "type": "json_editor",
-                "grouping": "deployment",
-                "original_grouping": "deployment",
-                "config_constraints": {
-                  "type": "mixed"
-                }
-              }
-            },
-            {
-              "key": "afm_cos_config",
-              "type": "object",
-              "default_value": "[\n  {\n    \"afm_fileset\": \"afm_fileset\",\n    \"mode\": \"iw\",\n    \"cos_instance\": \"\",\n \"bucket_name\": \"\",\n \"bucket_region\": \"us-south\",\n \"cos_service_cred_key\": \"\",\n \"bucket_storage_class\": \"smart\",\n \"bucket_type\": \"region_location\"\n  }\n]",
-              "required": false,
-              "custom_config": {
-                "type": "json_editor",
-                "grouping": "deployment",
-                "original_grouping": "deployment",
-                "config_constraints": {
-                  "type": "mixed"
-                }
-              }
-            },
-            {
-              "key": "protocol_instances",
-              "type": "object",
-              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"cx2-32x64\"\n  }\n]",
-              "required": false,
-              "custom_config": {
-                "type": "json_editor",
-                "grouping": "deployment",
-                "original_grouping": "deployment",
-                "config_constraints": {
-                  "type": "mixed"
-                }
-              }
-            },
-            {
-              "key": "colocate_protocol_instances"
-            },
-            {
-              "key": "scale_encryption_enabled"
-            },
-            {
-              "key": "key_protect_instance_id"
-            },
-            {
-              "key": "scale_encryption_type",
-              "default_value": "null",
-              "options": [
-                {
-                  "displayname": "null",
-                  "value": "null"
-                },
-                {
-                  "displayname": "key_protect",
-                  "value": "key_protect"
-                },
-                {
-                  "displayname": "gklm",
-                  "value": "gklm"
-                }
-              ]
-            },
-            {
-              "key": "gklm_instances",
-              "type": "object",
-              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"hpcc-scale-gklm4202-v2-5-3\"\n  }\n]",
-              "required": false,
-              "custom_config": {
-                "type": "json_editor",
-                "grouping": "deployment",
-                "original_grouping": "deployment",
-                "config_constraints": {
-                  "type": "mixed"
-                }
-              }
-            },
-            {
-              "key": "scale_encryption_admin_password"
-            },
-            {
-              "key": "filesystem_config",
-              "type": "object",
-              "default_value": "[\n  {\n    \"filesystem\": \"/gpfs/fs1\",\n  \"block_size\": \"4M\",\n \"default_data_replica\": 2,\n \"default_metadata_replica\": 2,\n \"max_data_replica\": 3,\n \"max_metadata_replica\": 3 }\n]",
-              "required": false,
-              "custom_config": {
-                "type": "json_editor",
-                "grouping": "deployment",
-                "original_grouping": "deployment",
-                "config_constraints": {
-                  "type": "mixed"
-                }
-              }
-            },
-            {
-              "key": "filesets_config",
-              "type": "object",
-              "default_value": "[\n  {\n    \"client_mount_path\": \"/mnt/scale/tools\",\n    \"quota\": 0\n  },\n  {\n    \"client_mount_path\": \"/mnt/scale/data\",\n    \"quota\": 0\n  }\n]",
-              "required": false,
-              "custom_config": {
-                "type": "json_editor",
-                "grouping": "deployment",
-                "original_grouping": "deployment",
-                "config_constraints": {
-                  "type": "mixed"
-                }
-              }
-            },
-            {
-              "key": "enable_cos_integration"
-            },
-            {
-              "key": "cos_instance_name"
-            },
-            {
-              "key": "enable_ldap"
-            },
-            {
-              "key": "ldap_basedns"
-            },
-            {
-              "key": "ldap_server"
-            },
-            {
-              "key": "ldap_admin_password"
-            },
-            {
-              "key": "ldap_user_name"
-            },
-            {
-              "key": "ldap_user_password"
-            },
-            {
-              "key": "ldap_instance",
-              "type": "array",
-              "default_value": "[\n  {\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-5\"\n  }\n]",
-              "required": false,
-              "custom_config": {
-                "type": "json_editor",
-                "grouping": "deployment",
-                "original_grouping": "deployment",
-                "config_constraints": {
-                  "type": "mixed"
-                }
-              }
-            },
-            {
-              "key": "ldap_server_cert"
-            },
-            {
-              "key": "observability_atracker_enable"
-            },
-            {
-              "key": "observability_atracker_target_type"
-            },
-            {
-              "key": "sccwp_enable"
-            },
-            {
-              "key": "sccwp_service_plan",
-              "default_value": "free-trial",
-              "options": [
-                {
-                  "displayname": "free-trial",
-                  "value": "free-trial"
-                },
-                {
-                  "displayname": "graduated-tier",
-                  "value": "graduated-tier"
-                }
-              ]
-            },
-            {
-              "key": "cspm_enabled"
-            },
-            {
-              "key": "app_config_plan",
-              "default_value": "basic",
-              "options": [
-                {
-                  "displayname": "basic",
-                  "value": "basic"
-                },
-                {
-                  "displayname": "standardv2",
-                  "value": "standardv2"
-                },
-                {
-                  "displayname": "enterprise",
-                  "value": "enterprise"
-                }
-              ]
-            },
-            {
-              "key": "existing_bastion_instance_name"
-            },
-            {
-              "key": "existing_bastion_instance_public_ip"
-            },
-            {
-              "key": "existing_bastion_security_group_id"
-            },
-            {
-              "key": "existing_bastion_ssh_private_key",
-              "type": "multiline_secure_value",
-              "required": false,
-              "custom_config": {
-                "grouping": "deployment",
-                "original_grouping": "deployment",
-                "type": "multiline_secure_value"
-              }
-            },
-            {
-              "hidden": true,
-              "key": "TF_VERSION"
-            },
-            {
-              "hidden": true,
-              "key": "TF_PARALLELISM"
-            },
-            {
-              "hidden": true,
-              "key": "override"
-            },
-            {
-              "hidden": true,
-              "key": "override_json_string"
-            }
-          ],
-          "iam_permissions": [
-            {
-              "role_crns": [
-                "crn:v1:bluemix:public:iam::::serviceRole:Manager"
-              ],
-              "service_name": "cloud-object-storage"
-            },
-            {
-              "role_crns": [
-                "crn:v1:bluemix:public:iam::::serviceRole:Manager",
-                "crn:v1:bluemix:public:iam::::role:Editor"
-              ],
-              "service_name": "dns-svcs"
-            },
-            {
-              "role_crns": [
-                "crn:v1:bluemix:public:iam::::role:Administrator"
-              ],
-              "service_name": "iam-identity"
-            },
-            {
-              "service_name": "kms",
-              "role_crns": [
-                "crn:v1:bluemix:public:iam::::serviceRole:Manager",
-                "crn:v1:bluemix:public:iam::::role:ConfigReader"
-              ]
-            },
-            {
-              "service_name": "Security and Compliance Center Workload Protection",
-              "role_crns": [
-                "crn:v1:bluemix:public:iam::::role:Administrator"
-              ]
-            },
-            {
-              "role_crns": [
-                "crn:v1:bluemix:public:iam::::role:Administrator"
-              ],
-              "service_name": "VPC Infrastructure Services"
-            },
-            {
-              "service_name": "All Identity and Access enabled services",
-              "role_crns": [
-                "crn:v1:bluemix:public:iam::::serviceRole:Manager",
-                "crn:v1:bluemix:public:iam::::role:Administrator"
-              ]
-            },
-            {
-              "service_name": "apprapp",
-              "role_crns": [
-                "crn:v1:bluemix:public:iam::::serviceRole:Manager",
-                "crn:v1:bluemix:public:iam::::role:Administrator"
-              ]
-            },
-            {
-              "service_name": "secrets-manager",
-              "role_crns": [
-                "crn:v1:bluemix:public:iam::::serviceRole:Manager",
-                "crn:v1:bluemix:public:iam::::role:Administrator"
-              ]
-            }
-          ],
-          "architecture": {
-            "descriptions": "",
-            "features": [
-              {
-                "title": "Separate VPC for HPC workloads",
-                "description": "Yes"
-              },
-              {
-                "title": "Virtual Server Instances for every subnet",
-                "description": "Yes"
-              },
-              {
-                "title": "Increases security with Key Protect",
-                "description": "Yes"
-              },
-              {
-                "title": "Reduces failure events by using multizone regions",
-                "description": "No"
-              },
-              {
-                "title": "Collects and stores Internet Protocol (IP) traffic information with Activity Tracker and Flow Logs",
-                "description": "Yes"
-              },
-              {
-                "title": "Securely connects to multiple networks with a site-to-site virtual private network",
-                "description": "Yes"
-              },
-              {
-                "title": "Simplifies risk management and demonstrates regulatory compliance with Financial Services",
-                "description": "Yes"
-              },
-              {
-                "title": "Uses Floating IP address for access through the public internet",
-                "description": "No"
-              }
-            ],
-            "diagrams": [
-              {
-                "diagram": {
-                  "caption": "IBM Storage Scale",
-                  "url": "https://raw.githubusercontent.com/terraform-ibm-modules/terraform-ibm-hpc/refs/heads/main/Scale-DA-Architecture.drawio.svg",
-                  "type": "image/svg+xml"
-                },
-                "description": "This deployable architecture provisions a VPC on IBM Cloud to run a clustered file system within a single availability zone. A Bastion node is deployed in a dedicated subnet and security group to enable secure access to the storage environment. The IBM Spectrum Scale (GPFS) storage nodes and compute nodes are hosted in a separate subnet and security group\n. Each GPFS storage node operates as part of the Spectrum Scale cluster, contributing to the system’s high-performance, distributed storage by adding capacity and enabling application access through the compute nodes. The NFS server, running on a protocol node, interacts with the underlying distributed file system to serve client requests. By separating storage management from protocol services, the NFS storage node acts as an intelligent gateway, translating NFS client requests into operations on the highly scalable and resilient Spectrum Scale backend file system."
               }
             ]
           }

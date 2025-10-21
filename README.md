@@ -115,7 +115,7 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveIn
 ```
 * where `floating_IP_address` is the floating IP address for the bastion node and `LDAP_server_IP` is the IP address for the OpenLDAP node.
 
-* Verify the LDAP service status:
+* Verifiy the LDAP service status:
 
 ```
 systemctl status slapd

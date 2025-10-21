@@ -57,8 +57,8 @@ ssh_key_create() {
     for region in "${REGIONS[@]}"; do
         disable_update_check=$(eval "ibmcloud config --check-version=false")
         echo "$disable_update_check"
-        authenticate=$(eval "ibmcloud login --apikey $API_KEY -r $region")
-        if [[ $authenticate = *OK* ]]; then
+        auhtenticate=$(eval "ibmcloud login --apikey $API_KEY -r $region")
+        if [[ $auhtenticate = *OK* ]]; then
             echo "************SSH-KEY creation process in $region ************"
             check_key=$(eval "ibmcloud is keys | grep $CICD_SSH_KEY | awk '{print $2}'")
             if [[ -z "$check_key" ]]; then
@@ -89,7 +89,7 @@ ssh_key_create() {
             fi
             echo "************SSH-KEY create process in $region done ************"
         else
-            echo "Issue Login with IBMCLOUD $authenticate"
+            echo "Issue Login with IBMCLOUD $auhtenticate"
             exit 1
         fi
     done
@@ -102,8 +102,8 @@ ssh_key_delete() {
     for region in "${REGIONS[@]}"; do
         disable_update_check=$(eval "ibmcloud config --check-version=false")
         echo "$disable_update_check"
-        authenticate=$(eval "ibmcloud login --apikey $API_KEY -r $region")
-        if [[ $authenticate = *OK* ]]; then
+        auhtenticate=$(eval "ibmcloud login --apikey $API_KEY -r $region")
+        if [[ $auhtenticate = *OK* ]]; then
             echo "************SSH-KEY deletion process in $region ************"
             ssh_key_delete=$(eval "ibmcloud is key-delete $CICD_SSH_KEY -f")
             if [[ $ssh_key_delete = *deleted* ]]; then
@@ -113,7 +113,7 @@ ssh_key_delete() {
             fi
             echo "************SSH-KEY delete process in $region done ************"
         else
-            echo "Issue Login with IBMCLOUD $authenticate"
+            echo "Issue Login with IBMCLOUD $auhtenticate"
             exit 1
         fi
     done

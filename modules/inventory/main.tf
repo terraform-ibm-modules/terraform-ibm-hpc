@@ -14,9 +14,6 @@ ${join("\n", [for host in var.hosts : host if can(regex(".*-comp-.*", host))])}
 management_nodes
 compute_nodes
 
-[gui_hosts]
-${join("\n", var.gui_hosts)}
-
 [login_node]
 ${join("\n", var.login_host)}
 

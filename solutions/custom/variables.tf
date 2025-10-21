@@ -4,7 +4,7 @@
 variable "scheduler" {
   type        = string
   default     = "LSF"
-  description = "Select one of the scheduler (Scale/LSF/Symphony/Slurm/null)"
+  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
 }
 
 variable "ibm_customer_number" {
@@ -247,7 +247,7 @@ variable "storage_instances" {
       profile    = string
       count      = number
       image      = string
-      filesystem = optional(string)
+      filesystem = string
     })
   )
   default = [{
@@ -479,6 +479,66 @@ variable "enable_vpc_flow_logs" {
   default     = true
   description = "Enable Activity tracker"
 }
+
+##############################################################################
+# Scale specific Variables
+##############################################################################
+# variable "filesystem_config" {
+#   type = list(object({
+#     filesystem               = string
+#     block_size               = string
+#     default_data_replica     = number
+#     default_metadata_replica = number
+#     max_data_replica         = number
+#     max_metadata_replica     = number
+#     mount_point              = string
+#   }))
+#   default     = null
+#   description = "File system configurations."
+# }
+
+# variable "filesets_config" {
+#   type = list(object({
+#     fileset           = string
+#     filesystem        = string
+#     junction_path     = string
+#     client_mount_path = string
+#     quota             = number
+#   }))
+#   default     = null
+#   description = "Fileset configurations."
+# }
+
+# variable "afm_instances" {
+#   type = list(
+#     object({
+#       profile = string
+#       count   = number
+#       image   = string
+#     })
+#   )
+#   default = [{
+#     profile = "bx2-2x8"
+#     count   = 0
+#     image   = "ibm-redhat-8-10-minimal-amd64-2"
+#   }]
+#   description = "Number of instances to be launched for afm hosts."
+# }
+
+# variable "afm_cos_config" {
+#   type = list(object({
+#     afm_fileset          = string,
+#     mode                 = string,
+#     cos_instance         = string,
+#     bucket_name          = string,
+#     bucket_region        = string,
+#     cos_service_cred_key = string,
+#     bucket_type          = string,
+#     bucket_storage_class = string
+#   }))
+#   default     = null
+#   description = "AFM configurations."
+# }
 
 ##############################################################################
 # LSF specific Variables

@@ -84,18 +84,15 @@ yum versionlock $package_list
 yum versionlock list
 echo 'export PATH=$PATH:/usr/lpp/mmfs/bin' >> /root/.bashrc
 
-if [[ "${storage_disk_type}" == "fixed" ]]
-then
-    echo "###########################################################################################" >> /etc/motd
-    echo "# You have logged in to Instance storage virtual server.                                  #" >> /etc/motd
-    echo "#   - Instance storage is temporary storage that's available only while your virtual      #" >> /etc/motd
-    echo "#     server is running.                                                                  #" >> /etc/motd
-    echo "#   - Data on the drive is unrecoverable after instance shutdown, disruptive maintenance, #" >> /etc/motd
-    echo "#     or hardware failure.                                                                #" >> /etc/motd
-    echo "#                                                                                         #" >> /etc/motd
-    echo "# Refer: https://cloud.ibm.com/docs/vpc?topic=vpc-instance-storage                        #" >> /etc/motd
-    echo "###########################################################################################" >> /etc/motd
-fi
+echo "###########################################################################################" >> /etc/motd
+echo "# You have logged in to Storage BareMetal Server.                                         #" >> /etc/motd
+echo "#   - Server storage is temporary storage that's available only while your Baremetal      #" >> /etc/motd
+echo "#     server is running.                                                                  #" >> /etc/motd
+echo "#   - Data on the drive is unrecoverable after server shutdown, disruptive maintenance,   #" >> /etc/motd
+echo "#     or hardware failure.                                                                #" >> /etc/motd
+echo "#                                                                                         #" >> /etc/motd
+echo "# Refer: https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-storage              #" >> /etc/motd
+echo "###########################################################################################" >> /etc/motd
 
 echo "DOMAIN=${storage_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${storage_interfaces}"
 echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${storage_interfaces}"
@@ -121,16 +118,3 @@ firewall-offline-cmd --zone=public --add-port=30000-61000/tcp
 firewall-offline-cmd --zone=public --add-port=30000-61000/udp
 systemctl start firewalld
 systemctl enable firewalld
-
-if [ "${enable_protocol}" == true ]; then
-    sec_interface=$(nmcli -t con show --active | grep eth1 | cut -d ':' -f 1)
-    nmcli conn del "$sec_interface"
-    nmcli con add type ethernet con-name eth1 ifname eth1
-    echo "DOMAIN=\"${protocol_dns_domain}\"" >> "/etc/sysconfig/network-scripts/ifcfg-eth1"
-    echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-eth1"
-    systemctl restart NetworkManager
-    ###### TODO: Fix Me ######
-    echo 'export IC_REGION=${vpc_region}' >> /root/.bashrc
-    echo 'export IC_SUBNET=${protocol_subnets}' >> /root/.bashrc
-    echo 'export IC_RG=${resource_group_id}' >> /root/.bashrc
-fi

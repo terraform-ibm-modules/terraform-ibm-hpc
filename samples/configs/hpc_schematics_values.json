@@ -87,7 +87,7 @@
           "value": "Please fill here",
           "type": "string",
           "secure": true,
-          "description": "Password required to access the IBM Spectrum LSF Application Center (App Center) GUI, which is enabled by default in both Fix Pack 15 and Fix Pack 14 with HTTPS. This is a mandatory value and omitting it will result in deployment failure. The password must meet the following requirements, at least 15 characters in length, and must include one uppercase letter, one lowercase letter, one number, and one special character. Spaces are not allowed."
+          "description": "Password required to access the IBM Spectrum LSF Application Center (App Center) GUI, which is enabled by default in both Fix Pack 15 and Fix Pack 14 with HTTPS. This is a mandatory value and omitting it will result in deployment failure. The password must meet the following requirements, at least 8 characters in length, and must include one uppercase letter, one lowercase letter, one number, and one special character."
         },
         {
           "name": "remote_allowed_ips",
@@ -147,7 +147,7 @@
         },
         {
           "name": "dns_domain_name",
-          "value": "{compute= \"hpc.local\"}",
+          "value": "{compute= \"lsf.com\"}",
           "type": "object({compute = string})",
           "secure": false,
           "description": "IBM Cloud DNS Services domain name to be used for the IBM Cloud HPC cluster."
@@ -199,7 +199,7 @@
           "value": "[{ profile = \"bx2-16x64\", count = 2, image = \"hpc-lsf-fp15-rhel810-v1\" }]",
           "type": "list(object({ profile = string, count = number, image = string }))",
           "secure": false,
-          "description": "Specify the list of management node configurations, including instance profile, image name, and count. By default, all management nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. The solution allows customization of instance profiles and counts, but mixing custom images and IBM stock images across instances is not supported. If using IBM stock images, only Red Hat-based images are allowed. Management nodes must have a minimum of 9 GB RAM. Select a profile with 9 GB or higher."
+          "description": "Specify the list of management node configurations, including instance profile, image name, and count. By default, all management nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. The solution allows customization of instance profiles and counts, but mixing custom images and IBM stock images across instances is not supported. If using IBM stock images, only Red Hat-based images are allowed."
         },
         {
           "name": "static_compute_instances",
@@ -287,7 +287,7 @@
         },
         {
           "name": "ldap_basedns",
-          "value": "hpc.local",
+          "value": "lsf.com",
           "type": "string",
           "secure": false,
           "description": "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."
@@ -311,7 +311,7 @@
           "value": "",
           "type": "string",
           "secure": true,
-          "description": "The LDAP admin password must be 15 to 32 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces. [This value is ignored for an existing LDAP server]."
+          "description": "The LDAP administrative password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required. It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
         },
         {
           "name": "ldap_user_name",

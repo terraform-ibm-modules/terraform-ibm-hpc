@@ -6,11 +6,13 @@
   register: https_check
   changed_when: "'was already enabled' not in https_check.stdout"
   failed_when: false
+  run_once: true
 
 - name: PAC | Debug HTTPS status
   ansible.builtin.debug:
     msg: "HTTPS is already enabled"
   when: "'was already enabled' in https_check.stdout"
+  run_once: true
 
 - name: PAC | Configure HTTPS for AppCenter
   block:
@@ -68,3 +70,4 @@
         msg: "AppCenter HTTPS configuration block completed (success or failure)."
 
   when: "'was already enabled' not in https_check.stdout"
+  run_once: true

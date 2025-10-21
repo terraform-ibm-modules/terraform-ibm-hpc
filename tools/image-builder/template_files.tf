@@ -14,6 +14,7 @@ data "template_file" "packer_user_data" {
     target_dir               = "/var"
     prefix                   = var.prefix
     cluster_name             = var.cluster_name
+    reservation_id           = var.reservation_id
     catalog_validate_ssh_key = var.ssh_keys[0]
     zones                    = join(",", var.zones)
     existing_resource_group  = var.existing_resource_group

@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -769,23 +768,4 @@ func GetBoolVar(vars map[string]interface{}, key string) (bool, error) {
 	}
 
 	return boolVal, nil
-}
-
-// GeneratePassword generates a random string of length 8 using lowercase characters
-func GeneratePassword() string {
-	// Define the character set containing lowercase letters
-	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*"
-
-	b := make([]byte, 8)
-
-	// Loop through each index of the byte slice
-	for i := range b {
-		// Generate a random index within the length of the character set
-		randomIndex := rand.Intn(len(charset))
-
-		b[i] = charset[randomIndex]
-	}
-
-	// Convert the byte slice to a string and return it
-	return string(b) + "1*"
 }
