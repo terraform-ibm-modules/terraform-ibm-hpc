@@ -48,6 +48,7 @@
           "name": "Cluster-with-LSF",
           "install_type": "fullstack",
           "working_directory": "solutions/lsf",
+          "terraform_version": "1.10.5",
           "compliance": {
             "authority": "scc-v3",
             "profiles": [
