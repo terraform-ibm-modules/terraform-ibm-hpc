@@ -55,9 +55,11 @@ else
   ln -s /usr/bin/python3.11 /usr/bin/python3
   python3 --version
   pip3 -V
-  adduser --disabled-password --gecos "" lsfadmin
+  useradd -u 1005 -m lsfadmin
+  chage -I -1 -m 0 -M 99999 -E -1 -W 14 lsfadmin
+  chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
+  id lsfadmin
   echo 'lsfadmin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers #pragma: allowlist secret
-  usermod -s /bin/bash lsfadmin
 fi
 
 # LSF prerequisites packages required for configuring and installing LSF
