@@ -254,6 +254,16 @@ func TestRunSCCWPAndCSPMEnabledClusterValidation(t *testing.T) {
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
 	require.NoError(t, err, "Failed to initialize test options")
 
+	// Define multiple management instances
+	options.TerraformVars["management_instances"] = []map[string]interface{}{
+
+		{
+			"profile": "bx2-4x16",
+			"count":   1,
+			"image":   envVars.ManagementInstancesImage,
+		},
+	}
+
 	// SCCWP Specific Configuration
 	options.TerraformVars["sccwp_enable"] = envVars.SccWPEnabled
 	options.TerraformVars["cspm_enabled"] = envVars.CspmEnabled
@@ -1803,12 +1813,12 @@ func TestRunMultiProfileStaticAndDynamic(t *testing.T) {
 	options.TerraformVars["management_instances"] = []map[string]interface{}{
 
 		{
-			"profile": "bx2d-16x64",
+			"profile": "bx2d-4x16",
 			"count":   1,
 			"image":   envVars.ManagementInstancesImage,
 		},
 		{
-			"profile": "bx2-2x8",
+			"profile": "bx2-4x16",
 			"count":   1,
 			"image":   envVars.ManagementInstancesImage,
 		},

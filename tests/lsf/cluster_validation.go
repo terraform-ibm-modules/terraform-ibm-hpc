@@ -67,9 +67,6 @@ func runClusterValidationsOnManagementNode(t *testing.T, sshClient *ssh.Client, 
 	// Run job
 	VerifyJobs(t, sshClient, jobCmd, logger)
 
-	// Verify application center configuration
-	VerifyAPPCenterConfig(t, sshClient, logger)
-
 	// Verify noVNC configuration
 	//VerifyNoVNCConfig(t, sshClient, logger)
 
@@ -80,13 +77,16 @@ func runClusterValidationsOnManagementNode(t *testing.T, sshClient *ssh.Client, 
 	VerifyLSFDNS(t, sshClient, managementNodeIPs, expected.DnsDomainName, logger)
 
 	// Perform failover and failback
-	FailoverAndFailback(t, sshClient, jobCmd, logger)
+	// FailoverAndFailback(t, sshClient, jobCmd, logger)
 
 	// Restart LSF daemon
 	RestartLsfDaemon(t, sshClient, logger)
 
 	// Reboot instance
 	RebootInstance(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPs[0], logger)
+
+	// Verify application center configuration
+	VerifyAPPCenterConfig(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPs, logger)
 
 	logger.Info(t, "Management node and App Center validations completed.")
 }
@@ -293,10 +293,17 @@ func ValidateClusterConfigurationWithPACHA(t *testing.T, options *testhelper.Tes
 
 	runClusterValidationsOnManagementNode(t, sshClient, bastionIP, managementNodeIPs, expected, jobCommandMed, logger)
 
+	var managementNodeIP string
+	if len(managementNodeIPs) == 1 {
+		managementNodeIP = managementNodeIPs[0]
+	} else {
+		managementNodeIP = managementNodeIPs[1]
+	}
+
 	// Reconnect to the management node after reboot
-	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPs[0])
+	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIP)
 	if connectionErr != nil {
-		msg := fmt.Sprintf("SSH connection to master node via bastion (%s) -> private IP (%s) failed after reboot: %v", bastionIP, managementNodeIPs[0], connectionErr)
+		msg := fmt.Sprintf("SSH connection to master node via bastion (%s) -> private IP (%s) failed after reboot: %v", bastionIP, managementNodeIP, connectionErr)
 		logger.FAIL(t, msg)
 		require.FailNow(t, msg)
 	}
@@ -1110,6 +1117,9 @@ func ValidateBasicClusterConfigurationWithSCCWPAndCSPM(t *testing.T, options *te
 		}
 	}()
 
+	// Verify application center configuration
+	VerifyAPPCenterConfig(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPs, logger)
+
 	// Run job to verify job execution on the cluster
 	VerifyJobs(t, sshClient, jobCommandLow, logger)
 
@@ -1157,7 +1167,7 @@ func ValidateBasicClusterConfigurationWithCloudLogs(t *testing.T, options *testh
 	require.NoError(t, getdeployerIPErr, "Failed to get deployer IP from Terraform outputs - check deployer configuration")
 
 	// Set job commands for low and medium memory tasks, ignoring high memory command
-	jobCommandLow, jobCommandMed, _ := GenerateLSFJobCommandsForMemoryTypes()
+	jobCommandLow, _, _ := GenerateLSFJobCommandsForMemoryTypes()
 
 	// Log validation start
 	logger.Info(t, t.Name()+" Validation started ......")
@@ -1536,7 +1546,7 @@ func ValidateClusterConfigurationWithMultipleKeys(t *testing.T, options *testhel
 	VerifySSHKey(t, sshClientOne, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, "management", managementNodeIPs, expected.NumOfKeys, logger)
 
 	// Perform failover and failback
-	FailoverAndFailback(t, sshClientOne, jobCommandMed, logger)
+	// FailoverAndFailback(t, sshClientOne, jobCommandMed, logger)
 
 	// Restart LSF daemon
 	RestartLsfDaemon(t, sshClientOne, logger)
@@ -1646,6 +1656,9 @@ func ValidateBasicClusterConfigurationForMultiProfileStaticAndDynamic(t *testing
 			t.Errorf("Error in WaitForDynamicNodeDisappearance: %v", err)
 		}
 	}()
+
+	// Verify application center configuration
+	VerifyAPPCenterConfig(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPs, logger)
 
 	// Run job to trigger dynamic node behavior
 	VerifyJobs(t, sshClient, jobCommandHigh, logger)

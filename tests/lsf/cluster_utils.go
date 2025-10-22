@@ -1387,7 +1387,7 @@ func VerifyEncryption(t *testing.T, apiKey, region, resourceGroup, clusterPrefix
 	}
 
 	//	// Retrieve the list of file shares (retry once after 2s if it fails)
-	fileSharesOutput, err := utils.RunCommandWithRetry(fileSharesCmd, 3, 60*time.Second)
+	fileSharesOutput, err := utils.RunCommandWithRetry(fileSharesCmd, 3, 90*time.Second)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve file shares: %w", err)
 	}
@@ -1403,18 +1403,23 @@ func VerifyEncryption(t *testing.T, apiKey, region, resourceGroup, clusterPrefix
 			return fmt.Errorf("failed to retrieve file share details for '%s': %w", fileShareName, err)
 		}
 
-		if !utils.VerifyDataContains(t, strings.ToLower(keyManagement), "key_protect", logger) {
-			if !utils.VerifyDataContains(t, string(output), "provider_managed", logger) {
-				return fmt.Errorf("encryption-in-transit is unexpectedly enabled for the file shares")
+		outStr := string(output)
+
+		if utils.VerifyDataContains(t, strings.ToLower(keyManagement), "key_protect", logger) {
+			// With KMS → expect user_managed + Encryption key present
+			if !utils.VerifyDataContains(t, outStr, "Encryption                         user_managed", logger) ||
+				!utils.VerifyDataContains(t, outStr, "Encryption key", logger) {
+				return fmt.Errorf("expected user-managed encryption with an encryption key for file share '%s'", fileShareName)
 			}
 		} else {
-			if !utils.VerifyDataContains(t, string(output), "user_managed", logger) {
-				return fmt.Errorf("encryption-in-transit is unexpectedly disabled for the file shares")
-			}
+			// Without KMS → expect provider_managed + no Encryption key
+			if !utils.VerifyDataContains(t, outStr, "Encryption                         provider_managed", logger) ||
+				utils.VerifyDataContains(t, outStr, "Encryption key", logger) {
+				return fmt.Errorf("expected provider-managed encryption without an encryption key for file share '%s'", fileShareName)
 		}
 
 	}
-	logger.Info(t, "Encryption set as expected")
+	logger.Info(t, "Encryption settings match the expected configuration")
 	return nil
 }
 
