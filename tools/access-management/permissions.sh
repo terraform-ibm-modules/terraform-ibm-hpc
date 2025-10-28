@@ -137,10 +137,7 @@ kms|Service Configuration Reader|Manager
 secrets-manager|Administrator|Manager
 sysdig-secure|Administrator|
 is|Editor|
-iam-identity|Administrator|
-atracker|Administrator|
-logs-router|Administrator|
-metrics-router|Administrator|"
+iam-identity|Administrator|"
 
 FRIENDLY_NAMES="apprapp|App Configuration
 cloud-object-storage|Cloud Object Storage
@@ -150,10 +147,7 @@ kms|Key Protect
 secrets-manager|Secrets Manager
 sysdig-secure|Security and Compliance Center Workload Protection
 is|VPC Infrastructure Services
-iam-identity|IAM Identity
-atracker|Activity tracker event routing
-logs-router|Cloud logs routing
-metrics-router|Metrics routing"
+iam-identity|IAM Identity"
 
 get_friendly_name() {
   local service="$1"
