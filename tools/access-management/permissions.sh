@@ -98,7 +98,7 @@ check_policies() {
 }
 
 USER_POLICIES=$(ibmcloud iam user-policies "$ADMIN_EMAIL" --output json 2>/dev/null || echo "[]")
-echo $USER_POLICIES
+
 if echo "$USER_POLICIES" | jq empty 2>/dev/null; then
   if check_policies "$USER_POLICIES" "User"; then
     has_permission=true
