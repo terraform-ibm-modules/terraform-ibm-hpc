@@ -10,3 +10,7 @@
 - name: Ansible Repo | Disable Ansible repo
   command: subscription-manager repos --disable=ansible-2-for-rhel-8-x86_64-rpms
   when: ansible_repo_check.rc == 0
+  register: disable_repo
+  retries: 3
+  delay: 10
+  until: disable_repo.rc == 0

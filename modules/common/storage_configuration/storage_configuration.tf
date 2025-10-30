@@ -1,5 +1,5 @@
 /*
-    Excutes ansible playbook to install IBM Spectrum Scale storage cluster.
+    Executes ansible playbook to install IBM Spectrum Scale storage cluster.
 */
 
 resource "local_file" "create_storage_tuning_parameters" {
@@ -39,6 +39,60 @@ resource "local_sensitive_file" "write_existing_ldap_cert" {
   content         = var.ldap_server_cert
   filename        = local.ldap_server_cert_path
   file_permission = "0600"
+}
+
+resource "time_sleep" "wait_300_seconds" {
+  count           = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true) && var.storage_type == "persistent" ? 1 : 0
+  create_duration = "300s"
+  depends_on      = [local_sensitive_file.write_meta_private_key]
+}
+
+resource "null_resource" "scale_baremetal_ssh_check_play" {
+  count = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true && tobool(var.create_scale_cluster) == true) && var.storage_type == "persistent" ? 1 : 0
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "sudo ansible-playbook -f 50 -i ${local.scale_all_inventory} -l 'storage' -e @${local.scale_baremetal_prerequisite_vars} ${local.scale_baremetal_ssh_check_playbook_path}"
+  }
+  depends_on = [local_sensitive_file.write_meta_private_key, time_sleep.wait_300_seconds]
+  triggers = {
+    build = timestamp()
+  }
+}
+
+resource "null_resource" "scale_host_play" {
+  count = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true && tobool(var.create_scale_cluster) == true) ? 1 : 0
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "sudo ansible-playbook -f 50 -i ${local.scale_all_inventory} -l 'storage' -e @${local.scale_cluster_hosts} -e @${local.domain_name_file} ${local.scale_hostentry_playbook_path}"
+  }
+  depends_on = [null_resource.scale_baremetal_ssh_check_play, time_sleep.wait_300_seconds]
+  triggers = {
+    build = timestamp()
+  }
+}
+
+resource "null_resource" "scale_baremetal_bootdrive_play" {
+  count = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true && tobool(var.create_scale_cluster) == true) && var.storage_type == "persistent" && var.bms_boot_drive_encryption == true ? 1 : 0
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "sudo ansible-playbook -f 50 -i ${local.scale_all_inventory} -l 'storage' -e @${local.scale_baremetal_prerequisite_vars} ${local.scale_baremetal_bootdrive_playbook_path}"
+  }
+  depends_on = [null_resource.scale_baremetal_ssh_check_play, null_resource.scale_host_play]
+  triggers = {
+    build = timestamp()
+  }
+}
+
+resource "null_resource" "scale_baremetal_prerequisite_play" {
+  count = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true && tobool(var.create_scale_cluster) == true) && var.storage_type == "persistent" ? 1 : 0
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "sudo ansible-playbook -f 50 -i ${local.scale_all_inventory} -l 'storage' -e @${local.scale_baremetal_prerequisite_vars} ${local.scale_baremetal_prerequisite_playbook_path}"
+  }
+  depends_on = [null_resource.scale_baremetal_ssh_check_play, null_resource.scale_host_play]
+  triggers = {
+    build = timestamp()
+  }
 }
 
 resource "null_resource" "prepare_ansible_inventory_using_jumphost_connection" {
@@ -111,9 +165,9 @@ resource "null_resource" "perform_scale_deployment" {
   count = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true && tobool(var.create_scale_cluster) == true) ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "ansible-playbook -f 32 -i ${local.storage_inventory_path} ${local.storage_playbook_path} --extra-vars \"scale_version=${var.scale_version}\" --extra-vars \"scale_install_directory_pkg_path=${var.spectrumscale_rpms_path}\""
+    command     = "sudo ansible-playbook -f 32 -i ${local.storage_inventory_path} ${local.storage_playbook_path} --extra-vars \"scale_version=${var.scale_version}\" --extra-vars \"scale_install_directory_pkg_path=${var.spectrumscale_rpms_path}\""
   }
-  depends_on = [time_sleep.wait_60_seconds, null_resource.wait_for_ssh_availability, null_resource.prepare_ansible_inventory, null_resource.prepare_ansible_inventory_using_jumphost_connection, null_resource.prepare_ansible_inventory, null_resource.prepare_ansible_inventory_using_jumphost_connection]
+  depends_on = [null_resource.scale_host_play, null_resource.scale_baremetal_prerequisite_play, null_resource.scale_baremetal_bootdrive_play, time_sleep.wait_60_seconds, null_resource.wait_for_ssh_availability, null_resource.prepare_ansible_inventory, null_resource.prepare_ansible_inventory_using_jumphost_connection, null_resource.prepare_ansible_inventory, null_resource.prepare_ansible_inventory_using_jumphost_connection]
   triggers = {
     build = timestamp()
   }
