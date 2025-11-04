@@ -74,6 +74,10 @@
               "key": "remote_allowed_ips"
             },
             {
+              "key": "lsf_pay_per_use",
+              "required": true
+            },
+            {
               "key": "lsf_version",
               "default_value": "fixpack_15",
               "required": true,
