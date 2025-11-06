@@ -160,7 +160,7 @@ def prepare_ansible_playbook(hosts_config, cluster_config, cluster_key_file):
     """Write to playbook"""
     content = f"""---
 # Ensure provisioned VMs are up and Passwordless SSH setup
-# has been compleated and operational
+# has been completed and operational
 - name: Check passwordless SSH connection is setup
   hosts: {hosts_config}
   any_errors_fatal: true
@@ -240,9 +240,6 @@ def prepare_ansible_playbook(hosts_config, cluster_config, cluster_key_file):
      - {{ role: afm_cos_prepare, when: enable_afm }}
      - {{ role: afm_cos_install, when: "enable_afm and scale_packages_installed is false" }}
      - {{ role: afm_cos_configure, when: enable_afm }}
-     - {{ role: kp_encryption_prepare, when: "enable_key_protect and scale_cluster_type == 'storage'" }}
-     - {{ role: kp_encryption_configure, when: enable_key_protect }}
-     - {{ role: kp_encryption_apply, when: "enable_key_protect and scale_cluster_type == 'storage'" }}
 """
     return content
 
@@ -329,6 +326,26 @@ def prepare_ansible_playbook_encryption_cluster(hosts_config):
      - encryption_configure
 """
     return content.format(hosts_config=hosts_config)
+
+
+def prepare_ansible_playbook_key_protect_encryption(hosts_config, cluster_config):
+    # Write to playbook
+    content = f"""---
+# Install and config Spectrum Scale on nodes
+- hosts: {hosts_config}
+  collections:
+     - ibm.spectrum_scale
+  any_errors_fatal: true
+  vars:
+    - scale_node_update_check: false
+  pre_tasks:
+     - include_vars: group_vars/{cluster_config}
+  roles:
+     - {{ role: kp_encryption_prepare, when: "enable_key_protect and scale_cluster_type == 'storage'" }}
+     - {{ role: kp_encryption_configure, when: enable_key_protect }}
+     - {{ role: kp_encryption_apply, when: "enable_key_protect and scale_cluster_type == 'storage'" }}
+"""
+    return content
 
 
 def initialize_cluster_details(
@@ -465,7 +482,7 @@ def initialize_node_details(
                     "scale_protocol_node": False,
                     "scale_cluster_gateway": False,
                 }
-            # Scale Management node defination
+            # Scale Management node definition
             elif (
                 compute_cluster_instance_names.index(each_ip) == total_compute_node - 1
             ):
@@ -492,7 +509,7 @@ def initialize_node_details(
                     ),
                 )
             else:
-                # Non-quorum node defination
+                # Non-quorum node definition
                 node = {
                     "ip_addr": each_ip,
                     "is_quorum": False,
@@ -546,7 +563,7 @@ def initialize_node_details(
                     "scale_protocol_node": is_protocol,
                     "scale_cluster_gateway": is_afm,
                 }
-            # Tie-breaker node defination
+            # Tie-breaker node definition
             elif (
                 storage_cluster_instance_names.index(each_ip) == total_storage_node - 1
             ):
@@ -565,7 +582,7 @@ def initialize_node_details(
                     "scale_protocol_node": False,
                     "scale_cluster_gateway": False,
                 }
-            # Scale Management node defination
+            # Scale Management node definition
             elif (
                 storage_cluster_instance_names.index(each_ip) == total_storage_node - 2
             ):
@@ -592,7 +609,7 @@ def initialize_node_details(
                     ),
                 )
             else:
-                # Non-quorum node defination
+                # Non-quorum node definition
                 node = {
                     "ip_addr": each_ip,
                     "is_quorum": False,
@@ -949,7 +966,7 @@ def initialize_scale_ces_details(
         export_node_ip_map = [
             {protocol_cluster_instance_name.split(".")[0]: ip}
             for protocol_cluster_instance_name, ip in zip(
-                protocol_cluster_instance_names, export_ip_pool
+                protocol_cluster_instance_names, export_ip_pool, strict=False
             )
         ]
 
@@ -1577,6 +1594,31 @@ if __name__ == "__main__":
             "Content of ansible playbook for encryption:\n", encryption_playbook_content
         )
 
+    # Step-4.2: Create Key Protect Encryption playbook
+    if (
+        ARGUMENTS.scale_encryption_enabled == "true"
+        and ARGUMENTS.scale_encryption_type == "key_protect"
+        and ARGUMENTS.enable_key_protect == "True"
+    ):
+        kp_encryption_playbook_content = (
+            prepare_ansible_playbook_key_protect_encryption(
+                "scale_nodes", f"{cluster_type}_cluster_config.yaml"
+            )
+        )
+        write_to_file(
+            "/{}/{}/{}_kp_encryption_playbook.yaml".format(
+                ARGUMENTS.install_infra_path,
+                "ibm-spectrum-scale-install-infra",
+                cluster_type,
+            ),
+            kp_encryption_playbook_content,
+        )
+    if ARGUMENTS.verbose:
+        print(
+            "Content of ansible playbook for key protect encryption:\n",
+            kp_encryption_playbook_content,
+        )
+
     # Step-5: Create hosts
     config = configparser.ConfigParser(allow_no_value=True)
     node_details = initialize_node_details(
@@ -1596,7 +1638,7 @@ if __name__ == "__main__":
     node_template = ""
     for each_entry in node_details:
         if ARGUMENTS.bastion_ssh_private_key is None:
-            each_entry = each_entry + " " + "ansible_ssh_common_args=" ""
+            each_entry = each_entry + " " + "ansible_ssh_common_args="
             node_template = node_template + each_entry + "\n"
         else:
             proxy_command = f"ssh -p 22 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p {ARGUMENTS.bastion_user}@{ARGUMENTS.bastion_ip} -i {ARGUMENTS.bastion_ssh_private_key}"

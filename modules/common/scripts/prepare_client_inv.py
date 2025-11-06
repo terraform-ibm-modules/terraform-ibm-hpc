@@ -172,7 +172,7 @@ if __name__ == "__main__":
             ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra", "client"
         )
     )
-    # Step-3: Cleanup the Clinet inventory file
+    # Step-3: Cleanup the Client inventory file
     cleanup(
         "{}/{}/{}_mount_inventory.ini".format(
             ARGUMENTS.install_infra_path, "ibm-spectrum-scale-install-infra", "client"

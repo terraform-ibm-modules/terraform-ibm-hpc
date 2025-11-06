@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/utilities"
 	"golang.org/x/crypto/ssh"
@@ -176,17 +177,47 @@ func VerifyComputeNodeConfig(
 
 }
 
-// VerifyAPPCenterConfig verifies the configuration of the application center by performing various checks.
+// VerifyAPPCenterConfig verifies the configuration of the Application Center by performing various checks.
+// If more than one management node exists, validation runs on node 2; otherwise on node 1.
 func VerifyAPPCenterConfig(
 	t *testing.T,
 	sshMgmtClient *ssh.Client,
+	publicHostIP, publicHostName, privateHostName string,
+	managementNodeIPs []string,
 	logger *utils.AggregatedLogger,
 ) {
+	var targetSSHClient *ssh.Client
+	var nodeLabel string
 
-	// Verify application center
-	appCenterErr := LSFAPPCenterConfiguration(t, sshMgmtClient, logger)
-	utils.LogVerificationResult(t, appCenterErr, "check Application center", logger)
+	if len(managementNodeIPs) > 1 {
+		// Connect to management node 2
+		appCenterSSHClient, err := utils.ConnectToHost(publicHostName, publicHostIP, privateHostName, managementNodeIPs[1])
+		if err != nil {
+			msg := fmt.Sprintf(
+				"Failed to SSH to management node 2 via bastion (%s) -> private IP (%s): %v",
+				publicHostIP, managementNodeIPs[1], err,
+			)
+			logger.FAIL(t, msg)
+			require.FailNow(t, msg)
+		}
+		defer func() {
+			if cerr := appCenterSSHClient.Close(); cerr != nil {
+				logger.Warn(t, fmt.Sprintf("Failed to close SSH connection: %v", cerr))
+			}
+		}()
+		targetSSHClient = appCenterSSHClient
+		nodeLabel = "Application Center (mgmt node 2)"
+	} else {
+		// Use the provided SSH client (mgmt node 1)
+		targetSSHClient = sshMgmtClient
+		nodeLabel = "Application Center (mgmt node 1)"
+	}
 
+	// Run App Center validation
+	appCenterErr := LSFAPPCenterConfiguration(t, targetSSHClient, logger)
+	utils.LogVerificationResult(t, appCenterErr, nodeLabel, logger)
+
+	logger.Info(t, fmt.Sprintf("Completed %s validation.", nodeLabel))
 }
 
 // VerifyLoginNodeConfig validates the configuration of a login node by performing multiple checks.
@@ -296,10 +327,10 @@ func VerifyJobs(t *testing.T, sshClient *ssh.Client, jobCommand string, logger *
 func VerifyFileShareEncryption(t *testing.T, sshMgmtClient *ssh.Client, apiKey, region, resourceGroup, clusterPrefix, keyManagement string, managementNodeIPList []string, logger *utils.AggregatedLogger) {
 	// Validate encryption
 	encryptErr := VerifyEncryption(t, apiKey, region, resourceGroup, clusterPrefix, keyManagement, logger)
-	utils.LogVerificationResult(t, encryptErr, "File share encryption validation failed", logger)
+	utils.LogVerificationResult(t, encryptErr, "File share encryption validation", logger)
 
 	encryptCRNErr := VerifyEncryptionCRN(t, sshMgmtClient, keyManagement, managementNodeIPList, logger)
-	utils.LogVerificationResult(t, encryptCRNErr, "CRN encryption validation failed", logger)
+	utils.LogVerificationResult(t, encryptCRNErr, "CRN encryption validation", logger)
 }
 
 // VerifyManagementNodeLDAPConfig performs various checks on a management node's LDAP configuration.
