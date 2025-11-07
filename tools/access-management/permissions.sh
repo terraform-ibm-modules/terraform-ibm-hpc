@@ -180,7 +180,7 @@ if [ -n "$ACCESS_GROUP" ] && [ -z "$USER_EMAIL" ]; then
 
     POLICY_ID=$(echo "$existing_policies" | jq -r \
       --arg service "$SERVICE_NAME" '
-      .[] | 
+      .[] |
       select(any(.resources[].attributes[]?;
                  .name == "serviceName" and .value == $service)) |
       select(all(.resources[].attributes[]?.name; . != "resourceGroupId")) |
@@ -221,7 +221,7 @@ if [ -n "$ACCESS_GROUP" ] && [ -z "$USER_EMAIL" ]; then
   POLICY_ID=$(echo "$existing_policies" | jq -r '
     .[] |
     select(any(.resources[].attributes[]?; .name == "serviceType" and .value == "service")) |
-    select(all(.resources[].attributes[]?.name; . != "resourceGroupId")) | 
+    select(all(.resources[].attributes[]?.name; . != "resourceGroupId")) |
     .id' | head -n1)
   if [ -n "$POLICY_ID" ] && [ "$POLICY_ID" != "null" ]; then
     EXISTING_ROLES=$(echo "$existing_policies" | jq -r --arg id "$POLICY_ID" '
@@ -301,7 +301,7 @@ elif [ -z "$ACCESS_GROUP" ] && [ -n "$USER_EMAIL" ]; then
       .[]
       | select(any(.resources[].attributes[]?;
                   .name == "serviceName" and .value == $service))
-      | select(all(.resources[].attributes[]?.name; . != "resourceGroupId"))            
+      | select(all(.resources[].attributes[]?.name; . != "resourceGroupId"))
       | .id' | head -n1)
 
     if [ -n "$POLICY_ID" ] && [ "$POLICY_ID" != "null" ]; then
@@ -341,7 +341,6 @@ elif [ -z "$ACCESS_GROUP" ] && [ -n "$USER_EMAIL" ]; then
     select(any(.resources[].attributes[]?; .name == "serviceType" and .value == "service")) |
     select(all(.resources[].attributes[]?.name; . != "resourceGroupId")) |
     .id' | head -n1)
-  echo $POLICY_ID  
   if [ -n "$POLICY_ID" ] && [ "$POLICY_ID" != "null" ]; then
     EXISTING_ROLES=$(echo "$existing_policies" | jq -r --arg id "$POLICY_ID" '
       .[] | select(.id == $id) | [.roles[].display_name] | join(",")')
@@ -402,7 +401,7 @@ elif [ -z "$ACCESS_GROUP" ] && [ -n "$USER_EMAIL" ]; then
     ibmcloud iam user-policy-create "$USER_EMAIL" \
       --account-management \
       --roles "Administrator" || echo "⚠️ Failed to assign Administrator roles for All Account Management services to user: $USER_EMAIL"
-  fi  
+  fi
 
 else
   echo "❗ Please choose either Access Group or User."
