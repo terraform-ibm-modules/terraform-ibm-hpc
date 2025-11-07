@@ -1,0 +1,14 @@
+---
+# -------------------------------------------------------------------
+# Tasks: Stop and disable lsfd service on Login Node
+# -------------------------------------------------------------------
+
+- name: Disable lsfd service from starting at boot
+  ansible.builtin.systemd:
+    name: lsfd
+    enabled: false
+
+- name: Stop lsfd service if it is currently running
+  ansible.builtin.systemd:
+    name: lsfd
+    state: stopped

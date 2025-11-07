@@ -803,3 +803,10 @@ resource "local_file" "scale_gpfs_restart_playbook" {
 EOT
   filename = local.gpfs_restart_playbook_path
 }
+
+resource "time_sleep" "wait_for_servers_syncup" {
+  triggers = {
+    always = timestamp()
+  }
+  create_duration = "60s"
+}

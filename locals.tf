@@ -52,9 +52,42 @@ locals {
   # skip_iam_authorization_policy = true
   # skip_iam_authorization_policy = var.bastion_instance_name != null ? false : local.skip_iam_authorization_policy
   # Cluster node details:
-  compute_instances     = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data, module.landing_zone_vsi[0].compute_vsi_data])
+
+  # Simplified management VSI data
+  simplified_management_vsi_data = var.enable_deployer ? [] : [
+    for outer in module.landing_zone_vsi[0].management_vsi_data : [
+      for vsi in outer : {
+        id           = try(vsi.id, null),
+        ipv4_address = try(vsi.ipv4_address, try(vsi.primary_network_interface_detail.primary_ipv4_address, null)),
+        name         = try(vsi.name, null)
+      }
+    ]
+  ]
+
+  # Simplified compute VSI data
+  simplified_compute_vsi_data = var.enable_deployer ? [] : [
+    for outer in module.landing_zone_vsi[0].compute_vsi_data : [
+      for vsi in outer : {
+        id           = try(vsi.id, null),
+        ipv4_address = try(vsi.ipv4_address, try(vsi.primary_network_interface_detail.primary_ipv4_address, null)),
+        name         = try(vsi.name, null)
+      }
+    ]
+  ]
+
+  simplified_storage_vsi_data = var.enable_deployer ? [] : [
+    for outer in flatten(module.landing_zone_vsi[0].storage_vsi_data) :
+    { id           = try(outer.id, null),
+      ipv4_address = try(outer.ipv4_address, try(outer.primary_network_interface_detail.primary_ipv4_address, null)),
+      name         = try(outer.name, null)
+    }
+  ]
+
+  # Flattened Management and Compute instances
+  compute_instances = var.enable_deployer ? [] : flatten([local.simplified_management_vsi_data, local.simplified_compute_vsi_data])
+
   comp_mgmt_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_management_vsi_data])
-  storage_instances     = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_vsi_data])
+  storage_instances     = var.enable_deployer ? [] : local.simplified_storage_vsi_data
   storage_servers       = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_bms_data])
   storage_tie_brkr_bm   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].storage_tie_breaker_bms_data])
   protocol_instances    = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].protocol_vsi_data])
@@ -461,15 +494,13 @@ locals {
 
 # details needed for json file
 locals {
-  compute_instances_data      = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_vsi_data])
-  compute_hosts_ips           = var.enable_deployer ? [] : local.compute_instances_data[*]["ipv4_address"]
+  compute_hosts_ips           = var.enable_deployer ? [] : flatten(local.compute_instances)[*].ipv4_address
   compute_mgmt_instances_data = var.scheduler == "Scale" ? var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_management_vsi_data]) : []
   compute_mgmt_hosts_ips      = var.scheduler == "Scale" ? var.enable_deployer ? [] : local.compute_mgmt_instances_data[*]["ipv4_address"] : []
   all_compute_hosts           = concat(local.compute_hosts_ips, local.compute_mgmt_hosts_ips)
   bastion_hosts_ips           = var.enable_deployer ? [module.deployer.bastion_fip] : []
   deployer_hosts_ips          = var.enable_deployer ? [module.deployer.deployer_ip] : []
-  mgmt_instances_data         = var.scheduler == "LSF" ? var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].management_vsi_data]) : []
-  mgmt_hosts_ips              = var.scheduler == "LSF" ? var.enable_deployer ? [] : local.mgmt_instances_data[*]["ipv4_address"] : []
+  mgmt_hosts_ips              = var.scheduler == "LSF" ? (var.enable_deployer ? [] : flatten(local.simplified_management_vsi_data)[*].ipv4_address) : []
   ldap_hosts_ips              = var.scheduler == "LSF" ? var.enable_deployer ? [] : (var.enable_ldap == true ? (var.ldap_server == "null" ? local.ldap_instances[*]["ipv4_address"] : [var.ldap_server]) : []) : []
   json_inventory_path         = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/all.json" : "${path.root}/modules/ansible-roles/all.json"
   management_nodes            = var.scheduler == "LSF" ? var.enable_deployer ? [] : (flatten([module.landing_zone_vsi[0].management_vsi_data]))[*]["name"] : []

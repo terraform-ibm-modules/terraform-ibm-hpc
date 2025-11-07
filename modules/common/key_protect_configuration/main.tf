@@ -4,6 +4,9 @@ resource "null_resource" "perform_encryption_storage" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo /usr/local/bin/ansible-playbook -f 32 -i ${local.storage_inventory_path} ${local.storage_kp_encryption_playbook}"
   }
+  triggers = {
+    build = timestamp()
+  }
 }
 
 resource "null_resource" "perform_encryption_compute" {
@@ -11,6 +14,9 @@ resource "null_resource" "perform_encryption_compute" {
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo /usr/local/bin/ansible-playbook -f 32 -i ${local.compute_inventory_path} ${local.compute_kp_encryption_playbook}"
+  }
+  triggers = {
+    build = timestamp()
   }
 }
 
@@ -21,4 +27,7 @@ resource "null_resource" "perform_encryption_gpfs_restart" {
     command     = "sudo /usr/local/bin/ansible-playbook -f 32 -i ${local.compute_inventory_path} ${local.gpfs_restart_playbook_path}"
   }
   depends_on = [null_resource.perform_encryption_compute]
+  triggers = {
+    build = timestamp()
+  }
 }

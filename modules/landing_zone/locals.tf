@@ -210,7 +210,7 @@ locals {
   exstng_instance_bucket_new_hmac = var.scheduler == "Scale" ? [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name != "" && details.cos_service_cred_key == "")] : []
   exstng_instance_hmac_new_bucket = var.scheduler == "Scale" ? [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name == "" && details.cos_service_cred_key != "")] : []
 
-  path_elements = split("/", var.storage_instances[0]["filesystem"] != "" ? var.storage_instances[0]["filesystem"] : var.filesystem_config[0]["filesystem"])
+  path_elements = split("/", (var.storage_type != "persistent" && var.storage_instances[0]["filesystem"] != "") ? var.storage_instances[0]["filesystem"] : (var.storage_type == "persistent" && var.storage_servers[0]["filesystem"] != "") ? var.storage_servers[0]["filesystem"] : var.filesystem_config[0]["filesystem"])
   filesystem    = element(local.path_elements, length(local.path_elements) - 1)
   total         = concat(local.exstng_instance_new_bucket_hmac, local.exstng_instance_bucket_new_hmac, local.exstng_instance_hmac_new_bucket)
 
