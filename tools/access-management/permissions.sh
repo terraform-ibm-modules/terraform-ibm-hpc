@@ -55,12 +55,12 @@ check_policies() {
     select(any(.resources[].attributes[]?; .name == "serviceType" and .value == "service"))
   ' >/dev/null 2>&1 && echo "true" || echo "false")
 
-  # Check role for serviceType=platform_service (Viewer, Editor, or Administrator)
+  # Check role for serviceType=platform_service (Administrator)
   local has_platform_role
   has_platform_role=$(echo "$policies" | jq -e '
     .[] |
     select(.roles? != null) |
-    select(any(.roles[]?.display_name; . == "Viewer" or . == "Editor" or . == "Administrator")) |
+    select(any(.roles[]?.display_name; . == "Administrator")) |
     select(any(.resources[].attributes[]?; .name == "accountId")) |
     select(any(.resources[].attributes[]?; .name == "serviceType" and .value == "platform_service"))
   ' >/dev/null 2>&1 && echo "true" || echo "false")
@@ -89,15 +89,16 @@ check_policies() {
   fi
 
   if [ "$has_platform_role" = "true" ]; then
-    echo "✅ At $scope policy level: Has Viewer/Editor/Administrator for All Account Management services"
+    echo "✅ At $scope policy level: Has Administrator for All Account Management services"
   else
-    echo "❌ At $scope policy level: Missing Viewer/Editor/Administrator for All Account Management services"
+    echo "❌ At $scope policy level: Missing Administrator for All Account Management services"
   fi
 
   [[ "$has_admin" == "true" && "$has_platform_role" == "true" && "$has_identity_role" == "true" ]]
 }
 
 USER_POLICIES=$(ibmcloud iam user-policies "$ADMIN_EMAIL" --output json 2>/dev/null || echo "[]")
+
 if echo "$USER_POLICIES" | jq empty 2>/dev/null; then
   if check_policies "$USER_POLICIES" "User"; then
     has_permission=true
@@ -136,10 +137,7 @@ kms|Service Configuration Reader|Manager
 secrets-manager|Administrator|Manager
 sysdig-secure|Administrator|
 is|Editor|
-iam-identity|Administrator|
-atracker|Administrator|
-logs-router|Administrator|
-metrics-router|Administrator|"
+iam-identity|Administrator|"
 
 FRIENDLY_NAMES="apprapp|App Configuration
 cloud-object-storage|Cloud Object Storage
@@ -149,10 +147,7 @@ kms|Key Protect
 secrets-manager|Secrets Manager
 sysdig-secure|Security and Compliance Center Workload Protection
 is|VPC Infrastructure Services
-iam-identity|IAM Identity
-atracker|Activity tracker event routing
-logs-router|Cloud logs routing
-metrics-router|Metrics routing"
+iam-identity|IAM Identity"
 
 get_friendly_name() {
   local service="$1"
@@ -185,8 +180,10 @@ if [ -n "$ACCESS_GROUP" ] && [ -z "$USER_EMAIL" ]; then
 
     POLICY_ID=$(echo "$existing_policies" | jq -r \
       --arg service "$SERVICE_NAME" '
-      .[] | select(any(.resources[].attributes[]?;
-                      .name == "serviceName" and .value == $service)) |
+      .[] |
+      select(any(.resources[].attributes[]?;
+                 .name == "serviceName" and .value == $service)) |
+      select(all(.resources[].attributes[]?.name; . != "resourceGroupId")) |
       .id' | head -n1)
 
     if [ -n "$POLICY_ID" ] && [ "$POLICY_ID" != "null" ]; then
@@ -224,8 +221,8 @@ if [ -n "$ACCESS_GROUP" ] && [ -z "$USER_EMAIL" ]; then
   POLICY_ID=$(echo "$existing_policies" | jq -r '
     .[] |
     select(any(.resources[].attributes[]?; .name == "serviceType" and .value == "service")) |
+    select(all(.resources[].attributes[]?.name; . != "resourceGroupId")) |
     .id' | head -n1)
-
   if [ -n "$POLICY_ID" ] && [ "$POLICY_ID" != "null" ]; then
     EXISTING_ROLES=$(echo "$existing_policies" | jq -r --arg id "$POLICY_ID" '
       .[] | select(.id == $id) | [.roles[].display_name] | join(",")')
@@ -253,6 +250,43 @@ if [ -n "$ACCESS_GROUP" ] && [ -z "$USER_EMAIL" ]; then
       --roles "Administrator,Manager" || echo "⚠️ Failed to assign Administrator,Manager roles for All Identity and Access enabled services to access group: $ACCESS_GROUP"
   fi
 
+  echo "🔍 Checking All Account Management Administrator policy for access group: $ACCESS_GROUP"
+  existing_policies=$(ibmcloud iam access-group-policies "$ACCESS_GROUP" --output json 2>/dev/null || echo "[]")
+  POLICY_ID=$(echo "$existing_policies" | jq -r '
+    .[] |
+    select(any(.resources[].attributes[]?; .name == "serviceType" and .value == "platform_service")) |
+    select(all(.resources[].attributes[]?.name; . != "resourceGroupId")) |
+    .id' | head -n1)
+
+  if [ -n "$POLICY_ID" ] && [ "$POLICY_ID" != "null" ]; then
+    EXISTING_ROLES=$(echo "$existing_policies" | jq -r --arg id "$POLICY_ID" '
+      .[] | select(.id == $id) | [.roles[].display_name] | join(",")')
+
+    EXISTING_SORTED=$(normalize_roles "$EXISTING_ROLES")
+    MERGED_SORTED=$(normalize_roles "$EXISTING_ROLES,Administrator")
+
+    if [ "$MERGED_SORTED" = "$EXISTING_SORTED" ]; then
+      echo "✅ All Account Management Administrator policy already present with required roles for access group: $ACCESS_GROUP"
+    else
+      NEW_ROLES=$(comm -13 \
+        <(echo "$EXISTING_SORTED" | tr ',' '\n' | sort) \
+        <(echo "$MERGED_SORTED" | tr ',' '\n' | sort) | paste -sd, -)
+
+      echo "🔄 Updating account management policy $POLICY_ID for access group: $ACCESS_GROUP"
+      echo "   • Current roles : $EXISTING_SORTED"
+      echo "   • Adding roles  : $NEW_ROLES"
+
+      ibmcloud iam access-group-policy-update "$ACCESS_GROUP" "$POLICY_ID" \
+        --account-management \
+        --roles "$MERGED_SORTED" || echo "⚠️ Failed to update Administrator roles for All Account Management Administrator services to access group: $ACCESS_GROUP"
+    fi
+  else
+    echo "➕ Creating new all account management Administrator policy for access group: $ACCESS_GROUP"
+    ibmcloud iam access-group-policy-create "$ACCESS_GROUP" \
+      --account-management \
+      --roles "Administrator" || echo "⚠️ Failed to assign Administrator roles for All Account Management Administrator services to access group: $ACCESS_GROUP"
+  fi
+
 elif [ -z "$ACCESS_GROUP" ] && [ -n "$USER_EMAIL" ]; then
   echo "👤 Assigning roles to user: $USER_EMAIL"
   echo "$PERMISSIONS_LIST" | while IFS='|' read -r SERVICE_NAME PLATFORM_ROLE SERVICE_ROLE; do
@@ -267,6 +301,7 @@ elif [ -z "$ACCESS_GROUP" ] && [ -n "$USER_EMAIL" ]; then
       .[]
       | select(any(.resources[].attributes[]?;
                   .name == "serviceName" and .value == $service))
+      | select(all(.resources[].attributes[]?.name; . != "resourceGroupId"))
       | .id' | head -n1)
 
     if [ -n "$POLICY_ID" ] && [ "$POLICY_ID" != "null" ]; then
@@ -304,6 +339,7 @@ elif [ -z "$ACCESS_GROUP" ] && [ -n "$USER_EMAIL" ]; then
   POLICY_ID=$(echo "$existing_policies" | jq -r '
     .[] |
     select(any(.resources[].attributes[]?; .name == "serviceType" and .value == "service")) |
+    select(all(.resources[].attributes[]?.name; . != "resourceGroupId")) |
     .id' | head -n1)
   if [ -n "$POLICY_ID" ] && [ "$POLICY_ID" != "null" ]; then
     EXISTING_ROLES=$(echo "$existing_policies" | jq -r --arg id "$POLICY_ID" '
@@ -330,6 +366,41 @@ elif [ -z "$ACCESS_GROUP" ] && [ -n "$USER_EMAIL" ]; then
     echo "➕ Creating new global Administrator/Manager policy for $USER_EMAIL"
     ibmcloud iam user-policy-create "$USER_EMAIL" \
       --roles "Administrator,Manager" || echo "⚠️ Failed to assign Administrator,Manager roles for All Identity and Access enabled services to user: $USER_EMAIL"
+  fi
+
+  echo "🔍 Checking All Account Management Administrator policy for $USER_EMAIL"
+  existing_policies=$(ibmcloud iam user-policies "$USER_EMAIL" --output json 2>/dev/null || echo "[]")
+  POLICY_ID=$(echo "$existing_policies" | jq -r '
+    .[] |
+    select(any(.resources[].attributes[]?; .name == "serviceType" and .value == "platform_service")) |
+    select(all(.resources[].attributes[]?.name; . != "resourceGroupId")) |
+    .id' | head -n1)
+  if [ -n "$POLICY_ID" ] && [ "$POLICY_ID" != "null" ]; then
+    EXISTING_ROLES=$(echo "$existing_policies" | jq -r --arg id "$POLICY_ID" '
+      .[] | select(.id == $id) | [.roles[].display_name] | join(",")')
+
+    EXISTING_SORTED=$(normalize_roles "$EXISTING_ROLES")
+    MERGED_SORTED=$(normalize_roles "$EXISTING_ROLES,Administrator")
+
+    if [ "$MERGED_SORTED" = "$EXISTING_SORTED" ]; then
+      echo "✅ All Account Management Administrator policy already present with required roles for $USER_EMAIL"
+    else
+      NEW_ROLES=$(comm -13 \
+        <(echo "$EXISTING_SORTED" | tr ',' '\n' | sort) \
+        <(echo "$MERGED_SORTED" | tr ',' '\n' | sort) | paste -sd, -)
+
+      echo "🔄 Updating account management policy $POLICY_ID for $USER_EMAIL"
+      echo "   • Current roles : $EXISTING_SORTED"
+      echo "   • Adding roles  : $NEW_ROLES"
+
+      ibmcloud iam user-policy-update "$USER_EMAIL" "$POLICY_ID" \
+        --roles "$MERGED_SORTED" || echo "⚠️ Failed to update Administrator roles for All Account Management services to user: $USER_EMAIL"
+    fi
+  else
+    echo "➕ Creating new All Account Management Administrator policy for $USER_EMAIL"
+    ibmcloud iam user-policy-create "$USER_EMAIL" \
+      --account-management \
+      --roles "Administrator" || echo "⚠️ Failed to assign Administrator roles for All Account Management services to user: $USER_EMAIL"
   fi
 
 else
