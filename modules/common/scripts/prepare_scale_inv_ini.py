@@ -966,7 +966,7 @@ def initialize_scale_ces_details(
         export_node_ip_map = [
             {protocol_cluster_instance_name.split(".")[0]: ip}
             for protocol_cluster_instance_name, ip in zip(
-                protocol_cluster_instance_names, export_ip_pool
+                protocol_cluster_instance_names, export_ip_pool, strict=False
             )
         ]
 
@@ -1638,7 +1638,7 @@ if __name__ == "__main__":
     node_template = ""
     for each_entry in node_details:
         if ARGUMENTS.bastion_ssh_private_key is None:
-            each_entry = each_entry + " " + "ansible_ssh_common_args=" ""
+            each_entry = each_entry + " " + "ansible_ssh_common_args="
             node_template = node_template + each_entry + "\n"
         else:
             proxy_command = f"ssh -p 22 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p {ARGUMENTS.bastion_user}@{ARGUMENTS.bastion_ip} -i {ARGUMENTS.bastion_ssh_private_key}"
