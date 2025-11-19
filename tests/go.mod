@@ -1,4 +1,4 @@
-module github.ibm.com/GoldenEye/HPCaaS
+module github.com/terraform-ibm-modules/terraform-ibm-hpc
 
 go 1.24.2
 
