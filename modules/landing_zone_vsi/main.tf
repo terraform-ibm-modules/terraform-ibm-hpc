@@ -136,7 +136,7 @@ module "storage_sg" {
 module "login_vsi" {
   count                         = var.scheduler == "LSF" ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.4.6"
+  version                       = "5.11.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -159,13 +159,15 @@ module "login_vsi" {
 }
 
 module "management_vsi" {
-  count                         = length(var.management_instances)
-  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.4.16"
-  vsi_per_subnet                = var.management_instances[count.index]["count"]
-  create_security_group         = false
-  security_group                = null
-  image_id                      = local.image_mapping_entry_found ? local.new_image_id : data.ibm_is_image.management_stock_image[0].id
+  count                 = length(var.management_instances)
+  source                = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version               = "5.11.0"
+  vsi_per_subnet        = var.management_instances[count.index]["count"]
+  create_security_group = false
+  security_group        = null
+  catalog_offering      = var.lsf_pay_per_use ? local.catalog_offering : null
+  image_id              = var.lsf_pay_per_use ? null : (local.image_mapping_entry_found ? local.new_image_id : data.ibm_is_image.management_stock_image[0].id)
+  #image_id                      = local.image_mapping_entry_found ? local.new_image_id : data.ibm_is_image.management_stock_image[0].id
   machine_type                  = var.management_instances[count.index]["profile"]
   prefix                        = format("%s-%s", local.management_node_name, count.index + 1)
   resource_group_id             = var.resource_group
@@ -183,13 +185,15 @@ module "management_vsi" {
 }
 
 module "compute_vsi" {
-  count                         = length(var.static_compute_instances)
-  source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.4.16"
-  vsi_per_subnet                = var.static_compute_instances[count.index]["count"]
-  create_security_group         = false
-  security_group                = null
-  image_id                      = var.scheduler == "LSF" ? (local.compute_image_found_in_map ? local.new_compute_image_id : data.ibm_is_image.compute_stock_image[0].id) : (var.storage_type != "evaluation" ? (local.scale_compute_image_found_in_map ? local.scale_compute_image_id : data.ibm_is_image.scale_compute_stock_image[0].id) : local.evaluation_image_id)
+  count                 = length(var.static_compute_instances)
+  source                = "terraform-ibm-modules/landing-zone-vsi/ibm"
+  version               = "5.11.0"
+  vsi_per_subnet        = var.static_compute_instances[count.index]["count"]
+  create_security_group = false
+  security_group        = null
+  catalog_offering      = var.lsf_pay_per_use ? local.catalog_offering : null
+  image_id              = var.lsf_pay_per_use ? null : (var.scheduler == "LSF" ? (local.compute_image_found_in_map ? local.new_compute_image_id : data.ibm_is_image.compute_stock_image[0].id) : (var.storage_type != "evaluation" ? (local.scale_compute_image_found_in_map ? local.scale_compute_image_id : data.ibm_is_image.scale_compute_stock_image[0].id) : local.evaluation_image_id))
+  #image_id                      = var.scheduler == "LSF" ? (local.compute_image_found_in_map ? local.new_compute_image_id : data.ibm_is_image.compute_stock_image[0].id) : (var.storage_type != "evaluation" ? (local.scale_compute_image_found_in_map ? local.scale_compute_image_id : data.ibm_is_image.scale_compute_stock_image[0].id) : local.evaluation_image_id)
   machine_type                  = var.static_compute_instances[count.index]["profile"]
   prefix                        = format("%s-%s", local.compute_node_name, count.index + 1)
   resource_group_id             = var.resource_group
@@ -215,7 +219,7 @@ module "compute_vsi" {
 module "compute_cluster_management_vsi" {
   count                         = var.scheduler == "Scale" && local.enable_compute ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.4.16"
+  version                       = "5.11.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -242,7 +246,7 @@ module "compute_cluster_management_vsi" {
 module "storage_vsi" {
   count                         = var.scheduler == "Scale" ? (length(var.storage_instances) > 0 && var.storage_type != "persistent" ? 1 : 0) : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.4.16"
+  version                       = "5.11.0"
   vsi_per_subnet                = var.storage_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -273,7 +277,7 @@ module "storage_vsi" {
 module "storage_cluster_management_vsi" {
   count                         = var.scheduler == "Scale" ? length(var.storage_instances) : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.4.16"
+  version                       = "5.11.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -301,7 +305,7 @@ module "storage_cluster_management_vsi" {
 module "storage_cluster_tie_breaker_vsi" {
   count                         = var.scheduler == "Scale" ? (var.storage_type != "persistent" ? 1 : 0) : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.4.16"
+  version                       = "5.11.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -330,7 +334,7 @@ module "storage_cluster_tie_breaker_vsi" {
 module "client_vsi" {
   count                         = var.scheduler == "Scale" ? length(var.client_instances) : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.4.6"
+  version                       = "5.11.0"
   vsi_per_subnet                = var.client_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -353,7 +357,7 @@ module "client_vsi" {
 module "protocol_vsi" {
   count                         = var.scheduler == "Scale" ? ((local.enable_protocol && var.colocate_protocol_instances == false && local.ces_server_type == false) ? 1 : 0) : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.4.16"
+  version                       = "5.11.0"
   vsi_per_subnet                = var.protocol_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -383,7 +387,7 @@ module "protocol_vsi" {
 module "afm_vsi" {
   count                         = var.scheduler == "Scale" ? ((local.afm_server_type == false && local.enable_afm) ? 1 : 0) : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.4.6"
+  version                       = "5.11.0"
   vsi_per_subnet                = var.afm_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -407,7 +411,7 @@ module "afm_vsi" {
 module "gklm_vsi" {
   count                         = var.scheduler == "Scale" ? (var.scale_encryption_enabled == true && var.scale_encryption_type == "gklm" ? 1 : 0) : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.4.6"
+  version                       = "5.11.0"
   vsi_per_subnet                = var.gklm_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -430,7 +434,7 @@ module "gklm_vsi" {
 module "ldap_vsi" {
   count                         = var.enable_ldap == true && var.ldap_server == "null" ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.4.6"
+  version                       = "5.11.0"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null

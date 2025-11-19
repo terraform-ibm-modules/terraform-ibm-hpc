@@ -1,17 +1,17 @@
 locals {
   image_region_map = {
-    "hpc-lsf-fp15-deployer-rhel810-v1" = {
-      "eu-es"    = "r050-e7b874c1-f370-41c4-8ee6-50efb07aa340"
-      "eu-gb"    = "r018-eb14c522-cb0f-4b72-948f-2c029957665a"
-      "eu-de"    = "r010-00629ef3-324c-4651-a7a7-76830d2ad660"
-      "us-east"  = "r014-ac586488-de00-490e-8962-5e2a7fcab076"
-      "us-south" = "r006-f2b7871c-54c9-4b02-837c-1d28294f0842"
-      "jp-tok"   = "r022-dd715ea3-d2dc-4936-bff0-51c9cd63b3a9"
-      "jp-osa"   = "r034-82d648ed-fd3e-4248-955c-6009c973aa5f"
-      "au-syd"   = "r026-b47e4863-f5e7-440c-8734-c058f6b8ce33"
-      "br-sao"   = "r042-8b5ac031-3e65-4afb-9679-b7e2b907a2ad"
-      "ca-tor"   = "r038-c55b1ab4-500f-4842-9e78-dc64a16a746a"
-      "ca-mon"   = "r058-fc93c3f9-f97c-4d9b-b8d6-dd40db891913"
+    "hpc-lsf-fp15-deployer-rhel810-v2" = {
+      "eu-es"    = "r050-92ce36d5-20c3-4c7d-8d38-a5d16e553d6a"
+      "eu-gb"    = "r018-da0c8368-8b87-428b-b63e-1d4acd3764f0"
+      "eu-de"    = "r010-4625705f-a2af-46fc-9694-864fb8a4b02f"
+      "us-east"  = "r014-79497f2e-d71c-4390-93d6-8ccdb19f594a"
+      "us-south" = "r006-390958ed-07cc-4489-98d3-8e3350174cf9"
+      "jp-tok"   = "r022-f4d7ac54-1707-42e7-acf9-a74f46b4aa66"
+      "jp-osa"   = "r034-e5363d7e-f4e3-4fdc-a642-3a89c1c86b6b"
+      "au-syd"   = "r026-a52653e5-2d96-4470-bb28-5903d562099b"
+      "br-sao"   = "r042-61f7226d-5ebc-40fa-ae81-1554344b9640"
+      "ca-tor"   = "r038-4ccdcbb5-5d1a-4a86-9fdf-847f57dd1588"
+      "ca-mon"   = "r058-9a37637f-07a1-4048-9a6c-6ab75441f74a"
     },
     "hpc-lsf-fp14-deployer-rhel810-v1" = {
       "eu-es"    = "r050-a530edc3-d053-41cd-899b-2c61d53d5efd"

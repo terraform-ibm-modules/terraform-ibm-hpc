@@ -67,6 +67,10 @@
               "required": true
             },
             {
+              "key": "lsf_pay_per_use",
+              "required": true
+            },
+            {
               "key": "ssh_keys",
               "required": true
             },
@@ -669,7 +673,7 @@
               "service_name": "dns-svcs"
             },
             {
-              "service_name": "kms",
+              "service_name": "Key Protect",
               "role_crns": [
                 "crn:v1:bluemix:public:iam::::serviceRole:Manager",
                 "crn:v1:bluemix:public:iam::::role:ConfigReader"
@@ -718,6 +722,12 @@
               "service_name": "Cloud Monitoring",
               "role_crns": [
                 "crn:v1:bluemix:public:iam::::serviceRole:Manager",
+                "crn:v1:bluemix:public:iam::::role:Administrator"
+              ]
+            },
+            {
+              "service_name": "All Account Management services",
+              "role_crns": [
                 "crn:v1:bluemix:public:iam::::role:Administrator"
               ]
             }

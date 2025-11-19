@@ -1,25 +1,33 @@
 {
-    "templates": [
-        {
-            "templateId": "Template-1",
-            "maxNumber": "{{ rc_max_num }}",
-            "attributes": {
-                "type": ["String", "X86_64"],
-                "ncores": ["Numeric", "{{ rc_ncores }}"],
-                "ncpus": ["Numeric", "{{ rc_ncpus }}"],
-                "mem": ["Numeric", "{{ rc_mem_in_mb }}"],
-                "icgen2host": ["Boolean", "1"]
-            },
-            "crn": "{{ boot_volume_encryption_key }}",
-            "imageId": "{{ image_id }}",
-            "subnetId": "{{ compute_subnet_crn }}",
-            "vpcId": "{{ vpc_id }}",
-            "vmType": "{{ rc_profile }}",
-            "securityGroupIds": ["{{ compute_security_group_id | first }}"],
-            "resourceGroupId": "{{ resource_group_id }}",
-            "sshkey_id": "{{ compute_ssh_keys_ids | first }}",
-            "region": "{{ region_name }}",
-            "zone": "{{ zone_name | first }}"
-        }
-    ]
+  "templates": [
+    {
+      "templateId": "Template-1",
+      "maxNumber": "{{ rc_max_num }}",
+      "attributes": {
+        "type": ["String", "X86_64"],
+        "ncores": ["Numeric", "{{ rc_ncores }}"],
+        "ncpus": ["Numeric", "{{ rc_ncpus }}"],
+        "mem": ["Numeric", "{{ rc_mem_in_mb }}"],
+        "icgen2host": ["Boolean", "1"]
+      },
+      "volumeProfile": "general-purpose",
+      "encryptionKey": "{{ boot_volume_encryption_key }}",
+{% if lsf_pay_per_use %}
+      "catalogOffering": {
+        "version_crn": "{{ catalog_offering.version_crn }}",
+        "plan_crn": "{{ catalog_offering.plan_crn }}"
+      },
+{% else %}
+      "imageId": "{{ image_id }}",
+{% endif %}
+      "subnetId": "{{ compute_subnet_crn }}",
+      "vpcId": "{{ vpc_id }}",
+      "vmType": "{{ rc_profile }}",
+      "securityGroupIds": ["{{ compute_security_group_id | first }}"],
+      "resourceGroupId": "{{ resource_group_id }}",
+      "sshkeyIds": {{ compute_ssh_keys_ids | to_json }},
+      "region": "{{ region_name }}",
+      "zone": "{{ zone_name | first }}"
+    }
+  ]
 }
