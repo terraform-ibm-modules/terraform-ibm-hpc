@@ -445,7 +445,7 @@
             {
               "key": "deployer_instance",
               "type": "object",
-              "default_value": "{\n  \"image\": \"hpc-lsf-fp15-deployer-rhel810-v1\",\n  \"profile\": \"bx2-8x32\"\n}",
+              "default_value": "{\n  \"image\": \"hpc-lsf-fp15-deployer-rhel810-v2\",\n  \"profile\": \"bx2-8x32\"\n}",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -477,7 +477,7 @@
             {
               "key": "login_instance",
               "type": "array",
-              "default_value": "[\n  {\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v1\"\n  }\n]",
+              "default_value": "[\n  {\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v2\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -491,7 +491,7 @@
             {
               "key": "management_instances",
               "type": "array",
-              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-16x64\",\n    \"image\": \"hpc-lsf-fp15-rhel810-v1\"\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-16x64\",\n    \"image\": \"hpc-lsf-fp15-rhel810-v2\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -505,7 +505,7 @@
             {
               "key": "static_compute_instances",
               "type": "array",
-              "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"bx2-16x64\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v1\"\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"bx2-16x64\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v2\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -519,7 +519,7 @@
             {
               "key": "dynamic_compute_instances",
               "type": "array",
-              "default_value": "[\n  {\n    \"count\": 500,\n    \"profile\": \"bx2-16x64\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v1\"\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 500,\n    \"profile\": \"bx2-16x64\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v2\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
