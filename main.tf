@@ -134,6 +134,7 @@ module "landing_zone_vsi" {
   client_security_group_name    = var.client_security_group_name
   gklm_security_group_name      = var.gklm_security_group_name
   ldap_security_group_name      = var.ldap_security_group_name
+  lsf_pay_per_use               = var.lsf_pay_per_use
 }
 
 module "prepare_tf_input" {
@@ -237,6 +238,7 @@ module "prepare_tf_input" {
   bms_boot_drive_encryption                        = var.bms_boot_drive_encryption
   scale_afm_bucket_config_details                  = local.scale_afm_bucket_config_details
   scale_afm_cos_hmac_key_params                    = local.scale_afm_cos_hmac_key_params
+  lsf_pay_per_use                                  = var.lsf_pay_per_use
   depends_on                                       = [module.deployer]
 }
 
@@ -378,6 +380,7 @@ module "write_compute_cluster_inventory" {
   compute_subnet_crn          = local.compute_subnet_crn
   kms_encryption_enabled      = local.kms_encryption_enabled
   boot_volume_encryption_key  = var.boot_volume_encryption_key
+  lsf_pay_per_use             = var.lsf_pay_per_use
   depends_on                  = [time_sleep.wait_for_vsi_syncup, module.landing_zone_vsi]
 }
 

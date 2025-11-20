@@ -65,4 +65,5 @@ module "lsf" {
   sccwp_service_plan                               = local.env.sccwp_service_plan
   cspm_enabled                                     = var.cspm_enabled
   app_config_plan                                  = var.app_config_plan
+  lsf_pay_per_use                                  = local.env.lsf_pay_per_use
 }

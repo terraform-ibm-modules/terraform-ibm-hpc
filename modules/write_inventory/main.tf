@@ -37,7 +37,9 @@ resource "local_sensitive_file" "infra_details_to_json" {
   "compute_subnets_cidr": ${jsonencode(var.compute_subnets_cidr)},
   "compute_security_group_id": ${jsonencode(var.compute_security_group_id)},
   "compute_subnet_crn": "${var.compute_subnet_crn}",
-  "boot_volume_encryption_key": ${local.boot_volume_encryption_key}
+  "boot_volume_encryption_key": ${local.boot_volume_encryption_key},
+  "lsf_pay_per_use": ${var.lsf_pay_per_use},
+  "catalog_offering": ${jsonencode(local.catalog_offering)}
 }
 EOT
   filename = var.json_inventory_path

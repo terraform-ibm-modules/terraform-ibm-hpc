@@ -22,6 +22,12 @@ variable "lsf_version" {
   }
 }
 
+variable "lsf_pay_per_use" {
+  type        = bool
+  default     = true
+  description = "When lsf_pay_per_use is set to true, the LSF cluster nodes are provisioned using predefined custom images under a pay-per-use pricing plan, where billing is based on vCPU usage per hour. In this mode, providing custom images for the nodes is not required, and Bring Your Own Image (BYOI) is not supported. The pay-per-use option is available only for FP15 images. If you set the variable to false, the automation uses default images for all cluster nodes and enables support for BYOI, with no pay-per-use billing applied."
+}
+
 variable "app_center_gui_password" {
   type        = string
   default     = ""
@@ -192,16 +198,16 @@ variable "deployer_instance" {
     profile = string
   })
   default = {
-    image   = "hpc-lsf-fp15-deployer-rhel810-v1"
+    image   = "hpc-lsf-fp15-deployer-rhel810-v2"
     profile = "bx2-8x32"
   }
-  description = "Configuration for the deployer node, including the custom image and instance profile. By default, deployer node is created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp15-deployer-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures."
+  description = "Configuration for the deployer node, including the custom image and instance profile. By default, deployer node is created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-deployer-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures."
   validation {
     condition = contains([
-      "hpc-lsf-fp15-deployer-rhel810-v1",
+      "hpc-lsf-fp15-deployer-rhel810-v2",
       "hpc-lsf-fp14-deployer-rhel810-v1"
     ], var.deployer_instance.image)
-    error_message = "Invalid deployer image. Allowed values for fixpack_15 is 'hpc-lsf-fp15-deployer-rhel810-v1' and for fixpack_14 is 'hpc-lsf-fp14-deployer-rhel810-v1'."
+    error_message = "Invalid deployer image. Allowed values for fixpack_15 is 'hpc-lsf-fp15-deployer-rhel810-v2' and for fixpack_14 is 'hpc-lsf-fp14-deployer-rhel810-v1'."
   }
   validation {
     condition = (
@@ -229,7 +235,7 @@ variable "login_instance" {
   )
   default = [{
     profile = "bx2-2x8"
-    image   = "hpc-lsf-fp15-compute-rhel810-v1"
+    image   = "hpc-lsf-fp15-compute-rhel810-v2"
   }]
   description = "Specify the list of login node configurations, including instance profile, image name. By default, login node is created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures."
   validation {
@@ -260,7 +266,7 @@ variable "management_instances" {
   default = [{
     profile = "bx2-16x64"
     count   = 2
-    image   = "hpc-lsf-fp15-rhel810-v1"
+    image   = "hpc-lsf-fp15-rhel810-v2"
   }]
   description = "Specify the list of management node configurations, including instance profile, image name, and count. By default, all management nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. The solution allows customization of instance profiles and counts, but mixing custom images and IBM stock images across instances is not supported. If using IBM stock images, only Red Hat-based images are allowed. Management nodes must have a minimum of 9 GB RAM. Select a profile with 9 GB or higher."
   validation {
@@ -306,7 +312,7 @@ variable "static_compute_instances" {
   default = [{
     profile = "bx2-4x16"
     count   = 0
-    image   = "hpc-lsf-fp15-compute-rhel810-v1"
+    image   = "hpc-lsf-fp15-compute-rhel810-v2"
   }]
   description = "Specify the list of static compute node configurations, including instance profile, image name, and count. By default, all compute nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. The solution allows customization of instance profiles and counts, but mixing custom images and IBM stock images across instances is not supported. If using IBM stock images, only Red Hat-based images are allowed."
   validation {
@@ -345,7 +351,7 @@ variable "dynamic_compute_instances" {
   default = [{
     profile = "bx2-4x16"
     count   = 500
-    image   = "hpc-lsf-fp15-compute-rhel810-v1"
+    image   = "hpc-lsf-fp15-compute-rhel810-v2"
   }]
   description = "Specify the list of dynamic compute node configurations, including instance profile, image name, and count. By default, all dynamic compute nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. Currently, only a single instance profile is supported for dynamic compute nodes—multiple profiles are not yet supported.."
   validation {
