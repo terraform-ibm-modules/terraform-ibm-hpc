@@ -4,9 +4,8 @@
 # }
 
 module "storage_baremetal" {
-  # source                       = "terraform-ibm-modules/bare-metal-vpc/ibm"
-  # version                      = "1.3.0"
-  source                       = "github.com/jayeshh123/terraform-ibm-bare-metal-vpc?ref=jay_bm_op_chng"
+  source                       = "terraform-ibm-modules/bare-metal-vpc/ibm"
+  version                      = "1.4.0"
   count                        = length(var.storage_servers)
   server_count                 = var.storage_servers[count.index]["count"]
   prefix                       = var.prefix
