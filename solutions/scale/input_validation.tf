@@ -14,7 +14,7 @@ locals {
 
 locals {
   total_compute_instance_count  = sum(var.compute_instances[*]["count"])
-  total_storage_instance_count  = var.storage_type == "persistent" ? sum(var.storage_baremetal_server[*]["count"]) : sum(var.storage_instances[*]["count"])
+  total_storage_instance_count  = var.storage_type == "baremetal" ? sum(var.storage_baremetal_server[*]["count"]) : sum(var.storage_instances[*]["count"])
   total_client_instance_count   = sum(var.client_instances[*]["count"])
   total_gklm_instance_count     = sum(var.gklm_instances[*]["count"])
   total_protocol_instance_count = sum(var.protocol_instances[*]["count"])

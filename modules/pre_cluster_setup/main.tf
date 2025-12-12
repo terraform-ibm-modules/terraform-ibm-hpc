@@ -113,40 +113,40 @@ resource "local_file" "ansible_inventory" {
       ])) > 0 ? [
       "[storage]",
       join("\n", flatten([
-        # Non-persistent storage hosts
+        # Non-baremetal storage hosts
         [
           for host in flatten([
             values(local.normalize_hosts.storage_hosts),
             values(local.normalize_hosts.storage_tb_hosts),
             values(local.normalize_hosts.storage_mgmnt_hosts)
-          ]) : "${host.name} ansible_ssh_private_key_file=${local.storage_private_key} storage_type=scratch colocate_protocol_instances=${var.colocate_protocol_instances} scale_protocol_node=${var.enable_protocol}"
+          ]) : "${host.name} ansible_ssh_private_key_file=${local.storage_private_key} storage_type=vsi colocate_protocol_instances=${var.colocate_protocol_instances} scale_protocol_node=${var.enable_protocol}"
         ],
-        # Persistent storage hosts
+        # baremetal storage hosts
         [
           for host in flatten([
             values(local.normalize_hosts.storage_bms_hosts),
             values(local.normalize_hosts.storage_tb_bms_hosts)
-          ]) : "${host.name} id=${host.id} ansible_ssh_private_key_file=${local.storage_private_key} storage_type=persistent scale_protocol_node=${var.enable_protocol} colocate_protocol_instances=${var.colocate_protocol_instances} bms_boot_drive_encryption=${var.bms_boot_drive_encryption}"
+          ]) : "${host.name} id=${host.id} ansible_ssh_private_key_file=${local.storage_private_key} storage_type=baremetal scale_protocol_node=${var.enable_protocol} colocate_protocol_instances=${var.colocate_protocol_instances} bms_boot_drive_encryption=${var.bms_boot_drive_encryption}"
         ],
         # AFM hosts
         [
           for host in values(local.normalize_hosts.afm_hosts) :
-          "${host.name} ansible_ssh_private_key_file=${local.storage_private_key} storage_type=scratch scale_protocol_node=false"
+          "${host.name} ansible_ssh_private_key_file=${local.storage_private_key} storage_type=vsi scale_protocol_node=false"
         ],
         # AFM BMS hosts
         [
           for host in values(local.normalize_hosts.afm_bms_hosts) :
-          "${host.name} id=${host.id} ansible_ssh_private_key_file=${local.storage_private_key} storage_type=persistent scale_protocol_node=false bms_boot_drive_encryption=${var.bms_boot_drive_encryption}"
+          "${host.name} id=${host.id} ansible_ssh_private_key_file=${local.storage_private_key} storage_type=baremetal scale_protocol_node=false bms_boot_drive_encryption=${var.bms_boot_drive_encryption}"
         ],
         # Protocol hosts
         [
           for host in values(local.normalize_hosts.protocol_hosts) :
-          "${host.name} ansible_ssh_private_key_file=${local.storage_private_key} storage_type=scratch scale_protocol_node=true colocate_protocol_instances=false"
+          "${host.name} ansible_ssh_private_key_file=${local.storage_private_key} storage_type=vsi scale_protocol_node=true colocate_protocol_instances=false"
         ],
         # Protocol BMS hosts
         [
           for host in values(local.normalize_hosts.protocol_bms_hosts) :
-          "${host.name} id=${host.id} ansible_ssh_private_key_file=${local.storage_private_key} storage_type=persistent scale_protocol_node=true colocate_protocol_instances=false bms_boot_drive_encryption=${var.bms_boot_drive_encryption}"
+          "${host.name} id=${host.id} ansible_ssh_private_key_file=${local.storage_private_key} storage_type=baremetal scale_protocol_node=true colocate_protocol_instances=false bms_boot_drive_encryption=${var.bms_boot_drive_encryption}"
         ]
       ])),
       ""
@@ -476,10 +476,10 @@ resource "local_file" "bms_bootdrive_playbook" {
 
   tasks:
     # Main boot drive encryption tasks
-    - name: Handle boot drive encryption for persistent storage
+    - name: Handle boot drive encryption for baremetal storage
       when:
         - bms_boot_drive_encryption | default(false)
-        - storage_type | default("") == "persistent"
+        - storage_type | default("") == "baremetal"
         - "'mgmt' not in inventory_hostname"
       block:
         # Post-recovery verification
@@ -511,7 +511,7 @@ EOT
 }
 
 resource "local_file" "scale_baremetal_prerequisite_playbook" {
-  count    = var.scheduler == "Scale" && var.storage_type == "persistent" ? 1 : 0
+  count    = var.scheduler == "Scale" && var.storage_type == "baremetal" ? 1 : 0
   content  = <<EOT
 ---
 - name: Configure network, packages, and firewall
@@ -747,7 +747,7 @@ resource "local_file" "scale_baremetal_prerequisite_playbook" {
             - backup_resolv.changed
 
       when:
-        - storage_type | default("") == "persistent"
+        - storage_type | default("") == "baremetal"
         - "'mgmt' not in inventory_hostname"
 
     # Protocol-specific configuration
@@ -823,7 +823,7 @@ resource "local_file" "scale_baremetal_prerequisite_playbook" {
             path: "/root/.bashrc"
             line: "export IC_RG={{ resource_group }}"
       when:
-        - storage_type | default("") == "persistent"
+        - storage_type | default("") == "baremetal"
         - scale_protocol_node | default(false) | bool
 EOT
   filename = local.scale_baremetal_prerequisite_playbook_path

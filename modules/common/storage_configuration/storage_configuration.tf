@@ -42,13 +42,13 @@ resource "local_sensitive_file" "write_existing_ldap_cert" {
 }
 
 resource "time_sleep" "wait_300_seconds" {
-  count           = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true) && var.storage_type == "persistent" ? 1 : 0
+  count           = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true) && var.storage_type == "baremetal" ? 1 : 0
   create_duration = "300s"
   depends_on      = [local_sensitive_file.write_meta_private_key]
 }
 
 resource "null_resource" "scale_baremetal_ssh_check_play" {
-  count = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true && tobool(var.create_scale_cluster) == true) && var.storage_type == "persistent" ? 1 : 0
+  count = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true && tobool(var.create_scale_cluster) == true) && var.storage_type == "baremetal" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo ansible-playbook -f 50 -i ${local.scale_all_inventory} -l 'storage' -e @${local.scale_baremetal_prerequisite_vars} ${local.scale_baremetal_ssh_check_playbook_path}"
@@ -72,7 +72,7 @@ resource "null_resource" "scale_host_play" {
 }
 
 resource "null_resource" "scale_baremetal_bootdrive_play" {
-  count = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true && tobool(var.create_scale_cluster) == true) && var.storage_type == "persistent" && var.bms_boot_drive_encryption == true ? 1 : 0
+  count = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true && tobool(var.create_scale_cluster) == true) && var.storage_type == "baremetal" && var.bms_boot_drive_encryption == true ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo ansible-playbook -f 50 -i ${local.scale_all_inventory} -l 'storage' -e @${local.scale_baremetal_prerequisite_vars} ${local.scale_baremetal_bootdrive_playbook_path}"
@@ -84,7 +84,7 @@ resource "null_resource" "scale_baremetal_bootdrive_play" {
 }
 
 resource "null_resource" "scale_baremetal_prerequisite_play" {
-  count = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true && tobool(var.create_scale_cluster) == true) && var.storage_type == "persistent" ? 1 : 0
+  count = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true && tobool(var.create_scale_cluster) == true) && var.storage_type == "baremetal" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo ansible-playbook -f 50 -i ${local.scale_all_inventory} -l 'storage' -e @${local.scale_baremetal_prerequisite_vars} ${local.scale_baremetal_prerequisite_playbook_path}"

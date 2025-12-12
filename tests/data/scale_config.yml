@@ -7,7 +7,7 @@ vpc_name: null
 ibm_customer_number: 051700
 
 # Storage Type
-storage_type: "scratch"
+storage_type: "vsi"
 
 # SSH Configuration
 ssh_keys: geretain-hpc

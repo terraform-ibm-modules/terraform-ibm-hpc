@@ -38,7 +38,7 @@
                     "value": "Please fill here",
                     "type": "string",
                     "secure": true,
-                    "description": "IBM Customer Number (ICN) used for Bring Your Own License (BYOL) entitlement check and not required if storage_type is evaluation, but must be provided if storage_type is scratch or persistent. Failing to provide an ICN will cause the deployment to fail to decrypt the packages. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
+                    "description": "IBM Customer Number (ICN) used for Bring Your Own License (BYOL) entitlement check and not required if storage_type is evaluation, but must be provided if storage_type is vsi or baremetal. Failing to provide an ICN will cause the deployment to fail to decrypt the packages. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
                 },
                 {
                     "name": "ibmcloud_api_key",
@@ -206,14 +206,14 @@
                     "value": "[{ profile = \"bx2d-32x128\", count = 0}]",
                     "type": "list(object({ profile = string, count = number}))",
                     "secure": false,
-                    "description": "Specify the list of virtual server instances to be provisioned as AFM nodes in the cluster. Each object in the list includes the instance profile (machine type), the count (number of instances), the image (OS image to use). This configuration allows you to access remote data  and high-performance computing needs.This input can be used to provision virtual server instances (VSI). If persistent, high-throughput storage is required, consider using bare metal instances instead. Ensure you provide valid instance profiles. Maximum of 16 afm nodes is supported. For more details, refer to [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
+                    "description": "Specify the list of virtual server instances to be provisioned as AFM nodes in the cluster. Each object in the list includes the instance profile (machine type), the count (number of instances), the image (OS image to use). This configuration allows you to access remote data  and high-performance computing needs.This input can be used to provision virtual server instances (VSI). If baremetal, high-throughput storage is required, consider using bare metal instances instead. Ensure you provide valid instance profiles. Maximum of 16 afm nodes is supported. For more details, refer to [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
                 },
                 {
                     "name": "protocol_instances",
                     "value": "[{ profile = \"cx2-32x64\", count = 2}]",
                     "type": "list(object({ profile = string, count = number}))",
                     "secure": false,
-                    "description": "Specify the list of virtual server instances to be provisioned as protocol nodes in the cluster. Each object in the list includes the instance profile (machine type), the count (number of instances), the image (OS image to use). This configuration allows allows for a unified data management solution, enabling different clients to access the same data using NFS protocol.This input can be used to provision virtual server instances (VSI). If persistent, high-throughput storage is required, consider using bare metal instances instead. Ensure you provide valid instance profiles. Maximum of 32 VSI or baremetal nodes are supported. For more details, refer to [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
+                    "description": "Specify the list of virtual server instances to be provisioned as protocol nodes in the cluster. Each object in the list includes the instance profile (machine type), the count (number of instances), the image (OS image to use). This configuration allows allows for a unified data management solution, enabling different clients to access the same data using NFS protocol.This input can be used to provision virtual server instances (VSI). If baremetal, high-throughput storage is required, consider using bare metal instances instead. Ensure you provide valid instance profiles. Maximum of 32 VSI or baremetal nodes are supported. For more details, refer to [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
                 },
                 {
                     "name": "colocate_protocol_instances",
@@ -406,10 +406,10 @@
                 },
                 {
                     "name": "storage_type",
-                    "value": "scratch",
+                    "value": "vsi",
                     "type": "string",
                     "secure": false,
-                    "description": "Select the Storage Scale file system deployment method. Note: The Storage Scale scratch and evaluation type deploys the Storage Scale file system on virtual server instances, and the persistent type deploys the Storage Scale file system on bare metal servers."
+                    "description": "Select the Storage Scale file system deployment method. Note: The Storage Scale vsi and evaluation type deploys the Storage Scale file system on virtual server instances, and the baremetal type deploys the Storage Scale file system on bare metal servers."
                 },
                 {
                     "name": "observability_atracker_enable",

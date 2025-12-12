@@ -46,7 +46,7 @@ locals {
 
   client_instance_count         = sum(var.client_instances[*]["count"])
   management_instance_count     = sum(var.management_instances[*]["count"])
-  storage_instance_count        = var.storage_type == "persistent" ? sum(var.storage_servers[*]["count"]) : sum(var.storage_instances[*]["count"])
+  storage_instance_count        = var.storage_type == "baremetal" ? sum(var.storage_servers[*]["count"]) : sum(var.storage_instances[*]["count"])
   protocol_instance_count       = sum(var.protocol_instances[*]["count"])
   static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
   afm_instances_count           = sum(var.afm_instances[*]["count"])
@@ -58,7 +58,7 @@ locals {
   enable_protocol   = local.storage_instance_count > 0 && local.protocol_instance_count > 0
   enable_afm        = local.afm_instances_count > 0
   # TODO: Fix the logic
-  enable_block_storage = var.storage_type == "scratch" || var.storage_type == "evaluation" ? true : false
+  enable_block_storage = var.storage_type == "vsi" || var.storage_type == "evaluation" ? true : false
 
   # Future use
   # TODO: Fix the logic
@@ -181,7 +181,7 @@ locals {
   }
 
   enable_sec_interface_compute = local.enable_protocol == false && data.ibm_is_instance_profile.compute_profile[0].bandwidth[0].value >= 64000 ? true : false
-  enable_sec_interface_storage = local.enable_protocol == false && var.storage_type != "persistent" && data.ibm_is_instance_profile.storage[0].bandwidth[0].value >= 64000 ? true : false
+  enable_sec_interface_storage = local.enable_protocol == false && var.storage_type != "baremetal" && data.ibm_is_instance_profile.storage[0].bandwidth[0].value >= 64000 ? true : false
 
   # Security Groups
   protocol_secondary_security_group = distinct(flatten([

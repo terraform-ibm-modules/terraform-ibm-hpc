@@ -120,8 +120,8 @@ variable "scheduler" {
 
 variable "storage_type" {
   type        = string
-  default     = "scratch"
-  description = "Select the required storage type(scratch/persistent/eval)."
+  default     = "vsi"
+  description = "Select the required storage type(vsi/baremetal/eval)."
 }
 
 variable "domain_names" {

@@ -93,7 +93,7 @@
 | <a name="input_storage_profile"></a> [storage\_profile](#input\_storage\_profile) | Profile to be used for storage cluster instance. | `string` | `"bx2d-2x8"` | no |
 | <a name="input_storage_ssh_keys"></a> [storage\_ssh\_keys](#input\_storage\_ssh\_keys) | The key pair to use to launch the storage cluster host. | `list(string)` | n/a | yes |
 | <a name="input_storage_subnets_cidr"></a> [storage\_subnets\_cidr](#input\_storage\_subnets\_cidr) | Subnet CIDR block to launch the storage cluster host. | `list(string)` | <pre>[<br>  "10.10.20.0/24",<br>  "10.20.20.0/24",<br>  "10.30.20.0/24"<br>]</pre> | no |
-| <a name="input_storage_type"></a> [storage\_type](#input\_storage\_type) | Select the required storage type(scratch/persistent/eval). | `string` | `"scratch"` | no |
+| <a name="input_storage_type"></a> [storage\_type](#input\_storage\_type) | Select the required storage type(vsi/baremetal/eval). | `string` | `"vsi"` | no |
 | <a name="input_vpc"></a> [vpc](#input\_vpc) | Name of an existing VPC in which the cluster resources will be deployed. If no value is given, then a new VPC will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc) | `string` | `null` | no |
 | <a name="input_vpc_custom_resolver_id"></a> [vpc\_custom\_resolver\_id](#input\_vpc\_custom\_resolver\_id) | IBM Cloud DNS custom resolver id. | `string` | `null` | no |
 | <a name="input_vpn_peer_address"></a> [vpn\_peer\_address](#input\_vpn\_peer\_address) | The peer public IP address to which the VPN will be connected. | `string` | `null` | no |

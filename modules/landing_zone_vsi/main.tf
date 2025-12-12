@@ -254,7 +254,7 @@ module "compute_cluster_management_vsi" {
 }
 
 module "storage_vsi" {
-  count                         = var.scheduler == "Scale" ? (length(var.storage_instances) > 0 && var.storage_type != "persistent" ? 1 : 0) : 0
+  count                         = var.scheduler == "Scale" ? (length(var.storage_instances) > 0 && var.storage_type != "baremetal" ? 1 : 0) : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
   version                       = "5.13.0"
   vsi_per_subnet                = var.storage_instances[count.index]["count"]
@@ -318,7 +318,7 @@ module "storage_cluster_management_vsi" {
 }
 
 module "storage_cluster_tie_breaker_vsi" {
-  count                         = var.scheduler == "Scale" ? (var.storage_type != "persistent" ? 1 : 0) : 0
+  count                         = var.scheduler == "Scale" ? (var.storage_type != "baremetal" ? 1 : 0) : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
   version                       = "5.13.0"
   vsi_per_subnet                = 1
@@ -510,7 +510,7 @@ module "dedicated_host" {
 ########################################################################
 
 module "storage_baremetal" {
-  count                        = length(var.storage_servers) > 0 && var.storage_type == "persistent" ? 1 : 0
+  count                        = length(var.storage_servers) > 0 && var.storage_type == "baremetal" ? 1 : 0
   source                       = "../baremetal"
   existing_resource_group      = var.resource_group
   image_id                     = local.storage_bare_metal_image_mapping_entry_found ? local.storage_bare_metal_image_id : data.ibm_is_image.baremetal_storage[0].id
@@ -528,7 +528,7 @@ module "storage_baremetal" {
 }
 
 module "storage_baremetal_tie_breaker" {
-  count                         = length(var.storage_servers) > 0 && var.storage_type == "persistent" ? 1 : 0
+  count                         = length(var.storage_servers) > 0 && var.storage_type == "baremetal" ? 1 : 0
   source                        = "../baremetal"
   existing_resource_group       = var.resource_group
   image_id                      = local.storage_bare_metal_image_mapping_entry_found ? local.storage_bare_metal_image_id : data.ibm_is_image.baremetal_storage[0].id

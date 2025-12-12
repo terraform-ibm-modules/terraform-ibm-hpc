@@ -1085,15 +1085,15 @@
             },
             {
               "key": "storage_type",
-              "default_value": "scratch",
+              "default_value": "vsi",
               "options": [
                 {
-                  "displayname": "scratch",
-                  "value": "scratch"
+                  "displayname": "vsi",
+                  "value": "vsi"
                 },
                 {
-                  "displayname": "persistent",
-                  "value": "persistent"
+                  "displayname": "baremetal",
+                  "value": "baremetal"
                 },
                 {
                   "displayname": "evaluation",

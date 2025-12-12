@@ -945,8 +945,8 @@ variable "spectrumscale_rpms_path" {
 
 variable "storage_type" {
   type        = string
-  default     = "scratch"
-  description = "Select the required storage type(scratch/persistent/eval)."
+  default     = "vsi"
+  description = "Select the required storage type(vsi/baremetal/eval)."
 }
 
 variable "using_packer_image" {

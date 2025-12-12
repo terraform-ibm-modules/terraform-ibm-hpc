@@ -382,7 +382,7 @@ module "gklm_dns_records" {
 }
 
 resource "time_sleep" "wait_for_vsi_syncup" {
-  count           = var.enable_deployer == false && var.scheduler == "Scale" && var.storage_type != "persistent" && (can(regex("^ibm-redhat-8-10-minimal-amd64-.*$", (var.storage_instances[*]["image"])[0])) || local.enable_sec_interface_compute || local.enable_sec_interface_storage) ? 1 : 0
+  count           = var.enable_deployer == false && var.scheduler == "Scale" && var.storage_type != "baremetal" && (can(regex("^ibm-redhat-8-10-minimal-amd64-.*$", (var.storage_instances[*]["image"])[0])) || local.enable_sec_interface_compute || local.enable_sec_interface_storage) ? 1 : 0
   create_duration = local.enable_sec_interface_compute || local.enable_sec_interface_storage ? "180s" : "300s"
   depends_on      = [module.storage_dns_records, module.protocol_reserved_ip, module.compute_dns_records, module.landing_zone_vsi]
 }
@@ -495,9 +495,9 @@ module "write_storage_scale_cluster_inventory" {
   compute_cluster_instance_private_ips             = []
   compute_cluster_instance_private_dns_ip_map      = {}
   compute_cluster_instance_names                   = []
-  storage_cluster_instance_ids                     = var.storage_type == "persistent" ? concat(local.baremetal_cluster_instance_ids, local.strg_mgmtt_instance_ids, local.bm_tie_breaker_ids) : concat(local.storage_cluster_instance_ids, local.strg_mgmtt_instance_ids, local.tie_breaker_storage_instance_ids)
-  storage_cluster_instance_private_ips             = var.storage_type == "persistent" ? concat(local.baremetal_cluster_instance_private_ips, local.strg_mgmt_instance_private_ips, local.bm_tie_breaker_private_ips) : concat(local.storage_cluster_instance_private_ips, local.strg_mgmt_instance_private_ips, local.tie_breaker_storage_instance_private_ips)
-  storage_cluster_instance_names                   = var.storage_type == "persistent" ? concat(local.baremetal_cluster_instance_names, local.strg_mgmt_instance_names, local.bm_tie_breaker_names) : concat(local.storage_cluster_instance_names, local.strg_mgmt_instance_names, local.tie_breaker_storage_instance_names)
+  storage_cluster_instance_ids                     = var.storage_type == "baremetal" ? concat(local.baremetal_cluster_instance_ids, local.strg_mgmtt_instance_ids, local.bm_tie_breaker_ids) : concat(local.storage_cluster_instance_ids, local.strg_mgmtt_instance_ids, local.tie_breaker_storage_instance_ids)
+  storage_cluster_instance_private_ips             = var.storage_type == "baremetal" ? concat(local.baremetal_cluster_instance_private_ips, local.strg_mgmt_instance_private_ips, local.bm_tie_breaker_private_ips) : concat(local.storage_cluster_instance_private_ips, local.strg_mgmt_instance_private_ips, local.tie_breaker_storage_instance_private_ips)
+  storage_cluster_instance_names                   = var.storage_type == "baremetal" ? concat(local.baremetal_cluster_instance_names, local.strg_mgmt_instance_names, local.bm_tie_breaker_names) : concat(local.storage_cluster_instance_names, local.strg_mgmt_instance_names, local.tie_breaker_storage_instance_names)
   storage_cluster_with_data_volume_mapping         = local.storage_ips_with_vol_mapping[0]
   storage_cluster_instance_private_dns_ip_map      = {}
   storage_cluster_desc_instance_private_ips        = local.strg_tie_breaker_private_ips

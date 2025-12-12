@@ -32,7 +32,7 @@ locals {
   client_instance_count         = sum(var.client_instances[*]["count"])
   management_instance_count     = sum(var.management_instances[*]["count"])
   static_compute_instance_count = sum(var.compute_instances[*]["count"])
-  storage_instance_count        = var.storage_type == "persistent" ? sum(var.storage_servers[*]["count"]) : sum(var.storage_instances[*]["count"])
+  storage_instance_count        = var.storage_type == "baremetal" ? sum(var.storage_servers[*]["count"]) : sum(var.storage_instances[*]["count"])
   protocol_instance_count       = sum(var.protocol_instances[*]["count"])
 
   # Region and Zone calculations
@@ -210,7 +210,7 @@ locals {
   exstng_instance_bucket_new_hmac = var.scheduler == "Scale" ? [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name != "" && details.cos_service_cred_key == "")] : []
   exstng_instance_hmac_new_bucket = var.scheduler == "Scale" ? [for details in var.afm_cos_config : details if(details.cos_instance != "" && details.bucket_name == "" && details.cos_service_cred_key != "")] : []
 
-  path_elements = split("/", (var.storage_type != "persistent" && var.storage_instances[0]["filesystem"] != "") ? var.storage_instances[0]["filesystem"] : (var.storage_type == "persistent" && var.storage_servers[0]["filesystem"] != "") ? var.storage_servers[0]["filesystem"] : var.filesystem_config[0]["filesystem"])
+  path_elements = split("/", (var.storage_type != "baremetal" && var.storage_instances[0]["filesystem"] != "") ? var.storage_instances[0]["filesystem"] : (var.storage_type == "baremetal" && var.storage_servers[0]["filesystem"] != "") ? var.storage_servers[0]["filesystem"] : var.filesystem_config[0]["filesystem"])
   filesystem    = element(local.path_elements, length(local.path_elements) - 1)
   total         = concat(local.exstng_instance_new_bucket_hmac, local.exstng_instance_bucket_new_hmac, local.exstng_instance_hmac_new_bucket)
 

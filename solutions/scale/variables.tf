@@ -6,7 +6,7 @@ variable "ibm_customer_number" {
   type        = string
   sensitive   = true
   default     = null
-  description = "IBM Customer Number (ICN) used for Bring Your Own License (BYOL) entitlement check and not required if storage_type is evaluation, but must be provided if storage_type is scratch or persistent. Failing to provide an ICN will cause the deployment to fail to decrypt the packages. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
+  description = "IBM Customer Number (ICN) used for Bring Your Own License (BYOL) entitlement check and not required if storage_type is evaluation, but must be provided if storage_type is vsi or baremetal. Failing to provide an ICN will cause the deployment to fail to decrypt the packages. For more information on how to find your ICN, see [What is my IBM Customer Number (ICN)?](https://www.ibm.com/support/pages/what-my-ibm-customer-number-icn)."
   # Format validation - Only if value is not null
   validation {
     condition = (
@@ -21,7 +21,7 @@ variable "ibm_customer_number" {
     condition = (
       var.storage_type == "evaluation" || var.ibm_customer_number != null
     )
-    error_message = "The IBM customer number cannot be null when storage_type is 'scratch' or 'persistent'."
+    error_message = "The IBM customer number cannot be null when storage_type is 'vsi' or 'baremetal'."
   }
 }
 
@@ -322,7 +322,7 @@ variable "storage_instances" {
     filesystem = "/gpfs/fs1"
   }]
   validation {
-    condition = var.storage_type != "persistent" ? alltrue([
+    condition = var.storage_type != "baremetal" ? alltrue([
       for inst in var.storage_instances : can(regex("^(b|c|m)x[0-9]-[0-9]+x[0-9]+$", inst.profile))
     ]) : true
     error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name and must be from the Balanced, Compute, Memory Categories (e.g., bx2d-4x16, cx2d-16x64). [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)"
@@ -334,7 +334,7 @@ variable "storage_instances" {
     error_message = "Storage count should always be an even number."
   }
   validation {
-    condition = var.storage_type != "persistent" ? alltrue([
+    condition = var.storage_type != "baremetal" ? alltrue([
       for inst in var.storage_instances : inst.count >= 2 && inst.count <= 64
     ]) : true
     error_message = "storage_instances 'count' value must be in range 2 to 64."
@@ -360,14 +360,14 @@ variable "storage_baremetal_server" {
   }]
 
   validation {
-    condition = var.storage_type == "persistent" ? alltrue([
+    condition = var.storage_type == "baremetal" ? alltrue([
       for inst in var.storage_baremetal_server : can(regex("^[b|c|m]x[0-9]+d?-[a-z]+-[0-9]+x[0-9]+", inst.profile))
     ]) : true
     error_message = "Specified profile must be a valid IBM Cloud VPC GEN2 profile name [Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles)."
   }
 
   validation {
-    condition = var.storage_type == "persistent" ? alltrue([
+    condition = var.storage_type == "baremetal" ? alltrue([
       for inst in var.storage_baremetal_server : inst.count >= 2 && inst.count <= 64
     ]) : true
     error_message = "Each storage_baremetal_server 'count' value must be between 2 and 64."
@@ -422,7 +422,7 @@ variable "afm_instances" {
     ])
     error_message = "afm_instances 'count' value must be between 0 and 16."
   }
-  description = "Specify the list of virtual server instances to be provisioned as AFM nodes in the cluster. Each object in the list includes the instance profile (machine type), the count (number of instances), the image (OS image to use). This configuration allows you to access remote data  and high-performance computing needs.This input can be used to provision virtual server instances (VSI). If persistent, high-throughput storage is required, consider using bare metal instances instead. Ensure you provide valid instance profiles. Maximum of 16 afm nodes is supported. For more details, refer to [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
+  description = "Specify the list of virtual server instances to be provisioned as AFM nodes in the cluster. Each object in the list includes the instance profile (machine type), the count (number of instances), the image (OS image to use). This configuration allows you to access remote data  and high-performance computing needs.This input can be used to provision virtual server instances (VSI). If baremetal, high-throughput storage is required, consider using bare metal instances instead. Ensure you provide valid instance profiles. Maximum of 16 afm nodes is supported. For more details, refer to [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
 }
 
 
@@ -449,7 +449,7 @@ variable "protocol_instances" {
     ])
     error_message = "protocol_instances 'count' value must be between 0 and 32."
   }
-  description = "Specify the list of virtual server instances to be provisioned as protocol nodes in the cluster. Each object in the list includes the instance profile (machine type), the count (number of instances), the image (OS image to use). This configuration allows allows for a unified data management solution, enabling different clients to access the same data using NFS protocol.This input can be used to provision virtual server instances (VSI). If persistent, high-throughput storage is required, consider using bare metal instances instead. Ensure you provide valid instance profiles. Maximum of 32 VSI or baremetal nodes are supported. For more details, refer to [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
+  description = "Specify the list of virtual server instances to be provisioned as protocol nodes in the cluster. Each object in the list includes the instance profile (machine type), the count (number of instances), the image (OS image to use). This configuration allows allows for a unified data management solution, enabling different clients to access the same data using NFS protocol.This input can be used to provision virtual server instances (VSI). If baremetal, high-throughput storage is required, consider using bare metal instances instead. Ensure you provide valid instance profiles. Maximum of 32 VSI or baremetal nodes are supported. For more details, refer to [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
 }
 
 variable "colocate_protocol_instances" {
@@ -457,7 +457,7 @@ variable "colocate_protocol_instances" {
   default     = true
   description = "Enable this option to colocate protocol services on the same virtual server instances used for storage. When set to true, the storage nodes will also act as protocol nodes for reducing the need for separate infrastructure. This can optimize resource usage and simplify the cluster setup, especially for smaller environments or cost-sensitive deployments. For larger or performance-intensive workloads, consider deploying dedicated protocol instances instead."
   validation {
-    condition     = anytrue([var.colocate_protocol_instances == true && var.storage_type != "persistent" && sum(var.protocol_instances[*]["count"]) <= sum(var.storage_instances[*]["count"]), var.colocate_protocol_instances == true && var.storage_type == "persistent" && sum(var.protocol_instances[*]["count"]) <= sum(var.storage_baremetal_server[*]["count"]), var.colocate_protocol_instances == false])
+    condition     = anytrue([var.colocate_protocol_instances == true && var.storage_type != "baremetal" && sum(var.protocol_instances[*]["count"]) <= sum(var.storage_instances[*]["count"]), var.colocate_protocol_instances == true && var.storage_type == "baremetal" && sum(var.protocol_instances[*]["count"]) <= sum(var.storage_baremetal_server[*]["count"]), var.colocate_protocol_instances == false])
     error_message = "When colocation is true, protocol instance count should always be less than or equal to storage instance count"
   }
 }
@@ -893,15 +893,15 @@ variable "key_protect_instance_id" {
 
 variable "storage_type" {
   type        = string
-  default     = "scratch"
-  description = "Select the Storage Scale file system deployment method. Note: The Storage Scale scratch and evaluation type deploys the Storage Scale file system on virtual server instances, and the persistent type deploys the Storage Scale file system on bare metal servers."
+  default     = "vsi"
+  description = "Select the Storage Scale file system deployment method. Note: The Storage Scale vsi and evaluation type deploys the Storage Scale file system on virtual server instances, and the baremetal type deploys the Storage Scale file system on bare metal servers."
   validation {
-    condition     = can(regex("^(scratch|persistent|evaluation)$", lower(var.storage_type)))
-    error_message = "The solution only support scratch, evaluation, and persistent; provide any one of the value."
+    condition     = can(regex("^(vsi|baremetal|evaluation)$", lower(var.storage_type)))
+    error_message = "The solution only support vsi, evaluation, and baremetal; provide any one of the value."
   }
   validation {
-    condition     = var.storage_type == "persistent" ? contains(["us-south-1", "us-south-2", "us-south-3", "us-east-1", "us-east-2", "eu-de-1", "eu-de-2", "eu-de-3", "eu-gb-1", "eu-es-3", "eu-es-1", "jp-tok-2", "jp-tok-3", "ca-tor-2", "ca-tor-3"], join(",", var.zones)) : true
-    error_message = "The solution supports bare metal server creation in only given availability zones i.e. us-south-1, us-south-3, us-south-2, eu-de-1, eu-de-2, eu-de-3, jp-tok-2, eu-gb-1, us-east-1, us-east-2, eu-es-3, eu-es-1, jp-tok-3, jp-tok-2, ca-tor-2 and ca-tor-3. To deploy persistent storage provide any one of the supported availability zones."
+    condition     = var.storage_type == "baremetal" ? contains(["us-south-1", "us-south-2", "us-south-3", "us-east-1", "us-east-2", "eu-de-1", "eu-de-2", "eu-de-3", "eu-gb-1", "eu-es-3", "eu-es-1", "jp-tok-2", "jp-tok-3", "ca-tor-2", "ca-tor-3"], join(",", var.zones)) : true
+    error_message = "The solution supports bare metal server creation in only given availability zones i.e. us-south-1, us-south-3, us-south-2, eu-de-1, eu-de-2, eu-de-3, jp-tok-2, eu-gb-1, us-east-1, us-east-2, eu-es-3, eu-es-1, jp-tok-3, jp-tok-2, ca-tor-2 and ca-tor-3. To deploy baremetal storage provide any one of the supported availability zones."
   }
 }
 

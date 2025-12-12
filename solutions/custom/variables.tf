@@ -552,7 +552,7 @@ variable "enable_vpc_flow_logs" {
 #       boot_volume_crk_name                  = optional(string)      # Boot volume encryption key name
 #       disable_public_endpoint               = optional(bool, true)  # disable cluster public, leaving only private endpoint
 #       disable_outbound_traffic_protection   = optional(bool, false) # public outbound access from the cluster workers
-#       cluster_force_delete_storage          = optional(bool, false) # force the removal of persistent storage associated with the cluster during cluster deletion
+#       cluster_force_delete_storage          = optional(bool, false) # force the removal of baremetal storage associated with the cluster during cluster deletion
 #       operating_system                      = string                # The operating system of the workers in the default worker pool. See https://cloud.ibm.com/docs/openshift?topic=openshift-openshift_versions#openshift_versions_available .
 #       kms_wait_for_apply                    = optional(bool, true)  # make terraform wait until KMS is applied to master and it is ready and deployed
 #       verify_cluster_network_readiness      = optional(bool, true)  # Flag to run a script will run kubectl commands to verify that all worker nodes can communicate successfully with the master. If the runtime does not have access to the kube cluster to run kubectl commands, this should be set to false.

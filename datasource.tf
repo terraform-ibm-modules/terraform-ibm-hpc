@@ -83,7 +83,7 @@ data "ibm_is_instance_profile" "storage_profile" {
 }
 
 data "ibm_is_bare_metal_server_profile" "storage_bms_profile" {
-  count = var.scheduler == "Scale" && var.storage_type == "persistent" ? 1 : 0
+  count = var.scheduler == "Scale" && var.storage_type == "baremetal" ? 1 : 0
   name  = local.storage_bms_profile[0]
 }
 

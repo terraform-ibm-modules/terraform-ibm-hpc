@@ -49,7 +49,7 @@
     "gklm_instances": "[{ profile = \"bx2-2x8\", count = 2, image = \"hpcc-scale-gklm4202-v2-5-3\" }]",
     "scale_encryption_admin_password": "__NULL__",
     "key_protect_instance_id": "__NULL__",
-    "storage_type": "scratch",
+    "storage_type": "vsi",
     "observability_atracker_enable": "true",
     "observability_atracker_target_type": "cloudlogs",
     "sccwp_enable": "true",
