@@ -10,7 +10,7 @@ dns_domain_name:
   compute: comp.com
 bastion_instance:
   profile:  cx2-4x8
-  image: ibm-ubuntu-22-04-5-minimal-amd64-3
+  image: ibm-ubuntu-22-04-5-minimal-amd64-8
 deployer_instance:
   profile:  bx2-8x32
   image: hpc-lsf-fp15-deployer-rhel810-v2
@@ -65,7 +65,7 @@ ldap_user_name: tester
 ldap_user_password: Password@123456    # pragma: allowlist secret
 ldap_instance:
   - profile: cx2-2x4
-    image: ibm-ubuntu-22-04-5-minimal-amd64-1
+    image: ibm-ubuntu-22-04-5-minimal-amd64-8
     count: 1
 us_east_zone: us-east-3
 us_east_cluster_name: HPC-LSF-1
