@@ -1,6 +1,6 @@
 module "landing_zone" {
   source                                 = "terraform-ibm-modules/landing-zone/ibm"
-  version                                = "7.4.4"
+  version                                = "8.7.1"
   prefix                                 = local.prefix
   region                                 = local.region
   tags                                   = local.tags
@@ -49,10 +49,10 @@ resource "null_resource" "compress_and_encode_folder" {
   provisioner "local-exec" {
     command = <<EOT
     # Compress the folder
-    tar -czf ${path.module}/packer/hpcaas/compressed_compute.tar.gz ${path.module}/packer/hpcaas/compute
+    tar -czf ${path.module}/packer/lsf/compressed_compute.tar.gz ${path.module}/packer/lsf/compute
 
     # Encode the compressed file to base64
-    base64 -i ${path.module}/packer/hpcaas/compressed_compute.tar.gz -o ${path.module}/packer/hpcaas/encoded_compute.txt
+    base64 -i ${path.module}/packer/lsf/compressed_compute.tar.gz -o ${path.module}/packer/lsf/encoded_compute.txt
     EOT
   }
 }
@@ -62,7 +62,7 @@ resource "null_resource" "delete_encoded_files" {
     when    = destroy
     command = <<EOT
     # Deleting the compressed and encoded files on terraform destroy
-    rm ${path.module}/packer/hpcaas/compressed_compute.tar.gz ${path.module}/packer/hpcaas/encoded_compute.txt
+    rm ${path.module}/packer/lsf/compressed_compute.tar.gz ${path.module}/packer/lsf/encoded_compute.txt
     EOT
   }
 }
@@ -70,12 +70,12 @@ resource "null_resource" "delete_encoded_files" {
 # Instead of using the file function, we read the file contents during the Terraform run.
 data "local_file" "encoded_compute_content" {
   depends_on = [null_resource.compress_and_encode_folder, null_resource.delete_encoded_files]
-  filename   = "${path.module}/packer/hpcaas/encoded_compute.txt"
+  filename   = "${path.module}/packer/lsf/encoded_compute.txt"
 }
 
 module "packer_vsi" {
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "5.0.0"
+  version                       = "5.11.0"
   vsi_per_subnet                = 1
   image_id                      = local.packer_image_id
   machine_type                  = local.packer_machine_type
@@ -93,6 +93,6 @@ module "packer_vsi" {
   kms_encryption_enabled        = local.kms_encryption_enabled
   skip_iam_authorization_policy = var.skip_iam_authorization_policy
   boot_volume_encryption_key    = local.boot_volume_encryption_key
-  existing_kms_instance_guid    = local.existing_kms_instance_guid
-  depends_on                    = [data.local_file.encoded_compute_content]
+  # existing_kms_instance_guid    = local.existing_kms_instance_guid
+  depends_on = [data.local_file.encoded_compute_content]
 }

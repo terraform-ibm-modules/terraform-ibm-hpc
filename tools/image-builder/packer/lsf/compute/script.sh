@@ -35,7 +35,10 @@ if grep -q 'ID="rhel"' /etc/os-release || grep -q 'ID="rocky"' /etc/os-release; 
   rpm -qa | grep epel-release
   rpm -qa | grep s3fs-fuse
   yum install -y python3.11 python3.11-pip ed wget gcc-c++ gcc-gfortran kernel-devel-"$(uname -r)" perl libnsl openldap-clients nss-pam-ldapd sssd tar
-  useradd lsfadmin
+  useradd -u 1005 -m lsfadmin
+  chage -I -1 -m 0 -M 99999 -E -1 -W 14 lsfadmin
+  chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
+  id lsfadmin
   echo 'lsfadmin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers #pragma: allowlist secret
   rm -f /usr/bin/python3
   rm -rf /bin/pip3
@@ -68,13 +71,15 @@ echo $LSF_PACKAGES_PATH
 mkdir -p ${LSF_TOP}
 chmod -R 755 /opt
 
-echo "======================Triggering mounting of Cos Bucket====================="
+echo "======================Triggering mounting of Cos Bucket for lsf package installation====================="
 mkdir /wes-hpc
-s3fs custom-image-builder /wes-hpc -o url=https://s3.direct.us-south.cloud-object-storage.appdomain.cloud -o ro -o public_bucket=1
+ls -ltr /wes-hpc
+s3fs custom-image-builder-bucket /wes-hpc -o url=https://s3.direct.us-south.cloud-object-storage.appdomain.cloud -o ro -o public_bucket=1
+ls -ltr /wes-hpc
 mkdir -p /tmp/packages
-cp -r /wes-hpc/hpcaas/base/latest/* /tmp/packages/
+cp -r /wes-hpc/lsf/* /tmp/packages/
 ls -ltr /tmp/packages/
-echo "======================Cos Bucket mounting completed====================="
+echo "======================Cos Bucket mounting completed for lsf package installation====================="
 
 sleep 100
 
@@ -90,17 +95,17 @@ hostnamectl
 hostnamectl set-hostname lsfservers
 # Installation of LSF base packages on compute node
 cd "${LSF_PACKAGES_PATH}" || exit
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-conf-10.1.0.15-25050119.noarch.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-man-pages-10.1.0.15-25050119.noarch.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-client-10.1.0.15-25050119.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-server-10.1.0.15-25050119.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-integrations-10.1.0.15-25050118.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-ego-server-10.1.0.15-25050118.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-devel-10.1.0.15-25050119.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-data-mgr-10.1.0.15-25050119.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-ls-client-10.1.0.15-25050119.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/ibm-jre-1.8.0-25041010.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-pm-client-10.2.0.15-25050118.x86_64.rpm
+yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-conf-10.1.0.15-25100715.noarch.rpm
+yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-man-pages-10.1.0.15-25100715.noarch.rpm
+yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-client-10.1.0.15-25100715.x86_64.rpm
+yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-server-10.1.0.15-25100715.x86_64.rpm
+yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-integrations-10.1.0.15-25100715.x86_64.rpm
+yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-ego-server-10.1.0.15-25100715.x86_64.rpm
+yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-devel-10.1.0.15-25100715.x86_64.rpm
+yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-data-mgr-10.1.0.15-25100715.x86_64.rpm
+yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-ls-client-10.1.0.15-25100715.x86_64.rpm
+yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/ibm-jre-1.8.0-25070916.x86_64.rpm
+yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-pm-client-10.2.0.15-25100715.x86_64.rpm
 echo "========================LSF 10.1 installation completed====================="
 
 # Installation Of OpenMPI
@@ -110,7 +115,7 @@ tar -xvf openmpi-4.1.0.tar.gz
 cd openmpi-4.1.0 || exit
 ln -s /usr/lib64/libnsl.so.2.0.0 /usr/lib64/libnsl.so
 export LANG=C
-./configure --prefix='/usr/local/openmpi-4.1.0' --enable-mpi-thread-multiple --enable-shared --disable-static --enable-mpi-fortran=usempi --disable-libompitrace --enable-script-wrapper-compilers --enable-wrapper-rpath --enable-orterun-prefix-by-default --with-io-romio-flags=--with-file-system=nfs --with-lsf=/opt/ibm/lsf/10.1 --with-lsf-libdir=/opt/ibm/lsf/10.1/linux3.10-glibc2.17-x86_64/lib
+./configure --prefix='/usr/local/openmpi-4.1.0' --enable-mpi-thread-multiple --enable-shared --disable-static --enable-mpi-fortran=usempi --disable-libompitrace --enable-script-wrapper-compilers --enable-wrapper-rpath --enable-orterun-prefix-by-default --with-io-romio-flags=--with-file-system=nfs --with-lsf=/opt/ibm/lsfsuite/lsf/10.1 --with-lsf-libdir=/opt/ibm/lsfsuite/lsf/10.1/linux3.10-glibc2.17-x86_64/lib
 make -j 32
 make install
 find /usr/local/openmpi-4.1.0/ -type d -exec chmod 775 {} \;

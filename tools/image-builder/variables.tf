@@ -186,7 +186,7 @@ variable "enable_fip" {
   default     = true
   description = "If connecting to the Packer deployment via Floating IP, set this value to true."
 }
-
+/**
 # tflint-ignore: terraform_unused_declarations
 variable "cluster_name" {
   type        = string
@@ -196,7 +196,7 @@ variable "cluster_name" {
     error_message = "The Cluster ID can be up to 39 alphanumeric characters including the underscore (_), the hyphen (-), and the period (.) characters. Other special characters and spaces are not allowed."
   }
 }
-
+**/
 # tflint-ignore: terraform_unused_declarations
 variable "private_catalog_id" {
   type        = string

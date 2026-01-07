@@ -6,7 +6,6 @@
 ###################################################
 
 # Install required packages
-
 export HOME=/root  # Setting this as a path because got to see error on user data scripts, we can revisit this logic later
 
 sudo yum install -y wget unzip jq
@@ -62,10 +61,10 @@ rpm -qa | grep s3fs-fuse
 echo "======================Cloning HPC public repo====================="
 
 sudo yum install git -y
-mkdir /HPCaaS
-cd /HPCaaS
+mkdir /LSF
+cd /LSF
 git clone https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git
-cd /HPCaaS/terraform-ibm-hpc/solutions/hpc
+cd /LSF/image-builder/solutions/lsf
 
 echo "======================Installing terraform====================="
 git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
@@ -75,15 +74,17 @@ tfenv install latest
 tfenv use latest
 terraform --version
 
-echo "====================== Triggering mounting of Cos Bucket ====================="
+echo "====================== Triggering mounting of Cos Bucket for test case execution ====================="
 mkdir /wes-hpc
-s3fs custom-image-builder /wes-hpc -o url=https://s3.direct.us-south.cloud-object-storage.appdomain.cloud -o ro -o public_bucket=1
-mkdir -p /HPCaaS/terraform-ibm-hpc/tools/tests
-cp -r /wes-hpc/tests/* /HPCaaS/terraform-ibm-hpc/tools/tests/
-ls -ltr /HPCaaS/terraform-ibm-hpc/tools/tests/
-echo "====================== Cos Bucket mounting completed ====================="
+ls -ltr /wes-hpc
+s3fs custom-image-builder-bucket /wes-hpc -o url=https://s3.direct.us-south.cloud-object-storage.appdomain.cloud -o ro -o public_bucket=1
+ls -ltr /wes-hpc
+mkdir -p /LSF/image-builder/tools/tests_lsf_da
+cp -r /wes-hpc/tests_lsf_da/* /LSF/image-builder/tools/tests_lsf_da/
+ls -ltr /LSF/image-builder/tools/tests_lsf_da/
+echo "====================== Cos Bucket mounting completed for test case execution ====================="
 
-cd /var/packer/hpcaas/compute
+cd /var/packer/lsf/compute
 
 sudo -E packer init . && sudo -E packer build \
     -var "ibm_api_key=${ibm_api_key}" \
@@ -96,8 +97,8 @@ sudo -E packer init . && sudo -E packer build \
     -var "image_name=${image_name}" .
 
 echo "========== Generating SSH key ========="
-mkdir -p /HPCaaS/artifacts/.ssh
-ssh-keygen -t rsa -N '' -f /HPCaaS/artifacts/.ssh/id_rsa <<< y
+mkdir -p /LSF/artifacts/.ssh
+ssh-keygen -t rsa -N '' -f /LSF/artifacts/.ssh/id_rsa <<< y
 
 RANDOM_SUFFIX=$(head /dev/urandom | tr -dc 'a-z' | head -c 4)
 CICD_SSH_KEY="hpc-packer-$RANDOM_SUFFIX"
@@ -109,12 +110,14 @@ curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
 ibmcloud plugin install infrastructure-service
 ibmcloud login --apikey ${ibm_api_key} -r ${vpc_region}
 echo "========== Uploading SSH key to IBM cloud ========="
-ibmcloud is key-create $CICD_SSH_KEY @/HPCaaS/artifacts/.ssh/id_rsa.pub --resource-group-name ${existing_resource_group}
+ibmcloud is key-create $CICD_SSH_KEY @/LSF/artifacts/.ssh/id_rsa.pub --resource-group-name ${existing_resource_group}
 
-cd /HPCaaS/terraform-ibm-hpc/tools/tests
+cd /LSF/image-builder/tools/tests_lsf_da/lsf_tests/
 git submodule update --init
 
 sudo yum update -y
+export TF_VAR_ibmcloud_api_key=${ibm_api_key}
+export LOG_FILE_NAME={prefix}".json"
 
 echo "***** Installing Golang *****"
 
@@ -125,3 +128,13 @@ if [ ! -d "$(pwd)/go" ]; then
     echo "export GOROOT=$(pwd)/go" >> ~/.bashrc
     source ~/.bashrc
 fi
+
+if [ "${private_catalog_id}" ]; then
+    CLUSTER_PREFIX=${prefix} SSH_FILE_PATH="/LSF/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY CATALOG_VALIDATE_SSH_KEY=${catalog_validate_ssh_key} ZONES=${zones} EXISTING_RESOURCE_GROUP=${existing_resource_group} COMPUTE_IMAGE_NAME=${image_name} PRIVATE_CATALOG_ID=${private_catalog_id} VPC_ID=${vpc_id} SUBNET_ID=${vpc_subnet_id} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee -a "$LOG_FILE_NAME"
+else
+    CLUSTER_PREFIX=${prefix} SSH_FILE_PATH="/LSF/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY ZONES=${zones} EXISTING_RESOURCE_GROUP=${existing_resource_group} COMPUTE_IMAGE_NAME=${image_name} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee -a "$LOG_FILE_NAME"
+fi
+
+echo "========== Deleting the SSH key ========="
+
+ibmcloud is key-delete $CICD_SSH_KEY -f
