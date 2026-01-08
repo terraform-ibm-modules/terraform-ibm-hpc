@@ -63,7 +63,8 @@ echo "======================Cloning HPC public repo====================="
 sudo yum install git -y
 mkdir /LSF
 cd /LSF
-git clone https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git
+# git clone https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git
+git clone -b image-builder https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git
 cd /LSF/image-builder/solutions/lsf
 
 echo "======================Installing terraform====================="
