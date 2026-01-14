@@ -220,6 +220,55 @@ func VerifyAPPCenterConfig(
 	logger.Info(t, fmt.Sprintf("Completed %s validation.", nodeLabel))
 }
 
+// VerifyLSFWebServicesConfig verifies the configuration of LSF Web Services (lwsd).
+// If more than one management node exists, validation runs on node 2; otherwise on node 1.
+func VerifyLSFWebServicesConfig(
+	t *testing.T,
+	sshMgmtClient *ssh.Client,
+	publicHostIP, publicHostName, privateHostName string,
+	managementNodeIPs []string,
+	logger *utils.AggregatedLogger,
+) {
+	var targetSSHClient *ssh.Client
+	var nodeLabel string
+
+	if len(managementNodeIPs) > 1 {
+		// Connect to management node 2
+		wsSSHClient, err := utils.ConnectToHost(
+			publicHostName,
+			publicHostIP,
+			privateHostName,
+			managementNodeIPs[1],
+		)
+		if err != nil {
+			msg := fmt.Sprintf(
+				"Failed to SSH to management node 2 via bastion (%s) -> private IP (%s): %v",
+				publicHostIP,
+				managementNodeIPs[1],
+				err,
+			)
+			logger.FAIL(t, msg)
+			require.FailNow(t, msg)
+		}
+		defer func() {
+			if cerr := wsSSHClient.Close(); cerr != nil {
+				logger.Warn(t, fmt.Sprintf("Failed to close SSH connection: %v", cerr))
+			}
+		}()
+		targetSSHClient = wsSSHClient
+		nodeLabel = "LSF Web Services (mgmt node 2)"
+	} else {
+		// Use management node 1
+		targetSSHClient = sshMgmtClient
+		nodeLabel = "LSF Web Services (mgmt node 1)"
+	}
+
+	wsErr := LSFWebServicesConfiguration(t, targetSSHClient, logger)
+	utils.LogVerificationResult(t, wsErr, nodeLabel, logger)
+
+	logger.Info(t, fmt.Sprintf("Completed %s validation.", nodeLabel))
+}
+
 // VerifyLoginNodeConfig validates the configuration of a login node by performing multiple checks.
 // It verifies the cluster name, master node name, MTU settings, IP routing, hyperthreading status,
 // LSF version, file mounts, job execution, and LSF command availability.

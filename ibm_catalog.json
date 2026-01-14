@@ -805,7 +805,7 @@
       "short_description": "Deploy your HPC cluster with IBM Storage Scale for high performance, highly available, clustered file system.",
       "long_description": "**Before you begin deploying IBM Storage Scale, make sure that you meet the prerequisites listed in [the step-by-step guide](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-before-you-begin-deploying).**\n\nIBM Storage Scale is a deployable architecture where you can deploy dedicated Storage Scale cluster. Storage Scale supports the configuration of both compute and storage nodes, allowing you to build a complete, end-to-end Storage cluster.",
       "provider_name": "IBM",
-      "offering_docs_url": "https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-overview",
+      "offering_docs_url": "https://cloud.ibm.com/docs/allowlist/storage-scale-da?topic=storage-scale-da-overview-storage-scale",
       "features": [
         {
           "title": "Cluster file system",
@@ -837,7 +837,7 @@
               }
             ]
           },
-          "release_notes_url": "https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-release-notes",
+          "release_notes_url": "https://cloud.ibm.com/docs/allowlist/storage-scale-da?topic=storage-scale-da-storagescale-service-relnotes",
           "configuration": [
             {
               "key": "ibmcloud_api_key",

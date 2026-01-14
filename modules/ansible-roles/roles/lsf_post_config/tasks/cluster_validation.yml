@@ -10,6 +10,9 @@
   when: inventory_hostname in groups['mgmt_compute_nodes']
 
 - name: LSF Version | Retrieve lsid output
+  become: true
+  become_user: lsfadmin
+  become_flags: "-i"
   ansible.builtin.shell: lsid
   register: lsid_output
   changed_when: false
@@ -21,7 +24,10 @@
   when: inventory_hostname == groups['management_nodes'][0]
 
 - name: Cluster Status | Fetch node status using bhosts
-  ansible.builtin.shell: su - lsfadmin -c 'bhosts -w'
+  become: true
+  become_user: lsfadmin
+  become_flags: "-i"
+  ansible.builtin.shell: bhosts -w
   register: cluster_status_output
   changed_when: false
   when: inventory_hostname == groups['management_nodes'][0]

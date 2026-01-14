@@ -60,8 +60,8 @@ spec:
           echo $'***** Installing Golang *****\n'
           yum install wget -y
           [ ! -d "$(pwd)/go" ] &&
-          cd $(pwd) && wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz &&
-          tar -C $(pwd)/ -xzf go1.21.0.linux-amd64.tar.gz &&
+          cd $(pwd) && wget https://go.dev/dl/go1.24.2.linux-amd64.tar.gz &&
+          tar -C $(pwd)/ -xzf go1.24.2.linux-amd64.tar.gz &&
           cd $(pwd)/ &&
           echo "export PATH=\$PATH:$(pwd)/go/bin:\$HOME/go/bin" >> ~/.bashrc &&
           echo "export GOROOT=$(pwd)/go" >> ~/.bashrc

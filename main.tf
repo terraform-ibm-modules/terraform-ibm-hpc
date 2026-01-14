@@ -219,6 +219,7 @@ module "prepare_tf_input" {
   scale_encryption_admin_password                  = var.scale_encryption_admin_password
   scale_encryption_enabled                         = var.scale_encryption_enabled
   key_protect_instance_id                          = var.key_protect_instance_id
+  github_token                                     = var.github_token
   storage_security_group_id                        = var.storage_security_group_id
   custom_file_shares                               = var.custom_file_shares
   existing_bastion_instance_name                   = var.existing_bastion_instance_name
@@ -267,6 +268,7 @@ module "resource_provisioner" {
   bastion_private_key_content    = local.bastion_ssh_private_key != null ? local.bastion_ssh_private_key : local.bastion_private_key_content
   deployer_ip                    = local.deployer_ip
   scheduler                      = var.scheduler
+  github_token                   = var.github_token
   existing_bastion_instance_name = var.existing_bastion_instance_name
   bastion_public_key_content     = local.bastion_public_key_content
   depends_on                     = [module.deployer, module.prepare_tf_input, module.validate_ldap_server_connection]
@@ -355,7 +357,7 @@ module "vpe" {
   vpc_name             = local.vpc_name
   vpc_id               = local.vpc_id
   subnet_zone_list     = local.client_subnets
-  security_group_ids   = length(local.client_security_group_id) > 0 ? local.client_security_group_id : [local.vpc_default_security_group]
+  security_group_ids   = local.client_instance_count > 0 && var.client_security_group_name == null ? local.client_security_group_id : data.ibm_is_security_group.client_security_group[*].id
   cloud_services       = []
   cloud_service_by_crn = local.cloud_service_by_crn
   service_endpoints    = "private"
@@ -384,7 +386,11 @@ module "gklm_dns_records" {
 resource "time_sleep" "wait_for_vsi_syncup" {
   count           = var.enable_deployer == false && var.scheduler == "Scale" && var.storage_type != "baremetal" && (can(regex("^ibm-redhat-8-10-minimal-amd64-.*$", (var.storage_instances[*]["image"])[0])) || local.enable_sec_interface_compute || local.enable_sec_interface_storage) ? 1 : 0
   create_duration = local.enable_sec_interface_compute || local.enable_sec_interface_storage ? "180s" : "300s"
-  depends_on      = [module.storage_dns_records, module.protocol_reserved_ip, module.compute_dns_records, module.landing_zone_vsi]
+  triggers = {
+    # Force recreation on every apply
+    run_always = timestamp()
+  }
+  depends_on = [module.storage_dns_records, module.protocol_reserved_ip, module.compute_dns_records, module.landing_zone_vsi]
 }
 
 module "write_compute_cluster_inventory" {
@@ -627,6 +633,7 @@ module "pre_cluster_setup" {
   storage_tb_bms_hosts         = local.storage_tb_bms_host_entry
   protocol_bms_hosts           = local.protocol_bms_host_entry
   afm_bms_hosts                = local.afm_bms_host_entry
+  ppnlb_hosts                  = local.ppnlb_host_entry
   domain_names                 = var.dns_domain_names
   storage_type                 = var.storage_type
   storage_interface            = local.bms_interfaces[0]
@@ -913,7 +920,7 @@ module "mgmt_inventory_hosts" {
 module "compute_inventory_hosts" {
   count          = var.enable_deployer == false ? 1 : 0
   source         = "./modules/inventory_hosts"
-  hosts          = var.scheduler == "Scale" ? local.all_compute_hosts : local.compute_hosts_ips
+  hosts          = var.scheduler == "Scale" ? local.all_compute_hosts : local.lsf_compute_hosts_ips
   inventory_path = local.compute_hosts_inventory_path
 }
 
@@ -996,7 +1003,6 @@ module "compute_playbook" {
   source                      = "./modules/playbook"
   scheduler                   = var.scheduler
   bastion_fip                 = local.bastion_fip
-  private_key_path            = local.compute_private_key_path
   inventory_path              = local.compute_inventory_path
   enable_deployer             = var.enable_deployer
   ibmcloud_api_key            = var.ibmcloud_api_key

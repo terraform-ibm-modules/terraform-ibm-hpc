@@ -14,14 +14,21 @@ then
     USER=ubuntu
 fi
 
-sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo \'Please client as the user \\\\\"$USER\\\\\" rather than the user \\\\\"root\\\\\".\';echo;sleep 5; exit 142\" /" /root/.ssh/authorized_keys
+sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo \'Login as the \\\\\"$USER\\\\\" user rather than \\\\\"root\\\\\".\';echo;sleep 5; exit 142\" /" /root/.ssh/authorized_keys
 
-# input parameters
-echo "${bastion_public_key_content}" >> ~/.ssh/authorized_keys
-echo "${management_public_key_content}" >> ~/.ssh/authorized_keys
-echo "StrictHostKeyChecking no" >> ~/.ssh/config
-echo "${management_private_key_content}" > ~/.ssh/id_rsa
-chmod 600 ~/.ssh/id_rsa
+mkdir -p /home/$USER/.ssh
+chmod 700 /home/$USER/.ssh
+#input parameters
+# Append the public keys to the USER's authorized_keys file
+echo "${bastion_public_key_content}" >> /home/$USER/.ssh/authorized_keys
+echo "${management_public_key_content}" >> /home/$USER/.ssh/authorized_keys
+# Create the SSH config file to disable host key checking for all hosts
+echo "Host *
+    StrictHostKeyChecking no" > /home/$USER/.ssh/config
+chmod 600 /home/$USER/.ssh/config
+# Write the private key file for USER
+echo "${management_private_key_content}" > /home/$USER/.ssh/id_rsa
+chmod 600 /home/$USER/.ssh/id_rsa /home/$USER/.ssh/authorized_keys
 
 # Network Configuration
 RESOLV_CONF="/etc/resolv.conf"

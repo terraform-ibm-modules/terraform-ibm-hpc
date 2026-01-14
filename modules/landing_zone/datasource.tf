@@ -70,7 +70,7 @@ locals {
       resource_instance_id = item.guid
     }
   ]
-  newly_created_instance_afm = [for instance in local.total_new_instance : instance.resource_instance_id if(join("-", slice(split("-", instance.name), 0, length(split("-", instance.name)) - 1))) != "${local.prefix}-hpc-cos"]
+  newly_created_instance_afm = [for instance in local.total_new_instance : instance.resource_instance_id if startswith(instance.name, "${local.prefix}-") && (join("-", slice(split("-", instance.name), 0, length(split("-", instance.name)) - 1))) != "${local.prefix}-hpc-cos"]
 
   config_details = flatten([
     for instance in local.total_instance : [
@@ -167,7 +167,7 @@ locals {
       endpoint             = item.endpoint
       bucket               = item.bucket
       resource_instance_id = item.resource_instance_id
-    } if item.resource_instance_id == (var.enable_landing_zone && local.enable_afm ? local.newly_created_instance_afm[0] : "")
+    } if item.resource_instance_id == (var.enable_landing_zone && local.enable_afm && length(local.newly_created_instance_afm) > 0 ? local.newly_created_instance_afm[0] : "")
   ]
 
   afm_config_details_0 = flatten([

@@ -30,6 +30,7 @@ def prepare_ansible_playbook_ldap_server(hosts_config):
     content = """---
 # Encryption setup for the ldap server
 - hosts: {hosts_config}
+  become: yes
   collections:
      - ibm.spectrum_scale
   any_errors_fatal: true
@@ -56,19 +57,20 @@ def initialize_cluster_details(
 
 def get_host_format(node):
     """Return host entries"""
-    host_format = f"{node['hostname']} ansible_ssh_private_key_file={node['key_file']}"
+    host_format = f"{node['hostname']} ansible_ssh_private_key_file={node['key_file']} ansible_user={node['user']}"
     return host_format
 
 
-def initialize_node_details(ldap_instance_ips, key_file):
+def initialize_node_details(ldap_instance_ips, key_file, user):
     """Initialize node details for cluster definition.
-    :args: ldap_instance_ips (list), key_file (string)
+    :args: ldap_instance_ips (list), key_file (string), user (string)
     """
     node_details = []
     for ip in ldap_instance_ips:
         node = {
             "hostname": ip,
             "key_file": key_file,
+            "user": user,
         }
         node_details.append(get_host_format(node))
     return node_details
@@ -116,6 +118,7 @@ if __name__ == "__main__":
     )
     PARSER.add_argument("--resource_prefix", help="Name of the cluster", default="null")
     PARSER.add_argument("--verbose", action="store_true", help="print log messages")
+    PARSER.add_argument("--user", help="OS User for Ansible", default="ubuntu")
     ARGUMENTS = PARSER.parse_args()
 
     cluster_name = ARGUMENTS.resource_prefix
@@ -137,7 +140,7 @@ if __name__ == "__main__":
     # Step-5: Create hosts
     config = configparser.ConfigParser(allow_no_value=True)
     node_details = initialize_node_details(
-        ARGUMENTS.ldap_nodes.split(","), ARGUMENTS.instance_private_key
+        ARGUMENTS.ldap_nodes.split(","), ARGUMENTS.instance_private_key, ARGUMENTS.user
     )
     node_template = ""
     for each_entry in node_details:

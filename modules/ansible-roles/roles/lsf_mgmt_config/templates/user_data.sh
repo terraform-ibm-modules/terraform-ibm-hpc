@@ -374,7 +374,6 @@ fi
 if [ "$observability_logs_enable_for_compute" = true ]; then
 
   echo "Configuring cloud logs for compute since observability logs for compute is enabled"
-  sudo cp /root/post-config.sh /opt/ibm
   cd /opt/ibm || exit
 
   cat <<EOL >/etc/fluent-bit/fluent-bit.conf
@@ -422,11 +421,11 @@ if [ "$observability_logs_enable_for_compute" = true ]; then
   Add subsystemName compute
   Add applicationName lsf
 
-@INCLUDE output-logs-router-agent.conf
+@INCLUDE outputs.conf
 EOL
 
-  sudo chmod +x post-config.sh
-  sudo ./post-config.sh -h "$cloud_logs_ingress_private_endpoint" -p "3443" -t "/logs/v1/singles" -a IAMAPIKey -k "$VPC_APIKEY_VALUE" --send-directly-to-icl -s true -i Production
+  sudo chmod +x /opt/fluent-bit/bin/post-config.sh
+  sudo /opt/fluent-bit/bin/post-config.sh -h "$cloud_logs_ingress_private_endpoint" -p "3443" -t "/logs/v1/singles" -a IAMAPIKey -k "$VPC_APIKEY_VALUE" --send-directly-to-icl -s true -i Production
   echo "INFO Testing IBM Cloud LSF Logs from compute: $hostname" | sudo tee -a /opt/ibm/lsflogs/test.log.com >/dev/null
   sudo logger -u /tmp/in_syslog my_ident my_syslog_test_message_from_compute:"$hostname"
 else

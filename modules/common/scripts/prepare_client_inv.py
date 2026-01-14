@@ -58,6 +58,7 @@ def prepare_ansible_playbook_mount_fileset_client(hosts_config):
     content = f"""---
 # Mounting mount filesets on client nodes
 - hosts: {hosts_config}
+  become: yes
   collections:
      - ibm.spectrum_scale
   any_errors_fatal: true
@@ -102,19 +103,20 @@ def initialize_cluster_details(
 
 def get_host_format(node):
     """Return host entries"""
-    host_format = f"{node['hostname']} ansible_ssh_private_key_file={node['key_file']}"
+    host_format = f"{node['hostname']} ansible_ssh_private_key_file={node['key_file']} ansible_user={node['user']}"
     return host_format
 
 
-def initialize_node_details(client_cluster_instance_names, key_file):
+def initialize_node_details(client_cluster_instance_names, key_file, user):
     """Initialize node details for cluster definition.
-    :args:hostname (string), key_file (string)
+    :args:hostname (string), key_file (string), user (string)
     """
     node_details, node = [], {}
     for hostname in client_cluster_instance_names:
         node = {
             "hostname": hostname,
             "key_file": key_file,
+            "user": user,
         }
         node_details.append(get_host_format(node))
     return node_details
@@ -159,6 +161,7 @@ if __name__ == "__main__":
     PARSER.add_argument(
         "--ldap_admin_password", help="LDAP Admin Password", default="null"
     )
+    PARSER.add_argument("--user", help="OS User for Ansible", default="vpcuser")
     ARGUMENTS = PARSER.parse_args()
 
     # Step-1: Read the inventory file
@@ -193,6 +196,7 @@ if __name__ == "__main__":
     node_details = initialize_node_details(
         STRG_TF["client_cluster_instance_names"],
         ARGUMENTS.instance_private_key,
+        ARGUMENTS.user,
     )
     node_template = ""
     for each_entry in node_details:

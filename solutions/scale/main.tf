@@ -79,4 +79,5 @@ module "scale" {
   volume_storages                               = local.env.volume_storages
   enable_private_path_nlb                       = local.env.enable_private_path_nlb
   protocol_instance_eth1_mtu                    = local.env.protocol_instance_eth1_mtu
+  github_token                                  = local.env.github_token # Delete this variable before pushing to the public repository.
 }

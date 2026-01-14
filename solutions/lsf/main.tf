@@ -67,4 +67,5 @@ module "lsf" {
   cspm_enabled                                     = var.cspm_enabled
   app_config_plan                                  = var.app_config_plan
   lsf_pay_per_use                                  = local.env.lsf_pay_per_use
+  github_token                                     = local.env.github_token # Delete this variable before pushing to the public repository.
 }

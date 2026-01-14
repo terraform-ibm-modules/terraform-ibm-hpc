@@ -19,8 +19,8 @@ locals {
 # locals needed for deployer
 locals {
   # dependency: landing_zone -> deployer
-  vpc_id                     = var.vpc_name == null ? one(module.landing_zone.vpc_id) : data.ibm_is_vpc.existing_vpc[0].id
-  vpc_default_security_group = var.vpc_name == null ? one(module.landing_zone.vpc_default_security_group) : data.ibm_is_vpc.existing_vpc[0].default_security_group
+  vpc_id = var.vpc_name == null ? one(module.landing_zone.vpc_id) : data.ibm_is_vpc.existing_vpc[0].id
+  # vpc_default_security_group = var.vpc_name == null ? one(module.landing_zone.vpc_default_security_group) : data.ibm_is_vpc.existing_vpc[0].default_security_group
   vpc_name                   = var.vpc_name == null ? one(module.landing_zone.vpc_name) : var.vpc_name
   kms_encryption_enabled     = local.key_management != null ? true : false
   boot_volume_encryption_key = local.key_management != null && var.enable_deployer ? one(module.landing_zone.boot_volume_encryption_key)["crn"] : null
@@ -127,7 +127,10 @@ locals {
   ]
 
   # Flattened Management and Compute instances
-  compute_instances = var.enable_deployer ? [] : flatten([local.simplified_management_vsi_data, local.simplified_compute_vsi_data])
+  compute_instances     = var.enable_deployer ? [] : local.simplified_compute_vsi_data
+  inv_compute_instances = var.enable_deployer ? [] : try(flatten([local.simplified_compute_vsi_data]), [])
+  management_instances  = var.enable_deployer ? [] : flatten([local.simplified_management_vsi_data])
+  lsf_compute_instances = var.enable_deployer ? [] : concat(local.management_instances, local.inv_compute_instances)
 
   comp_mgmt_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_management_vsi_data])
   storage_instances     = var.enable_deployer ? [] : local.simplified_storage_vsi_data
@@ -447,11 +450,11 @@ locals {
     }
   ]
 
-  compute_sec_vnic_dns_record_details      = var.enable_deployer ? [] : flatten(local.simplified_compute_vsi_data)
-  compute_mgmt_sec_vnic_dns_record_details = var.enable_deployer ? [] : flatten(local.simplified_compute_management_vsi_data)
+  #  compute_sec_vnic_dns_record_details      = var.enable_deployer ? [] : flatten(local.simplified_compute_vsi_data)
+  #  compute_mgmt_sec_vnic_dns_record_details = var.enable_deployer ? [] : flatten(local.simplified_compute_management_vsi_data)
 
   raw_compute_sec_vnic_dns_record_details = local.enable_sec_interface_compute ? [
-    for record in flatten([local.compute_sec_vnic_dns_record_details]) : {
+    for record in flatten([local.simplified_compute_vsi_data]) : {
       id           = record.secondary_network_interface_detail.id
       ipv4_address = record.secondary_network_interface_detail.primary_ipv4_address
       name         = "${record.name}-secondary-vni-0"
@@ -459,7 +462,7 @@ locals {
   ] : []
 
   raw_compute_mgmt_sec_vnic_dns_record_details = local.enable_sec_interface_compute ? [
-    for record in flatten([local.compute_mgmt_sec_vnic_dns_record_details]) : {
+    for record in flatten([local.simplified_compute_management_vsi_data]) : {
       id           = record.secondary_network_interface_detail.id
       ipv4_address = record.secondary_network_interface_detail.primary_ipv4_address
       name         = "${record.name}-secondary-vni-0"
@@ -467,7 +470,7 @@ locals {
   ] : []
 
   compute_dns_records = [
-    for instance in concat(local.compute_instances, local.comp_mgmt_instances, local.deployer_instances, local.login_instance) :
+    for instance in concat(flatten(local.compute_instances), local.management_instances, local.comp_mgmt_instances, local.deployer_instances, local.login_instance) :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
@@ -499,7 +502,7 @@ locals {
 
 # locals needed for inventory
 locals {
-  compute_hosts = try([for name in local.compute_instances[*]["name"] : "${name}.${var.dns_domain_names["compute"]}"], [])
+  compute_hosts = try([for name in local.lsf_compute_instances[*]["name"] : "${name}.${var.dns_domain_names["compute"]}"], [])
   # storage_hosts                = try([for name in local.storage_instances[*]["name"] : "${name}.${var.dns_domain_names["storage"]}"], [])
   ldap_hosts                    = try([for instance in local.ldap_instances : instance["ipv4_address"]], [])
   client_hosts                  = try([for instance in local.client_instances : instance["ipv4_address"]], [])
@@ -527,8 +530,8 @@ locals {
 
 # locals needed for playbook
 locals {
-  bastion_fip              = module.deployer.bastion_fip
-  compute_private_key_path = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/compute_id_rsa" : "${path.root}/modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
+  bastion_fip = module.deployer.bastion_fip
+  # compute_private_key_path = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/compute_id_rsa" : "${path.root}/modules/ansible-roles/compute_id_rsa" #checkov:skip=CKV_SECRET_6
   # storage_private_key_path = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/storage_id_rsa" : "${path.root}/modules/ansible-roles/storage_id_rsa" #checkov:skip=CKV_SECRET_6
   observability_playbook_path = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/observability.yaml" : "${path.root}/modules/ansible-roles/observability.yaml"
   lsf_mgmt_playbooks_path     = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/lsf_mgmt_config.yml" : "${path.root}/modules/ansible-roles/lsf_mgmt_config.yml"
@@ -543,6 +546,7 @@ locals {
 
 # details needed for json file
 locals {
+  lsf_compute_hosts_ips       = var.enable_deployer ? [] : flatten(local.inv_compute_instances)[*].ipv4_address
   compute_hosts_ips           = var.enable_deployer ? [] : flatten(local.compute_instances)[*].ipv4_address
   compute_mgmt_instances_data = var.scheduler == "Scale" ? var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_management_vsi_data]) : []
   compute_mgmt_hosts_ips      = var.scheduler == "Scale" ? var.enable_deployer ? [] : local.compute_mgmt_instances_data[*]["ipv4_address"] : []
@@ -616,6 +620,7 @@ locals {
   protocol_host_entry      = var.scheduler == "Scale" ? { for vsi in flatten([module.landing_zone_vsi[*].protocol_vsi_data]) : vsi.ipv4_address => vsi.name } : {}
   gklm_host_entry          = var.scheduler == "Scale" ? { for vsi in flatten([module.landing_zone_vsi[*].gklm_vsi_data]) : vsi.ipv4_address => vsi.name } : {}
   afm_host_entry           = var.scheduler == "Scale" ? { for vsi in flatten([module.landing_zone_vsi[*].afm_vsi_data]) : vsi.ipv4_address => vsi.name } : {}
+  ppnlb_host_entry         = var.scheduler == "Scale" && var.enable_private_path_nlb && length(module.vpe) > 0 ? { for ip in module.vpe[0].vpe_ip["${var.cluster_prefix}-vpe-gateway"] : ip.address => var.cluster_prefix } : {}
 
   storage_bms_host_entry = var.scheduler == "Scale" ? {
     for server in local.raw_bm_storage_servers_dns_record_details : server.ipv4_address =>
@@ -670,9 +675,9 @@ locals {
   scale_afm_bucket_config_details = module.landing_zone.scale_afm_bucket_config_details
   scale_afm_cos_hmac_key_params   = module.landing_zone.scale_afm_cos_hmac_key_params
 
-  compute_instance_private_ips = local.enable_sec_interface_compute ? flatten([for ip in local.compute_instances : ip.secondary_network_interface_detail[*]["primary_ipv4_address"]]) : flatten(local.compute_instances[*]["ipv4_address"])
-  compute_instance_ids         = local.enable_sec_interface_compute ? flatten([for id in local.compute_instances : id.secondary_network_interface_detail[*]["id"]]) : flatten(local.compute_instances[*]["id"])
-  compute_instance_names       = local.enable_sec_interface_compute ? flatten([for name in local.compute_instances : [for nic in name.secondary_network_interface_detail[*]["name"] : "${nic}.${var.dns_domain_names["storage"]}"]]) : try(tolist([for name_details in flatten(local.compute_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["compute"]}"]), [])
+  compute_instance_private_ips = local.enable_sec_interface_compute ? flatten([for ip in local.inv_compute_instances : ip.secondary_network_interface_detail[*]["primary_ipv4_address"]]) : flatten(local.inv_compute_instances[*]["ipv4_address"])
+  compute_instance_ids         = local.enable_sec_interface_compute ? flatten([for id in local.inv_compute_instances : id.secondary_network_interface_detail[*]["id"]]) : flatten(local.inv_compute_instances[*]["id"])
+  compute_instance_names       = local.enable_sec_interface_compute ? flatten([for name in local.inv_compute_instances : [for nic in name.secondary_network_interface_detail[*]["name"] : "${nic}.${var.dns_domain_names["storage"]}"]]) : try(tolist([for name_details in flatten(local.inv_compute_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["compute"]}"]), [])
 
   compute_mgmt_instance_private_ips = local.enable_sec_interface_compute ? flatten([for ip in local.comp_mgmt_instances : ip.secondary_network_interface_detail[*]["primary_ipv4_address"]]) : flatten(local.comp_mgmt_instances[*]["ipv4_address"])
   compute_mgmt_instance_ids         = local.enable_sec_interface_compute ? flatten([for id in local.comp_mgmt_instances : id.secondary_network_interface_detail[*]["id"]]) : flatten(local.comp_mgmt_instances[*]["id"])

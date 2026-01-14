@@ -31,6 +31,12 @@ spec:
     - name: solution
       description: Provide the value for the solution that is needed for the support of lsf and HPC.
       default: ""
+    - name: lsf_version
+      description: Fix pack LSF Version
+      default: ""
+    - name: ssh_key_regions
+      description: Region to create ssh_keys
+      default: ""
   workspaces:
     - name: workspace
       mountPath: /artifacts
@@ -42,6 +48,10 @@ spec:
             name: $(params.continuous-delivery-context-secret)
             key: $(params.ibmcloud-apikey-secret-key)
             optional: true
+      - name: BUILD_NUMBER
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.annotations['devops.cloud.ibm.com/build-number']
       - name: PIPELINE_DEBUG
         value: $(params.pipeline-debug)
       - name: PR_REVISION
@@ -52,6 +62,10 @@ spec:
         value: $(params.resource_group)
       - name: solution
         value: $(params.solution)
+      - name: lsf_version
+        value: $(params.lsf_version)
+      - name: ssh_key_regions
+        value: $(params.ssh_key_regions)
   steps:
     - name: ssh-key-creation
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
@@ -71,4 +85,4 @@ spec:
 
           source .tekton/scripts/ssh_create_delete.sh
           echo "${solution}"
-          ssh_key_create "${solution}"
+          ssh_key_create "${solution}" "${ssh_key_regions}" "${lsf_version}"

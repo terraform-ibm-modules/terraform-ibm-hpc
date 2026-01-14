@@ -1,6 +1,6 @@
 # LSF Suites Inventory file
 [local]
-localhost
+localhost ansible_connection=local
 # Use this file to define the machines there roles
 # A machine can belong to more than one role, but
 # should only belong to one LSF_xxxxx role.
@@ -62,3 +62,7 @@ localhost
 {% for host in db_hosts %}
 {{ host }}
 {% endfor %}
+
+[all:vars]
+ansible_user=vpcuser
+ansible_ssh_private_key_file=/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/compute_id_rsa

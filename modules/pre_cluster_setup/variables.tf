@@ -107,6 +107,12 @@ variable "afm_bms_hosts" {
   default = {}
 }
 
+variable "ppnlb_hosts" {
+  description = "Map of PPNLB hosts configuration"
+  type        = map(string)
+  default     = {}
+}
+
 variable "clone_path" {
   type        = string
   description = "Scale repo clone path"
@@ -131,6 +137,7 @@ variable "domain_names" {
     protocol = optional(string)
     client   = optional(string)
     gklm     = optional(string)
+    ppnlb    = optional(string)
   })
   default = {
     compute  = "comp.com"
@@ -138,6 +145,7 @@ variable "domain_names" {
     protocol = "ces.com"
     client   = "clnt.com"
     gklm     = "gklm.com"
+    ppnlb    = "strgscale.private"
   }
   description = "IBM Cloud HPC DNS domain names."
 }

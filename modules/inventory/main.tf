@@ -21,6 +21,8 @@ ${join("\n", var.gui_hosts)}
 ${join("\n", var.login_host)}
 
 [all:vars]
+ansible_user = "vpcuser"
+ansible_ssh_private_key_file = "/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/compute_id_rsa"
 scheduler = ${jsonencode(var.scheduler)}
 name_mount_path_map = {${join(",", [for k, v in var.name_mount_path_map : "\"${k}\": \"${v}\""])}}
 nfs_shares_map       = ${jsonencode(var.nfs_shares_map)}

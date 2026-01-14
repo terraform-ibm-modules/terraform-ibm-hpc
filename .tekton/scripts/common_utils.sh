@@ -3,26 +3,27 @@ echo "************************************************"
 get_commit_ssh_key() {
     REVISION=$1
     CHECK_SOLUTION=$2
+    LSF_VERSION=$3
     if [[ "$CHECK_SOLUTION" == "hpcaas" ]]; then
-        CICD_SSH_KEY=cicd-hpcaas
+        CICD_SSH_KEY=cicd-hpcaas-"${BUILD_NUMBER:?}"
         if [ "${REVISION}" ]; then
-            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-"$REVISION")
+            CICD_SSH_KEY=$(echo "$CICD_SSH_KEY"-"$REVISION")
         else
             CICD_SSH_KEY=$CICD_SSH_KEY-tekton
         fi
     fi
     if [[ "$CHECK_SOLUTION" == "lsf" ]]; then
-        CICD_SSH_KEY=cicd-lsf
+        CICD_SSH_KEY=cicd-lsf-"${BUILD_NUMBER:?}"
         if [ "${REVISION}" ]; then
-            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-"$REVISION")
+            CICD_SSH_KEY=$(echo "$CICD_SSH_KEY"-"$REVISION")
         else
             CICD_SSH_KEY=$CICD_SSH_KEY-tekton
         fi
     fi
     if [[ "$CHECK_SOLUTION" == "lsf-da" ]]; then
-        CICD_SSH_KEY=cicd-lsf-da
+        CICD_SSH_KEY=cicd-"$LSF_VERSION"-"${BUILD_NUMBER:?}"
         if [ "${REVISION}" ]; then
-            CICD_SSH_KEY=$(echo $CICD_SSH_KEY-"$REVISION")
+            CICD_SSH_KEY=$(echo "$CICD_SSH_KEY"-"$REVISION")
         else
             CICD_SSH_KEY=$CICD_SSH_KEY-tekton
         fi
@@ -33,17 +34,18 @@ get_commit_ssh_key() {
 get_pr_ssh_key() {
     PR_REVISION=$1
     CHECK_SOLUTION=$2
+    LSF_VERSION=$3
     if [[ "$CHECK_SOLUTION" == "hpcaas" ]]; then
-        CICD_SSH_KEY=cicd-hpcaas
-        CICD_SSH_KEY=$(echo $CICD_SSH_KEY-"$PR_REVISION")
+        CICD_SSH_KEY=cicd-hpcaas-"${BUILD_NUMBER:?}"
+        CICD_SSH_KEY=$(echo "$CICD_SSH_KEY"-"$PR_REVISION")
     fi
     if [[ "$CHECK_SOLUTION" == "lsf" ]]; then
-        CICD_SSH_KEY=cicd-lsf
-        CICD_SSH_KEY=$(echo $CICD_SSH_KEY-"$PR_REVISION")
+        CICD_SSH_KEY=cicd-lsf-"${BUILD_NUMBER:?}"
+        CICD_SSH_KEY=$(echo "$CICD_SSH_KEY"-"$PR_REVISION")
     fi
     if [[ "$CHECK_SOLUTION" == "lsf-da" ]]; then
-        CICD_SSH_KEY=cicd-lsf
-        CICD_SSH_KEY=$(echo $CICD_SSH_KEY-"$PR_REVISION")
+        CICD_SSH_KEY=cicd-"$LSF_VERSION"-"${BUILD_NUMBER:?}"
+        CICD_SSH_KEY=$(echo "$CICD_SSH_KEY"-"$PR_REVISION")
     fi
 }
 

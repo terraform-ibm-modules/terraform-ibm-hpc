@@ -73,10 +73,13 @@ spec:
       default: ""
     - name: solution
       description: Provide the value for the solution that is needed for the support of lsf and HPC.
-      default: "lsf"
+      default: "lsf-da"
     - name: pac_ha_exist_certificate
       description: PAC HA Existing Certificate
       default: ""
+    - name: lsf_version
+      description: Fix pack LSF Version
+      default: "lsf15"
   workspaces:
     - name: workspace
       mountPath: /artifacts
@@ -130,8 +133,10 @@ spec:
         value: $(params.deployer_image_name)
       - name: pac_ha_exist_certificate
         value: $(params.pac_ha_exist_certificate)
+      - name: lsf_version
+        value: $(params.lsf_version)
   steps:
-    - name: rhel-suite-7
+    - name: rhel-suite-9
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -149,8 +154,8 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          lsf_da_rhel_suite_7
-    - name: rhel-suite-8
+          lsf_da_rhel_suite_9
+    - name: rhel-suite-10
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -168,23 +173,4 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          lsf_da_rhel_suite_8
-    # - name: rhel-suite-9
-    #   onError: continue
-    #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-    #   workingDir: "/artifacts"
-    #   imagePullPolicy: Always
-    #   command: ["/bin/bash", "-c"]
-    #   args:
-    #     - |
-    #       #!/bin/bash
-
-    #       if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
-    #         pwd
-    #         env
-    #         trap env EXIT
-    #         set -x
-    #       fi
-
-    #       source .tekton/scripts/suites.sh
-    #       lsf_da_rhel_suite_9
+          lsf_da_rhel_suite_10

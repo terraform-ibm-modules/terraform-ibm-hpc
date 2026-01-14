@@ -121,6 +121,11 @@ data "ibm_is_security_group" "login_security_group" {
   name  = var.login_security_group_name
 }
 
+data "ibm_is_security_group" "client_security_group" {
+  count = var.client_security_group_name != null ? 1 : 0
+  name  = var.client_security_group_name
+}
+
 data "ibm_iam_account_settings" "account" {
   count = var.enable_private_path_nlb ? 1 : 0
 }

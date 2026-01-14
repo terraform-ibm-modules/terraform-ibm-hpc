@@ -41,21 +41,21 @@ resource "null_resource" "dedicated_host_validation" {
 }
 
 resource "local_sensitive_file" "write_meta_private_key" {
-  count           = local.enable_compute ? 1 : 0
+  count           = var.scheduler == "LSF" && local.enable_compute ? 1 : 0
   content         = (local.compute_private_key_content)
   filename        = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/compute_id_rsa" : "${path.root}/modules/ansible-roles/compute_id_rsa"
   file_permission = "0600"
 }
 
 resource "local_sensitive_file" "copy_compute_private_key_content" {
-  count           = local.enable_compute ? 1 : 0
+  count           = var.scheduler == "LSF" && local.enable_compute ? 1 : 0
   content         = (local.compute_private_key_content)
   filename        = "/root/.ssh/id_rsa"
   file_permission = "0600"
 }
 
 resource "null_resource" "copy_compute_public_key_content" {
-  count = local.enable_compute ? 1 : 0
+  count = var.scheduler == "LSF" && local.enable_compute ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -518,11 +518,11 @@ module "storage_baremetal" {
   storage_subnets              = [for subnet in local.storage_subnets : subnet.id]
   storage_ssh_keys             = local.ssh_keys
   storage_servers              = var.storage_servers
-  security_group_ids           = module.storage_sg[*].security_group_id
+  security_group_ids           = var.storage_security_group_name == null ? module.storage_sg[*].security_group_id : local.storage_security_group_name_id
   user_data                    = var.bms_boot_drive_encryption == false ? data.template_file.storage_bm_user_data.rendered : templatefile("${path.module}/templates/storage_bootdrive_user_data/cloud_init.yml", local.user_data_vars)
   secondary_vni_enabled        = local.enable_protocol && var.colocate_protocol_instances ? true : false
   protocol_subnets             = local.enable_protocol && var.colocate_protocol_instances ? local.protocol_subnets : []
-  secondary_security_group_ids = local.enable_protocol && var.colocate_protocol_instances ? module.storage_sg[*].security_group_id : []
+  secondary_security_group_ids = var.storage_security_group_name == null ? module.storage_sg[*].security_group_id : local.storage_security_group_name_id
   #  manage_reserved_ips           = local.enable_protocol && var.colocate_protocol_instances ? true : false
   sapphire_rapids_profile_check = local.sapphire_rapids_profile_check
 }
@@ -536,7 +536,7 @@ module "storage_baremetal_tie_breaker" {
   storage_subnets               = [for subnet in local.storage_subnets : subnet.id]
   storage_ssh_keys              = local.ssh_keys
   storage_servers               = local.tie_breaker_bm_server
-  security_group_ids            = module.storage_sg[*].security_group_id
+  security_group_ids            = var.storage_security_group_name == null ? module.storage_sg[*].security_group_id : local.storage_security_group_name_id
   user_data                     = var.bms_boot_drive_encryption == false ? data.template_file.storage_bmtb_user_data.rendered : templatefile("${path.module}/templates/storage_tb_bootdrive_user_data/cloud_init.yml", local.user_data_vars)
   secondary_vni_enabled         = false
   protocol_subnets              = local.protocol_subnets
@@ -553,11 +553,11 @@ module "protocol_baremetal_server" {
   storage_subnets               = [for subnet in local.storage_subnets : subnet.id]
   storage_ssh_keys              = local.ssh_keys
   storage_servers               = var.protocol_instances
-  security_group_ids            = module.storage_sg[*].security_group_id
+  security_group_ids            = var.storage_security_group_name == null ? module.storage_sg[*].security_group_id : local.storage_security_group_name_id
   user_data                     = var.bms_boot_drive_encryption == false ? data.template_file.protocol_bm_user_data.rendered : templatefile("${path.module}/templates/protocol_bootdrive_user_data/cloud_init.yml", local.user_data_vars)
   secondary_vni_enabled         = true
   protocol_subnets              = local.protocol_subnets
-  secondary_security_group_ids  = module.storage_sg[*].security_group_id
+  secondary_security_group_ids  = var.storage_security_group_name == null ? module.storage_sg[*].security_group_id : local.storage_security_group_name_id
   sapphire_rapids_profile_check = local.sapphire_rapids_profile_check
 }
 
@@ -570,7 +570,7 @@ module "afm_baremetal_server" {
   storage_subnets               = [for subnet in local.storage_subnets : subnet.id]
   storage_ssh_keys              = local.ssh_keys
   storage_servers               = var.afm_instances
-  security_group_ids            = module.storage_sg[*].security_group_id
+  security_group_ids            = var.storage_security_group_name == null ? module.storage_sg[*].security_group_id : local.storage_security_group_name_id
   user_data                     = var.bms_boot_drive_encryption == false ? data.template_file.afm_bm_user_data.rendered : templatefile("${path.module}/templates/afm_bootdrive_user_data/cloud_init.yml", local.user_data_vars)
   secondary_vni_enabled         = false
   protocol_subnets              = local.protocol_subnets

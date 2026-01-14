@@ -6,16 +6,16 @@
 
 - name: Download Cloud Logs Agent RPM package checksum
   ansible.builtin.get_url:
-    url: "https://logs-router-agent-install-packages.s3.us.cloud-object-storage.appdomain.cloud/logs-router-agent-rhel8-1.3.1.rpm.sha256"
-    dest: "/tmp/logs-router-agent-rhel8-1.3.1.rpm.sha256"
+    url: "https://logs-router-agent-install-packages.s3.us.cloud-object-storage.appdomain.cloud/logs-router-agent-rhel8-1.6.3.rpm.sha256"
+    dest: "/tmp/logs-router-agent-rhel8-1.6.3.rpm.sha256"
 
 - name: Download Cloud Logs Agent RPM package
   ansible.builtin.get_url:
-    url: "https://logs-router-agent-install-packages.s3.us.cloud-object-storage.appdomain.cloud/logs-router-agent-rhel8-1.3.1.rpm"
-    dest: "/tmp/logs-router-agent-rhel8-1.3.1.rpm"
+    url: "https://logs-router-agent-install-packages.s3.us.cloud-object-storage.appdomain.cloud/logs-router-agent-rhel8-1.6.3.rpm"
+    dest: "/tmp/logs-router-agent-rhel8-1.6.3.rpm"
 
 - name: Verify package integrity
-  ansible.builtin.command: sha256sum -c /tmp/logs-router-agent-rhel8-1.3.1.rpm.sha256
+  ansible.builtin.command: sha256sum -c /tmp/logs-router-agent-rhel8-1.6.3.rpm.sha256
   args:
     chdir: /tmp
   register: checksum_result
@@ -27,7 +27,7 @@
 
 - name: Install Cloud Logs Agent
   ansible.builtin.yum:
-    name: /tmp/logs-router-agent-rhel8-1.3.1.rpm
+    name: /tmp/logs-router-agent-rhel8-1.6.3.rpm
     state: present
     disable_gpg_check: yes
 
@@ -40,12 +40,6 @@
   ansible.builtin.debug:
     msg: "{{ agent_installed.stdout }}"
 
-- name: Download post-config.sh script
-  ansible.builtin.get_url:
-    url: "https://logs-router-agent-config.s3.us.cloud-object-storage.appdomain.cloud/post-config.sh"
-    dest: "/root/post-config.sh"
-    mode: "0755"
-
 - name: Print installation completion message
   ansible.builtin.debug:
     msg: "Cloud logs agent installed successfully"
@@ -54,14 +48,6 @@
 - name: Check if observability logs for compute are enabled
   ansible.builtin.debug:
     msg: "Configuring cloud logs for compute since observability logs for compute is enabled"
-  when: logs_enable_for_compute | bool
-
-- name: Copy post-config.sh script
-  ansible.builtin.copy:
-    src: /root/post-config.sh
-    dest: /opt/ibm/post-config.sh
-    mode: '0755'
-    remote_src: true
   when: logs_enable_for_compute | bool
 
 - name: Create fluent-bit.conf for cloud logs
@@ -108,7 +94,7 @@
         Match *
         Add subsystemName compute
         Add applicationName lsf
-      @INCLUDE output-logs-router-agent.conf
+      @INCLUDE outputs.conf
   when: logs_enable_for_compute | bool
 
 - name: Fetch API KEY from file
@@ -129,7 +115,7 @@
 
 - name: Run post-config.sh script
   ansible.builtin.command: >
-    /opt/ibm/post-config.sh -h {{ cloud_logs_ingress_private_endpoint }}
+    /opt/fluent-bit/bin/post-config.sh -h {{ cloud_logs_ingress_private_endpoint }}
     -p "3443"
     -t "/logs/v1/singles"
     -a IAMAPIKey

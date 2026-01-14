@@ -75,7 +75,13 @@ spec:
       default: ""
     - name: solution
       description: Provide the value for the solution that is needed for the support of lsf and HPC.
-      default: "lsf"
+      default: "lsf-da"
+    - name: lsf_version
+      description: Fix pack LSF Version
+      default: "lsf15"
+    - name: ssh_key_regions
+      description: Region to create ssh_keys
+      default: ""
   resourcetemplates:
     - apiVersion: v1
       kind: PersistentVolumeClaim
@@ -144,6 +150,10 @@ spec:
             value: $(params.git_user_email)
           - name: solution
             value: $(params.solution)
+          - name: lsf_version
+            value: $(params.lsf_version)
+          - name: ssh_key_regions
+            value: $(params.ssh_key_regions)
         workspaces:
           - name: pipeline-ws
             persistentVolumeClaim:

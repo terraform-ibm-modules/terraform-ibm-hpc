@@ -595,6 +595,52 @@ func LSFAPPCenterConfiguration(t *testing.T, sClient *ssh.Client, logger *utils.
 	return nil
 }
 
+// LSFWebServicesConfiguration validates LSF Web Services (lwsd) configuration.
+func LSFWebServicesConfiguration(
+	t *testing.T,
+	sshClient *ssh.Client,
+	logger *utils.AggregatedLogger,
+) error {
+
+	// 1. Check lwsd service status
+	cmd := "sudo su -l root -c 'systemctl is-active lwsd'"
+	output, err := utils.RunCommandInSSHSession(sshClient, cmd)
+	if err != nil {
+		return fmt.Errorf("failed to execute systemctl check for lwsd: %v", err)
+	}
+	if strings.TrimSpace(output) != "active" {
+		return fmt.Errorf("lwsd service is not active (output: %s)", output)
+	}
+	logger.Info(t, "Verified lwsd service is active.")
+
+	// 2. Check cacert.pem file existence
+	const certPath = "/opt/ibm/lsfsuite/ext/ws/conf/https/cacert.pem"
+	cmd = fmt.Sprintf("test -f %s", certPath)
+	_, err = utils.RunCommandInSSHSession(sshClient, cmd)
+	if err != nil {
+		return fmt.Errorf("required certificate file not found: %s", certPath)
+	}
+	logger.Info(t, fmt.Sprintf("Verified certificate file exists: %s", certPath))
+
+	// 3. Check if port 8448 is listening
+	const port = "8448"
+	portStatusCommand := fmt.Sprintf("netstat -tuln | grep ':%s '", port)
+	portStatusOutput, err := utils.RunCommandInSSHSession(sshClient, portStatusCommand)
+	if err != nil {
+		return fmt.Errorf("failed to execute command '%s': %w", portStatusCommand, err)
+	}
+	if !utils.VerifyDataContains(t, portStatusOutput, "LISTEN", logger) {
+		return fmt.Errorf(
+			"LSF Web Services port %s is not listening as expected: %s",
+			port,
+			portStatusOutput,
+		)
+	}
+	logger.Info(t, fmt.Sprintf("Verified LSF Web Services port %s is listening.", port))
+
+	return nil
+}
+
 // // LSFGETDynamicComputeNodeIPs retrieves the IP addresses of static nodes with a status of "ok" in an LSF cluster.
 // // It excludes nodes containing "worker" in their HOST_NAME and processes the IP addresses from the node names.
 // // The function executes the "bhosts -w" command over an SSH session, parses the output, and returns a sorted slice of IP addresses.
@@ -900,9 +946,9 @@ func LSFCheckSSHKeyForManagementNodes(t *testing.T, publicHostName, publicHostIP
 // It adjusts the expected values to account for default key counts.
 func HPCGenerateFilePathMap(numKeys int) map[string]int {
 	return map[string]int{
-		"/home/vpcuser/.ssh/authorized_keys":  numKeys,     // Default value plus number of keys
+		"/home/vpcuser/.ssh/authorized_keys":  numKeys + 1, // Default value plus number of keys
 		"/home/lsfadmin/.ssh/authorized_keys": numKeys + 1, // Default value plus number of keys
-		"/root/.ssh/authorized_keys":          numKeys + 1, // Default value plus number of keys
+		"/root/.ssh/authorized_keys":          numKeys,     // Default value plus number of keys
 	}
 }
 
@@ -3279,10 +3325,10 @@ func VerifyEncryptionCRN(t *testing.T, sshClient *ssh.Client, keyManagement stri
 		normalizedOutput := strings.ReplaceAll(strings.ReplaceAll(actualOutput, " ", ""), "\n", "")
 
 		// Determine the expected CRN format based on key management type
-		expectedCRN := "\"crn\":\"crn:v1:bluemix:public:kms"
+		expectedCRN := "\"encryptionKey\":\"crn:v1:bluemix:public:kms"
 		if strings.ToLower(keyManagement) != "key_protect" {
-			//expectedCRN = "\"crn\":\"\""
-			expectedCRN = "\"crn\":\"\""
+			//expectedCRN = "\"encryptionKey\":\"\""
+			expectedCRN = "\"encryptionKey\":\"\""
 		}
 
 		if !utils.VerifyDataContains(t, normalizedOutput, expectedCRN, logger) {

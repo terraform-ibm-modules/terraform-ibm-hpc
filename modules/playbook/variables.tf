@@ -4,11 +4,11 @@ variable "bastion_fip" {
   description = "If Bastion is enabled, jump-host connection is required."
 }
 
-variable "private_key_path" {
-  description = "Private key file path"
-  type        = string
-  default     = "id_rsa"
-}
+# variable "private_key_path" {
+#   description = "Private key file path"
+#   type        = string
+#   default     = "id_rsa"
+# }
 
 variable "inventory_path" {
   description = "Inventory file path"

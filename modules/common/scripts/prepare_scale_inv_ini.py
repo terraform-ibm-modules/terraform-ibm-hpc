@@ -169,7 +169,7 @@ def prepare_ansible_playbook(hosts_config, cluster_config, cluster_key_file):
   connection: local
   tasks:
   - name: Check passwordless SSH on all scale inventory hosts
-    shell: ssh {{{{ ansible_ssh_common_args }}}} -i {cluster_key_file} root@{{{{ inventory_hostname }}}} "echo PASSWDLESS_SSH_ENABLED"
+    shell: ssh {{{{ ansible_ssh_common_args }}}} -i {cluster_key_file} vpcuser@{{{{ inventory_hostname }}}} "echo PASSWDLESS_SSH_ENABLED"
     register: result
     until: result.stdout.find("PASSWDLESS_SSH_ENABLED") != -1
     retries: 240
@@ -209,6 +209,7 @@ def prepare_ansible_playbook(hosts_config, cluster_config, cluster_key_file):
 
 # Install and config Spectrum Scale on nodes
 - hosts: {hosts_config}
+  become: yes
   collections:
      - ibm.spectrum_scale
   any_errors_fatal: true
@@ -250,6 +251,7 @@ def prepare_packer_ansible_playbook(hosts_config, cluster_config):
     content = f"""---
 # Install and config Spectrum Scale on nodes
 - hosts: {hosts_config}
+  become: yes
   collections:
      - ibm.spectrum_scale
   any_errors_fatal: true
@@ -270,6 +272,7 @@ def prepare_nogui_ansible_playbook(hosts_config, cluster_config):
     content = f"""---
 # Install and config Spectrum Scale on nodes
 - hosts: {hosts_config}
+  become: yes
   collections:
      - ibm.spectrum_scale
   any_errors_fatal: true
@@ -288,6 +291,7 @@ def prepare_nogui_packer_ansible_playbook(hosts_config, cluster_config):
     content = f"""---
 # Install and config Spectrum Scale on nodes
 - hosts: {hosts_config}
+  become: yes
   collections:
      - ibm.spectrum_scale
   any_errors_fatal: true
@@ -304,6 +308,7 @@ def prepare_ansible_playbook_encryption_gklm():
     content = """---
 # Encryption setup for the key servers
 - hosts: localhost
+  become: yes
   collections:
      - ibm.spectrum_scale
   any_errors_fatal: true
@@ -319,6 +324,7 @@ def prepare_ansible_playbook_encryption_cluster(hosts_config):
     content = """---
 # Enabling encryption on Storage Scale
 - hosts: {hosts_config}
+  become: yes
   collections:
      - ibm.spectrum_scale
   any_errors_fatal: true
@@ -334,6 +340,7 @@ def prepare_ansible_playbook_key_protect_encryption(hosts_config, cluster_config
     content = f"""---
 # Install and config Spectrum Scale on nodes
 - hosts: {hosts_config}
+  become: yes
   collections:
      - ibm.spectrum_scale
   any_errors_fatal: true
@@ -354,6 +361,7 @@ def boot_volume_disk_grow_partition(hosts_config):
     content = f"""---
 # Spectrum Scale — Grow boot partition and filesystem
 - hosts: {hosts_config}
+  become: yes
   collections:
     - ibm.spectrum_scale
   gather_facts: false
@@ -408,6 +416,7 @@ def block_volume_disk_grow_and_nsd_add(
     content = f"""---
 # Spectrum Scale — NSD grow flow (primary executes all NSD ops sequentially)
 - hosts: {hosts_config}
+  become: yes
   collections:
     - ibm.spectrum_scale
   gather_facts: false
@@ -1392,6 +1401,7 @@ if __name__ == "__main__":
     PARSER.add_argument(
         "--enable_key_protect", help="enable key protect", default="null"
     )
+    PARSER.add_argument("--user", help="OS User for Ansible", default="vpcuser")
     ARGUMENTS = PARSER.parse_args()
 
     cluster_type, gui_username, gui_password = None, None, None
@@ -1899,7 +1909,7 @@ if __name__ == "__main__":
         TF["protocol_cluster_instance_names"],
         TF["storage_cluster_desc_instance_private_ips"],
         quorum_count,
-        "root",
+        ARGUMENTS.user,
         ARGUMENTS.instance_private_key,
     )
     node_template = ""

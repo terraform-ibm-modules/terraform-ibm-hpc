@@ -88,6 +88,9 @@ func runClusterValidationsOnManagementNode(t *testing.T, sshClient *ssh.Client, 
 	// Verify application center configuration
 	VerifyAPPCenterConfig(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPs, logger)
 
+	// Verify Webservice configuration
+	VerifyLSFWebServicesConfig(t, sshClient, bastionIP, LSF_PUBLIC_HOST_NAME, LSF_PRIVATE_HOST_NAME, managementNodeIPs, logger)
+
 	logger.Info(t, "Management node and App Center validations completed.")
 }
 

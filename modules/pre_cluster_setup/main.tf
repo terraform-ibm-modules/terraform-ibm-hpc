@@ -14,6 +14,7 @@ resource "local_file" "scale_cluster_hosts" {
     storage_tb_bms_hosts = var.storage_tb_bms_hosts
     protocol_bms_hosts   = var.protocol_bms_hosts
     afm_bms_hosts        = var.afm_bms_hosts
+    ppnlb_hosts          = var.ppnlb_hosts
   })
 }
 
@@ -27,6 +28,7 @@ resource "local_file" "domain_file" {
       protocol = try(var.domain_names.protocol, null)
       client   = try(var.domain_names.client, null)
       gklm     = try(var.domain_names.gklm, null)
+      ppnlb    = try(var.domain_names.ppnlb, null)
     }
   })
 }
@@ -54,6 +56,7 @@ resource "local_file" "deployer_host_entry_playbook" {
       afm_hosts: "storage"
       afm_bms_hosts: "storage"
       protocol_bms_hosts: "storage"
+      ppnlb_hosts: "ppnlb"
 
   tasks:
 
@@ -119,34 +122,34 @@ resource "local_file" "ansible_inventory" {
             values(local.normalize_hosts.storage_hosts),
             values(local.normalize_hosts.storage_tb_hosts),
             values(local.normalize_hosts.storage_mgmnt_hosts)
-          ]) : "${host.name} ansible_ssh_private_key_file=${local.storage_private_key} storage_type=vsi colocate_protocol_instances=${var.colocate_protocol_instances} scale_protocol_node=${var.enable_protocol}"
+          ]) : "${host.name} ansible_ssh_private_key_file=${local.storage_private_key} ansible_user=vpcuser storage_type=vsi colocate_protocol_instances=${var.colocate_protocol_instances} scale_protocol_node=${var.enable_protocol}"
         ],
         # baremetal storage hosts
         [
           for host in flatten([
             values(local.normalize_hosts.storage_bms_hosts),
             values(local.normalize_hosts.storage_tb_bms_hosts)
-          ]) : "${host.name} id=${host.id} ansible_ssh_private_key_file=${local.storage_private_key} storage_type=baremetal scale_protocol_node=${var.enable_protocol} colocate_protocol_instances=${var.colocate_protocol_instances} bms_boot_drive_encryption=${var.bms_boot_drive_encryption}"
+          ]) : "${host.name} id=${host.id} ansible_ssh_private_key_file=${local.storage_private_key} ansible_user=vpcuser storage_type=baremetal scale_protocol_node=${var.enable_protocol} colocate_protocol_instances=${var.colocate_protocol_instances} bms_boot_drive_encryption=${var.bms_boot_drive_encryption}"
         ],
         # AFM hosts
         [
           for host in values(local.normalize_hosts.afm_hosts) :
-          "${host.name} ansible_ssh_private_key_file=${local.storage_private_key} storage_type=vsi scale_protocol_node=false"
+          "${host.name} ansible_ssh_private_key_file=${local.storage_private_key} ansible_user=vpcuser storage_type=vsi scale_protocol_node=false"
         ],
         # AFM BMS hosts
         [
           for host in values(local.normalize_hosts.afm_bms_hosts) :
-          "${host.name} id=${host.id} ansible_ssh_private_key_file=${local.storage_private_key} storage_type=baremetal scale_protocol_node=false bms_boot_drive_encryption=${var.bms_boot_drive_encryption}"
+          "${host.name} id=${host.id} ansible_ssh_private_key_file=${local.storage_private_key} ansible_user=vpcuser storage_type=baremetal scale_protocol_node=false bms_boot_drive_encryption=${var.bms_boot_drive_encryption}"
         ],
         # Protocol hosts
         [
           for host in values(local.normalize_hosts.protocol_hosts) :
-          "${host.name} ansible_ssh_private_key_file=${local.storage_private_key} storage_type=vsi scale_protocol_node=true colocate_protocol_instances=false"
+          "${host.name} ansible_ssh_private_key_file=${local.storage_private_key} ansible_user=vpcuser storage_type=vsi scale_protocol_node=true colocate_protocol_instances=false"
         ],
         # Protocol BMS hosts
         [
           for host in values(local.normalize_hosts.protocol_bms_hosts) :
-          "${host.name} id=${host.id} ansible_ssh_private_key_file=${local.storage_private_key} storage_type=baremetal scale_protocol_node=true colocate_protocol_instances=false bms_boot_drive_encryption=${var.bms_boot_drive_encryption}"
+          "${host.name} id=${host.id} ansible_ssh_private_key_file=${local.storage_private_key} ansible_user=vpcuser storage_type=baremetal scale_protocol_node=true colocate_protocol_instances=false bms_boot_drive_encryption=${var.bms_boot_drive_encryption}"
         ]
       ])),
       ""
@@ -162,7 +165,7 @@ resource "local_file" "ansible_inventory" {
         for host in flatten([
           values(local.normalize_hosts.compute_hosts),
           values(local.normalize_hosts.compute_mgmnt_hosts)
-        ]) : "${host.name} ansible_ssh_private_key_file=${local.compute_private_key}"
+        ]) : "${host.name} ansible_ssh_private_key_file=${local.compute_private_key} ansible_user=vpcuser"
       ]),
       ""
     ] : [],
@@ -172,7 +175,7 @@ resource "local_file" "ansible_inventory" {
       "[client]",
       join("\n", [
         for host in values(local.normalize_hosts.client_hosts) :
-        "${host.name} ansible_ssh_private_key_file=${local.client_private_key}"
+        "${host.name} ansible_ssh_private_key_file=${local.client_private_key} ansible_user=vpcuser"
       ]),
       ""
     ] : [],
@@ -182,7 +185,7 @@ resource "local_file" "ansible_inventory" {
       "[gklm]",
       join("\n", [
         for host in values(local.normalize_hosts.gklm_hosts) :
-        "${host.name} ansible_ssh_private_key_file=${local.gklm_private_key}"
+        "${host.name} ansible_ssh_private_key_file=${local.gklm_private_key} ansible_user=vpcuser"
       ]),
       ""
     ] : []
@@ -214,6 +217,7 @@ resource "local_file" "scale_host_entry_playbook" {
       afm_hosts: "storage"
       afm_bms_hosts: "storage"
       protocol_bms_hosts: "storage"
+      ppnlb_hosts: "ppnlb"
 
   tasks:
 
@@ -670,7 +674,12 @@ resource "local_file" "scale_baremetal_prerequisite_playbook" {
           ignore_errors: yes
           when: ansible_os_family == "RedHat"
 
-        - name: Add GPFS bin path to root bashrc
+        - name: Add GPFS bin path to User bashrc
+          lineinfile:
+            path: "/home/vpcuser/.bashrc"
+            line: "export PATH=$PATH:/usr/lpp/mmfs/bin"
+
+        - name: Add GPFS bin path to Root User bashrc
           lineinfile:
             path: "/root/.bashrc"
             line: "export PATH=$PATH:/usr/lpp/mmfs/bin"
@@ -808,19 +817,19 @@ resource "local_file" "scale_baremetal_prerequisite_playbook" {
             - backup_resolv is defined
             - backup_resolv.changed
 
-        - name: Add IC_REGION to root bashrc
+        - name: Add IC_REGION to User bashrc
           lineinfile:
-            path: "/root/.bashrc"
+            path: "/etc/environment"
             line: "export IC_REGION={{ vpc_region }}"
 
-        - name: Add IC_SUBNET to root bashrc
+        - name: Add IC_SUBNET to User bashrc
           lineinfile:
-            path: "/root/.bashrc"
+            path: "/etc/environment"
             line: "export IC_SUBNET={{ protocol_subnet }}"
 
-        - name: Add IC_RG to root bashrc
+        - name: Add IC_RG to User bashrc
           lineinfile:
-            path: "/root/.bashrc"
+            path: "/etc/environment"
             line: "export IC_RG={{ resource_group }}"
       when:
         - storage_type | default("") == "baremetal"

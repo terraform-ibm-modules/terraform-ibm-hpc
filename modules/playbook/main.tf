@@ -118,8 +118,6 @@ resource "local_file" "lsf_host_entry_playbook" {
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
       -o StrictHostKeyChecking=no
-    ansible_user: root
-    ansible_ssh_private_key_file: ${var.private_key_path}
   tasks:
 
     - name: Wait for SSH (retry 5x)
@@ -207,6 +205,7 @@ resource "local_file" "create_common_config_playbook" {
 
 - name: Prerequisite Configuration
   hosts: all
+  become: yes
   any_errors_fatal: true
   gather_facts: false
   vars:
@@ -216,8 +215,6 @@ resource "local_file" "create_common_config_playbook" {
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
       -o StrictHostKeyChecking=no
-    ansible_user: root
-    ansible_ssh_private_key_file: ${var.private_key_path}
   pre_tasks:
     - name: Load cluster-specific variables
       include_vars: all.json
@@ -247,6 +244,7 @@ resource "local_file" "create_pre_lsf_config_playbook" {
 
 - name: Prerequisite Configuration
   hosts: [mgmt_compute_nodes]
+  become: yes
   any_errors_fatal: true
   gather_facts: false
   vars:
@@ -256,8 +254,6 @@ resource "local_file" "create_pre_lsf_config_playbook" {
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
       -o StrictHostKeyChecking=no
-    ansible_user: root
-    ansible_ssh_private_key_file: ${var.private_key_path}
   pre_tasks:
     - name: Load cluster-specific variables
       include_vars: all.json
@@ -345,7 +341,7 @@ resource "null_resource" "run_lsf_playbooks" {
     command     = <<EOT
       sudo ansible-playbook -f 200 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml &&
       sudo ansible-playbook -f 200 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml &&
-      sudo ansible-playbook -f 200 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml
+      sudo ansible-playbook -f 200 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml -b
     EOT
   }
 
@@ -361,6 +357,7 @@ resource "local_file" "create_playbook_for_mgmt_config" {
   content  = <<EOT
 - name: Prerequisite Configuration
   hosts: [mgmt_compute_nodes]
+  become: yes
   any_errors_fatal: true
   gather_facts: false
   vars:
@@ -370,8 +367,6 @@ resource "local_file" "create_playbook_for_mgmt_config" {
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
       -o StrictHostKeyChecking=no
-    ansible_user: root
-    ansible_ssh_private_key_file: ${var.private_key_path}
   pre_tasks:
     - name: Load cluster-specific variables
       include_vars: all.json
@@ -399,6 +394,7 @@ resource "local_file" "create_playbook_for_login_node_config" {
   content  = <<EOT
 - name: Prerequisite Configuration
   hosts: [login_node]
+  become: yes
   any_errors_fatal: true
   gather_facts: false
   vars:
@@ -408,8 +404,6 @@ resource "local_file" "create_playbook_for_login_node_config" {
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
       -o StrictHostKeyChecking=no
-    ansible_user: root
-    ansible_ssh_private_key_file: ${var.private_key_path}
   pre_tasks:
     - name: Load cluster-specific variables
       include_vars: all.json
@@ -437,6 +431,7 @@ resource "local_file" "create_playbook_for_post_deploy_config" {
   content  = <<EOT
 - name: Prerequisite Configuration
   hosts: all
+  become: yes
   any_errors_fatal: true
   gather_facts: false
   vars:
@@ -446,8 +441,6 @@ resource "local_file" "create_playbook_for_post_deploy_config" {
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
       -o StrictHostKeyChecking=no
-    ansible_user: root
-    ansible_ssh_private_key_file: ${var.private_key_path}
   pre_tasks:
     - name: Load cluster-specific variables
       include_vars: all.json
@@ -475,17 +468,18 @@ resource "local_file" "prepare_ldap_server_playbook" {
   content  = <<EOT
 - name: LDAP Server Configuration
   hosts: [ldap_server_node]
+  become: yes
   any_errors_fatal: true
   gather_facts: true
   vars:
+    ansible_user: ubuntu
+    ansible_ssh_private_key_file: /opt/ibm/terraform-ibm-hpc/modules/ansible-roles/compute_id_rsa
     ansible_ssh_common_args: >
       ${local.proxyjump}
       -o ControlMaster=auto
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
       -o StrictHostKeyChecking=no
-    ansible_user: root
-    ansible_ssh_private_key_file: ${var.private_key_path}
   roles:
     - { role: ldap_server_prepare }
 EOT
@@ -510,6 +504,7 @@ resource "local_file" "prepare_ldap_client_playbook" {
   content  = <<EOT
 - name: LDAP Server Configuration
   hosts: all
+  become: yes
   any_errors_fatal: true
   gather_facts: true
   vars:
@@ -519,8 +514,6 @@ resource "local_file" "prepare_ldap_client_playbook" {
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
       -o StrictHostKeyChecking=no
-    ansible_user: root
-    ansible_ssh_private_key_file: ${var.private_key_path}
   roles:
     - { role: ldap_client_config }
 EOT
@@ -560,6 +553,7 @@ resource "local_file" "create_observability_playbook" {
   content  = <<EOT
 - name: Cloud Logs Configuration
   hosts: [mgmt_compute_nodes]
+  become: yes
   any_errors_fatal: true
   gather_facts: true
   vars:
@@ -569,13 +563,12 @@ resource "local_file" "create_observability_playbook" {
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
       -o StrictHostKeyChecking=no
-    ansible_user: root
-    ansible_ssh_private_key_file: ${var.private_key_path}
   roles:
     - { role: cloudlogs, tags: ["cloud_logs"] }
 
 - name: Cloud Monitoring Configuration
   hosts: [mgmt_compute_nodes]
+  become: yes
   any_errors_fatal: true
   gather_facts: true
   vars:
@@ -585,8 +578,6 @@ resource "local_file" "create_observability_playbook" {
       -o ControlPersist=30m
       -o UserKnownHostsFile=/dev/null
       -o StrictHostKeyChecking=no
-    ansible_user: root
-    ansible_ssh_private_key_file: ${var.private_key_path}
   roles:
     - { role: cloudmonitoring, tags: ["cloud_monitoring"] }
 EOT
