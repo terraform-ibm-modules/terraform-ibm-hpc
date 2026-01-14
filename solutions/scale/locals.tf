@@ -94,7 +94,6 @@ locals {
     volume_storages                      = var.volume_storages
     enable_private_path_nlb              = var.enable_private_path_nlb
     protocol_instance_eth1_mtu           = var.protocol_instance_eth1_mtu
-    github_token                         = var.github_token # Delete this variable before pushing to the public repository.
   }
 }
 
@@ -178,6 +177,5 @@ locals {
     volume_storages                      = lookup(local.override[local.override_type], "volume_storages", local.config.volume_storages)
     enable_private_path_nlb              = lookup(local.override[local.override_type], "enable_private_path_nlb", local.config.enable_private_path_nlb)
     protocol_instance_eth1_mtu           = lookup(local.override[local.override_type], "protocol_instance_eth1_mtu", local.config.protocol_instance_eth1_mtu)
-    github_token                         = lookup(local.override[local.override_type], "github_token", local.config.github_token) # Delete this variable before pushing to the public repository.
   }
 }
