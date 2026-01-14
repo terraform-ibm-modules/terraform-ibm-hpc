@@ -19,3 +19,13 @@
         name: lwsd
         state: restarted
       when: "'already enabled' not in https_enable_result.stdout"
+
+  rescue:
+    - name: Web Services | HTTPS enable failed
+      ansible.builtin.debug:
+        msg: "Failed to enable HTTPS for Web Services using lwsadmin"
+
+  always:
+    - name: Web Services | HTTPS enable attempt completed
+      ansible.builtin.debug:
+        msg: "Web Services HTTPS configuration block executed"
