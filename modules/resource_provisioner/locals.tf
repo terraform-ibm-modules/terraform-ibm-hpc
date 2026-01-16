@@ -9,9 +9,9 @@ locals {
   da_hpc_scale_repo_tag       = "v3.3.0"
   da_hpc_repo_tag             = var.scheduler == "Scale" ? local.da_hpc_scale_repo_tag : local.da_hpc_lsf_repo_tag
   remote_ansible_path         = format("%s/ibm-spectrumscale-cloud-deploy", local.deployer_path)
-  scale_cloud_infra_repo_url  = "https://github.com/Louies-Jhony/ibm-spectrum-scale-install-infra"
+  scale_cloud_infra_repo_url  = "https://github.com/IBM/ibm-spectrum-scale-install-infra"
   scale_cloud_infra_repo_name = "ibm-spectrum-scale-install-infra"
-  scale_cloud_infra_repo_tag  = "JL_5467_DDL"
+  scale_cloud_infra_repo_tag  = "scale_hpc"
   products                    = var.scheduler == "Scale" ? "scale" : "lsf"
   ssh_key_file                = "${path.root}/../../solutions/${local.products}/bastion_id_rsa"
   bastion_public_key_content  = var.existing_bastion_instance_name != null ? var.bastion_public_key_content : ""
