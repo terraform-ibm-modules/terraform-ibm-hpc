@@ -695,6 +695,7 @@ def initialize_cluster_details(
     cluster_details["ldap_admin_password"] = ldap_admin_password
     cluster_details["scale_afm_cos_bucket_params"] = afm_cos_bucket_details
     cluster_details["scale_afm_cos_filesets_params"] = afm_config_details
+    cluster_details["sudo_enable"] = True
     return cluster_details
 
 
