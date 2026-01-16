@@ -98,6 +98,7 @@ def initialize_cluster_details(
     cluster_details["ldap_basedns"] = ldap_basedns
     cluster_details["ldap_server"] = ldap_server
     cluster_details["ldap_admin_password"] = ldap_admin_password
+    cluster_details["sudo_enable"] = True
     return cluster_details
 
 
