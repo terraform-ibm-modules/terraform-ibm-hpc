@@ -837,7 +837,7 @@ variable "gklm_instances" {
   default = [{
     profile = "bx2-2x8"
     count   = 2
-    image   = "hpcc-scale-gklm4202-v2-5-3"
+    image   = "hpcc-scale-gklm4202-v2-5-4"
   }]
   validation {
     condition = (

@@ -1369,7 +1369,7 @@
             {
               "key": "gklm_instances",
               "type": "object",
-              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"hpcc-scale-gklm4202-v2-5-3\"\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"hpcc-scale-gklm4202-v2-5-4\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
