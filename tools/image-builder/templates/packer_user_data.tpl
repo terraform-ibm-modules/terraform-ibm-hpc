@@ -129,12 +129,6 @@ if [ ! -d "$(pwd)/go" ]; then
     source ~/.bashrc
 fi
 
-if [ "${private_catalog_id}" ]; then
-    CLUSTER_PREFIX=${prefix} SSH_FILE_PATH="/LSF/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY CATALOG_VALIDATE_SSH_KEY=${catalog_validate_ssh_key} ZONES=${zones} EXISTING_RESOURCE_GROUP=${existing_resource_group} COMPUTE_IMAGE_NAME=${image_name} PRIVATE_CATALOG_ID=${private_catalog_id} VPC_ID=${vpc_id} SUBNET_ID=${vpc_subnet_id} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee -a "$LOG_FILE_NAME"
-else
-    CLUSTER_PREFIX=${prefix} SSH_FILE_PATH="/LSF/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY ZONES=${zones} EXISTING_RESOURCE_GROUP=${existing_resource_group} COMPUTE_IMAGE_NAME=${image_name} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee -a "$LOG_FILE_NAME"
-fi
-
 echo "========== Deleting the SSH key ========="
 
 ibmcloud is key-delete $CICD_SSH_KEY -f

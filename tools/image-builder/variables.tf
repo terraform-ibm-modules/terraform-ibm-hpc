@@ -154,13 +154,9 @@ variable "image_name" {
 
 variable "source_image_name" {
   type        = string
-  default     = "ibm-redhat-8-8-minimal-amd64-5"
+  default     = "ibm-redhat-8-10-minimal-amd64-10"
   description = "Provide the base stock image available in IBM Cloud that will be used as the foundation for creating a custom image."
 
-  validation {
-    condition     = can(regex("^(ibm-ubuntu-22-04-4-minimal-amd64-|ibm-redhat-8-8-minimal-amd64-|ibm-rocky-linux-8-10-minimal-amd64-)", var.source_image_name))
-    error_message = "We provide support for the following source images: Ubuntu 22.04, RHEL 8.8, and Rocky Linux 8.10."
-  }
 }
 
 variable "install_sysdig" {
