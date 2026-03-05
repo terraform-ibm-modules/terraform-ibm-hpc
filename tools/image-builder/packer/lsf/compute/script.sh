@@ -69,6 +69,7 @@ LSF_CONF_PATH="${LSF_TOP}/conf"
 LSF_PACKAGES_PATH="/tmp/packages"
 echo $LSF_PACKAGES_PATH
 mkdir -p ${LSF_TOP}
+mkdir -p ${LSF_TOP}/Divya
 chmod -R 755 /opt
 
 echo "======================Triggering mounting of Cos Bucket for lsf package installation====================="
@@ -77,7 +78,7 @@ ls -ltr /wes-hpc
 s3fs custom-image-builder-bucket /wes-hpc -o url=https://s3.direct.us-south.cloud-object-storage.appdomain.cloud -o ro -o public_bucket=1
 ls -ltr /wes-hpc
 mkdir -p /tmp/packages
-cp -r /wes-hpc/lsf/* /tmp/packages/
+cp -r /wes-hpc/lsf/LSF_Standalone_Packages/* /tmp/packages/
 ls -ltr /tmp/packages/
 echo "======================Cos Bucket mounting completed for lsf package installation====================="
 
@@ -85,6 +86,7 @@ sleep 100
 
 echo "======================Installation of IBMCloud Plugins started====================="
 curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+export PATH=$PATH:/usr/local/ibmcloud/bin
 pip3 install ibm-vpc==0.10.0
 pip3 install ibm-cloud-networking-services ibm-cloud-sdk-core selinux
 ibmcloud plugin install vpc-infrastructure DNS
@@ -93,34 +95,107 @@ echo "======================Installation of IBMCloud Plugins completed==========
 
 hostnamectl
 hostnamectl set-hostname lsfservers
+
+
+
+
+echo "====== Setting entitlement files ======"
+echo 'LS_Standard  10.1  ()  ()  ()  ()  18b1928f13939bd17bf25e09a2dd8459f238028f' > /tmp/packages/ls.entitlement
+echo 'LSF_Standard  10.1  ()  ()  ()  pa  3f08e215230ffe4608213630cd5ef1d8c9b4dfea' > /tmp/packages/lsf.entitlement
+
+echo "======================LSF installation====================="
+cd $LSF_PACKAGES_PATH || exit
+zcat lsf*lsfinstall_linux_x86_64.tar.Z | tar xvf -
+cd lsf*_lsfinstall || exit
+sed -e '/show_copyright/ s/^#*/#/' -i lsfinstall
+cat <<EOT >> install.config
+LSF_TOP="/opt/ibm/lsf"
+LSF_ADMINS="lsfadmin"
+LSF_CLUSTER_NAME="HPCCluster"
+LSF_LOCAL_RESOURCES="[resource icgen2host]"
+LSF_MASTER_LIST="lsfservers"
+LSF_ENTITLEMENT_FILE="$LSF_PACKAGES_PATH/lsf.entitlement"
+CONFIGURATION_TEMPLATE="DEFAULT"
+ENABLE_DYNAMIC_HOSTS="Y"
+ENABLE_EGO="N"
+ACCEPT_LICENSE="Y"
+SILENT_INSTALL="Y"
+LSF_SILENT_INSTALL_TARLIST="ALL"
+EOT
+bash lsfinstall -f install.config
+echo $?
+cat Install.log
+echo "====================== LSF Setup Done====================="
+
+
+
+
+echo "====== LSF License Scheduler installation started  ======"
+# LSF License Scheduler installation
+source /opt/ibm/lsf/conf/profile.lsf
+cd $LSF_PACKAGES_PATH || exit
+echo "====== Decompressing, extracting and installing the LSF License Scheduler packages  ======"
+zcat lsf*_licsched_lnx418-x64.tar.Z | tar xvf -
+cd lsf*_licsched_linux4.18-glibc2.28-x86_64 || exit
+# Edit the config file
+cat <<EOF >> setup.config
+LS_TOP="/opt/ibm/lsf"
+LS_ADMIN="lsfadmin"
+SILENT_INSTALL="Y"
+EOF
+bash setup
+echo $?
+echo "====== Installation ends  ======"
+echo "====== Checking for License Scheduler files  ======"
+cd /opt/ibm/lsf/conf || exit
+echo 'LSF_LICENSE_ACCT_PATH=/opt/ibm/lsf/work' >> lsf.conf
+ls -ltr
+echo "====== LSF License Scheduler installation completed ======"
+
+
 # Installation of LSF base packages on compute node
-cd "${LSF_PACKAGES_PATH}" || exit
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-conf-10.1.0.15-25100715.noarch.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-man-pages-10.1.0.15-25100715.noarch.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-client-10.1.0.15-25100715.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-server-10.1.0.15-25100715.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-integrations-10.1.0.15-25100715.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-ego-server-10.1.0.15-25100715.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-devel-10.1.0.15-25100715.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-data-mgr-10.1.0.15-25100715.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-ls-client-10.1.0.15-25100715.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/ibm-jre-1.8.0-25070916.x86_64.rpm
-yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-pm-client-10.2.0.15-25100715.x86_64.rpm
-echo "========================LSF 10.1 installation completed====================="
+# cd "${LSF_PACKAGES_PATH}" || exit
+# yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-conf-10.1.0.15-25100715.noarch.rpm
+# yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-man-pages-10.1.0.15-25100715.noarch.rpm
+# yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-client-10.1.0.15-25100715.x86_64.rpm
+# yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-server-10.1.0.15-25100715.x86_64.rpm
+# yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-integrations-10.1.0.15-25100715.x86_64.rpm
+# yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-ego-server-10.1.0.15-25100715.x86_64.rpm
+# yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-devel-10.1.0.15-25100715.x86_64.rpm
+# yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-data-mgr-10.1.0.15-25100715.x86_64.rpm
+# yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-ls-client-10.1.0.15-25100715.x86_64.rpm
+# yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/ibm-jre-1.8.0-25070916.x86_64.rpm
+# yum install -y --nogpgcheck "${LSF_PACKAGES_PATH}"/lsf-pm-client-10.2.0.15-25100715.x86_64.rpm
+# echo "========================LSF 10.1 installation completed====================="
+
+
+echo "====== AMD and Intel HostModel Configuration started ======"
+cd /opt/ibm/lsf/conf || exit
+sed -i '/^Intel_EM64T/a Intel_GraniteRapids 50.0 (x6_5000_IntelXeonProcessorGraniteRapids)' lsf.shared
+sed -i '/^Intel_EM64T/a Intel_Cascadelake 48.0 (x6_4788_IntelXeonProcessorCascadelake)' lsf.shared 
+sed -i '/^Intel_EM64T/a Intel_SapphireRapids 42.0 (x6_4200_IntelXeonProcessorSapphireRapids)' lsf.shared 
+sed -i '/^Intel_EM64T/a AMD_EPYC_9575F 66.0 (x26_6590_AMDEPYC9575F64CoreProcessor)' lsf.shared 
+sed -i '/^Intel_EM64T/a Intel_Gaudi_PLATINUM_8568Y 46.0 (x6_4600_IntelXeonPLATINUM8568Y+)' lsf.shared
+echo "====== AMD and Intel HostModel Configuration completed ======"
+
 
 # Installation Of OpenMPI
-cd "${LSF_PACKAGES_PATH}" || exit
-wget https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.0.tar.gz
-tar -xvf openmpi-4.1.0.tar.gz
-cd openmpi-4.1.0 || exit
+echo "====== SetUp of one MPI Started ======"
+cd "$LSF_PACKAGES_PATH" || exit
+wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-5.0.9.tar.gz
+tar -xvf openmpi-5.0.9.tar.gz
+cd openmpi-5.0.9 || exit
 ln -s /usr/lib64/libnsl.so.2.0.0 /usr/lib64/libnsl.so
 export LANG=C
-./configure --prefix='/usr/local/openmpi-4.1.0' --enable-mpi-thread-multiple --enable-shared --disable-static --enable-mpi-fortran=usempi --disable-libompitrace --enable-script-wrapper-compilers --enable-wrapper-rpath --enable-orterun-prefix-by-default --with-io-romio-flags=--with-file-system=nfs --with-lsf=/opt/ibm/lsfsuite/lsf/10.1 --with-lsf-libdir=/opt/ibm/lsfsuite/lsf/10.1/linux3.10-glibc2.17-x86_64/lib
+#Please update the linux package latest version in the below line whenever required
+./configure --prefix='/usr/local/openmpi-5.0.9' --enable-shared --disable-static --enable-mpi-fortran=usempi --disable-libompitrace --enable-script-wrapper-compilers --enable-wrapper-rpath --enable-prte-prefix-by-default --with-io-romio-flags=--with-file-system=nfs --with-lsf=/opt/ibm/lsf/10.1 --with-lsf-libdir=/opt/ibm/lsf/10.1/linux4.18-glibc2.28-x86_64/lib
 make -j 32
 make install
-find /usr/local/openmpi-4.1.0/ -type d -exec chmod 775 {} \;
+find /usr/local/openmpi-5.0.9/ -type d -exec chmod 775 {} \;
 echo "======================OneMPI installation completed====================="
 
+
+echo "====== SetUp of Intel One API Started ======"
 # Intel One API (hpckit) installation based on the Operating system
 if grep -q 'ID="rhel"' /etc/os-release || grep -q 'ID="rocky"' /etc/os-release; then
   # For RHEL-based systems
@@ -152,11 +227,15 @@ else
   sudo apt update && sudo apt upgrade -y
   sudo apt install -y nfs-common build-essential
 fi
+echo "====== SetUp of Intel one API completed ======"
+
 
 # Setting up access to the appropriate path
 mv -f ${LSF_PACKAGES_PATH}/*.entitlement /opt/ibm/lsf/conf
 chown -R lsfadmin:root ${LSF_CONF_PATH}
 
+
+echo "====== Sysdig Agent installation Started ======"
 echo "${INSTALL_SYSDIG}"
 if [ "${INSTALL_SYSDIG}" = true ]; then
    # Installation of Sysdig Agent on compute nodes
@@ -167,18 +246,19 @@ if [ "${INSTALL_SYSDIG}" = true ]; then
 else
   echo "INSTALL_SYDIG is set as false and the sysdig agent is not installed on compute node image"
 fi
+echo "====== Sysdig Agent installation completed ======"
 
 #Cloud Log Agent Installation
-echo "Cloud logs agent installation started"
+echo "====== Cloud Log Agent Installation started ======"
 pwd
-wget https://logs-router-agent-install-packages.s3.us.cloud-object-storage.appdomain.cloud/logs-router-agent-rhel8-1.3.1.rpm.sha256
-wget https://logs-router-agent-install-packages.s3.us.cloud-object-storage.appdomain.cloud/logs-router-agent-rhel8-1.3.1.rpm
-sha256sum -c logs-router-agent-rhel8-1.3.1.rpm.sha256
-rpm -ivh logs-router-agent-rhel8-1.3.1.rpm
+wget https://logs-router-agent-install-packages.s3.us.cloud-object-storage.appdomain.cloud/logs-router-agent-rhel8-1.7.1.rpm.sha256
+wget https://logs-router-agent-install-packages.s3.us.cloud-object-storage.appdomain.cloud/logs-router-agent-rhel8-1.7.1.rpm
+sha256sum -c logs-router-agent-rhel8-1.7.1.rpm.sha256
+rpm -ivh logs-router-agent-rhel8-1.7.1.rpm
 rpm -qa | grep logs-router-agent
 wget -O /root/post-config.sh https://logs-router-agent-config.s3.us.cloud-object-storage.appdomain.cloud/post-config.sh
 ls -a /root
-echo "Cloud logs agent installated"
+echo "====== Cloud Log Agent Installation completed ======"
 
 # Security approach to delete unwanted ssh keys and host file entries
 rm -rf "${LSF_PACKAGES_PATH}"
