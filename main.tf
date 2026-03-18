@@ -1014,24 +1014,24 @@ module "post_cluster_setup" {
 }
 
 module "compute_playbook" {
-  count                       = var.enable_deployer == false ? 1 : 0
-  source                      = "./modules/playbook"
-  scheduler                   = var.scheduler
-  bastion_fip                 = local.bastion_fip
-  inventory_path              = local.compute_inventory_path
-  enable_deployer             = var.enable_deployer
-  ibmcloud_api_key            = var.ibmcloud_api_key
-  lsf_mgmt_playbooks_path     = local.lsf_mgmt_playbooks_path
-  enable_ldap                 = var.enable_ldap
-  ldap_server                 = local.ldap_server
-  playbooks_path              = local.playbooks_path
-  mgmnt_hosts                 = local.mgmnt_host_entry
-  comp_hosts                  = local.comp_host_entry
-  login_host                  = local.login_host_entry
-  deployer_host               = local.deployer_host_entry
-  domain_name                 = var.dns_domain_names["compute"]
-  enable_dedicated_host       = var.enable_dedicated_host
-  depends_on                  = [module.compute_inventory, module.landing_zone_vsi]
+  count                   = var.enable_deployer == false ? 1 : 0
+  source                  = "./modules/playbook"
+  scheduler               = var.scheduler
+  bastion_fip             = local.bastion_fip
+  inventory_path          = local.compute_inventory_path
+  enable_deployer         = var.enable_deployer
+  ibmcloud_api_key        = var.ibmcloud_api_key
+  lsf_mgmt_playbooks_path = local.lsf_mgmt_playbooks_path
+  enable_ldap             = var.enable_ldap
+  ldap_server             = local.ldap_server
+  playbooks_path          = local.playbooks_path
+  mgmnt_hosts             = local.mgmnt_host_entry
+  comp_hosts              = local.comp_host_entry
+  login_host              = local.login_host_entry
+  deployer_host           = local.deployer_host_entry
+  domain_name             = var.dns_domain_names["compute"]
+  enable_dedicated_host   = var.enable_dedicated_host
+  depends_on              = [module.compute_inventory, module.landing_zone_vsi]
 }
 
 ###################################################

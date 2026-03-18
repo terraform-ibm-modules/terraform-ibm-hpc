@@ -1,6 +1,6 @@
 variable "vpc_apikey_value" {
-  type      = string
-  sensitive = true
+  type        = string
+  sensitive   = true
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module."
 }
 ##############################################################################
