@@ -141,10 +141,10 @@ spec:
           value: $(params.lsf_version)
         - name: ssh_key_regions
           value: $(params.ssh_key_regions)
-    - name: wes-lsf-da-rhel-1
+    - name: rhel-core-deployment-and-rga-tests
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
-        name: wes-lsf-da-rhel-1
+        name: rhel-core-deployment-and-rga-tests
       workspaces:
         - name: workspace
           workspace: pipeline-ws
@@ -191,10 +191,10 @@ spec:
           value: $(params.solution)
         - name: lsf_version
           value: $(params.lsf_version)
-    - name: wes-lsf-da-rhel-2
+    - name: rhel-kms-cluster-topology-and-identity-tests
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
-        name: wes-lsf-da-rhel-2
+        name: rhel-kms-cluster-topology-and-identity-tests
       workspaces:
         - name: workspace
           workspace: pipeline-ws
@@ -241,10 +241,10 @@ spec:
           value: $(params.solution)
         - name: lsf_version
           value: $(params.lsf_version)
-    - name: wes-lsf-da-rhel-3
+    - name: rhel-observability-and-network-profile-tests
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
-        name: wes-lsf-da-rhel-3
+        name: rhel-observability-and-network-profile-tests
       workspaces:
         - name: workspace
           workspace: pipeline-ws
@@ -291,62 +291,10 @@ spec:
           value: $(params.solution)
         - name: lsf_version
           value: $(params.lsf_version)
-    - name: wes-lsf-da-rhel-4
+    - name: rhel-observability-and-existing-network-tests
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
-        name: wes-lsf-da-rhel-4
-      workspaces:
-        - name: workspace
-          workspace: pipeline-ws
-      params:
-        - name: repository
-          value: $(params.repository)
-        - name: git_access_token
-          value: $(params.git_access_token)
-        - name: pipeline-debug
-          value: $(params.pipeline-debug)
-        - name: zone
-          value: $(params.zone)
-        - name: resource_group
-          value: $(params.resource_group)
-        - name: compute_image_name_rhel
-          value: $(params.compute_image_name_rhel)
-        - name: compute_image_name_ubuntu
-          value: $(params.compute_image_name_ubuntu)
-        - name: login_image_name
-          value: $(params.login_image_name)
-        - name: management_image_name
-          value: $(params.management_image_name)
-        - name: deployer_image_name
-          value: $(params.deployer_image_name)
-        - name: revision
-          value: $(params.revision)
-        - name: cos_region
-          value: $(params.cos_region)
-        - name: cos_bucket
-          value: $(params.cos_bucket)
-        - name: cos_instance_crn
-          value: $(params.cos_instance_crn)
-        - name: cos_api_key
-          value: $(params.cos_api_key)
-        - name: hpc_custom_reports_repo
-          value: $(params.hpc_custom_reports_repo)
-        - name: hpc_custom_reports_branch
-          value: $(params.hpc_custom_reports_branch)
-        - name: git_user_name
-          value: $(params.git_user_name)
-        - name: git_user_email
-          value: $(params.git_user_email)
-        - name: solution
-          value: $(params.solution)
-        - name: pac_ha_exist_certificate
-          value: $(params.pac_ha_exist_certificate)
-        - name: lsf_version
-          value: $(params.lsf_version)
-    - name: wes-lsf-da-rhel-5
-      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
-      taskRef:
-        name: wes-lsf-da-rhel-5
+        name: rhel-observability-and-existing-network-tests
       workspaces:
         - name: workspace
           workspace: pipeline-ws
@@ -395,10 +343,114 @@ spec:
           value: $(params.pac_ha_exist_certificate)
         - name: lsf_version
           value: $(params.lsf_version)
-    - name: wes-lsf-da-rhel-6
+    - name: rhel-vpc-dns-and-logging-integration-tests
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
-        name: wes-lsf-da-rhel-6
+        name: rhel-vpc-dns-and-logging-integration-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+    - name: rhel-security-compliance-and-observability-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: rhel-security-compliance-and-observability-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+    - name: rhel-api-reapply-and-scaling-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: rhel-api-reapply-and-scaling-tests
       workspaces:
         - name: workspace
           workspace: pipeline-ws
@@ -587,12 +639,13 @@ spec:
     #       value: $(params.git_user_email)
     - name: ssh-key-deletion
       runAfter: [
-          wes-lsf-da-rhel-1,
-          wes-lsf-da-rhel-2,
-          wes-lsf-da-rhel-3,
-          wes-lsf-da-rhel-4,
-          wes-lsf-da-rhel-5,
-          wes-lsf-da-rhel-6,
+          rhel-core-deployment-and-rga-tests,
+          rhel-kms-cluster-topology-and-identity-tests,
+          rhel-observability-and-network-profile-tests,
+          rhel-observability-and-existing-network-tests,
+          rhel-vpc-dns-and-logging-integration-tests,
+          rhel-security-compliance-and-observability-tests,
+          rhel-api-reapply-and-scaling-tests,
           # wes-lsf-da-region,
           # wes-lsf-da-negative,
         ]
@@ -614,12 +667,13 @@ spec:
           value: $(params.ssh_key_regions)
     - name: git-content-inspect
       runAfter: [
-          wes-lsf-da-rhel-1,
-          wes-lsf-da-rhel-2,
-          wes-lsf-da-rhel-3,
-          wes-lsf-da-rhel-4,
-          wes-lsf-da-rhel-5,
-          wes-lsf-da-rhel-6,
+          rhel-core-deployment-and-rga-tests,
+          rhel-kms-cluster-topology-and-identity-tests,
+          rhel-observability-and-network-profile-tests,
+          rhel-observability-and-existing-network-tests,
+          rhel-vpc-dns-and-logging-integration-tests,
+          rhel-security-compliance-and-observability-tests,
+          rhel-api-reapply-and-scaling-tests,
           # wes-lsf-da-region,
           # wes-lsf-da-negative,
         ]
@@ -645,12 +699,13 @@ spec:
           value: $(tasks.git-clone.results.git-user)
     - name: display-validation-logs
       runAfter: [
-          wes-lsf-da-rhel-1,
-          wes-lsf-da-rhel-2,
-          wes-lsf-da-rhel-3,
-          wes-lsf-da-rhel-4,
-          wes-lsf-da-rhel-5,
-          wes-lsf-da-rhel-6,
+          rhel-core-deployment-and-rga-tests,
+          rhel-kms-cluster-topology-and-identity-tests,
+          rhel-observability-and-network-profile-tests,
+          rhel-observability-and-existing-network-tests,
+          rhel-vpc-dns-and-logging-integration-tests,
+          rhel-security-compliance-and-observability-tests,
+          rhel-api-reapply-and-scaling-tests,
           # wes-lsf-da-region,
           # wes-lsf-da-negative,
         ]
@@ -663,7 +718,7 @@ spec:
             description: The git repo will be cloned onto the volume backing this workspace
             mountPath: /artifacts
         steps:
-          - name: validation-lsf-da-rhel-suite-1
+          - name: validation-basic-deployment-and-default-rga-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -671,10 +726,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-1.log"
+                VALIDATION_LOG_FILE_NAME="basic-deployment-and-default-rga-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-2
+          - name: validation-custom-rga-and-no-kms-host-config-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -682,10 +737,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-2.log"
+                VALIDATION_LOG_FILE_NAME="custom-rga-and-no-kms-host-config-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-3
+          - name: validation-existing-kms-key-configuration-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -693,10 +748,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-3.log"
+                VALIDATION_LOG_FILE_NAME="existing-kms-key-configuration-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-4
+          - name: validation-kms-authorization-and-zero-worker-cluster-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -704,10 +759,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-4.log"
+                VALIDATION_LOG_FILE_NAME="kms-authorization-and-zero-worker-cluster-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-5
+          - name: validation-ldap-integration-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -715,10 +770,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-5.log"
+                VALIDATION_LOG_FILE_NAME="ldap-integration-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-6
+          - name: validation-dedicated-host-and-observability-disabled-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -726,10 +781,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-6.log"
+                VALIDATION_LOG_FILE_NAME="dedicated-host-and-observability-disabled-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-7
+          - name: validation-atracker-logging-and-monitoring-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -737,10 +792,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-7.log"
+                VALIDATION_LOG_FILE_NAME="atracker-logging-and-monitoring-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-8
+          - name: validation-custom-cidr-and-multi-profile-network-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -748,10 +803,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-8.log"
+                VALIDATION_LOG_FILE_NAME="custom-cidr-and-multi-profile-network-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-9
+          - name: validation-monitoring-enabled-management-and-compute-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -759,10 +814,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-9.log"
+                VALIDATION_LOG_FILE_NAME="monitoring-enabled-management-and-compute-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-10
+          - name: validation-existing-vpc-cluster-creation-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -770,10 +825,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-10.log"
+                VALIDATION_LOG_FILE_NAME="existing-vpc-cluster-creation-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-11
+          - name: validation-custom-dns-vpc-creation-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -781,10 +836,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-11.log"
+                VALIDATION_LOG_FILE_NAME="custom-dns-vpc-creation-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-12
+          - name: validation-logs-enabled-observability-and-flow-logs-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -792,10 +847,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-12.log"
+                VALIDATION_LOG_FILE_NAME="logs-enabled-observability-and-flow-logs-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-13
+          - name: validation-atracker-cos-and-cloud-logs-integration-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -803,10 +858,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-13.log"
+                VALIDATION_LOG_FILE_NAME="atracker-cos-and-cloud-logs-integration-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-14
+          - name: validation-scc-cspm-and-custom-dns-validation-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -814,7 +869,40 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-14.log"
+                VALIDATION_LOG_FILE_NAME="scc-cspm-and-custom-dns-validation-tests.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-api-and-lsf-reapply-tests
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="api-and-lsf-reapply-tests.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-lsf-node-scale-up-and-down-tests
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="lsf-node-scale-up-and-down-tests.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-basic-deployment-default-and-appcenter-tests
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="basic-deployment-default-and-appcenter-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
           # # - name: validation-lsf-ubuntu-suite
@@ -896,11 +984,13 @@ spec:
           #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
     - name: display-lsf-da-infra-logs
       runAfter: [
-          wes-lsf-da-rhel-1,
-          wes-lsf-da-rhel-2,
-          wes-lsf-da-rhel-3,
-          wes-lsf-da-rhel-4,
-          wes-lsf-da-rhel-5,
+          rhel-core-deployment-and-rga-tests,
+          rhel-kms-cluster-topology-and-identity-tests,
+          rhel-observability-and-network-profile-tests,
+          rhel-observability-and-existing-network-tests,
+          rhel-vpc-dns-and-logging-integration-tests,
+          rhel-security-compliance-and-observability-tests,
+          rhel-api-reapply-and-scaling-tests,
           # wes-lsf-da-region,
           # wes-lsf-da-negative,
         ]
@@ -913,7 +1003,7 @@ spec:
             description: The git repo will be cloned onto the volume backing this workspace
             mountPath: /artifacts
         steps:
-          - name: display-infra-da-log-rhel-suite-1
+          - name: display-infra-basic-deployment-and-default-rga-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -921,10 +1011,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-1.json"
+                LOG_FILE_NAME="basic-deployment-and-default-rga-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-2
+          - name: display-infra-custom-rga-and-no-kms-host-config-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -932,10 +1022,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-2.json"
+                LOG_FILE_NAME="custom-rga-and-no-kms-host-config-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-3
+          - name: display-infra-existing-kms-key-configuration-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -943,10 +1033,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-3.json"
+                LOG_FILE_NAME="existing-kms-key-configuration-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-4
+          - name: display-infra-kms-authorization-and-zero-worker-cluster-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -954,10 +1044,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-4.json"
+                LOG_FILE_NAME="kms-authorization-and-zero-worker-cluster-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-5
+          - name: display-infra-ldap-integration-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -965,10 +1055,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-5.json"
+                LOG_FILE_NAME="ldap-integration-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-6
+          - name: display-infra-dedicated-host-and-observability-disabled-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -976,10 +1066,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-6.json"
+                LOG_FILE_NAME="dedicated-host-and-observability-disabled-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-7
+          - name: display-infra-atracker-logging-and-monitoring-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -987,10 +1077,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-7.json"
+                LOG_FILE_NAME="atracker-logging-and-monitoring-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-8
+          - name: display-infra-custom-cidr-and-multi-profile-network-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -998,10 +1088,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-8.json"
+                LOG_FILE_NAME="custom-cidr-and-multi-profile-network-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-9
+          - name: display-infra-monitoring-enabled-management-and-compute-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -1009,10 +1099,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-9.json"
+                LOG_FILE_NAME="monitoring-enabled-management-and-compute-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-10
+          - name: display-infra-existing-vpc-cluster-creation-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -1020,10 +1110,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-10.json"
+                LOG_FILE_NAME="existing-vpc-cluster-creation-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-11
+          - name: display-infra-custom-dns-vpc-creation-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -1031,10 +1121,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-11.json"
+                LOG_FILE_NAME="custom-dns-vpc-creation-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-12
+          - name: display-infra-logs-enabled-observability-and-flow-logs-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -1042,10 +1132,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-12.json"
+                LOG_FILE_NAME="logs-enabled-observability-and-flow-logs-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-13
+          - name: display-infra-atracker-cos-and-cloud-logs-integration-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -1053,10 +1143,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-13.json"
+                LOG_FILE_NAME="atracker-cos-and-cloud-logs-integration-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-14
+          - name: display-infra-scc-cspm-and-custom-dns-validation-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -1064,7 +1154,29 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-14.json"
+                LOG_FILE_NAME="scc-cspm-and-custom-dns-validation-tests.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: display-infra-api-and-lsf-reapply-tests
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="api-and-lsf-reapply-tests.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: display-infra-lsf-node-scale-up-and-down-tests
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="lsf-node-scale-up-and-down-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
           # # - name: display-infra-log-ubuntu-suite

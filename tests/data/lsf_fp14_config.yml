@@ -53,8 +53,8 @@ observability_enable_platform_logs: true
 observability_enable_metrics_routing: true
 observability_logs_retention_period: 7
 observability_monitoring_plan: graduated-tier
-sccwp_enable: true
-cspm_enabled: true
+enable_sccwp: true
+enable_cspm: true
 sccwp_service_plan: graduated-tier
 app_config_plan: standardv2
 enable_hyperthreading: true

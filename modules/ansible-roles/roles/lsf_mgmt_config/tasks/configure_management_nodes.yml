@@ -79,23 +79,59 @@
   loop: "{{ lsf_masters }}"
   run_once: true
 
-- name: Management Config | Check if LSF_HOST_ADDR_RANGE is already set
-  shell: "grep -q '# ANSIBLE MANAGED: LSF_HOST_ADDR_RANGE added' '{{ LSF_CONF_FILE_PATH }}/lsf.cluster.{{ prefix }}'"
-  register: lsf_host_addr_range_marker_check
-  changed_when: false
-  failed_when: false
+- name: Management Config | Replace lsfservers with management nodes to lsb.hosts
+  replace:
+    path: "{{ LSF_LSBATCH_CONF }}/lsb.hosts"
+    regexp: 'master_hosts\s+\(\s*lsfservers\s*\)'
+    replace: "master_hosts      ( {{ lsf_masters | join(' ') }} )"
   run_once: true
 
-- name: Management Config | Append LSF_HOST_ADDR_RANGE to lsf.cluster
-  blockinfile:
+- name: Management Config | Update LSF_MASTER_LIST in lsf.conf
+  ansible.builtin.lineinfile:
+    path: "{{ LSF_CONF_FILE }}"
+    regexp: '^LSF_MASTER_LIST='
+    line: 'LSF_MASTER_LIST="{{ lsf_masters | join(" ") }}"'
+    state: present
+  run_once: true
+
+- name: Management Config | Update LSF_SERVER_HOSTS in lsf.conf
+  ansible.builtin.lineinfile:
+    path: "{{ LSF_CONF_FILE }}"
+    regexp: '^LSF_SERVER_HOSTS='
+    line: 'LSF_SERVER_HOSTS="{{ lsf_masters | join(" ") }}"'
+    state: present
+  run_once: true
+
+- name: Management Config | Update existing LSF_HOST_ADDR_RANGE
+  ansible.builtin.replace:
     path: "{{ LSF_CONF_FILE_PATH }}/lsf.cluster.{{ prefix }}"
-    block: |
-      # ANSIBLE MANAGED: LSF_HOST_ADDR_RANGE added
-      Begin Parameters
-      LSF_HOST_ADDR_RANGE=10.*.*.*
-      End Parameters
-    marker: ""
-  when: lsf_host_addr_range_marker_check.rc != 0
+    regexp: '^(LSF_HOST_ADDR_RANGE=).*'
+    replace: '\g<1>10.*.*.*'
+  run_once: true
+
+- name: Management Config | Append management hosts under Host section
+  ansible.builtin.lineinfile:
+    path: "{{ LSF_CONF_FILE_PATH }}/lsf.cluster.{{ prefix }}"
+    insertafter: '^#prune'
+    line: "{{ item }} ! ! 1 (mg)"
+    state: present
+  loop: "{{ lsf_masters }}"
+  run_once: true
+
+- name: Management Config | Update EGO_MASTER_LIST in ego.conf
+  ansible.builtin.lineinfile:
+    path: "{{ LSF_EGO_CONF_FILE }}"
+    regexp: '^EGO_MASTER_LIST='
+    line: 'EGO_MASTER_LIST="{{ lsf_masters | join(" ") }}"'
+    state: present
+  run_once: true
+
+- name: Management Config | Override lsfservers with management node names in lsb.hosts
+  ansible.builtin.lineinfile:
+    path: "{{ LSF_EGO_CONF_FILE }}"
+    regexp: '^(master_hosts\s*\()\s*lsfservers\s*(\))'
+    line: '\1{{ lsf_masters | join(" ") }}\2'
+    backrefs: yes
   run_once: true
 
 - name: Management Config | Remove line containing 'lsfservers'
@@ -105,19 +141,17 @@
     state: absent
   run_once: true
 
-# Temporary: Remove after new image build includes cleanup
-- name: Temporary Cleanup | Delete all 'sagar-fp-15-new1' folders
-  ansible.builtin.shell: |
-    find "{{ LSF_EXT_CONF }}" -type d -name "sagar-fp-15-new1" -exec rm -rf {} +
-  args:
-    warn: false
-  ignore_errors: true
+- name: Stop MariaDB service
+  ansible.builtin.systemd:
+    name: mariadb
+    state: stopped
   when: inventory_hostname in groups['management_nodes']
 
-# Temporary: Remove after new image build includes cleanup
-- name: Temporary Cleanup | Replace 'sagar-fp-15-new1' with 'lsfservers'
-  ansible.builtin.shell: |
-    grep -rl 'sagar-fp-15-new1' "{{ LSF_EXT_CONF }}"  | xargs sed -i 's/sagar-fp-15-new1/lsfservers/g' || true
-  args:
-    warn: false
-  when: inventory_hostname in groups['management_nodes']
+- name: Ensure timeout is 1200 in vpc_vm_dns.py
+  ansible.builtin.lineinfile:
+    path: "{{ LSF_TOP }}/10.1/resource_connector/ibmcloudgen2/scripts/vpc_vm_dns.py"
+    regexp: '^timeout\s*='
+    line: 'timeout = 1200'
+  run_once: true
+  when:
+    - "'gaudi3' in management_instances_profile"

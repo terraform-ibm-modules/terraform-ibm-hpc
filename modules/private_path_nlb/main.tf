@@ -1,6 +1,6 @@
 module "private_path_nlb" {
   source                             = "terraform-ibm-modules/vpc-private-path/ibm"
-  version                            = "1.3.2"
+  version                            = "1.6.8"
   resource_group_id                  = var.resource_group_id
   tags                               = var.tags
   access_tags                        = var.access_tags

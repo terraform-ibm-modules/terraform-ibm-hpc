@@ -12,7 +12,7 @@
       },
       "volumeProfile": "general-purpose",
       "encryptionKey": "{{ boot_volume_encryption_key }}",
-{% if lsf_pay_per_use %}
+{% if enable_lsf_pay_per_use %}
       "catalogOffering": {
         "version_crn": "{{ catalog_offering.version_crn }}",
         "plan_crn": "{{ catalog_offering.plan_crn }}"

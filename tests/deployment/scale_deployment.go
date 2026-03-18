@@ -107,8 +107,8 @@ type ScaleConfig struct {
 	ScaleEncryptionType                  string                `yaml:"scale_encryption_type" json:"scale_encryption_type"`
 	ScaleObservabilityAtrackerEnable     bool                  `yaml:"observability_atracker_enable" json:"observability_atracker_enable"`
 	ScaleObservabilityAtrackerTargetType string                `yaml:"observability_atracker_target_type" json:"observability_atracker_target_type"`
-	ScaleSCCWPEnable                     bool                  `yaml:"sccwp_enable" json:"sccwp_enable"`
-	ScaleCSPMEnabled                     bool                  `yaml:"cspm_enabled" json:"cspm_enabled"`
+	ScaleSCCWPEnable                     bool                  `yaml:"enable_sccwp" json:"enable_sccwp"`
+	ScaleCSPMEnabled                     bool                  `yaml:"enable_cspm" json:"enable_cspm"`
 	ScaleSCCWPServicePlan                string                `yaml:"sccwp_service_plan" json:"sccwp_service_plan"`
 	GKLMInstances                        []GKLMInstance        `yaml:"gklm_instances" json:"gklm_instances"`
 	ScaleEncryptionAdminPassword         string                `yaml:"scale_encryption_admin_password" json:"scale_encryption_admin_password"` // pragma: allowlist secret
@@ -195,8 +195,8 @@ func scaleSetEnvFromConfig(config *ScaleConfig) error {
 		"SCALE_ENCRYPTION_TYPE":                    config.ScaleEncryptionType,
 		"SCALE_OBSERVABILITY_ATRACKER_ENABLE":      config.ScaleObservabilityAtrackerEnable,
 		"SCALE_OBSERVABILITY_ATRACKER_TARGET_TYPE": config.ScaleObservabilityAtrackerTargetType,
-		"SCALE_SCCWP_ENABLE":                       config.ScaleSCCWPEnable,
-		"SCALE_CSPM_ENABLED":                       config.ScaleCSPMEnabled,
+		"SCALE_ENABLE_SCCWP":                       config.ScaleSCCWPEnable,
+		"SCALE_ENABLE_CSPM":                        config.ScaleCSPMEnabled,
 		"SCALE_SCCWP_SERVICE_PLAN":                 config.ScaleSCCWPServicePlan,
 		"GKLM_INSTANCES":                           config.GKLMInstances,
 		"SCALE_ENCRYPTION_ADMIN_PASSWORD":          config.ScaleEncryptionAdminPassword, // # pragma: allowlist secret

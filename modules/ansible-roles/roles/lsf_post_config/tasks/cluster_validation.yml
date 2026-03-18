@@ -37,11 +37,31 @@
     msg: "{{ cluster_status_output.stdout }}"
   when: inventory_hostname == groups['management_nodes'][0]
 
-- name: Duplicate Logs | Remove duplicate logs from LSF log directory if not deleted
-  shell: |
-    rm -rf /opt/ibm/lsflogs/* /opt/ibm/lsflogs/.* 2>/dev/null || true
-  args:
-    warn: false
-  ignore_errors: true
+- name: Ensure login node is registered in LSF
+  when: inventory_hostname == groups['management_nodes'][0]
   become: true
-  when: inventory_hostname in groups['management_nodes']
+  become_user: lsfadmin
+  block:
+
+    - name: Check if login node exists in LSF hosts list
+      ansible.builtin.shell: |
+        source /opt/ibm/lsf/conf/profile.lsf
+        lshosts -w | grep login
+      args:
+        executable: /bin/bash
+      register: login_host_check
+      failed_when: false
+      changed_when: false
+
+    - name: Run LSF reconfig if login node is missing
+      ansible.builtin.shell: |
+        sudo service lsfd restart
+      args:
+        executable: /bin/bash
+      when:
+        - login_host_check.rc != 0
+
+    - name: Wait for LSF to stabilize
+      ansible.builtin.pause:
+        seconds: 10
+      when: login_host_check.rc != 0

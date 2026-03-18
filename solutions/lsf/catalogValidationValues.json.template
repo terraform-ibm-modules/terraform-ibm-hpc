@@ -4,5 +4,5 @@
   "zones": "[\"ca-tor-1\"]",
   "existing_resource_group": "geretain-hpc-rg",
   "ssh_keys": "[\"geretain-hpc-ssh-key\"]",
-  "app_center_gui_password": $RAND_PASSWORD
+  "webservice_appcenter_password": $RAND_PASSWORD
 }

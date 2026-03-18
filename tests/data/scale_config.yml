@@ -111,15 +111,15 @@ scale_encryption_type: "key_protect"
 gklm_instances:
   - profile: "bx2-2x8"
     count: 2
-    image: "hpcc-scale-gklm4202-v2-5-3"
+    image: "hpcc-scale-gklm4202-v2-5-4"
 scale_encryption_admin_password: "Pass@1234"  # pragma: allowlist secret
 
 
 
 
 # Security and Compliance
-sccwp_enable: false
-cspm_enabled: false
+enable_sccwp: false
+enable_cspm: false
 sccwp_service_plan: "graduated-tier"
 app_config_plan: "basic"
 

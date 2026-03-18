@@ -385,7 +385,7 @@
                 },
                 {
                     "name": "gklm_instances",
-                    "value": "[{ profile = \"bx2-2x8\", count = 2, image = \"hpcc-scale-gklm4202-v2-5-3\" }]",
+                    "value": "[{ profile = \"bx2-2x8\", count = 2, image = \"hpcc-scale-gklm4202-v2-5-4\" }]",
                     "type": "list(object({ profile = string, count = number, image = string }))",
                     "secure": false,
                     "description": "Specify the list of virtual server instances to be provisioned as GKLM (Guardium Key Lifecycle Manager) nodes in the cluster. Each object in the list includes the instance profile (machine type), the count (number of instances), and the image (OS image to use).  This configuration allows you to  manage and securely store encryption keys used across the cluster components. The profile must match a valid IBM Cloud VPC Gen2 instance profile format. A minimum of 2 and maximum of 5 gklm nodes are supported. For more details, refer[Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
@@ -433,14 +433,14 @@
                     "description": "Specify the plan type for the Security and Compliance Center (SCC) Workload Protection instance. Valid values are free-trial and graduated-tier only."
                 },
                 {
-                    "name": "sccwp_enable",
+                    "name": "enable_sccwp",
                     "value": "false",
                     "type": "bool",
                     "secure": false,
                     "description": "Set this flag to true to create an instance of IBM Security and Compliance Center (SCC) Workload Protection. When enabled, it provides tools to discover and prioritize vulnerabilities, monitor for security threats, and enforce configuration, permission, and compliance policies across the full lifecycle of your workloads. To view the data on the dashboard, enable the cspm to create the app configuration and required trusted profile policies.[Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
                 },
                 {
-                    "name": "cspm_enabled",
+                    "name": "enable_cspm",
                     "value": "true",
                     "type": "bool",
                     "secure": false,

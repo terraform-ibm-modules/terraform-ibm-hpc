@@ -66,7 +66,38 @@
 - name: Set appropriate permissions on base dirs
   ansible.builtin.shell: |
     chmod -R {{ (item.key == '/mnt/lsf') | ternary('0755', '0777') }} "{{ item.key }}"
-  args:
-    warn: false
   with_dict: "{{ name_mount_path_map }}"
   run_once: true
+
+- name: Management Config | Move LSF directories to NFS
+  ansible.builtin.shell: |
+    set -e
+    for dir in conf work; do
+      if [ -d "{{ LSF_TOP }}/$dir" ] && [ ! -L "{{ LSF_TOP }}/$dir" ]; then
+        mv "{{ LSF_TOP }}/$dir" "{{ nfs_client_mount_path }}/$dir"
+      fi
+    done
+  args:
+    executable: /bin/bash
+  run_once: true
+
+- name: Management Config | Remove any remaining local LSF directories
+  ansible.builtin.file:
+    path: "{{ LSF_TOP }}/{{ item }}"
+    state: absent
+  loop:
+    - conf
+    - work
+
+- name: Management Config | Create symlink back to LSF tree (forced)
+  ansible.builtin.shell: |
+    ln -fs "{{ nfs_client_mount_path }}/{{ item }}" "{{ LSF_TOP }}/{{ item }}"
+  loop:
+    - conf
+    - work
+  args:
+    executable: /bin/bash
+
+- name: Management Config | Fix ownership on LSF tree
+  ansible.builtin.shell: |
+    chown -R lsfadmin:root "{{ LSF_TOP }}"

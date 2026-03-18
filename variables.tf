@@ -504,7 +504,7 @@ variable "key_protect_instance_id" {
 #   description = "Hyper Protect Crypto Service instance"
 # }
 
-variable "vpn_enabled" {
+variable "enable_vpn" {
   type        = bool
   default     = false
   description = "Set the value as true to deploy a VPN gateway for VPC in the cluster."
@@ -656,7 +656,7 @@ variable "scale_afm_cos_hmac_key_params" {
 
 variable "enable_hyperthreading" {
   type        = bool
-  default     = true
+  default     = false
   description = "Setting this to true will enable hyper-threading in the worker nodes of the cluster (default). Otherwise, hyper-threading will be disabled."
 }
 
@@ -676,11 +676,32 @@ variable "enable_hyperthreading" {
 #   }
 # }
 
-variable "app_center_gui_password" {
+##############################################################################
+# Web Services & App Center Variables
+##############################################################################
+variable "enable_webservice" {
+  type        = bool
+  default     = true
+  description = "Set to true to enable the IBM Spectrum LSF Web Services (default: true)."
+}
+
+variable "enable_appcenter" {
+  type        = bool
+  default     = false
+  description = "Set to true to enable the IBM Spectrum LSF Application Center GUI (default: false). [System requirements](https://www.ibm.com/docs/en/slac/10.2.0?topic=requirements-system-102-fix-pack-15) for IBM Spectrum LSF Application Center Version 10.2 Fix Pack 15."
+}
+
+variable "webservice_appcenter_password" {
   type        = string
   default     = ""
   sensitive   = true
-  description = "Password for IBM Spectrum LSF Application Center GUI."
+  description = "Password required to access the IBM Spectrum LSF Application Center (App Center) GUI, which is enabled by default with HTTPS. This is a mandatory value and omitting it will result in deployment failure. The password must meet the following requirements, at least 15 characters in length, and must include one uppercase letter, one lowercase letter, one number, and one special character. Spaces are not allowed."
+}
+
+variable "enable_license_scheduler" {
+  type        = bool
+  default     = true
+  description = "Set to true to enable the IBM Spectrum LSF License Scheduler (default: true)."
 }
 
 ##############################################################################
@@ -814,7 +835,7 @@ variable "cloud_metrics_data_bucket" {
 ##############################################################################
 
 
-variable "sccwp_enable" {
+variable "enable_sccwp" {
   type        = bool
   default     = false
   description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
@@ -883,7 +904,7 @@ variable "ldap_instance" {
   )
   default = [{
     profile = "cx2-2x4"
-    image   = "ibm-ubuntu-22-04-5-minimal-amd64-8"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-12"
   }]
   description = "Profile and Image name to be used for provisioning the LDAP instances. Note: Debian based OS are only supported for the LDAP feature"
 }
@@ -914,7 +935,7 @@ variable "gklm_instances" {
   default = [{
     profile = "bx2-2x8"
     count   = 2
-    image   = "hpcc-scale-gklm4202-v2-5-2"
+    image   = "hpcc-scale-gklm4202-v2-5-4"
   }]
   description = "Number of GKLM instances to be launched for scale cluster."
 }
@@ -1115,7 +1136,7 @@ variable "bms_boot_drive_encryption" {
   description = "Set this flag to true to create an instance of IBM Security and Compliance Center (SCC) Workload Protection. When enabled, it provides tools to discover and prioritize vulnerabilities, monitor for security threats, and enforce configuration, permission, and compliance policies across the full lifecycle of your workloads. To view the data on the dashboard, enable the cspm to create the app configuration and required trusted profile policies.[Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
 }
 
-variable "cspm_enabled" {
+variable "enable_cspm" {
   description = "CSPM (Cloud Security Posture Management) is a set of tools and practices that continuously monitor and secure cloud infrastructure. When enabled, it creates a trusted profile with viewer access to the App Configuration and Enterprise services for the SCC Workload Protection instance. Make sure the required IAM permissions are in place, as missing permissions will cause deployment to fail. If CSPM is disabled, dashboard data will not be available.[Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
   type        = bool
   default     = false
@@ -1229,10 +1250,10 @@ variable "enable_private_path_nlb" {
   description = "When set to true, provisions a private path Network Load Balancer that enables CES (NFS) storage access for the cluster. The private path integrates with the Scale NFS nodes to provide a secure, high-performance method of delivering file storage to clients within the same VPC, ensuring direct and efficient access to the CES storage nodes."
 }
 
-variable "lsf_pay_per_use" {
+variable "enable_lsf_pay_per_use" {
   type        = bool
   default     = true
-  description = "When lsf_pay_per_use is set to true, the LSF cluster nodes are provisioned using predefined custom images under a pay-per-use pricing plan, where billing is based on vCPU usage per hour. In this mode, providing custom images for the nodes is not required, and Bring Your Own Image (BYOL) is not supported. The pay-per-use option is available only for FP15 images. If you set the variable to false, the automation uses default images for all cluster nodes and enables support for BYOL, with no pay-per-use billing applied."
+  description = "When enable_lsf_pay_per_use is set to true, the LSF cluster nodes are provisioned using predefined custom images under a pay-per-use pricing plan, where billing is based on vCPU usage per hour. In this mode, providing custom images for the nodes is not required, and Bring Your Own Image (BYOL) is not supported. The pay-per-use option is available only for FP15 images. If you set the variable to false, the automation uses default images for all cluster nodes and enables support for BYOL, with no pay-per-use billing applied."
 }
 
 variable "protocol_instance_eth1_mtu" {

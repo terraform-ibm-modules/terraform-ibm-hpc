@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: wes-lsf-da-rhel-4
+  name: rhel-observability-and-existing-network-tests
 spec:
   params:
     - name: ibmcloud-api
@@ -136,7 +136,7 @@ spec:
       - name: lsf_version
         value: $(params.lsf_version)
   steps:
-    - name: rhel-suite-9
+    - name: monitoring-enabled-management-and-compute-tests
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -154,8 +154,8 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          lsf_da_rhel_suite_9
-    - name: rhel-suite-10
+          monitoring-enabled-management-and-compute-tests
+    - name: existing-vpc-cluster-creation-tests
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -173,4 +173,23 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          lsf_da_rhel_suite_10
+          existing-vpc-cluster-creation-tests
+    - name: display-summary-report
+      onError: continue
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          source .tekton/scripts/html_report.sh
+          common_task_report monitoring-enabled-management-and-compute-tests,existing-vpc-cluster-creation-tests lsf-da

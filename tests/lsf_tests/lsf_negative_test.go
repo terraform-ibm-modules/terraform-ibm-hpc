@@ -36,11 +36,11 @@ func getBaseVars(t *testing.T) map[string]interface{} {
 	envVars, err := GetEnvVars()
 	require.NoError(t, err, "Failed to get environment variables")
 	return map[string]interface{}{
-		"cluster_prefix":          utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString()),
-		"ssh_keys":                utils.SplitAndTrim(envVars.SSHKeys, ","),
-		"zones":                   utils.SplitAndTrim(envVars.Zones, ","),
-		"remote_allowed_ips":      utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
-		"app_center_gui_password": APP_CENTER_GUI_PASSWORD, // pragma: allowlist secret
+		"cluster_prefix":                utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString()),
+		"ssh_keys":                      utils.SplitAndTrim(envVars.SSHKeys, ","),
+		"zones":                         utils.SplitAndTrim(envVars.Zones, ","),
+		"remote_allowed_ips":            utils.SplitAndTrim(envVars.RemoteAllowedIPs, ","),
+		"webservice_appcenter_password": WEB_SERVICE_APP_CENTER_PASSWORD, // pragma: allowlist secret
 	}
 }
 
@@ -148,7 +148,7 @@ func TestInvalidAppCenterPassword(t *testing.T) {
 			// Get base Terraform variables
 			terraformVars := getBaseVars(t)
 			testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
-			terraformVars["app_center_gui_password"] = password // Invalid password    // pragma: allowlist secret
+			terraformVars["webservice_appcenter_password"] = password // Invalid password    // pragma: allowlist secret
 
 			terraformDirPath := getTerraformDirPath(t)
 			terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{

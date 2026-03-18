@@ -62,6 +62,10 @@ resource "null_resource" "ext_bastion_access" {
 resource "null_resource" "fetch_host_details_from_deployer" {
   count = var.enable_deployer == true ? 1 : 0
 
+  triggers = {
+    always_run = timestamp()
+  }
+
   provisioner "local-exec" {
     command = <<EOT
       ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \

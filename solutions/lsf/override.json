@@ -82,6 +82,9 @@
    "dns_domain_name": {
       "compute": "comp.com"
    },
+   "enable_webservice": true,
+   "enable_appcenter": false,
+   "webservice_appcenter_password": null,
    "enable_cos_integration": true,
    "cos_instance_name": null,
    "enable_vpc_flow_logs": true,

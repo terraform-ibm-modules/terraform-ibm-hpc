@@ -1,13 +1,13 @@
 ---
 
 # Set recursive permissions for LSF Suite directory to 0755
-- name: Change permissions of lsfsuite to 0755
-  ansible.builtin.command: "chmod -R 0755 {{ LSF_SUITE }}"
+- name: Change permissions of lsf to 0755
+  ansible.builtin.command: "chmod -R 0755 {{ LSF_TOP }}"
   ignore_errors: true
 
 # Set ownership of LSF Suite directory to lsfadmin
-- name: Change ownership of lsfsuite to lsfadmin
-  ansible.builtin.command: "chown -R lsfadmin {{ LSF_SUITE }}"
+- name: Change ownership of lsf to lsfadmin
+  ansible.builtin.command: "chown -R lsfadmin {{ LSF_TOP }}"
   ignore_errors: true
 
 # Set recursive permissions for shared path
@@ -21,3 +21,13 @@
   ansible.builtin.command: "chown -R lsfadmin {{ SHARED_PATH }}"
   when: inventory_hostname == groups['management_nodes'][0]
   ignore_errors: true
+
+- name: Set permissions on LSF event file
+  ansible.builtin.file:
+    path: "{{ LSF_EVENT }}"
+    mode: '0644'
+    owner: lsfadmin
+    group: lsfadmin
+    state: file
+  ignore_errors: true
+  when: inventory_hostname in groups['management_nodes']

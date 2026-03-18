@@ -61,7 +61,9 @@ locals {
     skip_iam_block_storage_authorization_policy      = var.skip_iam_block_storage_authorization_policy
     skip_kms_s2s_auth_policy                         = var.skip_kms_s2s_auth_policy
     ibmcloud_api_key                                 = var.ibmcloud_api_key
-    app_center_gui_password                          = var.app_center_gui_password
+    enable_webservice                                = var.enable_webservice
+    enable_appcenter                                 = var.enable_appcenter
+    webservice_appcenter_password                    = var.webservice_appcenter_password
     lsf_version                                      = var.lsf_version
     enable_hyperthreading                            = var.enable_hyperthreading
     enable_ldap                                      = var.enable_ldap
@@ -78,13 +80,13 @@ locals {
     existing_bastion_security_group_id               = var.existing_bastion_security_group_id
     existing_bastion_ssh_private_key                 = var.existing_bastion_ssh_private_key
     login_instance                                   = var.login_instance
-    vpn_enabled                                      = var.vpn_enabled
+    enable_vpn                                       = var.enable_vpn
     sccwp_service_plan                               = var.sccwp_service_plan
-    sccwp_enable                                     = var.sccwp_enable
-    cspm_enabled                                     = var.cspm_enabled
+    enable_sccwp                                     = var.enable_sccwp
+    enable_cspm                                      = var.enable_cspm
     app_config_plan                                  = var.app_config_plan
-    lsf_pay_per_use                                  = var.lsf_pay_per_use
-
+    enable_lsf_pay_per_use                           = var.enable_lsf_pay_per_use
+    enable_license_scheduler                         = var.enable_license_scheduler
   }
 }
 
@@ -134,11 +136,13 @@ locals {
     skip_iam_block_storage_authorization_policy      = lookup(local.override[local.override_type], "skip_iam_block_storage_authorization_policy", local.config.skip_iam_block_storage_authorization_policy)
     skip_kms_s2s_auth_policy                         = lookup(local.override[local.override_type], "skip_kms_s2s_auth_policy", local.config.skip_kms_s2s_auth_policy)
     ibmcloud_api_key                                 = lookup(local.override[local.override_type], "ibmcloud_api_key", local.config.ibmcloud_api_key)
-    app_center_gui_password                          = lookup(local.override[local.override_type], "app_center_gui_password", local.config.app_center_gui_password)
+    enable_webservice                                = lookup(local.override[local.override_type], "enable_webservice", local.config.enable_webservice)
+    enable_appcenter                                 = lookup(local.override[local.override_type], "enable_appcenter", local.config.enable_appcenter)
+    webservice_appcenter_password                    = lookup(local.override[local.override_type], "webservice_appcenter_password", local.config.webservice_appcenter_password)
     lsf_version                                      = lookup(local.override[local.override_type], "lsf_version", local.config.lsf_version)
     enable_hyperthreading                            = lookup(local.override[local.override_type], "enable_hyperthreading", local.config.enable_hyperthreading)
     enable_ldap                                      = lookup(local.override[local.override_type], "enable_ldap", local.config.enable_ldap)
-    vpn_enabled                                      = lookup(local.override[local.override_type], "vpn_enabled", local.config.vpn_enabled)
+    enable_vpn                                       = lookup(local.override[local.override_type], "enable_vpn", local.config.enable_vpn)
     ldap_basedns                                     = lookup(local.override[local.override_type], "ldap_basedns", local.config.ldap_basedns)
     ldap_admin_password                              = lookup(local.override[local.override_type], "ldap_admin_password", local.config.ldap_admin_password)
     ldap_user_name                                   = lookup(local.override[local.override_type], "ldap_user_name", local.config.ldap_user_name)
@@ -152,11 +156,12 @@ locals {
     existing_bastion_security_group_id               = lookup(local.override[local.override_type], "existing_bastion_security_group_id", local.config.existing_bastion_security_group_id)
     existing_bastion_ssh_private_key                 = lookup(local.override[local.override_type], "existing_bastion_ssh_private_key", local.config.existing_bastion_ssh_private_key)
     login_instance                                   = lookup(local.override[local.override_type], "login_instance", local.config.login_instance)
-    sccwp_enable                                     = lookup(local.override[local.override_type], "scc_wp_enable", local.config.sccwp_enable)
-    cspm_enable                                      = lookup(local.override[local.override_type], "cspm_enable", local.config.cspm_enabled)
+    enable_sccwp                                     = lookup(local.override[local.override_type], "scc_wp_enable", local.config.enable_sccwp)
+    cspm_enable                                      = lookup(local.override[local.override_type], "cspm_enable", local.config.enable_cspm)
     sccwp_service_plan                               = lookup(local.override[local.override_type], "scc_wp_service_plan", local.config.sccwp_service_plan)
     app_config_plan                                  = lookup(local.override[local.override_type], "app_config_plan", local.config.app_config_plan)
-    lsf_pay_per_use                                  = lookup(local.override[local.override_type], "lsf_pay_per_use", local.config.lsf_pay_per_use)
+    enable_lsf_pay_per_use                           = lookup(local.override[local.override_type], "enable_lsf_pay_per_use", local.config.enable_lsf_pay_per_use)
+    enable_license_scheduler                         = lookup(local.override[local.override_type], "enable_license_scheduler", local.config.enable_license_scheduler)
     # client_instances                                 = lookup(local.override[local.override_type], "client_instances", local.config.client_instances)
     # client_subnets_cidr                              = lookup(local.override[local.override_type], "client_subnets_cidr", local.config.client_subnets_cidr)
   }

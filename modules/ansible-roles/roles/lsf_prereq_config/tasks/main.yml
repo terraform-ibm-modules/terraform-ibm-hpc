@@ -1,19 +1,19 @@
 ---
 
-# MTU Configuration
-- import_tasks: mtu_configuration.yml
+# Configure VPC file share required for the cluster
+- name: Configure VPC fileshare
+  import_tasks: vpc_fileshare_configure.yml
 
-# lsf_tunables configuration
-- import_tasks: lsf_tunables.yml
+# Setup passwordless SSH authentication for lsfadmin user across nodes
+- name: Configure passwordless SSH for lsfadmin
+  import_tasks: lsfadmin_password_less_auth.yml
 
-# Create lsfadmin user
-- import_tasks: lsfadmin_creation.yml
+# Disable hyperthreading on compute nodes for better HPC performance
+- name: Disable CPU hyperthreading
+  import_tasks: disable_hyperthreading.yml
 
-# Setup Password less authentication for lsfadmin user
-- import_tasks: lsfadmin_password_less_auth.yml
-
-# Disable Hyperthreading
-- import_tasks: hyperthreading.yml
-
-# Disable Ansible repo
-- import_tasks: disable_ansible_repo.yml
+# Load Cluster specific variables
+- name: Load Cluster specific variables
+  import_tasks: load_cluster_variables.yml
+  when:
+    - inventory_hostname in groups['management_nodes']

@@ -1,15 +1,41 @@
 ---
 
-- import_tasks: hyperthreading.yml
+# Disable hyperthreading on cluster nodes
+- name: Configure CPU hyperthreading settings
+  import_tasks: hyperthreading.yml
 
-- import_tasks: configure_management_nodes.yml
+# Configure LSF management nodes
+- name: Configure management nodes
+  import_tasks: configure_management_nodes.yml
 
-- import_tasks: hosts_file_update.yml
+# Update /etc/hosts across all nodes
+- name: Update hosts file with cluster entries
+  import_tasks: hosts_file_update.yml
 
-- import_tasks: app_center_configure.yml
-  when: inventory_hostname in groups['gui_hosts']
+# Configure App Center (only on GUI hosts with elevated privileges)
+- name: Configure App Center on GUI hosts
+  block:
+    - import_tasks: app_center_configure.yml
+  become: true
+  become_flags: "-i"
+  when:
+    - inventory_hostname in groups['gui_hosts']
+    - enable_appcenter | bool
 
-- import_tasks: web_services.yml
-  when: lsf_version == "fixpack_15" and inventory_hostname in groups['gui_hosts']
+# Configure Web Services (only on GUI hosts with elevated privileges)
+- name: Configure Web Services on GUI hosts
+  block:
+    - import_tasks: web_services.yml
+  become: true
+  become_flags: "-i"
+  when:
+    - inventory_hostname in groups['gui_hosts']
+    - enable_webservice | bool
 
-- import_tasks: configure_dynamic_nodes_templates.yml
+# Configure templates for dynamic compute nodes
+- name: Configure dynamic node templates
+  import_tasks: configure_dynamic_nodes_templates.yml
+
+# Configure License Scheduler
+- name: Configure License Scheduler
+  import_tasks: license_scheduler.yml

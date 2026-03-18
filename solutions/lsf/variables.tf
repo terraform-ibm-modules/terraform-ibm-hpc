@@ -17,36 +17,16 @@ variable "lsf_version" {
   description = "Select the desired version of IBM Spectrum LSF to deploy either fixpack_15 or fixpack_14. By default, the solution uses the latest available version, which is Fix Pack 15. If you need to deploy an earlier version such as Fix Pack 14, update the lsf_version field to fixpack_14. When changing the LSF version, ensure that all custom images used for management, compute, and login nodes correspond to the same version. This is essential to maintain compatibility across the cluster and to prevent deployment issues."
 
   validation {
-    condition     = contains(["fixpack_14", "fixpack_15"], var.lsf_version)
-    error_message = "Invalid LSF version. Allowed values are 'fixpack_14' and 'fixpack_15'"
+    condition     = contains(["fixpack_15"], var.lsf_version)
+    error_message = "Invalid LSF version. Allowed values are 'fixpack_15'"
   }
 }
 
-variable "lsf_pay_per_use" {
+variable "enable_lsf_pay_per_use" {
   type        = bool
   default     = true
-  description = "When lsf_pay_per_use is set to true, the LSF cluster nodes are provisioned using predefined custom images under a pay-per-use pricing plan, where billing is based on vCPU usage per hour. In this mode, providing custom images for the nodes is not required, and Bring Your Own Image (BYOI) is not supported. The pay-per-use option is available only for FP15 images. If you set the variable to false, the automation uses default images for all cluster nodes and enables support for BYOI, with no pay-per-use billing applied."
+  description = "When enable_lsf_pay_per_use is set to true, the LSF cluster nodes are provisioned using predefined custom images under a pay-per-use pricing plan, where billing is based on vCPU usage per hour. In this mode, providing custom images for the nodes is not required, and Bring Your Own Image (BYOI) is not supported. The pay-per-use option is available only for FP15 images. If you set the variable to false, the automation uses default images for all cluster nodes and enables support for BYOI, with no pay-per-use billing applied."
 }
-
-variable "app_center_gui_password" {
-  type        = string
-  default     = ""
-  sensitive   = true
-  description = "Password required to access the IBM Spectrum LSF Application Center (App Center) GUI, which is enabled by default in both Fix Pack 15 and Fix Pack 14 with HTTPS. This is a mandatory value and omitting it will result in deployment failure. The password must meet the following requirements, at least 15 characters in length, and must include one uppercase letter, one lowercase letter, one number, and one special character. Spaces are not allowed."
-
-  validation {
-    condition = (
-      can(regex("^.{15,}$", var.app_center_gui_password)) &&
-      can(regex("[0-9]", var.app_center_gui_password)) &&
-      can(regex("[a-z]", var.app_center_gui_password)) &&
-      can(regex("[A-Z]", var.app_center_gui_password)) &&
-      can(regex("[!@#$%^&*()_+=-]", var.app_center_gui_password)) &&
-      !can(regex(".*\\s.*", var.app_center_gui_password))
-    )
-    error_message = "The password must be at least 15 characters long and include at least one lowercase letter, one uppercase letter, one number, and one special character (!@#$%^&*()_+=-). Spaces are not allowed."
-  }
-}
-
 
 ##############################################################################
 # Cluster Level Variables
@@ -176,7 +156,7 @@ variable "bastion_instance" {
     profile = string
   })
   default = {
-    image   = "ibm-ubuntu-22-04-5-minimal-amd64-8"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-12"
     profile = "cx2-4x8"
   }
   description = "Configuration for the bastion node, including the image and instance profile. Only Ubuntu 22.04 stock images are supported."
@@ -198,21 +178,13 @@ variable "deployer_instance" {
     profile = string
   })
   default = {
-    image   = "hpc-lsf-fp15-deployer-rhel810-v2"
+    image   = "hpc-lsf-fp15-deployer-rhel810-v3"
     profile = "bx2-8x32"
   }
   description = "Configuration for the deployer node, including the custom image and instance profile. By default, deployer node is created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-deployer-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures."
   validation {
-    condition = contains([
-      "hpc-lsf-fp15-deployer-rhel810-v2",
-      "hpc-lsf-fp14-deployer-rhel810-v1"
-    ], var.deployer_instance.image)
-    error_message = "Invalid deployer image. Allowed values for fixpack_15 is 'hpc-lsf-fp15-deployer-rhel810-v2' and for fixpack_14 is 'hpc-lsf-fp14-deployer-rhel810-v1'."
-  }
-  validation {
     condition = (
-      (!can(regex("fp15", var.deployer_instance.image)) || var.lsf_version == "fixpack_15") &&
-      (!can(regex("fp14", var.deployer_instance.image)) || var.lsf_version == "fixpack_14")
+      (!can(regex("fp15", var.deployer_instance.image)) || var.lsf_version == "fixpack_15")
     )
     error_message = "Mismatch between deployer_instance.image and lsf_version. Use an image with 'fp14' only when lsf_version is fixpack_14, and 'fp15' only with fixpack_15."
   }
@@ -235,7 +207,7 @@ variable "login_instance" {
   )
   default = [{
     profile = "bx2-2x8"
-    image   = "hpc-lsf-fp15-compute-rhel810-v2"
+    image   = "hpc-lsf-fp15-compute-rhel810-v3"
   }]
   description = "Specify the list of login node configurations, including instance profile, image name. By default, login node is created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures."
   validation {
@@ -247,8 +219,7 @@ variable "login_instance" {
   validation {
     condition = alltrue([
       for inst in var.login_instance : (
-        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15") &&
-        (!can(regex("fp14", inst.image)) || var.lsf_version == "fixpack_14")
+        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15")
       )
     ])
     error_message = "Mismatch between login_instance image and lsf_version. Use an image with 'fp14' only when lsf_version is fixpack_14, and 'fp15' only with fixpack_15."
@@ -266,7 +237,7 @@ variable "management_instances" {
   default = [{
     profile = "bx2-16x64"
     count   = 2
-    image   = "hpc-lsf-fp15-rhel810-v2"
+    image   = "hpc-lsf-fp15-rhel810-v3"
   }]
   description = "Specify the list of management node configurations, including instance profile, image name, and count. By default, all management nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. The solution allows customization of instance profiles and counts, but mixing custom images and IBM stock images across instances is not supported. If using IBM stock images, only Red Hat-based images are allowed. Management nodes must have a minimum of 9 GB RAM. Select a profile with 9 GB or higher."
   validation {
@@ -286,8 +257,7 @@ variable "management_instances" {
   validation {
     condition = alltrue([
       for inst in var.management_instances : (
-        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15") &&
-        (!can(regex("fp14", inst.image)) || var.lsf_version == "fixpack_14")
+        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15")
       )
     ])
     error_message = "Mismatch between management_instances image and lsf_version. Use an image with 'fp14' only when lsf_version is fixpack_14, and 'fp15' only with fixpack_15."
@@ -295,10 +265,11 @@ variable "management_instances" {
   validation {
     condition = alltrue([
       for inst in var.management_instances :
-      tonumber(regex("\\d+$", inst.profile)) >= 9
+      inst.profile != "hx4da-248x680" || startswith(var.zones[0], "us-south")
     ])
-    error_message = "Management node memory requirement not met. Minimum: 9 GB RAM. Please select a profile with 9 GB or higher."
+    error_message = "The profile 'hx4da-248x680' is only supported in the us-south region. Please choose any zone from us-south region when using this profile."
   }
+
 }
 
 variable "static_compute_instances" {
@@ -312,7 +283,7 @@ variable "static_compute_instances" {
   default = [{
     profile = "bx2-4x16"
     count   = 0
-    image   = "hpc-lsf-fp15-compute-rhel810-v2"
+    image   = "hpc-lsf-fp15-compute-rhel810-v3"
   }]
   description = "Specify the list of static compute node configurations, including instance profile, image name, and count. By default, all compute nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. The solution allows customization of instance profiles and counts, but mixing custom images and IBM stock images across instances is not supported. If using IBM stock images, only Red Hat-based images are allowed."
   validation {
@@ -332,11 +303,17 @@ variable "static_compute_instances" {
   validation {
     condition = alltrue([
       for inst in var.static_compute_instances : (
-        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15") &&
-        (!can(regex("fp14", inst.image)) || var.lsf_version == "fixpack_14")
+        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15")
       )
     ])
     error_message = "Mismatch between static_compute_instances image and lsf_version. Use an image with 'fp14' only when lsf_version is fixpack_14, and 'fp15' only with fixpack_15."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances :
+      inst.profile != "hx4da-248x680" || startswith(var.zones[0], "us-south")
+    ])
+    error_message = "The profile 'hx4da-248x680' is only supported in the us-south region. Please choose any zone from us-south region when using this profile."
   }
 }
 
@@ -351,7 +328,7 @@ variable "dynamic_compute_instances" {
   default = [{
     profile = "bx2-4x16"
     count   = 500
-    image   = "hpc-lsf-fp15-compute-rhel810-v2"
+    image   = "hpc-lsf-fp15-compute-rhel810-v3"
   }]
   description = "Specify the list of dynamic compute node configurations, including instance profile, image name, and count. By default, all dynamic compute nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. Currently, only a single instance profile is supported for dynamic compute nodes—multiple profiles are not yet supported.."
   validation {
@@ -367,8 +344,7 @@ variable "dynamic_compute_instances" {
   validation {
     condition = alltrue([
       for inst in var.dynamic_compute_instances : (
-        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15") &&
-        (!can(regex("fp14", inst.image)) || var.lsf_version == "fixpack_14")
+        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15")
       )
     ])
     error_message = "Mismatch between dynamic_compute_instances image and lsf_version. Use an image with 'fp14' only when lsf_version is fixpack_14, and 'fp15' only with fixpack_15."
@@ -461,6 +437,28 @@ variable "dns_domain_name" {
     condition     = can(regex("^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\\.[a-zA-Z]{2,})+$", var.dns_domain_name.compute))
     error_message = "The compute domain name must be a valid FQDN. It may include letters, digits, hyphens, and must start and end with an alphanumeric character."
   }
+}
+
+##############################################################################
+# Web Services & App Center Variables
+##############################################################################
+variable "enable_webservice" {
+  type        = bool
+  default     = true
+  description = "Set to true to enable the IBM Spectrum LSF Web Services (default: true)."
+}
+
+variable "enable_appcenter" {
+  type        = bool
+  default     = false
+  description = "Set to true to enable the IBM Spectrum LSF Application Center GUI (default: false). [System requirements](https://www.ibm.com/docs/en/slac/10.2.0?topic=requirements-system-102-fix-pack-15) for IBM Spectrum LSF Application Center Version 10.2 Fix Pack 15."
+}
+
+variable "webservice_appcenter_password" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Password required to access the IBM Spectrum LSF Application Center (App Center) GUI, which is enabled by default with HTTPS. This is a mandatory value and omitting it will result in deployment failure. The password must meet the following requirements, at least 15 characters in length, and must include one uppercase letter, one lowercase letter, one number, and one special character. Spaces are not allowed."
 }
 
 ##############################################################################
@@ -602,7 +600,7 @@ variable "ldap_instance" {
   )
   default = [{
     profile = "cx2-2x4"
-    image   = "ibm-ubuntu-22-04-5-minimal-amd64-8"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-12"
   }]
   description = "Specify the compute instance profile and image to be used for deploying LDAP instances. Only Debian-based operating systems, such as Ubuntu, are supported for LDAP functionality."
   validation {
@@ -635,7 +633,7 @@ variable "enable_vpc_flow_logs" {
   description = "This flag determines whether VPC flow logs are enabled. When set to true, a flow log collector will be created to capture and monitor network traffic data within the VPC. Enabling flow logs provides valuable insights for troubleshooting, performance monitoring, and security auditing by recording information about the traffic passing through your VPC. Consider enabling this feature to enhance visibility and maintain robust network management practices."
 }
 
-variable "vpn_enabled" {
+variable "enable_vpn" {
   type        = bool
   default     = false
   description = "Set the value as true to deploy a VPN gateway for VPC in the cluster."
@@ -643,7 +641,7 @@ variable "vpn_enabled" {
 
 variable "enable_hyperthreading" {
   type        = bool
-  default     = true
+  default     = false
   description = "Setting this to true will enable hyper-threading in the worker nodes of the cluster (default). Otherwise, hyper-threading will be disabled."
 }
 ##############################################################################
@@ -846,13 +844,13 @@ variable "sccwp_service_plan" {
   }
 }
 
-variable "sccwp_enable" {
+variable "enable_sccwp" {
   type        = bool
   default     = true
   description = "Set this flag to true to create an instance of IBM Security and Compliance Center (SCC) Workload Protection. When enabled, it provides tools to discover and prioritize vulnerabilities, monitor for security threats, and enforce configuration, permission, and compliance policies across the full lifecycle of your workloads. To view the data on the dashboard, enable the cspm to create the app configuration and required trusted profile policies.[Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
 }
 
-variable "cspm_enabled" {
+variable "enable_cspm" {
   description = "CSPM (Cloud Security Posture Management) is a set of tools and practices that continuously monitor and secure cloud infrastructure. When enabled, it creates a trusted profile with viewer access to the App Configuration and Enterprise services for the SCC Workload Protection instance. Make sure the required IAM permissions are in place, as missing permissions will cause deployment to fail. If CSPM is disabled, dashboard data will not be available.[Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
   type        = bool
   default     = true
@@ -870,4 +868,10 @@ variable "app_config_plan" {
       var.app_config_plan
     )
   }
+}
+
+variable "enable_license_scheduler" {
+  type        = bool
+  default     = true
+  description = "Set to true to enable the IBM Spectrum LSF License Scheduler (default: true)."
 }

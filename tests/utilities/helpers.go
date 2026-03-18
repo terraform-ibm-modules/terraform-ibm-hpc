@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"path"
 
 	"os"
 	"os/exec"
@@ -22,7 +23,10 @@ import (
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/secrets-manager-go-sdk/v2/secretsmanagerv2"
+	"github.com/gruntwork-io/terratest/modules/files"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/common"
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
 	"golang.org/x/crypto/ssh"
 )
@@ -780,4 +784,82 @@ func GeneratePassword() string {
 		b[i] = charset[idx.Int64()]
 	}
 	return string(b) + "1*"
+}
+
+// PrepareTerraformWorkingDir creates a temp working directory,
+// copies the repo into it, and returns the TerraformDir to use.
+// This must be called ONCE per test.
+func PrepareTerraformWorkingDir(
+	t *testing.T,
+	prefix string,
+	terraformSubDir string,
+	isUpgradeTest bool,
+) string {
+	t.Helper()
+
+	// Ensure always running from git root
+	gitRoot, err := common.GitRootPath(".")
+	require.NoError(t, err, "Error getting git root path")
+
+	// Create temp working directory
+	tempDir, err := os.MkdirTemp("", fmt.Sprintf("terraform-%s", prefix))
+	require.NoError(t, err, "Error creating temp working dir")
+
+	t.Logf("Automation-created Terraform working dir: %s", tempDir)
+
+	// Same filter logic as public wrapper
+	tempDirFilter := func(p string) bool {
+		if !isUpgradeTest && files.PathContainsHiddenFileOrFolder(p) {
+			return false
+		}
+		if files.PathContainsTerraformStateOrVars(p) ||
+			files.PathIsTerraformLockFile(p) {
+			return false
+		}
+		return true
+	}
+
+	// Copy entire repo into temp dir
+	err = common.CopyDirectory(gitRoot, tempDir, tempDirFilter)
+	require.NoError(t, err, "Error copying terraform code to temp dir")
+
+	// Final TerraformDir = tempDir + original subdir
+	finalTerraformDir := path.Join(tempDir, terraformSubDir)
+
+	// Safety cleanup at test end
+	// t.Cleanup(func() {
+	// 	os.RemoveAll(tempDir)
+	// })
+
+	return finalTerraformDir
+}
+
+func UpdateInstanceCount(
+	t *testing.T,
+	vars map[string]interface{},
+	key string,
+	delta int,
+) {
+	raw, ok := vars[key]
+	require.True(t, ok, "Terraform var %s must exist", key)
+
+	rawStr, ok := raw.(string)
+	require.True(t, ok, "%s must be a string", key)
+
+	var instances []map[string]interface{}
+	err := json.Unmarshal([]byte(rawStr), &instances)
+	require.NoError(t, err, "failed to parse %s", key)
+	require.NotEmpty(t, instances, "%s must not be empty", key)
+
+	current, err := strconv.Atoi(
+		fmt.Sprintf("%v", instances[0]["count"]),
+	)
+	require.NoError(t, err)
+
+	instances[0]["count"] = current + delta
+
+	updated, err := json.Marshal(instances)
+	require.NoError(t, err)
+
+	vars[key] = string(updated)
 }

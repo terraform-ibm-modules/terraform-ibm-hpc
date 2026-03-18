@@ -22,12 +22,6 @@ variable "enable_deployer" {
   description = "Deployer should be only used for better deployment performance."
 }
 
-variable "observability_playbook_path" {
-  description = "Observability Playbook path"
-  type        = string
-  default     = "ssh.yaml"
-}
-
 variable "lsf_mgmt_playbooks_path" {
   description = "Playbook root path"
   type        = string
@@ -38,12 +32,6 @@ variable "ibmcloud_api_key" {
   type        = string
   default     = ""
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
-}
-
-variable "observability_provision" {
-  description = "Set true to provision observability instances"
-  type        = bool
-  default     = false
 }
 
 variable "enable_ldap" {
@@ -62,12 +50,6 @@ variable "playbooks_path" {
   description = "Playbooks path"
   type        = string
   default     = ""
-}
-
-variable "cloudlogs_provision" {
-  description = "Set true to provision cloud logs instances"
-  type        = bool
-  default     = false
 }
 
 variable "scheduler" {

@@ -49,8 +49,8 @@ locals {
     observability_atracker_enable        = var.observability_atracker_enable
     observability_atracker_target_type   = var.observability_atracker_target_type
     sccwp_service_plan                   = var.sccwp_service_plan
-    sccwp_enable                         = var.sccwp_enable
-    cspm_enabled                         = var.cspm_enabled
+    enable_sccwp                         = var.enable_sccwp
+    enable_cspm                          = var.enable_cspm
     app_config_plan                      = var.app_config_plan
     skip_flowlogs_s2s_auth_policy        = var.skip_flowlogs_s2s_auth_policy
     ibmcloud_api_key                     = var.ibmcloud_api_key
@@ -131,8 +131,8 @@ locals {
     vpc_name                             = lookup(local.override[local.override_type], "vpc_name", local.config.vpc_name)
     observability_atracker_enable        = lookup(local.override[local.override_type], "observability_atracker_enable", local.config.observability_atracker_enable)
     observability_atracker_target_type   = lookup(local.override[local.override_type], "observability_atracker_target_type", local.config.observability_atracker_target_type)
-    sccwp_enable                         = lookup(local.override[local.override_type], "scc_wp_enable", local.config.sccwp_enable)
-    cspm_enable                          = lookup(local.override[local.override_type], "cspm_enable", local.config.cspm_enabled)
+    enable_sccwp                         = lookup(local.override[local.override_type], "scc_wp_enable", local.config.enable_sccwp)
+    cspm_enable                          = lookup(local.override[local.override_type], "cspm_enable", local.config.enable_cspm)
     sccwp_service_plan                   = lookup(local.override[local.override_type], "scc_wp_service_plan", local.config.sccwp_service_plan)
     app_config_plan                      = lookup(local.override[local.override_type], "app_config_plan", local.config.app_config_plan)
     skip_flowlogs_s2s_auth_policy        = lookup(local.override[local.override_type], "skip_flowlogs_s2s_auth_policy", local.config.skip_flowlogs_s2s_auth_policy)

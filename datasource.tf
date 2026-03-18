@@ -45,7 +45,7 @@ data "ibm_is_subnet" "existing_storage_subnets" {
 }
 
 data "ibm_is_subnet" "existing_compute_subnets_cidr" {
-  count      = var.enable_deployer == false && var.compute_subnet_id != null ? 1 : 0
+  count      = var.compute_subnet_id != null ? 1 : 0
   identifier = var.compute_subnet_id
 }
 

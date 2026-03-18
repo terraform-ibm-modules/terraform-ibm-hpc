@@ -4,9 +4,11 @@ resource "local_sensitive_file" "prepare_tf_input" {
 {
   "scheduler": "${local.scheduler}",
   "ibmcloud_api_key": "${var.ibmcloud_api_key}",
-  "app_center_gui_password": "${var.app_center_gui_password}",
+  "enable_webservice": "${var.enable_webservice}",
+  "enable_appcenter": "${var.enable_appcenter}",
+  "webservice_appcenter_password": "${var.webservice_appcenter_password}",
   "lsf_version": "${var.lsf_version}",
-  "lsf_pay_per_use": "${var.lsf_pay_per_use}",
+  "enable_lsf_pay_per_use": "${var.enable_lsf_pay_per_use}",
   "resource_group_ids": ${local.resource_group_ids},
   "cluster_prefix": "${var.cluster_prefix}",
   "zones": ${local.zones},
@@ -98,15 +100,16 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "bms_boot_drive_encryption": ${var.bms_boot_drive_encryption},
   "existing_resource_group": "${var.existing_resource_group}",
   "sccwp_service_plan": "${var.sccwp_service_plan}",
-  "sccwp_enable": ${var.sccwp_enable},
-  "cspm_enabled": ${var.cspm_enabled},
+  "enable_sccwp": ${var.enable_sccwp},
+  "enable_cspm": ${var.enable_cspm},
   "app_config_plan": "${var.app_config_plan}",
   "scale_afm_bucket_config_details": ${local.scale_afm_bucket_config_details},
   "scale_afm_cos_hmac_key_params": ${local.scale_afm_cos_hmac_key_params},
   "volume_storages": ${local.volume_storages},
   "enable_private_path_nlb": ${var.enable_private_path_nlb},
   "protocol_instance_eth1_mtu": ${var.protocol_instance_eth1_mtu},
-  "mtu_value": ${var.mtu_value}
+  "mtu_value": ${var.mtu_value},
+  "enable_license_scheduler": ${var.enable_license_scheduler}
 }
 EOT
   filename = local.schematics_inputs_path

@@ -71,7 +71,7 @@ variable "resource_tags" {
 #   default     = []
 # }
 
-variable "cspm_enabled" {
+variable "enable_cspm" {
   description = "Enable Cloud Security Posture Management (CSPM) for the Workload Protection instance. This will create a trusted profile associated with the SCC Workload Protection instance that has viewer / reader access to the App Config service and viewer access to the Enterprise service. [Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
   type        = bool
   default     = false
@@ -79,11 +79,11 @@ variable "cspm_enabled" {
 }
 
 #variable "app_config_crn" {
-#  description = "The CRN of an existing App Config instance to use with the SCC Workload Protection instance. Required if `cspm_enabled` is true. NOTE: Ensure the App Config instance has configuration aggregator enabled."
+#  description = "The CRN of an existing App Config instance to use with the SCC Workload Protection instance. Required if `enable_cspm` is true. NOTE: Ensure the App Config instance has configuration aggregator enabled."
 #  type        = string
 #  default     = null
 #  validation {
-#    condition     = var.cspm_enabled ? var.app_config_crn != null : true
+#    condition     = var.enable_cspm ? var.app_config_crn != null : true
 #    error_message = "Cannot be `null` if CSPM is enabled."
 #  }
 #  validation {
@@ -96,7 +96,7 @@ variable "cspm_enabled" {
 #}
 
 variable "scc_workload_protection_trusted_profile_name" {
-  description = "The name to give the trusted profile that is created by this module if `cspm_enabled` is `true. Must begin with a letter."
+  description = "The name to give the trusted profile that is created by this module if `enable_cspm` is `true. Must begin with a letter."
   type        = string
   default     = "workload-protection-trusted-profile"
   validation {
@@ -104,8 +104,8 @@ variable "scc_workload_protection_trusted_profile_name" {
     error_message = "The trusted profile name must begin with a letter and can only contain letters, numbers, hyphens, underscores, and periods."
   }
   validation {
-    condition     = !(var.cspm_enabled && var.scc_workload_protection_trusted_profile_name == null)
-    error_message = "Cannot be `null` if `cspm_enabled` is `true`."
+    condition     = !(var.enable_cspm && var.scc_workload_protection_trusted_profile_name == null)
+    error_message = "Cannot be `null` if `enable_cspm` is `true`."
   }
 }
 
@@ -135,7 +135,7 @@ variable "enable_deployer" {
   description = "Deployer should be only used for better deployment performance"
 }
 
-variable "sccwp_enable" {
+variable "enable_sccwp" {
   type        = bool
   default     = true
   description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."

@@ -24,7 +24,7 @@
         "solution"
       ],
       "short_description": "Deploy your high performance computing (HPC) cluster with IBM scheduling software for compute intensive workloads.",
-      "long_description": "**Before you begin deploying IBM Spectrum LSF, make sure that you meet the prerequisites listed in [the step-by-step guide](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-before-you-begin-deploying).**\n\nIBM Spectrum LSF is a deployable architecture where you can deploy both cloud compute resources (vCPU resources) and HPC scheduling software for your compute-intensive HPC workloads.",
+      "long_description": "**Before you begin deploying IBM Spectrum LSF, make sure that you meet the prerequisites listed in [the step-by-step guide](https://cloud.ibm.com/docs/hpc-ibm-spectrumlsf?topic=hpc-ibm-spectrumlsf-getting-started-tutorial).**\n\nIBM Spectrum LSF is a deployable architecture where you can deploy both cloud compute resources (vCPU resources) and HPC scheduling software for your compute-intensive HPC workloads.",
       "provider_name": "IBM",
       "offering_docs_url": "https://cloud.ibm.com/docs/hpc-ibm-spectrumlsf?topic=hpc-ibm-spectrumlsf-about-spectrum-lsf",
       "features": [
@@ -59,7 +59,7 @@
               "required": true
             },
             {
-              "key": "lsf_pay_per_use",
+              "key": "enable_lsf_pay_per_use",
               "required": true
             },
             {
@@ -77,10 +77,6 @@
                 {
                   "displayname": "fixpack_15",
                   "value": "fixpack_15"
-                },
-                {
-                  "displayname": "fixpack_14",
-                  "value": "fixpack_14"
                 }
               ]
             },
@@ -292,8 +288,17 @@
               ]
             },
             {
-              "key": "app_center_gui_password",
+              "key": "webservice_appcenter_password",
               "required": true
+            },
+            {
+              "key": "enable_webservice"
+            },
+            {
+              "key": "enable_license_scheduler"
+            },
+            {
+              "key": "enable_appcenter"
             },
             {
               "key": "cluster_prefix"
@@ -383,7 +388,7 @@
               "key": "skip_kms_s2s_auth_policy"
             },
             {
-              "key": "sccwp_enable"
+              "key": "enable_sccwp"
             },
             {
               "key": "sccwp_service_plan",
@@ -400,7 +405,7 @@
               ]
             },
             {
-              "key": "cspm_enabled"
+              "key": "enable_cspm"
             },
             {
               "key": "app_config_plan",
@@ -423,7 +428,7 @@
             {
               "key": "bastion_instance",
               "type": "object",
-              "default_value": "{\n  \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-8\",\n  \"profile\": \"cx2-4x8\"\n}",
+              "default_value": "{\n  \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-12\",\n  \"profile\": \"cx2-4x8\"\n}",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -437,7 +442,7 @@
             {
               "key": "deployer_instance",
               "type": "object",
-              "default_value": "{\n  \"image\": \"hpc-lsf-fp15-deployer-rhel810-v2\",\n  \"profile\": \"bx2-8x32\"\n}",
+              "default_value": "{\n  \"image\": \"hpc-lsf-fp15-deployer-rhel810-v3\",\n  \"profile\": \"bx2-8x32\"\n}",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -469,7 +474,7 @@
             {
               "key": "login_instance",
               "type": "array",
-              "default_value": "[\n  {\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v2\"\n  }\n]",
+              "default_value": "[\n  {\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v3\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -483,7 +488,7 @@
             {
               "key": "management_instances",
               "type": "array",
-              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-16x64\",\n    \"image\": \"hpc-lsf-fp15-rhel810-v2\"\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-16x64\",\n    \"image\": \"hpc-lsf-fp15-rhel810-v3\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -497,7 +502,7 @@
             {
               "key": "static_compute_instances",
               "type": "array",
-              "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"bx2-16x64\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v2\"\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"bx2-16x64\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v3\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -511,7 +516,7 @@
             {
               "key": "dynamic_compute_instances",
               "type": "array",
-              "default_value": "[\n  {\n    \"count\": 500,\n    \"profile\": \"bx2-16x64\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v2\"\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 500,\n    \"profile\": \"bx2-16x64\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v3\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -581,7 +586,7 @@
               "key": "skip_iam_share_authorization_policy"
             },
             {
-              "key": "vpn_enabled"
+              "key": "enable_vpn"
             },
             {
               "key": "enable_ldap"
@@ -604,7 +609,7 @@
             {
               "key": "ldap_instance",
               "type": "array",
-              "default_value": "[\n  {\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-8\"\n  }\n]",
+              "default_value": "[\n  {\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-12\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -1182,7 +1187,7 @@
             {
               "key": "bastion_instance",
               "type": "object",
-              "default_value": "{\n  \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-8\",\n  \"profile\": \"cx2-4x8\"\n}",
+              "default_value": "{\n  \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-12\",\n  \"profile\": \"cx2-4x8\"\n}",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -1442,7 +1447,7 @@
             {
               "key": "ldap_instance",
               "type": "array",
-              "default_value": "[\n  {\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-8\"\n  }\n]",
+              "default_value": "[\n  {\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-12\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -1463,7 +1468,7 @@
               "key": "observability_atracker_target_type"
             },
             {
-              "key": "sccwp_enable"
+              "key": "enable_sccwp"
             },
             {
               "key": "sccwp_service_plan",
@@ -1480,7 +1485,7 @@
               ]
             },
             {
-              "key": "cspm_enabled"
+              "key": "enable_cspm"
             },
             {
               "key": "app_config_plan",

@@ -66,7 +66,7 @@
 
 - name: Management Config | Restore LSF hosts file if missing
   copy:
-    src: "{{ HA_shared_dir }}/lsf/conf/hosts"
+    src: "{{ HA_shared_dir }}/conf/hosts"
     dest: "{{ LSF_HOSTS_FILE }}"
     remote_src: yes
   when: not lsf_hosts_stat.stat.exists
@@ -77,3 +77,16 @@
     dest: /etc/hosts
     remote_src: yes
   ignore_errors: yes
+
+- name: Management Config | Run LSF hostsetup
+  ansible.builtin.shell: >
+    /opt/ibm/lsf/10.1/install/hostsetup
+    --top="/opt/ibm/lsf"
+    --boot="y"
+    --start="y"
+    --dynamic
+  args:
+    executable: /bin/bash
+  register: hostsetup_output
+  ignore_errors: yes
+  when: inventory_hostname in groups['mgmt_compute_nodes']

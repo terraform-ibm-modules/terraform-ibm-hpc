@@ -1,0 +1,15 @@
+#!/bin/bash
+
+source /opt/ibm/lsfsuite/ext/profile.platform
+
+OP=$1
+
+if [ "x${OP}" = "x" ]; then
+    echo "Usage: $0 {start|stop}"
+    exit 1
+fi
+
+perfadmin ${OP} all
+pmcadmin ${OP}
+
+exit 0

@@ -1,5 +1,5 @@
 output "cloud_monitoring_access_key" {
-  value       = var.cloud_monitoring_provision ? module.observability_instance.cloud_monitoring_access_key : null
+  value       = var.cloud_monitoring_provision ? module.cloud_monitoring[0].access_key : null
   description = "IBM Cloud Monitoring access key for agents to use"
   sensitive   = true
 }
@@ -21,26 +21,26 @@ output "cloud_monitoring_prws_url" {
 }
 
 output "cloud_logs_ingress_endpoint" {
-  value       = var.cloud_logs_provision ? module.observability_instance.cloud_logs_ingress_endpoint : null
+  value       = var.cloud_logs_provision ? module.cloud_logs[0].ingress_endpoint : null
   description = "The public ingress endpoint of the provisioned Cloud Logs instance."
 }
 
 output "cloud_logs_ingress_private_endpoint" {
-  value       = var.cloud_logs_provision ? module.observability_instance.cloud_logs_ingress_private_endpoint : ""
+  value       = var.cloud_logs_provision ? module.cloud_logs[0].ingress_private_endpoint : ""
   description = "The private ingress endpoint of the provisioned Cloud Logs instance."
 }
 
 output "cloud_monitoring_url" {
-  value       = var.cloud_monitoring_provision ? "https://cloud.ibm.com/observe/embedded-view/monitoring/${module.observability_instance.cloud_monitoring_guid}" : null
+  value       = var.cloud_monitoring_provision ? "https://cloud.ibm.com/observe/embedded-view/monitoring/${module.cloud_monitoring[0].guid}" : null
   description = "IBM Cloud Monitoring URL"
 }
 
 output "cloud_monitoring_crn" {
-  value       = var.cloud_monitoring_provision ? module.observability_instance.cloud_monitoring_crn : null
+  value       = var.cloud_monitoring_provision ? module.cloud_monitoring[0].crn : null
   description = "IBM Cloud Monitoring URL"
 }
 
 output "cloud_logs_url" {
-  value       = var.cloud_logs_provision ? "https://dashboard.${var.location}.logs.cloud.ibm.com/${module.observability_instance.cloud_logs_guid}" : null
+  value       = var.cloud_logs_provision ? "https://dashboard.${var.location}.logs.cloud.ibm.com/${module.cloud_logs[0].guid}" : null
   description = "IBM Cloud Logs URL"
 }

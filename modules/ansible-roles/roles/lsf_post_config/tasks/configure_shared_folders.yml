@@ -25,27 +25,22 @@
   when: inventory_hostname in groups['management_nodes']
 
 - name: Log directories | Move existing logs to shared per-host directory
-  shell: |
+  ansible.builtin.shell: |
     mv {{ LSF_LOGS }}/* {{ SHARED_PATH }}/logs/{{ inventory_hostname }}/ 2>/dev/null || true
-  args:
-    warn: false
   when: inventory_hostname in groups['management_nodes']
 
-- name: Log directories | Remove original LSF logs directory if it exists
-  file:
-    path: "{{ LSF_LOGS }}"
-    state: absent
-  ignore_errors: true
-  when: inventory_hostname in groups['management_nodes']
-
-- name: Log directories | Create symlink from shared per-host logs to LSF log path
-  file:
-    src: "{{ SHARED_PATH }}/logs/{{ inventory_hostname }}"
-    dest: "{{ LSF_LOGS }}"
-    state: link
-    force: true
-    owner: lsfadmin
-    group: root
+- name: Ensure LSF log are symlinks via shell
+  shell: |
+    if [ -L "{{ LSF_TOP }}/{{ item }}" ]; then
+      echo "Symlink exists, skipping."
+    else
+      if [ -d "{{ LSF_TOP }}/{{ item }}" ]; then
+        rm -rf "{{ LSF_TOP }}/{{ item }}"
+      fi
+      ln -s "{{ SHARED_PATH }}/logs/{{ inventory_hostname }}" "{{ LSF_TOP }}/{{ item }}"
+    fi
+  loop:
+    - log
   when: inventory_hostname in groups['management_nodes']
 
 - name: Log directories | Ensure correct permissions on per-host logs directory
@@ -56,6 +51,17 @@
     recurse: yes
     owner: lsfadmin
     group: root
+  when: inventory_hostname in groups['management_nodes']
+
+- name: Log directories | Ensure permissions recursively on LSF log path
+  ansible.builtin.file:
+    path: "{{ LSF_LOGS }}"
+    state: directory
+    owner: lsfadmin
+    group: root
+    mode: '0777'
+    recurse: yes
+    follow: yes
   when: inventory_hostname in groups['management_nodes']
 
 - name: Log directories | Create symlink to shared data directory
@@ -86,7 +92,7 @@
 
 - name: LoginNode host entry | Read LSF hosts file from shared path
   slurp:
-    src: "{{ SHARED_PATH }}/lsf/conf/hosts"
+    src: "{{ SHARED_PATH }}/conf/hosts"
   register: lsf_hosts_file
   when: inventory_hostname == groups['login_node'][0]
 
@@ -109,30 +115,39 @@
   become: yes
   when: inventory_hostname == groups['login_node'][0]
 
-- name: Duplicate Logs | Remove duplicate logs from LSF log directory
-  shell: |
-    rm -rf /opt/ibm/lsflogs/* /opt/ibm/lsflogs/.* 2>/dev/null || true
-  args:
-    warn: false
-  ignore_errors: true
-  become: true
-  when: inventory_hostname in groups['management_nodes']
+- name: Check if LSF log cleanup already executed
+  ansible.builtin.stat:
+    path: /opt/ibm/lsf/log/.cleanup_done
+  register: cleanup_marker
+  when:
+    - inventory_hostname in groups['mgmt_compute_nodes']
 
-- name: Set permissions on LSF event file
-  ansible.builtin.file:
-    path: "{{ LSF_EVENT }}"
-    mode: '0644'
-    owner: lsfadmin
-    group: lsfadmin
-    state: file
-  ignore_errors: true
-  when: inventory_hostname in groups['management_nodes']
-
-- name: Change ownership and permissions of PEM directory using shell
+- name: Remove logs except fluent
   ansible.builtin.shell: |
-    chown lsfadmin:lsfadmin /tmp/.pem.{{ prefix }} && chmod 775 /tmp/.pem.{{ prefix }}
-  become: yes
-  args:
-    warn: false
-  ignore_errors: true
+    find /opt/ibm/lsf/log/ -type f ! -name 'fluent*' -exec rm -f {} \;
+  become: true
+  when:
+    - inventory_hostname in groups['mgmt_compute_nodes']
+    - not cleanup_marker.stat.exists
+
+- name: Create cleanup marker file
+  ansible.builtin.file:
+    path: /opt/ibm/lsf/log/.cleanup_done
+    state: touch
+  become: true
+  when:
+    - inventory_hostname in groups['mgmt_compute_nodes']
+    - not cleanup_marker.stat.exists
+
+# Restart LSF daemon (lsfd) service on the first management node
+- name: Restart lsfd service
+  service:
+    name: lsfd
+    state: restarted
   when: inventory_hostname in groups['management_nodes']
+
+# Restart the NetworkManager service on all nodes
+- name: Restart NetworkManager
+  service:
+    name: NetworkManager
+    state: restarted
