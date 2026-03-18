@@ -630,9 +630,9 @@ locals {
 # Playbook - LSF Specific
 #########################
 locals {
-  bastion_fip                 = module.deployer.bastion_fip
-  lsf_mgmt_playbooks_path     = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/lsf_mgmt_config.yml" : "${path.root}/modules/ansible-roles/lsf_mgmt_config.yml"
-  playbooks_path              = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/" : "${path.root}/modules/ansible-roles"
+  bastion_fip             = module.deployer.bastion_fip
+  lsf_mgmt_playbooks_path = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/lsf_mgmt_config.yml" : "${path.root}/modules/ansible-roles/lsf_mgmt_config.yml"
+  playbooks_path          = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/" : "${path.root}/modules/ansible-roles"
 }
 
 ############################################

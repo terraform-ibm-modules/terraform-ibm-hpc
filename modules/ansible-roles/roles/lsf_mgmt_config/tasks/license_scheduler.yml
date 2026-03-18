@@ -15,6 +15,11 @@
     - inventory_hostname in groups['management_nodes']
     - enable_license_scheduler | bool
 
+  rescue:
+    - name: Log failure for lsfd restart block
+      ansible.builtin.debug:
+        msg: "WARNING: Failed to restart lsfd service on {{ inventory_hostname }}"
+
 ##############################
 # WHEN ENABLE_LICENSE_SCHEDULER = TRUE
 ##############################
@@ -174,6 +179,11 @@
     - inventory_hostname in groups['gui_hosts']
     - enable_license_scheduler | bool
 
+  rescue:
+    - name: Log failure for license scheduler enable block
+      ansible.builtin.debug:
+        msg: "WARNING: License Scheduler enable block failed"
+
 ##############################
 # WHEN ENABLE_LICENSE_SCHEDULER = FALSE
 ##############################
@@ -206,3 +216,8 @@
   when:
     - inventory_hostname in groups['gui_hosts']
     - not enable_license_scheduler | bool
+
+  rescue:
+    - name: Log failure for license scheduler disable block
+      ansible.builtin.debug:
+        msg: "WARNING: License Scheduler disable block failed"

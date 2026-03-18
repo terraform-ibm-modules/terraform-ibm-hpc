@@ -88,8 +88,8 @@ type EnvVars struct {
 	WorkerNodeMaxCount                          string
 	StaticComputeInstances                      string
 	DynamicComputeInstances                     string
-	SccWPEnabled                                string
-	CspmEnabled                                 string
+	EnableSccwp                                 string
+	EnableCspm                                  string
 	SccwpServicePlan                            string
 	AppConfigPlan                               string
 	ObservabilityMonitoringEnable               string
@@ -169,8 +169,8 @@ func GetEnvVars() (*EnvVars, error) {
 		WorkerNodeMaxCount:              os.Getenv("WORKER_NODE_MAX_COUNT"),
 		StaticComputeInstances:          os.Getenv("STATIC_COMPUTE_INSTANCES"),
 		DynamicComputeInstances:         os.Getenv("DYNAMIC_COMPUTE_INSTANCES"),
-		SccWPEnabled:                    os.Getenv("ENABLE_SCCWP"),
-		CspmEnabled:                     os.Getenv("ENABLE_CSPM"),
+		EnableSccwp:                     os.Getenv("ENABLE_SCCWP"),
+		EnableCspm:                      os.Getenv("ENABLE_CSPM"),
 		SccwpServicePlan:                os.Getenv("SCCWP_SERVICE_PLAN"),
 		AppConfigPlan:                   os.Getenv("APP_CONFIG_PLAN"),
 		ObservabilityMonitoringEnable:   os.Getenv("OBSERVABILITY_MONITORING_ENABLE"),

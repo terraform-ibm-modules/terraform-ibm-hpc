@@ -65,3 +65,8 @@
       ansible.builtin.pause:
         seconds: 10
       when: login_host_check.rc != 0
+
+  rescue:
+    - name: Log failure
+      ansible.builtin.debug:
+        msg: "Failed to ensure login node is registered in LSF"

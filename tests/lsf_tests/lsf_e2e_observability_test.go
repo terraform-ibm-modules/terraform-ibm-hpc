@@ -32,7 +32,7 @@ func TestRunSCCWPAndCSPMEnabledClusterValidation(t *testing.T) {
 	require.NoError(t, err, "Failed to load environment configuration")
 
 	// Skip the test if SCC is disabled
-	if strings.ToLower(envVars.SccWPEnabled) == "false" {
+	if strings.ToLower(envVars.EnableSccwp) == "false" {
 		testLogger.Warn(t, fmt.Sprintf("Skipping %s - SCCWP disabled in configuration", t.Name()))
 		return
 	}
@@ -54,8 +54,8 @@ func TestRunSCCWPAndCSPMEnabledClusterValidation(t *testing.T) {
 	}
 
 	// SCCWP Specific Configuration
-	options.TerraformVars["enable_sccwp"] = envVars.SccWPEnabled
-	options.TerraformVars["enable_cspm"] = envVars.CspmEnabled
+	options.TerraformVars["enable_sccwp"] = envVars.EnableSccwp
+	options.TerraformVars["enable_cspm"] = envVars.EnableCspm
 	options.TerraformVars["sccwp_service_plan"] = envVars.SccwpServicePlan
 	options.TerraformVars["app_config_plan"] = envVars.AppConfigPlan
 

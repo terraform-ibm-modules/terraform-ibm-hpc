@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: rhel-vpc-dns-and-logging-integration-tests
+  name: rhel-security-compliance-and-observability-tests
 spec:
   params:
     - name: ibmcloud-api
@@ -136,7 +136,7 @@ spec:
       - name: lsf_version
         value: $(params.lsf_version)
   steps:
-    - name: custom-dns-vpc-creation-tests
+    - name: atracker-cos-and-cloud-logs-integration-tests
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -154,8 +154,8 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          custom-dns-vpc-creation-tests
-    - name: logs-enabled-observability-and-flow-logs-tests
+          atracker-cos-and-cloud-logs-integration-tests
+    - name: scc-cspm-and-custom-dns-validation-tests
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -173,7 +173,7 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          logs-enabled-observability-and-flow-logs-tests
+          scc-cspm-and-custom-dns-validation-tests
     - name: display-summary-report
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
@@ -192,4 +192,4 @@ spec:
           fi
 
           source .tekton/scripts/html_report.sh
-          common_task_report custom-dns-vpc-creation-tests,logs-enabled-observability-and-flow-logs-tests lsf-da
+          common_task_report atracker-cos-and-cloud-logs-integration-tests,scc-cspm-and-custom-dns-validation-tests lsf-da

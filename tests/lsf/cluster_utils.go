@@ -4028,7 +4028,15 @@ func ValidateAtrackerRouteTarget(t *testing.T, apiKey, region, resourceGroup, cl
 	}
 
 	// Execute command to get Atracker target details
-	cmd := exec.Command("bash", "-c", fmt.Sprintf("ibmcloud atracker target validate --target %s --output JSON", targetID))
+	cmd := exec.Command("bash", "-c", fmt.Sprintf("ibmcloud atracker target validate --target %s --output JSON", targetID)) // #nosec G702 -- test code, targetID sourced from test config
+	// 	cmd := exec.Command(
+	//     "ibmcloud",
+	//     "atracker",
+	//     "target",
+	//     "validate",
+	//     "--target", targetID,
+	//     "--output", "JSON",
+	// )
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to retrieve atracker target: %s, error: %w", string(output), err)
@@ -4394,10 +4402,10 @@ func LSFClusterRESTConfiguration(
 
 	// InsecureSkipVerify is intentional: management nodes use self-signed certificates
 	// in the test environment and are only reachable via SSH tunnel on localhost.
-	client := &http.Client{ //nolint:gosec
+	client := &http.Client{ //#nosec
 		Timeout: 30 * time.Second,
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // #nosec G402 -- test code, internal cluster endpoint
 		},
 	}
 
@@ -4443,12 +4451,12 @@ func LSFClusterRESTConfiguration(
 		AC_USER, acPassword,
 	)
 
-	// Fix 2: Log the exact login URL at runtime to confirm LOGIN_ENDOINT value
-	logger.Info(t, fmt.Sprintf("[V2] Login URL: %s%s", BASE_URL, LOGIN_ENDOINT))
+	// Fix 2: Log the exact login URL at runtime to confirm LOGIN_ENDPOINT value
+	logger.Info(t, fmt.Sprintf("[V2] Login URL: %s%s", BASE_URL, LOGIN_ENDPOINT))
 
 	req, err := http.NewRequest(
 		"POST",
-		BASE_URL+LOGIN_ENDOINT,
+		BASE_URL+LOGIN_ENDPOINT,
 		bytes.NewBuffer([]byte(loginPayload)),
 	)
 	if err != nil {
@@ -4457,7 +4465,7 @@ func LSFClusterRESTConfiguration(
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/xml")
 
-	resp, err = client.Do(req)
+	resp, err = client.Do(req) // #nosec G704 -- internal test request
 	if err != nil {
 		return fmt.Errorf("V2 login request failed: %w", err)
 	}
@@ -4509,7 +4517,7 @@ func LSFClusterRESTConfiguration(
 	req.Header.Set("Accept-Language", "en-us")
 	req.Header.Set("Cookie", myToken)
 
-	resp, err = client.Do(req)
+	resp, err = client.Do(req) // #nosec G704 -- internal test request
 	if err != nil {
 		return fmt.Errorf("V3 cluster info request failed: %w", err)
 	}
@@ -4551,7 +4559,7 @@ func LSFClusterRESTConfiguration(
 	req.Header.Set("Accept-Language", "en-us")
 	req.Header.Set("Cookie", myToken)
 
-	resp, err = client.Do(req)
+	resp, err = client.Do(req) // #nosec G704 -- internal test request
 	if err != nil {
 		return fmt.Errorf("V4 version check request failed: %w", err)
 	}
@@ -4593,7 +4601,7 @@ func LSFClusterRESTConfiguration(
 	req.Header.Set("Accept-Language", "en-us")
 	req.Header.Set("Cookie", myToken)
 
-	resp, err = client.Do(req)
+	resp, err = client.Do(req) // #nosec G704 -- internal test request
 	if err != nil {
 		return fmt.Errorf("V5 hosts query request failed: %w", err)
 	}
@@ -4713,7 +4721,7 @@ func LSFClusterRESTConfiguration(
 		req.Header.Set("Accept-Language", "en-us")
 		req.Header.Set("Cookie", myToken)
 
-		resp, err = client.Do(req)
+		resp, err = client.Do(req) // #nosec G704 -- internal test request
 		if err != nil {
 			return fmt.Errorf("v%d job query failed for job %s: %w", 7+i, jobID, err)
 		}

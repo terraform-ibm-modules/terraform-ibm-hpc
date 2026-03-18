@@ -29,7 +29,7 @@ const (
 	AC_USER                                 = "lsfadmin"
 	BASE_URL                                = "https://localhost:8443"
 	PING_ENDPOINT                           = "/platform/ws/ping"
-	LOGIN_ENDOINT                           = "/platform/ws/logon"
+	LOGIN_ENDPOINT                          = "/platform/ws/logon"
 	CLUSTER_ENDPOINT                        = "/platform/ws/clusters/local"
 )
 

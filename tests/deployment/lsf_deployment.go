@@ -108,8 +108,8 @@ type Config struct {
 	SSHFilePathTwo                              string                    `yaml:"ssh_file_path_two"`
 	StaticComputeInstances                      []StaticWorkerInstances   `yaml:"static_compute_instances"`
 	DynamicComputeInstances                     []DynamicWorkerInstances  `yaml:"dynamic_compute_instances"`
-	SccWPEnabled                                bool                      `yaml:"enable_sccwp"`
-	CspmEnabled                                 bool                      `yaml:"enable_cspm"`
+	EnableSccwp                                 bool                      `yaml:"enable_sccwp"`
+	EnableCspm                                  bool                      `yaml:"enable_cspm"`
 	SccwpServicePlan                            string                    `yaml:"sccwp_service_plan"`
 	AppConfigPlan                               string                    `yaml:"app_config_plan"`
 	ObservabilityMonitoringEnable               bool                      `yaml:"observability_monitoring_enable"`
@@ -209,8 +209,8 @@ func setEnvFromConfig(config *Config) error {
 		"SSH_FILE_PATH":                       config.SSHFilePath,
 		"SSH_FILE_PATH_TWO":                   config.SSHFilePathTwo,
 		"SCHEDULER":                           config.Scheduler,
-		"ENABLE_SCCWP":                        config.SccWPEnabled,
-		"ENABLE_CSPM":                         config.CspmEnabled,
+		"ENABLE_SCCWP":                        config.EnableSccwp,
+		"ENABLE_CSPM":                         config.EnableCspm,
 		"SCCWP_SERVICE_PLAN":                  config.SccwpServicePlan,
 		"APP_CONFIG_PLAN":                     config.AppConfigPlan,
 		"OBSERVABILITY_MONITORING_ENABLE":     config.ObservabilityMonitoringEnable,
