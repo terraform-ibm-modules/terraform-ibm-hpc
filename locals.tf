@@ -631,7 +631,6 @@ locals {
 #########################
 locals {
   bastion_fip                 = module.deployer.bastion_fip
-  observability_playbook_path = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/observability.yaml" : "${path.root}/modules/ansible-roles/observability.yaml"
   lsf_mgmt_playbooks_path     = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/lsf_mgmt_config.yml" : "${path.root}/modules/ansible-roles/lsf_mgmt_config.yml"
   playbooks_path              = var.enable_deployer ? "${path.root}/../../modules/ansible-roles/" : "${path.root}/modules/ansible-roles"
 }
