@@ -4673,7 +4673,7 @@ func LSFClusterRESTConfiguration(
 		req.Header.Set("Accept-Language", "en-us")
 		req.Header.Set("Cookie", myToken)
 
-		resp, err := client.Do(req)
+		resp, err := client.Do(req) // #nosec G704 -- internal test request
 		if err != nil {
 			return fmt.Errorf("V6 job submission failed: %w", err)
 		}
