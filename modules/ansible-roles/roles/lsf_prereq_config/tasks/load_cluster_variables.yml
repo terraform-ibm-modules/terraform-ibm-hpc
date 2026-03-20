@@ -1,0 +1,15 @@
+---
+- name: Environment Config | Configure system-wide LSF platform environment
+  ansible.builtin.copy:
+    dest: /etc/profile.d/lsf_platform.sh
+    owner: root
+    group: root
+    mode: '0755'
+    content: |
+      # LSF Platform Environment
+      source /opt/ibm/lsf/conf/profile.lsf
+      source /opt/ibm/lsfsuite/ext/profile.platform
+
+      export PATH
+      export LSF_ENVDIR
+      export LSF_SERVERDIR

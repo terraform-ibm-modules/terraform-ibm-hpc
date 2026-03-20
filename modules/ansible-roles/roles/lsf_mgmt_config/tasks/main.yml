@@ -1,15 +1,49 @@
 ---
 
-- import_tasks: hyperthreading.yml
+# Disable hyperthreading on all cluster nodes
+- name: Disable CPU hyperthreading on cluster nodes
+  import_tasks: hyperthreading.yml
 
-- import_tasks: configure_management_nodes.yml
+# Configure LSF management nodes
+- name: Set up and configure LSF management nodes
+  import_tasks: configure_management_nodes.yml
 
-- import_tasks: hosts_file_update.yml
+# Update /etc/hosts across all nodes
+- name: Update /etc/hosts with cluster-wide entries
+  import_tasks: hosts_file_update.yml
 
-- import_tasks: app_center_configure.yml
-  when: inventory_hostname in groups['gui_hosts']
+# Configure App Center (only on GUI hosts with elevated privileges)
+- name: Configure App Center on GUI nodes
+  block:
+    - import_tasks: app_center_configure.yml
+  become: true
+  become_flags: "-i"
+  when:
+    - inventory_hostname in groups['gui_hosts']
+    - enable_appcenter | bool
+  rescue:
+    - name: Log failure for App Center configuration
+      ansible.builtin.debug:
+        msg: "WARNING: App Center configuration failed"
 
-- import_tasks: web_services.yml
-  when: lsf_version == "fixpack_15" and inventory_hostname in groups['gui_hosts']
+# Configure Web Services (only on GUI hosts with elevated privileges)
+- name: Configure Web Services on GUI nodes
+  block:
+    - import_tasks: web_services.yml
+  become: true
+  become_flags: "-i"
+  when:
+    - inventory_hostname in groups['gui_hosts']
+    - enable_webservice | bool
+  rescue:
+    - name: Log failure for Web Services configuration
+      ansible.builtin.debug:
+        msg: "WARNING: Web Services configuration failed"
 
-- import_tasks: configure_dynamic_nodes_templates.yml
+# Configure templates for dynamic compute nodes
+- name: Set up templates for dynamic compute nodes
+  import_tasks: configure_dynamic_nodes_templates.yml
+
+# Configure License Scheduler
+- name: Set up and configure License Scheduler
+  import_tasks: license_scheduler.yml

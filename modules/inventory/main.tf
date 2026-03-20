@@ -21,9 +21,9 @@ ${join("\n", var.gui_hosts)}
 ${join("\n", var.login_host)}
 
 [all:vars]
-ansible_user = "vpcuser"
-ansible_ssh_private_key_file = "/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/compute_id_rsa"
-scheduler = ${jsonencode(var.scheduler)}
+ansible_user=vpcuser
+ansible_ssh_private_key_file=/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/compute_id_rsa
+scheduler=${jsonencode(var.scheduler)}
 name_mount_path_map = {${join(",", [for k, v in var.name_mount_path_map : "\"${k}\": \"${v}\""])}}
 nfs_shares_map       = ${jsonencode(var.nfs_shares_map)}
 mount_paths_map = ${jsonencode(merge(var.name_mount_path_map, var.nfs_shares_map))}
@@ -45,6 +45,7 @@ ldap_admin_password      = ${var.ldap_admin_password}
 ldap_server_cert         = ${replace(var.ldap_server_cert, "\n", "\\n")}
 ldap_user_name           = ${var.ldap_user_name}
 ldap_user_password       = ${var.ldap_user_password}
+ansible_python_interpreter = /usr/bin/python3
 EOT
   filename = var.inventory_path
 }

@@ -1,30 +1,17 @@
 locals {
   image_region_map = {
-    "hpc-lsf-fp15-deployer-rhel810-v2" = {
-      "eu-es"    = "r050-92ce36d5-20c3-4c7d-8d38-a5d16e553d6a"
-      "eu-gb"    = "r018-da0c8368-8b87-428b-b63e-1d4acd3764f0"
-      "eu-de"    = "r010-4625705f-a2af-46fc-9694-864fb8a4b02f"
-      "us-east"  = "r014-79497f2e-d71c-4390-93d6-8ccdb19f594a"
-      "us-south" = "r006-390958ed-07cc-4489-98d3-8e3350174cf9"
-      "jp-tok"   = "r022-f4d7ac54-1707-42e7-acf9-a74f46b4aa66"
-      "jp-osa"   = "r034-e5363d7e-f4e3-4fdc-a642-3a89c1c86b6b"
-      "au-syd"   = "r026-a52653e5-2d96-4470-bb28-5903d562099b"
-      "br-sao"   = "r042-61f7226d-5ebc-40fa-ae81-1554344b9640"
-      "ca-tor"   = "r038-4ccdcbb5-5d1a-4a86-9fdf-847f57dd1588"
-      "ca-mon"   = "r058-9a37637f-07a1-4048-9a6c-6ab75441f74a"
-    },
-    "hpc-lsf-fp14-deployer-rhel810-v1" = {
-      "eu-es"    = "r050-a530edc3-d053-41cd-899b-2c61d53d5efd"
-      "eu-gb"    = "r018-b368f002-64ea-48bb-a5f1-77e7891c2691"
-      "eu-de"    = "r010-c5b5f7d9-bc3e-4e18-9724-f682ccfef617"
-      "us-east"  = "r014-9d0c683d-da23-4836-9057-d8732c26010a"
-      "us-south" = "r006-33e861c5-590f-492d-a97b-eb62e313dc8d"
-      "jp-tok"   = "r022-b02c8618-ea8f-42bf-854a-da5822ee3cb5"
-      "jp-osa"   = "r034-490ee8d9-f5af-410d-9aeb-c6190beefdf6"
-      "au-syd"   = "r026-93a5c85d-8861-46a9-8100-1d3d788f750d"
-      "br-sao"   = "r042-93c1a769-c138-4765-91d2-5796965b6a98"
-      "ca-tor"   = "r038-9448213f-22ce-4a6a-b6b0-22dd6ed9fbb3"
-      "ca-mon"   = "r058-b3211406-9eec-4148-aafb-d6ab7c26a6eb"
+    "hpc-lsf-fp15-deployer-rhel810-v3" = {
+      "eu-es"    = "r050-87e6094c-acc2-4d73-8840-40e3ba0c4ef9"
+      "eu-gb"    = "r018-445092fe-755b-4ea4-85f9-d6a49db9dece"
+      "eu-de"    = "r010-b6099c4b-dac4-4e59-a3dd-506b2f08b26c"
+      "us-east"  = "r014-2c390812-4117-4302-8565-707bff81a84b"
+      "ca-mon"   = "r058-dd6891da-ca10-417d-8481-cc8381318f1b"
+      "us-south" = "r006-43bab52b-8145-449f-ae1a-5fcda404b0e1"
+      "jp-tok"   = "r022-92008a9b-4bbe-48ac-98d1-645fedee5778"
+      "jp-osa"   = "r034-d7e36a4c-f5e9-4e21-a6b1-524ca283204b"
+      "au-syd"   = "r026-b6b3eaf9-8d4c-4e94-be8a-6314c2f5d153"
+      "br-sao"   = "r042-ec4916e6-4ef3-4b8d-8bf0-1f795354ba8b"
+      "ca-tor"   = "r038-3c4b2940-1251-41b0-b1e7-93ddcd72b953"
     },
     "hpcc-scale-deployer-v2" = {
       "eu-es"    = "r050-8dd39af9-61e0-47eb-a51c-1aacb0194f5a"

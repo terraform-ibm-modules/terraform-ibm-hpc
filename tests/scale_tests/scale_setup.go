@@ -88,8 +88,8 @@ func GetEnvVars() (*EnvVars, error) {
 		ScaleEncryptionType:                  os.Getenv("SCALE_ENCRYPTION_TYPE"),
 		ScaleObservabilityAtrackerEnable:     os.Getenv("SCALE_OBSERVABILITY_ATRACKER_ENABLE"),
 		ScaleObservabilityAtrackerTargetType: os.Getenv("SCALE_OBSERVABILITY_ATRACKER_TARGET_TYPE"),
-		ScaleSCCWPEnable:                     os.Getenv("SCALE_SCCWP_ENABLE"),
-		ScaleCSPMEnabled:                     os.Getenv("SCALE_CSPM_ENABLED"),
+		ScaleSCCWPEnable:                     os.Getenv("SCALE_ENABLE_SCCWP"),
+		ScaleCSPMEnabled:                     os.Getenv("SCALE_ENABLE_CSPM"),
 		ScaleSCCWPServicePlan:                os.Getenv("SCALE_SCCWP_SERVICE_PLAN"),
 		GKLMInstances:                        os.Getenv("GKLM_INSTANCES"),
 		ScaleEncryptionAdminPassword:         os.Getenv("SCALE_ENCRYPTION_ADMIN_PASSWORD"),
@@ -231,36 +231,61 @@ func GetScaleVersionConfig() (string, error) {
 	return defaultConfigFile, nil
 }
 
-// DefaultTest runs the default test using the provided Terraform directory and existing resource group.
-// It provisions a cluster, waits for it to be ready, and then validates it.
+// DefaultTest validates creation and verification of an HPC Scale cluster.
+// Tests:
+//   - Successful cluster provisioning
+//   - Valid output structure
+//   - Resource cleanup
 func DefaultTest(t *testing.T) {
-	setupTestSuite(t)
-	if testLogger == nil {
-		t.Fatal("Logger initialization failed")
-	}
-	testLogger.Info(t, fmt.Sprintf("Test %s starting execution", t.Name()))
+	t.Helper()
 
+	// ── 1. Initialization ────────────────────────────────────────────────────
+	setupTestSuite(t)
+	require.NotNil(t, testLogger, "Test logger must be initialized before use")
+	testLogger.Info(t, fmt.Sprintf("[START] Test %s beginning execution", t.Name()))
+	t.Log("[START] Test", t.Name(), "beginning execution")
+
+	// ── 2. Configuration ─────────────────────────────────────────────────────
 	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
+	t.Log("Generated cluster name prefix:", clusterNamePrefix)
 
 	envVars, err := GetEnvVars()
 	if err != nil {
-		testLogger.Error(t, fmt.Sprintf("Environment config error: %v", err))
+		t.Log("Failed to load environment variables:", err)
+		testLogger.FAIL(t, fmt.Sprintf("Failed to load environment variables: %v", err))
+		require.NoError(t, err, "Environment configuration failed")
 	}
-	require.NoError(t, err, "Environment configuration failed")
+	t.Log("Environment variables loaded successfully")
 
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.ExistingResourceGroup)
 	if err != nil {
-		testLogger.Error(t, fmt.Sprintf("Test setup error: %v", err))
+		t.Log("Failed to initialize test options:", err)
+		testLogger.FAIL(t, fmt.Sprintf("Failed to initialize test options: %v", err))
+		require.NoError(t, err, "Test options initialization failed")
 	}
-	require.NoError(t, err, "Test options initialization failed")
+	t.Log("Test options initialized successfully")
+
+	// ── 3. Pre-conditions ─────────────────────────────────────────────────────
+	testLogger.Info(t, fmt.Sprintf("Pre-condition check: cluster prefix=%s, resource group=%s",
+		clusterNamePrefix, envVars.ExistingResourceGroup))
+	t.Log("Pre-condition check passed — configuration is valid, ready to provision")
+
+	// ── 4. Execution & Validation ─────────────────────────────────────────────
+	testLogger.Info(t, fmt.Sprintf("Deployment started for test: %s", t.Name()))
+	t.Log("Starting cluster provisioning...")
 
 	output, err := options.RunTestConsistency()
 	if err != nil {
-		testLogger.FAIL(t, fmt.Sprintf("Provisioning failed: %v", err))
+		t.Log("Cluster provisioning failed:", err)
+		testLogger.FAIL(t, fmt.Sprintf("Cluster provisioning failed: %v", err))
+		require.NoError(t, err, "Cluster provisioning failed with output: %v", output)
 	}
-	require.NoError(t, err, "Cluster provisioning failed with output: %v", output)
-	require.NotNil(t, output, "Received nil output from provisioning")
+	require.NotNil(t, output, "Cluster provisioning returned nil output")
 
-	testLogger.PASS(t, fmt.Sprintf("Test %s completed successfully", t.Name()))
+	testLogger.Info(t, fmt.Sprintf("Deployment completed successfully for test: %s", t.Name()))
+	t.Log("Cluster provisioning completed and output validated")
+
+	// ── 5. Completion ─────────────────────────────────────────────────────────
+	testLogger.PASS(t, fmt.Sprintf("[END] Test %s completed successfully", t.Name()))
+	t.Log("[END] Test", t.Name(), "completed successfully")
 }

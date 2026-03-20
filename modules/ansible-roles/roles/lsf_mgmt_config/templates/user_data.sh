@@ -5,7 +5,7 @@ echo "START $(date '+%Y-%m-%d %H:%M:%S')" >>$logfile
 
 # Initialize variables
 cluster_prefix="{{ prefix }}"
-default_cluster_name="myCluster"
+default_cluster_name="HPCCluster"
 nfs_server_with_mount_path="{{ mount_paths_map['/mnt/lsf'] }}"
 cloud_monitoring_access_key="{{ cloud_monitoring_access_key }}"
 cloud_monitoring_ingestion_url="{{ cloud_monitoring_ingestion_url }}"
@@ -114,8 +114,8 @@ echo "Setting custom file shares is completed." >>"$logfile"
 echo '{% endraw %}'
 
 # Setup SSH
-LDAP_DIR="/home/lsfadmin"
-SSH_DIR="$LDAP_DIR/.ssh"
+LSFADMIN_DIR="/home/lsfadmin"
+SSH_DIR="$LSFADMIN_DIR/.ssh"
 mkdir -p "$SSH_DIR"
 cp /home/vpcuser/.ssh/authorized_keys "$SSH_DIR/authorized_keys"
 cat "{{ ha_shared_dir }}/ssh/id_rsa.pub" >>"$SSH_DIR/authorized_keys"
@@ -127,12 +127,12 @@ chmod 700 "$SSH_DIR"
 chown -R lsfadmin:lsfadmin "$SSH_DIR"
 
 # Setup LSF environment variables
-LSF_TOP="/opt/ibm/lsfsuite/lsf"
+LSF_TOP="/opt/ibm/lsf"
 LSF_CONF="$LSF_TOP/conf"
 LSF_WORK="$LSF_TOP/work"
 LSF_CONF_FILE="$LSF_CONF/lsf.conf"
-LSF_LOGS="/opt/ibm/lsflogs"
-SHARED_HOSTS="/mnt/lsf/lsf/conf/hosts"
+LSF_LOGS="/opt/ibm/lsf/log"
+SHARED_HOSTS="/mnt/lsf/conf/hosts"
 LSF_HOSTS_FILE="${LSF_CONF}/hosts"
 SYSTEM_HOSTS_FILE="/etc/hosts"
 
@@ -140,6 +140,17 @@ SYSTEM_HOSTS_FILE="/etc/hosts"
 mkdir -p $LSF_LOGS
 chown -R lsfadmin $LSF_LOGS
 chown -R 755 $LSF_LOGS
+
+# Configure LSF sudoers and host setup
+
+cat <<EOT > "/etc/lsf.sudoers"
+LSF_STARTUP_USERS="lsfadmin"
+LSF_STARTUP_PATH=$LSF_TOP_VERSION/linux4.18-glibc2.28-x86_64/etc/
+EOT
+
+chmod 600 /etc/lsf.sudoers
+
+$LSF_TOP/10.1/install/hostsetup --top="$LSF_TOP" --boot="y" --start="y" --dynamic
 
 # Append the line only if the exact search line is not already present
 if ! grep -Fxq "search ${dns_domain}" /etc/resolv.conf; then
@@ -192,7 +203,7 @@ fi
 echo "EGO_DEFINE_NCPUS=${ego_define_ncpus}" >>$LSF_CONF_FILE
 
 # Main Configuration for Dynamic Nodes
-sed -i 's|^LSF_LOGDIR=.*|LSF_LOGDIR="/opt/ibm/lsflogs"|' $LSF_CONF_FILE
+# sed -i 's|^LSF_LOGDIR=.*|LSF_LOGDIR="/opt/ibm/lsf/log"|' $LSF_CONF_FILE
 sed -i '/^lsfservers/d' "$LSF_CONF/lsf.cluster.$cluster_prefix"
 grep -rli "$default_cluster_name" $LSF_CONF/* | xargs sed -i "s/$default_cluster_name/$cluster_prefix/g"
 mv $LSF_WORK/$default_cluster_name $LSF_WORK/"$cluster_prefix"
@@ -227,9 +238,9 @@ fi
 
 # source profile.lsf
 echo "source ${LSF_CONF}/profile.lsf" >>~/.bashrc
-echo "source ${LSF_CONF}/profile.lsf" >>"$LDAP_DIR"/.bashrc
+echo "source ${LSF_CONF}/profile.lsf" >>"$LSFADMIN_DIR"/.bashrc
 source "$HOME/.bashrc"
-source "$LDAP_DIR/.bashrc"
+source "$LSFADMIN_DIR/.bashrc"
 
 chown -R lsfadmin $LSF_TOP
 chown -R lsfadmin $LSF_WORK
@@ -346,7 +357,7 @@ fi
 
 # Setting up the Cloud Monitoring Agent
 if [ "$cloud_monitoring_access_key" != "" ] && [ "$cloud_monitoring_ingestion_url" != "" ]; then
-
+  echo "cloud_monitoring_access_key and cloud_monitoring_ingestion_url are provided" >>"$logfile"
   SYSDIG_CONFIG_FILE="/opt/draios/etc/dragent.yaml"
 
   #packages installation
@@ -373,7 +384,8 @@ fi
 # Setting up the IBM Cloud Logs
 if [ "$observability_logs_enable_for_compute" = true ]; then
 
-  echo "Configuring cloud logs for compute since observability logs for compute is enabled"
+  echo "Configuring cloud logs for compute since observability logs for compute is enabled" >>"$logfile"
+  sudo cp /opt/fluent-bit/bin/post-config.sh /opt/ibm
   cd /opt/ibm || exit
 
   cat <<EOL >/etc/fluent-bit/fluent-bit.conf
@@ -404,10 +416,10 @@ if [ "$observability_logs_enable_for_compute" = true ]; then
 [INPUT]
   Name              tail
   Tag               *
-  Path              /opt/ibm/lsflogs/*.log.*
+  Path              /opt/ibm/lsf/log/*.log.*
   Path_Key          file
   Exclude_Path      /var/log/at/**
-  DB                /opt/ibm/lsflogs/fluent-bit.DB
+  DB                /opt/ibm/lsf/log/fluent-bit.DB
   Buffer_Chunk_Size 32KB
   Buffer_Max_Size   256KB
   Skip_Long_Lines   On
@@ -423,13 +435,13 @@ if [ "$observability_logs_enable_for_compute" = true ]; then
 
 @INCLUDE outputs.conf
 EOL
-
-  sudo chmod +x /opt/fluent-bit/bin/post-config.sh
-  sudo /opt/fluent-bit/bin/post-config.sh -h "$cloud_logs_ingress_private_endpoint" -p "3443" -t "/logs/v1/singles" -a IAMAPIKey -k "$VPC_APIKEY_VALUE" --send-directly-to-icl -s true -i Production
-  echo "INFO Testing IBM Cloud LSF Logs from compute: $hostname" | sudo tee -a /opt/ibm/lsflogs/test.log.com >/dev/null
-  sudo logger -u /tmp/in_syslog my_ident my_syslog_test_message_from_compute:"$hostname"
+  echo "Providing execution access to post-config.sh" >>"$logfile"
+  sudo chmod +x post-config.sh
+  sudo ./post-config.sh -h "$cloud_logs_ingress_private_endpoint" -p "3443" -t "/logs/v1/singles" -a IAMAPIKey -k "$VPC_APIKEY_VALUE" --send-directly-to-icl -s true -i Production
+  echo "INFO Testing IBM Cloud LSF Logs from compute: '$hostname'" | sudo tee -a /opt/ibm/lsf/log/fluent-test.log.com >/dev/null
+  echo "fluent-test.log.com has been successfully created" >>"$logfile"
 else
   echo "Cloud Logs configuration skipped since observability logs for compute is not enabled"
 fi
-
-echo "COMPLETED $(date '+%Y-%m-%d %H:%M:%S')" >>$logfile
+echo "Completed sysdig and cloud logs configuration" >>"$logfile"
+echo "COMPLETED $(date '+%Y-%m-%d %H:%M:%S')" >>"$logfile"

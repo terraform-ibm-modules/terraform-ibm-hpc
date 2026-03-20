@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: wes-lsf-da-rhel-1
+  name: rhel-core-deployment-and-rga-tests
 spec:
   params:
     - name: ibmcloud-api
@@ -131,7 +131,7 @@ spec:
       - name: lsf_version
         value: $(params.lsf_version)
   steps:
-    - name: rhel-suite-1
+    - name: basic-deployment-and-default-rga-tests
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -149,8 +149,8 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          lsf_da_rhel_suite_1
-    - name: rhel-suite-2
+          basic-deployment-and-default-rga-tests
+    - name: custom-rga-and-no-kms-host-config-tests
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -168,8 +168,8 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          lsf_da_rhel_suite_2
-    - name: rhel-suite-3
+          custom-rga-and-no-kms-host-config-tests
+    - name: basic-deployment-default-and-appcenter-tests
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -187,4 +187,42 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          lsf_da_rhel_suite_3
+          basic-deployment-default-and-appcenter-tests
+    - name: existing-kms-key-configuration-tests
+      onError: continue
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          source .tekton/scripts/suites.sh
+          existing-kms-key-configuration-tests
+    - name: display-summary-report
+      onError: continue
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          source .tekton/scripts/html_report.sh
+          common_task_report basic-deployment-and-default-rga-tests,basic-deployment-default-and-appcenter-tests,custom-rga-and-no-kms-host-config-tests,existing-kms-key-configuration-tests lsf-da

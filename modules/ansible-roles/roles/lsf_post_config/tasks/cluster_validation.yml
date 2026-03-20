@@ -1,5 +1,5 @@
 ---
-- name: MTU Check | Restart NetworkManager if MTU {{ mtu_value }} is not configured
+- name: MTU Check | Restart NetworkManager if required MTU is not configured
   ansible.builtin.shell: |
     ip route show | grep -q 'mtu {{ mtu_value }}' || {
       systemctl restart NetworkManager
@@ -9,7 +9,7 @@
   changed_when: "'restarted' in mtu_check_result.stdout"
   when: inventory_hostname in groups['mgmt_compute_nodes']
 
-- name: LSF Version | Retrieve lsid output
+- name: LSF Version | Retrieve LSF environment details using lsid
   become: true
   become_user: lsfadmin
   become_flags: "-i"
@@ -18,12 +18,12 @@
   changed_when: false
   when: inventory_hostname == groups['management_nodes'][0]
 
-- name: LSF Version | Display lsid output
+- name: LSF Version | Display LSF environment details
   ansible.builtin.debug:
     msg: "{{ lsid_output.stdout }}"
   when: inventory_hostname == groups['management_nodes'][0]
 
-- name: Cluster Status | Fetch node status using bhosts
+- name: Cluster Status | Retrieve cluster node status
   become: true
   become_user: lsfadmin
   become_flags: "-i"
@@ -32,16 +32,41 @@
   changed_when: false
   when: inventory_hostname == groups['management_nodes'][0]
 
-- name: Cluster Status | Show node status
+- name: Cluster Status | Display cluster node status
   ansible.builtin.debug:
     msg: "{{ cluster_status_output.stdout }}"
   when: inventory_hostname == groups['management_nodes'][0]
 
-- name: Duplicate Logs | Remove duplicate logs from LSF log directory if not deleted
-  shell: |
-    rm -rf /opt/ibm/lsflogs/* /opt/ibm/lsflogs/.* 2>/dev/null || true
-  args:
-    warn: false
-  ignore_errors: true
+- name: Cluster Validation | Ensure login node is registered in LSF
+  when: inventory_hostname == groups['management_nodes'][0]
   become: true
-  when: inventory_hostname in groups['management_nodes']
+  become_user: lsfadmin
+  block:
+
+    - name: Cluster Validation | Check if login node exists in LSF host list
+      ansible.builtin.shell: |
+        source /opt/ibm/lsf/conf/profile.lsf
+        lshosts -w | grep login
+      args:
+        executable: /bin/bash
+      register: login_host_check
+      failed_when: false
+      changed_when: false
+
+    - name: Cluster Validation | Restart LSF services if login node is missing
+      ansible.builtin.shell: |
+        sudo service lsfd restart
+      args:
+        executable: /bin/bash
+      when:
+        - login_host_check.rc != 0
+
+    - name: Cluster Validation | Wait for LSF services to stabilize
+      ansible.builtin.pause:
+        seconds: 10
+      when: login_host_check.rc != 0
+
+  rescue:
+    - name: Cluster Validation | Log failure for login node registration
+      ansible.builtin.debug:
+        msg: "Failed to ensure login node is registered in LSF"

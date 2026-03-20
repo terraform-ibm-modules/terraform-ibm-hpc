@@ -33,9 +33,9 @@ module "scale" {
   storage_gui_username                          = local.env.storage_gui_username
   observability_atracker_enable                 = local.env.observability_atracker_enable
   observability_atracker_target_type            = local.env.observability_atracker_target_type
-  sccwp_enable                                  = local.env.sccwp_enable
+  enable_sccwp                                  = local.env.enable_sccwp
   sccwp_service_plan                            = local.env.sccwp_service_plan
-  cspm_enabled                                  = local.env.cspm_enable
+  enable_cspm                                   = local.env.cspm_enable
   app_config_plan                               = local.env.app_config_plan
   skip_flowlogs_s2s_auth_policy                 = local.env.skip_flowlogs_s2s_auth_policy
   ibmcloud_api_key                              = local.env.ibmcloud_api_key

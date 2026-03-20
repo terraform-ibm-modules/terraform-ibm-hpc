@@ -103,7 +103,7 @@ variable "bastion_instance" {
     profile = string
   })
   default = {
-    image   = "ibm-ubuntu-22-04-5-minimal-amd64-8"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-12"
     profile = "cx2-4x8"
   }
   description = "Configuration for the Bastion node, including the image and instance profile. Only Ubuntu stock images are supported."

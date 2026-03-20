@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: wes-lsf-da-rhel-3
+  name: rhel-observability-and-network-profile-tests
 spec:
   params:
     - name: ibmcloud-api
@@ -131,7 +131,7 @@ spec:
       - name: lsf_version
         value: $(params.lsf_version)
   steps:
-    - name: rhel-suite-7
+    - name: atracker-logging-and-monitoring-tests
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -149,8 +149,8 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          lsf_da_rhel_suite_7
-    - name: rhel-suite-8
+          atracker-logging-and-monitoring-tests
+    - name: custom-cidr-and-multi-profile-network-tests
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -168,4 +168,23 @@ spec:
           fi
 
           source .tekton/scripts/suites.sh
-          lsf_da_rhel_suite_8
+          custom-cidr-and-multi-profile-network-tests
+    - name: display-summary-report
+      onError: continue
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd
+            env
+            trap env EXIT
+            set -x
+          fi
+
+          source .tekton/scripts/html_report.sh
+          common_task_report atracker-logging-and-monitoring-tests,custom-cidr-and-multi-profile-network-tests lsf-da

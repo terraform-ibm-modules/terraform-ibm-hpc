@@ -1,0 +1,103 @@
+---
+- name: NFS Config | Display VPC file share mappings
+  ansible.builtin.debug:
+    msg: "{{ item.key }}: {{ item.value }}"
+  with_dict: "{{ name_mount_path_map }}"
+
+- name: NFS Config | Display NFS share mappings
+  ansible.builtin.debug:
+    msg: "{{ item.key }}: {{ item.value }}"
+  with_dict: "{{ nfs_shares_map }}"
+
+- name: NFS Config | Create mount directories for VPC file shares
+  file:
+    path: "{{ item.key }}"
+    state: directory
+    mode: '0777'
+  with_dict: "{{ name_mount_path_map }}"
+
+- name: NFS Config | Add VPC file share entries to /etc/fstab
+  lineinfile:
+    path: /etc/fstab
+    line: "{{ item.value }} {{ item.key }} nfs rw,sec=sys,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,_netdev 0 0"
+    state: present
+    create: yes
+  with_dict: "{{ name_mount_path_map }}"
+  notify: Mount NFS
+
+- name: NFS Config | Create mount directories for NFS shares
+  file:
+    path: "{{ item.key }}"
+    state: directory
+    mode: '0777'
+  with_dict: "{{ nfs_shares_map }}"
+
+- name: NFS Config | Mount NFS shares
+  ansible.builtin.mount:
+    path: "{{ item.key }}"
+    src: "{{ item.value }}"
+    fstype: nfs
+    opts: rw,sec=sys,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,_netdev
+    state: mounted
+  with_dict: "{{ nfs_shares_map }}"
+
+- name: NFS Config | Validate NFS mount status
+  shell: mount | grep "on {{ item.key }} type nfs"
+  register: mount_check_nfs
+  with_dict: "{{ nfs_shares_map }}"
+  changed_when: false
+  failed_when: mount_check_nfs is failed
+
+- name: NFS Config | Flush handlers to apply mounts immediately
+  meta: flush_handlers
+
+- name: NFS Config | Verify mounted filesystems using df
+  command: df -h
+  register: df_output
+  changed_when: false
+  failed_when: df_output.rc != 0
+
+- name: NFS Config | Verify directory listing for mount path
+  command: ls -ltr /mnt/lsf
+  register: ls_output
+  changed_when: false
+  failed_when: ls_output.rc != 0
+
+- name: NFS Config | Set appropriate permissions on mount directories
+  ansible.builtin.shell: |
+    chmod -R {{ (item.key == '/mnt/lsf') | ternary('0755', '0777') }} "{{ item.key }}"
+  with_dict: "{{ name_mount_path_map }}"
+  run_once: true
+
+- name: Management Config | Move LSF directories to NFS mount location
+  ansible.builtin.shell: |
+    set -e
+    for dir in conf work; do
+      if [ -d "{{ LSF_TOP }}/$dir" ] && [ ! -L "{{ LSF_TOP }}/$dir" ]; then
+        mv "{{ LSF_TOP }}/$dir" "{{ nfs_client_mount_path }}/$dir"
+      fi
+    done
+  args:
+    executable: /bin/bash
+  run_once: true
+
+- name: Management Config | Remove remaining local LSF directories
+  ansible.builtin.file:
+    path: "{{ LSF_TOP }}/{{ item }}"
+    state: absent
+  loop:
+    - conf
+    - work
+
+- name: Management Config | Create symlinks for LSF directories to NFS
+  ansible.builtin.shell: |
+    ln -fs "{{ nfs_client_mount_path }}/{{ item }}" "{{ LSF_TOP }}/{{ item }}"
+  loop:
+    - conf
+    - work
+  args:
+    executable: /bin/bash
+
+- name: Management Config | Ensure correct ownership on LSF directory tree
+  ansible.builtin.shell: |
+    chown -R lsfadmin:root "{{ LSF_TOP }}"

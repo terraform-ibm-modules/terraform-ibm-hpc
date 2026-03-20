@@ -55,3 +55,51 @@ locals {
   public_gateways_list = var.vpc_name != null && var.compute_subnet_id == null && var.login_subnet_id == null ? data.ibm_is_public_gateways.public_gateways[0].public_gateways : []
   zone_1_pgw_ids       = var.vpc_name != null && var.compute_subnet_id == null && var.login_subnet_id == null ? [for gateway in local.public_gateways_list : gateway.id if gateway.vpc == local.vpc_id && gateway.zone == var.zones[0]] : []
 }
+
+locals {
+
+  password_validation_required = var.enable_webservice || var.enable_appcenter
+
+  ###########################################################################
+  # Password presence validation
+  ###########################################################################
+
+  validate_webservice_password_msg = "webservice_appcenter_password must be provided when enable_webservice or enable_appcenter is true."
+
+  validate_webservice_password = (
+    !local.password_validation_required ||
+    var.webservice_appcenter_password != ""
+  )
+
+  # tflint-ignore: terraform_unused_declarations
+  validate_webservice_password_chk = regex(
+    "^$",
+    local.validate_webservice_password ? "" : local.validate_webservice_password_msg
+  )
+
+
+  ###########################################################################
+  # Password complexity validation
+  ###########################################################################
+
+  validate_password_complexity_msg = "Password must be at least 15 characters long and include uppercase, lowercase, number and special character (!@#$%^&*()_+=-). Spaces are not allowed."
+
+  validate_password_complexity = (
+    !local.password_validation_required ||
+    (
+      length(var.webservice_appcenter_password) >= 15 &&
+      can(regex("[0-9]", var.webservice_appcenter_password)) &&
+      can(regex("[a-z]", var.webservice_appcenter_password)) &&
+      can(regex("[A-Z]", var.webservice_appcenter_password)) &&
+      can(regex("[!@#$%^&*()_+=-]", var.webservice_appcenter_password)) &&
+      !can(regex("\\s", var.webservice_appcenter_password))
+    )
+  )
+
+  # tflint-ignore: terraform_unused_declarations
+  validate_password_complexity_chk = regex(
+    "^$",
+    local.validate_password_complexity ? "" : local.validate_password_complexity_msg
+  )
+
+}

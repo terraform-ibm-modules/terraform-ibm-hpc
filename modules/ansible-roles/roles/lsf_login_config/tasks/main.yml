@@ -1,7 +1,6 @@
 ---
+# Configure Login Node
+# Includes tasks to set up the login node configuration.
 
-# Configure Login node
-- import_tasks: login_node_configuration.yml
-
-# Disable lsfd service
-- import_tasks: disable-lsfd.yml
+- name: Configure Login Node
+  import_tasks: configure_login_node.yml

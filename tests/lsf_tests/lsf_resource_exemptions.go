@@ -18,6 +18,8 @@ var LSFIgnoreLists = ResourceExemptions{
 		"module.check_node_status.null_resource.remote_exec[1]",
 		"module.check_node_status.null_resource.remote_exec[2]",
 		"module.check_cluster_status.null_resource.remote_exec[0]",
+		"module.lsf.module.resource_provisioner.null_resource.fetch_host_details_from_deployer[0]",
+		"module.lsf.module.resource_provisioner.null_resource.tf_resource_provisioner[0]",
 
 		// Boot waiting resources
 		"module.landing_zone_vsi.module.wait_management_vsi_booted.null_resource.remote_exec[0]",

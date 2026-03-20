@@ -2,10 +2,15 @@ package tests
 
 import (
 	"bufio"
+	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"maps"
+	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
@@ -24,7 +29,7 @@ import (
 const (
 	defaultSleepDuration           = 30 * time.Second
 	timeOutForDynamicNodeDisappear = 15 * time.Minute
-	jobCompletionWaitTime          = 50 * time.Second
+	jobCompletionWaitTime          = 40 * time.Second
 	dynamicNodeWaitTime            = 3 * time.Minute
 )
 
@@ -441,6 +446,17 @@ func LSFRunJobs(t *testing.T, sClient *ssh.Client, jobCmd string, logger *utils.
 			return nil
 		}
 
+		jobCheck := LOGIN_NODE_EXECUTION_PATH + "bjobs -u all -p"
+
+		// Run the 'bjobs' command to retrieve pending job information
+		pendingJobStatus, err := utils.RunCommandInSSHSession(sClient, jobCheck)
+		if err != nil {
+			return fmt.Errorf("failed to execute 'bjobs -u all -p' command: %w", err)
+		}
+
+		// Log the pending job status
+		logger.Info(t, fmt.Sprintf("Pending job status: %s", pendingJobStatus))
+
 		// Sleep for a minute before checking again
 		logger.Info(t, fmt.Sprintf("Waiting for dynamic node creation and job completion. Elapsed time: %s", time.Since(startTime)))
 		time.Sleep(jobCompletionWaitTime)
@@ -592,52 +608,6 @@ func LSFAPPCenterConfiguration(t *testing.T, sClient *ssh.Client, logger *utils.
 	// }
 
 	logger.Info(t, "App Center configuration validated successfully")
-	return nil
-}
-
-// LSFWebServicesConfiguration validates LSF Web Services (lwsd) configuration.
-func LSFWebServicesConfiguration(
-	t *testing.T,
-	sshClient *ssh.Client,
-	logger *utils.AggregatedLogger,
-) error {
-
-	// 1. Check lwsd service status
-	cmd := "sudo su -l root -c 'systemctl is-active lwsd'"
-	output, err := utils.RunCommandInSSHSession(sshClient, cmd)
-	if err != nil {
-		return fmt.Errorf("failed to execute systemctl check for lwsd: %v", err)
-	}
-	if strings.TrimSpace(output) != "active" {
-		return fmt.Errorf("lwsd service is not active (output: %s)", output)
-	}
-	logger.Info(t, "Verified lwsd service is active.")
-
-	// 2. Check cacert.pem file existence
-	const certPath = "/opt/ibm/lsfsuite/ext/ws/conf/https/cacert.pem"
-	cmd = fmt.Sprintf("test -f %s", certPath)
-	_, err = utils.RunCommandInSSHSession(sshClient, cmd)
-	if err != nil {
-		return fmt.Errorf("required certificate file not found: %s", certPath)
-	}
-	logger.Info(t, fmt.Sprintf("Verified certificate file exists: %s", certPath))
-
-	// 3. Check if port 8448 is listening
-	const port = "8448"
-	portStatusCommand := fmt.Sprintf("netstat -tuln | grep ':%s '", port)
-	portStatusOutput, err := utils.RunCommandInSSHSession(sshClient, portStatusCommand)
-	if err != nil {
-		return fmt.Errorf("failed to execute command '%s': %w", portStatusCommand, err)
-	}
-	if !utils.VerifyDataContains(t, portStatusOutput, "LISTEN", logger) {
-		return fmt.Errorf(
-			"LSF Web Services port %s is not listening as expected: %s",
-			port,
-			portStatusOutput,
-		)
-	}
-	logger.Info(t, fmt.Sprintf("Verified LSF Web Services port %s is listening.", port))
-
 	return nil
 }
 
@@ -1066,7 +1036,7 @@ func CheckLSFVersion(t *testing.T, sClient *ssh.Client, lsfVersion string, logge
 		return fmt.Errorf("unsupported LSF version identifier: %s", lsfVersion)
 	}
 
-	expectedString := "IBM Spectrum LSF " + expectedVersion
+	expectedString := "IBM Spectrum LSF Standard " + expectedVersion
 	if !utils.VerifyDataContains(t, output, expectedString, logger) {
 		actualValue := strings.TrimSpace(strings.Split(strings.Split(output, "IBM Spectrum LSF")[1], ", ")[0])
 		return fmt.Errorf("expected cluster Version %s, but found %s", expectedVersion, actualValue)
@@ -1245,15 +1215,15 @@ func verifyDirectories(t *testing.T, sClient *ssh.Client, ip string, logger *uti
 	switch {
 	case utils.IsStringInSlice(actualDirs, "openldap"):
 		expectedDirs = []string{
-			"das_staging_area", "data", "gui", "logs", "lsf", "openldap", "perf", "ppm", "repository-path", "ssh",
+			"conf", "das_staging_area", "data", "logs", "openldap", "repository-path", "ssh", "work",
 		}
 	case utils.IsStringInSlice(actualDirs, "pac"):
 		expectedDirs = []string{
-			"das_staging_area", "data", "gui", "logs", "lsf", "perf", "ppm", "repository-path", "ssh",
+			"conf", "das_staging_area", "data", "logs", "openldap", "repository-path", "ssh", "work",
 		}
 	default:
 		expectedDirs = []string{
-			"das_staging_area", "data", "gui", "logs", "lsf", "perf", "ppm", "repository-path", "ssh",
+			"conf", "das_staging_area", "data", "logs", "repository-path", "ssh", "work",
 		}
 	}
 
@@ -1546,6 +1516,17 @@ func LSFRunJobsAsLDAPUser(t *testing.T, sClient *ssh.Client, jobCmd, ldapUser st
 			return nil
 		}
 
+		jobCheck := LOGIN_NODE_EXECUTION_PATH + "bjobs -u all -p"
+
+		// Run the 'bjobs -u all -p' command to retrieve pending job information
+		pendingJobStatus, err := utils.RunCommandInSSHSession(sClient, jobCheck)
+		if err != nil {
+			return fmt.Errorf("failed to execute 'bjobs -u all -p' command: %w", err)
+		}
+
+		// Log the pending job status
+		logger.Info(t, fmt.Sprintf("Pending job status: %s", pendingJobStatus))
+
 		// Sleep for a minute before checking again
 		logger.Info(t, fmt.Sprintf("Waiting for dynamic node creation and job completion. Elapsed time: %s", time.Since(startTime)))
 		time.Sleep(jobCompletionWaitTime)
@@ -1649,7 +1630,7 @@ func verifyDirectoriesAsLdapUser(t *testing.T, sClient *ssh.Client, hostname str
 	actualDirs := strings.Fields(strings.TrimSpace(string(outputTwo)))
 
 	// Define expected directories
-	expectedDirs := []string{"das_staging_area", "data", "gui", "logs", "lsf", "openldap", "perf", "ppm", "repository-path", "ssh"}
+	expectedDirs := []string{"conf", "das_staging_area", "data", "logs", "openldap", "repository-path", "ssh", "work"}
 
 	// Verify if all expected directories exist
 	if !utils.VerifyDataContains(t, actualDirs, expectedDirs, logger) {
@@ -3305,7 +3286,7 @@ func VerifyEncryptionCRN(t *testing.T, sshClient *ssh.Client, keyManagement stri
 	}
 
 	// Command to retrieve CRN configuration
-	cmd := "cat /opt/ibm/lsfsuite/lsf/conf/resource_connector/ibmcloudgen2/conf/ibmcloudgen2_templates.json"
+	cmd := "cat /opt/ibm/lsf/conf/resource_connector/ibmcloudgen2/conf/ibmcloudgen2_templates.json"
 
 	// Iterate over each management node IP in the list
 	for _, managementNodeIP := range managementNodeIPList {
@@ -4047,7 +4028,15 @@ func ValidateAtrackerRouteTarget(t *testing.T, apiKey, region, resourceGroup, cl
 	}
 
 	// Execute command to get Atracker target details
-	cmd := exec.Command("bash", "-c", fmt.Sprintf("ibmcloud atracker target validate --target %s --output JSON", targetID))
+	cmd := exec.Command("bash", "-c", fmt.Sprintf("ibmcloud atracker target validate --target %s --output JSON", targetID)) // #nosec G702 -- test code, targetID sourced from test config
+	// 	cmd := exec.Command(
+	//     "ibmcloud",
+	//     "atracker",
+	//     "target",
+	//     "validate",
+	//     "--target", targetID,
+	//     "--output", "JSON",
+	// )
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to retrieve atracker target: %s, error: %w", string(output), err)
@@ -4353,5 +4342,409 @@ func ValidateTerraformOutput(
 		return fmt.Errorf("ssh_to_ldap_node not found in terraform output")
 	}
 
+	return nil
+}
+
+// LSFWebServicesConfiguration validates LSF Web Services (lwsd) configuration.
+func LSFWebServicesConfiguration(
+	t *testing.T,
+	sshClient *ssh.Client,
+	logger *utils.AggregatedLogger,
+) error {
+
+	// 1. Check lwsd service status
+	cmd := "sudo su -l root -c 'systemctl is-active lwsd'"
+	output, err := utils.RunCommandInSSHSession(sshClient, cmd)
+	if err != nil {
+		return fmt.Errorf("failed to execute systemctl check for lwsd: %v", err)
+	}
+	if strings.TrimSpace(output) != "active" {
+		return fmt.Errorf("lwsd service is not active (output: %s)", output)
+	}
+	logger.Info(t, "Verified lwsd service is active.")
+
+	// 2. Check cacert.pem file existence
+	const certPath = "/opt/ibm/lsfsuite/ext/ws/conf/https/cacert.pem"
+	cmd = fmt.Sprintf("test -f %s", certPath)
+	_, err = utils.RunCommandInSSHSession(sshClient, cmd)
+	if err != nil {
+		return fmt.Errorf("required certificate file not found: %s", certPath)
+	}
+	logger.Info(t, fmt.Sprintf("Verified certificate file exists: %s", certPath))
+
+	// 3. Check if port 8448 is listening
+	const port = "8448"
+	portStatusCommand := fmt.Sprintf("netstat -tuln | grep ':%s'", port)
+	portStatusOutput, err := utils.RunCommandInSSHSession(sshClient, portStatusCommand)
+	if err != nil {
+		return fmt.Errorf("failed to execute command '%s': %w", portStatusCommand, err)
+	}
+	if !utils.VerifyDataContains(t, portStatusOutput, "LISTEN", logger) {
+		return fmt.Errorf(
+			"LSF Web Services port %s is not listening as expected: %s",
+			port,
+			portStatusOutput,
+		)
+	}
+	logger.Info(t, fmt.Sprintf("Verified LSF Web Services port %s is listening.", port))
+
+	return nil
+}
+
+// LSFClusterRESTConfiguration sets up REST configuration for the LSF cluster.
+// Ensures proper connectivity and endpoint configuration.
+func LSFClusterRESTConfiguration(
+	t *testing.T,
+	clusterPrefix string,
+	acPassword string,
+	logger *utils.AggregatedLogger,
+) error {
+
+	// InsecureSkipVerify is intentional: management nodes use self-signed certificates
+	// in the test environment and are only reachable via SSH tunnel on localhost.
+	client := &http.Client{ //#nosec
+		Timeout: 30 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // #nosec G402 -- test code, internal cluster endpoint
+		},
+	}
+
+	/* ================= V1: Ping ================= */
+
+	logger.Info(t, "[V1] Sending ping request")
+
+	resp, err := client.Post(
+		BASE_URL+PING_ENDPOINT,
+		"application/json",
+		nil,
+	)
+	if err != nil {
+		return fmt.Errorf("V1 ping request failed: %w", err)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err := resp.Body.Close(); err != nil {
+		log.Printf("V1 response body close error: %v", err)
+	}
+	if err != nil {
+		return fmt.Errorf("V1 failed to read response body: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("V1 ping failed with status: %d", resp.StatusCode)
+	}
+
+	if !strings.Contains(string(body), "Web Services are ready") {
+		return fmt.Errorf("V1 ping validation failed: %s", body)
+	}
+	logger.Info(t, fmt.Sprintf("[V1] Ping OK: %s", strings.TrimSpace(string(body))))
+
+	/* ================= V2: Login ================= */
+
+	logger.Info(t, "[V2] Attempting login")
+
+	// Fix 1: Trim whitespace from password to guard against env var trailing newlines
+	acPassword = strings.TrimSpace(acPassword)
+
+	loginPayload := fmt.Sprintf(
+		"<User><name>%s</name><pass>%s</pass></User>",
+		AC_USER, acPassword,
+	)
+
+	// Fix 2: Log the exact login URL at runtime to confirm LOGIN_ENDPOINT value
+	logger.Info(t, fmt.Sprintf("[V2] Login URL: %s%s", BASE_URL, LOGIN_ENDPOINT))
+
+	req, err := http.NewRequest(
+		"POST",
+		BASE_URL+LOGIN_ENDPOINT,
+		bytes.NewBuffer([]byte(loginPayload)),
+	)
+	if err != nil {
+		return fmt.Errorf("V2 request for login failed: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/xml")
+
+	resp, err = client.Do(req) // #nosec G704 -- internal test request
+	if err != nil {
+		return fmt.Errorf("V2 login request failed: %w", err)
+	}
+
+	// Fix 3: Read body first so we can log it on failure, instead of discarding it
+	loginBody, err := io.ReadAll(resp.Body)
+	if err := resp.Body.Close(); err != nil {
+		log.Printf("V2 response body close error: %v", err)
+	}
+	if err != nil {
+		return fmt.Errorf("V2 failed to read login response body: %w", err)
+	}
+
+	logger.Info(t, fmt.Sprintf("[V2] Login status=%d body=%s", resp.StatusCode, string(loginBody)))
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("V2 login failed with status: %d, body: %s", resp.StatusCode, loginBody)
+	}
+
+	var loginResp struct {
+		Token string `json:"token"`
+	}
+	if err := json.Unmarshal(loginBody, &loginResp); err != nil {
+		return fmt.Errorf("V2 failed to decode login response: %w, body: %s", err, loginBody)
+	}
+
+	if loginResp.Token == "" {
+		return fmt.Errorf("V2 login failed: token not generated, body: %s", loginBody)
+	}
+
+	myToken := "platform_token=" +
+		strings.ReplaceAll(loginResp.Token, `\"`, "#quote#")
+
+	logger.Info(t, "[V2] Login successful, token received")
+
+	/* ================= V3: Cluster Info ================= */
+
+	req, err = http.NewRequest(
+		"GET",
+		BASE_URL+CLUSTER_ENDPOINT,
+		nil,
+	)
+	if err != nil {
+		return fmt.Errorf("V3 request for cluster info failed: %w", err)
+	}
+	// Fix 4: Add missing headers to match working curl command
+	req.Header.Set("Content-Type", "application/xml")
+	req.Header.Set("Accept", "text/plain,application/json,text/xml,multipart/mixed")
+	req.Header.Set("Accept-Language", "en-us")
+	req.Header.Set("Cookie", myToken)
+
+	resp, err = client.Do(req) // #nosec G704 -- internal test request
+	if err != nil {
+		return fmt.Errorf("V3 cluster info request failed: %w", err)
+	}
+
+	clusterBody, err := io.ReadAll(resp.Body)
+	if err := resp.Body.Close(); err != nil {
+		log.Printf("V3 response body close error: %v", err)
+	}
+	if err != nil {
+		return fmt.Errorf("V3 failed to read cluster response body: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("V3 cluster info failed with status: %d, body: %s", resp.StatusCode, clusterBody)
+	}
+
+	if !strings.Contains(string(clusterBody), clusterPrefix) {
+		return fmt.Errorf(
+			"V3 cluster prefix validation failed: expected %s, got %s",
+			clusterPrefix, clusterBody,
+		)
+	}
+	logger.Info(t, fmt.Sprintf("[V3] Cluster response: %s", clusterBody))
+	logger.Info(t, "[V3] Cluster prefix validation passed")
+
+	/* ================= V4: Version ================= */
+
+	req, err = http.NewRequest(
+		"GET",
+		BASE_URL+"/platform/ws/version",
+		nil,
+	)
+	if err != nil {
+		return fmt.Errorf("V4 request for version info failed: %w", err)
+	}
+	// Fix 4 (cont): Add missing headers to match working curl command
+	req.Header.Set("Content-Type", "application/xml")
+	req.Header.Set("Accept", "text/plain,application/json,text/xml,multipart/mixed")
+	req.Header.Set("Accept-Language", "en-us")
+	req.Header.Set("Cookie", myToken)
+
+	resp, err = client.Do(req) // #nosec G704 -- internal test request
+	if err != nil {
+		return fmt.Errorf("V4 version check request failed: %w", err)
+	}
+
+	versionBody, err := io.ReadAll(resp.Body)
+	if err := resp.Body.Close(); err != nil {
+		log.Printf("V4 response body close error: %v", err)
+	}
+	if err != nil {
+		return fmt.Errorf("V4 failed to read version response body: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("V4 version check failed with status: %d, body: %s", resp.StatusCode, versionBody)
+	}
+
+	if !strings.Contains(string(versionBody), EXPECTED_LSF_VERSION) {
+		return fmt.Errorf(
+			"V4 version mismatch: expected %s, got %s",
+			EXPECTED_LSF_VERSION, versionBody,
+		)
+	}
+	logger.Info(t, fmt.Sprintf("[V4] Version response: %s", versionBody))
+	logger.Info(t, "[V4] Version validation passed")
+
+	/* ================= V5: Hosts ================= */
+
+	req, err = http.NewRequest(
+		"GET",
+		BASE_URL+"/platform/ws/hosts",
+		nil,
+	)
+	if err != nil {
+		return fmt.Errorf("V5 hosts info request failed: %w", err)
+	}
+	// Fix 4 (cont): Add missing headers to match working curl command
+	req.Header.Set("Content-Type", "application/xml")
+	req.Header.Set("Accept", "text/plain,application/json,text/xml,multipart/mixed")
+	req.Header.Set("Accept-Language", "en-us")
+	req.Header.Set("Cookie", myToken)
+
+	resp, err = client.Do(req) // #nosec G704 -- internal test request
+	if err != nil {
+		return fmt.Errorf("V5 hosts query request failed: %w", err)
+	}
+
+	hostsBody, err := io.ReadAll(resp.Body)
+	if err := resp.Body.Close(); err != nil {
+		log.Printf("V5 response body close error: %v", err)
+	}
+	if err != nil {
+		return fmt.Errorf("V5 failed to read hosts response body: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("V5 hosts query failed with status: %d, body: %s", resp.StatusCode, hostsBody)
+	}
+
+	if !strings.Contains(string(hostsBody), clusterPrefix) {
+		return fmt.Errorf("V5 hostnames do not contain cluster prefix")
+	}
+	logger.Info(t, fmt.Sprintf("[V5] Hosts response: %s", hostsBody))
+	logger.Info(t, "[V5] Hosts validation passed")
+
+	/* ================= V6–V9: Job submit & job query (twice) ================= */
+
+	for i := 0; i < 2; i++ {
+		boundary := "bqJky99mlBWa-ZuqjC53mG6EzbmlxB"
+		innerBoundary := "_Part_1_701508.1145579811786"
+
+		jobPayload := fmt.Sprintf(
+			"--%s\r\n"+
+				"Content-Disposition: form-data; name=\"AppName\"\r\n"+
+				"Content-ID: <AppName>\r\n\r\n"+
+				"generic\r\n"+
+				"--%s\r\n"+
+				"Content-Disposition: form-data; name=\"data\"\r\n"+
+				"Content-Type: multipart/mixed; boundary=%s\r\n"+
+				"Accept-Language: en-us\r\n"+
+				"Content-ID: <data>\r\n\r\n"+
+				"--%s\r\n"+
+				"Content-Disposition: form-data; name=\"COMMANDTORUN\"\r\n"+
+				"Content-Type: application/xml; charset=UTF-8\r\n"+
+				"Content-Transfer-Encoding: 8bit\r\n"+
+				"Accept-Language: en-us\r\n\r\n"+
+				"<AppParam><id>COMMANDTORUN</id><value>sleep 99</value><type></type></AppParam>\r\n"+
+				"--%s--\r\n"+
+				"--%s--\r\n",
+			boundary,
+			boundary,
+			innerBoundary,
+			innerBoundary,
+			innerBoundary,
+			boundary,
+		)
+
+		req, err := http.NewRequest(
+			"POST",
+			BASE_URL+"/platform/webservice/pacclient/submitapp",
+			bytes.NewBufferString(jobPayload),
+		)
+		if err != nil {
+			return fmt.Errorf("V6 request creation failed: %w", err)
+		}
+
+		req.Header.Set(
+			"Content-Type",
+			fmt.Sprintf("multipart/mixed; boundary=%s", boundary),
+		)
+		req.Header.Set("Accept", "text/xml, application/xml")
+		req.Header.Set("Accept-Language", "en-us")
+		req.Header.Set("Cookie", myToken)
+
+		resp, err := client.Do(req) // #nosec G704 -- internal test request
+		if err != nil {
+			return fmt.Errorf("V6 job submission failed: %w", err)
+		}
+
+		jobBody, err := io.ReadAll(resp.Body)
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("V6 response body close error: %v", err)
+		}
+		if err != nil {
+			return fmt.Errorf("V6 failed to read job submission response body: %w", err)
+		}
+
+		logger.Info(t, fmt.Sprintf("V6 Job submit status=%d body=%q", resp.StatusCode, string(jobBody)))
+
+		// Fix 5: Check job submission status before attempting to parse job ID
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("V6 job submission failed with status: %d, body: %s", resp.StatusCode, jobBody)
+		}
+
+		re := regexp.MustCompile(`<id>\s*(\d+)\s*</id>`)
+		match := re.FindStringSubmatch(string(jobBody))
+
+		if len(match) < 2 {
+			return fmt.Errorf(
+				"v%d job ID not found, status=%d body=%q",
+				6+i,
+				resp.StatusCode,
+				string(jobBody),
+			)
+		}
+
+		jobID := match[1]
+
+		req, err = http.NewRequest(
+			"GET",
+			BASE_URL+"/platform/ws/jobs/"+jobID,
+			nil,
+		)
+		if err != nil {
+			return fmt.Errorf("v%d request creation failed for job %s: %w", 7+i, jobID, err)
+		}
+
+		req.Header.Set("Content-Type", "application/xml")
+		req.Header.Set("Accept", "text/plain,application/xml,text/xml,multipart/mixed")
+		req.Header.Set("Accept-Language", "en-us")
+		req.Header.Set("Cookie", myToken)
+
+		resp, err = client.Do(req) // #nosec G704 -- internal test request
+		if err != nil {
+			return fmt.Errorf("v%d job query failed for job %s: %w", 7+i, jobID, err)
+		}
+
+		jobQueryBody, err := io.ReadAll(resp.Body)
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("V7 response body close error: %v", err)
+		}
+		if err != nil {
+			return fmt.Errorf("v%d failed to read job query response body for job %s: %w", 7+i, jobID, err)
+		}
+
+		logger.Info(t, fmt.Sprintf("V7 Job query status=%d body=%q", resp.StatusCode, string(jobQueryBody)))
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf(
+				"v7 job query failed, status=%d body=%q",
+				resp.StatusCode,
+				string(jobQueryBody),
+			)
+		}
+	}
+
+	logger.Info(t, "LSF Cluster REST API validation completed successfully")
 	return nil
 }

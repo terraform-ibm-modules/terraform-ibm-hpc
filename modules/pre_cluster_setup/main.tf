@@ -878,25 +878,181 @@ EOT
 resource "local_file" "scale_cluster_health_refresh_playbook" {
   count    = var.scheduler == "Scale" ? 1 : 0
   content  = <<EOT
-- name: Ensure GPFS service is restarted properly
-  hosts: all
+- name: GPFS Restripe and Health Check
+  hosts: "{{ groups['scale_nodes'][0] }}"
   become: yes
+
   tasks:
-
-    - name: Refresh and check GPFS node health status
-      ansible.builtin.shell: |
-        /usr/lpp/mmfs/bin/mmhealth node show --refresh
-      register: gpfs_health
+    # --------------------------------------------------
+    # Task 0: Collect GPFS health for all nodes
+    # --------------------------------------------------
+    - name: Check GPFS node health (all nodes)
+      ansible.builtin.command:
+        cmd: /usr/lpp/mmfs/bin/mmhealth node show -a
+      register: health_output
       changed_when: false
-      failed_when: gpfs_health.rc != 0
 
+    - name: Extract nodes with unmounted filesystem (fs1)
+      set_fact:
+        unmounted_fs_nodes: >-
+          {{
+            health_output.stdout
+            | split('\n\n')
+            | select('search', 'FILESYSTEM\\s+DEGRADED')
+            | select('search', 'unmounted_fs_check\\(fs1\\)')
+            | map('regex_search', 'Node name:\\s+([^\\s]+)', '\\1')
+            | select('string')
+            | list
+          }}
+
+    - name: Detect ill-unbalanced filesystem
+      set_fact:
+        ill_unbalanced_fs: "{{ 'ill_unbalanced_fs' in health_output.stdout }}"
+
+    - name: Detect nodes with no_disk_space_warn alert
+      set_fact:
+        no_disk_space_warn_nodes: >-
+          {{
+            health_output.stdout
+            | split('\n\n')
+            | select('search', 'no_disk_space_warn')
+            | map('regex_search', 'Node name:\\s+([^\\s]+)', '\\1')
+            | select('string')
+            | list
+          }}
+
+    - name: Extract filesystem name | Find existing filesystem
+      shell: "/usr/lpp/mmfs/bin/mmlsfs all -Y | grep -v HEADER | cut -d ':' -f 7 | uniq"
+      register: scale_storage_existing_fs
+      changed_when: false
+      failed_when: false
+
+    - name: Show detected health issues
+      ansible.builtin.debug:
+        msg:
+          unmounted_fs_nodes: "{{ unmounted_fs_nodes }}"
+          ill_unbalanced_fs: "{{ ill_unbalanced_fs }}"
+          no_disk_space_warn_nodes: "{{ no_disk_space_warn_nodes }}"
+          filesystem_name: "{{ scale_storage_existing_fs.stdout }}"
+
+    # --------------------------------------------------
+    # Task 1: Restart nodes with unmounted filesystem
+    # --------------------------------------------------
+    - name: Shutdown nodes with unmounted filesystem
+      ansible.builtin.command:
+        cmd: /usr/lpp/mmfs/bin/mmshutdown -N {{ item }}
+      loop: "{{ unmounted_fs_nodes }}"
+      when: unmounted_fs_nodes | length > 0
+
+    - name: Wait for node shutdown to complete
+      ansible.builtin.command:
+        cmd: /usr/lpp/mmfs/bin/mmgetstate -N {{ item }}
+      register: shutdown_state
+      until: shutdown_state.stdout is search("down")
+      retries: 20
+      delay: 30
+      loop: "{{ unmounted_fs_nodes }}"
+      when: unmounted_fs_nodes | length > 0
+
+    - name: Startup nodes after shutdown
+      ansible.builtin.command:
+        cmd: /usr/lpp/mmfs/bin/mmstartup -N {{ item }}
+      loop: "{{ unmounted_fs_nodes }}"
+      when: unmounted_fs_nodes | length > 0
+
+    # --------------------------------------------------
+    # Task 2: Resolve no_disk_space_warn alerts
+    # --------------------------------------------------
+    - name: Resolve no_disk_space_warn alerts
+      ansible.builtin.command:
+        cmd: /usr/lpp/mmfs/bin/mmhealth event resolve no_disk_space_warn {{ scale_storage_existing_fs.stdout }}
+      register: resolve_output
+      changed_when: "'successfully resolved' in resolve_output.stdout"
+      failed_when: false
+      when:
+        - no_disk_space_warn_nodes | length > 0
+        - filesystem_name != ""
+
+    - name: Show resolve command output
+      ansible.builtin.debug:
+        var: resolve_output.stdout_lines
+      when:
+        - no_disk_space_warn_nodes | length > 0
+        - resolve_output.stdout is defined
+        - resolve_output.stdout != ""
+
+    # --------------------------------------------------
+    # Task 3: Restripe filesystem (only if ill_unbalanced)
+    # --------------------------------------------------
+
+    - name: Execute mmrestripefs command
+      ansible.builtin.command:
+        cmd: /usr/lpp/mmfs/bin/mmrestripefs {{ scale_storage_existing_fs.stdout }} -b
+      register: restripe_output
+      changed_when: "'restripe operation completed' in restripe_output.stdout"
+      failed_when:
+        - restripe_output.rc != 0
+        - "'File system is busy' not in restripe_output.stderr"
+      args:
+        warn: false
+      when:
+        - ill_unbalanced_fs
+        - scale_storage_existing_fs.stdout != ""
+
+    - name: Show restripe output
+      ansible.builtin.debug:
+        var: restripe_output.stdout_lines
+      when:
+        - ill_unbalanced_fs
+        - restripe_output.stdout is defined
+        - restripe_output.stdout != ""
+
+    # --------------------------------------------------
+    # Task 4: Final GPFS health refresh
+    # --------------------------------------------------
+    - name: Refresh GPFS health after remediation
+      ansible.builtin.command:
+        cmd: /usr/lpp/mmfs/bin/mmhealth node show --refresh
+      changed_when: false
+
+    - name: Display GPFS health status
+      ansible.builtin.debug:
+        msg: "GPFS Health Check Completed: {{ health_output.stdout_lines }}"
 EOT
   filename = local.cluster_health_refresh_playbook_path
+}
+
+
+resource "local_file" "scale_encryption_replication_playbook" {
+  count    = var.scheduler == "Scale" ? 1 : 0
+  content  = <<EOT
+---
+- name: Execute master replication task only
+  hosts: localhost
+  become: yes
+  collections:
+    - ibm.spectrum_scale
+  any_errors_fatal: true
+
+  vars:
+    scale_encryption_servers: "{{ scale_encryption_servers_list }}"
+    scale_encryption_ssh_key_file: "/dev/null"
+
+  tasks:
+    - name: Executing Replication on Slave from key Servers
+      ansible.builtin.include_role:
+        name: encryption_prepare
+        tasks_from: initiate_master_replication.yml
+      loop: "{{ scale_encryption_servers[1:] }}"
+      loop_control:
+        loop_var: server
+EOT
+  filename = local.encryption_replication_playbook_path
 }
 
 resource "time_sleep" "wait_for_servers_syncup" {
   triggers = {
     always = timestamp()
   }
-  create_duration = "60s"
+  create_duration = "180s"
 }

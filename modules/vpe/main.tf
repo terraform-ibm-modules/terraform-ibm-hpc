@@ -1,6 +1,6 @@
 module "vpe_gateway" {
   source               = "terraform-ibm-modules/vpe-gateway/ibm"
-  version              = "4.8.5"
+  version              = "5.0.4"
   region               = var.region
   prefix               = var.prefix
   vpc_name             = var.vpc_name

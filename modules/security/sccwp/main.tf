@@ -10,9 +10,9 @@ provider "restapi" {
 }
 
 module "app_config" {
-  count                                  = var.enable_deployer == false && var.sccwp_enable && var.cspm_enabled ? 1 : 0
+  count                                  = var.enable_deployer == false && var.enable_sccwp && var.enable_cspm ? 1 : 0
   source                                 = "terraform-ibm-modules/app-configuration/ibm"
-  version                                = "1.14.7"
+  version                                = "1.15.10"
   region                                 = var.region
   resource_group_id                      = data.ibm_resource_group.existing_resource_group[0].id
   app_config_plan                        = var.app_config_plan
@@ -23,15 +23,15 @@ module "app_config" {
 }
 
 module "scc_workload_protection" {
-  count                                        = var.enable_deployer == false && var.sccwp_enable ? 1 : 0
+  count                                        = var.enable_deployer == false && var.enable_sccwp ? 1 : 0
   source                                       = "terraform-ibm-modules/scc-workload-protection/ibm"
-  version                                      = "1.16.17"
+  version                                      = "1.17.6"
   region                                       = var.region
   name                                         = var.prefix
   resource_group_id                            = data.ibm_resource_group.existing_resource_group[0].id
   scc_wp_service_plan                          = var.sccwp_service_plan
   resource_tags                                = var.resource_tags
-  cspm_enabled                                 = var.cspm_enabled
-  app_config_crn                               = var.cspm_enabled && length(module.app_config) > 0 ? module.app_config[0].app_config_crn : null
-  scc_workload_protection_trusted_profile_name = var.cspm_enabled == true ? var.scc_workload_protection_trusted_profile_name : "workload-protection-trusted-profile"
+  cspm_enabled                                 = var.enable_cspm
+  app_config_crn                               = var.enable_cspm && length(module.app_config) > 0 ? module.app_config[0].app_config_crn : null
+  scc_workload_protection_trusted_profile_name = var.enable_cspm == true ? var.scc_workload_protection_trusted_profile_name : "workload-protection-trusted-profile"
 }

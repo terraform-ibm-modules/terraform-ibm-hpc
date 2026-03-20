@@ -1,5 +1,5 @@
 ---
-- name: Management Config | Append LSF configuration settings
+- name: Management Config | Append core LSF configuration parameters
   lineinfile:
     path: "{{ LSF_CONF_FILE }}"
     line: "{{ item }}"
@@ -17,14 +17,14 @@
     - "LSF_RSH=\"ssh -o 'PasswordAuthentication no' -o 'StrictHostKeyChecking no'\""
   run_once: true
 
-- name: Management Config | Check if queue configuration already exists
+- name: Management Config | Check if custom queue configuration already exists
   shell: "grep -q '# ANSIBLE MANAGED: QUEUE_NAME added' '{{ LSF_LSBATCH_CONF }}/lsb.queues'"
   register: queue_check
   changed_when: false
   failed_when: false
   run_once: true
 
-- name: Management Config | Append LSF queue configuration to lsb.queues
+- name: Management Config | Append custom queue definition to lsb.queues
   blockinfile:
     path: "{{ LSF_LSBATCH_CONF }}/lsb.queues"
     insertafter: EOF
@@ -41,34 +41,34 @@
   when: queue_check.rc != 0
   run_once: true
 
-- name: Management Config | Uncomment "icgen2host" in lsf.shared
+- name: Management Config | Uncomment icgen2host resource in lsf.shared
   replace:
     path: "{{ LSF_CONF_FILE_PATH }}/lsf.shared"
     regexp: '^#\s*(icgen2host)'
     replace: '   \1'
   run_once: true
 
-- name: Management Config | Uncomment "schmod_demand" in lsb.modules
+- name: Management Config | Enable schmod_demand module in lsb.modules
   replace:
     path: "{{ LSF_LSBATCH_CONF }}/lsb.modules"
     regexp: '^#\s*(schmod_demand)'
     replace: '\1'
   run_once: true
 
-- name: Management Config | Check if RC_HOSTS modification was already done
+- name: Management Config | Check if RC_HOSTS update has already been applied
   stat:
     path: "/tmp/rc_hosts_added"
   register: rc_hosts_marker
   run_once: true
 
-- name: Management Config | Add "RC_HOSTS = all" after QUEUE_NAME in lsb.queues using sed
+- name: Management Config | Insert RC_HOSTS entry into queue definitions
   shell: |
     sed -i '/^Begin Queue$/,/^End Queue$/{/QUEUE_NAME/{N;s/\(QUEUE_NAME\s*=[^\n]*\)\n/\1\nRC_HOSTS     = all\n/}}' "{{ LSF_LSBATCH_CONF }}/lsb.queues"
     touch /tmp/rc_hosts_added
   when: not rc_hosts_marker.stat.exists
   run_once: true
 
-- name: Management Config | Append management hostnames to lsb.hosts
+- name: Management Config | Add management nodes to lsb.hosts
   vars:
     management_hostnames: "{{ lsf_masters_list.split() }}"
   lineinfile:
@@ -79,45 +79,73 @@
   loop: "{{ lsf_masters }}"
   run_once: true
 
-- name: Management Config | Check if LSF_HOST_ADDR_RANGE is already set
-  shell: "grep -q '# ANSIBLE MANAGED: LSF_HOST_ADDR_RANGE added' '{{ LSF_CONF_FILE_PATH }}/lsf.cluster.{{ prefix }}'"
-  register: lsf_host_addr_range_marker_check
-  changed_when: false
-  failed_when: false
+- name: Management Config | Replace default lsfservers group with management nodes in lsb.hosts
+  replace:
+    path: "{{ LSF_LSBATCH_CONF }}/lsb.hosts"
+    regexp: 'master_hosts\s+\(\s*lsfservers\s*\)'
+    replace: "master_hosts      ( {{ lsf_masters | join(' ') }} )"
   run_once: true
 
-- name: Management Config | Append LSF_HOST_ADDR_RANGE to lsf.cluster
-  blockinfile:
+- name: Management Config | Update LSF_MASTER_LIST in lsf.conf
+  ansible.builtin.lineinfile:
+    path: "{{ LSF_CONF_FILE }}"
+    regexp: '^LSF_MASTER_LIST='
+    line: 'LSF_MASTER_LIST="{{ lsf_masters | join(" ") }}"'
+    state: present
+  run_once: true
+
+- name: Management Config | Update LSF_SERVER_HOSTS in lsf.conf
+  ansible.builtin.lineinfile:
+    path: "{{ LSF_CONF_FILE }}"
+    regexp: '^LSF_SERVER_HOSTS='
+    line: 'LSF_SERVER_HOSTS="{{ lsf_masters | join(" ") }}"'
+    state: present
+  run_once: true
+
+- name: Management Config | Update LSF_HOST_ADDR_RANGE in cluster configuration
+  ansible.builtin.replace:
     path: "{{ LSF_CONF_FILE_PATH }}/lsf.cluster.{{ prefix }}"
-    block: |
-      # ANSIBLE MANAGED: LSF_HOST_ADDR_RANGE added
-      Begin Parameters
-      LSF_HOST_ADDR_RANGE=10.*.*.*
-      End Parameters
-    marker: ""
-  when: lsf_host_addr_range_marker_check.rc != 0
+    regexp: '^(LSF_HOST_ADDR_RANGE=).*'
+    replace: '\g<1>10.*.*.*'
   run_once: true
 
-- name: Management Config | Remove line containing 'lsfservers'
+- name: Management Config | Append management nodes under Host section
+  ansible.builtin.lineinfile:
+    path: "{{ LSF_CONF_FILE_PATH }}/lsf.cluster.{{ prefix }}"
+    insertafter: '^#prune'
+    line: "{{ item }} ! ! 1 (mg)"
+    state: present
+  loop: "{{ lsf_masters }}"
+  run_once: true
+
+- name: Management Config | Update EGO_MASTER_LIST in ego.conf
+  ansible.builtin.lineinfile:
+    path: "{{ LSF_EGO_CONF_FILE }}"
+    regexp: '^EGO_MASTER_LIST='
+    line: 'EGO_MASTER_LIST="{{ lsf_masters | join(" ") }}"'
+    state: present
+  run_once: true
+
+- name: Management Config | Replace lsfservers with management nodes in ego configuration
+  ansible.builtin.lineinfile:
+    path: "{{ LSF_EGO_CONF_FILE }}"
+    regexp: '^(master_hosts\s*\()\s*lsfservers\s*(\))'
+    line: '\1{{ lsf_masters | join(" ") }}\2'
+    backrefs: yes
+  run_once: true
+
+- name: Management Config | Remove legacy lsfservers entry from cluster configuration
   ansible.builtin.lineinfile:
     path: "{{ LSF_CLUSTER_FILE }}"
     regexp: '^lsfservers'
     state: absent
   run_once: true
 
-# Temporary: Remove after new image build includes cleanup
-- name: Temporary Cleanup | Delete all 'sagar-fp-15-new1' folders
-  ansible.builtin.shell: |
-    find "{{ LSF_EXT_CONF }}" -type d -name "sagar-fp-15-new1" -exec rm -rf {} +
-  args:
-    warn: false
-  ignore_errors: true
-  when: inventory_hostname in groups['management_nodes']
-
-# Temporary: Remove after new image build includes cleanup
-- name: Temporary Cleanup | Replace 'sagar-fp-15-new1' with 'lsfservers'
-  ansible.builtin.shell: |
-    grep -rl 'sagar-fp-15-new1' "{{ LSF_EXT_CONF }}"  | xargs sed -i 's/sagar-fp-15-new1/lsfservers/g' || true
-  args:
-    warn: false
-  when: inventory_hostname in groups['management_nodes']
+- name: Management Config | Increase DNS script timeout for resource connector
+  ansible.builtin.lineinfile:
+    path: "{{ LSF_TOP }}/10.1/resource_connector/ibmcloudgen2/scripts/vpc_vm_dns.py"
+    regexp: '^timeout\s*='
+    line: 'timeout = 1200'
+  when:
+    - has_gaudi3
+    - inventory_hostname in groups['management_nodes']

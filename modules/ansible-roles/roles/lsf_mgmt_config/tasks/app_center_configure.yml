@@ -1,77 +1,122 @@
 ---
 # AppCenter HTTPS Configuration
 
-- name: PAC | Check if HTTPS is already enabled
+- name: PAC | Source LSF platform environment profile
+  ansible.builtin.shell: ". /opt/ibm/lsfsuite/ext/profile.platform"
+
+- name: PAC | Ensure MariaDB service is enabled and running
+  ansible.builtin.systemd:
+    name: mariadb
+    state: started
+    enabled: yes
+
+- name: PAC | Deploy ac_daemons control script
+  ansible.builtin.template:
+    src: ac_daemons.j2
+    dest: /opt/ibm/lsfsuite/ext/gui/3.0/bin/ac_daemons
+    mode: '0755'
+
+- name: PAC | Deploy acd systemd service unit file
+  ansible.builtin.template:
+    src: acd.service.j2
+    dest: /etc/systemd/system/acd.service
+    mode: '0644'
+
+- name: PAC | Check if HTTPS disable step was previously executed
+  ansible.builtin.stat:
+    path: /var/tmp/.pmc_https_disabled
+  register: https_disable_marker
+
+- name: PAC | Disable HTTPS (initial setup only)
+  ansible.builtin.command: pmcadmin https disable
   become: true
-  become_flags: "-i"
+  become_user: root
+  when: not https_disable_marker.stat.exists
+
+- name: PAC | Create marker file after disabling HTTPS
+  ansible.builtin.file:
+    path: /var/tmp/.pmc_https_disabled
+    state: touch
+  when: not https_disable_marker.stat.exists
+
+- name: PAC | Check current HTTPS status
   ansible.builtin.command: pmcadmin https enable
+  become: true
+  become_user: root
   register: https_check
   changed_when: "'was already enabled' not in https_check.stdout"
   failed_when: false
 
-- name: PAC | HTTPS already enabled
+- name: PAC | Confirm HTTPS is already enabled
   ansible.builtin.debug:
     msg: "HTTPS is already enabled"
   when: "'was already enabled' in https_check.stdout"
 
-- name: PAC | Configure HTTPS for AppCenter
+- name: PAC | Configure and enable HTTPS for AppCenter
   become: true
   become_flags: "-i"
   block:
 
-    - name: PAC | Set GUI password for lsfadmin
+    - name: PAC | Stop AppCenter (pmc) services
+      ansible.builtin.shell: pmcadmin stop
+
+    - name: PAC | Ensure ALLOW_EVENT_TYPE is configured in lsb.params
+      ansible.builtin.lineinfile:
+        path: "{{ LSF_LSBATCH_CONF }}/lsb.params"
+        regexp: '^ALLOW_EVENT_TYPE='
+        line: "ALLOW_EVENT_TYPE=JOB_NEW JOB_STATUS JOB_FINISH2 JOB_START JOB_EXECUTE JOB_EXT_MSG JOB_SIGNAL JOB_REQUEUE JOB_MODIFY2 JOB_SWITCH METRIC_LOG"
+        insertbefore: '^End Parameters'
+
+    - name: PAC | Ensure NEWJOB_REFRESH parameter is set to Y
+      ansible.builtin.lineinfile:
+        path: "{{ LSF_LSBATCH_CONF }}/lsb.params"
+        regexp: '^NEWJOB_REFRESH='
+        line: "NEWJOB_REFRESH=Y"
+
+    - name: PAC | Configure LSF_ADDON_HOSTS in lsf.conf
+      ansible.builtin.lineinfile:
+        path: "{{ LSF_CONF_FILE }}"
+        regexp: '^LSF_ADDON_HOSTS='
+        line: 'LSF_ADDON_HOSTS="{{ inventory_hostname }}"'
+
+    - name: PAC | Set lsfadmin GUI password
       ansible.builtin.command: passwd --stdin lsfadmin
       args:
-        stdin: "{{ app_center_gui_password }}"
-      no_log: true
+        stdin: "{{ webservice_appcenter_password }}"
 
-    - name: PAC | Enable HTTPS access
+    - name: PAC | Enable HTTPS access via pmcadmin
       ansible.builtin.command: >
         pmcadmin https enable
-        --password {{ app_center_gui_password }}
-        --validhosts localhost
-      no_log: true
+        --password {{ webservice_appcenter_password }}
+        --validhosts {{ inventory_hostname }},localhost
 
-    - name: PAC | Restart pmcadmin
-      block:
-        - name: PAC | Stop pmcadmin
-          ansible.builtin.command: pmcadmin stop
+    - name: PAC | Reload systemd daemon configuration
+      ansible.builtin.command: systemctl daemon-reload
 
-        - pause:
-            seconds: 5
-
-        - name: PAC | Start pmcadmin
-          ansible.builtin.command: pmcadmin start
-
-      rescue:
-        - name: PAC | pmcadmin restart failed
-          ansible.builtin.debug:
-            msg: "pmcadmin restart failed. Manual intervention may be required."
-
-      always:
-        - name: PAC | pmcadmin restart attempt finished
-          ansible.builtin.debug:
-            msg: "pmcadmin restart block executed."
-
-    - name: PAC | Update JS_PAC_SERVER_URL
+    - name: PAC | Append LSF environment to root bashrc
       ansible.builtin.lineinfile:
-        path: "{{ JS_PAC_SERVER_URL }}"
-        regexp: '^JS_PAC_SERVER_URL='
-        line: "JS_PAC_SERVER_URL=https://{{ lsf_masters[0] }}:8443"
+        path: /root/.bashrc
+        line: "source /opt/ibm/lsfsuite/ext/profile.platform"
+        insertafter: EOF
+        state: present
+        create: yes
 
-    - name: PAC | Restart ACD service
-      ansible.builtin.service:
-        name: acd
-        state: restarted
+    - name: PAC | Reload root bashrc environment
+      ansible.builtin.shell: source /root/.bashrc
+      args:
+        executable: /bin/bash
 
   rescue:
-    - name: PAC | HTTPS configuration failed
+    - name: PAC | Log HTTPS configuration failure
       ansible.builtin.debug:
         msg: "AppCenter HTTPS configuration failed. Check logs."
 
   always:
-    - name: PAC | HTTPS configuration completed
+    - name: PAC | Log HTTPS configuration completion
       ansible.builtin.debug:
         msg: "AppCenter HTTPS configuration block completed."
 
   when: "'was already enabled' not in https_check.stdout"
+
+- name: PAC | Restart acd service
+  ansible.builtin.shell: sudo systemctl restart acd

@@ -33,7 +33,7 @@ module "landing_zone" {
   client_subnets_cidr                           = var.client_subnets_cidr
   vpc_name                                      = var.vpc_name
   zones                                         = var.zones
-  enable_vpn                                    = var.vpn_enabled
+  enable_vpn                                    = var.enable_vpn
   skip_flowlogs_s2s_auth_policy                 = var.skip_flowlogs_s2s_auth_policy
   skip_kms_s2s_auth_policy                      = var.skip_kms_s2s_auth_policy
   observability_logs_enable                     = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || (var.observability_atracker_enable && var.observability_atracker_target_type == "cloudlogs") ? true : false
@@ -83,60 +83,71 @@ module "deployer" {
 }
 
 module "landing_zone_vsi" {
-  count                         = var.enable_deployer == false ? 1 : 0
-  source                        = "./modules/landing_zone_vsi"
-  resource_group                = var.resource_group_ids["workload_rg"]
-  prefix                        = var.cluster_prefix
-  vpc_id                        = local.vpc_id
-  zones                         = var.zones
-  bastion_security_group_id     = var.bastion_security_group_id
-  bastion_public_key_content    = local.bastion_public_key_content
-  ssh_keys                      = var.ssh_keys
-  client_subnets                = local.client_subnets
-  client_instances              = var.client_instances
-  compute_subnet_id             = local.compute_subnets
-  management_instances          = var.management_instances
-  static_compute_instances      = var.static_compute_instances
-  dynamic_compute_instances     = var.dynamic_compute_instances
-  storage_subnets               = local.storage_subnets
-  storage_instances             = var.storage_instances
-  storage_servers               = var.storage_servers
-  storage_type                  = var.storage_type
-  protocol_subnets              = local.protocol_subnets
-  protocol_instances            = var.protocol_instances
-  dns_domain_names              = var.dns_domain_names
-  kms_encryption_enabled        = local.kms_encryption_enabled
-  boot_volume_encryption_key    = var.boot_volume_encryption_key
-  enable_deployer               = var.enable_deployer
-  afm_instances                 = var.afm_instances
-  enable_dedicated_host         = var.enable_dedicated_host
-  enable_ldap                   = var.enable_ldap
-  ldap_instances                = var.ldap_instance
-  ldap_server                   = local.ldap_server
-  scale_encryption_enabled      = var.scale_encryption_enabled
-  scale_encryption_type         = var.scale_encryption_type
-  gklm_instances                = var.gklm_instances
-  vpc_region                    = local.region
-  scheduler                     = var.scheduler
-  ibm_customer_number           = var.ibm_customer_number
-  colocate_protocol_instances   = var.colocate_protocol_instances
-  storage_security_group_id     = var.storage_security_group_id
-  mtu_value                     = var.mtu_value
-  login_instance                = var.login_instance
-  bastion_subnets               = local.login_subnets
-  cluster_cidr                  = local.cluster_cidr
-  bms_boot_drive_encryption     = var.bms_boot_drive_encryption
-  tie_breaker_bm_server_profile = var.tie_breaker_bm_server_profile
-  scale_management_vsi_profile  = var.scale_management_vsi_profile
-  login_security_group_name     = var.login_security_group_name
-  storage_security_group_name   = var.storage_security_group_name
-  compute_security_group_name   = var.compute_security_group_name
-  client_security_group_name    = var.client_security_group_name
-  gklm_security_group_name      = var.gklm_security_group_name
-  ldap_security_group_name      = var.ldap_security_group_name
-  volume_storages               = var.volume_storages
-  lsf_pay_per_use               = var.lsf_pay_per_use
-  protocol_instance_eth1_mtu    = var.protocol_instance_eth1_mtu
+  count                                            = var.enable_deployer == false ? 1 : 0
+  source                                           = "./modules/landing_zone_vsi"
+  resource_group                                   = var.resource_group_ids["workload_rg"]
+  prefix                                           = var.cluster_prefix
+  vpc_id                                           = local.vpc_id
+  zones                                            = var.zones
+  bastion_security_group_id                        = var.bastion_security_group_id
+  bastion_public_key_content                       = local.bastion_public_key_content
+  ssh_keys                                         = var.ssh_keys
+  client_subnets                                   = local.client_subnets
+  client_instances                                 = var.client_instances
+  compute_subnet_id                                = local.compute_subnets
+  management_instances                             = var.management_instances
+  static_compute_instances                         = var.static_compute_instances
+  dynamic_compute_instances                        = var.dynamic_compute_instances
+  storage_subnets                                  = local.storage_subnets
+  storage_instances                                = var.storage_instances
+  storage_servers                                  = var.storage_servers
+  storage_type                                     = var.storage_type
+  protocol_subnets                                 = local.protocol_subnets
+  protocol_instances                               = var.protocol_instances
+  dns_domain_names                                 = var.dns_domain_names
+  kms_encryption_enabled                           = local.kms_encryption_enabled
+  boot_volume_encryption_key                       = var.boot_volume_encryption_key
+  enable_deployer                                  = var.enable_deployer
+  afm_instances                                    = var.afm_instances
+  enable_dedicated_host                            = var.enable_dedicated_host
+  enable_ldap                                      = var.enable_ldap
+  ldap_instances                                   = var.ldap_instance
+  ldap_server                                      = local.ldap_server
+  scale_encryption_enabled                         = var.scale_encryption_enabled
+  scale_encryption_type                            = var.scale_encryption_type
+  gklm_instances                                   = var.gklm_instances
+  vpc_region                                       = local.region
+  scheduler                                        = var.scheduler
+  ibm_customer_number                              = var.ibm_customer_number
+  colocate_protocol_instances                      = var.colocate_protocol_instances
+  storage_security_group_id                        = var.storage_security_group_id
+  mtu_value                                        = var.mtu_value
+  login_instance                                   = var.login_instance
+  bastion_subnets                                  = local.login_subnets
+  cluster_cidr                                     = local.cluster_cidr
+  bms_boot_drive_encryption                        = var.bms_boot_drive_encryption
+  tie_breaker_bm_server_profile                    = var.tie_breaker_bm_server_profile
+  scale_management_vsi_profile                     = var.scale_management_vsi_profile
+  login_security_group_name                        = var.login_security_group_name
+  storage_security_group_name                      = var.storage_security_group_name
+  compute_security_group_name                      = var.compute_security_group_name
+  client_security_group_name                       = var.client_security_group_name
+  gklm_security_group_name                         = var.gklm_security_group_name
+  ldap_security_group_name                         = var.ldap_security_group_name
+  volume_storages                                  = var.volume_storages
+  enable_lsf_pay_per_use                           = var.enable_lsf_pay_per_use
+  protocol_instance_eth1_mtu                       = var.protocol_instance_eth1_mtu
+  observability_monitoring_enable                  = var.observability_monitoring_enable
+  observability_logs_enable_for_management         = var.observability_logs_enable_for_management
+  observability_logs_enable_for_compute            = var.observability_logs_enable_for_compute
+  observability_monitoring_on_compute_nodes_enable = var.observability_monitoring_on_compute_nodes_enable
+  cloud_logs_ingress_private_endpoint              = local.cloud_logs_ingress_private_endpoint
+  cloud_monitoring_access_key                      = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation[0].cloud_monitoring_access_key : ""
+  cloud_monitoring_ingestion_url                   = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation[0].cloud_monitoring_ingestion_url : ""
+  cloud_monitoring_prws_key                        = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation[0].cloud_monitoring_prws_key : ""
+  cloud_monitoring_prws_url                        = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation[0].cloud_monitoring_prws_url : ""
+  vpc_apikey_value                                 = var.ibmcloud_api_key
+  enable_hyperthreading                            = var.enable_hyperthreading
 }
 
 module "prepare_tf_input" {
@@ -146,7 +157,9 @@ module "prepare_tf_input" {
   deployer_ip                                      = local.deployer_ip
   bastion_fip                                      = local.bastion_fip
   ibmcloud_api_key                                 = var.ibmcloud_api_key
-  app_center_gui_password                          = var.app_center_gui_password
+  enable_webservice                                = var.enable_webservice
+  enable_appcenter                                 = var.enable_appcenter
+  webservice_appcenter_password                    = var.webservice_appcenter_password
   lsf_version                                      = var.lsf_version
   resource_group_ids                               = local.resource_group_ids
   cluster_prefix                                   = var.cluster_prefix
@@ -223,10 +236,10 @@ module "prepare_tf_input" {
   custom_file_shares                               = var.custom_file_shares
   existing_bastion_instance_name                   = var.existing_bastion_instance_name
   existing_bastion_security_group_id               = var.existing_bastion_security_group_id
-  vpc_cluster_private_subnets_cidr_blocks          = var.vpc_cluster_private_subnets_cidr_blocks
-  sccwp_enable                                     = var.sccwp_enable
+  vpc_cluster_private_subnets_cidr_blocks          = var.compute_subnet_id != null ? data.ibm_is_subnet.existing_compute_subnets_cidr[0].ipv4_cidr_block : var.vpc_cluster_private_subnets_cidr_blocks
+  enable_sccwp                                     = var.enable_sccwp
   sccwp_service_plan                               = var.sccwp_service_plan
-  cspm_enabled                                     = var.cspm_enabled
+  enable_cspm                                      = var.enable_cspm
   app_config_plan                                  = var.app_config_plan
   existing_resource_group                          = var.existing_resource_group
   tie_breaker_bm_server_profile                    = var.tie_breaker_bm_server_profile
@@ -242,9 +255,10 @@ module "prepare_tf_input" {
   scale_afm_cos_hmac_key_params                    = local.scale_afm_cos_hmac_key_params
   volume_storages                                  = var.volume_storages
   enable_private_path_nlb                          = var.enable_private_path_nlb
-  lsf_pay_per_use                                  = var.lsf_pay_per_use
+  enable_lsf_pay_per_use                           = var.enable_lsf_pay_per_use
   protocol_instance_eth1_mtu                       = var.protocol_instance_eth1_mtu
   mtu_value                                        = var.mtu_value
+  enable_license_scheduler                         = var.enable_license_scheduler
   depends_on                                       = [module.deployer]
 }
 
@@ -392,42 +406,45 @@ resource "time_sleep" "wait_for_vsi_syncup" {
 }
 
 module "write_compute_cluster_inventory" {
-  count                       = var.enable_deployer == false ? 1 : 0
-  source                      = "./modules/write_inventory"
-  json_inventory_path         = local.json_inventory_path
-  lsf_masters                 = local.management_nodes
-  lsf_servers                 = local.compute_nodes_list
-  lsf_clients                 = local.client_nodes
-  gui_hosts                   = local.gui_hosts
-  db_hosts                    = local.db_hosts
-  login_host                  = local.login_host
-  prefix                      = var.cluster_prefix
-  ha_shared_dir               = local.ha_shared_dir
-  nfs_install_dir             = local.nfs_install_dir
-  enable_monitoring           = local.enable_monitoring
-  lsf_deployer_hostname       = local.lsf_deployer_hostname
-  ibmcloud_api_key            = var.ibmcloud_api_key
-  app_center_gui_password     = var.app_center_gui_password
-  lsf_version                 = var.lsf_version
-  dns_domain_names            = var.dns_domain_names
-  compute_public_key_content  = local.compute_public_key_content
-  compute_private_key_content = local.compute_private_key_content
-  enable_hyperthreading       = var.enable_hyperthreading
-  compute_subnet_id           = local.compute_subnet_id
-  region                      = local.region
-  resource_group_id           = var.resource_group_ids["service_rg"]
-  zones                       = var.zones
-  vpc_id                      = local.vpc_id
-  compute_subnets_cidr        = var.compute_subnet_id != null ? [data.ibm_is_subnet.existing_compute_subnets_cidr[0].ipv4_cidr_block] : [var.vpc_cluster_private_subnets_cidr_blocks]
-  dynamic_compute_instances   = var.dynamic_compute_instances
-  compute_security_group_id   = local.compute_security_group_id
-  compute_ssh_keys_ids        = local.ssh_keys_ids
-  compute_subnet_crn          = local.compute_subnet_crn
-  kms_encryption_enabled      = local.kms_encryption_enabled
-  boot_volume_encryption_key  = var.boot_volume_encryption_key
-  lsf_pay_per_use             = var.lsf_pay_per_use
-  mtu_value                   = var.mtu_value
-  depends_on                  = [time_sleep.wait_for_vsi_syncup, module.landing_zone_vsi]
+  count                         = var.enable_deployer == false ? 1 : 0
+  source                        = "./modules/write_inventory"
+  json_inventory_path           = local.json_inventory_path
+  lsf_masters                   = local.management_nodes
+  lsf_servers                   = local.compute_nodes_list
+  lsf_clients                   = local.client_nodes
+  gui_hosts                     = local.gui_hosts
+  login_host                    = local.login_host
+  prefix                        = var.cluster_prefix
+  ha_shared_dir                 = local.ha_shared_dir
+  nfs_install_dir               = local.nfs_install_dir
+  enable_monitoring             = local.enable_monitoring
+  lsf_deployer_hostname         = local.lsf_deployer_hostname
+  ibmcloud_api_key              = var.ibmcloud_api_key
+  enable_webservice             = var.enable_webservice
+  enable_appcenter              = var.enable_appcenter
+  webservice_appcenter_password = var.webservice_appcenter_password
+  lsf_version                   = var.lsf_version
+  dns_domain_names              = var.dns_domain_names
+  compute_public_key_content    = local.compute_public_key_content
+  compute_private_key_content   = local.compute_private_key_content
+  enable_hyperthreading         = var.enable_hyperthreading
+  compute_subnet_id             = local.compute_subnet_id
+  region                        = local.region
+  resource_group_id             = var.resource_group_ids["service_rg"]
+  zones                         = var.zones
+  vpc_id                        = local.vpc_id
+  compute_subnets_cidr          = var.compute_subnet_id != null ? [data.ibm_is_subnet.existing_compute_subnets_cidr[0].ipv4_cidr_block] : [var.vpc_cluster_private_subnets_cidr_blocks]
+  dynamic_compute_instances     = var.dynamic_compute_instances
+  compute_security_group_id     = local.compute_security_group_id
+  compute_ssh_keys_ids          = local.ssh_keys_ids
+  compute_subnet_crn            = local.compute_subnet_crn
+  kms_encryption_enabled        = local.kms_encryption_enabled
+  boot_volume_encryption_key    = var.boot_volume_encryption_key
+  enable_lsf_pay_per_use        = var.enable_lsf_pay_per_use
+  mtu_value                     = var.mtu_value
+  enable_license_scheduler      = var.enable_license_scheduler
+  has_gaudi3                    = local.has_gaudi3
+  depends_on                    = [time_sleep.wait_for_vsi_syncup, module.landing_zone_vsi]
 }
 
 module "write_compute_scale_cluster_inventory" {
@@ -864,7 +881,7 @@ module "compute_inventory" {
   count                               = var.enable_deployer == false ? 1 : 0
   source                              = "./modules/inventory"
   scheduler                           = var.scheduler
-  hosts                               = local.compute_hosts
+  hosts                               = local.lsf_compute_hosts
   gui_hosts                           = local.gui_hosts
   login_host                          = local.login_host
   inventory_path                      = local.compute_inventory_path
@@ -986,38 +1003,39 @@ module "storage_inventory_hosts" {
 }
 
 module "post_cluster_setup" {
-  count                = var.scheduler == "Scale" && var.enable_deployer == false ? 1 : 0
-  turn_on              = var.create_separate_namespaces
-  source               = "./modules/post_cluster_setup"
-  create_scale_cluster = var.create_scale_cluster
-  storage_turn_on      = (var.create_separate_namespaces == true && local.storage_instance_count > 0) ? true : false
-  compute_turn_on      = (var.create_separate_namespaces == true && local.static_compute_instance_count > 0) ? true : false
-  clone_path           = var.scale_ansible_repo_clone_path
-  depends_on           = [module.compute_cluster_configuration, module.storage_cluster_configuration, module.remote_mount_configuration, module.encryption_configuration, module.invoke_compute_network_playbook, module.invoke_storage_network_playbook]
+  count                           = var.scheduler == "Scale" && var.enable_deployer == false ? 1 : 0
+  turn_on                         = var.create_separate_namespaces
+  source                          = "./modules/post_cluster_setup"
+  create_scale_cluster            = var.create_scale_cluster
+  storage_turn_on                 = (var.create_separate_namespaces == true && local.storage_instance_count > 0) ? true : false
+  compute_turn_on                 = (var.create_separate_namespaces == true && local.static_compute_instance_count > 0) ? true : false
+  clone_path                      = var.scale_ansible_repo_clone_path
+  scale_encryption_type           = var.scale_encryption_type != null ? var.scale_encryption_type : null
+  scale_encryption_admin_password = var.scale_encryption_admin_password == null ? "null" : var.scale_encryption_admin_password
+  scale_encryption_admin_username = local.scale_encryption_admin_username
+  scale_encryption_servers        = var.scale_encryption_enabled && var.scale_encryption_type == "gklm" ? local.gklm_instance_private_ips : []
+  depends_on                      = [module.compute_cluster_configuration, module.storage_cluster_configuration, module.remote_mount_configuration, module.encryption_configuration, module.invoke_compute_network_playbook, module.invoke_storage_network_playbook]
 }
 
 module "compute_playbook" {
-  count                       = var.enable_deployer == false ? 1 : 0
-  source                      = "./modules/playbook"
-  scheduler                   = var.scheduler
-  bastion_fip                 = local.bastion_fip
-  inventory_path              = local.compute_inventory_path
-  enable_deployer             = var.enable_deployer
-  ibmcloud_api_key            = var.ibmcloud_api_key
-  observability_provision     = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || var.observability_monitoring_enable ? true : false
-  cloudlogs_provision         = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute ? true : false
-  observability_playbook_path = local.observability_playbook_path
-  lsf_mgmt_playbooks_path     = local.lsf_mgmt_playbooks_path
-  enable_ldap                 = var.enable_ldap
-  ldap_server                 = local.ldap_server
-  playbooks_path              = local.playbooks_path
-  mgmnt_hosts                 = local.mgmnt_host_entry
-  comp_hosts                  = local.comp_host_entry
-  login_host                  = local.login_host_entry
-  deployer_host               = local.deployer_host_entry
-  domain_name                 = var.dns_domain_names["compute"]
-  enable_dedicated_host       = var.enable_dedicated_host
-  depends_on                  = [module.compute_inventory, module.landing_zone_vsi]
+  count                   = var.enable_deployer == false ? 1 : 0
+  source                  = "./modules/playbook"
+  scheduler               = var.scheduler
+  bastion_fip             = local.bastion_fip
+  inventory_path          = local.compute_inventory_path
+  enable_deployer         = var.enable_deployer
+  ibmcloud_api_key        = var.ibmcloud_api_key
+  lsf_mgmt_playbooks_path = local.lsf_mgmt_playbooks_path
+  enable_ldap             = var.enable_ldap
+  ldap_server             = local.ldap_server
+  playbooks_path          = local.playbooks_path
+  mgmnt_hosts             = local.mgmnt_host_entry
+  comp_hosts              = local.comp_host_entry
+  login_host              = local.login_host_entry
+  deployer_host           = local.deployer_host_entry
+  domain_name             = var.dns_domain_names["compute"]
+  enable_dedicated_host   = var.enable_dedicated_host
+  depends_on              = [module.compute_inventory, module.landing_zone_vsi]
 }
 
 ###################################################
@@ -1053,8 +1071,8 @@ module "scc_workload_protection" {
   sccwp_service_plan                           = var.sccwp_service_plan
   resource_tags                                = [local.scheduler_lowercase, var.cluster_prefix]
   enable_deployer                              = var.enable_deployer
-  sccwp_enable                                 = var.sccwp_enable
-  cspm_enabled                                 = var.cspm_enabled
+  enable_sccwp                                 = var.enable_sccwp
+  enable_cspm                                  = var.enable_cspm
   app_config_plan                              = var.app_config_plan
   scc_workload_protection_trusted_profile_name = "${var.cluster_prefix}-wp-tp"
 }

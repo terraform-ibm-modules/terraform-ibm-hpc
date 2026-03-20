@@ -91,7 +91,7 @@ func ConnectToHost(publicHostName, publicHostIP, privateHostName, privateHostIP 
 	sshFilePath := os.Getenv("SSH_FILE_PATH")
 
 	// Check if the file exists
-	_, err := os.Stat(sshFilePath)
+	_, err := os.Stat(sshFilePath) // #nosec G703 -- controlled test file path
 	if os.IsNotExist(err) {
 		return nil, fmt.Errorf("SSH private key file '%s' does not exist", sshFilePath)
 	} else if err != nil {
@@ -118,7 +118,7 @@ func ConnectToHost(publicHostName, publicHostIP, privateHostName, privateHostIP 
 // The function reads the private key file, parses it, and returns an SSH signer.
 // If any step in the process fails, an error is returned with a descriptive message.
 func getSshKeyFile(filepath string) (key ssh.Signer, err error) {
-	privateKey, err := os.ReadFile(filepath)
+	privateKey, err := os.ReadFile(filepath) // #nosec G703 -- test key file
 	if err != nil {
 		return nil, fmt.Errorf("failed to read private key file: %w", err)
 	}
@@ -133,7 +133,7 @@ func getSshKeyFile(filepath string) (key ssh.Signer, err error) {
 
 func ConnectionE(t *testing.T, publicHostName, publicHostIP, privateHostName, privateHostIP, command string) (string, error) {
 	sshFilePath := os.Getenv("SSH_FILE_PATH")
-	if _, err := os.Stat(sshFilePath); os.IsNotExist(err) {
+	if _, err := os.Stat(sshFilePath); os.IsNotExist(err) { // #nosec G703 -- controlled test file path
 		return "", fmt.Errorf("SSH private key file '%s' does not exist", sshFilePath)
 	} else if err != nil {
 		return "", fmt.Errorf("error checking SSH private key file: %v", err)
@@ -178,7 +178,7 @@ func ConnectToHostAsLDAPUser(publicHostName, publicHostIP, privateHostIP, ldapUs
 	sshFilePath := os.Getenv("SSH_FILE_PATH")
 
 	// Check if the file exists
-	_, err := os.Stat(sshFilePath)
+	_, err := os.Stat(sshFilePath) // #nosec G703 -- controlled test file path
 	if os.IsNotExist(err) {
 		return nil, fmt.Errorf("SSH private key file '%s' does not exist", sshFilePath)
 	} else if err != nil {
@@ -216,7 +216,7 @@ func ConnectToHostsWithMultipleUsers(publicHostName, publicHostIP, privateHostNa
 	sshFilePath := os.Getenv("SSH_FILE_PATH")
 
 	// Check if the file exists
-	_, err := os.Stat(sshFilePath)
+	_, err := os.Stat(sshFilePath) // #nosec G703 -- controlled test file path
 	if os.IsNotExist(err) {
 		return nil, nil, nil, fmt.Errorf("SSH private key file '%s' does not exist", sshFilePath)
 	} else if err != nil {
@@ -243,7 +243,7 @@ func ConnectToHostsWithMultipleUsers(publicHostName, publicHostIP, privateHostNa
 	sshFilePathTwo := os.Getenv("SSH_FILE_PATH_TWO")
 
 	// Check if the file exists
-	_, err = os.Stat(sshFilePathTwo)
+	_, err = os.Stat(sshFilePathTwo) // #nosec G703 -- test file path
 	if os.IsNotExist(err) {
 		return nil, nil, nil, fmt.Errorf("SSH private key file '%s' does not exist", sshFilePathTwo)
 	} else if err != nil {

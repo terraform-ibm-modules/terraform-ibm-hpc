@@ -25,6 +25,12 @@ const (
 	SHAREDLOGDIRPATH                        = `/mnt/lsf/logs`
 	NEW_LDAP_USER_NAME                      = `Krishna`
 	NEW_LDAP_USER_PASSWORD                  = `Pass@1234` // pragma: allowlist secret
+	EXPECTED_LSF_VERSION                    = "10.2.0.15"
+	AC_USER                                 = "lsfadmin"
+	BASE_URL                                = "https://localhost:8443"
+	PING_ENDPOINT                           = "/platform/ws/ping"
+	LOGIN_ENDPOINT                          = "/platform/ws/logon"
+	CLUSTER_ENDPOINT                        = "/platform/ws/clusters/local"
 )
 
 var (

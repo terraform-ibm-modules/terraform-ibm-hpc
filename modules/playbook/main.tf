@@ -1,9 +1,8 @@
 locals {
   proxyjump                        = var.enable_deployer ? "-o ProxyJump=ubuntu@${var.bastion_fip}" : ""
   common_config_playbook           = format("%s/common_config_playbook.yml", var.playbooks_path)
-  pre_lsf_config_playbook          = format("%s/pre_lsf_config_playbook.yml", var.playbooks_path)
-  login_node_playbook              = format("%s/login_node_configuration.yml", var.playbooks_path)
   lsf_post_config_playbook         = format("%s/lsf_post_config_playbook.yml", var.playbooks_path)
+  login_node_playbook              = format("%s/login_node_configuration.yml", var.playbooks_path)
   ldap_server_inventory            = format("%s/ldap_server_inventory.ini", var.playbooks_path)
   configure_ldap_client            = format("%s/configure_ldap_client.yml", var.playbooks_path)
   prepare_ldap_server              = format("%s/prepare_ldap_server.yml", var.playbooks_path)
@@ -66,25 +65,6 @@ resource "local_file" "deployer_host_entry_play" {
         path: "{{ hosts_file }}"
         marker: "# === ANSIBLE MANAGED HOSTS {mark} ==="
         block: "{{ managed_block }}"
-
-    - name: Insert Create folder and Ensure js.conf lines
-      ansible.builtin.blockinfile:
-        path: /opt/ibm/lsf_installer/playbook/roles/deploy-gui/tasks/configure_pm_common.yml
-        marker: "# {mark} MANAGED BLOCK FOR PM_CONF_DIR"
-        insertbefore: "^\\- name: Update JS_HOST"
-        block: |
-          {% raw %}
-          - name: Create folder from PM_CONF_DIR variable
-            file:
-              path: "{{ PM_CONF_DIR }}"
-              state: directory
-              mode: '0755'
-          - name: Ensure js.conf file exists
-            file:
-              path: "{{ PM_CONF_DIR }}/js.conf"
-              state: touch
-              mode: '0644'
-          {% endraw %}
 EOT
   filename = local.deployer_hostentry_playbook_path
 }
@@ -120,16 +100,20 @@ resource "local_file" "lsf_host_entry_playbook" {
       -o StrictHostKeyChecking=no
   tasks:
 
+    - name: Pause for 60s
+      ansible.builtin.pause:
+        seconds: 60
+
     - name: Wait for SSH (retry 5x)
       ansible.builtin.wait_for:
         port: 22
-        host: [all_nodes]
+        host: "{{ inventory_hostname }}"
         timeout: 60
         delay: 10
-      retries: 5
-      until: true
       delegate_to: localhost
-      ignore_errors: yes
+      retries: 5
+      register: ssh_wait
+      until: ssh_wait is succeeded
 
     - name: Check passwordless SSH on all scale inventory hosts
       shell: echo PASSWDLESS_SSH_ENABLED
@@ -219,7 +203,6 @@ resource "local_file" "create_common_config_playbook" {
     - name: Load cluster-specific variables
       include_vars: all.json
   roles:
-     - { role: vpc_fileshare_config }
      - { role: lsf_prereq_config }
 EOT
   filename = local.common_config_playbook
@@ -235,44 +218,6 @@ resource "null_resource" "run_common_config_playbook" {
     build = timestamp()
   }
   depends_on = [local_file.create_common_config_playbook, null_resource.lsf_host_play]
-}
-
-resource "local_file" "create_pre_lsf_config_playbook" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
-  content  = <<EOT
-# Ensure provisioned VMs are up and Passwordless SSH setup has been established
-
-- name: Prerequisite Configuration
-  hosts: [mgmt_compute_nodes]
-  become: yes
-  any_errors_fatal: true
-  gather_facts: false
-  vars:
-    ansible_ssh_common_args: >
-      ${local.proxyjump}
-      -o ControlMaster=auto
-      -o ControlPersist=30m
-      -o UserKnownHostsFile=/dev/null
-      -o StrictHostKeyChecking=no
-  pre_tasks:
-    - name: Load cluster-specific variables
-      include_vars: all.json
-  roles:
-     - { role: lsf_template_config }
-EOT
-  filename = local.pre_lsf_config_playbook
-}
-
-resource "null_resource" "run_pre_lsf_config_playbook" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.pre_lsf_config_playbook}"
-  }
-  triggers = {
-    build = timestamp()
-  }
-  depends_on = [local_file.create_pre_lsf_config_playbook, null_resource.run_common_config_playbook]
 }
 
 resource "local_file" "lsf_prerequisite_playbook" {
@@ -330,137 +275,7 @@ resource "null_resource" "lsf_prerequisite_play" {
   triggers = {
     build = timestamp()
   }
-  depends_on = [null_resource.run_pre_lsf_config_playbook, local_file.lsf_prerequisite_playbook]
-}
-
-resource "null_resource" "run_lsf_playbooks" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
-
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    command     = <<EOT
-      sudo ansible-playbook -f 200 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-config-test.yml &&
-      sudo ansible-playbook -f 200 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-predeploy-test.yml &&
-      sudo ansible-playbook -f 200 -i /opt/ibm/lsf_installer/playbook/lsf-inventory /opt/ibm/lsf_installer/playbook/lsf-deploy.yml -b
-    EOT
-  }
-
-  triggers = {
-    build = timestamp()
-  }
-
-  depends_on = [null_resource.lsf_prerequisite_play]
-}
-
-resource "local_file" "create_playbook_for_mgmt_config" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
-  content  = <<EOT
-- name: Prerequisite Configuration
-  hosts: [mgmt_compute_nodes]
-  become: yes
-  any_errors_fatal: true
-  gather_facts: false
-  vars:
-    ansible_ssh_common_args: >
-      ${local.proxyjump}
-      -o ControlMaster=auto
-      -o ControlPersist=30m
-      -o UserKnownHostsFile=/dev/null
-      -o StrictHostKeyChecking=no
-  pre_tasks:
-    - name: Load cluster-specific variables
-      include_vars: all.json
-  roles:
-     - { role: lsf_mgmt_config }
-EOT
-  filename = var.lsf_mgmt_playbooks_path
-}
-
-
-resource "null_resource" "run_playbook_for_mgmt_config" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${var.lsf_mgmt_playbooks_path}"
-  }
-  triggers = {
-    build = timestamp()
-  }
-  depends_on = [local_file.create_playbook_for_mgmt_config, null_resource.run_lsf_playbooks]
-}
-
-resource "local_file" "create_playbook_for_login_node_config" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
-  content  = <<EOT
-- name: Prerequisite Configuration
-  hosts: [login_node]
-  become: yes
-  any_errors_fatal: true
-  gather_facts: false
-  vars:
-    ansible_ssh_common_args: >
-      ${local.proxyjump}
-      -o ControlMaster=auto
-      -o ControlPersist=30m
-      -o UserKnownHostsFile=/dev/null
-      -o StrictHostKeyChecking=no
-  pre_tasks:
-    - name: Load cluster-specific variables
-      include_vars: all.json
-  roles:
-     - { role: lsf_login_config }
-EOT
-  filename = local.login_node_playbook
-}
-
-
-resource "null_resource" "run_playbook_for_login_node_config" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.login_node_playbook}"
-  }
-  triggers = {
-    build = timestamp()
-  }
-  depends_on = [local_file.create_playbook_for_mgmt_config, null_resource.run_lsf_playbooks]
-}
-
-resource "local_file" "create_playbook_for_post_deploy_config" {
-  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
-  content  = <<EOT
-- name: Prerequisite Configuration
-  hosts: all
-  become: yes
-  any_errors_fatal: true
-  gather_facts: false
-  vars:
-    ansible_ssh_common_args: >
-      ${local.proxyjump}
-      -o ControlMaster=auto
-      -o ControlPersist=30m
-      -o UserKnownHostsFile=/dev/null
-      -o StrictHostKeyChecking=no
-  pre_tasks:
-    - name: Load cluster-specific variables
-      include_vars: all.json
-  roles:
-     - { role: lsf_post_config }
-EOT
-  filename = local.lsf_post_config_playbook
-}
-
-
-resource "null_resource" "run_playbook_post_deploy_config" {
-  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.lsf_post_config_playbook}"
-  }
-  triggers = {
-    build = timestamp()
-  }
-  depends_on = [local_file.create_playbook_for_post_deploy_config, null_resource.run_playbook_for_mgmt_config, null_resource.run_playbook_for_login_node_config]
+  depends_on = [local_file.lsf_prerequisite_playbook]
 }
 
 resource "local_file" "prepare_ldap_server_playbook" {
@@ -530,11 +345,121 @@ resource "null_resource" "run_ldap_client_playbooks" {
   triggers = {
     build = timestamp()
   }
-  depends_on = [local_file.prepare_ldap_client_playbook, null_resource.configure_ldap_server_playbook, null_resource.run_playbook_for_mgmt_config]
+  depends_on = [local_file.prepare_ldap_client_playbook, null_resource.configure_ldap_server_playbook, null_resource.run_common_config_playbook]
+}
+
+resource "local_file" "create_playbook_for_mgmt_config" {
+  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  content  = <<EOT
+- name: Prerequisite Configuration
+  hosts: [mgmt_compute_nodes]
+  become: yes
+  any_errors_fatal: true
+  gather_facts: false
+  vars:
+    ansible_ssh_common_args: >
+      ${local.proxyjump}
+      -o ControlMaster=auto
+      -o ControlPersist=30m
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+  pre_tasks:
+    - name: Load cluster-specific variables
+      include_vars: all.json
+  roles:
+     - { role: lsf_mgmt_config }
+EOT
+  filename = var.lsf_mgmt_playbooks_path
+}
+
+resource "null_resource" "run_playbook_for_mgmt_config" {
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${var.lsf_mgmt_playbooks_path}"
+  }
+  triggers = {
+    build = timestamp()
+  }
+  depends_on = [local_file.create_playbook_for_mgmt_config, null_resource.run_common_config_playbook]
+}
+
+resource "local_file" "create_playbook_for_login_node_config" {
+  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  content  = <<EOT
+- name: Prerequisite Configuration
+  hosts: [login_node]
+  become: yes
+  any_errors_fatal: true
+  gather_facts: false
+  vars:
+    ansible_ssh_common_args: >
+      ${local.proxyjump}
+      -o ControlMaster=auto
+      -o ControlPersist=30m
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+  pre_tasks:
+    - name: Load cluster-specific variables
+      include_vars: all.json
+  roles:
+     - { role: lsf_login_config }
+EOT
+  filename = local.login_node_playbook
+}
+
+
+resource "null_resource" "run_playbook_for_login_node_config" {
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.login_node_playbook}"
+  }
+  triggers = {
+    build = timestamp()
+  }
+  depends_on = [local_file.create_playbook_for_login_node_config, null_resource.run_playbook_for_mgmt_config]
+}
+
+resource "local_file" "create_playbook_for_post_deploy_config" {
+  count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  content  = <<EOT
+- name: Prerequisite Configuration
+  hosts: all
+  become: yes
+  any_errors_fatal: true
+  gather_facts: false
+  vars:
+    ansible_ssh_common_args: >
+      ${local.proxyjump}
+      -o ControlMaster=auto
+      -o ControlPersist=30m
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+  pre_tasks:
+    - name: Load cluster-specific variables
+      include_vars: all.json
+  roles:
+     - { role: lsf_post_config }
+EOT
+  filename = local.lsf_post_config_playbook
+}
+
+
+resource "null_resource" "run_playbook_post_deploy_config" {
+  count = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${local.lsf_post_config_playbook}"
+  }
+  triggers = {
+    build = timestamp()
+  }
+  depends_on = [local_file.create_playbook_for_post_deploy_config, null_resource.run_playbook_for_mgmt_config]
 }
 
 resource "null_resource" "export_api" {
-  count = (var.cloudlogs_provision && var.scheduler == "LSF") || var.scheduler == "Scale" ? 1 : 0
+  count = var.scheduler == "Scale" ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<EOT
@@ -545,79 +470,16 @@ resource "null_resource" "export_api" {
   triggers = {
     build = timestamp()
   }
-  depends_on = [null_resource.run_lsf_playbooks]
-}
-
-resource "local_file" "create_observability_playbook" {
-  count    = var.inventory_path != null && var.observability_provision && var.scheduler == "LSF" ? 1 : 0
-  content  = <<EOT
-- name: Cloud Logs Configuration
-  hosts: [mgmt_compute_nodes]
-  become: yes
-  any_errors_fatal: true
-  gather_facts: true
-  vars:
-    ansible_ssh_common_args: >
-      ${local.proxyjump}
-      -o ControlMaster=auto
-      -o ControlPersist=30m
-      -o UserKnownHostsFile=/dev/null
-      -o StrictHostKeyChecking=no
-  roles:
-    - { role: cloudlogs, tags: ["cloud_logs"] }
-
-- name: Cloud Monitoring Configuration
-  hosts: [mgmt_compute_nodes]
-  become: yes
-  any_errors_fatal: true
-  gather_facts: true
-  vars:
-    ansible_ssh_common_args: >
-      ${local.proxyjump}
-      -o ControlMaster=auto
-      -o ControlPersist=30m
-      -o UserKnownHostsFile=/dev/null
-      -o StrictHostKeyChecking=no
-  roles:
-    - { role: cloudmonitoring, tags: ["cloud_monitoring"] }
-EOT
-  filename = var.observability_playbook_path
-}
-
-resource "null_resource" "run_observability_playbooks" {
-  count = var.inventory_path != null && var.observability_provision && var.scheduler == "LSF" ? 1 : 0
-
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    command     = "sudo ansible-playbook -f 200 -i ${var.inventory_path} ${var.observability_playbook_path}"
-  }
-  triggers = {
-    build = timestamp()
-  }
-  depends_on = [null_resource.export_api]
+  depends_on = []
 }
 
 resource "local_file" "remove_host_entry_playbook" {
   count    = var.inventory_path != null && var.scheduler == "LSF" ? 1 : 0
   content  = <<EOT
 ---
-- name: Remove managed host entries from /etc/hosts
-  hosts: all
-  connection: local
-  become: yes
-  vars:
-    hosts_file: /etc/hosts
-
-  tasks:
-    - name: Remove managed block from /etc/hosts
-      ansible.builtin.blockinfile:
-        path: "{{ hosts_file }}"
-        marker: "# === ANSIBLE MANAGED HOSTS {mark} ==="
-        state: absent
-
 # Playbook to restart the lsfd service after all playbooks finish, ensuring all nodes are healthy.
 - name: Sleep and restart lsfd on all nodes
-  hosts: mgmt_compute_nodes
+  hosts: [mgmt_compute_nodes]
   become: yes
   gather_facts: false
   tasks:
@@ -629,6 +491,12 @@ resource "local_file" "remove_host_entry_playbook" {
     - name: Pause for 20s
       ansible.builtin.pause:
         seconds: 20
+
+    - name: Ensure /etc/resolv.conf is not immutable
+      file:
+        path: /etc/resolv.conf
+        attributes: -i
+      become: true
 EOT
   filename = local.remove_hostentry_playbooks_path
 }
@@ -643,7 +511,7 @@ resource "null_resource" "remove_host_entry_play" {
   triggers = {
     build = timestamp()
   }
-  depends_on = [local_file.remove_host_entry_playbook, null_resource.run_playbook_for_mgmt_config, null_resource.run_ldap_client_playbooks, null_resource.run_observability_playbooks]
+  depends_on = [local_file.remove_host_entry_playbook, null_resource.run_playbook_for_mgmt_config, null_resource.run_ldap_client_playbooks, null_resource.run_playbook_post_deploy_config]
 }
 
 resource "local_file" "lsfd_self_healing_playbook" {
@@ -651,7 +519,7 @@ resource "local_file" "lsfd_self_healing_playbook" {
   content  = <<EOT
 ---
 - name: Deploy self-healing LSFD cron job
-  hosts: mgmt_compute_nodes
+  hosts: [mgmt_compute_nodes]
   become: yes
   gather_facts: false
   tasks:
@@ -663,7 +531,7 @@ resource "local_file" "lsfd_self_healing_playbook" {
           HOSTNAME=$(hostname)
           LOGFILE="/home/lsfadmin/lsfd-restart.log"
 
-          source /opt/ibm/lsfsuite/lsf/conf/profile.lsf
+          source /opt/ibm/lsf/conf/profile.lsf
 
           # Check if this host is unavail or unreach
           if bhosts -w | grep -q "$HOSTNAME.*\(unavail\|unreach\)"; then

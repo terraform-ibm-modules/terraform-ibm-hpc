@@ -1,6 +1,15 @@
 Scheduler: LSF
 lsf_version: fixpack_15
-zones: ca-tor-1
+zones: ca-tor-1          # Default zones used when default_region=true. Set default_region=true to use this.
+default_region: false    # When false, test-specific region mapping is used (basic, kms, ldap, etc.)
+basic: br-sao-1
+kms: ca-tor-1
+ldap: eu-gb-1
+appcenter: br-sao-1
+observability: ca-tor-1
+existing_vpc: au-syd-1
+scaling: eu-de-1
+
 remote_allowed_ips:
 cluster_name: HPC-LSF-1
 ssh_keys: geretain-hpc
@@ -13,7 +22,7 @@ bastion_instance:
   image: ibm-ubuntu-22-04-5-minimal-amd64-8
 deployer_instance:
   profile:  bx2-8x32
-  image: hpc-lsf-fp15-deployer-rhel810-v2
+  image: hpc-lsf-fp15-deployer-rhel810-v3
 enable_cos_integration: false
 enable_vpc_flow_logs: false
 custom_file_shares:
@@ -26,23 +35,25 @@ custom_file_shares:
 key_management: key_protect
 login_instance:
   - profile:  bx2-2x8
-    image: hpc-lsf-fp15-compute-rhel810-v2
+    image: hpc-lsf-fp15-compute-rhel810-v3
 management_instances:
   - profile:  bx2-4x16
     count: 2
-    image: hpc-lsf-fp15-rhel810-v2
+    image: hpc-lsf-fp15-rhel810-v3
 static_compute_instances:
   - profile: bx2-2x8
     count: 2
-    image: hpc-lsf-fp15-compute-rhel810-v2
+    image: hpc-lsf-fp15-compute-rhel810-v3
 dynamic_compute_instances:
   - profile: bx2-2x8
     count: 1024
-    image: hpc-lsf-fp15-compute-rhel810-v2
+    image: hpc-lsf-fp15-compute-rhel810-v3
 placement_strategy: spread
 kms_instance_name: cicd-lsf-dnd-kms-instance
 kms_key_name: cicd-lsf-dnd-kms-key
-app_center_gui_password: Password@123456  # pragma: allowlist secret
+enable_webservice: true
+enable_appcenter: false
+webservice_appcenter_password: Password@123456  # pragma: allowlist secret
 observability_atracker_enable: true
 observability_atracker_target_type: cloudlogs
 observability_monitoring_enable: true
@@ -53,8 +64,8 @@ observability_enable_platform_logs: true
 observability_enable_metrics_routing: true
 observability_logs_retention_period: 7
 observability_monitoring_plan: graduated-tier
-sccwp_enable: true
-cspm_enabled: true
+enable_sccwp: true
+enable_cspm: true
 sccwp_service_plan: graduated-tier
 app_config_plan: standardv2
 enable_hyperthreading: true
@@ -65,7 +76,7 @@ ldap_user_name: tester
 ldap_user_password: Password@123456   # pragma: allowlist secret
 ldap_instance:
   - profile: cx2-2x4
-    image: ibm-ubuntu-22-04-5-minimal-amd64-8
+    image: ibm-ubuntu-22-04-5-minimal-amd64-12
     count: 1
 us_east_zone: us-east-3
 us_east_cluster_name: HPC-LSF-1
@@ -76,8 +87,8 @@ us_south_cluster_name: HPC-LSF-2
 jp_tok_zone: jp-tok-1
 jp_tok_cluster_name: HPC-LSF-2
 attracker_test_zone: eu-de-1  #added for testing purpose
-management_instances_image: hpc-lsf-fp15-rhel810-v2   #added for testing purpose
-static_compute_instances_image: hpc-lsf-fp15-compute-rhel810-v2 #added for testing purpose
-dynamic_compute_instances_image: hpc-lsf-fp15-compute-rhel810-v2 #added for testing purpose
+management_instances_image: hpc-lsf-fp15-rhel810-v3  #added for testing purpose
+static_compute_instances_image: hpc-lsf-fp15-compute-rhel810-v3 #added for testing purpose
+dynamic_compute_instances_image: hpc-lsf-fp15-compute-rhel810-v3 #added for testing purpose
 ssh_file_path: /artifacts/.ssh/id_rsa
 ssh_file_path_two: /artifacts/.ssh/id_rsa

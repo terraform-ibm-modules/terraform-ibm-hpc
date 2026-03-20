@@ -18,5 +18,5 @@ const (
 	CLUSTER_TWO_DNS_DOMAIN_NAME                               = "clustertwo.com"
 	KMS_KEY_INSTANCE_NAME                                     = "cicd-key-instance"
 	KMS_KEY_NAME                                              = "cicd-key-name"
-	APP_CENTER_GUI_PASSWORD                                   = "Password@123456" // pragma: allowlist secret
+	WEB_SERVICE_APP_CENTER_PASSWORD                           = "Password@123456" // pragma: allowlist secret
 )

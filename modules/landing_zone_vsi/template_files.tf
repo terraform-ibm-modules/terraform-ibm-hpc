@@ -1,3 +1,90 @@
+##########################################
+#  LSF User Data Templates
+##########################################
+data "template_file" "lsf_management_user_data" {
+  template = file("${path.module}/templates/lsf_management_user_data.tpl")
+  vars = {
+    vpc_apikey_value                         = var.vpc_apikey_value
+    bastion_public_key_content               = var.bastion_public_key_content != null ? var.bastion_public_key_content : ""
+    compute_public_key_content               = local.enable_management ? local.compute_public_key_content != null ? local.compute_public_key_content : "" : ""
+    compute_private_key_content              = local.enable_management ? local.compute_private_key_content != null ? local.compute_private_key_content : "" : ""
+    interface                                = local.vsi_interfaces[0]
+    dns_domain                               = var.dns_domain_names["compute"]
+    mtu_value                                = var.mtu_value
+    cluster_prefix                           = var.prefix
+    rc_cidr_block                            = var.vpc_cluster_private_subnets_cidr_blocks
+    observability_monitoring_enable          = var.observability_monitoring_enable
+    observability_logs_enable_for_management = var.observability_logs_enable_for_management
+    cloud_monitoring_access_key              = var.cloud_monitoring_access_key
+    cloud_monitoring_ingestion_url           = var.cloud_monitoring_ingestion_url
+    cloud_monitoring_prws_key                = var.cloud_monitoring_prws_key
+    cloud_monitoring_prws_url                = var.cloud_monitoring_prws_url
+    cloud_logs_ingress_private_endpoint      = var.cloud_logs_ingress_private_endpoint
+  }
+}
+
+data "template_file" "lsf_compute_user_data" {
+  template = file("${path.module}/templates/lsf_compute_user_data.tpl")
+  vars = {
+    vpc_apikey_value                                 = var.vpc_apikey_value
+    bastion_public_key_content                       = var.bastion_public_key_content != null ? var.bastion_public_key_content : ""
+    compute_public_key_content                       = local.enable_compute ? local.compute_public_key_content != null ? local.compute_public_key_content : "" : ""
+    compute_private_key_content                      = local.enable_compute ? local.compute_private_key_content != null ? local.compute_private_key_content : "" : ""
+    interface                                        = local.vsi_interfaces[0]
+    dns_domain                                       = var.dns_domain_names["compute"]
+    dynamic_compute_instances                        = var.dynamic_compute_instances == null ? "" : ""
+    mtu_value                                        = var.mtu_value
+    cluster_prefix                                   = var.prefix
+    rc_cidr_block                                    = var.vpc_cluster_private_subnets_cidr_blocks
+    observability_monitoring_on_compute_nodes_enable = var.observability_monitoring_on_compute_nodes_enable
+    observability_logs_enable_for_compute            = var.observability_logs_enable_for_compute
+    cloud_monitoring_access_key                      = var.cloud_monitoring_access_key
+    cloud_monitoring_ingestion_url                   = var.cloud_monitoring_ingestion_url
+    cloud_logs_ingress_private_endpoint              = var.cloud_logs_ingress_private_endpoint
+  }
+}
+
+data "template_file" "lsf_login_user_data" {
+  template = file("${path.module}/templates/lsf_login_user_data.tpl")
+  vars = {
+    bastion_public_key_content  = var.bastion_public_key_content != null ? var.bastion_public_key_content : ""
+    compute_public_key_content  = local.enable_compute ? local.compute_public_key_content != null ? local.compute_public_key_content : "" : ""
+    compute_private_key_content = local.enable_compute ? local.compute_private_key_content != null ? local.compute_private_key_content : "" : ""
+    interface                   = local.vsi_interfaces[0]
+    dns_domain                  = var.dns_domain_names["compute"]
+    scheduler                   = var.scheduler
+    mtu_value                   = var.mtu_value
+    cluster_prefix              = var.prefix
+    rc_cidr_block               = var.vpc_cluster_private_subnets_cidr_blocks
+  }
+}
+
+data "template_file" "lsf_ldap_user_data" {
+  template = file("${path.module}/templates/lsf_ldap_user_data.tpl")
+  vars = {
+    bastion_public_key_content = var.bastion_public_key_content != null ? var.bastion_public_key_content : ""
+
+    cluster_public_key_content = (
+      var.scheduler == "LSF" && local.enable_compute ? try(local.compute_public_key_content, "") :
+      var.scheduler == "Scale" && local.enable_storage ? try(local.storage_public_key_content, "") :
+      ""
+    )
+
+    cluster_private_key_content = (
+      var.scheduler == "LSF" && local.enable_compute ? try(local.compute_private_key_content, "") :
+      var.scheduler == "Scale" && local.enable_storage ? try(local.storage_private_key_content, "") :
+      ""
+    )
+
+    compute_interfaces = var.storage_type == "vsi" ? local.vsi_interfaces[0] : local.bms_interfaces[0]
+    cluster_dns_domain = var.scheduler == "LSF" && local.enable_compute ? var.dns_domain_names["compute"] : "ldap.com"
+    cluster_prefix     = var.prefix
+  }
+}
+
+##########################################
+#  Scale User Data Templates
+##########################################
 data "template_file" "ldap_user_data" {
   template = file("${path.module}/templates/ldap_user_data.tpl")
   vars = {
@@ -20,18 +107,6 @@ data "template_file" "ldap_user_data" {
   }
 }
 
-data "template_file" "client_user_data" {
-  template = file("${path.module}/templates/client_user_data.tpl")
-  vars = {
-    bastion_public_key_content = var.bastion_public_key_content != null ? var.bastion_public_key_content : ""
-    client_public_key_content  = local.enable_client ? local.client_public_key_content != null ? local.client_public_key_content : "" : ""
-    client_private_key_content = local.enable_client ? local.client_private_key_content != null ? local.client_private_key_content : "" : ""
-    client_interfaces          = local.vsi_interfaces[0]
-    client_dns_domain          = local.enable_client ? var.dns_domain_names["client"] : ""
-    client_instance_eth1_mtu   = var.protocol_instance_eth1_mtu
-  }
-}
-
 data "template_file" "management_user_data" {
   template = file("${path.module}/templates/management_user_data.tpl")
   vars = {
@@ -44,30 +119,15 @@ data "template_file" "management_user_data" {
   }
 }
 
-data "template_file" "lsf_compute_user_data" {
-  template = file("${path.module}/templates/lsf_compute_user_data.tpl")
-  vars = {
-    bastion_public_key_content     = var.bastion_public_key_content != null ? var.bastion_public_key_content : ""
-    management_public_key_content  = local.enable_compute ? local.compute_public_key_content != null ? local.compute_public_key_content : "" : ""
-    management_private_key_content = local.enable_compute ? local.compute_private_key_content != null ? local.compute_private_key_content : "" : ""
-    management_interfaces          = var.storage_type == "vsi" ? local.vsi_interfaces[0] : local.bms_interfaces[0]
-    management_dns_domain          = var.dns_domain_names["compute"]
-    # TODO: Fix me
-    dynamic_compute_instances = var.dynamic_compute_instances == null ? "" : ""
-    mtu_value                 = var.mtu_value
-  }
-}
-
-data "template_file" "login_user_data" {
-  template = file("${path.module}/templates/login_user_data.tpl")
+data "template_file" "client_user_data" {
+  template = file("${path.module}/templates/client_user_data.tpl")
   vars = {
     bastion_public_key_content = var.bastion_public_key_content != null ? var.bastion_public_key_content : ""
-    login_public_key_content   = local.enable_compute ? local.compute_public_key_content != null ? local.compute_public_key_content : "" : ""
-    login_private_key_content  = local.enable_compute ? local.compute_private_key_content != null ? local.compute_private_key_content : "" : ""
-    login_interfaces           = var.storage_type == "vsi" ? local.vsi_interfaces[0] : local.bms_interfaces[0]
-    login_dns_domain           = var.dns_domain_names["compute"]
-    scheduler                  = var.scheduler
-    mtu_value                  = var.mtu_value
+    client_public_key_content  = local.enable_client ? local.client_public_key_content != null ? local.client_public_key_content : "" : ""
+    client_private_key_content = local.enable_client ? local.client_private_key_content != null ? local.client_private_key_content : "" : ""
+    client_interfaces          = local.vsi_interfaces[0]
+    client_dns_domain          = local.enable_client ? var.dns_domain_names["client"] : ""
+    client_instance_eth1_mtu   = var.protocol_instance_eth1_mtu
   }
 }
 

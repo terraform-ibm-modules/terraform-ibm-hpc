@@ -5,7 +5,7 @@
     "cluster_prefix": "hpc-lsf",
     "ssh_keys": "[\"Please fill here\"]",
     "remote_allowed_ips": "[\"Please fill here\"]",
-    "app_center_gui_password": "Please fill here",
+    "webservice_appcenter_password": "Please fill here",
     "lsf_version": "fixpack_15",
     "vpc_name": "__NULL__",
     "cluster_subnet_id": "__NULL__",
@@ -40,9 +40,9 @@
     "skip_flowlogs_s2s_auth_policy": "false",
     "skip_kms_s2s_auth_policy": "false",
     "skip_iam_block_storage_authorization_policy": "false",
-    "sccwp_enable": "true",
+    "enable_sccwp": "true",
     "app_config_plan": "basic",
-    "cspm_enabled": "true",
+    "enable_cspm": "true",
     "sccwp_service_plan": "free-trial",
     "observability_atracker_enable": "true",
     "observability_atracker_target_type": "cloudlogs",
@@ -62,8 +62,8 @@
     "enable_cos_integration": "false",
     "cos_instance_name": "__NULL__",
     "enable_hyperthreading": "true",
-    "vpn_enabled": "false",
+    "enable_vpn": "false",
     "TF_VERSION": "1.9",
     "TF_PARALLELISM": "250",
-    "lsf_pay_per_use": "true"
+    "enable_lsf_pay_per_use": "true"
 }

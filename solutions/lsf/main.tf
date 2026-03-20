@@ -44,7 +44,6 @@ module "lsf" {
   skip_iam_block_storage_authorization_policy      = local.env.skip_iam_block_storage_authorization_policy
   skip_kms_s2s_auth_policy                         = local.env.skip_kms_s2s_auth_policy
   ibmcloud_api_key                                 = local.env.ibmcloud_api_key
-  app_center_gui_password                          = local.env.app_center_gui_password
   lsf_version                                      = local.env.lsf_version
   enable_hyperthreading                            = local.env.enable_hyperthreading
   enable_ldap                                      = local.env.enable_ldap
@@ -60,11 +59,15 @@ module "lsf" {
   existing_bastion_instance_public_ip              = local.env.existing_bastion_instance_public_ip
   existing_bastion_security_group_id               = local.env.existing_bastion_security_group_id
   existing_bastion_ssh_private_key                 = local.env.existing_bastion_ssh_private_key
-  vpn_enabled                                      = local.env.vpn_enabled
+  enable_vpn                                       = local.env.enable_vpn
   login_instance                                   = local.env.login_instance
-  sccwp_enable                                     = local.env.sccwp_enable
+  enable_sccwp                                     = local.env.enable_sccwp
   sccwp_service_plan                               = local.env.sccwp_service_plan
-  cspm_enabled                                     = var.cspm_enabled
+  enable_cspm                                      = var.enable_cspm
   app_config_plan                                  = var.app_config_plan
-  lsf_pay_per_use                                  = local.env.lsf_pay_per_use
+  enable_lsf_pay_per_use                           = local.env.enable_lsf_pay_per_use
+  enable_license_scheduler                         = local.env.enable_license_scheduler
+  enable_webservice                                = local.env.enable_webservice
+  enable_appcenter                                 = local.env.enable_appcenter
+  webservice_appcenter_password                    = local.env.webservice_appcenter_password
 }

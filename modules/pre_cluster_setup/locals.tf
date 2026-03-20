@@ -10,6 +10,7 @@ locals {
   scale_baremetal_prerequisite_playbook_path = format("%s/%s/scale_baremetal_prerequisite.yml", var.clone_path, "ibm-spectrum-scale-install-infra")
   gpfs_restart_playbook_path                 = format("%s/%s/scale_gpfs_restart.yml", var.clone_path, "ibm-spectrum-scale-install-infra")
   cluster_health_refresh_playbook_path       = format("%s/%s/scale_cluster_health_refresh.yml", var.clone_path, "ibm-spectrum-scale-install-infra")
+  encryption_replication_playbook_path       = format("%s/%s/scale_encryption_replication.yml", var.clone_path, "ibm-spectrum-scale-install-infra")
   domain_name_file                           = format("%s/%s/domain_names.yml", var.clone_path, "ibm-spectrum-scale-install-infra")
   storage_domain                             = try(var.domain_names.storage, null)
   protocol_domain                            = try(var.domain_names.protocol, null)

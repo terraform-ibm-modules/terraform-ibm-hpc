@@ -1,3 +1,8 @@
+variable "vpc_apikey_value" {
+  type        = string
+  sensitive   = true
+  description = "IBM Cloud API Key that will be used for authentication in scripts run in this module."
+}
 ##############################################################################
 # Offering Variations
 ##############################################################################
@@ -15,6 +20,12 @@ variable "resource_group" {
   description = "String describing resource groups to create or reference"
   type        = string
   default     = null
+}
+
+variable "enable_hyperthreading" {
+  description = "enable/disable hyperthreading"
+  type        = bool
+  default     = false
 }
 
 ##############################################################################
@@ -382,7 +393,7 @@ variable "ldap_instances" {
   )
   default = [{
     profile = "cx2-2x4"
-    image   = "ibm-ubuntu-22-04-5-minimal-amd64-8"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-12"
   }]
   description = "Profile and Image name to be used for provisioning the LDAP instances. Note: Debian based OS are only supported for the LDAP feature"
 }
@@ -547,13 +558,78 @@ variable "volume_storages" {
   default = []
 }
 
-variable "lsf_pay_per_use" {
+variable "enable_lsf_pay_per_use" {
   type        = bool
   default     = true
-  description = "When lsf_pay_per_use is set to true, the LSF cluster nodes are provisioned using predefined custom images under a pay-per-use pricing plan, where billing is based on vCPU usage per hour. In this mode, providing custom images for the nodes is not required, and Bring Your Own Image (BYOL) is not supported. The pay-per-use option is available only for FP15 images. If you set the variable to false, the automation uses default images for all cluster nodes and enables support for BYOL, with no pay-per-use billing applied."
+  description = "When enable_lsf_pay_per_use is set to true, the LSF cluster nodes are provisioned using predefined custom images under a pay-per-use pricing plan, where billing is based on vCPU usage per hour. In this mode, providing custom images for the nodes is not required, and Bring Your Own Image (BYOL) is not supported. The pay-per-use option is available only for FP15 images. If you set the variable to false, the automation uses default images for all cluster nodes and enables support for BYOL, with no pay-per-use billing applied."
 }
 
 variable "protocol_instance_eth1_mtu" {
   type        = number
   description = "Enable the Private Path NLB for CES. When enabled, MTU must be 8500 or lower because PPNLB does not support MTU 9000. When disabled, protocol nodes can safely use MTU 9000."
+}
+
+variable "vpc_cluster_private_subnets_cidr_blocks" {
+  type        = string
+  default     = "10.241.0.0/20"
+  description = "Provide the CIDR block required for the creation of the compute cluster's private subnet. One CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Ensure the selected CIDR block size can accommodate the maximum number of management and dynamic compute nodes expected in your cluster. For more information on CIDR block size selection, refer to the documentation, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
+}
+
+##############################################################################
+# Observability Variables
+##############################################################################
+variable "observability_monitoring_enable" {
+  description = "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure and LSF application metrics from Management Nodes will be ingested."
+  type        = bool
+  default     = false
+}
+
+variable "observability_logs_enable_for_management" {
+  description = "Set false to disable IBM Cloud Logs integration. If enabled, infrastructure and LSF application logs from Management Nodes will be ingested."
+  type        = bool
+  default     = false
+}
+
+variable "cloud_logs_ingress_private_endpoint" {
+  description = "Cloud logs ingress private endpoint"
+  type        = string
+  default     = ""
+}
+
+variable "cloud_monitoring_access_key" {
+  description = "IBM Cloud Monitoring access key for agents to use"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "cloud_monitoring_ingestion_url" {
+  description = "IBM Cloud Monitoring ingestion url for agents to use"
+  type        = string
+  default     = ""
+}
+
+variable "cloud_monitoring_prws_key" {
+  description = "IBM Cloud Monitoring Prometheus Remote Write ingestion key"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "cloud_monitoring_prws_url" {
+  description = "IBM Cloud Monitoring Prometheus Remote Write ingestion url"
+  type        = string
+  default     = ""
+}
+
+variable "observability_logs_enable_for_compute" {
+  description = "Set false to disable IBM Cloud Logs integration. If enabled, infrastructure and LSF application logs from Compute Nodes will be ingested."
+  type        = bool
+  default     = false
+}
+
+variable "observability_monitoring_on_compute_nodes_enable" {
+  description = "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure metrics from Compute Nodes will be ingested."
+  type        = bool
+  default     = false
 }

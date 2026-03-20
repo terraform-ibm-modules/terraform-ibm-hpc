@@ -6,7 +6,6 @@ resource "local_sensitive_file" "infra_details_to_json" {
   "lsf_servers": ${jsonencode(var.lsf_servers)},
   "lsf_clients": ${jsonencode(var.lsf_clients)},
   "gui_hosts": ${jsonencode(var.gui_hosts)},
-  "db_hosts": ${jsonencode(var.db_hosts)},
   "login_host": ${jsonencode(var.login_host)},
   "prefix": ${jsonencode(var.prefix)},
   "HA_shared_dir": ${jsonencode(var.ha_shared_dir)},
@@ -16,7 +15,9 @@ resource "local_sensitive_file" "infra_details_to_json" {
   "dns_domain_names": ${jsonencode(var.dns_domain_names["compute"])},
   "enable_hyperthreading": ${var.enable_hyperthreading},
   "ibmcloud_api_key": "${var.ibmcloud_api_key}",
-  "app_center_gui_password": "${var.app_center_gui_password}",
+  "enable_webservice": "${var.enable_webservice}",
+  "enable_appcenter": "${var.enable_appcenter}",
+  "webservice_appcenter_password": "${var.webservice_appcenter_password}",
   "lsf_version": "${var.lsf_version}",
   "compute_public_key_content": ${jsonencode(var.compute_public_key_content)},
   "compute_private_key_content": ${jsonencode(var.compute_private_key_content)},
@@ -38,9 +39,11 @@ resource "local_sensitive_file" "infra_details_to_json" {
   "compute_security_group_id": ${jsonencode(var.compute_security_group_id)},
   "compute_subnet_crn": "${var.compute_subnet_crn}",
   "boot_volume_encryption_key": ${local.boot_volume_encryption_key},
-  "lsf_pay_per_use": ${var.lsf_pay_per_use},
-  "catalog_offering": ${jsonencode(local.catalog_offering)},
-  "mtu_value": ${var.mtu_value}
+  "enable_lsf_pay_per_use": ${var.enable_lsf_pay_per_use},
+  "catalog_offering": ${jsonencode(local.pricing_model)},
+  "mtu_value": ${var.mtu_value},
+  "enable_license_scheduler": ${var.enable_license_scheduler},
+  "has_gaudi3": ${var.has_gaudi3}
 }
 EOT
   filename = var.json_inventory_path

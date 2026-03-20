@@ -1,80 +1,74 @@
 ---
+# LSF Login Node Configuration
+# Configures LSF directories, host entries, environment setup,
+# and required system settings for the login node.
 
-- name: Check if LSF logs directory exists
-  stat:
-    path: "{{ LSF_LOGS }}"
-  register: logs_dir_stat
-
-- name: Ensure LSF logs directory exists (recurse only on first creation)
-  file:
-    path: "{{ LSF_LOGS }}"
-    state: directory
-    owner: lsfadmin
-    group: lsfadmin
-    mode: '0755'
-    recurse: "{{ not logs_dir_stat.stat.exists }}"
-
-- name: Ensure LSF conf and work are symlinks via shell
+- name: Ensure LSF log path is configured as symlink
   shell: |
     [ -L "{{ LSF_TOP }}/{{ item }}" ] && echo "Symlink exists, skipping." || { \
       [ -d "{{ LSF_TOP }}/{{ item }}" ] && rm -rf "{{ LSF_TOP }}/{{ item }}"; \
-      ln -s /mnt/lsf/lsf/{{ item }} "{{ LSF_TOP }}/{{ item }}"; }
+      ln -s /mnt/lsf/logs "{{ LSF_TOP }}/{{ item }}"; }
   loop:
-    - conf
-    - work
+    - log
 
-- name: Ensure correct ownership and permissions of /opt/ibm/lsfsuite
+- name: Ensure ownership and permissions are set on LSF directory
   file:
-    path: "{{ LSF_SUITE }}"
+    path: "{{ LSF_TOP }}"
     owner: lsfadmin
-    group: lsfadmin
-    mode: '0777'
+    group: root
+    mode: '0755'
     recurse: yes
 
-- name: Set login_node_host to first host in login_node group
+- name: Set login node host fact
   set_fact:
     login_node_host: "{{ groups['login_node'][0] }}"
 
-- name: Get IPv4 address of the current host
+- name: Get IPv4 address of current host
   shell: "getent ahostsv4 {{ inventory_hostname }} | awk '{ print $1; exit }'"
   register: ip_result
   changed_when: false
 
 - name: Ensure login node entry exists in LSF hosts file
   lineinfile:
-    path: /mnt/lsf/lsf/conf/hosts
+    path: "{{ nfs_client_mount_path }}/conf/hosts"
     line: "{{ ip_result.stdout }} {{ login_node_host }}"
     state: present
     insertafter: EOF
     create: yes
 
-- name: Insert hostname line after "#prune" only once
+- name: Ensure login node entry is present in LSF cluster file
   lineinfile:
     path: "{{ LSF_CLUSTER_FILE }}"
     insertafter: "^#prune"
     line: "{{ login_node_host }} Intel_E5 X86_64 0 ()"
     state: present
 
-- name: Ensure LSF profile is sourced in root's .bashrc
+- name: Ensure LSF profile is present in root bashrc
   lineinfile:
     path: "/root/.bashrc"
     line: "source {{ LSF_CONF }}/profile.lsf"
     state: present
 
-- name: Ensure LSF profile is sourced in lsfadmin's .bashrc
+- name: Ensure LSF profile is present in lsfadmin bashrc
   lineinfile:
     path: "{{ LSFADMIN_DIR }}/.bashrc"
     line: "source {{ LSF_CONF }}/profile.lsf"
     state: present
 
-- name: Source current user's .bashrc (only if updated)
+- name: Source root bashrc if profile is configured
   shell: |
     grep -q "source {{ LSF_CONF }}/profile.lsf" /root/.bashrc && source /root/.bashrc || true
   args:
     executable: /bin/bash
 
-- name: Source lsfadmin's .bashrc (only if updated)
+- name: Source lsfadmin bashrc if profile is configured
   shell: |
     grep -q "source {{ LSF_CONF }}/profile.lsf" "{{ LSFADMIN_DIR }}/.bashrc" && source "{{ LSFADMIN_DIR }}/.bashrc" || true
   args:
     executable: /bin/bash
+
+- name: Ensure /etc/resolv.conf is mutable
+  file:
+    path: /etc/resolv.conf
+    attributes: -i
+  become: true

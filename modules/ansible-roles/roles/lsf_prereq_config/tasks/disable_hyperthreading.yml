@@ -1,5 +1,5 @@
 ---
-- name: Hyperthreading | Create LSF hyperthreading script for disabling threads if hyperthreading is false
+- name: Hyperthreading | Create script to disable CPU hyperthreading
   copy:
     dest: "{{ hyperthreading_file }}"
     content: |
@@ -10,11 +10,11 @@
     mode: '0755'
   when: not enable_hyperthreading
 
-- name: Hyperthreading | Run the hyperthreading script and add to cron if hyperthreading is false
+- name: Hyperthreading | Execute hyperthreading disable script
   shell: "{{ hyperthreading_file }}"
   when: not enable_hyperthreading
 
-- name: Hyperthreading | Add script to cron for reboot if hyperthreading is false
+- name: Hyperthreading | Ensure script runs on reboot via cron
   cron:
     name: "Disable Hyperthreading"
     special_time: reboot

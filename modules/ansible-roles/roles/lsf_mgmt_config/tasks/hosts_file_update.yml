@@ -2,51 +2,54 @@
 
 # Update the /etc/hosts file for Dynamic node Support
 
-- name: Management Config | Check if IP-to-host mapping already exists
+- name: Management Config | Check if IP-to-host mappings are already present
   shell: "grep -q '# ANSIBLE MANAGED: IP mapping added' '{{ LSF_HOSTS_FILE }}'"
   register: ip_mapping_check
   changed_when: false
   failed_when: false
   run_once: true
 
-- name: Management Config | Generate and append IP-to-host mapping to LSF hosts file
+- name: Management Config | Generate and append dynamic IP-to-host mappings
   shell: |
     echo "# ANSIBLE MANAGED: IP mapping added" >> '{{ LSF_HOSTS_FILE }}'
     python3 -c "import ipaddress; \
-    print('\\n'.join([str(ip) + ' {{ prefix }}-' + str(ip).replace('.', '-') \
-    for ip in ipaddress.IPv4Network('{{ compute_subnets_cidr | first }}')]))" >> '{{ LSF_HOSTS_FILE }}'
+    print('\n'.join([
+      f'{ip} {{ prefix }}-' + str(ip).replace('.', '-') +
+      ' ' + f'{{ prefix }}-' + str(ip).replace('.', '-') + '.{{ dns_domain_names }}'
+      for ip in ipaddress.IPv4Network('{{ compute_subnets_cidr | first }}')
+    ]))" >> '{{ LSF_HOSTS_FILE }}'
   args:
     executable: /bin/bash
   run_once: true
   when: ip_mapping_check.rc != 0
 
-- name:  Management Config | Get IP addresses using getent
+- name: Management Config | Resolve IP address for each host
   shell: "getent hosts {{ inventory_hostname }} | awk '{ print $1 }'"
   register: dns_ip
   changed_when: false
 
-- name:  Management Config | Store IPs for each host
+- name: Management Config | Store resolved IP address per host
   set_fact:
     host_ip: "{{ dns_ip.stdout }}"
 
-- name:  Management Config | Aggregate all IPs from all hosts
+- name: Management Config | Aggregate IP addresses from all compute nodes
   set_fact:
     all_ips: "{{ groups['mgmt_compute_nodes'] | map('extract', hostvars, 'host_ip') | list }}"
   run_once: true
 
-- name:  Management Config | Display all resolved IP addresses
+- name: Management Config | Display aggregated IP address list
   debug:
     msg: "Resolved IPs: {{ all_ips }}"
   run_once: true
 
-- name:  Management Config | Check if each IP exists in LSF hosts file
+- name: Management Config | Verify existing IP entries in LSF hosts file
   shell: "grep -w '{{ item }}' {{ LSF_HOSTS_FILE }} || true"
   register: ip_check
   loop: "{{ all_ips }}"
   changed_when: false
   run_once: true
 
-- name:  Management Config | Remove matched IPs from LSF hosts file if they exist
+- name: Management Config | Remove existing IP entries from LSF hosts file
   lineinfile:
     path: "{{ LSF_HOSTS_FILE }}"
     state: absent
@@ -55,25 +58,38 @@
   when: item.stdout | length > 0
   run_once: true
 
-- name: Management Config | Ensure LSF hosts file exists
+- name: Management Config | Check if LSF hosts file exists
   stat:
     path: "{{ LSF_HOSTS_FILE }}"
   register: lsf_hosts_stat
 
-- name: Management Config | Pause for 5 seconds
+- name: Management Config | Wait briefly before validation
   ansible.builtin.pause:
     seconds: 5
 
-- name: Management Config | Restore LSF hosts file if missing
+- name: Management Config | Restore LSF hosts file from backup if missing
   copy:
-    src: "{{ HA_shared_dir }}/lsf/conf/hosts"
+    src: "{{ HA_shared_dir }}/conf/hosts"
     dest: "{{ LSF_HOSTS_FILE }}"
     remote_src: yes
   when: not lsf_hosts_stat.stat.exists
 
-- name: Management Config | Copy the Hosts file to /etc/hosts
+- name: Management Config | Sync LSF hosts file to system /etc/hosts
   copy:
     src: "{{ LSF_HOSTS_FILE }}"
     dest: /etc/hosts
     remote_src: yes
   ignore_errors: yes
+
+- name: Management Config | Execute LSF hostsetup for dynamic nodes
+  ansible.builtin.shell: >
+    /opt/ibm/lsf/10.1/install/hostsetup
+    --top="/opt/ibm/lsf"
+    --boot="y"
+    --start="y"
+    --dynamic
+  args:
+    executable: /bin/bash
+  register: hostsetup_output
+  ignore_errors: yes
+  when: inventory_hostname in groups['mgmt_compute_nodes']
