@@ -14,6 +14,7 @@ import (
 )
 
 func TestRunLSFDefault(t *testing.T) {
+	t.Helper()
 	t.Parallel()
 
 	require.NoError(t, os.Setenv("ZONES", "us-east-3"), "Failed to set ZONES env variable")
@@ -24,6 +25,7 @@ func TestRunLSFDefault(t *testing.T) {
 }
 
 func TestRunScaleDefault(t *testing.T) {
+	t.Helper()
 	t.Parallel()
 
 	require.NoError(t, os.Setenv("ZONES", "us-east-3"), "Failed to set ZONES env variable")

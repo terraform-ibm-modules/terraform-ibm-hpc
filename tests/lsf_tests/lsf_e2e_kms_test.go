@@ -20,28 +20,28 @@ import (
 //   - Permissions to create/delete KMS instances
 //   - Proper test suite initialization
 func TestRunUsingExistingKMSInstanceAndExistingKey(t *testing.T) {
+	t.Helper()
 	t.Parallel()
 
-	// Initialization and Setup
+	// ── 1. Initialization ────────────────────────────────────────────────────
 	setupTestSuite(t)
-	require.NotNil(t, testLogger, "Test logger must be initialized")
+	require.NotNil(t, testLogger, "Test logger must be initialized before use")
 	defer logResult(t)
-	testLogger.Info(t, fmt.Sprintf("Test %s initiated", t.Name()))
+	testLogger.Info(t, fmt.Sprintf("[START] Test %s initiated", t.Name()))
 
-	// Generate Unique Cluster Prefix
+	// ── 2. Configuration ─────────────────────────────────────────────────────
 	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
+	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
 
-	// Load Environment Configuration
 	envVars, err := GetEnvVars()
 	require.NoError(t, err, "Failed to load environment configuration")
+	testLogger.Info(t, "Environment variables loaded successfully")
 
-	// KMS Setup
-	kmsInstanceName := "cicd-" + utils.GenerateRandomString()
 	apiKey := os.Getenv("TF_VAR_ibmcloud_api_key")
 	require.NotEmpty(t, apiKey, "IBM Cloud API key must be set")
 
 	region := utils.GetRegion(envVars.Zones)
+	kmsInstanceName := "cicd-" + utils.GenerateRandomString()
 	testLogger.Info(t, fmt.Sprintf("Creating KMS instance: %s in region: %s", kmsInstanceName, region))
 
 	err = lsf.CreateServiceInstanceAndKmsKey(
@@ -53,11 +53,13 @@ func TestRunUsingExistingKMSInstanceAndExistingKey(t *testing.T) {
 		KMS_KEY_NAME,
 		testLogger,
 	)
-	require.NoError(t, err, "Must create KMS service instance and key")
+	require.NoError(t, err, "Failed to create KMS service instance and key")
+	testLogger.Info(t, fmt.Sprintf("KMS instance and key created successfully: %s", kmsInstanceName))
 
-	// Cleanup KMS instance after test
+	// Defer KMS instance deletion independently of cluster teardown so the
+	// KMS resource is always cleaned up even if cluster teardown fails.
 	defer func() {
-		testLogger.Info(t, fmt.Sprintf("Deleting KMS instance: %s", kmsInstanceName))
+		testLogger.Info(t, fmt.Sprintf("Initiating KMS instance deletion: %s", kmsInstanceName))
 		lsf.DeleteServiceInstanceAndAssociatedKeys(
 			t,
 			apiKey,
@@ -66,53 +68,64 @@ func TestRunUsingExistingKMSInstanceAndExistingKey(t *testing.T) {
 			kmsInstanceName,
 			testLogger,
 		)
+		testLogger.Info(t, fmt.Sprintf("KMS instance deletion completed: %s", kmsInstanceName))
 	}()
 
-	// Prepare Test Options
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
 	require.NoError(t, err, "Failed to initialize test options")
+	testLogger.Info(t, "Test options initialized successfully")
 
-	// Override default zones with kms-specific region since default_region=false
+	// Override default zones with kms-specific region (default_region=false).
 	applyRegionOverrides(t, envVars, options, "kms")
+	testLogger.Info(t, "Region overrides applied for KMS cluster configuration")
 
-	// Set KMS Terraform Variables
 	options.TerraformVars["key_management"] = "key_protect"
 	options.TerraformVars["kms_instance_name"] = kmsInstanceName
 	options.TerraformVars["kms_key_name"] = KMS_KEY_NAME
+	testLogger.Info(t, "KMS Terraform variables configured")
 
-	// Resource Cleanup Configuration
+	// ── 3. Teardown ──────────────────────────────────────────────────────────
+	// SkipTestTearDown defers destruction to the explicit defer below, giving
+	// us control over logging and sequencing around teardown.
 	options.SkipTestTearDown = true
 	defer func() {
-		testLogger.Info(t, "Final cleanup: destroying resources")
+		testLogger.Info(t, "Initiating final resource teardown...")
 		options.TestTearDown()
+		testLogger.Info(t, "Resource teardown completed")
 	}()
 
-	// Deploy Cluster
-	// DeployCluster and ValidateCluster subtests are intentionally sequential.
-	// Neither calls t.Parallel(), so t.Run blocks until each subtest completes
-	// before the parent resumes. Do not add t.Parallel() to either subtest.
+	// ── 4. Deployment ────────────────────────────────────────────────────────
+	// DeployCluster and ValidateCluster subtests run sequentially by design.
+	// Neither calls t.Parallel(), so each t.Run blocks until the subtest
+	// completes before the parent resumes.
 	t.Run("DeployCluster", func(t *testing.T) {
+		t.Helper()
 		deploymentStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+		testLogger.Info(t, fmt.Sprintf("[START] Cluster deployment for test: %s", t.Name()))
 
-		clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-		if clusterCreationErr != nil {
-			testLogger.Error(t, fmt.Sprintf("Cluster deployment failed after %v: %v", time.Since(deploymentStart), clusterCreationErr))
-			require.NoError(t, clusterCreationErr, "Cluster creation failed")
+		err := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
+		if err != nil {
+			testLogger.FAIL(t, fmt.Sprintf("Cluster deployment failed after %v: %v", time.Since(deploymentStart), err))
+			require.NoError(t, err, "Cluster creation and consistency check failed")
 		}
-		testLogger.Info(t, fmt.Sprintf("Cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
+
+		testLogger.Info(t, fmt.Sprintf("[END] Cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
 	})
 
-	// Abort the parent test immediately if DeployCluster failed.
-	// Using require.False ensures the overall test is marked as FAILED (not skipped),
-	// so CI pipelines correctly surface deployment failures.
-	require.False(t, t.Failed(), "DeployCluster failed — aborting test, skipping ValidateCluster")
+	// Abort immediately if deployment failed.
+	// require.False ensures the test is marked FAILED (not skipped), so CI
+	// pipelines correctly surface deployment failures before validation runs.
+	require.False(t, t.Failed(), "DeployCluster failed — aborting parent test, skipping ValidateCluster")
 
-	// Post-deployment Validation
+	// ── 5. Validation ────────────────────────────────────────────────────────
 	t.Run("ValidateCluster", func(t *testing.T) {
+		t.Helper()
 		validationStart := time.Now()
+		testLogger.Info(t, fmt.Sprintf("[START] Cluster validation for test: %s", t.Name()))
+
 		lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
-		testLogger.Info(t, fmt.Sprintf("Validation completed (duration: %v)", time.Since(validationStart)))
+
+		testLogger.Info(t, fmt.Sprintf("[END] Cluster validation completed successfully (duration: %v)", time.Since(validationStart)))
 	})
 }
 
@@ -125,28 +138,28 @@ func TestRunUsingExistingKMSInstanceAndExistingKey(t *testing.T) {
 //   - Permissions to create/delete KMS instances
 //   - Proper test suite initialization
 func TestRunUsingExistingKMSInstanceAndWithoutKey(t *testing.T) {
+	t.Helper()
 	t.Parallel()
 
-	// Initialization and Setup
+	// ── 1. Initialization ────────────────────────────────────────────────────
 	setupTestSuite(t)
-	require.NotNil(t, testLogger, "Test logger must be initialized")
+	require.NotNil(t, testLogger, "Test logger must be initialized before use")
 	defer logResult(t)
-	testLogger.Info(t, fmt.Sprintf("Test %s initiated", t.Name()))
+	testLogger.Info(t, fmt.Sprintf("[START] Test %s initiated", t.Name()))
 
-	// Generate Unique Cluster Prefix
+	// ── 2. Configuration ─────────────────────────────────────────────────────
 	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
+	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
 
-	// Load Environment Configuration
 	envVars, err := GetEnvVars()
 	require.NoError(t, err, "Failed to load environment configuration")
+	testLogger.Info(t, "Environment variables loaded successfully")
 
-	// KMS Setup
-	kmsInstanceName := "cicd-" + utils.GenerateRandomString()
 	apiKey := os.Getenv("TF_VAR_ibmcloud_api_key")
 	require.NotEmpty(t, apiKey, "IBM Cloud API key must be set")
 
 	region := utils.GetRegion(envVars.Zones)
+	kmsInstanceName := "cicd-" + utils.GenerateRandomString()
 	testLogger.Info(t, fmt.Sprintf("Creating KMS instance: %s in region: %s", kmsInstanceName, region))
 
 	err = lsf.CreateServiceInstanceAndKmsKey(
@@ -158,11 +171,13 @@ func TestRunUsingExistingKMSInstanceAndWithoutKey(t *testing.T) {
 		KMS_KEY_NAME,
 		testLogger,
 	)
-	require.NoError(t, err, "Must create KMS service instance and key")
+	require.NoError(t, err, "Failed to create KMS service instance and key")
+	testLogger.Info(t, fmt.Sprintf("KMS instance and key created successfully: %s", kmsInstanceName))
 
-	// Cleanup KMS instance after test
+	// Defer KMS instance deletion independently of cluster teardown so the
+	// KMS resource is always cleaned up even if cluster teardown fails.
 	defer func() {
-		testLogger.Info(t, fmt.Sprintf("Deleting KMS instance: %s", kmsInstanceName))
+		testLogger.Info(t, fmt.Sprintf("Initiating KMS instance deletion: %s", kmsInstanceName))
 		lsf.DeleteServiceInstanceAndAssociatedKeys(
 			t,
 			apiKey,
@@ -171,52 +186,59 @@ func TestRunUsingExistingKMSInstanceAndWithoutKey(t *testing.T) {
 			kmsInstanceName,
 			testLogger,
 		)
+		testLogger.Info(t, fmt.Sprintf("KMS instance deletion completed: %s", kmsInstanceName))
 	}()
 
-	// Test Options Configuration
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
 	require.NoError(t, err, "Failed to initialize test options")
+	testLogger.Info(t, "Test options initialized successfully")
 
-	// Override default zones with kms-specific region since default_region=false
+	// Override default zones with kms-specific region (default_region=false).
 	applyRegionOverrides(t, envVars, options, "kms")
+	testLogger.Info(t, "Region overrides applied for KMS cluster configuration")
 
-	// Set KMS Terraform Variables (no key specified)
+	// kms_key_name intentionally omitted — verifies cluster handles no pre-specified key.
 	options.TerraformVars["key_management"] = "key_protect"
 	options.TerraformVars["kms_instance_name"] = kmsInstanceName
+	testLogger.Info(t, "KMS Terraform variables configured (no key specified)")
 
-	// Resource Cleanup Configuration
+	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
 	defer func() {
-		testLogger.Info(t, "Final cleanup: destroying resources")
+		testLogger.Info(t, "Initiating final resource teardown...")
 		options.TestTearDown()
+		testLogger.Info(t, "Resource teardown completed")
 	}()
 
-	// Deploy Cluster
-	// DeployCluster and ValidateCluster subtests are intentionally sequential.
-	// Neither calls t.Parallel(), so t.Run blocks until each subtest completes
-	// before the parent resumes. Do not add t.Parallel() to either subtest.
+	// ── 4. Deployment ────────────────────────────────────────────────────────
+	// DeployCluster and ValidateCluster subtests run sequentially by design.
+	// Neither calls t.Parallel(), so each t.Run blocks until the subtest
+	// completes before the parent resumes.
 	t.Run("DeployCluster", func(t *testing.T) {
+		t.Helper()
 		deploymentStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+		testLogger.Info(t, fmt.Sprintf("[START] Cluster deployment for test: %s", t.Name()))
 
-		clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-		if clusterCreationErr != nil {
-			testLogger.Error(t, fmt.Sprintf("Cluster deployment failed after %v: %v", time.Since(deploymentStart), clusterCreationErr))
-			require.NoError(t, clusterCreationErr, "Cluster creation failed")
+		err := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
+		if err != nil {
+			testLogger.FAIL(t, fmt.Sprintf("Cluster deployment failed after %v: %v", time.Since(deploymentStart), err))
+			require.NoError(t, err, "Cluster creation and consistency check failed")
 		}
-		testLogger.Info(t, fmt.Sprintf("Cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
+
+		testLogger.Info(t, fmt.Sprintf("[END] Cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
 	})
 
-	// Abort the parent test immediately if DeployCluster failed.
-	// Using require.False ensures the overall test is marked as FAILED (not skipped),
-	// so CI pipelines correctly surface deployment failures.
-	require.False(t, t.Failed(), "DeployCluster failed — aborting test, skipping ValidateCluster")
+	require.False(t, t.Failed(), "DeployCluster failed — aborting parent test, skipping ValidateCluster")
 
-	// Post-deployment Validation
+	// ── 5. Validation ────────────────────────────────────────────────────────
 	t.Run("ValidateCluster", func(t *testing.T) {
+		t.Helper()
 		validationStart := time.Now()
+		testLogger.Info(t, fmt.Sprintf("[START] Cluster validation for test: %s", t.Name()))
+
 		lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
-		testLogger.Info(t, fmt.Sprintf("Validation completed (duration: %v)", time.Since(validationStart)))
+
+		testLogger.Info(t, fmt.Sprintf("[END] Cluster validation completed successfully (duration: %v)", time.Since(validationStart)))
 	})
 }
 
@@ -229,72 +251,79 @@ func TestRunUsingExistingKMSInstanceAndWithoutKey(t *testing.T) {
 //   - IAM authorization policy already enabled for the KMS instance and VPC file share
 //   - Proper test suite initialization
 func TestRunWithExistingKMSInstanceAndKeyWithAuthorizationPolicy(t *testing.T) {
+	t.Helper()
 	t.Parallel()
 
-	// Initialization and Setup
+	// ── 1. Initialization ────────────────────────────────────────────────────
 	setupTestSuite(t)
-	require.NotNil(t, testLogger, "Test logger must be initialized")
+	require.NotNil(t, testLogger, "Test logger must be initialized before use")
 	defer logResult(t)
-	testLogger.Info(t, fmt.Sprintf("Test %s initiated", t.Name()))
+	testLogger.Info(t, fmt.Sprintf("[START] Test %s initiated", t.Name()))
 
-	// Generate Unique Cluster Prefix
+	// ── 2. Configuration ─────────────────────────────────────────────────────
 	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
+	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
 
-	// Load Environment Configuration
 	envVars, err := GetEnvVars()
 	require.NoError(t, err, "Failed to load environment configuration")
+	testLogger.Info(t, "Environment variables loaded successfully")
 
-	// API Key Validation
 	apiKey := os.Getenv("TF_VAR_ibmcloud_api_key")
 	require.NotEmpty(t, apiKey, "IBM Cloud API key must be set")
+	testLogger.Info(t, "IBM Cloud API key validated")
 
-	// Test Options Configuration
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
 	require.NoError(t, err, "Failed to initialize test options")
+	testLogger.Info(t, "Test options initialized successfully")
 
-	// Override default zones with kms-specific region since default_region=false
+	// Override default zones with kms-specific region (default_region=false).
 	applyRegionOverrides(t, envVars, options, "kms")
+	testLogger.Info(t, "Region overrides applied for KMS cluster configuration")
 
-	// Set KMS Terraform Variables
+	// IAM authorization policies are pre-existing — skip creation to avoid conflicts.
 	options.TerraformVars["key_management"] = "key_protect"
 	options.TerraformVars["kms_instance_name"] = envVars.KMSInstanceName
 	options.TerraformVars["kms_key_name"] = envVars.KMSKeyName
 	options.TerraformVars["skip_iam_share_authorization_policy"] = true
 	options.TerraformVars["skip_iam_block_storage_authorization_policy"] = true
+	testLogger.Info(t, "KMS Terraform variables configured with pre-existing IAM authorization policies")
 
-	// Resource Cleanup Configuration
+	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
 	defer func() {
-		testLogger.Info(t, "Final cleanup: destroying resources")
+		testLogger.Info(t, "Initiating final resource teardown...")
 		options.TestTearDown()
+		testLogger.Info(t, "Resource teardown completed")
 	}()
 
-	// Deploy Cluster
-	// DeployCluster and ValidateCluster subtests are intentionally sequential.
-	// Neither calls t.Parallel(), so t.Run blocks until each subtest completes
-	// before the parent resumes. Do not add t.Parallel() to either subtest.
+	// ── 4. Deployment ────────────────────────────────────────────────────────
+	// DeployCluster and ValidateCluster subtests run sequentially by design.
+	// Neither calls t.Parallel(), so each t.Run blocks until the subtest
+	// completes before the parent resumes.
 	t.Run("DeployCluster", func(t *testing.T) {
+		t.Helper()
 		deploymentStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("Starting cluster deployment for test: %s", t.Name()))
+		testLogger.Info(t, fmt.Sprintf("[START] Cluster deployment for test: %s", t.Name()))
 
-		clusterCreationErr := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-		if clusterCreationErr != nil {
-			testLogger.Error(t, fmt.Sprintf("Cluster deployment failed after %v: %v", time.Since(deploymentStart), clusterCreationErr))
-			require.NoError(t, clusterCreationErr, "Cluster creation failed")
+		err := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
+		if err != nil {
+			testLogger.FAIL(t, fmt.Sprintf("Cluster deployment failed after %v: %v", time.Since(deploymentStart), err))
+			require.NoError(t, err, "Cluster creation and consistency check failed")
 		}
-		testLogger.Info(t, fmt.Sprintf("Cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
+
+		testLogger.Info(t, fmt.Sprintf("[END] Cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
 	})
 
-	// Abort the parent test immediately if DeployCluster failed.
-	// Using require.False ensures the overall test is marked as FAILED (not skipped),
-	// so CI pipelines correctly surface deployment failures.
-	require.False(t, t.Failed(), "DeployCluster failed — aborting test, skipping ValidateCluster")
+	require.False(t, t.Failed(), "DeployCluster failed — aborting parent test, skipping ValidateCluster")
 
-	// Post-deployment Validation
+	// ── 5. Validation ────────────────────────────────────────────────────────
 	t.Run("ValidateCluster", func(t *testing.T) {
+		t.Helper()
 		validationStart := time.Now()
+		testLogger.Info(t, fmt.Sprintf("[START] Cluster validation for test: %s", t.Name()))
+
 		lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
-		testLogger.Info(t, fmt.Sprintf("Validation completed (duration: %v)", time.Since(validationStart)))
+
+		testLogger.Info(t, fmt.Sprintf("[END] Cluster validation completed successfully (duration: %v)", time.Since(validationStart)))
 	})
 }
