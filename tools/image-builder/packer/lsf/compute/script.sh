@@ -80,7 +80,7 @@ verify_lsf_commands() {
 }
 
 verify_license_scheduler() {
-    ls /opt/ibm/lsf/conf | grep -i license >/dev/null 2>&1
+    compgen -G "/opt/ibm/lsf/conf/*[lL][iI][cC][eE][nN][sS][eE]*" > /dev/null
 }
 
 verify_file_contains() {
@@ -252,7 +252,7 @@ fi
 
 # LSF Packages copied
 if verify_directory_nonempty "/tmp/packages"; then
-    count=$(ls /tmp/packages | wc -l)
+    count=$(find /tmp/packages -mindepth 1 -maxdepth 1 | wc -l)
     log_summary "SUCCESS" "LSF Packages" "$count files available"
 else
     log_summary "FAILED" "LSF Packages" "No packages found"
@@ -572,13 +572,14 @@ fi
 
 log_summary "INFO" "Customer Script" "Not validated or tracked in this report"
 
-echo "=======================================================" >> "$SUMMARY_FILE"
-echo "" >> "$SUMMARY_FILE"
-echo "---- End of Base Image Setup (script.sh) ----" >> "$SUMMARY_FILE"
-echo "---- Customer Script (customer_script.sh) not tracked ----" >> "$SUMMARY_FILE"
-echo "" >> "$SUMMARY_FILE"
+{
+  echo "======================================================="
+  echo ""
+  echo "---- End of Base Image Setup (script.sh) ----"
+  echo "---- Customer Script (customer_script.sh) not tracked ----"
+  echo ""
+} >> "$SUMMARY_FILE"
 
 cat "$SUMMARY_FILE"
 
 history -c
-
