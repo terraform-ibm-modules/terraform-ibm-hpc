@@ -27,7 +27,7 @@ data "ibm_kms_key" "kms_key" {
 }
 
 data "ibm_is_image" "packer" {
-  name = "ibm-redhat-8-8-minimal-amd64-6"
+  name = "ibm-redhat-8-10-minimal-amd64-11"
 }
 
 data "ibm_is_ssh_key" "packer" {

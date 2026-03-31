@@ -8,6 +8,13 @@ variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
 }
 
+# Delete this variable before pushing to the public repository.
+variable "github_token" {
+  type        = string
+  default     = null
+  description = "Provide your GitHub token to download the HPCaaS code into the Deployer node"
+}
+
 variable "lsf_version" {
   type        = string
   default     = "fixpack_15"
@@ -935,7 +942,7 @@ variable "gklm_instances" {
   default = [{
     profile = "bx2-2x8"
     count   = 2
-    image   = "hpcc-scale-gklm4202-v2-5-4"
+    image   = "hpcc-scale-gklm4202-v2-5-5"
   }]
   description = "Number of GKLM instances to be launched for scale cluster."
 }

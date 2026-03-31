@@ -111,7 +111,7 @@ scale_encryption_type: "key_protect"
 gklm_instances:
   - profile: "bx2-2x8"
     count: 2
-    image: "hpcc-scale-gklm4202-v2-5-4"
+    image: "hpcc-scale-gklm4202-v2-5-5"
 scale_encryption_admin_password: "Pass@1234"  # pragma: allowlist secret
 
 

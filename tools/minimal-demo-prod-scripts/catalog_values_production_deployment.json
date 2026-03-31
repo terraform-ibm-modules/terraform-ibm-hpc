@@ -5,7 +5,7 @@
   "ssh_keys": "[\"XX_SSH_KEY_XX\"]",
   "cluster_prefix": "XX_PREFIX_XX",
   "remote_allowed_ips": "[\"XX_REMOTE_IP_XX\"]",
-  "webservice_appcenter_password": "XX_APP_CENTER_GUI_PASSWORD_XX",
+  "webservice_appcenter_password": "XX_WEBSERVICE_APPCENTER_PASSWORD_XX",
 
   "enable_hyperthreading": true,
   "enable_vpn": false,
@@ -42,11 +42,11 @@
   "dns_instance_id": "__NULL__",
   "dns_custom_resolver_id": "__NULL__",
   "bastion_instance": "{ image = \"ibm-ubuntu-22-04-5-minimal-amd64-12\", profile = \"cx2-4x8\" }",
-  "deployer_instance": "{ image = \"hpc-lsf-fp15-deployer-rhel810-v2\", profile = \"bx2-8x32\" }",
-  "login_instance": "[{ profile = \"bx2-2x8\", image = \"hpc-lsf-fp15-compute-rhel810-v2\" }]",
-  "management_instances": "[{ profile = \"bx2-16x64\", count = 2, image = \"hpc-lsf-fp15-rhel810-v2\" }]",
-  "static_compute_instances": "[{ profile = \"bx2-4x16\", count = 5, image = \"hpc-lsf-fp15-compute-rhel810-v2\" }]",
-  "dynamic_compute_instances": "[{ profile = \"bx2-4x16\", count = 500, image = \"hpc-lsf-fp15-compute-rhel810-v2\" }]",
+  "deployer_instance": "{ image = \"hpc-lsf-fp15-deployer-rhel810-v3\", profile = \"bx2-8x32\" }",
+  "login_instance": "[{ profile = \"bx2-2x8\", image = \"hpc-lsf-fp15-compute-rhel810-v3\" }]",
+  "management_instances": "[{ profile = \"bx2-16x64\", count = 2, image = \"hpc-lsf-fp15-rhel810-v3\" }]",
+  "static_compute_instances": "[{ profile = \"bx2-4x16\", count = 5, image = \"hpc-lsf-fp15-compute-rhel810-v3\" }]",
+  "dynamic_compute_instances": "[{ profile = \"bx2-4x16\", count = 500, image = \"hpc-lsf-fp15-compute-rhel810-v3\" }]",
   "custom_file_shares": "[{mount_path = \"/mnt/vpcstorage/tools\", size = 100, iops = 2000 }, { mount_path = \"/mnt/vpcstorage/data\", size = 100, iops = 6000 }, { mount_path = \"/mnt/scale/tools\", nfs_share = \"\" }]",
   "storage_security_group_id": "__NULL__",
   "enable_ldap": "false",
@@ -67,5 +67,8 @@
   "existing_bastion_ssh_private_key": "__NULL__",
   "enable_dedicated_host": "false",
   "enable_cos_integration": "true",
-  "cos_instance_name": "__NULL__"
+  "cos_instance_name": "__NULL__",
+  "enable_webservice": "true",
+  "enable_appcenter": "true",
+  "enable_license_scheduler": "true"
 }
