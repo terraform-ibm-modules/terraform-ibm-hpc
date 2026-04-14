@@ -38,8 +38,8 @@ variable "prefix" {
     condition     = can(regex("^[a-z](?:[a-z0-9]*(-[a-z0-9]+)*)?$", var.prefix))
   }
   validation {
-    condition     = length(var.prefix) <= 16
-    error_message = "The prefix must be 16 characters or fewer."
+    condition     = length(var.prefix) <= 5
+    error_message = "The prefix must be 5 characters or fewer."
   }
 }
 
@@ -154,11 +154,11 @@ variable "image_name" {
 
 variable "source_image_name" {
   type        = string
-  default     = "ibm-redhat-8-8-minimal-amd64-5"
+  default     = "ibm-redhat-8-10-minimal-amd64-11"
   description = "Provide the base stock image available in IBM Cloud that will be used as the foundation for creating a custom image."
 
   validation {
-    condition     = can(regex("^(ibm-ubuntu-22-04-4-minimal-amd64-|ibm-redhat-8-8-minimal-amd64-|ibm-rocky-linux-8-10-minimal-amd64-)", var.source_image_name))
+    condition     = can(regex("^(ibm-ubuntu-22-04-4-minimal-amd64-|ibm-redhat-8-8-minimal-amd64-|ibm-rocky-linux-8-10-minimal-amd64-|ibm-redhat-8-10-minimal-amd64-)", var.source_image_name))
     error_message = "We provide support for the following source images: Ubuntu 22.04, RHEL 8.8, and Rocky Linux 8.10."
   }
 }

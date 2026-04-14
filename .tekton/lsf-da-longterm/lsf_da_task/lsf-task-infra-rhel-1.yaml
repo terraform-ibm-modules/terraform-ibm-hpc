@@ -225,4 +225,5 @@ spec:
           fi
 
           source .tekton/scripts/html_report.sh
+          common_task_report basic-deployment-and-default-rga-tests,custom-rga-and-no-kms-host-config-tests,existing-kms-key-configuration-tests lsf-da
           common_task_report basic-deployment-and-default-rga-tests,basic-deployment-default-and-appcenter-tests,custom-rga-and-no-kms-host-config-tests,existing-kms-key-configuration-tests lsf-da

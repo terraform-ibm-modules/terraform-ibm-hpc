@@ -16,12 +16,12 @@ sudo mkdir -p ${target_dir}
 echo "Decoding and saving base64-encoded content [necessary to retrieve the original compressed file]"
 echo "${encoded_compute}" | base64 -d > ${target_dir}/compressed_compute.tar.gz
 
-# Extract the tar.gz file
+echo "========================= Extract the tar.gz file ========================="
 echo "Unpacking the contents of the compressed file"
 tar -xzf ${target_dir}/compressed_compute.tar.gz -C ${target_dir}
 rm -f ${target_dir}/compressed_compute.tar.gz
 
-echo "Packer installation started"
+echo "========================= Packer installation started ========================="
 
 # Download and unzip Packer
 packer_version=$(curl -s https://checkpoint-api.hashicorp.com/v1/check/packer | jq -r .current_version)
@@ -33,6 +33,32 @@ sudo mv packer /usr/local/bin/
 
 # Create a symlink to /usr/sbin
 sudo ln -sf /usr/local/bin/packer /usr/sbin/packer
+
+
+echo "========================= packer build ========================="
+cd /var/packer/lsf/compute
+
+echo "sudo -E packer init . && sudo -E packer build \
+    -var \"ibm_api_key=${ibm_api_key}\" \
+    -var \"vpc_region=${vpc_region}\" \
+    -var \"resource_group_id=${resource_group_id}\" \
+    -var \"vpc_subnet_id=${vpc_subnet_id}\" \
+    -var \"source_image_name=${source_image_name}\" \
+    -var \"install_sysdig=${install_sysdig}\" \
+    -var \"security_group_id=${security_group_id}\" \
+    -var \"image_name=${image_name}\" . 2>&1 | tee /var/log/packer.log"
+
+sudo -E packer init . && sudo -E packer build \
+    -var "ibm_api_key=${ibm_api_key}" \
+    -var "vpc_region=${vpc_region}" \
+    -var "resource_group_id=${resource_group_id}" \
+    -var "vpc_subnet_id=${vpc_subnet_id}" \
+    -var "source_image_name=${source_image_name}" \
+    -var "install_sysdig=${install_sysdig}" \
+    -var "security_group_id=${security_group_id}" \
+    -var "image_name=${image_name}" . 2>&1 | tee /var/log/packer.log
+
+echo "HPC summary available at /var/log/hpc_summary.log"
 
 install_with_retry() {
     local cmd="$1"
@@ -51,22 +77,8 @@ install_with_retry() {
     fi
 }
 
-echo $'***** Installing s3fs *****\n'
-sudo rpm --import https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-8
-sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-install_with_retry "sudo yum install -y s3fs-fuse" 3
-rpm -qa | grep epel-release
-rpm -qa | grep s3fs-fuse
-
-echo "======================Cloning HPC public repo====================="
-
-sudo yum install git -y
-mkdir /LSF
-cd /LSF
-git clone https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git
-cd /LSF/image-builder/solutions/lsf
-
 echo "======================Installing terraform====================="
+sudo yum install git -y
 git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
 echo "export PATH=$PATH:$HOME/.tfenv/bin" >> ~/.bashrc
 ln -s ~/.tfenv/bin/* /usr/local/bin
@@ -74,27 +86,7 @@ tfenv install latest
 tfenv use latest
 terraform --version
 
-echo "====================== Triggering mounting of Cos Bucket for test case execution ====================="
-mkdir /wes-hpc
-ls -ltr /wes-hpc
-s3fs custom-image-builder-bucket /wes-hpc -o url=https://s3.direct.us-south.cloud-object-storage.appdomain.cloud -o ro -o public_bucket=1
-ls -ltr /wes-hpc
-mkdir -p /LSF/image-builder/tools/tests_lsf_da
-cp -r /wes-hpc/tests_lsf_da/* /LSF/image-builder/tools/tests_lsf_da/
-ls -ltr /LSF/image-builder/tools/tests_lsf_da/
-echo "====================== Cos Bucket mounting completed for test case execution ====================="
 
-cd /var/packer/lsf/compute
-
-sudo -E packer init . && sudo -E packer build \
-    -var "ibm_api_key=${ibm_api_key}" \
-    -var "vpc_region=${vpc_region}" \
-    -var "resource_group_id=${resource_group_id}" \
-    -var "vpc_subnet_id=${vpc_subnet_id}" \
-    -var "source_image_name=${source_image_name}" \
-    -var "install_sysdig=${install_sysdig}" \
-    -var "security_group_id=${security_group_id}" \
-    -var "image_name=${image_name}" .
 
 echo "========== Generating SSH key ========="
 mkdir -p /LSF/artifacts/.ssh
@@ -112,27 +104,81 @@ ibmcloud login --apikey ${ibm_api_key} -r ${vpc_region}
 echo "========== Uploading SSH key to IBM cloud ========="
 ibmcloud is key-create $CICD_SSH_KEY @/LSF/artifacts/.ssh/id_rsa.pub --resource-group-name ${existing_resource_group}
 
-cd /LSF/image-builder/tools/tests_lsf_da/lsf_tests/
-git submodule update --init
-
 sudo yum update -y
 export TF_VAR_ibmcloud_api_key=${ibm_api_key}
-export LOG_FILE_NAME={prefix}".json"
+export LOG_FILE_NAME=${prefix}".json"
 
-echo "***** Installing Golang *****"
+echo "================ Installing Golang ========================="
+GOPATH=~/GO
+mkdir -p "$GOPATH"
+cd "$GOPATH"
 
-if [ ! -d "$(pwd)/go" ]; then
-    wget https://go.dev/dl/go1.23.1.linux-amd64.tar.gz
-    tar -C $(pwd)/ -xzf go1.23.1.linux-amd64.tar.gz
-    echo "export PATH=\$PATH:$(pwd)/go/bin:\$HOME/go/bin" >> ~/.bashrc
-    echo "export GOROOT=$(pwd)/go" >> ~/.bashrc
+if [ ! -d "$GOPATH/go" ]; then
+    wget -q https://go.dev/dl/go1.23.1.linux-amd64.tar.gz
+    tar -C "$GOPATH" -xzf go1.23.1.linux-amd64.tar.gz
+
+    export GOROOT=$GOPATH/go
+    export GOMODCACHE=$GOPATH/pkg/mod
+    export PATH=$PATH:$GOPATH/go/bin
+
+    echo "export PATH=\$PATH:$GOPATH/go/bin" >> ~/.bashrc
+    echo "export GOROOT=$GOPATH/go" >> ~/.bashrc
+    echo "export GOMODCACHE=$GOPATH/pkg/mod" >> ~/.bashrc
+
     source ~/.bashrc
+    which go
+    go version
 fi
 
+echo "======================Cloning HPC public repo====================="
+ls -ltr /LSF
+cd /LSF
+git clone https://github.com/terraform-ibm-modules/terraform-ibm-hpc.git
+# git clone --branch develop-da-longterm https://<githubtoken>github.ibm.com/workload-eng-services/HPCaaS.git terraform-ibm-hpc
+ls -ltr /LSF
+ls -ltr /LSF/terraform-ibm-hpc
+ls -ltr /LSF/terraform-ibm-hpc/tests/lsf_tests
+
+
+
+
+echo "======================  Installing s3fs ====================== "
+sudo rpm --import https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-8
+sudo rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+install_with_retry "sudo yum install -y s3fs-fuse" 3
+rpm -qa | grep epel-release
+rpm -qa | grep s3fs-fuse
+
+echo "====================== Triggering mounting of Cos Bucket for test case execution ====================="
+mkdir /wes-hpc
+ls -ltr /wes-hpc
+s3fs custom-image-builder-bucket /wes-hpc -o url=https://s3.direct.us-south.cloud-object-storage.appdomain.cloud -o ro -o public_bucket=1
+ls -ltr /wes-hpc
+echo "====================== Cos Bucket mounting completed for test case execution ====================="
+
+
+echo "================= Replace the tests directory with the updated files ============"
+rm -rf  /LSF/terraform-ibm-hpc/tests/*
+cp -rpf /wes-hpc/tests_lsf_da/* /LSF/terraform-ibm-hpc/tests/
+ls -ltr /LSF/terraform-ibm-hpc/tests/
+
+
+echo "================= git submodule update ================="
+cd /LSF/terraform-ibm-hpc/tests/lsf_tests
+git submodule update --init
+
 if [ "${private_catalog_id}" ]; then
-    CLUSTER_PREFIX=${prefix} SSH_FILE_PATH="/LSF/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY CATALOG_VALIDATE_SSH_KEY=${catalog_validate_ssh_key} ZONES=${zones} EXISTING_RESOURCE_GROUP=${existing_resource_group} COMPUTE_IMAGE_NAME=${image_name} PRIVATE_CATALOG_ID=${private_catalog_id} VPC_ID=${vpc_id} SUBNET_ID=${vpc_subnet_id} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee -a "$LOG_FILE_NAME"
+    echo "================= Run Test TestRunBasic with Private Catalog ID ================"
+    echo "Running the command :"
+    echo " CLUSTER_PREFIX=${prefix} SSH_FILE_PATH='/LSF/artifacts/.ssh/id_rsa' REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY CATALOG_VALIDATE_SSH_KEY=${catalog_validate_ssh_key} ZONES=${zones} EXISTING_RESOURCE_GROUP=${existing_resource_group} DYNAMIC_COMPUTE_INSTANCES_IMAGE=${image_name} PRIVATE_CATALOG_ID=${private_catalog_id} VPC_ID=${vpc_id} SUBNET_ID=${vpc_subnet_id} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run \"TestRunBasic\" | tee -a '$LOG_FILE_NAME'"
+
+    CLUSTER_PREFIX=${prefix} SSH_FILE_PATH="/LSF/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY CATALOG_VALIDATE_SSH_KEY=${catalog_validate_ssh_key} ZONES=${zones} EXISTING_RESOURCE_GROUP=${existing_resource_group} DYNAMIC_COMPUTE_INSTANCES_IMAGE=${image_name} PRIVATE_CATALOG_ID=${private_catalog_id} VPC_ID=${vpc_id} SUBNET_ID=${vpc_subnet_id} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee -a "$LOG_FILE_NAME"
 else
-    CLUSTER_PREFIX=${prefix} SSH_FILE_PATH="/LSF/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY ZONES=${zones} EXISTING_RESOURCE_GROUP=${existing_resource_group} COMPUTE_IMAGE_NAME=${image_name} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee -a "$LOG_FILE_NAME"
+    echo "================= Run Test TestRunBasic ================="
+    echo "Running the command :"
+    echo "CLUSTER_PREFIX=${prefix} SSH_FILE_PATH='/LSF/artifacts/.ssh/id_rsa' REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY ZONES=${zones} EXISTING_RESOURCE_GROUP=${existing_resource_group} DYNAMIC_COMPUTE_INSTANCES_IMAGE=${image_name} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run \"TestRunBasic\" | tee -a '$LOG_FILE_NAME'"
+
+    CLUSTER_PREFIX=${prefix} SSH_FILE_PATH="/LSF/artifacts/.ssh/id_rsa" REMOTE_ALLOWED_IPS=$PACKER_FIP SSH_KEYS=$CICD_SSH_KEY ZONES=${zones} EXISTING_RESOURCE_GROUP=${existing_resource_group} DYNAMIC_COMPUTE_INSTANCES_IMAGE=${image_name} SOURCE_IMAGE_NAME=${source_image_name} go test -v -timeout 900m -parallel 4 -run "TestRunBasic" | tee -a "$LOG_FILE_NAME"
 fi
 
 echo "========== Deleting the SSH key ========="

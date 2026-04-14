@@ -9,7 +9,7 @@ source "ibmcloud-vpc" "itself" {
  image_name          = var.image_name
  security_group_id   = var.security_group_id
  communicator        = "ssh"
- ssh_username        = "root"
+ ssh_username        = "vpcuser"
  ssh_port            = 22
  timeout             = "60m"
 }

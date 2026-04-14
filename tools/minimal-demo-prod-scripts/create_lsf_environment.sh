@@ -35,7 +35,7 @@ sed s/XX_RESOURCE_GROUP_XX/"$RESOURCE_GROUP"/g | \
 sed s/XX_SSH_KEY_XX/"$SSH_KEY"/g | \
 sed s/XX_ZONES_XX/"$ZONES"/g | \
 sed s/XX_REMOTE_IP_XX/"$REMOTE_IP"/g | \
-sed s/XX_APP_CENTER_GUI_PASSWORD_XX/"$APP_CENTER_GUI_PASSWORD"/g > environment_values_"$1".json
+sed s/XX_WEBSERVICE_APPCENTER_PASSWORD_XX/"$WEBSERVICE_APPCENTER_PASSWORD"/g > environment_values_"$1".json
 
 ibmcloud login -a cloud.ibm.com --apikey "$API_KEY" -r "$REGION" -g "$RESOURCE_GROUP"
 ibmcloud target -r "$REGION"

@@ -38,13 +38,13 @@ SSH_KEY="SSH_KEY"
 # Template JSON file (choose as per your deployment type)
 TEMPLATE_FILE="catalog_values_minimal_deployment.json"
 
-# LSF Tile Version locator for 3.2.0
-LSF_TILE_VERSION="1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc.e09bd096-b377-4bc5-8e90-f038ec2df1ae-global"
+# LSF Tile Version locator for 3.3.1
+LSF_TILE_VERSION="1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc.1ee397b0-b567-4436-8fdb-22ef63cde150-global"
 
-# App Center GUI password
+# Webservice App Center GUI password
 # Rules: Minimum 15 characters, at least 1 uppercase, 1 lowercase, 1 number,
 # and 1 special character (!@#$%^&*()_+=-). No spaces allowed.
-APP_CENTER_GUI_PASSWORD="APP_CENTER_GUI_PASSWORD"
+WEBSERVICE_APPCENTER_PASSWORD="WEBSERVICE_APPCENTER_PASSWORD" #pragma: allowlist secret
 ```
 
 From the above snippet, below are the descriptions for the parameters:
@@ -68,7 +68,7 @@ catalog_values_production_deployment.json - choose this file for large deploymen
 LSF_TILE_VERSION - Login to the IBM Cloud catalog by using your unique credentials. Click Review deployment options. In the Deployment options section, select Create from the CLI, copy the version_locator_value, and save this value.
 Note: The version_locator_value changes are based on the tile version selected.
 
-APP_CENTER_GUI_PASSWORD - This is the password that is required to access the IBM Spectrum LSF Application Center (App Center) GUI, which is enabled by default in both Fix Pack 15 and Fix Pack 14 with HTTPS. This is a mandatory value and omitting it will result in deployment failure.
+WEBSERVICE_APPCENTER_PASSWORD - Password required to access IBM Spectrum LSF Web Services and the Application Center GUI over HTTPS. This is a mandatory parameter whenever either Web Services or Application Center is enabled, and must be provided to ensure proper functionality. If omitted, the services will not function as expected and deployment may fail.
 
 ### Step 2: Deploy the LSF environment
 
