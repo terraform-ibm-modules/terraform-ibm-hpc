@@ -6,19 +6,19 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 	lsf "github.com/terraform-ibm-modules/terraform-ibm-hpc/lsf"
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/utilities"
 )
 
-// TestRunAppCenter validates cluster creation with Application Center enabled.
+// TestAppCenterWithAPI validates cluster creation with Application Center enabled.
 //   - Deploys the cluster with Application Center configuration
 //   - Performs consistency checks during cluster creation
 //   - Validates basic cluster configuration with Application Center
 //   - Ensures resources are cleaned up after test execution
-func TestRunAppCenter(t *testing.T) {
+//   - Validates cluster API endpoint configuration
+func TestAppCenterWithAPI(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 
@@ -33,11 +33,11 @@ func TestRunAppCenter(t *testing.T) {
 	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
 
 	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to load environment configuration")
+	utils.NoError(t, err, "Failed to load environment configuration", testLogger)
 	testLogger.Info(t, "Environment variables loaded successfully")
 
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	require.NoError(t, err, "Failed to initialize test options")
+	utils.NoError(t, err, "Failed to initialize test options", testLogger)
 	testLogger.Info(t, "Test options initialized successfully")
 
 	// Override default zones with appcenter-specific region (default_region=false).
@@ -58,120 +58,20 @@ func TestRunAppCenter(t *testing.T) {
 	}()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
-	// DeployCluster and ValidateCluster subtests run sequentially by design.
-	// Neither calls t.Parallel(), so each t.Run blocks until the subtest
-	// completes before the parent resumes.
-	t.Run("DeployCluster", func(t *testing.T) {
-		t.Helper()
-		deploymentStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster deployment for test: %s", t.Name()))
-
-		err := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-		if err != nil {
-			testLogger.FAIL(t, fmt.Sprintf("Cluster deployment failed after %v: %v", time.Since(deploymentStart), err))
-			require.NoError(t, err, "Cluster creation and consistency check failed")
-		}
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
-	})
-
-	// Abort immediately if deployment failed.
-	// require.False ensures the test is marked FAILED (not skipped), so CI
-	// pipelines correctly surface deployment failures before validation runs.
-	require.False(t, t.Failed(), "DeployCluster failed — aborting parent test, skipping ValidateCluster")
+	utils.DeployCluster(t, options, testLogger)
 
 	// ── 5. Validation ────────────────────────────────────────────────────────
-	t.Run("ValidateCluster", func(t *testing.T) {
-		t.Helper()
-		validationStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster validation for test: %s", t.Name()))
-
+	utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
 		lsf.ValidateBasicClusterConfigurationWithAppcenter(t, options, testLogger)
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster validation completed successfully (duration: %v)", time.Since(validationStart)))
 	})
 }
 
-// TestRunAPI validates cluster API configuration with Application Center enabled.
-//   - Deploys the cluster with Application Center configuration
-//   - Performs consistency checks during cluster creation
-//   - Validates cluster API endpoint configuration
-//   - Ensures resources are cleaned up after test execution
-func TestRunAPI(t *testing.T) {
-	t.Helper()
-	t.Parallel()
-
-	// ── 1. Initialization ────────────────────────────────────────────────────
-	setupTestSuite(t)
-	require.NotNil(t, testLogger, "Test logger must be initialized before use")
-	defer logResult(t)
-	testLogger.Info(t, fmt.Sprintf("[START] Test %s initiated", t.Name()))
-
-	// ── 2. Configuration ─────────────────────────────────────────────────────
-	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
-
-	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to load environment configuration")
-	testLogger.Info(t, "Environment variables loaded successfully")
-
-	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	require.NoError(t, err, "Failed to initialize test options")
-	testLogger.Info(t, "Test options initialized successfully")
-
-	// Override default zones with appcenter-specific region (default_region=false).
-	applyRegionOverrides(t, envVars, options, "appcenter")
-	testLogger.Info(t, "Region overrides applied for appcenter cluster configuration")
-
-	options.TerraformVars["enable_appcenter"] = true
-	testLogger.Info(t, "Application Center enabled")
-
-	// ── 3. Teardown ──────────────────────────────────────────────────────────
-	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
-
-	// ── 4. Deployment ────────────────────────────────────────────────────────
-	// DeployCluster and ValidateCluster subtests run sequentially by design.
-	// Neither calls t.Parallel(), so each t.Run blocks until the subtest
-	// completes before the parent resumes.
-	t.Run("DeployCluster", func(t *testing.T) {
-		t.Helper()
-		deploymentStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster deployment for test: %s", t.Name()))
-
-		err := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-		if err != nil {
-			testLogger.FAIL(t, fmt.Sprintf("Cluster deployment failed after %v: %v", time.Since(deploymentStart), err))
-			require.NoError(t, err, "Cluster creation and consistency check failed")
-		}
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
-	})
-
-	require.False(t, t.Failed(), "DeployCluster failed — aborting parent test, skipping ValidateCluster")
-
-	// ── 5. Validation ────────────────────────────────────────────────────────
-	t.Run("ValidateCluster", func(t *testing.T) {
-		t.Helper()
-		validationStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster validation for test: %s", t.Name()))
-
-		lsf.ValidateClusterAPIConfiguration(t, options, testLogger)
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster validation completed successfully (duration: %v)", time.Since(validationStart)))
-	})
-}
-
-// TestRunAppcenterAndLDAP validates cluster creation with LDAP and Application Center.
+// TestLDAPAppCenterIntegration validates cluster creation with LDAP and Application Center.
 //   - Deploys the cluster with LDAP and Application Center enabled
 //   - Performs consistency checks during cluster creation
 //   - Validates LDAP user access and Application Center configuration
 //   - Ensures resources are cleaned up after test execution
-func TestRunAppcenterAndLDAP(t *testing.T) {
+func TestLDAPAppCenterIntegration(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 
@@ -186,7 +86,7 @@ func TestRunAppcenterAndLDAP(t *testing.T) {
 	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
 
 	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to load environment configuration")
+	utils.NoError(t, err, "Failed to load environment configuration", testLogger)
 	testLogger.Info(t, "Environment variables loaded successfully")
 
 	// Validate required LDAP credentials before proceeding.
@@ -197,7 +97,7 @@ func TestRunAppcenterAndLDAP(t *testing.T) {
 	testLogger.Info(t, "LDAP credentials validated successfully")
 
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	require.NoError(t, err, "Failed to initialize test options")
+	utils.NoError(t, err, "Failed to initialize test options", testLogger)
 	testLogger.Info(t, "Test options initialized successfully")
 
 	// Override default zones with appcenter-specific region (default_region=false).
@@ -221,45 +121,22 @@ func TestRunAppcenterAndLDAP(t *testing.T) {
 	}()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
-	// DeployCluster and ValidateCluster subtests run sequentially by design.
-	// Neither calls t.Parallel(), so each t.Run blocks until the subtest
-	// completes before the parent resumes.
-	t.Run("DeployCluster", func(t *testing.T) {
-		t.Helper()
-		deploymentStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster deployment for test: %s", t.Name()))
-
-		err := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-		if err != nil {
-			testLogger.FAIL(t, fmt.Sprintf("Cluster deployment failed after %v: %v", time.Since(deploymentStart), err))
-			require.NoError(t, err, "Cluster creation and consistency check failed")
-		}
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
-	})
-
-	require.False(t, t.Failed(), "DeployCluster failed — aborting parent test, skipping ValidateCluster")
+	utils.DeployCluster(t, options, testLogger)
 
 	// ── 5. Validation ────────────────────────────────────────────────────────
-	t.Run("ValidateCluster", func(t *testing.T) {
-		t.Helper()
-		validationStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster validation for test: %s", t.Name()))
-
+	utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
 		lsf.ValidateLDAPClusterConfigurationWithAppcenter(t, options, testLogger)
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster validation completed successfully (duration: %v)", time.Since(validationStart)))
 	})
 }
 
-// TestRunLDAP validates cluster creation with LDAP authentication enabled.
+// TestLDAPNewServer validates cluster creation with LDAP authentication enabled.
 // Verifies proper LDAP configuration and user authentication functionality.
 //
 // Prerequisites:
 //   - LDAP enabled in environment configuration
 //   - Valid LDAP credentials (admin password, username, user password)
 //   - Proper test suite initialization
-func TestRunLDAP(t *testing.T) {
+func TestLDAPNewServer(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 
@@ -274,7 +151,7 @@ func TestRunLDAP(t *testing.T) {
 	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
 
 	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to load environment configuration")
+	utils.NoError(t, err, "Failed to load environment configuration", testLogger)
 	testLogger.Info(t, "Environment variables loaded successfully")
 
 	// Validate required LDAP credentials before proceeding.
@@ -285,7 +162,7 @@ func TestRunLDAP(t *testing.T) {
 	testLogger.Info(t, "LDAP credentials validated successfully")
 
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	require.NoError(t, err, "Failed to initialize test options")
+	utils.NoError(t, err, "Failed to initialize test options", testLogger)
 	testLogger.Info(t, "Test options initialized successfully")
 
 	// Override default zones with appcenter-specific region (default_region=false).
@@ -308,38 +185,15 @@ func TestRunLDAP(t *testing.T) {
 	}()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
-	// DeployCluster and ValidateCluster subtests run sequentially by design.
-	// Neither calls t.Parallel(), so each t.Run blocks until the subtest
-	// completes before the parent resumes.
-	t.Run("DeployCluster", func(t *testing.T) {
-		t.Helper()
-		deploymentStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster deployment for test: %s", t.Name()))
-
-		err := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-		if err != nil {
-			testLogger.FAIL(t, fmt.Sprintf("Cluster deployment failed after %v: %v", time.Since(deploymentStart), err))
-			require.NoError(t, err, "Cluster creation and consistency check failed")
-		}
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
-	})
-
-	require.False(t, t.Failed(), "DeployCluster failed — aborting parent test, skipping ValidateCluster")
+	utils.DeployCluster(t, options, testLogger)
 
 	// ── 5. Validation ────────────────────────────────────────────────────────
-	t.Run("ValidateCluster", func(t *testing.T) {
-		t.Helper()
-		validationStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster validation for test: %s", t.Name()))
-
+	utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
 		lsf.ValidateLDAPClusterConfiguration(t, options, testLogger)
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster validation completed successfully (duration: %v)", time.Since(validationStart)))
 	})
 }
 
-// TestRunExistingLDAP validates cluster creation with existing LDAP integration.
+// TestLDAPExistingServer validates cluster creation with existing LDAP integration.
 // Verifies proper configuration of LDAP authentication with an existing LDAP server.
 //
 // Prerequisites:
@@ -347,7 +201,7 @@ func TestRunLDAP(t *testing.T) {
 //   - Valid LDAP credentials
 //   - Existing LDAP server configuration
 //   - Proper test suite initialization
-func TestRunExistingLDAP(t *testing.T) {
+func TestLDAPExistingServer(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 
@@ -362,7 +216,7 @@ func TestRunExistingLDAP(t *testing.T) {
 	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
 
 	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to load environment configuration")
+	utils.NoError(t, err, "Failed to load environment configuration", testLogger)
 	testLogger.Info(t, "Environment variables loaded successfully")
 
 	// Validate required LDAP credentials before proceeding.
@@ -374,7 +228,7 @@ func TestRunExistingLDAP(t *testing.T) {
 
 	// ── 3. First Cluster Configuration ───────────────────────────────────────
 	options1, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	require.NoError(t, err, "Failed to initialize first cluster test options")
+	utils.NoError(t, err, "Failed to initialize first cluster test options", testLogger)
 	testLogger.Info(t, "First cluster test options initialized successfully")
 
 	// Override default zones with appcenter-specific region (default_region=false).
@@ -396,56 +250,37 @@ func TestRunExistingLDAP(t *testing.T) {
 		testLogger.Info(t, "First cluster teardown completed")
 	}()
 
-	// ── 5. First Cluster Deployment ───────────────────────────────────────────
-	// DeployFirstCluster and SetupSecondCluster subtests run sequentially by design.
-	// Neither calls t.Parallel(), so each t.Run blocks until the subtest
-	// completes before the parent resumes.
-	t.Run("DeployFirstCluster", func(t *testing.T) {
-		t.Helper()
-		deploymentStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] First cluster deployment for test: %s", t.Name()))
+	// ── 5. Deployment ────────────────────────────────────────────────────────
+	utils.DeployCluster(t, options1, testLogger)
 
-		output, err := options1.RunTest()
-		if err != nil {
-			testLogger.FAIL(t, fmt.Sprintf("First cluster deployment failed after %v: %v", time.Since(deploymentStart), err))
-		}
-		require.NoError(t, err, "First cluster deployment failed")
-		require.NotNil(t, output, "First cluster deployment returned nil output")
-
-		testLogger.Info(t, fmt.Sprintf("[END] First cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
-	})
-
-	// Abort immediately if first cluster deployment failed.
-	require.False(t, t.Failed(), "DeployFirstCluster failed — aborting parent test, skipping SetupSecondCluster")
-
-	// ── 6. Second Cluster Setup & Validation ──────────────────────────────────
+	// ── 6. Second Cluster Setup & Validation ─────────────────────────────────
 	t.Run("SetupSecondCluster", func(t *testing.T) {
 		t.Helper()
 		testLogger.Info(t, fmt.Sprintf("[START] Second cluster setup for test: %s", t.Name()))
 
 		// Retrieve networking details from first cluster.
 		customResolverID, err := utils.GetCustomResolverID(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zones), envVars.DefaultExistingResourceGroup, clusterNamePrefix, testLogger)
-		require.NoError(t, err, "Failed to retrieve custom resolver ID: %v", err)
+		utils.NoError(t, err, fmt.Sprintf("Failed to retrieve custom resolver ID: %v", err), testLogger)
 		testLogger.Info(t, fmt.Sprintf("Custom resolver ID retrieved: %s", customResolverID))
 
 		ldapIP, err := utils.GetLdapIP(t, options1, testLogger)
-		require.NoError(t, err, "Failed to retrieve LDAP IP address: %v", err)
+		utils.NoError(t, err, fmt.Sprintf("Failed to retrieve LDAP IP address: %v", err), testLogger)
 		testLogger.Info(t, fmt.Sprintf("LDAP IP address retrieved: %s", ldapIP))
 
 		ldapServerBastionIP, err := utils.GetBastionIP(t, options1, testLogger)
-		require.NoError(t, err, "Failed to retrieve LDAP server bastion IP address: %v", err)
+		utils.NoError(t, err, fmt.Sprintf("Failed to retrieve LDAP server bastion IP address: %v", err), testLogger)
 		testLogger.Info(t, fmt.Sprintf("LDAP server bastion IP retrieved: %s", ldapServerBastionIP))
 
-		err = utils.RetrieveAndUpdateSecurityGroup(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zones), envVars.DefaultExistingResourceGroup, clusterNamePrefix, "10.241.0.0/18", "389", "389", testLogger)
-		require.NoError(t, err, "Failed to update security group for LDAP access")
-		testLogger.Info(t, "Security group updated for LDAP access")
+		// err = utils.RetrieveAndUpdateSecurityGroup(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(envVars.Zones), envVars.DefaultExistingResourceGroup, clusterNamePrefix, "10.241.0.0/18", "389", "389", testLogger)
+		// utils.NoError(t, err, "Failed to update security group for LDAP access", testLogger)
+		// testLogger.Info(t, "Security group updated for LDAP access")
 
 		// Generate second cluster prefix and options.
 		hpcClusterPrefix2 := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
 		testLogger.Info(t, fmt.Sprintf("Generated second cluster name prefix: %s", hpcClusterPrefix2))
 
 		options2, err := setupOptions(t, hpcClusterPrefix2, terraformDir, envVars.DefaultExistingResourceGroup)
-		require.NoError(t, err, "Failed to initialize second cluster test options: %v", err)
+		utils.NoError(t, err, fmt.Sprintf("Failed to initialize second cluster test options: %v", err), testLogger)
 		testLogger.Info(t, "Second cluster test options initialized successfully")
 
 		// Override default zones with appcenter-specific region (default_region=false).
@@ -454,7 +289,7 @@ func TestRunExistingLDAP(t *testing.T) {
 
 		// Retrieve LDAP server certificate from first cluster.
 		ldapServerCert, err := lsf.GetLDAPServerCert(lsf.LSF_PUBLIC_HOST_NAME, ldapServerBastionIP, lsf.LSF_LDAP_HOST_NAME, ldapIP)
-		require.NoError(t, err, "Failed to retrieve LDAP server certificate")
+		utils.NoError(t, err, "Failed to retrieve LDAP server certificate", testLogger)
 		testLogger.Info(t, fmt.Sprintf("LDAP server certificate retrieved successfully: %s", strings.TrimSpace(ldapServerCert)))
 
 		// Configure second cluster to connect to first cluster's LDAP server.
@@ -464,7 +299,7 @@ func TestRunExistingLDAP(t *testing.T) {
 
 		dnsMap := map[string]string{"compute": "comp2.com"}
 		dnsJSON, err := json.Marshal(dnsMap)
-		require.NoError(t, err, "Failed to marshal DNS domain name map to JSON")
+		utils.NoError(t, err, "Failed to marshal DNS domain name map to JSON", testLogger)
 
 		options2.TerraformVars["dns_domain_name"] = string(dnsJSON)
 		options2.TerraformVars["dns_custom_resolver_id"] = customResolverID
@@ -482,36 +317,12 @@ func TestRunExistingLDAP(t *testing.T) {
 			testLogger.Info(t, "Second cluster teardown completed")
 		}()
 
-		// Deploy second cluster.
-		// DeploySecondCluster and ValidateSecondCluster subtests run sequentially by design.
-		// Neither calls t.Parallel(), so each t.Run blocks until the subtest
-		// completes before the parent resumes.
-		t.Run("DeploySecondCluster", func(t *testing.T) {
-			t.Helper()
-			deploymentStart := time.Now()
-			testLogger.Info(t, fmt.Sprintf("[START] Second cluster deployment for test: %s", t.Name()))
+		// ── 6a. Deployment ───────────────────────────────────────────────────
+		utils.DeployCluster(t, options2, testLogger)
 
-			err := lsf.VerifyClusterCreationAndConsistency(t, options2, testLogger)
-			if err != nil {
-				testLogger.FAIL(t, fmt.Sprintf("Second cluster deployment failed after %v: %v", time.Since(deploymentStart), err))
-				require.NoError(t, err, "Second cluster creation and consistency check failed")
-			}
-
-			testLogger.Info(t, fmt.Sprintf("[END] Second cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
-		})
-
-		// Abort immediately if second cluster deployment failed.
-		require.False(t, t.Failed(), "DeploySecondCluster failed — aborting parent test, skipping ValidateSecondCluster")
-
-		// Validate second cluster with existing LDAP.
-		t.Run("ValidateSecondCluster", func(t *testing.T) {
-			t.Helper()
-			validationStart := time.Now()
-			testLogger.Info(t, fmt.Sprintf("[START] Second cluster validation for test: %s", t.Name()))
-
+		// ── 6b. Validation ───────────────────────────────────────────────────
+		utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
 			lsf.ValidateExistingLDAPClusterConfig(t, ldapServerBastionIP, ldapIP, envVars.LdapBaseDns, envVars.LdapAdminPassword, envVars.LdapUserName, envVars.LdapUserPassword, options2, testLogger)
-
-			testLogger.Info(t, fmt.Sprintf("[END] Second cluster validation completed successfully (duration: %v)", time.Since(validationStart)))
 		})
 	})
 }

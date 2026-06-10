@@ -34,6 +34,7 @@
 # Script Variables
 ###############################################################################
 LOGFILE="/tmp/init-script.log"
+DISPLAY_LOGFILE="/var/log/lsf_compute_setup.log"
 USER="vpcuser"
 REPO_ID="ansible-2-for-rhel-8-x86_64-rpms"
 CLUSTER_USER="lsfadmin"
@@ -49,7 +50,7 @@ HOSTNAME="$(hostname)"
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOGFILE"
 }
-
+exec > >(tee -a "$DISPLAY_LOGFILE") 2>&1
 log "Initialization script started"
 
 ###############################################################################
@@ -366,7 +367,14 @@ fi
 log "Completed sysdig and cloud logs configuration step"
 
 ###############################################################################
-# 12. Script completion
+# 12. Stop the lwsd service and prevent it from starting at boot
+###############################################################################
+log "Stopping lwsd service and disabling it from startup"
+sudo systemctl stop lwsd
+sudo systemctl disable lwsd
+
+###############################################################################
+# 13. Script completion
 ###############################################################################
 log "Initialization script completed"
 

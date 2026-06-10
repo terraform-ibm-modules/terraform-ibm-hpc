@@ -295,9 +295,12 @@ variable "static_compute_instances" {
   }
   validation {
     condition = alltrue([
-      for inst in var.static_compute_instances : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
+      for inst in var.static_compute_instances :
+      var.enable_baremetal
+      ? length(regexall("^(b|c|m)x[0-9]+d?-[a-z]+-[0-9]+x[0-9]+", inst.profile)) > 0
+      : length(regexall("^[^\\s]+-[0-9]+x[0-9]+", inst.profile)) > 0
     ])
-    error_message = "The profile must be a valid virtual server instance profile."
+    error_message = "Profiles must match baremetal pattern when enable_baremetal=true, and VSI pattern when enable_baremetal=false."
   }
   validation {
     condition = alltrue([
@@ -312,24 +315,57 @@ variable "static_compute_instances" {
       for inst in var.static_compute_instances :
       inst.profile != "hx4da-248x680" || startswith(var.zones[0], "us-south")
     ])
-    error_message = "The profile 'hx4da-248x680' is only supported in the us-south region. Please choose any zone from us-south region when using this profile."
+    error_message = "The profile 'hx4da-248x680' is only supported in the us-south region. Choose any zone from us-south region when using this profile."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances :
+      length(regexall("^(b|c|m)x4d?-[0-9]+x[0-9]+$", inst.profile)) == 0
+      || startswith(var.zones[0], "us-south")
+    ])
+    error_message = "Gen4 profiles (bx4, cx4, mx4, with or without 'd') are only supported in the us-south region. Choose a zone from us-south when using these profiles."
+  }
+  validation {
+    condition = (
+      !var.enable_dedicated_host ||
+      length(var.static_compute_instances) == 1
+    )
+    error_message = "When dedicated hosts are enabled, static_compute_instances must contain only a single instance profile entry. Multiple profile entries are not supported, even if the profiles belong to the same VSI family."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances : (
+        !var.enable_dedicated_host ||
+        !can(regex(".*xf.*", inst.profile))
+      )
+    ])
+    error_message = "Dedicated hosts do not support Flex instance profiles. Use supported fixed VSI profiles in static_compute_instances."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances :
+      !can(regex(".*xf.*", inst.profile))
+    ])
+    error_message = "Spot instance profiles are not supported for static_compute_instances. They are supported only for dynamic compute nodes when enable_spot_instances is set to true."
   }
 }
 
 variable "dynamic_compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile               = string
+      count                 = number
+      image                 = string
+      enable_spot_instances = bool
     })
   )
   default = [{
-    profile = "bx2-4x16"
-    count   = 500
-    image   = "hpc-lsf-fp15-compute-rhel810-v3"
+    profile               = "bx2-4x16"
+    count                 = 500
+    image                 = "hpc-lsf-fp15-compute-rhel810-v3"
+    enable_spot_instances = false
   }]
-  description = "Specify the list of dynamic compute node configurations, including instance profile, image name, and count. By default, all dynamic compute nodes are created using Fix Pack 15. Currently, only a single instance profile is supported for dynamic compute nodes multiple profiles are not yet supported. Solution also supports provisioning instances on AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions."
+  description = "Specify the list of dynamic compute node configurations, including instance profile, image name, count, and Spot instance support. By default, all dynamic compute nodes are created using Fix Pack 15. Currently, only a single instance profile is supported for dynamic compute nodes multiple profiles are not yet supported. Solution also supports provisioning instances on AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions. Spot instance support is available only for GPU-based profiles starting with 'gx' or profiles containing 'xf'. To enable Spot instances, set enable_spot_instances = true."
   validation {
     condition = alltrue([
       for inst in var.dynamic_compute_instances : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
@@ -347,6 +383,66 @@ variable "dynamic_compute_instances" {
       )
     ])
     error_message = "Mismatch between dynamic_compute_instances image and lsf_version. Use an image with 'fp14' only when lsf_version is fixpack_14, and 'fp15' only with fixpack_15."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances : (
+        !inst.enable_spot_instances ||
+        can(regex("^(gx.*|.*xf.*)$", inst.profile))
+      )
+    ])
+    error_message = "When enable_spot_instances is true, profile must start with 'gx' or contain 'xf'."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances : (
+        !(inst.enable_spot_instances && var.enable_dedicated_host)
+      )
+    ])
+    error_message = "Spot instances are not supported with dedicated hosts. When enable_spot_instances is true, enable_dedicated_host must be false."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances : (
+        !var.enable_dedicated_host ||
+        regex("^[a-z]+", inst.profile) ==
+        regex("^[a-z]+", var.static_compute_instances[0].profile)
+      )
+    ])
+    error_message = "When dedicated hosts are enabled, static_compute_instances and dynamic_compute_instances must belong to the same VSI profile family."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances : (
+        !var.enable_dedicated_host ||
+        !can(regex(".*xf.*", inst.profile))
+      )
+    ])
+    error_message = "Dedicated hosts do not support Flex instance profiles. Use supported fixed VSI profiles in dynamic_compute_instances."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances : (
+        inst.enable_spot_instances ||
+        !can(regex(".*xf.*", inst.profile))
+      )
+    ])
+    error_message = "Spot instance profiles are supported only when enable_spot_instances is set to true."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances :
+      inst.profile != "hx4da-248x680" || startswith(var.zones[0], "us-south")
+    ])
+    error_message = "The profile 'hx4da-248x680' is only supported in the us-south region. Choose any zone from us-south region when using this profile."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances :
+      length(regexall("^(b|c|m)x4d?-[0-9]+x[0-9]+$", inst.profile)) == 0
+      || startswith(var.zones[0], "us-south")
+    ])
+    error_message = "Gen4 profiles (bx4, cx4, mx4, with or without 'd') are only supported in the us-south region. Choose a zone from us-south when using these profiles."
   }
 }
 
@@ -770,7 +866,21 @@ variable "override_json_string" {
 variable "enable_dedicated_host" {
   type        = bool
   default     = false
-  description = "Set this option to true to enable dedicated hosts for the VSIs provisioned as workload servers. The default value is false. When dedicated hosts are enabled, multiple vsi instance profiles from the same or different families (for example, bx2, cx2, mx2) can be used. If you plan to deploy a static cluster with a third-generation profile, ensure that dedicated host support is available in the selected region, as not all regions support third-gen profiles on dedicated hosts. For more information, see [Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-dh-profiles&interface=ui)."
+  description = "Set this option to true to enable dedicated hosts for the VSIs provisioned as workload servers. The default value is false. When dedicated hosts are enabled, a single VSI instance profile is used for both static and dynamic node provisioning. Multiple profiles are not supported, as dedicated hosts are single-tenant servers. Spot instances are not supported with dedicated hosts. If you plan to deploy a static cluster with a third-generation profile, ensure that dedicated host support is available in the selected region, as not all regions support third-generation profiles on dedicated hosts. For more information, see [Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-dh-profiles&interface=ui)."
+  validation {
+    condition     = !(var.enable_baremetal == true && var.enable_dedicated_host == true)
+    error_message = "dedicated host cannot be enabled when baremetal servers are enabled"
+  }
+}
+
+##############################################################################
+# Baremetal Variables
+##############################################################################
+
+variable "enable_baremetal" {
+  type        = bool
+  default     = false
+  description = "Set this option to true to enable baremetal servers for static compute nodes. The default value is false."
 }
 
 ###########################################################################

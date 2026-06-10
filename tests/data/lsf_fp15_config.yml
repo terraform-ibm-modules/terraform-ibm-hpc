@@ -1,14 +1,14 @@
 Scheduler: LSF
 lsf_version: fixpack_15
-zones: ca-tor-1          # Default zones used when default_region=true. Set default_region=true to use this.
-default_region: false    # When false, test-specific region mapping is used (basic, kms, ldap, etc.)
-basic: br-sao-1
-kms: ca-tor-1
+zones: us-south-1         # Default zones used when default_region=true. Set default_region=true to use this.
+default_region: true    # When false, test-specific region mapping is used (basic, kms, ldap, etc.)
+basic: us-south-1
+kms: br-sao-1
 ldap: eu-gb-1
-appcenter: br-sao-1
+appcenter: jp-tok-1
 observability: ca-tor-1
-existing_vpc: au-syd-1
-scaling: eu-de-1
+existing_vpc: eu-de-1
+scaling: au-syd-1
 
 remote_allowed_ips:
 cluster_name: HPC-LSF-1
@@ -19,7 +19,7 @@ dns_domain_name:
   compute: comp.com
 bastion_instance:
   profile:  cx2-4x8
-  image: ibm-ubuntu-22-04-5-minimal-amd64-8
+  image: ibm-ubuntu-22-04-5-minimal-amd64-12
 deployer_instance:
   profile:  bx2-8x32
   image: hpc-lsf-fp15-deployer-rhel810-v3
@@ -48,6 +48,7 @@ dynamic_compute_instances:
   - profile: bx2-2x8
     count: 1024
     image: hpc-lsf-fp15-compute-rhel810-v3
+    enable_spot_instances: false
 placement_strategy: spread
 kms_instance_name: cicd-lsf-dnd-kms-instance
 kms_key_name: cicd-lsf-dnd-kms-key
@@ -68,7 +69,7 @@ enable_sccwp: true
 enable_cspm: true
 sccwp_service_plan: graduated-tier
 app_config_plan: standardv2
-enable_hyperthreading: true
+enable_hyperthreading: false
 enable_ldap: true
 ldap_basedns: cicdldap.com
 ldap_admin_password: Password@123456  # pragma: allowlist secret
@@ -86,7 +87,7 @@ us_south_zone: us-south-1
 us_south_cluster_name: HPC-LSF-2
 jp_tok_zone: jp-tok-1
 jp_tok_cluster_name: HPC-LSF-2
-attracker_test_zone: eu-de-1  #added for testing purpose
+attracker_test_zone: us-south-1  #added for testing purpose
 management_instances_image: hpc-lsf-fp15-rhel810-v3  #added for testing purpose
 static_compute_instances_image: hpc-lsf-fp15-compute-rhel810-v3 #added for testing purpose
 dynamic_compute_instances_image: hpc-lsf-fp15-compute-rhel810-v3 #added for testing purpose

@@ -633,6 +633,300 @@ func GetFirstDynamicComputeProfile(t *testing.T, terraformVars map[string]interf
 	return profileStr, nil
 }
 
+func GetComputeProfiles(
+	t *testing.T,
+	terraformVars map[string]interface{},
+	logger *AggregatedLogger,
+) ([]string, error) {
+
+	if logger == nil {
+		return nil, fmt.Errorf("logger cannot be nil")
+	}
+
+	rawVal, exists := terraformVars["static_compute_instances"]
+	if !exists {
+		err := fmt.Errorf("static_compute_instances key does not exist")
+		logger.Error(t, err.Error())
+		return nil, err
+	}
+
+	var profilesList []map[string]interface{}
+
+	if val, ok := rawVal.([]map[string]interface{}); ok {
+		profilesList = val
+
+	} else if str, ok := rawVal.(string); ok {
+		if err := json.Unmarshal([]byte(str), &profilesList); err != nil {
+			err := fmt.Errorf("failed to parse static_compute_instances JSON string: %w", err)
+			logger.Error(t, err.Error())
+			return nil, err
+		}
+
+	} else {
+		err := fmt.Errorf(
+			"static_compute_instances has unsupported type: %v (got %T)",
+			rawVal,
+			rawVal,
+		)
+		logger.Error(t, err.Error())
+		return nil, err
+	}
+
+	if len(profilesList) == 0 {
+		logger.Warn(t, "static_compute_instances is empty (count = 0)")
+		return []string{}, nil
+	}
+
+	var profiles []string
+
+	for i, inst := range profilesList {
+		profileVal, exists := inst["profile"]
+		if !exists {
+			err := fmt.Errorf("instance at index %d is missing 'profile' key", i)
+			logger.Error(t, err.Error())
+			return nil, err
+		}
+
+		profileStr, ok := profileVal.(string)
+		if !ok {
+			err := fmt.Errorf("profile at index %d is not a string (got %T)", i, profileVal)
+			logger.Error(t, err.Error())
+			return nil, err
+		}
+
+		count := 1
+
+		if countVal, exists := inst["count"]; exists {
+			switch v := countVal.(type) {
+			case int:
+				count = v
+			case float64:
+				count = int(v)
+			default:
+				err := fmt.Errorf("count at index %d is not a number (got %T)", i, countVal)
+				logger.Error(t, err.Error())
+				return nil, err
+			}
+		}
+
+		for j := 0; j < count; j++ {
+			profiles = append(profiles, profileStr)
+		}
+	}
+
+	logger.Info(
+		t,
+		fmt.Sprintf("Collected %d compute profiles: %v", len(profiles), profiles),
+	)
+
+	return profiles, nil
+}
+
+// Fetches the profiles, and returns a list with profile * count (Eg: count=2, profile=bx2-2x8; it returns: ["bx2-2x8","bx2-2x8"])
+func GetMgntProfiles(
+	t *testing.T,
+	terraformVars map[string]interface{},
+	logger *AggregatedLogger,
+) ([]string, error) {
+
+	if logger == nil {
+		return nil, fmt.Errorf("logger cannot be nil")
+	}
+
+	rawVal, exists := terraformVars["management_instances"]
+	if !exists {
+		err := fmt.Errorf("management_instances key does not exist")
+		logger.Error(t, err.Error())
+		return nil, err
+	}
+
+	var profilesList []map[string]interface{}
+
+	if val, ok := rawVal.([]map[string]interface{}); ok {
+		profilesList = val
+
+	} else if str, ok := rawVal.(string); ok {
+		if err := json.Unmarshal([]byte(str), &profilesList); err != nil {
+			err := fmt.Errorf("failed to parse management_instances JSON string: %w", err)
+			logger.Error(t, err.Error())
+			return nil, err
+		}
+
+	} else {
+		err := fmt.Errorf(
+			"management_instances has unsupported type: %v (got %T)",
+			rawVal,
+			rawVal,
+		)
+		logger.Error(t, err.Error())
+		return nil, err
+	}
+
+	if len(profilesList) == 0 {
+		logger.Warn(t, "management_instances is empty (count = 0)")
+		return []string{}, nil
+	}
+
+	var profiles []string
+
+	for i, inst := range profilesList {
+		profileVal, exists := inst["profile"]
+		if !exists {
+			err := fmt.Errorf("instance at index %d is missing 'profile' key", i)
+			logger.Error(t, err.Error())
+			return nil, err
+		}
+
+		profileStr, ok := profileVal.(string)
+		if !ok {
+			err := fmt.Errorf("profile at index %d is not a string (got %T)", i, profileVal)
+			logger.Error(t, err.Error())
+			return nil, err
+		}
+
+		count := 1
+
+		if countVal, exists := inst["count"]; exists {
+			switch v := countVal.(type) {
+			case int:
+				count = v
+			case float64:
+				count = int(v)
+			default:
+				err := fmt.Errorf("count at index %d is not a number (got %T)", i, countVal)
+				logger.Error(t, err.Error())
+				return nil, err
+			}
+		}
+
+		// Append profile the times of count
+		for j := 0; j < count; j++ {
+			profiles = append(profiles, profileStr)
+		}
+	}
+
+	logger.Info(
+		t,
+		fmt.Sprintf("Collected %d management profiles: %v", len(profiles), profiles),
+	)
+
+	return profiles, nil
+}
+
+// Fetches the profiles, and returns a list with profile * count (here count will always be 1)
+func GetLoginProfile(
+	t *testing.T,
+	terraformVars map[string]interface{},
+	logger *AggregatedLogger,
+) ([]string, error) {
+
+	if logger == nil {
+		return nil, fmt.Errorf("logger cannot be nil")
+	}
+
+	rawVal, exists := terraformVars["login_instance"]
+	if !exists {
+		err := fmt.Errorf("login_instance key does not exist")
+		logger.Error(t, err.Error())
+		return nil, err
+	}
+
+	var profilesList []map[string]interface{}
+
+	if val, ok := rawVal.([]map[string]interface{}); ok {
+		profilesList = val
+
+	} else if str, ok := rawVal.(string); ok {
+		if err := json.Unmarshal([]byte(str), &profilesList); err != nil {
+			err := fmt.Errorf("failed to parse login_instance JSON string: %w", err)
+			logger.Error(t, err.Error())
+			return nil, err
+		}
+
+	} else {
+		err := fmt.Errorf(
+			"login_instance has unsupported type: %v (got %T)",
+			rawVal,
+			rawVal,
+		)
+		logger.Error(t, err.Error())
+		return nil, err
+	}
+
+	// if len(profilesList) == 0 {
+	// 	logger.Warn(t, "login_instance is empty (count = 0)")
+	// 	return []string{}, nil
+	// }
+
+	var profiles []string
+
+	for i, inst := range profilesList {
+		profileVal, exists := inst["profile"]
+		if !exists {
+			err := fmt.Errorf("instance at index %d is missing 'profile' key", i)
+			logger.Error(t, err.Error())
+			return nil, err
+		}
+
+		profileStr, ok := profileVal.(string)
+		if !ok {
+			err := fmt.Errorf("profile at index %d is not a string (got %T)", i, profileVal)
+			logger.Error(t, err.Error())
+			return nil, err
+		}
+
+		count := 1
+
+		if countVal, exists := inst["count"]; exists {
+			switch v := countVal.(type) {
+			case int:
+				count = v
+			case float64:
+				count = int(v)
+			default:
+				err := fmt.Errorf("count at index %d is not a number (got %T)", i, countVal)
+				logger.Error(t, err.Error())
+				return nil, err
+			}
+		}
+
+		for j := 0; j < count; j++ {
+			profiles = append(profiles, profileStr)
+		}
+	}
+
+	logger.Info(
+		t,
+		fmt.Sprintf("Collected %d login profile: %v", len(profiles), profiles),
+	)
+	return profiles, nil
+}
+
+func ExtractProfileFamily(profile string) string {
+
+	// Order matters: more specific first
+	type match struct {
+		key   string
+		group string
+	}
+
+	matches := []match{
+		{"hx4da", "hx4da"},
+		{"gaudi", "gaudi"},
+		{"x4", "x4"},
+		{"x3", "x3"},
+		{"x2", "x2"},
+	}
+
+	for _, m := range matches {
+		if strings.Contains(profile, m.key) {
+			return m.group
+		}
+	}
+
+	return ""
+}
+
 // RunCommandWithRetry executes a shell command with retries
 func RunCommandWithRetry(cmd string, retries int, delay time.Duration) ([]byte, error) {
 	var output []byte
@@ -862,4 +1156,24 @@ func UpdateInstanceCount(
 	require.NoError(t, err)
 
 	vars[key] = string(updated)
+}
+
+// NoError verifies that err is nil.
+// If err is not nil, it logs a formatted message (including the error)
+// using the provided logger (if any), and then fails the test immediately.
+// Uses fmt.Sprintf because require.NoError does NOT support printf-style formatting.
+func NoError(t *testing.T, err error, msg string, logger *AggregatedLogger) {
+	if err != nil {
+		formattedMsg := fmt.Sprintf("%s: %v", msg, err)
+
+		if logger != nil {
+			logger.FAIL(t, formattedMsg)
+		}
+
+		require.NoError(t, err, formattedMsg)
+		return
+	}
+
+	// Success case — no logging, just pass through
+	require.NoError(t, err)
 }

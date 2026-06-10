@@ -23,6 +23,20 @@
       "subnetId": "{{ compute_subnet_crn }}",
       "vpcId": "{{ vpc_id }}",
       "vmType": "{{ rc_profile }}",
+{% if dedicated_host_id is not none and dedicated_host_id %}
+      "dedicatedHostGroupId": "{{ dedicated_host_id }}",
+{% endif %}
+{% if enable_spot_instances %}
+      "extensions": {
+        "availability": {
+          "class": "spot"
+        },
+        "availability_policy": {
+          "host_failure": "restart",
+          "preemption": "delete"
+        }
+      },
+{% endif %}
       "securityGroupIds": ["{{ compute_security_group_id | first }}"],
       "resourceGroupId": "{{ resource_group_id }}",
       "sshkeyIds": {{ compute_ssh_keys_ids | to_json }},

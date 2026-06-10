@@ -287,9 +287,10 @@ func TestInvalidDynamicComputeInstances(t *testing.T) {
 	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", terraformVars["cluster_prefix"]))
 	terraformVars["dynamic_compute_instances"] = []map[string]interface{}{
 		{
-			"profile": "bx2-4x16",
-			"count":   1024,
-			"image":   "hpc-lsf-fp15-compute-rhel810-v1",
+			"profile":               "bx2-4x16",
+			"count":                 1024,
+			"image":                 "hpc-lsf-fp15-compute-rhel810-v1",
+			"enable_spot_instances": false,
 		},
 		{
 			"profile": "cx2-4x8",
@@ -1244,22 +1245,25 @@ func TestInvalidInstanceProfiles(t *testing.T) {
 			if tc.name == "Multiple_Dynamic_Compute_Profiles" {
 				terraformVars["dynamic_compute_instances"] = []map[string]interface{}{
 					{
-						"image":   "hpc-lsf-fp15-compute-rhel810-v1",
-						"profile": "bx2-4x16",
-						"count":   512,
+						"image":                 "hpc-lsf-fp15-compute-rhel810-v1",
+						"profile":               "bx2-4x16",
+						"count":                 512,
+						"enable_spot_instances": false,
 					},
 					{
-						"image":   "hpc-lsf-fp15-compute-rhel810-v1",
-						"profile": "bx2-8x32",
-						"count":   512,
+						"image":                 "hpc-lsf-fp15-compute-rhel810-v1",
+						"profile":               "bx2-8x32",
+						"count":                 512,
+						"enable_spot_instances": false,
 					},
 				}
 			} else {
 				terraformVars["dynamic_compute_instances"] = []map[string]interface{}{
 					{
-						"image":   "hpc-lsf-fp15-compute-rhel810-v1",
-						"profile": tc.dynamicProfile,
-						"count":   1024,
+						"image":                 "hpc-lsf-fp15-compute-rhel810-v1",
+						"profile":               tc.dynamicProfile,
+						"count":                 1024,
+						"enable_spot_instances": false,
 					},
 				}
 			}

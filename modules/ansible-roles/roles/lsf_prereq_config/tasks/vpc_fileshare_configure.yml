@@ -41,6 +41,12 @@
     state: mounted
   with_dict: "{{ nfs_shares_map }}"
 
+- name: NFS Config | Daemon reload for baremetal servers
+  ansible.builtin.shell: sudo systemctl daemon-reload
+  when:
+    - inventory_hostname in groups['compute_nodes']
+    - enable_baremetal | bool
+
 - name: NFS Config | Validate NFS mount status
   shell: mount | grep "on {{ item.key }} type nfs"
   register: mount_check_nfs

@@ -22,6 +22,17 @@ variable "image_id" {
   description = "This is the image id required for baremetal"
   type        = string
 }
+
+##############################################################################
+# Offering Variations
+##############################################################################
+
+variable "scheduler" {
+  type        = string
+  default     = null
+  description = "Select one of the scheduler (Scale/LSF/Symphony/Slurm/null)"
+}
+
 ##############################################################################
 # Scale Storage Variables
 ##############################################################################
@@ -109,3 +120,33 @@ variable "protocol_subnets" {
   default     = []
   description = "Subnets to launch the bastion host."
 }
+
+##############################################################################
+# LSF Compute Variables
+##############################################################################
+
+variable "static_compute_servers" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+      image   = string
+    })
+  )
+  default = [{
+    profile = "cx2-2x4"
+    count   = 1
+    image   = "ibm-redhat-8-10-minimal-amd64-10"
+  }]
+  description = "Min Number of instances to be launched for compute cluster."
+}
+
+# variable "lsf_ssh_keys" {
+#   type        = list(string)
+#   description = "The key pair to use to launch the storage cluster host."
+# }
+
+# variable "static_compute_subnets" {
+#   type        = list(string)
+#   description = "Subnets to launch the storage host."
+# }

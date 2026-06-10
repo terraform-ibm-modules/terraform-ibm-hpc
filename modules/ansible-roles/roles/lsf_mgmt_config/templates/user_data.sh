@@ -20,6 +20,7 @@ ManagementHostNames="{{ lsf_masters | join(' ') }}"
 dns_domain="{{ dns_domain_names }}"
 network_interface="eth0"
 mtu_value="{{ mtu_value }}"
+enable_spot_instances="{{ enable_spot_instances }}"
 
 # LDAP
 enable_ldap="{{ enable_ldap }}"
@@ -249,6 +250,10 @@ chown -R lsfadmin $LSF_WORK
 service lsfd stop && sleep 2 && service lsfd start
 sleep 10
 
+# Stop and Disable lwsd service
+systemctl stop lwsd
+systemctl disable lwsd
+
 # Setting up the LDAP configuration
 if [ "$enable_ldap" = "true" ]; then
 
@@ -444,4 +449,60 @@ else
   echo "Cloud Logs configuration skipped since observability logs for compute is not enabled"
 fi
 echo "Completed sysdig and cloud logs configuration" >>"$logfile"
+
+# Shutdown Script for Spot Instances
+if [ "$enable_spot_instances" = "True" ]; then
+# Create shutdown hook script
+cat <<'EOF' > /usr/local/bin/ibm-cloud-shutdown-script.sh
+#!/bin/bash
+
+# IBM Cloud Spot Instance Shutdown Hook Script
+#
+# This script is triggered automatically during:
+#   - IBM Cloud Spot instance reclaim/preemption
+#   - System shutdown
+#   - System reboot
+#
+# Purpose:
+#   Mark the LSF host as reclaimed/closed.
+
+su - lsfadmin -c 'badmin hclose -i "hostreclaim" -C "VM Instance is being reclaimed"'
+EOF
+
+chmod 755 /usr/local/bin/ibm-cloud-shutdown-script.sh
+
+# Create systemd service
+
+cat <<'EOF' > /etc/systemd/system/ibm-cloud-shutdown-script.service
+[Unit]
+Description=IBM Cloud Spot Shutdown Hook
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/true
+RemainAfterExit=true
+ExecStop=/usr/local/bin/ibm-cloud-shutdown-script.sh
+TimeoutStopSec=0
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+chmod 644 /etc/systemd/system/ibm-cloud-shutdown-script.service
+
+# Reload and enable service
+
+systemctl daemon-reload
+
+systemctl enable ibm-cloud-shutdown-script.service
+
+systemctl start ibm-cloud-shutdown-script.service
+
+echo "IBM Cloud Spot shutdown hook configured successfully"
+
+fi
+
 echo "COMPLETED $(date '+%Y-%m-%d %H:%M:%S')" >>"$logfile"

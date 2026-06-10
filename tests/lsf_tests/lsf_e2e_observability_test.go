@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
@@ -12,8 +11,8 @@ import (
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/utilities"
 )
 
-// TestRunSCCWPAndCSPMEnabledClusterValidation tests basic cluster validation with SCCWP and CSPM enabled.
-func TestRunSCCWPAndCSPMEnabledClusterValidation(t *testing.T) {
+// TestSCCWPAndCSPM tests basic cluster validation with SCCWP and CSPM enabled.
+func TestSCCWPAndCSPM(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 
@@ -28,7 +27,7 @@ func TestRunSCCWPAndCSPMEnabledClusterValidation(t *testing.T) {
 	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
 
 	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to load environment configuration")
+	utils.NoError(t, err, "Failed to load environment configuration", testLogger)
 	testLogger.Info(t, "Environment variables loaded successfully")
 
 	// Skip if SCCWP is disabled — t.Skip marks the test as skipped (not failed)
@@ -39,7 +38,7 @@ func TestRunSCCWPAndCSPMEnabledClusterValidation(t *testing.T) {
 	}
 
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	require.NoError(t, err, "Failed to initialize test options")
+	utils.NoError(t, err, "Failed to initialize test options", testLogger)
 	testLogger.Info(t, "Test options initialized successfully")
 
 	// Override default zones with observability-specific region (default_region=false).
@@ -70,48 +69,22 @@ func TestRunSCCWPAndCSPMEnabledClusterValidation(t *testing.T) {
 	}()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
-	// DeployCluster and ValidateCluster subtests run sequentially by design.
-	// Neither calls t.Parallel(), so each t.Run blocks until the subtest
-	// completes before the parent resumes.
-	t.Run("DeployCluster", func(t *testing.T) {
-		t.Helper()
-		deploymentStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster deployment for test: %s", t.Name()))
-
-		err := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-		if err != nil {
-			testLogger.FAIL(t, fmt.Sprintf("Cluster deployment failed after %v: %v", time.Since(deploymentStart), err))
-			require.NoError(t, err, "Cluster creation and consistency check failed")
-		}
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
-	})
-
-	// Abort immediately if deployment failed.
-	// require.False ensures the test is marked FAILED (not skipped), so CI
-	// pipelines correctly surface deployment failures before validation runs.
-	require.False(t, t.Failed(), "DeployCluster failed — aborting parent test, skipping ValidateCluster")
+	utils.DeployCluster(t, options, testLogger)
 
 	// ── 5. Validation ────────────────────────────────────────────────────────
-	t.Run("ValidateCluster", func(t *testing.T) {
-		t.Helper()
-		validationStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster validation for test: %s", t.Name()))
-
+	utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
 		lsf.ValidateBasicClusterConfigurationWithSCCWPAndCSPM(t, options, testLogger)
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster validation completed successfully (duration: %v)", time.Since(validationStart)))
 	})
 }
 
-// TestRunCosAndVpcFlowLogs validates cluster creation with COS integration and VPC flow logs enabled.
+// TestCOSAndVPCFlowLogs validates cluster creation with COS integration and VPC flow logs enabled.
 // Verifies proper configuration of both features and their integration with the cluster.
 //
 // Prerequisites:
 //   - Valid environment configuration
 //   - Proper test suite initialization
 //   - Permissions to enable COS and VPC flow logs
-func TestRunCosAndVpcFlowLogs(t *testing.T) {
+func TestCOSAndVPCFlowLogs(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 
@@ -126,11 +99,11 @@ func TestRunCosAndVpcFlowLogs(t *testing.T) {
 	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
 
 	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to load environment configuration")
+	utils.NoError(t, err, "Failed to load environment configuration", testLogger)
 	testLogger.Info(t, "Environment variables loaded successfully")
 
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	require.NoError(t, err, "Failed to initialize test options")
+	utils.NoError(t, err, "Failed to initialize test options", testLogger)
 	testLogger.Info(t, "Test options initialized successfully")
 
 	// Override default zones with observability-specific region (default_region=false).
@@ -150,45 +123,22 @@ func TestRunCosAndVpcFlowLogs(t *testing.T) {
 	}()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
-	// DeployCluster and ValidateCluster subtests run sequentially by design.
-	// Neither calls t.Parallel(), so each t.Run blocks until the subtest
-	// completes before the parent resumes.
-	t.Run("DeployCluster", func(t *testing.T) {
-		t.Helper()
-		deploymentStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster deployment for test: %s", t.Name()))
-
-		err := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-		if err != nil {
-			testLogger.FAIL(t, fmt.Sprintf("Cluster deployment failed after %v: %v", time.Since(deploymentStart), err))
-			require.NoError(t, err, "Cluster creation and consistency check failed")
-		}
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
-	})
-
-	require.False(t, t.Failed(), "DeployCluster failed — aborting parent test, skipping ValidateCluster")
+	utils.DeployCluster(t, options, testLogger)
 
 	// ── 5. Validation ────────────────────────────────────────────────────────
-	t.Run("ValidateCluster", func(t *testing.T) {
-		t.Helper()
-		validationStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster validation for test: %s", t.Name()))
-
+	utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
 		lsf.ValidateBasicClusterConfigurationWithVPCFlowLogsAndCos(t, options, testLogger)
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster validation completed successfully (duration: %v)", time.Since(validationStart)))
 	})
 }
 
-// TestRunLSFLogs validates proper configuration of LSF management logs.
+// TestLSFLogs validates proper configuration of LSF management logs.
 // Verifies log directory structure, symbolic links, and log collection.
 //
 // Prerequisites:
 //   - Valid environment configuration
 //   - Cluster with at least two management nodes
 //   - Proper test suite initialization
-func TestRunLSFLogs(t *testing.T) {
+func TestLSFLogs(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 
@@ -203,11 +153,11 @@ func TestRunLSFLogs(t *testing.T) {
 	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
 
 	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to load environment configuration")
+	utils.NoError(t, err, "Failed to load environment configuration", testLogger)
 	testLogger.Info(t, "Environment variables loaded successfully")
 
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	require.NoError(t, err, "Failed to initialize test options")
+	utils.NoError(t, err, "Failed to initialize test options", testLogger)
 	testLogger.Info(t, "Test options initialized successfully")
 
 	// Override default zones with observability-specific region (default_region=false).
@@ -223,34 +173,11 @@ func TestRunLSFLogs(t *testing.T) {
 	}()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
-	// DeployCluster and ValidateCluster subtests run sequentially by design.
-	// Neither calls t.Parallel(), so each t.Run blocks until the subtest
-	// completes before the parent resumes.
-	t.Run("DeployCluster", func(t *testing.T) {
-		t.Helper()
-		deploymentStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster deployment for test: %s", t.Name()))
-
-		err := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-		if err != nil {
-			testLogger.FAIL(t, fmt.Sprintf("Cluster deployment failed after %v: %v", time.Since(deploymentStart), err))
-			require.NoError(t, err, "Cluster creation and consistency check failed")
-		}
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
-	})
-
-	require.False(t, t.Failed(), "DeployCluster failed — aborting parent test, skipping ValidateCluster")
+	utils.DeployCluster(t, options, testLogger)
 
 	// ── 5. Validation ────────────────────────────────────────────────────────
-	t.Run("ValidateCluster", func(t *testing.T) {
-		t.Helper()
-		validationStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster validation for test: %s", t.Name()))
-
+	utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
 		lsf.ValidateBasicClusterConfigurationLSFLogs(t, options, testLogger)
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster validation completed successfully (duration: %v)", time.Since(validationStart)))
 	})
 }
 
@@ -276,11 +203,11 @@ func TestObservabilityAllFeaturesDisabled(t *testing.T) {
 	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
 
 	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to load environment configuration")
+	utils.NoError(t, err, "Failed to load environment configuration", testLogger)
 	testLogger.Info(t, "Environment variables loaded successfully")
 
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	require.NoError(t, err, "Failed to initialize test options")
+	utils.NoError(t, err, "Failed to initialize test options", testLogger)
 	testLogger.Info(t, "Test options initialized successfully")
 
 	// Override default zones with observability-specific region (default_region=false).
@@ -307,34 +234,11 @@ func TestObservabilityAllFeaturesDisabled(t *testing.T) {
 	}()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
-	// DeployCluster and ValidateCluster subtests run sequentially by design.
-	// Neither calls t.Parallel(), so each t.Run blocks until the subtest
-	// completes before the parent resumes.
-	t.Run("DeployCluster", func(t *testing.T) {
-		t.Helper()
-		deploymentStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster deployment for test: %s", t.Name()))
-
-		err := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-		if err != nil {
-			testLogger.FAIL(t, fmt.Sprintf("Cluster deployment failed after %v: %v", time.Since(deploymentStart), err))
-			require.NoError(t, err, "Cluster creation and consistency check failed")
-		}
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
-	})
-
-	require.False(t, t.Failed(), "DeployCluster failed — aborting parent test, skipping ValidateCluster")
+	utils.DeployCluster(t, options, testLogger)
 
 	// ── 5. Validation ────────────────────────────────────────────────────────
-	t.Run("ValidateCluster", func(t *testing.T) {
-		t.Helper()
-		validationStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster validation for test: %s", t.Name()))
-
+	utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
 		lsf.ValidateBasicObservabilityClusterConfiguration(t, options, testLogger)
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster validation completed successfully (duration: %v)", time.Since(validationStart)))
 	})
 }
 
@@ -359,11 +263,11 @@ func TestObservabilityLogsEnabledForManagementAndCompute(t *testing.T) {
 	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
 
 	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to load environment configuration")
+	utils.NoError(t, err, "Failed to load environment configuration", testLogger)
 	testLogger.Info(t, "Environment variables loaded successfully")
 
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	require.NoError(t, err, "Failed to initialize test options")
+	utils.NoError(t, err, "Failed to initialize test options", testLogger)
 	testLogger.Info(t, "Test options initialized successfully")
 
 	// Override default zones with observability-specific region (default_region=false).
@@ -390,34 +294,11 @@ func TestObservabilityLogsEnabledForManagementAndCompute(t *testing.T) {
 	}()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
-	// DeployCluster and ValidateCluster subtests run sequentially by design.
-	// Neither calls t.Parallel(), so each t.Run blocks until the subtest
-	// completes before the parent resumes.
-	t.Run("DeployCluster", func(t *testing.T) {
-		t.Helper()
-		deploymentStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster deployment for test: %s", t.Name()))
-
-		err := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-		if err != nil {
-			testLogger.FAIL(t, fmt.Sprintf("Cluster deployment failed after %v: %v", time.Since(deploymentStart), err))
-			require.NoError(t, err, "Cluster creation and consistency check failed")
-		}
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
-	})
-
-	require.False(t, t.Failed(), "DeployCluster failed — aborting parent test, skipping ValidateCluster")
+	utils.DeployCluster(t, options, testLogger)
 
 	// ── 5. Validation ────────────────────────────────────────────────────────
-	t.Run("ValidateCluster", func(t *testing.T) {
-		t.Helper()
-		validationStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster validation for test: %s", t.Name()))
-
+	utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
 		lsf.ValidateBasicClusterConfigurationWithCloudLogs(t, options, testLogger)
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster validation completed successfully (duration: %v)", time.Since(validationStart)))
 	})
 }
 
@@ -442,11 +323,11 @@ func TestObservabilityMonitoringEnabledForManagementAndCompute(t *testing.T) {
 	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
 
 	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to load environment configuration")
+	utils.NoError(t, err, "Failed to load environment configuration", testLogger)
 	testLogger.Info(t, "Environment variables loaded successfully")
 
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	require.NoError(t, err, "Failed to initialize test options")
+	utils.NoError(t, err, "Failed to initialize test options", testLogger)
 	testLogger.Info(t, "Test options initialized successfully")
 
 	// Override default zones with observability-specific region (default_region=false).
@@ -473,34 +354,11 @@ func TestObservabilityMonitoringEnabledForManagementAndCompute(t *testing.T) {
 	}()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
-	// DeployCluster and ValidateCluster subtests run sequentially by design.
-	// Neither calls t.Parallel(), so each t.Run blocks until the subtest
-	// completes before the parent resumes.
-	t.Run("DeployCluster", func(t *testing.T) {
-		t.Helper()
-		deploymentStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster deployment for test: %s", t.Name()))
-
-		err := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-		if err != nil {
-			testLogger.FAIL(t, fmt.Sprintf("Cluster deployment failed after %v: %v", time.Since(deploymentStart), err))
-			require.NoError(t, err, "Cluster creation and consistency check failed")
-		}
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
-	})
-
-	require.False(t, t.Failed(), "DeployCluster failed — aborting parent test, skipping ValidateCluster")
+	utils.DeployCluster(t, options, testLogger)
 
 	// ── 5. Validation ────────────────────────────────────────────────────────
-	t.Run("ValidateCluster", func(t *testing.T) {
-		t.Helper()
-		validationStart := time.Now()
-		testLogger.Info(t, fmt.Sprintf("[START] Cluster validation for test: %s", t.Name()))
-
+	utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
 		lsf.ValidateBasicClusterConfigurationWithCloudMonitoring(t, options, testLogger)
-
-		testLogger.Info(t, fmt.Sprintf("[END] Cluster validation completed successfully (duration: %v)", time.Since(validationStart)))
 	})
 }
 
@@ -525,7 +383,7 @@ func TestObservabilityAtrackerLoggingMonitoring(t *testing.T) {
 
 	// ── 2. Configuration ─────────────────────────────────────────────────────
 	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to load environment configuration")
+	utils.NoError(t, err, "Failed to load environment configuration", testLogger)
 	testLogger.Info(t, "Environment variables loaded successfully")
 
 	scenarios := []struct {
@@ -575,7 +433,7 @@ func TestObservabilityAtrackerLoggingMonitoring(t *testing.T) {
 			testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
 
 			options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-			require.NoError(t, err, "Failed to initialize test options")
+			utils.NoError(t, err, "Failed to initialize test options", testLogger)
 			testLogger.Info(t, "Test options initialized successfully")
 
 			// Override default zones with observability-specific region (default_region=false).
@@ -601,34 +459,12 @@ func TestObservabilityAtrackerLoggingMonitoring(t *testing.T) {
 				testLogger.Info(t, fmt.Sprintf("Resource teardown completed for scenario: %s", scenario.name))
 			}()
 
-			// Deploy cluster for this scenario.
-			// DeployCluster and ValidateCluster subtests run sequentially by design.
-			// Neither calls t.Parallel(), so each t.Run blocks until the subtest
-			// completes before the parent resumes.
-			t.Run("DeployCluster", func(t *testing.T) {
-				t.Helper()
-				deploymentStart := time.Now()
-				testLogger.Info(t, fmt.Sprintf("[START] Cluster deployment for scenario: %s", scenario.name))
+			// ── 4. Deployment ────────────────────────────────────────────────────────
+			utils.DeployCluster(t, options, testLogger)
 
-				err := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-				if err != nil {
-					testLogger.FAIL(t, fmt.Sprintf("Cluster deployment failed after %v: %v", time.Since(deploymentStart), err))
-					require.NoError(t, err, "Cluster creation and consistency check failed")
-				}
-
-				testLogger.Info(t, fmt.Sprintf("[END] Cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
-			})
-
-			require.False(t, t.Failed(), "DeployCluster failed — aborting scenario, skipping ValidateCluster")
-
-			t.Run("ValidateCluster", func(t *testing.T) {
-				t.Helper()
-				validationStart := time.Now()
-				testLogger.Info(t, fmt.Sprintf("[START] Cluster validation for scenario: %s", scenario.name))
-
+			// ── 5. Validation ────────────────────────────────────────────────────────
+			utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
 				scenario.validationFunc(t, options, testLogger)
-
-				testLogger.Info(t, fmt.Sprintf("[END] Cluster validation completed successfully (duration: %v)", time.Since(validationStart)))
 			})
 		})
 	}
@@ -658,7 +494,7 @@ func TestObservabilityAtrackerWithCosAndCloudLogs(t *testing.T) {
 
 	// ── 2. Configuration ─────────────────────────────────────────────────────
 	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to load environment configuration")
+	utils.NoError(t, err, "Failed to load environment configuration", testLogger)
 	testLogger.Info(t, "Environment variables loaded successfully")
 
 	scenarios := []struct {
@@ -707,7 +543,7 @@ func TestObservabilityAtrackerWithCosAndCloudLogs(t *testing.T) {
 			testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
 
 			options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-			require.NoError(t, err, "Failed to initialize test options")
+			utils.NoError(t, err, "Failed to initialize test options", testLogger)
 			testLogger.Info(t, "Test options initialized successfully")
 
 			// Override default zones with observability-specific region (default_region=false).
@@ -733,34 +569,12 @@ func TestObservabilityAtrackerWithCosAndCloudLogs(t *testing.T) {
 				testLogger.Info(t, fmt.Sprintf("Resource teardown completed for scenario: %s", scenario.name))
 			}()
 
-			// Deploy cluster for this scenario.
-			// DeployCluster and ValidateCluster subtests run sequentially by design.
-			// Neither calls t.Parallel(), so each t.Run blocks until the subtest
-			// completes before the parent resumes.
-			t.Run("DeployCluster", func(t *testing.T) {
-				t.Helper()
-				deploymentStart := time.Now()
-				testLogger.Info(t, fmt.Sprintf("[START] Cluster deployment for scenario: %s", scenario.name))
+			// ── 4. Deployment ────────────────────────────────────────────────────────
+			utils.DeployCluster(t, options, testLogger)
 
-				err := lsf.VerifyClusterCreationAndConsistency(t, options, testLogger)
-				if err != nil {
-					testLogger.FAIL(t, fmt.Sprintf("Cluster deployment failed after %v: %v", time.Since(deploymentStart), err))
-					require.NoError(t, err, "Cluster creation and consistency check failed")
-				}
-
-				testLogger.Info(t, fmt.Sprintf("[END] Cluster deployment completed successfully (duration: %v)", time.Since(deploymentStart)))
-			})
-
-			require.False(t, t.Failed(), "DeployCluster failed — aborting scenario, skipping ValidateCluster")
-
-			t.Run("ValidateCluster", func(t *testing.T) {
-				t.Helper()
-				validationStart := time.Now()
-				testLogger.Info(t, fmt.Sprintf("[START] Cluster validation for scenario: %s", scenario.name))
-
+			// ── 5. Validation ────────────────────────────────────────────────────────
+			utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
 				scenario.validationFunc(t, options, testLogger)
-
-				testLogger.Info(t, fmt.Sprintf("[END] Cluster validation completed successfully (duration: %v)", time.Since(validationStart)))
 			})
 		})
 	}

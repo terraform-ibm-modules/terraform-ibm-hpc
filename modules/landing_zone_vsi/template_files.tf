@@ -44,6 +44,27 @@ data "template_file" "lsf_compute_user_data" {
   }
 }
 
+data "template_file" "lsf_bm_compute_user_data" {
+  template = file("${path.module}/templates/lsf_bm_compute_user_data.tpl")
+  vars = {
+    vpc_apikey_value                                 = var.vpc_apikey_value
+    bastion_public_key_content                       = var.bastion_public_key_content != null ? var.bastion_public_key_content : ""
+    compute_public_key_content                       = local.enable_compute ? local.compute_public_key_content != null ? local.compute_public_key_content : "" : ""
+    compute_private_key_content                      = local.enable_compute ? local.compute_private_key_content != null ? local.compute_private_key_content : "" : ""
+    interface                                        = local.vsi_interfaces[0]
+    dns_domain                                       = var.dns_domain_names["compute"]
+    dynamic_compute_instances                        = var.dynamic_compute_instances == null ? "" : ""
+    mtu_value                                        = var.mtu_value
+    cluster_prefix                                   = var.prefix
+    rc_cidr_block                                    = var.vpc_cluster_private_subnets_cidr_blocks
+    observability_monitoring_on_compute_nodes_enable = var.observability_monitoring_on_compute_nodes_enable
+    observability_logs_enable_for_compute            = var.observability_logs_enable_for_compute
+    cloud_monitoring_access_key                      = var.cloud_monitoring_access_key
+    cloud_monitoring_ingestion_url                   = var.cloud_monitoring_ingestion_url
+    cloud_logs_ingress_private_endpoint              = var.cloud_logs_ingress_private_endpoint
+  }
+}
+
 data "template_file" "lsf_login_user_data" {
   template = file("${path.module}/templates/lsf_login_user_data.tpl")
   vars = {

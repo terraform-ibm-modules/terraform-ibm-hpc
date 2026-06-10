@@ -191,7 +191,7 @@ module "management_vsi" {
 }
 
 module "compute_vsi" {
-  count                 = length(var.static_compute_instances)
+  count                 = var.enable_baremetal == false ? length(var.static_compute_instances) : 0
   source                = "terraform-ibm-modules/landing-zone-vsi/ibm"
   version               = "6.2.1"
   vsi_per_subnet        = var.static_compute_instances[count.index]["count"]
@@ -578,4 +578,22 @@ module "afm_baremetal_server" {
   protocol_subnets              = local.protocol_subnets
   secondary_security_group_ids  = []
   sapphire_rapids_profile_check = local.sapphire_rapids_profile_check
+}
+
+########################################################################
+###                        Baremetal Module - LSF                    ###
+########################################################################
+
+module "static_compute_baremetal" {
+  count                   = var.enable_baremetal && length([for i in var.static_compute_instances : i if i.count > 0]) > 0 ? 1 : 0
+  scheduler               = var.scheduler
+  source                  = "../baremetal"
+  existing_resource_group = var.resource_group
+  image_id                = var.scheduler == "LSF" ? (local.compute_image_found_in_map ? local.new_compute_image_id : data.ibm_is_image.compute_stock_image[0].id) : null
+  prefix                  = format("%s-%s", local.compute_node_name, "bm")
+  storage_subnets         = [for subnet in local.compute_subnet_id : subnet.id]
+  storage_ssh_keys        = local.ssh_keys
+  user_data               = data.template_file.lsf_bm_compute_user_data.rendered
+  static_compute_servers  = var.static_compute_instances
+  security_group_ids      = module.compute_sg[*].security_group_id
 }

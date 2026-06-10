@@ -110,6 +110,7 @@ module "landing_zone_vsi" {
   enable_deployer                                  = var.enable_deployer
   afm_instances                                    = var.afm_instances
   enable_dedicated_host                            = var.enable_dedicated_host
+  enable_baremetal                                 = var.enable_baremetal
   enable_ldap                                      = var.enable_ldap
   ldap_instances                                   = var.ldap_instance
   ldap_server                                      = local.ldap_server
@@ -179,6 +180,7 @@ module "prepare_tf_input" {
   enable_atracker                                  = var.enable_atracker
   enable_vpc_flow_logs                             = var.enable_vpc_flow_logs
   enable_dedicated_host                            = var.enable_dedicated_host
+  enable_baremetal                                 = var.enable_baremetal
   remote_allowed_ips                               = var.remote_allowed_ips
   vpc_name                                         = local.vpc_name
   compute_subnet_id                                = local.compute_subnet
@@ -444,6 +446,9 @@ module "write_compute_cluster_inventory" {
   mtu_value                     = var.mtu_value
   enable_license_scheduler      = var.enable_license_scheduler
   has_gaudi3                    = local.has_gaudi3
+  login_node_cpu_platform       = local.login_node_cpu_platform
+  enable_baremetal              = var.enable_baremetal
+  dedicated_host_id             = local.dedicated_host_id
   depends_on                    = [time_sleep.wait_for_vsi_syncup, module.landing_zone_vsi]
 }
 
@@ -1035,7 +1040,8 @@ module "compute_playbook" {
   deployer_host           = local.deployer_host_entry
   domain_name             = var.dns_domain_names["compute"]
   enable_dedicated_host   = var.enable_dedicated_host
-  depends_on              = [module.compute_inventory, module.landing_zone_vsi]
+  # enable_baremetal        = var.enable_baremetal
+  depends_on = [module.compute_inventory, module.landing_zone_vsi]
 }
 
 ###################################################

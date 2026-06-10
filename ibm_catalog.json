@@ -320,6 +320,9 @@
               ]
             },
             {
+              "key": "enable_baremetal"
+            },
+            {
               "key": "observability_monitoring_enable"
             },
             {

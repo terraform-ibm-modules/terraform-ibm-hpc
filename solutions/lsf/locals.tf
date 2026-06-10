@@ -75,6 +75,7 @@ locals {
     ldap_server_cert                                 = var.ldap_server_cert
     ldap_instance                                    = var.ldap_instance
     enable_dedicated_host                            = var.enable_dedicated_host
+    enable_baremetal                                 = var.enable_baremetal
     existing_bastion_instance_name                   = var.existing_bastion_instance_name
     existing_bastion_instance_public_ip              = var.existing_bastion_instance_public_ip
     existing_bastion_security_group_id               = var.existing_bastion_security_group_id
@@ -151,6 +152,7 @@ locals {
     ldap_server_cert                                 = lookup(local.override[local.override_type], "ldap_server_cert", local.config.ldap_server_cert)
     ldap_instance                                    = lookup(local.override[local.override_type], "ldap_instance", local.config.ldap_instance)
     enable_dedicated_host                            = lookup(local.override[local.override_type], "enable_dedicated_host", local.config.enable_dedicated_host)
+    enable_baremetal                                 = lookup(local.override[local.override_type], "enable_baremetal", local.config.enable_baremetal)
     existing_bastion_instance_name                   = lookup(local.override[local.override_type], "existing_bastion_instance_name", local.config.existing_bastion_instance_name)
     existing_bastion_instance_public_ip              = lookup(local.override[local.override_type], "existing_bastion_instance_public_ip", local.config.existing_bastion_instance_public_ip)
     existing_bastion_security_group_id               = lookup(local.override[local.override_type], "existing_bastion_security_group_id", local.config.existing_bastion_security_group_id)

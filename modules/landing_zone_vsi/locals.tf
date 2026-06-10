@@ -180,7 +180,7 @@ locals {
     storage_public_key_content  = var.scheduler == "Scale" ? base64encode(module.storage_key[0].public_key_content) : ""
   }
 
-  enable_sec_interface_compute = local.enable_protocol == false && data.ibm_is_instance_profile.compute_profile[0].bandwidth[0].value >= 64000 ? true : false
+  enable_sec_interface_compute = local.enable_protocol == false && try(data.ibm_is_instance_profile.compute_profile[0].bandwidth[0].value, 0) >= 64000 ? true : false
   enable_sec_interface_storage = local.enable_protocol == false && var.storage_type != "baremetal" && data.ibm_is_instance_profile.storage[0].bandwidth[0].value >= 64000 ? true : false
 
   # Security Groups

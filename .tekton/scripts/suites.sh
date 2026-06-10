@@ -470,75 +470,169 @@ lsf_da_pr_rhel_suite() {
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-1
-basic-deployment-and-default-rga-tests() {
-    suite=basic-deployment-and-default-rga-tests
+
+
+
+######################## LSF-DA-LONGTERM Testcases Start ########################
+
+# Suite 1: Default cluster configuration and web service disabled tests
+default-cluster-config-and-web-service-disabled-tests() {
+    suite=default-cluster-config-and-web-service-disabled-tests
     solution=lsf-da
-    test_cases="TestRunBasic,TestRunCustomRGA"
+    test_cases="TestDefaultCluster,TestWebServiceDisabled"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-2
-custom-rga-and-no-kms-host-config-tests() {
-    suite=custom-rga-and-no-kms-host-config-tests
+# Suite 2: AppCenter basic deployment and API tests
+appcenter-api-and-ldap-tests() {
+    suite=appcenter-api-and-ldap-tests
     solution=lsf-da
-    test_cases="TestRunCustomRGAsNonDefault,TestRunNoKMSAndHTOff"
+    test_cases="TestAppCenterWithAPI,TestLDAPAppCenterIntegration"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-3
-existing-kms-key-configuration-tests() {
-    suite=existing-kms-key-configuration-tests
+# Suite 3: LDAP new server tests (separate)
+ldap-new-server-tests() {
+    suite=ldap-new-server-tests
     solution=lsf-da
-    test_cases="TestRunUsingExistingKMSInstanceAndExistingKey,TestRunUsingExistingKMSInstanceAndWithoutKey"
+    test_cases="TestLDAPNewServer"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-4
-kms-authorization-and-zero-worker-cluster-tests() {
-    suite=kms-authorization-and-zero-worker-cluster-tests
+# Suite 4: LDAP existing server tests (separate)
+ldap-existing-server-tests() {
+    suite=ldap-existing-server-tests
     solution=lsf-da
-    test_cases="TestRunWithExistingKMSInstanceAndKeyWithAuthorizationPolicy,TestRunLSFClusterCreationWithZeroWorkerNodes"
+    test_cases="TestLDAPExistingServer"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-5
-ldap-integration-tests() {
-    suite=ldap-integration-tests
+# Suite 5: Null and non-default resource group tests
+resource-group-configuration-tests() {
+    suite=resource-group-configuration-tests
     solution=lsf-da
-    test_cases="TestRunLDAP,TestRunExistingLDAP"
+    test_cases="TestNullResourceGroup,TestNonDefaultResourceGroup"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-6
-dedicated-host-and-observability-disabled-tests() {
-    suite=dedicated-host-and-observability-disabled-tests
+# Suite 6: Zero static worker nodes and dedicated host tests
+zero-static-worker-nodes-and-dedicated-host-tests() {
+    suite=zero-static-worker-nodes-and-dedicated-host-tests
     solution=lsf-da
-    test_cases="TestRunDedicatedHost,TestObservabilityAllFeaturesDisabled"
+    test_cases="TestZeroStaticWorkerNodes,TestDedicatedHost"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-7
-atracker-logging-and-monitoring-tests() {
-    suite=atracker-logging-and-monitoring-tests
+# Suite 7: Custom CIDR blocks, multi-profile compute node, and spot instance tests
+custom-cidr-and-multi-profile-and-spot-instance-tests() {
+    suite=custom-cidr-and-multi-profile-compute-and-spot-instance-tests
+    solution=lsf-da
+    test_cases="TestCustomCIDRBlocks,TestMultiProfileComputeNodes,TestSpotInstance"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+
+# Suite 8: Existing VPC with CIDRs and subnets tests
+existing-vpc-cidrs-and-subnets-tests() {
+    suite=existing-vpc-cidrs-and-subnets-tests
+    solution=lsf-da
+    test_cases="TestExistingVPCCIDRsAndSubnets"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 9: Existing VPC with custom DNS and DNS instance only tests
+existing-vpc-dns-configuration-tests() {
+    suite=existing-vpc-dns-configuration-tests
+    solution=lsf-da
+    test_cases="TestExistingVPCWithCustomDNS,TestExistingVPCWithDNSInstanceOnly"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 10: LSF logs and reapply tests
+lsf-logs-and-reapply-tests() {
+    suite=lsf-logs-and-reapply-tests
+    solution=lsf-da
+    test_cases="TestLSFLogs,TestReapply"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 11: Existing KMS instance with and without key tests
+existing-kms-instance-key-tests() {
+    suite=existing-kms-instance-key-tests
+    solution=lsf-da
+    test_cases="^TestKMSInstanceWithoutKey$,^TestKMSInstanceWithExistingKey$"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 12: No KMS with hyperthreading and existing KMS authorization policy tests
+no-kms-hyperthreading-and-kms-auth-policy-tests() {
+    suite=no-kms-hyperthreading-and-kms-auth-policy-tests
+    solution=lsf-da
+    test_cases="TestNoKMSWithHyperthreading,TestExistingKMSInstanceAndKeyWithAuthorizationPolicy"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 13: Security compliance and COS VPC flow logs tests
+security-compliance-and-cos-vpc-flow-logs-tests() {
+    suite=security-compliance-and-cos-vpc-flow-logs-tests
+    solution=lsf-da
+    test_cases="TestSCCWPAndCSPM,TestCOSAndVPCFlowLogs"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 14: Observability features disabled tests
+observability-features-disabled-tests() {
+  suite=observability-features-disabled-tests
+  solution=lsf-da
+  test_cases="TestObservabilityAllFeaturesDisabled"
+  compute_image_name_rhel=""
+  new_line="${test_cases//,/$'\n'}"
+  echo "************** Going to run ${suite} ${new_line} **************"
+  common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 15: Observability atracker logging and monitoring tests
+observability-atracker-logging-monitoring-tests() {
+    suite=observability-atracker-logging-monitoring-tests
     solution=lsf-da
     test_cases="TestObservabilityAtrackerLoggingMonitoring"
     compute_image_name_rhel=""
@@ -547,64 +641,9 @@ atracker-logging-and-monitoring-tests() {
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-8
-custom-cidr-and-multi-profile-network-tests() {
-    suite=custom-cidr-and-multi-profile-network-tests
-    solution=lsf-da
-    test_cases="TestRunCIDRsAsNonDefault,TestRunMultiProfileStaticAndDynamic"
-    compute_image_name_rhel=""
-    new_line="${test_cases//,/$'\n'}"
-    echo "************** Going to run ${suite} ${new_line} **************"
-    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
-}
-
-# commit based suite on rhel-suite-9
-monitoring-enabled-management-and-compute-tests() {
-    suite=monitoring-enabled-management-and-compute-tests
-    solution=lsf-da
-    test_cases="TestObservabilityMonitoringEnabledForManagementAndCompute"
-    compute_image_name_rhel=""
-    new_line="${test_cases//,/$'\n'}"
-    echo "************** Going to run ${suite} ${new_line} **************"
-    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
-}
-
-# commit based suite on rhel-suite-10
-existing-vpc-cluster-creation-tests() {
-    suite=existing-vpc-cluster-creation-tests
-    solution=lsf-da
-    test_cases="TestRunCreateClusterWithExistingVPC"
-    compute_image_name_rhel=""
-    new_line="${test_cases//,/$'\n'}"
-    echo "************** Going to run ${suite} ${new_line} **************"
-    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
-}
-
-# commit based suite on rhel-suite-11
-custom-dns-vpc-creation-tests() {
-    suite=custom-dns-vpc-creation-tests
-    solution=lsf-da
-    test_cases="TestRunCreateVpcWithCustomDns"
-    compute_image_name_rhel=""
-    new_line="${test_cases//,/$'\n'}"
-    echo "************** Going to run ${suite} ${new_line} **************"
-    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
-}
-
-# commit based suite on rhel-suite-12
-logs-enabled-observability-and-flow-logs-tests() {
-    suite=logs-enabled-observability-and-flow-logs-tests
-    solution=lsf-da
-    test_cases="TestObservabilityLogsEnabledForManagementAndCompute,TestRunCosAndVpcFlowLogs"
-    compute_image_name_rhel=""
-    new_line="${test_cases//,/$'\n'}"
-    echo "************** Going to run ${suite} ${new_line} **************"
-    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
-}
-
-# commit based suite on rhel-suite-13
-atracker-cos-and-cloud-logs-integration-tests() {
-    suite=atracker-cos-and-cloud-logs-integration-tests
+# Suite 16: Observability atracker with COS and cloud logs tests
+observability-atracker-cos-cloud-logs-tests() {
+    suite=observability-atracker-cos-cloud-logs-tests
     solution=lsf-da
     test_cases="TestObservabilityAtrackerWithCosAndCloudLogs"
     compute_image_name_rhel=""
@@ -613,48 +652,37 @@ atracker-cos-and-cloud-logs-integration-tests() {
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-14
-scc-cspm-and-custom-dns-validation-tests() {
-    suite=scc-cspm-and-custom-dns-validation-tests
+# Suite 17: Node scale-up and scale-down tests
+node-scale-up-and-scale-down-tests() {
+    suite=node-scale-up-and-scale-down-tests
     solution=lsf-da
-    test_cases="TestRunSCCWPAndCSPMEnabledClusterValidation,TestRunCreateVpcWithCustomDnsOnlyDNS"
+    test_cases="^TestNodeScaleUp$,^TestNodeScaleDown$"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-15
-api-and-lsf-reapply-tests() {
-    suite=api-and-lsf-reapply-tests
+# Suite 18: Node scale-up-and-down bidirectional tests
+node-scale-up-and-down-tests() {
+    suite=node-scale-up-and-down-tests
     solution=lsf-da
-    test_cases="TestRunAPI,TestRunLsfReapply"
+    test_cases="^TestNodeScaleUpAndDown$"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-16
-lsf-node-scale-up-and-down-tests() {
-    suite=lsf-node-scale-up-and-down-tests
-    solution=lsf-da
-    test_cases="TestRunLsfNodeScaleUp,TestRunLsfNodeScaleDown" # "TestRunLsfNodeScaleUp,TestRunLsfNodeScaleDown"
-    compute_image_name_rhel=""
-    new_line="${test_cases//,/$'\n'}"
-    echo "************** Going to run ${suite} ${new_line} **************"
-    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+# Suite 19: Observability features enabled tests
+observability-features-enabled-tests() {
+  suite=observability-features-enabled-tests
+  solution=lsf-da
+  test_cases="TestObservabilityLogsEnabledForManagementAndCompute,TestObservabilityMonitoringEnabledForManagementAndCompute"
+  compute_image_name_rhel=""
+  new_line="${test_cases//,/$'\n'}"
+  echo "************** Going to run ${suite} ${new_line} **************"
+  common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-
-# commit based suite on rhel-suite-17
-basic-deployment-default-and-appcenter-tests() {
-    suite="basic-deployment-default-and-appcenter-tests"
-    solution="lsf-da"
-    test_cases="TestRunDefaultWithWebServiceAsFalse,TestRunAppCenter,TestRunAppcenterAndLDAP"
-    compute_image_name_rhel=""
-    new_line="${test_cases//,/$'\n'}"
-
-    echo "************** Going to run ${suite} ${new_line} **************"
-    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
-}
+######################## LSF-DA-LONGTERM Testcases End ########################

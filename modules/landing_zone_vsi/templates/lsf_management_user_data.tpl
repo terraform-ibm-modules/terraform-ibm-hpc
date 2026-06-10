@@ -34,6 +34,7 @@
 # Script Variables
 ###############################################################################
 LOGFILE="/tmp/init-script.log"
+DISPLAY_LOGFILE="/var/log/lsf_management_setup.log"
 USER="vpcuser"
 REPO_ID="ansible-2-for-rhel-8-x86_64-rpms"
 CLUSTER_USER="lsfadmin"
@@ -49,7 +50,7 @@ HOSTNAME="$(hostname)"
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOGFILE"
 }
-
+exec > >(tee -a "$DISPLAY_LOGFILE") 2>&1
 log "Initialization script started"
 
 ###############################################################################

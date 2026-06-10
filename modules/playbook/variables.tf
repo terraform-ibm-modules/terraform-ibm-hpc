@@ -93,3 +93,10 @@ variable "enable_dedicated_host" {
   default     = false
   description = "Enables dedicated host to the compute instances"
 }
+
+# variable "enable_baremetal" {
+#   type        = bool
+#   default     = false
+#   description = "Set this option to true to enable baremetal servers. The default value is false."
+
+# }

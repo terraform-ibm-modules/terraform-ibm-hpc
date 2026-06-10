@@ -75,7 +75,8 @@ data "ibm_is_subnet" "compute_subnet_crn" {
 }
 
 data "ibm_is_instance_profile" "compute_profile" {
-  name = local.compute_vsi_profile[0]
+  count = ((var.scheduler == "LSF" && var.enable_baremetal == false) || (var.scheduler == "Scale")) ? 1 : 0
+  name  = local.compute_vsi_profile[0]
 }
 
 data "ibm_is_instance_profile" "storage_profile" {
@@ -86,6 +87,11 @@ data "ibm_is_bare_metal_server_profile" "storage_bms_profile" {
   count = var.scheduler == "Scale" && var.storage_type == "baremetal" ? 1 : 0
   name  = local.storage_bms_profile[0]
 }
+
+# data "ibm_is_bare_metal_server_profile" "static_compute_bms_profile" {
+#   count = var.scheduler == "LSF" && var.enable_baremetal == true ? 1 : 0
+#   name  = local.static_compute_bms_profile[0]
+# }
 
 data "ibm_is_instance_profile" "management_profile" {
   name = local.management_vsi_profile[0]

@@ -12,7 +12,7 @@ provider "restapi" {
 module "app_config" {
   count                                  = var.enable_deployer == false && var.enable_sccwp && var.enable_cspm ? 1 : 0
   source                                 = "terraform-ibm-modules/app-configuration/ibm"
-  version                                = "1.15.10"
+  version                                = "1.17.0"
   region                                 = var.region
   resource_group_id                      = data.ibm_resource_group.existing_resource_group[0].id
   app_config_plan                        = var.app_config_plan
@@ -25,7 +25,7 @@ module "app_config" {
 module "scc_workload_protection" {
   count                                        = var.enable_deployer == false && var.enable_sccwp ? 1 : 0
   source                                       = "terraform-ibm-modules/scc-workload-protection/ibm"
-  version                                      = "1.17.6"
+  version                                      = "1.19.0"
   region                                       = var.region
   name                                         = var.prefix
   resource_group_id                            = data.ibm_resource_group.existing_resource_group[0].id

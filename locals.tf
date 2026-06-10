@@ -77,12 +77,24 @@ locals {
     ]
   ]
 
+  lsf_simplified_static_compute_baremetal_data = var.enable_deployer ? [] : [
+    for server in module.landing_zone_vsi[0].static_compute_baremetal_data : {
+      id                   = try(server.id, null)
+      ipv4_address         = try(server.ipv4_address, null)
+      bms_secondary_vni_id = try(server.bms_secondary_vni_id, null)
+      name                 = try(server.name, null)
+    }
+  ]
+
+
   # flattened Management and Compute instances
   lsf_inv_compute_instances = var.enable_deployer ? [] : try(flatten([local.lsf_simplified_compute_vsi_data]), [])
   lsf_management_instances  = var.enable_deployer ? [] : flatten([local.lsf_simplified_management_vsi_data])
+  lsf_static_compute_bms    = var.enable_deployer ? [] : flatten([local.lsf_simplified_static_compute_baremetal_data])
   lsf_compute_instances = var.enable_deployer ? [] : concat(
     local.lsf_management_instances,
-    local.lsf_inv_compute_instances
+    local.lsf_inv_compute_instances,
+    local.lsf_static_compute_bms
   )
 
   login_instance = var.enable_deployer ? [] : flatten(module.landing_zone_vsi[0].login_vsi_data)
@@ -93,6 +105,21 @@ locals {
     [for inst in var.static_compute_instances : strcontains(inst.profile, "gaudi3")],
     [for inst in var.dynamic_compute_instances : strcontains(inst.profile, "gaudi3")]
   ))
+
+  # Login Node CPU platform
+  cpu_platform_map = {
+    x2    = "Intel_Cascadelake"
+    x3    = "Intel_SapphireRapids"
+    x4    = "Intel_GraniteRapids"
+    hx4   = "AMD_EPYC_9575F"
+    gaudi = "Intel_Gaudi_PLATINUM_8568Y"
+  }
+
+  login_node_cpu_platform = var.enable_deployer ? null : lookup(
+    local.cpu_platform_map,
+    try(regex("(?:hx4|x2|x3|x4|gaudi)", var.login_instance[0].profile), "unknown"),
+    "UNKNOWN"
+  )
 
   ##########################################
   # Scale variables
@@ -197,6 +224,8 @@ locals {
   compute_instances     = var.enable_deployer ? [] : local.simplified_compute_vsi_data
   inv_compute_instances = var.enable_deployer ? [] : try(flatten([local.simplified_compute_vsi_data]), [])
   management_instances  = var.enable_deployer ? [] : flatten([local.simplified_management_vsi_data])
+  # static_compute_servers = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].static_compute_baremetal_data])
+  static_compute_bms = var.enable_deployer ? [] : flatten([local.lsf_simplified_static_compute_baremetal_data])
 
   comp_mgmt_instances   = var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_management_vsi_data])
   storage_instances     = var.enable_deployer ? [] : local.simplified_storage_vsi_data
@@ -278,6 +307,9 @@ locals {
   (local.use_existing_login_subnets ? local.existing_login_subnets : module.landing_zone.bastion_subnets))
 
   login_subnet = length(local.login_subnets) > 0 ? [for subnet in local.login_subnets : subnet.id][0] : ""
+
+  # Dedicated Host
+  dedicated_host_id = var.enable_dedicated_host ? try(one([for item in module.landing_zone_vsi[0].dedicated_host_id : item.id]), null) : null
 
   ##########################################
   # Scale specific variables
@@ -561,7 +593,7 @@ locals {
   ] : []
 
   compute_dns_records = [
-    for instance in concat(flatten(local.compute_instances), local.management_instances, local.comp_mgmt_instances, local.deployer_instances, local.login_instance) :
+    for instance in concat(flatten(local.compute_instances), local.management_instances, local.comp_mgmt_instances, local.deployer_instances, local.login_instance, local.static_compute_bms) :
     {
       name  = instance["name"]
       rdata = instance["ipv4_address"]
@@ -668,7 +700,7 @@ locals {
   ldap_hosts_ips        = var.scheduler == "LSF" ? var.enable_deployer ? [] : (var.enable_ldap == true ? (var.ldap_server == "null" ? local.ldap_instances[*]["ipv4_address"] : [var.ldap_server]) : []) : []
   login_host            = var.scheduler == "LSF" ? var.enable_deployer ? [] : try([for name in local.login_instance[*]["name"] : "${name}.${var.dns_domain_names["compute"]}"], []) : []
   compute_nodes = var.scheduler == "LSF" ? (
-    var.enable_deployer ? [] : flatten([module.landing_zone_vsi[0].compute_vsi_data])[*]["name"]
+    var.enable_deployer ? [] : concat(flatten([module.landing_zone_vsi[0].compute_vsi_data])[*]["name"], flatten([module.landing_zone_vsi[0].static_compute_baremetal_data])[*]["name"])
   ) : []
 
   management_nodes = var.scheduler == "LSF" ? (
@@ -706,7 +738,7 @@ locals {
   lsf_deployer_hostname = var.scheduler == "LSF" ? var.deployer_hostname : ""
 
   mgmnt_host_entry    = var.scheduler == "LSF" ? { for vsi in flatten([module.landing_zone_vsi[*].management_vsi_data]) : vsi.ipv4_address => vsi.name } : {}
-  comp_host_entry     = var.scheduler == "LSF" ? { for vsi in flatten([module.landing_zone_vsi[*].compute_vsi_data]) : vsi.ipv4_address => vsi.name } : {}
+  comp_host_entry     = var.scheduler == "LSF" ? (var.enable_baremetal == false ? { for vsi in flatten([module.landing_zone_vsi[*].compute_vsi_data]) : vsi.ipv4_address => vsi.name } : { for server in flatten([module.landing_zone_vsi[*].static_compute_baremetal_data]) : server.ipv4_address => server.name }) : {}
   login_host_entry    = var.scheduler == "LSF" ? { for vsi in flatten([module.landing_zone_vsi[*].login_vsi_data]) : vsi.ipv4_address => vsi.name } : {}
   deployer_host_entry = var.scheduler == "LSF" ? { for inst in local.deployer_instances : inst.ipv4_address => inst.name if inst.ipv4_address != null } : {}
 
@@ -777,7 +809,8 @@ locals {
   scale_org_version  = var.scheduler == "Scale" ? (var.enable_deployer ? "" : regex("gpfs.base-(.*).x86_64.rpm", tolist(local.gpfs_base_rpm_path)[0])[0]) : ""
   scale_version      = var.scheduler == "Scale" ? (var.enable_deployer ? "" : replace(local.scale_org_version, "-", ".")) : ""
 
-  compute_vsi_profile    = var.static_compute_instances[*]["profile"]
+  compute_vsi_profile = var.static_compute_instances[*]["profile"]
+  # static_compute_bms_profile = var.scheduler == "LSF" && var.enable_baremetal == true ? var.static_compute_instances[*]["profile"] : []
   storage_vsi_profile    = var.storage_instances[*]["profile"]
   storage_bms_profile    = var.storage_servers[*]["profile"]
   management_vsi_profile = var.management_instances[*]["profile"]
@@ -788,7 +821,7 @@ locals {
 
   scale_ces_enabled               = local.protocol_instance_count > 0 ? true : false
   is_colocate_protocol_subset     = local.scale_ces_enabled && var.colocate_protocol_instances ? local.protocol_instance_count < local.storage_instance_count ? true : false : false
-  enable_sec_interface_compute    = local.scale_ces_enabled == false && data.ibm_is_instance_profile.compute_profile.bandwidth[0].value >= 64000 ? true : false
+  enable_sec_interface_compute    = local.scale_ces_enabled == false && try(data.ibm_is_instance_profile.compute_profile[0].bandwidth[0].value, 0) >= 64000 ? true : false
   enable_sec_interface_storage    = local.scale_ces_enabled == false && var.storage_type != "baremetal" && data.ibm_is_instance_profile.storage_profile.bandwidth[0].value >= 64000 ? true : false
   enable_mrot_conf                = local.enable_sec_interface_compute && local.enable_sec_interface_storage ? true : false
   enable_afm                      = local.afm_instance_count > 0 ? true : false
@@ -889,9 +922,9 @@ locals {
   compute_subnet_cidr = local.static_compute_instance_count > 0 && var.compute_subnet_id != null ? jsonencode((data.ibm_is_subnet.existing_compute_subnets[*].ipv4_cidr_block)[0]) : ""
   client_subnet_cidr  = local.client_instance_count > 0 && var.client_subnet_id != null ? jsonencode((data.ibm_is_subnet.existing_client_subnets[*].ipv4_cidr_block)[0]) : ""
 
-  compute_memory               = data.ibm_is_instance_profile.compute_profile.memory[0].value
-  compute_vcpus_count          = data.ibm_is_instance_profile.compute_profile.vcpu_count[0].value
-  compute_bandwidth            = data.ibm_is_instance_profile.compute_profile.bandwidth[0].value
+  compute_memory               = var.enable_baremetal == false ? try(data.ibm_is_instance_profile.compute_profile[0].memory[0].value, 0) : 0
+  compute_vcpus_count          = var.enable_baremetal == false ? try(data.ibm_is_instance_profile.compute_profile[0].memory[0].value, 0) : 0
+  compute_bandwidth            = var.enable_baremetal == false ? try(data.ibm_is_instance_profile.compute_profile[0].memory[0].value, 0) : 0
   management_memory            = data.ibm_is_instance_profile.management_profile.memory[0].value
   management_vcpus_count       = data.ibm_is_instance_profile.management_profile.vcpu_count[0].value
   management_bandwidth         = data.ibm_is_instance_profile.management_profile.bandwidth[0].value

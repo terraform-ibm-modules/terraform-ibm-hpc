@@ -1,11 +1,12 @@
 locals {
-  schematics_inputs_path      = format("/tmp/.schematics/%s/solution_terraform.auto.tfvars.json", var.cluster_prefix)
-  remote_inputs_path          = format("%s/terraform.tfvars.json", "/tmp")
-  deployer_path               = "/opt/ibm"
-  remote_terraform_path       = format("%s/terraform-ibm-hpc", local.deployer_path)
+  schematics_inputs_path = format("/tmp/.schematics/%s/solution_terraform.auto.tfvars.json", var.cluster_prefix)
+  remote_inputs_path     = format("%s/terraform.tfvars.json", "/tmp")
+  deployer_path          = "/opt/ibm"
+  remote_terraform_path  = format("%s/terraform-ibm-hpc", local.deployer_path)
+  # da_hpc_repo_url        = "github.ibm.com/workload-eng-services/HPCaaS.git"
   da_hpc_repo_url             = "github.com/terraform-ibm-modules/terraform-ibm-hpc.git"
-  da_hpc_lsf_repo_tag         = "v3.3.2"
-  da_hpc_scale_repo_tag       = "v3.3.2"
+  da_hpc_lsf_repo_tag         = "10-june"
+  da_hpc_scale_repo_tag       = "10-june"
   da_hpc_repo_tag             = var.scheduler == "Scale" ? local.da_hpc_scale_repo_tag : local.da_hpc_lsf_repo_tag
   remote_ansible_path         = format("%s/ibm-spectrumscale-cloud-deploy", local.deployer_path)
   scale_cloud_infra_repo_url  = "https://github.com/IBM/ibm-spectrum-scale-install-infra"
