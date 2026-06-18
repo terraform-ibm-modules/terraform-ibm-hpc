@@ -1,0 +1,38 @@
+---
+- name: Get root device
+  command: findmnt -n -o SOURCE /
+  register: root_device_cmd
+  changed_when: false
+
+- name: Set root device
+  set_fact:
+    root_device: "{{ root_device_cmd.stdout }}"
+
+- name: Extract disk and partition number
+  set_fact:
+    disk_device: "{{ root_device | regex_replace('[0-9]+$', '') }}"
+    partition_number: "{{ root_device | regex_search('[0-9]+$') }}"
+
+- name: Debug detected values
+  debug:
+    msg:
+      - "Root device: {{ root_device }}"
+      - "Disk: {{ disk_device }}"
+      - "Partition: {{ partition_number }}"
+
+- name: Check if partition can be grown
+  command: growpart -N {{ disk_device }} {{ partition_number }}
+  register: growpart_check
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Grow partition
+  command: growpart {{ disk_device }} {{ partition_number }}
+  when: "'NOCHANGE' not in growpart_check.stdout"
+  become: true
+
+- name: Grow XFS filesystem
+  command: xfs_growfs /
+  when: "'NOCHANGE' not in growpart_check.stdout"
+  become: true

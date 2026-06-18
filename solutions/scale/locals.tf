@@ -70,7 +70,9 @@ locals {
     storage_type                         = var.storage_type
     colocate_protocol_instances          = var.colocate_protocol_instances
     scale_encryption_admin_password      = var.scale_encryption_admin_password
-    key_protect_instance_id              = var.key_protect_instance_id
+    key_management                       = var.key_management
+    kms_instance_name                    = var.kms_instance_name
+    kms_key_name                         = var.kms_key_name
     filesystem_config                    = var.filesystem_config
     existing_bastion_instance_name       = var.existing_bastion_instance_name
     existing_bastion_instance_public_ip  = var.existing_bastion_instance_public_ip
@@ -94,6 +96,8 @@ locals {
     volume_storages                      = var.volume_storages
     enable_private_path_nlb              = var.enable_private_path_nlb
     protocol_instance_eth1_mtu           = var.protocol_instance_eth1_mtu
+    tfstate_cos_config                   = var.tfstate_cos_config
+    tfstate_existing_cos_bucket_creds    = var.tfstate_existing_cos_bucket_creds
   }
 }
 
@@ -149,8 +153,10 @@ locals {
     ldap_instance                        = lookup(local.override[local.override_type], "ldap_instance", local.config.ldap_instance)
     scale_encryption_enabled             = lookup(local.override[local.override_type], "scale_encryption_enabled", local.config.scale_encryption_enabled)
     scale_encryption_type                = lookup(local.override[local.override_type], "scale_encryption_type", local.config.scale_encryption_type)
+    key_management                       = lookup(local.override[local.override_type], "key_management", local.config.key_management)
+    kms_instance_name                    = lookup(local.override[local.override_type], "kms_instance_name", local.config.kms_instance_name)
+    kms_key_name                         = lookup(local.override[local.override_type], "kms_key_name", local.config.kms_key_name)
     gklm_instances                       = lookup(local.override[local.override_type], "gklm_instances", local.config.gklm_instances)
-    key_protect_instance_id              = lookup(local.override[local.override_type], "key_protect_instance_id", local.config.key_protect_instance_id)
     storage_type                         = lookup(local.override[local.override_type], "storage_type", local.config.storage_type)
     colocate_protocol_instances          = lookup(local.override[local.override_type], "colocate_protocol_instances", local.config.colocate_protocol_instances)
     scale_encryption_admin_password      = lookup(local.override[local.override_type], "scale_encryption_admin_password", local.config.scale_encryption_admin_password)
@@ -177,5 +183,7 @@ locals {
     volume_storages                      = lookup(local.override[local.override_type], "volume_storages", local.config.volume_storages)
     enable_private_path_nlb              = lookup(local.override[local.override_type], "enable_private_path_nlb", local.config.enable_private_path_nlb)
     protocol_instance_eth1_mtu           = lookup(local.override[local.override_type], "protocol_instance_eth1_mtu", local.config.protocol_instance_eth1_mtu)
+    tfstate_cos_config                   = lookup(local.override[local.override_type], "tfstate_cos_config", local.config.tfstate_cos_config)
+    tfstate_existing_cos_bucket_creds    = lookup(local.override[local.override_type], "tfstate_existing_cos_bucket_creds", local.config.tfstate_existing_cos_bucket_creds)
   }
 }

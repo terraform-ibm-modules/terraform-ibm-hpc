@@ -180,7 +180,7 @@ locals {
     storage_public_key_content  = var.scheduler == "Scale" ? base64encode(module.storage_key[0].public_key_content) : ""
   }
 
-  enable_sec_interface_compute = local.enable_protocol == false && data.ibm_is_instance_profile.compute_profile[0].bandwidth[0].value >= 64000 ? true : false
+  enable_sec_interface_compute = local.enable_protocol == false && try(data.ibm_is_instance_profile.compute_profile[0].bandwidth[0].value, 0) >= 64000 ? true : false
   enable_sec_interface_storage = local.enable_protocol == false && var.storage_type != "baremetal" && data.ibm_is_instance_profile.storage[0].bandwidth[0].value >= 64000 ? true : false
 
   # Security Groups
@@ -240,7 +240,7 @@ locals {
       count                = inst.count
       instance_valid       = contains(local.valid_instance_profiles, inst.profile)
       dh_profile_available = length(local.profile_mappings[regex("^([a-z]+[0-9]+)", inst.profile)[0]].dh_profiles) > 0
-    } if inst.count > 0
+    }
   ]
 
   # Error messages for invalid configurations
@@ -479,11 +479,11 @@ locals {
   boot_volume_size = length(var.volume_storages) > 0 ? try(var.volume_storages[0].boot_volume_size, 100) : 100
 
   ht_true_pricing = {
-    version_crn = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:version:61e655c5-40b6-4b68-a6ab-e6c77a457fce-global/7b95e7f9-8ad6-4675-89e4-80620c7d39b6-global"
+    version_crn = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:version:61e655c5-40b6-4b68-a6ab-e6c77a457fce-global/b6efee69-353d-4f4d-925b-3809a7e44a7c-global"
     plan_crn    = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:plan:sw.1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc.d114e7ab-4f7e-40c4-98cc-f0c000cbf3a7-global"
   }
   ht_false_pricing = {
-    version_crn = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:version:61e655c5-40b6-4b68-a6ab-e6c77a457fce-global/7b95e7f9-8ad6-4675-89e4-80620c7d39b6-global"
+    version_crn = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:version:61e655c5-40b6-4b68-a6ab-e6c77a457fce-global/b6efee69-353d-4f4d-925b-3809a7e44a7c-global"
     plan_crn    = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:plan:sw.1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc.6e0f4e27-509d-4cba-bf80-58217a412103-global"
   }
 

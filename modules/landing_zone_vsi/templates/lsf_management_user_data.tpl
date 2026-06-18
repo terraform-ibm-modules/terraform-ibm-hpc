@@ -34,6 +34,7 @@
 # Script Variables
 ###############################################################################
 LOGFILE="/tmp/init-script.log"
+DISPLAY_LOGFILE="/var/log/lsf_management_setup.log"
 USER="vpcuser"
 REPO_ID="ansible-2-for-rhel-8-x86_64-rpms"
 CLUSTER_USER="lsfadmin"
@@ -49,7 +50,7 @@ HOSTNAME="$(hostname)"
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOGFILE"
 }
-
+exec > >(tee -a "$DISPLAY_LOGFILE") 2>&1
 log "Initialization script started"
 
 ###############################################################################
@@ -287,13 +288,18 @@ systemctl daemon-reload
 systemctl enable lsf_prometheus_exporter
 systemctl restart lsf_prometheus_exporter
 
-# Setting up the Metrics Agent
+# ==========================================
+# Setting up the Unified Metrics & Security Agent
+# ==========================================
+SYSDIG_CONFIG_FILE="/opt/draios/etc/dragent.yaml"
+PROMETHEUS_CONFIG_FILE="/opt/prometheus/prometheus.yml"
+START_DRAGENT=false
+
+# 1. Condition Block: IBM Cloud Monitoring (Metrics)
 if [ "${observability_monitoring_enable}" = true ]; then
   log "observability_monitoring_enable is true"
   if [ "${cloud_monitoring_access_key}" != "" ] && [ "${cloud_monitoring_ingestion_url}" != "" ]; then
     log "cloud_monitoring_access_key and cloud_monitoring_ingestion_url are provided"
-    SYSDIG_CONFIG_FILE="/opt/draios/etc/dragent.yaml"
-    PROMETHEUS_CONFIG_FILE="/opt/prometheus/prometheus.yml"
 
     #packages installation
     log "Writing sysdig config file"
@@ -302,8 +308,8 @@ if [ "${observability_monitoring_enable}" = true ]; then
     log "Setting customerid access key"
     sed -i "s/==ACCESSKEY==/${cloud_monitoring_access_key}/g" $SYSDIG_CONFIG_FILE
     sed -i "s/==COLLECTOR==/${cloud_monitoring_ingestion_url}/g" $SYSDIG_CONFIG_FILE
-    echo "tags: type:management,lsf:true" >> $SYSDIG_CONFIG_FILE
 
+    log "Writing prometheus config file"
     cat <<EOTF > $PROMETHEUS_CONFIG_FILE
 global:
   scrape_interval: 60s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
@@ -324,14 +330,52 @@ EOTF
     systemctl enable prometheus
     systemctl restart prometheus
 
-    log "Restarting sysdig agent"
-    systemctl enable dragent
-    systemctl restart dragent
+    # Mark that the agent has valid configuration to run
+    START_DRAGENT=true
   else
     log "Skipping metrics agent configuration due to missing parameters"
   fi
+fi
+
+# 2. Condition Block: SCC Workload Protection (Security)
+if [ "${enable_sccwp}" = true ]; then
+  log "enable_sccwp is true"
+  if [ "${sccwp_api_endpoint}" != "" ]; then
+    log "Configuring Security Compliance data endpoints"
+
+    sed -i "s/==SCC_ENDPOINT==/${sccwp_api_endpoint}/g" $SYSDIG_CONFIG_FILE
+
+    # FALLBACK LOGIC: If Monitoring is OFF, the agent still needs an access key and collector!
+    if [ "${observability_monitoring_enable}" != true ]; then
+      log "Monitoring is disabled. Using standalone SCC credentials for agent authentication."
+      sed -i "s/==ACCESSKEY==/${sccwp_access_key}/g" $SYSDIG_CONFIG_FILE
+      sed -i "s/==COLLECTOR==/${sccwp_ingestion_endpoint}/g" $SYSDIG_CONFIG_FILE
+    fi
+
+    # Mark that the agent has valid configuration to run
+    START_DRAGENT=true
+  else
+    log "Skipping SCC configuration due to missing sccwp_api_endpoint"
+  fi
+
 else
-  log "Metrics agent configuration skipped since monitoring provisioning is not enabled"
+  log "SCC Workload Protection is false. Safely disabling internal scanning engines."
+  # If security is explicitly disabled, flip the internal engine flags to false
+  # to save host CPU cycles and prevent connection errors to an empty placeholder.
+  sed -i '/host_scanner:/,/enabled: true/s/enabled: true/enabled: false/' $SYSDIG_CONFIG_FILE
+  sed -i '/kspm_analyzer:/,/enabled: true/s/enabled: true/enabled: false/' $SYSDIG_CONFIG_FILE
+fi
+
+# 3. Finalization Block: Global Rules & Daemon Lifecycle
+if [ "$${START_DRAGENT}" = true ]; then
+  log "Appending global metadata infrastructure tags"
+  echo "tags: type:management,lsf:true" >> $SYSDIG_CONFIG_FILE
+
+  log "Activating and starting Sysdig unified agent service"
+  systemctl enable dragent
+  systemctl restart dragent
+else
+  log "Sysdig agent remaining stopped and disabled: No features were requested."
 fi
 
 # Setting up the IBM Cloud Logs

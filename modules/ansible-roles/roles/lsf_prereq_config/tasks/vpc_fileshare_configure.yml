@@ -48,6 +48,13 @@
   changed_when: false
   failed_when: mount_check_nfs is failed
 
+- name: NFS Config | Daemon reload for baremetal servers
+  ansible.builtin.shell: sudo systemctl daemon-reload
+  when:
+    - inventory_hostname in groups['compute_nodes']
+    - enable_baremetal | bool
+    - mount_check_nfs.results | selectattr('rc', 'ne', 0) | list | length > 0
+
 - name: NFS Config | Flush handlers to apply mounts immediately
   meta: flush_handlers
 

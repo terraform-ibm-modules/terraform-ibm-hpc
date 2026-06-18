@@ -4,3 +4,8 @@
 
 - name: Configure Login Node
   import_tasks: configure_login_node.yml
+
+# Resize disk partition and filesystem
+- name: Resize root disk
+  include_role:
+    name: common_resize_disk

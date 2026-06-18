@@ -49,7 +49,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "kms_instance_name" : ${local.kms_instance_name},
   "kms_key_name": ${local.kms_key_name},
   "boot_volume_encryption_key": ${local.boot_volume_encryption_key},
-  "existing_kms_instance_guid": ${local.existing_kms_instance_guid},
+  "kms_instance_guid": ${local.kms_instance_guid},
   "skip_iam_share_authorization_policy": ${var.skip_iam_share_authorization_policy},
   "dns_custom_resolver_id": ${local.dns_custom_resolver_id},
   "dns_instance_id": ${local.dns_instance_id},
@@ -72,7 +72,6 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "scale_encryption_type": ${local.scale_encryption_type},
   "gklm_instances": ${local.list_gklm_instances},
   "scale_encryption_admin_password": ${local.scale_encryption_admin_password},
-  "key_protect_instance_id": ${local.key_protect_instance_id},
   "filesystem_config": ${local.filesystem_config},
   "filesets_config": ${local.filesets_config},
   "storage_gui_username": "${var.storage_gui_username}",
@@ -93,6 +92,7 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "observability_atracker_enable": ${var.observability_atracker_enable},
   "observability_atracker_target_type": "${var.observability_atracker_target_type}",
   "enable_dedicated_host": "${var.enable_dedicated_host}",
+  "enable_baremetal": "${var.enable_baremetal}",
   "storage_security_group_id": "${local.storage_security_group_id}",
   "custom_file_shares": ${local.custom_file_shares},
   "login_instance": ${local.login_instance},
@@ -113,4 +113,23 @@ resource "local_sensitive_file" "prepare_tf_input" {
 }
 EOT
   filename = local.schematics_inputs_path
+}
+
+resource "local_sensitive_file" "prepare_backend_input" {
+  count    = var.enable_deployer == true ? 1 : 0
+  content  = <<EOT
+terraform {
+  backend "s3" {
+    endpoint                    = "https://s3.${var.terraform_state_bucket_region}.cloud-object-storage.appdomain.cloud"
+    bucket                      = "${var.terraform_state_bucket}"
+    key                         = "${var.cluster_prefix}/${var.state_file_key}"
+    region                      = "${var.terraform_state_bucket_region}"
+    skip_credentials_validation = true
+    skip_region_validation      = true
+    skip_requesting_account_id  = true
+    force_path_style            = true
+  }
+}
+EOT
+  filename = local.backend_inputs_path
 }

@@ -220,7 +220,21 @@ locals {
         akey   = key.credentials["cos_hmac_keys.access_key_id"]
         bucket = bucket.bucket
         skey   = key.credentials["cos_hmac_keys.secret_access_key"]
-      } if key.resource_instance_id == bucket.resource_instance_id
+      } if key.resource_instance_id == bucket.resource_instance_id &&
+      !can(regex(".*terraform.*state.*", bucket.bucket)) &&
+      !can(regex(".*tf.*state.*", bucket.bucket)) &&
+      !can(regex(".*state.*bucket.*", bucket.bucket))
     ]
   ])
+
+  terraform_state_bucket_params = [
+    for item in local.new_hmac_keys : {
+      akey                 = item.credentials["cos_hmac_keys.access_key_id"]
+      bucket               = item.name
+      skey                 = item.credentials["cos_hmac_keys.secret_access_key"]
+      resource_instance_id = item.resource_instance_id
+    } if can(regex(".*terraform.*state.*", item.name)) ||
+    can(regex(".*tf.*state.*", item.name)) ||
+    can(regex(".*state.*bucket.*", item.name))
+  ]
 }

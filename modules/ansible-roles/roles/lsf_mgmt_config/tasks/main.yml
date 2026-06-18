@@ -20,7 +20,6 @@
   become_flags: "-i"
   when:
     - inventory_hostname in groups['gui_hosts']
-    - enable_appcenter | bool
   rescue:
     - name: Log failure for App Center configuration
       ansible.builtin.debug:
@@ -34,7 +33,6 @@
   become_flags: "-i"
   when:
     - inventory_hostname in groups['gui_hosts']
-    - enable_webservice | bool
   rescue:
     - name: Log failure for Web Services configuration
       ansible.builtin.debug:
@@ -47,3 +45,17 @@
 # Configure License Scheduler
 - name: Set up and configure License Scheduler
   import_tasks: license_scheduler.yml
+
+# Resize disk partition and filesystem
+- name: Resize root disk for compute nodes
+  include_role:
+    name: common_resize_disk
+  when:
+    - not enable_baremetal | bool
+    - inventory_hostname in groups['compute_nodes']
+
+- name: Resize root disk for management nodes
+  include_role:
+    name: common_resize_disk
+  when:
+    - inventory_hostname in groups['management_nodes']

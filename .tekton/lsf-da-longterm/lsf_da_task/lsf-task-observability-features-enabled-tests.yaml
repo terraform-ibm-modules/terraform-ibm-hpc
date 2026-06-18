@@ -1,0 +1,150 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: observability-features-enabled-tests
+spec:
+  params:
+    - name: ibmcloud-api
+      description: the ibmcloud api
+      default: https://cloud.ibm.com
+    - name: continuous-delivery-context-secret
+      description: name of the secret containing the continuous delivery pipeline context secrets
+      default: secure-properties
+    - name: ibmcloud-apikey-secret-key
+      description: field in the secret that contains the api key used to login to ibmcloud
+      default: ibmcloud_api_key
+    - name: pipeline-debug
+      description: Pipeline debug mode. Value can be 0 or 1. Default to 0
+      default: "0"
+    - name: revision
+      description: the git revision/commit to update the git HEAD to.
+      default: ""
+    - name: directory-name
+      default: "."
+    - name: repository
+      description: the git repo url
+    - name: git_access_token
+      default: ""
+    - name: zone
+      default: ""
+    - name: resource_group
+      default: Default
+    - name: compute_image_name_rhel
+      default: ""
+    - name: compute_image_name_ubuntu
+      default: ""
+    - name: login_image_name
+      default: ""
+    - name: management_image_name
+      default: ""
+    - name: deployer_image_name
+      default: ""
+    - name: cos_region
+      default: ""
+    - name: cos_bucket
+      default: ""
+    - name: cos_instance_crn
+      default: ""
+    - name: cos_api_key
+      default: ""
+    - name: hpc_custom_reports_repo
+      default: ""
+    - name: hpc_custom_reports_branch
+      default: "main"
+    - name: git_user_name
+      default: ""
+    - name: git_user_email
+      default: ""
+    - name: solution
+      default: "lsf-da"
+    - name: lsf_version
+      default: "lsf15"
+  workspaces:
+    - name: workspace
+      mountPath: /artifacts
+  stepTemplate:
+    env:
+      - name: API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: $(params.continuous-delivery-context-secret)
+            key: $(params.ibmcloud-apikey-secret-key)
+            optional: true
+      - name: BUILD_NUMBER
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.annotations['devops.cloud.ibm.com/build-number']
+      - name: PIPELINE_DEBUG
+        value: $(params.pipeline-debug)
+      - name: REVISION
+        value: $(params.revision)
+      - name: zone
+        value: $(params.zone)
+      - name: resource_group
+        value: $(params.resource_group)
+      - name: compute_image_name_rhel
+        value: $(params.compute_image_name_rhel)
+      - name: compute_image_name_ubuntu
+        value: $(params.compute_image_name_ubuntu)
+      - name: login_image_name
+        value: $(params.login_image_name)
+      - name: management_image_name
+        value: $(params.management_image_name)
+      - name: deployer_image_name
+        value: $(params.deployer_image_name)
+      - name: cos_region
+        value: $(params.cos_region)
+      - name: cos_bucket
+        value: $(params.cos_bucket)
+      - name: cos_instance_crn
+        value: $(params.cos_instance_crn)
+      - name: cos_api_key
+        value: $(params.cos_api_key)
+      - name: hpc_custom_reports_repo
+        value: $(params.hpc_custom_reports_repo)
+      - name: hpc_custom_reports_branch
+        value: $(params.hpc_custom_reports_branch)
+      - name: git_user_name
+        value: $(params.git_user_name)
+      - name: git_user_email
+        value: $(params.git_user_email)
+      - name: git_access_token
+        value: $(params.git_access_token)
+      - name: solution
+        value: $(params.solution)
+      - name: management_image_name
+        value: $(params.management_image_name)
+      - name: deployer_image_name
+        value: $(params.deployer_image_name)
+      - name: lsf_version
+        value: $(params.lsf_version)
+  steps:
+    - name: observability-features-enabled-tests
+      onError: continue
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd; env; trap env EXIT; set -x
+          fi
+          source .tekton/scripts/suites.sh
+          observability-features-enabled-tests
+    - name: display-summary-report
+      onError: continue
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+      workingDir: "/artifacts"
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          #!/bin/bash
+          if [[ "${PIPELINE_DEBUG}" == "true" ]]; then
+            pwd; env; trap env EXIT; set -x
+          fi
+          source .tekton/scripts/html_report.sh
+          common_task_report observability-features-enabled-tests lsf-da

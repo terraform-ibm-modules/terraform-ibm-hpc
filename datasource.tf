@@ -75,7 +75,8 @@ data "ibm_is_subnet" "compute_subnet_crn" {
 }
 
 data "ibm_is_instance_profile" "compute_profile" {
-  name = local.compute_vsi_profile[0]
+  count = ((var.scheduler == "LSF" && var.enable_baremetal == false) || (var.scheduler == "Scale")) ? 1 : 0
+  name  = local.compute_vsi_profile[0]
 }
 
 data "ibm_is_instance_profile" "storage_profile" {

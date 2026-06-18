@@ -800,6 +800,43 @@ variable "ldap_instance" {
   }
 }
 
+##############################################################################
+# KMS Variables for Boot Volume and COS Encryption
+##############################################################################
+
+variable "key_management" {
+  type        = string
+  default     = "key_protect"
+  description = "Set the value as key_protect to enable customer managed encryption for boot volume and file share. If the key_management is set to null, IBM Cloud resources will be always be encrypted through provider managed."
+  validation {
+    condition     = var.key_management == "null" || var.key_management == null || var.key_management == "key_protect"
+    error_message = "key_management must be either 'null', null, or 'key_protect'."
+  }
+}
+
+variable "kms_instance_name" {
+  type        = string
+  default     = null
+  description = "Provide the name of the existing Key Protect instance associated with the Key Management Service. Note: To use existing kms_instance_name set key_management as key_protect. The kms_instance_name can also be used to enable Scale encryption with Key Protect. The name can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
+  validation {
+    condition     = !(var.kms_instance_name != null && var.key_management != "key_protect")
+    error_message = "kms_instance_name can only be provided when key_management is set to 'key_protect'."
+  }
+}
+
+variable "kms_key_name" {
+  type        = string
+  default     = null
+  description = "Provide the existing kms key name that you want to use for the IBM Spectrum Scale cluster. Note: kms_key_name to be considered only if key_management value is set as key_protect (for example kms_key_name: my-encryption-key)."
+  validation {
+    condition     = !(var.kms_key_name != null && var.kms_instance_name == null)
+    error_message = "kms_instance_name must be provided when kms_key_name is specified."
+  }
+  validation {
+    condition     = !(var.kms_key_name != null && var.key_management != "key_protect")
+    error_message = "kms_key_name can only be provided when key_management is set to 'key_protect'."
+  }
+}
 
 ##############################################################################
 # GKLM variables
@@ -813,7 +850,7 @@ variable "scale_encryption_enabled" {
 variable "scale_encryption_type" {
   type        = string
   default     = "null"
-  description = "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled"
+  description = "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled. Key_Protect Encryption supports existing KMS Instance. Provdie the KMS instance on the kms_instance_name variable."
 
   validation {
     condition     = can(regex("^(key_protect|gklm|null)$", var.scale_encryption_type)) && (var.scale_encryption_type == "null" || var.scale_encryption_enabled) && (!var.scale_encryption_enabled || var.scale_encryption_type != "null")
@@ -835,9 +872,9 @@ variable "gklm_instances" {
     })
   )
   default = [{
-    profile = "bx2-2x8"
+    profile = "bx2-4x16"
     count   = 2
-    image   = "hpcc-scale-gklm4202-v2-5-5"
+    image   = "hpcc-scale-gklm4202-v2-5-6"
   }]
   validation {
     condition = (
@@ -881,14 +918,6 @@ variable "scale_encryption_admin_password" {
 
     error_message = "You must provide scale_encryption_admin_password when scale_encryption_enabled is true and scale_encryption_type is 'gklm'. The scale encryption admin password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain any spaces."
   }
-}
-
-# Existing Key Protect Instance Details
-
-variable "key_protect_instance_id" {
-  type        = string
-  default     = null
-  description = "Provide the ID of an existing IBM Key Protect instance to be used for filesystem encryption in IBM Storage Scale. If this value is provided, the automation will use the existing Key Protect instance and create a new encryption key within it. If not provided, a new Key Protect instance will be created automatically during deployment."
 }
 
 variable "storage_type" {
@@ -1251,5 +1280,69 @@ variable "protocol_instance_eth1_mtu" {
       )
     )
     error_message = "MTU must be between 1500-8500 when private path NLB is enabled, or 1500-9000 when disabled."
+  }
+}
+
+######## State Bucket variables #########
+
+variable "tfstate_cos_config" {
+  type = list(object({
+    bucket_storage_class = string
+    bucket_type          = string
+    bucket_region        = string
+  }))
+
+  nullable = false
+
+  default = [{
+    bucket_storage_class = "standard"
+    bucket_type          = "region_location"
+    bucket_region        = ""
+  }]
+
+  description = "Configuration for Terraform state COS bucket"
+
+  #bucket_storage_class validation
+  validation {
+    condition = alltrue([
+      for cfg in var.tfstate_cos_config :
+      contains(["standard", "smart-tier"], cfg.bucket_storage_class)
+    ])
+    error_message = "bucket_storage_class must be either 'standard' or 'smart-tier'."
+  }
+
+  #bucket_type validation
+  validation {
+    condition = alltrue([
+      for cfg in var.tfstate_cos_config :
+      contains(
+        ["cross_region_location", "single_site_location", "region_location"],
+        cfg.bucket_type
+      )
+    ])
+    error_message = "bucket_type must be one of: cross_region_location, single_site_location, or region_location."
+  }
+}
+
+variable "tfstate_existing_cos_bucket_creds" {
+  type = object({
+    bucket = string
+    region = string
+    akey   = string
+    skey   = string
+  })
+  sensitive   = true
+  default     = null
+  description = "Credentials to use an EXISTING Terraform state COS bucket. Leave null if creating a new bucket."
+
+  # COS Credentials must be completely filled out if provided
+  validation {
+    condition = var.tfstate_existing_cos_bucket_creds == null ? true : (
+      trimspace(try(var.tfstate_existing_cos_bucket_creds.bucket, "")) != "" &&
+      trimspace(try(var.tfstate_existing_cos_bucket_creds.region, "")) != "" &&
+      trimspace(try(var.tfstate_existing_cos_bucket_creds.akey, "")) != "" &&
+      trimspace(try(var.tfstate_existing_cos_bucket_creds.skey, "")) != ""
+    )
+    error_message = "When providing tfstate_existing_cos_bucket_creds, the bucket, region, akey, and skey must all be non-empty."
   }
 }

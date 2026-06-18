@@ -96,7 +96,7 @@ output "boot_volume_encryption_key" {
 
 output "key_management_guid" {
   description = "GUID for KMS instance"
-  value       = var.enable_landing_zone ? var.key_management != null || (var.scale_encryption_enabled && var.scale_encryption_type == "key_protect" && var.key_protect_instance_id == null) ? module.landing_zone[0].key_management_guid : null : null
+  value       = var.enable_landing_zone ? var.key_management != null || (var.scale_encryption_enabled && var.scale_encryption_type == "key_protect" && var.kms_instance_name == null) ? module.landing_zone[0].key_management_guid : null : null
 }
 
 output "cos_buckets_data" {
@@ -137,6 +137,11 @@ output "scale_afm_bucket_config_details" {
 output "scale_afm_cos_hmac_key_params" {
   description = "Scale AFM COS HMAC Key Details"
   value       = local.scale_afm_cos_hmac_key_params
+}
+
+output "tfstate_cos_hmac_key_params" {
+  description = "Scale AFM COS HMAC Key Details"
+  value       = local.terraform_state_bucket_params
 }
 
 # TODO: Observability data

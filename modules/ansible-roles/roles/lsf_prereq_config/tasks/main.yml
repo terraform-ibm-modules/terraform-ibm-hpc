@@ -10,7 +10,7 @@
 
 # Disable hyperthreading on compute nodes for better HPC performance
 - name: Disable CPU hyperthreading
-  import_tasks: disable_hyperthreading.yml
+  import_tasks: hyperthreading.yml
 
 # Load Cluster specific variables
 - name: Load Cluster specific variables

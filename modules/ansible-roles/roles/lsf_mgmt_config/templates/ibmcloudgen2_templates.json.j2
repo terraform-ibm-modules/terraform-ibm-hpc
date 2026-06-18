@@ -10,8 +10,8 @@
         "mem": ["Numeric", "{{ rc_mem_in_mb }}"],
         "icgen2host": ["Boolean", "1"]
       },
-      "volumeProfile": "general-purpose",
       "encryptionKey": "{{ boot_volume_encryption_key }}",
+
 {% if enable_lsf_pay_per_use %}
       "catalogOffering": {
         "version_crn": "{{ catalog_offering.version_crn }}",
@@ -20,9 +20,33 @@
 {% else %}
       "imageId": "{{ image_id }}",
 {% endif %}
+
       "subnetId": "{{ compute_subnet_crn }}",
       "vpcId": "{{ vpc_id }}",
       "vmType": "{{ rc_profile }}",
+{% if dedicated_host_id is not none and dedicated_host_id %}
+      "dedicatedHostGroupId": "{{ dedicated_host_id }}",
+{% endif %}
+{% if enable_spot_instances or boot_volume_attachment is not none %}
+      "extensions": {
+{% if enable_spot_instances %}
+        "availability": {
+          "class": "spot"
+        },
+        "availability_policy": {
+          "host_failure": "restart",
+          "preemption": "delete"
+        }{% if boot_volume_attachment is not none %},{% endif %}
+{% endif %}
+
+{% if boot_volume_attachment is not none %}
+        "boot_volume_attachment": {
+          "volume": {{ boot_volume_attachment.volume | to_json }}
+        }
+{% endif %}
+      },
+{% endif %}
+
       "securityGroupIds": ["{{ compute_security_group_id | first }}"],
       "resourceGroupId": "{{ resource_group_id }}",
       "sshkeyIds": {{ compute_ssh_keys_ids | to_json }},

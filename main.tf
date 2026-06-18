@@ -17,8 +17,8 @@ module "landing_zone" {
   kms_key_name                                  = var.kms_key_name
   ssh_keys                                      = var.ssh_keys
   vpc_cluster_login_private_subnets_cidr_blocks = var.vpc_cluster_login_private_subnets_cidr_blocks
-  management_instances                          = var.management_instances
-  compute_instances                             = var.static_compute_instances
+  management_instances                          = local.lsf_management_instance_profiles
+  compute_instances                             = local.lsf_static_compute_instance_profiles
   cluster_cidr                                  = local.cluster_cidr
   placement_strategy                            = var.placement_strategy
   prefix                                        = var.cluster_prefix
@@ -39,11 +39,12 @@ module "landing_zone" {
   observability_logs_enable                     = var.observability_logs_enable_for_management || var.observability_logs_enable_for_compute || (var.observability_atracker_enable && var.observability_atracker_target_type == "cloudlogs") ? true : false
   scale_encryption_type                         = var.scale_encryption_type
   scale_encryption_enabled                      = var.scale_encryption_enabled
-  key_protect_instance_id                       = var.key_protect_instance_id
   afm_instances                                 = var.afm_instances
   afm_cos_config                                = var.afm_cos_config
   filesystem_config                             = var.filesystem_config
   enable_private_path_nlb                       = var.enable_private_path_nlb
+  tfstate_cos_config                            = var.tfstate_cos_config
+  #  tfstate_existing_cos_bucket_creds             = var.tfstate_existing_cos_bucket_creds
   # hpcs_instance_name            = var.hpcs_instance_name
   # clusters                      = var.clusters
 }
@@ -95,9 +96,9 @@ module "landing_zone_vsi" {
   client_subnets                                   = local.client_subnets
   client_instances                                 = var.client_instances
   compute_subnet_id                                = local.compute_subnets
-  management_instances                             = var.management_instances
-  static_compute_instances                         = var.static_compute_instances
-  dynamic_compute_instances                        = var.dynamic_compute_instances
+  management_instances                             = local.lsf_management_instance_profiles
+  static_compute_instances                         = local.lsf_static_compute_instance_profiles
+  dynamic_compute_instances                        = local.lsf_dynamic_compute_instance_profiles
   storage_subnets                                  = local.storage_subnets
   storage_instances                                = var.storage_instances
   storage_servers                                  = var.storage_servers
@@ -110,6 +111,7 @@ module "landing_zone_vsi" {
   enable_deployer                                  = var.enable_deployer
   afm_instances                                    = var.afm_instances
   enable_dedicated_host                            = var.enable_dedicated_host
+  enable_baremetal                                 = var.enable_baremetal
   enable_ldap                                      = var.enable_ldap
   ldap_instances                                   = var.ldap_instance
   ldap_server                                      = local.ldap_server
@@ -122,7 +124,7 @@ module "landing_zone_vsi" {
   colocate_protocol_instances                      = var.colocate_protocol_instances
   storage_security_group_id                        = var.storage_security_group_id
   mtu_value                                        = var.mtu_value
-  login_instance                                   = var.login_instance
+  login_instance                                   = local.lsf_login_instance_profiles
   bastion_subnets                                  = local.login_subnets
   cluster_cidr                                     = local.cluster_cidr
   bms_boot_drive_encryption                        = var.bms_boot_drive_encryption
@@ -146,8 +148,15 @@ module "landing_zone_vsi" {
   cloud_monitoring_ingestion_url                   = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation[0].cloud_monitoring_ingestion_url : ""
   cloud_monitoring_prws_key                        = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation[0].cloud_monitoring_prws_key : ""
   cloud_monitoring_prws_url                        = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation[0].cloud_monitoring_prws_url : ""
+  enable_sccwp                                     = var.enable_sccwp
+  sccwp_api_endpoint                               = var.enable_sccwp ? replace(replace(module.scc_workload_protection[0].sccwp_api_endpoint, "https://", ""), "/api", "") : ""
+  sccwp_access_key                                 = var.enable_sccwp ? module.scc_workload_protection[0].sccwp_access_key : ""
+  sccwp_ingestion_endpoint                         = var.enable_sccwp ? module.scc_workload_protection[0].sccwp_ingestion_endpoint : ""
   vpc_apikey_value                                 = var.ibmcloud_api_key
   enable_hyperthreading                            = var.enable_hyperthreading
+  management_boot_volume                           = local.management_boot_volume
+  static_compute_boot_volume                       = local.static_compute_boot_volume
+  login_boot_volume                                = local.login_boot_volume
 }
 
 module "prepare_tf_input" {
@@ -179,6 +188,7 @@ module "prepare_tf_input" {
   enable_atracker                                  = var.enable_atracker
   enable_vpc_flow_logs                             = var.enable_vpc_flow_logs
   enable_dedicated_host                            = var.enable_dedicated_host
+  enable_baremetal                                 = var.enable_baremetal
   remote_allowed_ips                               = var.remote_allowed_ips
   vpc_name                                         = local.vpc_name
   compute_subnet_id                                = local.compute_subnet
@@ -192,7 +202,7 @@ module "prepare_tf_input" {
   kms_instance_name                                = var.kms_instance_name
   kms_key_name                                     = var.kms_key_name
   boot_volume_encryption_key                       = local.boot_volume_encryption_key
-  existing_kms_instance_guid                       = local.existing_kms_instance_guid
+  kms_instance_guid                                = local.kms_instance_guid
   skip_iam_share_authorization_policy              = var.skip_iam_share_authorization_policy
   dns_custom_resolver_id                           = var.dns_custom_resolver_id
   dns_instance_id                                  = var.dns_instance_id
@@ -231,7 +241,6 @@ module "prepare_tf_input" {
   compute_gui_password                             = var.compute_gui_password
   scale_encryption_admin_password                  = var.scale_encryption_admin_password
   scale_encryption_enabled                         = var.scale_encryption_enabled
-  key_protect_instance_id                          = var.key_protect_instance_id
   storage_security_group_id                        = var.storage_security_group_id
   custom_file_shares                               = var.custom_file_shares
   existing_bastion_instance_name                   = var.existing_bastion_instance_name
@@ -259,6 +268,8 @@ module "prepare_tf_input" {
   protocol_instance_eth1_mtu                       = var.protocol_instance_eth1_mtu
   mtu_value                                        = var.mtu_value
   enable_license_scheduler                         = var.enable_license_scheduler
+  terraform_state_bucket                           = local.terraform_state_bucket_name
+  terraform_state_bucket_region                    = local.terraform_state_bucket_region
   depends_on                                       = [module.deployer]
 }
 
@@ -283,6 +294,11 @@ module "resource_provisioner" {
   scheduler                      = var.scheduler
   existing_bastion_instance_name = var.existing_bastion_instance_name
   bastion_public_key_content     = local.bastion_public_key_content
+  deployer_instance_id           = local.deployer_instance_id
+  region                         = local.region
+  tfstate_cos_hmac_key_params    = local.tfstate_cos_hmac_key_params
+  terraform_state_bucket_region  = local.terraform_state_bucket_region
+  terraform_state_bucket         = local.terraform_state_bucket_name
   depends_on                     = [module.deployer, module.prepare_tf_input, module.validate_ldap_server_connection]
 }
 
@@ -295,7 +311,7 @@ module "file_storage" {
   encryption_key_crn                  = var.boot_volume_encryption_key
   security_group_ids                  = local.compute_security_group_id
   subnet_id                           = local.compute_subnet
-  existing_kms_instance_guid          = var.existing_kms_instance_guid
+  kms_instance_guid                   = var.kms_instance_guid
   skip_iam_share_authorization_policy = var.skip_iam_share_authorization_policy
   kms_encryption_enabled              = local.kms_encryption_enabled
 }
@@ -434,7 +450,8 @@ module "write_compute_cluster_inventory" {
   zones                         = var.zones
   vpc_id                        = local.vpc_id
   compute_subnets_cidr          = var.compute_subnet_id != null ? [data.ibm_is_subnet.existing_compute_subnets_cidr[0].ipv4_cidr_block] : [var.vpc_cluster_private_subnets_cidr_blocks]
-  dynamic_compute_instances     = var.dynamic_compute_instances
+  dynamic_compute_instances     = local.lsf_dynamic_compute_instance_profiles
+  dynamic_compute_boot_volume   = local.dynamic_compute_boot_volume
   compute_security_group_id     = local.compute_security_group_id
   compute_ssh_keys_ids          = local.ssh_keys_ids
   compute_subnet_crn            = local.compute_subnet_crn
@@ -444,6 +461,9 @@ module "write_compute_cluster_inventory" {
   mtu_value                     = var.mtu_value
   enable_license_scheduler      = var.enable_license_scheduler
   has_gaudi3                    = local.has_gaudi3
+  login_node_cpu_platform       = local.login_node_cpu_platform
+  enable_baremetal              = var.enable_baremetal
+  dedicated_host_id             = local.dedicated_host_id
   depends_on                    = [time_sleep.wait_for_vsi_syncup, module.landing_zone_vsi]
 }
 
@@ -602,7 +622,7 @@ module "write_client_scale_cluster_inventory" {
 module "key_protect_scale" {
   count                          = var.scale_encryption_enabled == true && var.scale_encryption_type == "key_protect" && var.enable_deployer == false ? 1 : 0
   source                         = "./modules/key_protect"
-  key_protect_instance_id        = var.key_protect_instance_id != null ? var.key_protect_instance_id : var.existing_kms_instance_guid
+  key_protect_instance_id        = var.kms_instance_guid
   resource_prefix                = var.cluster_prefix
   vpc_region                     = local.region
   scale_config_path              = format("%s/key_protect", var.scale_config_path)
@@ -893,6 +913,10 @@ module "compute_inventory" {
   cloud_monitoring_ingestion_url      = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation[0].cloud_monitoring_ingestion_url : ""
   cloud_monitoring_prws_key           = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation[0].cloud_monitoring_prws_key : ""
   cloud_monitoring_prws_url           = var.observability_monitoring_enable ? module.cloud_monitoring_instance_creation[0].cloud_monitoring_prws_url : ""
+  enable_sccwp                        = var.enable_sccwp
+  sccwp_api_endpoint                  = var.enable_sccwp ? replace(replace(module.scc_workload_protection[0].sccwp_api_endpoint, "https://", ""), "/api", "") : ""
+  sccwp_access_key                    = var.enable_sccwp ? module.scc_workload_protection[0].sccwp_access_key : ""
+  sccwp_ingestion_endpoint            = var.enable_sccwp ? module.scc_workload_protection[0].sccwp_ingestion_endpoint : ""
   logs_enable_for_compute             = var.observability_logs_enable_for_compute
   cloud_logs_ingress_private_endpoint = local.cloud_logs_ingress_private_endpoint
   ha_shared_dir                       = local.ha_shared_dir
@@ -1064,6 +1088,7 @@ module "cloud_monitoring_instance_creation" {
 
 # Code for SCC Instance
 module "scc_workload_protection" {
+  count                                        = var.enable_deployer == false ? 1 : 0
   source                                       = "./modules/security/sccwp"
   resource_group_name                          = var.existing_resource_group != "null" ? var.existing_resource_group : "${var.cluster_prefix}-service-rg"
   prefix                                       = var.cluster_prefix
@@ -1074,5 +1099,6 @@ module "scc_workload_protection" {
   enable_sccwp                                 = var.enable_sccwp
   enable_cspm                                  = var.enable_cspm
   app_config_plan                              = var.app_config_plan
+  cloud_monitoring_crn                         = var.observability_monitoring_enable ? local.cloud_monitoring_crn : null
   scc_workload_protection_trusted_profile_name = "${var.cluster_prefix}-wp-tp"
 }

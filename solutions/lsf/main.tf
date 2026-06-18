@@ -55,6 +55,7 @@ module "lsf" {
   ldap_server_cert                                 = local.env.ldap_server_cert
   ldap_instance                                    = local.env.ldap_instance
   enable_dedicated_host                            = local.env.enable_dedicated_host
+  enable_baremetal                                 = local.env.enable_baremetal
   existing_bastion_instance_name                   = local.env.existing_bastion_instance_name
   existing_bastion_instance_public_ip              = local.env.existing_bastion_instance_public_ip
   existing_bastion_security_group_id               = local.env.existing_bastion_security_group_id
@@ -70,4 +71,6 @@ module "lsf" {
   enable_webservice                                = local.env.enable_webservice
   enable_appcenter                                 = local.env.enable_appcenter
   webservice_appcenter_password                    = local.env.webservice_appcenter_password
+  tfstate_cos_config                               = local.env.tfstate_cos_config
+  tfstate_existing_cos_bucket_creds                = local.env.tfstate_existing_cos_bucket_creds
 }

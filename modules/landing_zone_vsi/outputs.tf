@@ -13,6 +13,12 @@ output "compute_vsi_data" {
   value       = module.compute_vsi[*]["list"]
 }
 
+output "static_compute_baremetal_data" {
+  description = "Storage BareMetal Server data"
+  value       = flatten(module.static_compute_baremetal[*].static_comp_bms_list)
+  depends_on  = [module.static_compute_baremetal]
+}
+
 output "compute_management_vsi_data" {
   description = "Compute Management VSI data"
   value       = module.compute_cluster_management_vsi[*]["list"]
@@ -121,6 +127,11 @@ output "storage_cluster_tie_breaker_vsi_data" {
   value       = module.storage_cluster_tie_breaker_vsi[*]["list"]
 }
 
+output "compute_subnet_id" {
+  description = "compute subnet id"
+  value       = local.compute_subnet_id
+}
+
 output "instance_ips_with_vol_mapping" {
   description = "Storage instance ips with vol mapping"
   value = {
@@ -172,4 +183,9 @@ output "storage_public_key_content" {
 output "client_sg_id" {
   description = "Client SG id"
   value       = module.client_sg[*].security_group_id
+}
+
+output "dedicated_host_id" {
+  description = "dedicated_host"
+  value       = local.dedicated_host_ids
 }

@@ -83,8 +83,25 @@ variable "management_instances" {
       profile = string
       count   = number
       image   = string
+      boot_volume = optional(object({
+        profile   = optional(string) # sdp | general-purpose
+        size      = optional(number) # in GB
+        iops      = optional(number) # only for sdp else null
+        bandwidth = optional(number) # only for sdp else null
+      }))
     })
   )
+  default = [{
+    profile = "cx2-2x4"
+    count   = 0
+    image   = "ibm-redhat-8-10-minimal-amd64-10"
+    boot_volume = {
+      profile   = "general-purpose"
+      size      = 100
+      iops      = null # null for general-purpose
+      bandwidth = null # only for sdp
+    }
+  }]
   description = "Number of instances to be launched for management."
 }
 
@@ -95,6 +112,13 @@ variable "static_compute_instances" {
       count      = number
       image      = string
       filesystem = optional(string)
+      boot_volume = optional(object({
+        profile   = optional(string) # sdp | general-purpose
+        size      = optional(number) # in GB
+        iops      = optional(number) # only for sdp else null
+        bandwidth = optional(number) # only for sdp else null
+      }))
+
     })
   )
   description = "Min Number of instances to be launched for compute cluster."
@@ -103,12 +127,19 @@ variable "static_compute_instances" {
 variable "dynamic_compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile               = string
+      count                 = number
+      image                 = string
+      enable_spot_instances = bool
+      boot_volume = optional(object({
+        profile   = optional(string) # general-purpose | sdp | 5iops-tier | 10iops-tier | custom
+        size      = optional(number) # 100–250 GB
+        iops      = optional(number) # sdp (>=3000), custom (>=100), else null
+        bandwidth = optional(number) # only for sdp (>=1000), else null
+      }))
     })
   )
-  description = "MaxNumber of instances to be launched for compute cluster."
+  description = "Specify the list of dynamic compute node configurations, including instance profile, image, instance count, and Spot instance support for the compute cluster."
 }
 
 ##############################################################################
@@ -546,12 +577,6 @@ variable "scale_encryption_admin_password" {
   description = "Password that is used for performing administrative operations for the GKLM.The password must contain at least 8 characters and at most 20 characters. For a strong password, at least three alphabetic characters are required, with at least one uppercase and one lowercase letter.  Two numbers, and at least one special character from this(~@_+:). Make sure that the password doesn't include the username. Visit this [page](https://www.ibm.com/docs/en/gklm/3.0.1?topic=roles-password-policy) to know more about password policy of GKLM. "
 }
 
-variable "key_protect_instance_id" {
-  type        = string
-  default     = null
-  description = "An existing Key Protect instance used for filesystem encryption"
-}
-
 variable "storage_type" {
   type        = string
   default     = "vsi"
@@ -656,6 +681,17 @@ variable "enable_dedicated_host" {
 }
 
 ##############################################################################
+# Baremetal Variables
+##############################################################################
+
+variable "enable_baremetal" {
+  type        = bool
+  default     = false
+  description = "Set this option to true to enable baremetal servers. The default value is false."
+
+}
+
+##############################################################################
 # Encryption Variables
 ##############################################################################
 variable "key_management" {
@@ -686,7 +722,7 @@ variable "boot_volume_encryption_key" {
   description = "The kms_key crn."
 }
 
-variable "existing_kms_instance_guid" {
+variable "kms_instance_guid" {
   type        = string
   default     = null
   description = "The existing KMS instance guid."
@@ -767,11 +803,23 @@ variable "login_instance" {
     object({
       profile = string
       image   = string
+      boot_volume = optional(object({
+        profile   = optional(string) # sdp | general-purpose
+        size      = optional(number) # in GB
+        iops      = optional(number) # only for sdp else null
+        bandwidth = optional(number) # only for sdp else null
+      }))
     })
   )
   default = [{
     profile = "bx2-2x8"
     image   = "hpcaas-lsf10-rhel810-compute-v8"
+    boot_volume = {
+      profile   = "general-purpose"
+      size      = 100
+      iops      = null # null for general-purpose
+      bandwidth = null # only for sdp
+    }
   }]
   description = "Number of instances to be launched for login node."
 }
@@ -909,4 +957,20 @@ variable "enable_license_scheduler" {
   type        = bool
   default     = true
   description = "Set to true to enable the IBM Spectrum LSF License Scheduler (default: true)."
+}
+
+variable "terraform_state_bucket_region" {
+  type        = string
+  description = "IBM Cloud region for the COS bucket"
+}
+
+variable "terraform_state_bucket" {
+  type        = string
+  description = "Name of the COS bucket for storing Terraform state"
+}
+
+variable "state_file_key" {
+  type        = string
+  description = "Path and name of the state file within the bucket"
+  default     = "terraform.tfstate"
 }

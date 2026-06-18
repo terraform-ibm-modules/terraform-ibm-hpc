@@ -42,7 +42,7 @@ data "ibm_is_image" "scale_compute_stock_image" {
 }
 
 data "ibm_is_instance_profile" "compute_profile" {
-  count = length(var.static_compute_instances)
+  count = (((var.scheduler == "LSF" && var.enable_baremetal == false) || var.scheduler == "Scale")) ? length(var.static_compute_instances) : 0
   name  = var.static_compute_instances[count.index]["profile"]
 }
 

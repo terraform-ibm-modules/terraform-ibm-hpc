@@ -10,16 +10,43 @@ locals {
   compute_image_found_in_map = contains(keys(local.image_region_map), var.dynamic_compute_instances[0]["image"])
   new_compute_image_id       = local.compute_image_found_in_map ? local.image_region_map[var.dynamic_compute_instances[0]["image"]][local.region] : "Image not found with the given name"
   image_id                   = local.compute_image_found_in_map ? local.new_compute_image_id : data.ibm_is_image.dynamic_compute[0].id
+  enable_spot_instances = anytrue([
+    for inst in var.dynamic_compute_instances : inst.enable_spot_instances
+  ])
   ht_true_pricing = {
-    version_crn = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:version:61e655c5-40b6-4b68-a6ab-e6c77a457fce-global/7b95e7f9-8ad6-4675-89e4-80620c7d39b6-global"
+    version_crn = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:version:61e655c5-40b6-4b68-a6ab-e6c77a457fce-global/b6efee69-353d-4f4d-925b-3809a7e44a7c-global"
     plan_crn    = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:plan:sw.1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc.d114e7ab-4f7e-40c4-98cc-f0c000cbf3a7-global"
   }
   ht_false_pricing = {
-    version_crn = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:version:61e655c5-40b6-4b68-a6ab-e6c77a457fce-global/7b95e7f9-8ad6-4675-89e4-80620c7d39b6-global"
+    version_crn = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:version:61e655c5-40b6-4b68-a6ab-e6c77a457fce-global/b6efee69-353d-4f4d-925b-3809a7e44a7c-global"
     plan_crn    = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:plan:sw.1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc.6e0f4e27-509d-4cba-bf80-58217a412103-global"
   }
 }
 
 locals {
   pricing_model = var.enable_hyperthreading ? local.ht_true_pricing : local.ht_false_pricing
+}
+
+locals {
+  boot_volume = try(var.dynamic_compute_boot_volume[0], null)
+
+  boot_volume_attachment = local.boot_volume != null ? {
+    volume = merge(
+      {
+        profile = local.boot_volume.profile != null ? {
+          name = local.boot_volume.profile
+        } : null
+
+        capacity = local.boot_volume.size
+      },
+
+      contains(["custom", "sdp"], local.boot_volume.profile) && local.boot_volume.iops != null ? {
+        iops = local.boot_volume.iops
+      } : {},
+
+      local.boot_volume.profile == "sdp" && local.boot_volume.bandwidth != null ? {
+        bandwidth = local.boot_volume.bandwidth
+      } : {}
+    )
+  } : null
 }
