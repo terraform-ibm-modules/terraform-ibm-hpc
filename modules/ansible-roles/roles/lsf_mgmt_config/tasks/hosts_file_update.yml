@@ -9,6 +9,23 @@
   failed_when: false
   run_once: true
 
+- name: Extract ANSIBLE managed block from control node /etc/hosts
+  shell: |
+    sed -n '/# === ANSIBLE MANAGED HOSTS BEGIN ===/,/# === ANSIBLE MANAGED HOSTS END ===/p' /etc/hosts
+  register: managed_block
+  changed_when: false
+  delegate_to: localhost
+  run_once: true
+
+- name: Insert/update block at beginning of LSF hosts file
+  blockinfile:
+    path: /opt/ibm/lsf/conf/hosts
+    marker: "# {mark} ANSIBLE SYNC FROM ETC HOSTS"
+    block: "{{ managed_block.stdout }}"
+    insertbefore: BOF
+    create: yes
+  run_once: true
+
 - name: Management Config | Generate and append dynamic IP-to-host mappings
   shell: |
     echo "# ANSIBLE MANAGED: IP mapping added" >> '{{ LSF_HOSTS_FILE }}'
@@ -49,11 +66,11 @@
   changed_when: false
   run_once: true
 
-- name: Management Config | Remove existing IP entries from LSF hosts file
-  lineinfile:
-    path: "{{ LSF_HOSTS_FILE }}"
-    state: absent
-    regexp: "^{{ item.item }}\\s"
+- name: Management Config | Remove existing IP entries only from dynamic section
+  shell: |
+    sed -i '/# ANSIBLE MANAGED: IP mapping added/,${
+      /^{{ item.item }}[[:space:]]/d
+    }' {{ LSF_HOSTS_FILE }}
   loop: "{{ ip_check.results }}"
   when: item.stdout | length > 0
   run_once: true

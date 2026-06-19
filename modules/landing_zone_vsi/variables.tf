@@ -180,17 +180,19 @@ variable "static_compute_instances" {
 variable "dynamic_compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile               = string
+      count                 = number
+      image                 = string
+      enable_spot_instances = bool
     })
   )
   default = [{
-    profile = "cx2-2x4"
-    count   = 250
-    image   = "ibm-redhat-8-10-minimal-amd64-10"
+    profile               = "cx2-2x4"
+    count                 = 250
+    image                 = "ibm-redhat-8-10-minimal-amd64-10"
+    enable_spot_instances = false
   }]
-  description = "MaxNumber of instances to be launched for compute cluster."
+  description = "Specify the list of dynamic compute node configurations, including instance profile, image, instance count, and Spot instance support for the compute cluster."
 }
 
 # variable "compute_gui_username" {
@@ -436,9 +438,9 @@ variable "gklm_instances" {
     })
   )
   default = [{
-    profile = "bx2-2x8"
+    profile = "bx2-4x16"
     count   = 2
-    image   = "ibm-redhat-8-10-minimal-amd64-10"
+    image   = "hpcc-scale-gklm4202-v2-5-6"
   }]
   description = "Number of instances to be launched for client."
 }
@@ -470,6 +472,17 @@ variable "enable_dedicated_host" {
   type        = bool
   default     = false
   description = "Enables dedicated host to the compute instances"
+}
+
+##############################################################################
+# Baremetal Variables
+##############################################################################
+
+variable "enable_baremetal" {
+  type        = bool
+  default     = false
+  description = "Set this option to true to enable baremetal servers. The default value is false."
+
 }
 
 ##############################################################################
@@ -622,6 +635,31 @@ variable "cloud_monitoring_prws_url" {
   default     = ""
 }
 
+variable "enable_sccwp" {
+  description = "Flag to enable or disable SCC Workload Protection agent configuration"
+  type        = bool
+  default     = false
+}
+
+variable "sccwp_api_endpoint" {
+  description = "SCC Workload Protection API endpoint for the Sysdig agent (must be formatted without https:// and /api)"
+  type        = string
+  default     = ""
+}
+
+variable "sccwp_access_key" {
+  description = "SCC Workload Protection access key for standalone agent authentication"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "sccwp_ingestion_endpoint" {
+  description = "SCC Workload Protection ingestion collector URL"
+  type        = string
+  default     = ""
+}
+
 variable "observability_logs_enable_for_compute" {
   description = "Set false to disable IBM Cloud Logs integration. If enabled, infrastructure and LSF application logs from Compute Nodes will be ingested."
   type        = bool
@@ -632,4 +670,51 @@ variable "observability_monitoring_on_compute_nodes_enable" {
   description = "Set false to disable IBM Cloud Monitoring integration. If enabled, infrastructure metrics from Compute Nodes will be ingested."
   type        = bool
   default     = false
+}
+
+variable "management_boot_volume" {
+  type = list(object({
+    profile   = optional(string) # sdp | general-purpose
+    size      = optional(number) # in GB
+    iops      = optional(number) # only for sdp, null for general-purpose
+    bandwidth = optional(number) # only for sdp, null for general-purpose
+  }))
+  default = [{
+    profile   = "general-purpose"
+    size      = 100
+    iops      = null
+    bandwidth = null # only for sdp, null for general-purpose
+  }]
+  description = "Boot volume configuration for management instances, including profile, size, IOPS, and bandwidth."
+}
+variable "static_compute_boot_volume" {
+  type = list(object({
+    profile   = optional(string) # sdp | general-purpose
+    size      = optional(number) # in GB
+    iops      = optional(number) # only for sdp, null for general-purpose
+    bandwidth = optional(number) # only for sdp, null for general-purpose
+  }))
+  default = [{
+    profile   = "general-purpose"
+    size      = 100
+    iops      = null
+    bandwidth = null # only for sdp, null for general-purpose
+  }]
+  description = "Boot volume configuration for static compute instances, including profile, size, IOPS, and bandwidth."
+}
+
+variable "login_boot_volume" {
+  type = list(object({
+    profile   = optional(string) # sdp | general-purpose
+    size      = optional(number) # in GB
+    iops      = optional(number) # only for sdp, null for general-purpose
+    bandwidth = optional(number) # only for sdp, null for general-purpose
+  }))
+  default = [{
+    profile   = "general-purpose"
+    size      = 100
+    iops      = null
+    bandwidth = null # only for sdp, null for general-purpose
+  }]
+  description = "Boot volume configuration for login instances, including profile, size, IOPS, and bandwidth."
 }

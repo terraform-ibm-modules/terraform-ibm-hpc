@@ -1,5 +1,6 @@
 locals {
   schematics_inputs_path             = format("/tmp/.schematics/%s/solution_terraform.auto.tfvars.json", var.cluster_prefix)
+  backend_inputs_path                = format("/tmp/.schematics/%s/backend.tf", var.cluster_prefix)
   scheduler                          = var.scheduler == null ? "null" : var.scheduler
   ibm_customer_number                = var.ibm_customer_number == null ? "" : var.ibm_customer_number
   storage_security_group_id          = var.storage_security_group_id == null ? "" : var.storage_security_group_id
@@ -25,7 +26,7 @@ locals {
   kms_instance_name                  = jsonencode(var.kms_instance_name)
   key_management                     = jsonencode(var.key_management)
   boot_volume_encryption_key         = jsonencode(var.boot_volume_encryption_key)
-  existing_kms_instance_guid         = jsonencode(var.existing_kms_instance_guid)
+  kms_instance_guid                  = jsonencode(var.kms_instance_guid)
   dns_custom_resolver_id             = jsonencode(var.dns_custom_resolver_id != null ? (length(var.dns_custom_resolver_id) > 0 ? var.dns_custom_resolver_id : null) : var.dns_custom_resolver_id)
   dns_instance_id                    = jsonencode(var.dns_instance_id != null ? (length(var.dns_instance_id) > 0 ? var.dns_instance_id : null) : var.dns_instance_id)
   list_ldap_instances                = jsonencode(var.ldap_instance)
@@ -37,7 +38,6 @@ locals {
   scale_encryption_type              = jsonencode(var.scale_encryption_type)
   filesystem_config                  = jsonencode(var.filesystem_config)
   scale_encryption_admin_password    = jsonencode(var.scale_encryption_admin_password)
-  key_protect_instance_id            = jsonencode(var.key_protect_instance_id)
   custom_file_shares                 = jsonencode(var.custom_file_shares)
   resource_group_ids                 = jsonencode(var.resource_group_ids)
   existing_bastion_instance_name     = jsonencode(var.existing_bastion_instance_name == null ? null : var.existing_bastion_instance_name)

@@ -15,7 +15,7 @@ resource "ibm_iam_authorization_policy" "policy" {
   source_service_name         = "is"
   source_resource_type        = "share"
   target_service_name         = "kms"
-  target_resource_instance_id = var.existing_kms_instance_guid
+  target_resource_instance_id = var.kms_instance_guid
   roles                       = ["Reader"]
 }
 

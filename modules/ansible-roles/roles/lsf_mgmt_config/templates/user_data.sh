@@ -9,6 +9,10 @@ default_cluster_name="HPCCluster"
 nfs_server_with_mount_path="{{ mount_paths_map['/mnt/lsf'] }}"
 cloud_monitoring_access_key="{{ cloud_monitoring_access_key }}"
 cloud_monitoring_ingestion_url="{{ cloud_monitoring_ingestion_url }}"
+enable_sccwp="{{ enable_sccwp }}"
+sccwp_api_endpoint="{{ sccwp_api_endpoint }}"
+sccwp_access_key="{{ sccwp_access_key }}"
+sccwp_ingestion_endpoint="{{ sccwp_ingestion_endpoint }}"
 observability_monitoring_on_compute_nodes_enable="{{ monitoring_enable_for_compute }}"
 observability_logs_enable_for_compute="{{ logs_enable_for_compute }}"
 cloud_logs_ingress_private_endpoint="{{ cloud_logs_ingress_private_endpoint }}"
@@ -20,6 +24,7 @@ ManagementHostNames="{{ lsf_masters | join(' ') }}"
 dns_domain="{{ dns_domain_names }}"
 network_interface="eth0"
 mtu_value="{{ mtu_value }}"
+enable_spot_instances="{{ enable_spot_instances }}"
 
 # LDAP
 enable_ldap="{{ enable_ldap }}"
@@ -249,6 +254,10 @@ chown -R lsfadmin $LSF_WORK
 service lsfd stop && sleep 2 && service lsfd start
 sleep 10
 
+# Stop and Disable lwsd service
+systemctl stop lwsd
+systemctl disable lwsd
+
 # Setting up the LDAP configuration
 if [ "$enable_ldap" = "true" ]; then
 
@@ -355,30 +364,70 @@ else
   echo "Skipping LDAP Client configuration as it is not enabled." >>$logfile
 fi
 
-# Setting up the Cloud Monitoring Agent
-if [ "$cloud_monitoring_access_key" != "" ] && [ "$cloud_monitoring_ingestion_url" != "" ]; then
-  echo "cloud_monitoring_access_key and cloud_monitoring_ingestion_url are provided" >>"$logfile"
-  SYSDIG_CONFIG_FILE="/opt/draios/etc/dragent.yaml"
+# ==========================================
+# Setting up the Unified Metrics & Security Agent
+# ==========================================
+SYSDIG_CONFIG_FILE="/opt/draios/etc/dragent.yaml"
+START_DRAGENT=false
 
-  #packages installation
-  echo "Writing sysdig config file" >>"$logfile"
+# 1. Condition Block: IBM Cloud Monitoring (Metrics)
+if [ "$observability_monitoring_on_compute_nodes_enable" = true ]; then
+  echo "observability_monitoring_on_compute_nodes_enable is true" >>"$logfile"
+  if [ "$cloud_monitoring_access_key" != "" ] && [ "$cloud_monitoring_ingestion_url" != "" ]; then
+    {
+      echo "cloud_monitoring_access_key and cloud_monitoring_ingestion_url are provided"
+      echo "Writing sysdig config file"
+      echo "Setting customerid access key"
+    } >>"$logfile"
+    sed -i "s/==ACCESSKEY==/$cloud_monitoring_access_key/g" $SYSDIG_CONFIG_FILE
+    sed -i "s/==COLLECTOR==/$cloud_monitoring_ingestion_url/g" $SYSDIG_CONFIG_FILE
 
-  #sysdig config file
-  echo "Setting customerid access key" >>"$logfile"
-  sed -i "s/==ACCESSKEY==/$cloud_monitoring_access_key/g" $SYSDIG_CONFIG_FILE
-  sed -i "s/==COLLECTOR==/$cloud_monitoring_ingestion_url/g" $SYSDIG_CONFIG_FILE
-  echo "tags: type:compute,lsf:true" >>$SYSDIG_CONFIG_FILE
-else
-  echo "Skipping metrics agent configuration due to missing parameters" >>"$logfile"
+    # Mark that the agent has valid configuration to run
+    START_DRAGENT=true
+  else
+    echo "Skipping metrics agent configuration due to missing parameters" >>"$logfile"
+  fi
 fi
 
-if [ "$observability_monitoring_on_compute_nodes_enable" = true ]; then
+# 2. Condition Block: SCC Workload Protection (Security)
+if [ "$enable_sccwp" = true ]; then
+  echo "enable_sccwp is true" >>"$logfile"
+  if [ "$sccwp_api_endpoint" != "" ]; then
+    echo "Configuring Security Compliance data endpoints" >>"$logfile"
 
-  echo "Restarting sysdig agent" >>"$logfile"
+    sed -i "s/==SCC_ENDPOINT==/$sccwp_api_endpoint/g" $SYSDIG_CONFIG_FILE
+
+    # FALLBACK LOGIC: If Monitoring is OFF, the agent still needs an access key and collector!
+    if [ "$observability_monitoring_on_compute_nodes_enable" != true ]; then
+      echo "Monitoring is disabled on compute nodes. Using standalone SCC credentials for agent authentication." >>"$logfile"
+      sed -i "s/==ACCESSKEY==/$sccwp_access_key/g" $SYSDIG_CONFIG_FILE
+      sed -i "s/==COLLECTOR==/$sccwp_ingestion_endpoint/g" $SYSDIG_CONFIG_FILE
+    fi
+
+    # Mark that the agent has valid configuration to run
+    START_DRAGENT=true
+  else
+    echo "Skipping SCC configuration due to missing sccwp_api_endpoint" >>"$logfile"
+  fi
+
+else
+  echo "SCC Workload Protection is false. Safely disabling internal scanning engines." >>"$logfile"
+  # If security is explicitly disabled, flip the internal engine flags to false
+  # to save host CPU cycles and prevent connection errors to an empty placeholder.
+  sed -i '/host_scanner:/,/enabled: true/s/enabled: true/enabled: false/' $SYSDIG_CONFIG_FILE
+  sed -i '/kspm_analyzer:/,/enabled: true/s/enabled: true/enabled: false/' $SYSDIG_CONFIG_FILE
+fi
+
+# 3. Finalization Block: Global Rules & Daemon Lifecycle
+if [ "$START_DRAGENT" = true ]; then
+  echo "Appending global metadata infrastructure tags for compute nodes" >>"$logfile"
+  echo "tags: type:compute,lsf:true" >> $SYSDIG_CONFIG_FILE
+
+  echo "Activating and starting Sysdig unified agent service" >>"$logfile"
   systemctl enable dragent
   systemctl restart dragent
 else
-  echo "Metrics agent start skipped since monitoring provisioning is not enabled" >>"$logfile"
+  echo "Sysdig agent remaining stopped and disabled: No features were requested." >>"$logfile"
 fi
 
 # Setting up the IBM Cloud Logs
@@ -444,4 +493,60 @@ else
   echo "Cloud Logs configuration skipped since observability logs for compute is not enabled"
 fi
 echo "Completed sysdig and cloud logs configuration" >>"$logfile"
+
+# Shutdown Script for Spot Instances
+if [ "$enable_spot_instances" = "True" ]; then
+# Create shutdown hook script
+cat <<'EOF' > /usr/local/bin/ibm-cloud-shutdown-script.sh
+#!/bin/bash
+
+# IBM Cloud Spot Instance Shutdown Hook Script
+#
+# This script is triggered automatically during:
+#   - IBM Cloud Spot instance reclaim/preemption
+#   - System shutdown
+#   - System reboot
+#
+# Purpose:
+#   Mark the LSF host as reclaimed/closed.
+
+su - lsfadmin -c 'badmin hclose -i "hostreclaim" -C "VM Instance is being reclaimed"'
+EOF
+
+chmod 755 /usr/local/bin/ibm-cloud-shutdown-script.sh
+
+# Create systemd service
+
+cat <<'EOF' > /etc/systemd/system/ibm-cloud-shutdown-script.service
+[Unit]
+Description=IBM Cloud Spot Shutdown Hook
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/true
+RemainAfterExit=true
+ExecStop=/usr/local/bin/ibm-cloud-shutdown-script.sh
+TimeoutStopSec=0
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+chmod 644 /etc/systemd/system/ibm-cloud-shutdown-script.service
+
+# Reload and enable service
+
+systemctl daemon-reload
+
+systemctl enable ibm-cloud-shutdown-script.service
+
+systemctl start ibm-cloud-shutdown-script.service
+
+echo "IBM Cloud Spot shutdown hook configured successfully"
+
+fi
+
 echo "COMPLETED $(date '+%Y-%m-%d %H:%M:%S')" >>"$logfile"

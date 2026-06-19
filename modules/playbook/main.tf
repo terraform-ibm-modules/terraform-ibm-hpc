@@ -38,6 +38,13 @@ resource "local_file" "deployer_host_entry_play" {
         file: all.json
 
   tasks:
+    - name: Add sleep time if it is baremetal
+      ansible.builtin.pause:
+        minutes: 10
+      when:
+        - enable_baremetal | bool
+        - (comp_hosts | from_json | length) > 0
+
     - name: Parse and merge host mappings
       ansible.builtin.set_fact:
         all_hosts: >-
@@ -227,40 +234,43 @@ resource "local_file" "lsf_prerequisite_playbook" {
 - name: Install bc package on RHEL 8/9 hosts
   hosts: all
   become: yes
+  gather_facts: yes
+
   vars:
     rpm_urls:
       "8": "https://vault.centos.org/8-stream/BaseOS/x86_64/os/Packages/bc-1.07.1-5.el8.x86_64.rpm"
       "9": "https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/Packages/bc-1.07.1-14.el9.x86_64.rpm"
+
   tasks:
+
     - name: Check if bc is already installed
       command: rpm -q bc
       register: bc_check
-      ignore_errors: yes
       changed_when: false
       failed_when: false
-    - name: Get OS major version
-      set_fact:
-        os_major_version: "{{ ansible_distribution_major_version }}"
+
     - name: Download bc rpm if not installed
       get_url:
-        url: "{{ rpm_urls[os_major_version | string] }}"
+        url: "{{ rpm_urls[ansible_facts['distribution_major_version'] | string] }}"
         dest: /tmp/bc.rpm
         mode: '0644'
+      register: download_result
+      ignore_errors: yes
       when: bc_check.rc != 0
-    - name: Install bc rpm (GPG check disabled)
-      yum:
-        name: /tmp/bc.rpm
-        state: present
-        disable_gpg_check: true
-      when: bc_check.rc != 0
+
+    - name: Install bc rpm without dnf dependency
+      shell: rpm -q bc || rpm -ivh /tmp/bc.rpm
+      ignore_errors: yes
+      when:
+        - bc_check.rc != 0
+        - download_result is succeeded
+
     - name: Clean up rpm file
       file:
         path: /tmp/bc.rpm
         state: absent
+      ignore_errors: yes
       when: bc_check.rc != 0
-    - name: Confirm bc is installed
-      debug:
-        msg: "bc installed successfully or already present"
 EOT
   filename = local.lsf_prerequesite_playbook_path
 }
@@ -275,7 +285,7 @@ resource "null_resource" "lsf_prerequisite_play" {
   triggers = {
     build = timestamp()
   }
-  depends_on = [local_file.lsf_prerequisite_playbook]
+  depends_on = [local_file.lsf_prerequisite_playbook, null_resource.run_common_config_playbook]
 }
 
 resource "local_file" "prepare_ldap_server_playbook" {
@@ -549,6 +559,11 @@ resource "local_file" "lsfd_self_healing_playbook" {
         user: lsfadmin
         minute: "*/2"
         job: /home/lsfadmin/check_lsfd.sh
+
+    - name: Remove system-wide LSF platform environment configuration
+      ansible.builtin.file:
+        path: /etc/profile.d/lsf_platform.sh
+        state: absent
 EOT
   filename = local.lsfd_self_healing_playbook_path
 }

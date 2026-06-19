@@ -19,6 +19,10 @@ data "template_file" "lsf_management_user_data" {
     cloud_monitoring_ingestion_url           = var.cloud_monitoring_ingestion_url
     cloud_monitoring_prws_key                = var.cloud_monitoring_prws_key
     cloud_monitoring_prws_url                = var.cloud_monitoring_prws_url
+    enable_sccwp                             = var.enable_sccwp
+    sccwp_api_endpoint                       = var.sccwp_api_endpoint
+    sccwp_access_key                         = var.sccwp_access_key
+    sccwp_ingestion_endpoint                 = var.sccwp_ingestion_endpoint
     cloud_logs_ingress_private_endpoint      = var.cloud_logs_ingress_private_endpoint
   }
 }
@@ -40,6 +44,10 @@ data "template_file" "lsf_compute_user_data" {
     observability_logs_enable_for_compute            = var.observability_logs_enable_for_compute
     cloud_monitoring_access_key                      = var.cloud_monitoring_access_key
     cloud_monitoring_ingestion_url                   = var.cloud_monitoring_ingestion_url
+    enable_sccwp                                     = var.enable_sccwp
+    sccwp_api_endpoint                               = var.sccwp_api_endpoint
+    sccwp_access_key                                 = var.sccwp_access_key
+    sccwp_ingestion_endpoint                         = var.sccwp_ingestion_endpoint
     cloud_logs_ingress_private_endpoint              = var.cloud_logs_ingress_private_endpoint
   }
 }

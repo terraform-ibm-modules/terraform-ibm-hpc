@@ -1,68 +1,116 @@
 ---
 # Web Services HTTPS Configuration
 
-- name: Web Services | Check current HTTPS status
-  ansible.builtin.shell: |
-    . /opt/ibm/lsfsuite/ext/profile.platform
-    lwsadmin https enable
-  args:
-    executable: /bin/bash
-  register: lws_https_check
-  changed_when: "'was already enabled' not in lws_https_check.stdout"
-  failed_when: false
-
-- name: Web Services | Confirm HTTPS is already enabled
-  ansible.builtin.debug:
-    msg: "HTTPS is already enabled"
-  when: "'was already enabled' in lws_https_check.stdout"
-
-- name: Web Services | Configure and enable HTTPS
+- name: PAC | Configure Web Services when enabled
   block:
 
-    - name: Web Services | Set lsfadmin GUI password
-      ansible.builtin.shell: |
-        echo "{{ webservice_appcenter_password }}" | passwd --stdin lsfadmin
-      args:
-        executable: /bin/bash
-
-    - name: Web Services | Enable HTTPS via lwsadmin
+    - name: Web Services | Check current HTTPS enablement status
       ansible.builtin.shell: |
         . /opt/ibm/lsfsuite/ext/profile.platform
-        lwsadmin https enable \
-        --password {{ webservice_appcenter_password }} \
-        --validhosts {{ inventory_hostname }},localhost
+        lwsadmin https enable
       args:
         executable: /bin/bash
+      register: lws_https_check
+      changed_when: "'was already enabled' not in lws_https_check.stdout"
+      failed_when: false
 
-    - name: Web Services | Ensure lwsd service is enabled and running
-      ansible.builtin.systemd:
-        name: lwsd
-        state: started
-        enabled: yes
+    - name: Web Services | Log if HTTPS is already enabled
+      ansible.builtin.debug:
+        msg: "HTTPS is already enabled"
+      when: "'was already enabled' in lws_https_check.stdout"
 
-    - name: Web Services | Append LSF environment to root bashrc
-      ansible.builtin.lineinfile:
-        path: /root/.bashrc
-        line: ". /opt/ibm/lsfsuite/ext/profile.platform"
-        insertafter: EOF
-        state: present
-        create: yes
-      become: true
+    - name: Web Services | Perform HTTPS configuration and service setup
+      block:
 
-    - name: Web Services | Reload root bashrc environment
-      ansible.builtin.shell: source /root/.bashrc
-      args:
-        executable: /bin/bash
-      become: true
+        - name: Web Services | Set lsfadmin password for GUI access
+          ansible.builtin.shell: |
+            echo "{{ webservice_appcenter_password }}" | passwd --stdin lsfadmin
+          args:
+            executable: /bin/bash
+
+        - name: Web Services | Enable HTTPS using lwsadmin
+          ansible.builtin.shell: |
+            . /opt/ibm/lsfsuite/ext/profile.platform
+            lwsadmin https enable \
+            --password {{ webservice_appcenter_password }} \
+            --validhosts {{ inventory_hostname }},localhost
+          args:
+            executable: /bin/bash
+
+        - name: Web Services | Enable lwsd service
+          ansible.builtin.shell: sudo systemctl enable lwsd
+          ignore_errors: true
+
+        - name: Web Services | Ensure lwsd service is enabled and started
+          ansible.builtin.systemd:
+            name: lwsd
+            state: started
+            enabled: yes
+
+        - name: Web Services | Ensure LSF environment is added to root bashrc
+          ansible.builtin.lineinfile:
+            path: /root/.bashrc
+            line: ". /opt/ibm/lsfsuite/ext/profile.platform"
+            insertafter: EOF
+            state: present
+            create: yes
+          become: true
+
+        - name: Web Services | Reload root bashrc to apply environment changes
+          ansible.builtin.shell: source /root/.bashrc
+          args:
+            executable: /bin/bash
+          become: true
+
+      rescue:
+        - name: Web Services | Log failure during HTTPS configuration
+          ansible.builtin.debug:
+            msg: "Web Services HTTPS configuration failed. Check logs."
+
+      always:
+        - name: Web Services | Log completion of HTTPS configuration block
+          ansible.builtin.debug:
+            msg: "Web Services HTTPS configuration block completed."
+
+      when: "'was already enabled' not in lws_https_check.stdout"
 
   rescue:
-    - name: Web Services | Log HTTPS configuration failure
+    - name: Web Services | Handle Web Services configuration failure
       ansible.builtin.debug:
-        msg: "Web Services HTTPS configuration failed. Check logs."
+        msg: "Web Services enablement block failed."
 
   always:
-    - name: Web Services | Log HTTPS configuration completion
+    - name: Web Services | Log Web Services configuration execution
       ansible.builtin.debug:
-        msg: "Web Services HTTPS configuration block completed."
+        msg: "Web Services enablement block completed."
 
-  when: "'was already enabled' not in lws_https_check.stdout"
+  when:
+    - enable_webservice | bool
+
+
+# Disable Web Services when not enabled
+- name: PAC | Disable Web Services when not enabled
+  block:
+
+    - name: Web Services | Stop lwsd service if present
+      ansible.builtin.systemd:
+        name: lwsd
+        state: stopped
+      ignore_errors: true
+
+    - name: Web Services | Disable lwsd service
+      ansible.builtin.shell: sudo systemctl disable lwsd
+      ignore_errors: true
+
+  rescue:
+    - name: Handle failure in disabling Web Services
+      debug:
+        msg: "Failed to disable Web Services cleanly"
+
+  always:
+    - name: Log Web Services disable execution
+      debug:
+        msg: "Disable Web Services block executed"
+
+  when:
+    - not enable_webservice | bool

@@ -201,6 +201,53 @@ locals {
   transit_gateway_connections    = [var.vpc_name]
 
   ##############################################################################################################
+  # Remote State COS Bucket and Instance Related Calculation
+  ##############################################################################################################
+
+  # enable_tfstate_cos = length(var.tfstate_cos_config) > 0 ? true : false
+  # tfstate_new_instance_bucket_hmac = [for details in var.tfstate_cos_config : details if(details.cos_instance == "" && details.bucket_name == "" && details.existing_bucket_cred_key == "")]
+  tfstate_new_instance_bucket_hmac = [
+    for details in var.tfstate_cos_config : details
+    if var.tfstate_existing_cos_bucket_creds == null
+  ]
+
+  # tfstate_exstng_instance_new_bucket_hmac = [for details in var.tfstate_cos_config : details if(details.cos_instance != "" && details.bucket_name == "" && details.existing_bucket_cred_key == "")]
+  # tfstate_exstng_instance_bucket_new_hmac = [for details in var.tfstate_cos_config : details if(details.cos_instance != "" && details.bucket_name != "" && details.existing_bucket_cred_key == "")]
+  # tfstate_exstng_instance_hmac_new_bucket = [for details in var.tfstate_cos_config : details if(details.cos_instance != "" && details.bucket_name == "" && details.existing_bucket_cred_key != "")]
+
+  # tfstate_total = concat(local.tfstate_exstng_instance_new_bucket_hmac, local.tfstate_exstng_instance_bucket_new_hmac, local.tfstate_exstng_instance_hmac_new_bucket)
+
+  # TFState COS data for new instances and buckets
+  tfstate_total_new_data = length(local.tfstate_new_instance_bucket_hmac) > 0 ? [{
+    name                          = "tfstate-cos-instance"
+    resource_group                = local.service_resource_group
+    plan                          = "standard"
+    random_suffix                 = true
+    use_data                      = false
+    skip_flowlogs_s2s_auth_policy = var.skip_flowlogs_s2s_auth_policy
+    skip_kms_s2s_auth_policy      = var.skip_kms_s2s_auth_policy
+    buckets = [
+      for idx, all in local.tfstate_new_instance_bucket_hmac : {
+        name                      = "terraform-state-bucket"
+        storage_class             = all.bucket_storage_class
+        endpoint_type             = "public"
+        force_delete              = true
+        single_site_location      = all.bucket_type == "single_site_location" ? all.bucket_region : null
+        region_location           = all.bucket_type == "region_location" ? (all.bucket_region != "" ? all.bucket_region : local.region) : null
+        cross_region_location     = all.bucket_type == "cross_region_location" ? all.bucket_region : null
+        kms_key                   = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-cos-key", var.prefix) : var.kms_key_name) : null
+        expire_rule               = null
+        object_versioning_enabled = true
+      }
+    ]
+    keys = [{
+      name        = "tfstate-key"
+      role        = "Manager"
+      enable_HMAC = true
+    }]
+  }] : []
+
+  ##############################################################################################################
   # AFM Related Calculation
   ##############################################################################################################
 
@@ -224,15 +271,16 @@ locals {
     skip_kms_s2s_auth_policy      = var.skip_kms_s2s_auth_policy
     buckets = [
       for idx, all in local.new_instance_bucket_hmac : {
-        name                  = all.bucket_name == "" ? format("hpcc-bucket%d", idx) : all.bucket_name
-        storage_class         = all.bucket_storage_class
-        endpoint_type         = "public"
-        force_delete          = true
-        kms_key               = null
-        expire_rule           = null
-        single_site_location  = all.bucket_type == "single_site_location" ? all.bucket_region : null
-        region_location       = all.bucket_type == "region_location" ? all.bucket_region : null
-        cross_region_location = all.bucket_type == "cross_region_location" ? all.bucket_region : null
+        name                      = all.bucket_name == "" ? format("hpcc-bucket%d", idx) : all.bucket_name
+        storage_class             = all.bucket_storage_class
+        endpoint_type             = "public"
+        force_delete              = true
+        kms_key                   = null
+        expire_rule               = null
+        object_versioning_enabled = null
+        single_site_location      = all.bucket_type == "single_site_location" ? all.bucket_region : null
+        region_location           = all.bucket_type == "region_location" ? all.bucket_region : null
+        cross_region_location     = all.bucket_type == "cross_region_location" ? all.bucket_region : null
       }
     ]
     keys = [{
@@ -253,15 +301,16 @@ locals {
     skip_kms_s2s_auth_policy      = var.skip_kms_s2s_auth_policy
     buckets = all.bucket_name == "" ? [
       {
-        name                  = format("hpc-bucket%d", idx)
-        storage_class         = all.bucket_storage_class
-        endpoint_type         = "public"
-        force_delete          = true
-        kms_key               = null
-        expire_rule           = null
-        single_site_location  = all.bucket_type == "single_site_location" ? all.bucket_region : null
-        region_location       = all.bucket_type == "region_location" ? all.bucket_region : null
-        cross_region_location = all.bucket_type == "cross_region_location" ? all.bucket_region : null
+        name                      = format("hpc-bucket%d", idx)
+        storage_class             = all.bucket_storage_class
+        endpoint_type             = "public"
+        force_delete              = true
+        kms_key                   = null
+        expire_rule               = null
+        object_versioning_enabled = null
+        single_site_location      = all.bucket_type == "single_site_location" ? all.bucket_region : null
+        region_location           = all.bucket_type == "region_location" ? all.bucket_region : null
+        cross_region_location     = all.bucket_type == "cross_region_location" ? all.bucket_region : null
       },
     ] : []
     keys = all.cos_service_cred_key == "" ? [{
@@ -275,96 +324,106 @@ locals {
   ##############################################################################################################
 
   ##############################################################################################################
+
   final_instance_bucket_hmac_creation = concat(local.total_new_data, local.total_existing_data)
 
-  active_cos = concat(local.final_instance_bucket_hmac_creation, [
+  active_cos = concat(
+    local.final_instance_bucket_hmac_creation,
+    local.tfstate_total_new_data,
+    (var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker || var.observability_logs_enable) ? [
+      {
+        name                          = var.cos_instance_name == null ? "hpc-cos" : var.cos_instance_name
+        resource_group                = local.service_resource_group
+        plan                          = "standard"
+        random_suffix                 = true
+        use_data                      = var.cos_instance_name == null ? false : true
+        keys                          = []
+        skip_flowlogs_s2s_auth_policy = var.skip_flowlogs_s2s_auth_policy
+        skip_kms_s2s_auth_policy      = var.skip_kms_s2s_auth_policy
 
-    (var.enable_cos_integration || var.enable_vpc_flow_logs || var.enable_atracker || var.observability_logs_enable) ? {
-      name                          = var.cos_instance_name == null ? "hpc-cos" : var.cos_instance_name
-      resource_group                = local.service_resource_group
-      plan                          = "standard"
-      random_suffix                 = true
-      use_data                      = var.cos_instance_name == null ? false : true
-      keys                          = []
-      skip_flowlogs_s2s_auth_policy = var.skip_flowlogs_s2s_auth_policy
-      skip_kms_s2s_auth_policy      = var.skip_kms_s2s_auth_policy
-
-      # Extra bucket for solution specific object storage
-      buckets = [
-        var.enable_cos_integration ? {
-          name                  = "hpc-bucket"
-          storage_class         = "standard"
-          endpoint_type         = "public"
-          force_delete          = true
-          single_site_location  = null
-          region_location       = null
-          cross_region_location = null
-          kms_key               = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-key", var.prefix) : var.kms_key_name) : null
-          expire_rule           = null
-        } : null,
-        var.enable_vpc_flow_logs ? {
-          name                  = "vpc-flow-logs-bucket"
-          storage_class         = "standard"
-          endpoint_type         = "public"
-          force_delete          = true
-          single_site_location  = null
-          region_location       = null
-          cross_region_location = null
-          kms_key               = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-slz-key", var.prefix) : var.kms_key_name) : null
-          expire_rule = {
-            days    = 30
-            enable  = true
-            rule_id = "bucket-expire-rule"
-          }
-        } : null,
-        var.enable_atracker ? {
-          name                  = "atracker-bucket"
-          storage_class         = "standard"
-          endpoint_type         = "public"
-          force_delete          = true
-          single_site_location  = null
-          region_location       = null
-          cross_region_location = null
-          kms_key               = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-atracker-key", var.prefix) : var.kms_key_name) : null
-          expire_rule = {
-            days    = 30
-            enable  = true
-            rule_id = "bucket-expire-rule"
-          }
-        } : null,
-        var.observability_logs_enable ? {
-          name                  = "logs-data-bucket"
-          storage_class         = "standard"
-          endpoint_type         = "public"
-          force_delete          = true
-          single_site_location  = null
-          region_location       = null
-          cross_region_location = null
-          kms_key               = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-logs-data-key", var.prefix) : var.kms_key_name) : null
-          expire_rule = {
-            days    = 30
-            enable  = true
-            rule_id = "bucket-expire-rule"
-          }
-        } : null,
-        var.observability_logs_enable ? {
-          name                  = "metrics-data-bucket"
-          storage_class         = "standard"
-          endpoint_type         = "public"
-          force_delete          = true
-          single_site_location  = null
-          region_location       = null
-          cross_region_location = null
-          kms_key               = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-metrics-data-key", var.prefix) : var.kms_key_name) : null
-          expire_rule = {
-            days    = 30
-            enable  = true
-            rule_id = "bucket-expire-rule"
-          }
-        } : null
-      ]
-    } : null
-    ]
+        # Extra bucket for solution specific object storage
+        buckets = [
+          for bucket in [
+            var.enable_cos_integration ? {
+              name                      = "hpc-bucket"
+              storage_class             = "standard"
+              endpoint_type             = "public"
+              force_delete              = true
+              single_site_location      = null
+              region_location           = null
+              cross_region_location     = null
+              kms_key                   = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-key", var.prefix) : var.kms_key_name) : null
+              expire_rule               = null
+              object_versioning_enabled = null
+            } : null,
+            var.enable_vpc_flow_logs ? {
+              name                      = "vpc-flow-logs-bucket"
+              storage_class             = "standard"
+              endpoint_type             = "public"
+              force_delete              = true
+              single_site_location      = null
+              region_location           = null
+              cross_region_location     = null
+              object_versioning_enabled = null
+              kms_key                   = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-slz-key", var.prefix) : var.kms_key_name) : null
+              expire_rule = {
+                days    = 30
+                enable  = true
+                rule_id = "bucket-expire-rule"
+              }
+            } : null,
+            var.enable_atracker ? {
+              name                      = "atracker-bucket"
+              storage_class             = "standard"
+              endpoint_type             = "public"
+              force_delete              = true
+              single_site_location      = null
+              region_location           = null
+              cross_region_location     = null
+              object_versioning_enabled = null
+              kms_key                   = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-atracker-key", var.prefix) : var.kms_key_name) : null
+              expire_rule = {
+                days    = 30
+                enable  = true
+                rule_id = "bucket-expire-rule"
+              }
+            } : null,
+            var.observability_logs_enable ? {
+              name                      = "logs-data-bucket"
+              storage_class             = "standard"
+              endpoint_type             = "public"
+              force_delete              = true
+              single_site_location      = null
+              region_location           = null
+              cross_region_location     = null
+              object_versioning_enabled = null
+              kms_key                   = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-logs-data-key", var.prefix) : var.kms_key_name) : null
+              expire_rule = {
+                days    = 30
+                enable  = true
+                rule_id = "bucket-expire-rule"
+              }
+            } : null,
+            var.observability_logs_enable ? {
+              name                      = "metrics-data-bucket"
+              storage_class             = "standard"
+              endpoint_type             = "public"
+              force_delete              = true
+              single_site_location      = null
+              region_location           = null
+              cross_region_location     = null
+              object_versioning_enabled = null
+              kms_key                   = var.key_management == "key_protect" ? (var.kms_key_name == null ? format("%s-metrics-data-key", var.prefix) : var.kms_key_name) : null
+              expire_rule = {
+                days    = 30
+                enable  = true
+                rule_id = "bucket-expire-rule"
+              }
+            } : null
+          ] : bucket if bucket != null
+        ]
+      }
+    ] : []
   )
 
   cos = [
@@ -381,15 +440,16 @@ locals {
       buckets = [
         for bucket in instance.buckets :
         {
-          name                  = bucket.name
-          storage_class         = bucket.storage_class
-          endpoint_type         = bucket.endpoint_type
-          force_delete          = bucket.force_delete
-          kms_key               = bucket.kms_key
-          expire_rule           = bucket.expire_rule
-          single_site_location  = bucket.single_site_location
-          region_location       = bucket.region_location
-          cross_region_location = bucket.cross_region_location
+          name                      = bucket.name
+          storage_class             = bucket.storage_class
+          endpoint_type             = bucket.endpoint_type
+          force_delete              = bucket.force_delete
+          kms_key                   = bucket.kms_key
+          expire_rule               = bucket.expire_rule
+          single_site_location      = bucket.single_site_location
+          region_location           = bucket.region_location
+          cross_region_location     = bucket.cross_region_location
+          object_versioning_enabled = bucket.object_versioning_enabled
         }
         if bucket != null
       ]
@@ -415,6 +475,9 @@ locals {
     } : null,
     var.enable_atracker ? {
       name = format("%s-atracker-key", var.prefix)
+    } : null,
+    length(local.tfstate_new_instance_bucket_hmac) > 0 ? {
+      name = format("%s-cos-key", var.prefix)
     } : null
     ] : [
     {
@@ -423,7 +486,7 @@ locals {
     }
   ]) : null
 
-  key_management = var.key_management == "key_protect" || (var.scale_encryption_enabled && var.scale_encryption_type == "key_protect" && var.key_protect_instance_id == null) ? {
+  key_management = var.key_management == "key_protect" || (var.scale_encryption_enabled && var.scale_encryption_type == "key_protect" && var.kms_instance_name == null) ? {
     name           = var.kms_instance_name != null ? var.kms_instance_name : format("%s-kms", var.prefix) # var.key_management == "hs_crypto" ? var.hpcs_instance_name : format("%s-kms", var.prefix)
     resource_group = local.service_resource_group
     use_hs_crypto  = false

@@ -75,6 +75,7 @@ locals {
     ldap_server_cert                                 = var.ldap_server_cert
     ldap_instance                                    = var.ldap_instance
     enable_dedicated_host                            = var.enable_dedicated_host
+    enable_baremetal                                 = var.enable_baremetal
     existing_bastion_instance_name                   = var.existing_bastion_instance_name
     existing_bastion_instance_public_ip              = var.existing_bastion_instance_public_ip
     existing_bastion_security_group_id               = var.existing_bastion_security_group_id
@@ -85,6 +86,8 @@ locals {
     enable_sccwp                                     = var.enable_sccwp
     enable_cspm                                      = var.enable_cspm
     app_config_plan                                  = var.app_config_plan
+    tfstate_cos_config                               = var.tfstate_cos_config
+    tfstate_existing_cos_bucket_creds                = var.tfstate_existing_cos_bucket_creds
     enable_lsf_pay_per_use                           = var.enable_lsf_pay_per_use
     enable_license_scheduler                         = var.enable_license_scheduler
   }
@@ -151,6 +154,7 @@ locals {
     ldap_server_cert                                 = lookup(local.override[local.override_type], "ldap_server_cert", local.config.ldap_server_cert)
     ldap_instance                                    = lookup(local.override[local.override_type], "ldap_instance", local.config.ldap_instance)
     enable_dedicated_host                            = lookup(local.override[local.override_type], "enable_dedicated_host", local.config.enable_dedicated_host)
+    enable_baremetal                                 = lookup(local.override[local.override_type], "enable_baremetal", local.config.enable_baremetal)
     existing_bastion_instance_name                   = lookup(local.override[local.override_type], "existing_bastion_instance_name", local.config.existing_bastion_instance_name)
     existing_bastion_instance_public_ip              = lookup(local.override[local.override_type], "existing_bastion_instance_public_ip", local.config.existing_bastion_instance_public_ip)
     existing_bastion_security_group_id               = lookup(local.override[local.override_type], "existing_bastion_security_group_id", local.config.existing_bastion_security_group_id)
@@ -161,6 +165,8 @@ locals {
     sccwp_service_plan                               = lookup(local.override[local.override_type], "scc_wp_service_plan", local.config.sccwp_service_plan)
     app_config_plan                                  = lookup(local.override[local.override_type], "app_config_plan", local.config.app_config_plan)
     enable_lsf_pay_per_use                           = lookup(local.override[local.override_type], "enable_lsf_pay_per_use", local.config.enable_lsf_pay_per_use)
+    tfstate_cos_config                               = lookup(local.override[local.override_type], "tfstate_cos_config", local.config.tfstate_cos_config)
+    tfstate_existing_cos_bucket_creds                = lookup(local.override[local.override_type], "tfstate_existing_cos_bucket_creds", local.config.tfstate_existing_cos_bucket_creds)
     enable_license_scheduler                         = lookup(local.override[local.override_type], "enable_license_scheduler", local.config.enable_license_scheduler)
     # client_instances                                 = lookup(local.override[local.override_type], "client_instances", local.config.client_instances)
     # client_subnets_cidr                              = lookup(local.override[local.override_type], "client_subnets_cidr", local.config.client_subnets_cidr)

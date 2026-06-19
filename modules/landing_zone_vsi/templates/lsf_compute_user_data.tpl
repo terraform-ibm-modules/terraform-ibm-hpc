@@ -1,3 +1,4 @@
+#!/bin/bash
 #!/usr/bin/env bash
 
 ###############################################################################
@@ -34,6 +35,7 @@
 # Script Variables
 ###############################################################################
 LOGFILE="/tmp/init-script.log"
+DISPLAY_LOGFILE="/var/log/lsf_compute_setup.log"
 USER="vpcuser"
 REPO_ID="ansible-2-for-rhel-8-x86_64-rpms"
 CLUSTER_USER="lsfadmin"
@@ -49,7 +51,7 @@ HOSTNAME="$(hostname)"
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOGFILE"
 }
-
+exec > >(tee -a "$DISPLAY_LOGFILE") 2>&1
 log "Initialization script started"
 
 ###############################################################################
@@ -74,7 +76,35 @@ else
 fi
 
 ###############################################################################
-# 3. Apply system tuning
+# 3. Configure SSH for user
+###############################################################################
+log "Setting up SSH configuration for user"
+
+USER_HOME="/home/$USER"
+SSH_DIR="$USER_HOME/.ssh"
+
+mkdir -p "$SSH_DIR"
+chmod 700 "$SSH_DIR"
+
+echo "${bastion_public_key_content}" >> "$SSH_DIR/authorized_keys"
+echo "${compute_public_key_content}" >> "$SSH_DIR/authorized_keys"
+
+cat > "$SSH_DIR/config" <<EOF
+Host *
+    StrictHostKeyChecking no
+EOF
+
+echo "${compute_private_key_content}" > "$SSH_DIR/id_rsa"
+
+chmod 600 \
+    "$SSH_DIR/authorized_keys" \
+    "$SSH_DIR/config" \
+    "$SSH_DIR/id_rsa"
+
+chown -R "$USER:$USER" "$SSH_DIR"
+
+###############################################################################
+# 4. Apply system tuning
 ###############################################################################
 log "Applying system tuning parameters"
 
@@ -94,7 +124,7 @@ echo 1 > /proc/sys/vm/overcommit_memory
 sysctl -p "$LSF_TUNABLES"
 
 ###############################################################################
-# 4. Configure network
+# 5. Configure network
 ###############################################################################
 log "Updating network configuration"
 
@@ -123,7 +153,7 @@ fi
 systemctl restart NetworkManager
 
 ###############################################################################
-# 5. Configure DNS settings
+# 6. Configure DNS settings
 ###############################################################################
 log "Updating DNS configuration"
 
@@ -156,34 +186,6 @@ fi
 make_immutable
 
 log "DNS configuration updated"
-
-###############################################################################
-# 6. Configure SSH for user
-###############################################################################
-log "Setting up SSH configuration for user"
-
-USER_HOME="/home/$USER"
-SSH_DIR="$USER_HOME/.ssh"
-
-mkdir -p "$SSH_DIR"
-chmod 700 "$SSH_DIR"
-
-echo "${bastion_public_key_content}" >> "$SSH_DIR/authorized_keys"
-echo "${compute_public_key_content}" >> "$SSH_DIR/authorized_keys"
-
-cat > "$SSH_DIR/config" <<EOF
-Host *
-    StrictHostKeyChecking no
-EOF
-
-echo "${compute_private_key_content}" > "$SSH_DIR/id_rsa"
-
-chmod 600 \
-    "$SSH_DIR/authorized_keys" \
-    "$SSH_DIR/config" \
-    "$SSH_DIR/id_rsa"
-
-chown -R "$USER:$USER" "$SSH_DIR"
 
 ###############################################################################
 # 7. Validate cluster configuration
@@ -276,29 +278,69 @@ log "Environment configuration updated"
 
 # this_hostname="$(hostname)"
 
-if [ "${cloud_monitoring_access_key}" != "" ] && [ "${cloud_monitoring_ingestion_url}" != "" ]; then
-  log "cloud_monitoring_access_key and cloud_monitoring_ingestion_url are provided"
-  SYSDIG_CONFIG_FILE="/opt/draios/etc/dragent.yaml"
+# ==========================================
+# Setting up the Unified Metrics & Security Agent
+# ==========================================
+SYSDIG_CONFIG_FILE="/opt/draios/etc/dragent.yaml"
+START_DRAGENT=false
 
-  #packages installation
-  log "Writing sysdig config file"
+# 1. Condition Block: IBM Cloud Monitoring (Metrics)
+if [ "${observability_monitoring_on_compute_nodes_enable}" = true ]; then
+  log "observability_monitoring_on_compute_nodes_enable is true"
+  if [ "${cloud_monitoring_access_key}" != "" ] && [ "${cloud_monitoring_ingestion_url}" != "" ]; then
+    log "cloud_monitoring_access_key and cloud_monitoring_ingestion_url are provided"
 
-  #sysdig config file
-  log "Setting customerid access key"
-  sed -i "s/==ACCESSKEY==/${cloud_monitoring_access_key}/g" $SYSDIG_CONFIG_FILE
-  sed -i "s/==COLLECTOR==/${cloud_monitoring_ingestion_url}/g" $SYSDIG_CONFIG_FILE
-  echo "tags: type:compute,lsf:true" >>$SYSDIG_CONFIG_FILE
-else
-  log "Skipping metrics agent configuration due to missing parameters"
+    log "Writing sysdig config file"
+    log "Setting customerid access key"
+    sed -i "s/==ACCESSKEY==/${cloud_monitoring_access_key}/g" $SYSDIG_CONFIG_FILE
+    sed -i "s/==COLLECTOR==/${cloud_monitoring_ingestion_url}/g" $SYSDIG_CONFIG_FILE
+
+    # Mark that the agent has valid configuration to run
+    START_DRAGENT=true
+  else
+    log "Skipping metrics agent configuration due to missing parameters"
+  fi
 fi
 
-if [ "${observability_monitoring_on_compute_nodes_enable}" = true ]; then
+# 2. Condition Block: SCC Workload Protection (Security)
+if [ "${enable_sccwp}" = true ]; then
+  log "enable_sccwp is true"
+  if [ "${sccwp_api_endpoint}" != "" ]; then
+    log "Configuring Security Compliance data endpoints"
 
-  log "Restarting sysdig agent"
+    sed -i "s/==SCC_ENDPOINT==/${sccwp_api_endpoint}/g" $SYSDIG_CONFIG_FILE
+
+    # FALLBACK LOGIC: If Monitoring is OFF, the agent still needs an access key and collector!
+    if [ "${observability_monitoring_on_compute_nodes_enable}" != true ]; then
+      log "Monitoring is disabled on compute nodes. Using standalone SCC credentials for agent authentication."
+      sed -i "s/==ACCESSKEY==/${sccwp_access_key}/g" $SYSDIG_CONFIG_FILE
+      sed -i "s/==COLLECTOR==/${sccwp_ingestion_endpoint}/g" $SYSDIG_CONFIG_FILE
+    fi
+
+    # Mark that the agent has valid configuration to run
+    START_DRAGENT=true
+  else
+    log "Skipping SCC configuration due to missing sccwp_api_endpoint"
+  fi
+
+else
+  log "SCC Workload Protection is false. Safely disabling internal scanning engines."
+  # If security is explicitly disabled, flip the internal engine flags to false
+  # to save host CPU cycles and prevent connection errors to an empty placeholder.
+  sed -i '/host_scanner:/,/enabled: true/s/enabled: true/enabled: false/' $SYSDIG_CONFIG_FILE
+  sed -i '/kspm_analyzer:/,/enabled: true/s/enabled: true/enabled: false/' $SYSDIG_CONFIG_FILE
+fi
+
+# 3. Finalization Block: Global Rules & Daemon Lifecycle
+if [ "$${START_DRAGENT}" = true ]; then
+  log "Appending global metadata infrastructure tags for compute nodes"
+  echo "tags: type:compute,lsf:true" >> $SYSDIG_CONFIG_FILE
+
+  log "Activating and starting Sysdig unified agent service"
   systemctl enable dragent
   systemctl restart dragent
 else
-  log "Metrics agent start skipped since monitoring provisioning is not enabled"
+  log "Sysdig agent remaining stopped and disabled: No features were requested."
 fi
 
 # Setting up the IBM Cloud Logs
@@ -366,7 +408,14 @@ fi
 log "Completed sysdig and cloud logs configuration step"
 
 ###############################################################################
-# 12. Script completion
+# 12. Stop the lwsd service and prevent it from starting at boot
+###############################################################################
+log "Stopping lwsd service and disabling it from startup"
+sudo systemctl stop lwsd
+sudo systemctl disable lwsd
+
+###############################################################################
+# 13. Script completion
 ###############################################################################
 log "Initialization script completed"
 

@@ -338,12 +338,6 @@ variable "scale_encryption_type" {
   description = "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled"
 }
 
-variable "key_protect_instance_id" {
-  type        = string
-  default     = null
-  description = "An existing Key Protect instance used for filesystem encryption"
-}
-
 # variable "hpcs_instance_name" {
 #   type        = string
 #   default     = null
@@ -472,4 +466,33 @@ variable "clusters" {
 variable "enable_private_path_nlb" {
   type        = bool
   description = "Enable private path network load balancer for providing CES (NFS) storage."
+}
+
+variable "tfstate_cos_config" {
+  type = list(object({
+    bucket_storage_class = string
+    bucket_type          = string
+    bucket_region        = string
+  }))
+
+  nullable = false
+
+  default = [{
+    bucket_storage_class = "standard"
+    bucket_type          = "region_location"
+    bucket_region        = ""
+  }]
+
+  description = "Configuration for Terraform state COS bucket"
+}
+
+variable "tfstate_existing_cos_bucket_creds" {
+  type = object({
+    bucket = string
+    region = string
+    akey   = string
+    skey   = string
+  })
+  default     = null
+  description = "Credentials for an EXISTING Terraform state COS bucket. Leave null if creating a new bucket."
 }

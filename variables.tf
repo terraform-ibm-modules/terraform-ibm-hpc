@@ -206,18 +206,31 @@ variable "vpc_cluster_private_subnets_cidr_blocks" {
   description = "Provide the CIDR block required for the creation of the compute cluster's private subnet. One CIDR block is required. If using a hybrid environment, modify the CIDR block to avoid conflicts with any on-premises CIDR blocks. Ensure the selected CIDR block size can accommodate the maximum number of management and dynamic compute nodes expected in your cluster. For more information on CIDR block size selection, refer to the documentation, see [Choosing IP ranges for your VPC](https://cloud.ibm.com/docs/vpc?topic=vpc-choosing-ip-ranges-for-your-vpc)."
 }
 
+
 variable "management_instances" {
   type = list(
     object({
       profile = string
       count   = number
       image   = string
+      boot_volume = optional(object({
+        profile   = optional(string) # sdp | general-purpose
+        size      = optional(number) # in GB
+        iops      = optional(number) # only for sdp else null
+        bandwidth = optional(number) # only for sdp else null
+      }))
     })
   )
   default = [{
     profile = "cx2-2x4"
     count   = 0
     image   = "ibm-redhat-8-10-minimal-amd64-10"
+    boot_volume = {
+      profile   = "general-purpose"
+      size      = 100
+      iops      = null # null for general-purpose
+      bandwidth = null # only for sdp
+    }
   }]
   description = "Number of instances to be launched for management."
 }
@@ -229,6 +242,12 @@ variable "static_compute_instances" {
       count      = number
       image      = string
       filesystem = optional(string)
+      boot_volume = optional(object({
+        profile   = optional(string) # sdp | general-purpose
+        size      = optional(number) # in GB
+        iops      = optional(number) # only for sdp else null
+        bandwidth = optional(number) # only for sdp else null
+      }))
     })
   )
   default = [{
@@ -236,6 +255,12 @@ variable "static_compute_instances" {
     count      = 0
     image      = "ibm-redhat-8-10-minimal-amd64-10"
     filesystem = "/ibm/fs1"
+    boot_volume = {
+      profile   = "general-purpose"
+      size      = 100
+      iops      = null # null for general-purpose
+      bandwidth = null # only for sdp
+    }
   }]
   description = "Min Number of instances to be launched for compute cluster."
 }
@@ -243,17 +268,31 @@ variable "static_compute_instances" {
 variable "dynamic_compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile               = string
+      count                 = number
+      image                 = string
+      enable_spot_instances = bool
+      boot_volume = optional(object({
+        profile   = optional(string) # general-purpose | sdp | 5iops-tier | 10iops-tier | custom
+        size      = optional(number) # 100–250 GB
+        iops      = optional(number) # sdp (>=3000), custom (>=100), else null
+        bandwidth = optional(number) # only for sdp (>=1000), else null
+      }))
     })
   )
   default = [{
-    profile = "cx2-2x4"
-    count   = 500
-    image   = "ibm-redhat-8-10-minimal-amd64-10"
+    profile               = "cx2-2x4"
+    count                 = 500
+    image                 = "ibm-redhat-8-10-minimal-amd64-10"
+    enable_spot_instances = false
+    boot_volume = {
+      profile   = "general-purpose"
+      size      = 100
+      iops      = null
+      bandwidth = null
+    }
   }]
-  description = "MaxNumber of instances to be launched for compute cluster."
+  description = "Specify the list of dynamic compute node configurations, including instance profile, image, instance count, and Spot instance support for the compute cluster."
 }
 
 variable "compute_gui_username" {
@@ -486,16 +525,10 @@ variable "boot_volume_encryption_key" {
   description = "The kms_key crn."
 }
 
-variable "existing_kms_instance_guid" {
+variable "kms_instance_guid" {
   type        = string
   default     = null
   description = "The existing KMS instance guid."
-}
-
-variable "key_protect_instance_id" {
-  type        = string
-  default     = null
-  description = "An existing Key Protect instance used for filesystem encryption"
 }
 
 # variable "hpcs_instance_name" {
@@ -933,9 +966,9 @@ variable "gklm_instances" {
     })
   )
   default = [{
-    profile = "bx2-2x8"
+    profile = "bx2-4x16"
     count   = 2
-    image   = "hpcc-scale-gklm4202-v2-5-5"
+    image   = "hpcc-scale-gklm4202-v2-5-6"
   }]
   description = "Number of GKLM instances to be launched for scale cluster."
 }
@@ -1039,6 +1072,17 @@ variable "enable_dedicated_host" {
   description = "Enables dedicated host to the compute instances"
 }
 
+##############################################################################
+# Baremetal Variables
+##############################################################################
+
+variable "enable_baremetal" {
+  type        = bool
+  default     = false
+  description = "Set this option to true to enable baremetal servers. The default value is false."
+
+}
+
 ###########################################################################
 # Existing Bastion Support variables
 ###########################################################################
@@ -1082,11 +1126,23 @@ variable "login_instance" {
     object({
       profile = string
       image   = string
+      boot_volume = optional(object({
+        profile   = optional(string) # sdp | general-purpose
+        size      = optional(number) # in GB
+        iops      = optional(number) # only for sdp else null
+        bandwidth = optional(number) # only for sdp else null
+      }))
     })
   )
   default = [{
     profile = "bx2-2x8"
     image   = "hpcaas-lsf10-rhel810-compute-v8"
+    boot_volume = {
+      profile   = "general-purpose"
+      size      = 100
+      iops      = null # null for general-purpose
+      bandwidth = null # only for sdp
+    }
   }]
   description = "Number of instances to be launched for login node."
 }
@@ -1270,4 +1326,36 @@ variable "protocol_instance_eth1_mtu" {
     )
     error_message = "MTU must be between 1500-8500 when private path NLB is enabled, or 1500-9000 when disabled."
   }
+}
+
+################### State Bucket variables ################
+
+variable "tfstate_cos_config" {
+  type = list(object({
+    bucket_storage_class = string
+    bucket_type          = string
+    bucket_region        = string
+  }))
+
+  nullable = false
+
+  default = [{
+    bucket_storage_class = "standard"
+    bucket_type          = "region_location"
+    bucket_region        = ""
+  }]
+
+  description = "Configuration for Terraform state COS bucket"
+}
+
+variable "tfstate_existing_cos_bucket_creds" {
+  type = object({
+    bucket = string
+    region = string
+    akey   = string
+    skey   = string
+  })
+  sensitive   = true
+  default     = null
+  description = "Credentials for an EXISTING Terraform state COS bucket. Leave null if creating a new bucket."
 }

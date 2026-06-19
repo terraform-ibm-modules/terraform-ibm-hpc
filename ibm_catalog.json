@@ -48,7 +48,7 @@
           "short_description": "Deploy your high performance computing (HPC) cluster with IBM scheduling software for compute intensive workloads.",
           "install_type": "fullstack",
           "working_directory": "solutions/lsf",
-          "terraform_version": "1.10.5",
+          "terraform_version": "1.14.0",
           "release_notes_url": "https://cloud.ibm.com/docs/hpc-ibm-spectrumlsf?topic=hpc-ibm-spectrumlsf-my-service-relnotes",
           "configuration": [
             {
@@ -454,7 +454,7 @@
             {
               "key": "bastion_instance",
               "type": "object",
-              "default_value": "{\n  \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-12\",\n  \"profile\": \"cx2-4x8\"\n}",
+              "default_value": "{\n  \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-16\",\n  \"profile\": \"cx2-4x8\"\n}",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -468,7 +468,7 @@
             {
               "key": "deployer_instance",
               "type": "object",
-              "default_value": "{\n  \"image\": \"hpc-lsf-fp15-deployer-rhel810-v3\",\n  \"profile\": \"bx2-8x32\"\n}",
+              "default_value": "{\n  \"image\": \"hpc-lsf-fp15-deployer-rhel810-v4\",\n  \"profile\": \"bx2-8x32\"\n}",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -482,7 +482,7 @@
             {
               "key": "login_instance",
               "type": "array",
-              "default_value": "[\n  {\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v3\"\n  }\n]",
+              "default_value": "[\n  {\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v4\",\n    \"boot_volume\": {\n    \"profile\": \"general-purpose\",\n    \"size\": 100,\n    \"iops\": null,\n    \"bandwidth\": null\n    }\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -496,7 +496,7 @@
             {
               "key": "management_instances",
               "type": "array",
-              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-16x64\",\n    \"image\": \"hpc-lsf-fp15-rhel810-v3\"\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-16x64\",\n    \"image\": \"hpc-lsf-fp15-rhel810-v4\",\n    \"boot_volume\": {\n      \"profile\": \"general-purpose\",\n      \"size\": 100,\n      \"iops\": null,\n      \"bandwidth\": null\n    }\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -508,9 +508,12 @@
               }
             },
             {
+              "key": "enable_baremetal"
+            },
+            {
               "key": "static_compute_instances",
               "type": "array",
-              "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"bx2-16x64\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v3\"\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"bx2-4x16\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v4\",\n    \"boot_volume\": {\n      \"profile\": \"general-purpose\",\n      \"size\": 100,\n      \"iops\": null,\n      \"bandwidth\": null\n    }\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -524,7 +527,7 @@
             {
               "key": "dynamic_compute_instances",
               "type": "array",
-              "default_value": "[\n  {\n    \"count\": 500,\n    \"profile\": \"bx2-16x64\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v3\"\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 500,\n    \"profile\": \"bx2-4x16\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v4\",\n    \"enable_spot_instances\": false,\n    \"boot_volume\": {\n      \"profile\": \"general-purpose\",\n      \"size\": 100,\n      \"iops\": null,\n      \"bandwidth\": null\n    }\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -608,7 +611,7 @@
             {
               "key": "ldap_instance",
               "type": "array",
-              "default_value": "[\n  {\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-12\"\n  }\n]",
+              "default_value": "[\n  {\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-16\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -656,6 +659,24 @@
             {
               "hidden": true,
               "key": "override_json_string"
+            },
+            {
+              "hidden": true,
+              "key": "tfstate_cos_config",
+              "custom_config": {
+                "type": "code_editor",
+                "grouping": "deployment",
+                "original_grouping": "deployment",
+                "config_constraints": {
+                  "supportedLanguages": [
+                    "hcl"
+                  ]
+                }
+              }
+            },
+            {
+              "hidden": true,
+              "key": "tfstate_existing_cos_bucket_creds"
             }
           ],
           "iam_permissions": [
@@ -807,9 +828,9 @@
         "solution"
       ],
       "short_description": "Deploy your HPC cluster with IBM Storage Scale for high performance, highly available, clustered file system.",
-      "long_description": "**Before you begin deploying IBM Storage Scale, make sure that you meet the prerequisites listed in [the step-by-step guide](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-before-you-begin-deploying).**\n\nIBM Storage Scale is a deployable architecture where you can deploy dedicated Storage Scale cluster. Storage Scale supports the configuration of both compute and storage nodes, allowing you to build a complete, end-to-end Storage cluster.",
+      "long_description": "**Before you begin deploying IBM Storage Scale, make sure that you meet the prerequisites listed in [the step-by-step guide](https://cloud.ibm.com/docs/storage-scale-da?topic=storage-scale-da-before-begin-deploy).**\n\nIBM Storage Scale is a deployable architecture where you can deploy dedicated Storage Scale cluster. Storage Scale supports the configuration of both compute and storage nodes, allowing you to build a complete, end-to-end Storage cluster.",
       "provider_name": "IBM",
-      "offering_docs_url": "https://cloud.ibm.com/docs/allowlist/storage-scale-da?topic=storage-scale-da-overview-storage-scale",
+      "offering_docs_url": "https://cloud.ibm.com/docs/storage-scale-da?topic=storage-scale-da-overview-storage-scale",
       "features": [
         {
           "title": "Cluster file system",
@@ -831,7 +852,7 @@
           "short_description": "Deploy your HPC cluster with IBM Storage Scale for high performance, highly available, clustered file system.",
           "install_type": "fullstack",
           "working_directory": "solutions/scale",
-          "terraform_version": "1.10.5",
+          "terraform_version": "1.14.0",
           "compliance": {
             "authority": "scc-v3",
             "profiles": [
@@ -841,7 +862,7 @@
               }
             ]
           },
-          "release_notes_url": "https://cloud.ibm.com/docs/allowlist/storage-scale-da?topic=storage-scale-da-storagescale-service-relnotes",
+          "release_notes_url": "https://cloud.ibm.com/docs/storage-scale-da?topic=storage-scale-da-storagescale-service-relnotes",
           "configuration": [
             {
               "key": "ibmcloud_api_key",
@@ -1151,6 +1172,9 @@
               "key": "client_subnet_id"
             },
             {
+              "key": "key_management"
+            },
+            {
               "key": "enable_sg_validation"
             },
             {
@@ -1350,7 +1374,10 @@
               "key": "scale_encryption_enabled"
             },
             {
-              "key": "key_protect_instance_id"
+              "key": "kms_instance_name"
+            },
+            {
+              "key": "kms_key_name"
             },
             {
               "key": "scale_encryption_type",
@@ -1373,7 +1400,7 @@
             {
               "key": "gklm_instances",
               "type": "object",
-              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"hpcc-scale-gklm4202-v2-5-5\"\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-4x16\",\n    \"image\": \"hpcc-scale-gklm4202-v2-5-6\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -1538,6 +1565,24 @@
             {
               "hidden": true,
               "key": "override_json_string"
+            },
+            {
+              "hidden": true,
+              "key": "tfstate_cos_config",
+              "custom_config": {
+                "type": "code_editor",
+                "grouping": "deployment",
+                "original_grouping": "deployment",
+                "config_constraints": {
+                  "supportedLanguages": [
+                    "hcl"
+                  ]
+                }
+              }
+            },
+            {
+              "hidden": true,
+              "key": "tfstate_existing_cos_bucket_creds"
             }
           ],
           "iam_permissions": [

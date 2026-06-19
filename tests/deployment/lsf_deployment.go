@@ -49,9 +49,10 @@ type StaticWorkerInstances struct {
 
 // DynamicWorkerInstances represents each dynamic compute instance.
 type DynamicWorkerInstances struct {
-	Profile string `yaml:"profile" json:"profile"`
-	Count   int    `yaml:"count" json:"count"`
-	Image   string `yaml:"image" json:"image"`
+	Profile             string `yaml:"profile" json:"profile"`
+	Count               int    `yaml:"count" json:"count"`
+	Image               string `yaml:"image" json:"image"`
+	EnableSpotInstances bool   `yaml:"enable_spot_instances" json:"enable_spot_instances"`
 }
 
 // LDAPServerNodeInstance represents each ldap node instance.

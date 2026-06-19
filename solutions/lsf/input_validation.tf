@@ -82,7 +82,7 @@ locals {
   # Password complexity validation
   ###########################################################################
 
-  validate_password_complexity_msg = "Password must be at least 15 characters long and include uppercase, lowercase, number and special character (!@#$%^&*()_+=-). Spaces are not allowed."
+  validate_password_complexity_msg = "The 'webservice_appcenter_password' variable does not meet the password requirements. It must be at least 15 characters long and contain uppercase, lowercase, numeric, and special characters (!@#$%^&*()_+=-). Spaces are not permitted."
 
   validate_password_complexity = (
     !local.password_validation_required ||

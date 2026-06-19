@@ -7,7 +7,7 @@ locals {
 
 module "cloud_logs" {
   source                      = "terraform-ibm-modules/cloud-logs/ibm"
-  version                     = "1.12.2"
+  version                     = "1.13.8"
   count                       = (var.cloud_logs_provision || var.cloud_logs_as_atracker_target) ? 1 : 0
   resource_group_id           = var.rg
   region                      = var.location
@@ -33,7 +33,7 @@ module "cloud_logs" {
 
 module "cloud_monitoring" {
   source                  = "terraform-ibm-modules/cloud-monitoring/ibm"
-  version                 = "1.14.3"
+  version                 = "1.15.6"
   count                   = var.cloud_monitoring_provision ? 1 : 0
   region                  = var.location
   resource_group_id       = var.rg
@@ -46,7 +46,7 @@ module "cloud_monitoring" {
 
 module "activity_tracker" {
   source  = "terraform-ibm-modules/activity-tracker/ibm"
-  version = "1.6.13"
+  version = "1.8.5"
 
   # Cloud Logs target
   cloud_logs_targets = var.cloud_logs_as_atracker_target ? [
@@ -70,7 +70,7 @@ module "activity_tracker" {
 # IBM Cloud Metrics Routing
 module "metric_router" {
   source  = "terraform-ibm-modules/cloud-monitoring/ibm//modules/metrics_routing"
-  version = "1.14.3" # Replace "X.Y.Z" with a release version to lock into a specific release
+  version = "1.15.6" # Replace "X.Y.Z" with a release version to lock into a specific release
   count   = (var.enable_metrics_routing && var.cloud_monitoring_provision) ? 1 : 0
   metrics_router_targets = [
     {

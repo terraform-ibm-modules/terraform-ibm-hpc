@@ -25,7 +25,7 @@ variable "lsf_version" {
 variable "enable_lsf_pay_per_use" {
   type        = bool
   default     = true
-  description = "Enabling lsf_pay_per_use provisions LSF cluster nodes using predefined custom images under a pay-per-use pricing model. Billing is based on vCPU usage per hour, considering the enable_hyperthreading configuration. In this mode, Bring Your Own Image (BYOI) is not supported for any cluster nodes. Disabling this variable provisions all cluster nodes using default images, enables support for BYOI, and does not apply pay-per-use billing."
+  description = "Enabling lsf_pay_per_use provisions LSF cluster nodes using predefined custom images under a pay-per-use pricing model. Billing is based on vCPU usage per hour, considering the enable_hyperthreading configuration. In this mode, Bring Your Own Image (BYOI) is not supported for any cluster nodes. If enable_lsf_pay_per_use is false, solution provisions all cluster nodes using default images and supports BYOI. Setting enable_lsf_pay_per_use as false does not apply pay-per-use billing."
 }
 
 ##############################################################################
@@ -156,7 +156,7 @@ variable "bastion_instance" {
     profile = string
   })
   default = {
-    image   = "ibm-ubuntu-22-04-5-minimal-amd64-12"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-16"
     profile = "cx2-4x8"
   }
   description = "Define the configuration for the bastion node, including the image and instance profile. Only stock Ubuntu 22.04 images are supported."
@@ -178,10 +178,10 @@ variable "deployer_instance" {
     profile = string
   })
   default = {
-    image   = "hpc-lsf-fp15-deployer-rhel810-v3"
+    image   = "hpc-lsf-fp15-deployer-rhel810-v4"
     profile = "bx2-8x32"
   }
-  description = "Define the configuration for the deployer node, including the image and instance profile. By default, deployer node is created using Fix Pack 15."
+  description = "Defines the configuration of the deployer node, including the image and instance profile. By default, the deployer node is provisioned using the Fix Pack 15 image, which contains the required software packages, dependencies, and configuration needed for the deployment workflow. Customer-provided or custom images are not supported for the deployer node, as they may not contain the required components, resulting in deployment failures."
   validation {
     condition = (
       (!can(regex("fp15", var.deployer_instance.image)) || var.lsf_version == "fixpack_15")
@@ -203,13 +203,26 @@ variable "login_instance" {
     object({
       profile = string
       image   = string
+      boot_volume = optional(object({
+        profile   = optional(string) # sdp | general-purpose
+        size      = optional(number) # in GB
+        iops      = optional(number) # only for sdp else null
+        bandwidth = optional(number) # only for sdp else null
+      }))
     })
   )
   default = [{
     profile = "bx2-2x8"
-    image   = "hpc-lsf-fp15-compute-rhel810-v3"
+    image   = "hpc-lsf-fp15-compute-rhel810-v4"
+    boot_volume = {
+      profile   = "general-purpose"
+      size      = 100
+      iops      = null # null for general-purpose
+      bandwidth = null # only for sdp
+    }
   }]
-  description = "Define the configuration for the login node, including instance profile, image name. By default, login node is created using Fix Pack 15. To use a custom image, update the image name accordingly"
+  description = "Defines the login node configuration, including the instance profile, image, and optional boot volume settings. By default, the login node is provisioned using the Fix Pack 15 image. You can provision the login node using your own custom image by specifying the desired image name. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
+
   validation {
     condition = alltrue([
       for inst in var.login_instance : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
@@ -224,22 +237,94 @@ variable "login_instance" {
     ])
     error_message = "Use an image with only 'fp15' only with fixpack_15."
   }
-}
+  validation {
+    condition = alltrue([
+      for inst in var.login_instance :
+      inst.boot_volume == null ||
+      contains(["sdp", "general-purpose"], inst.boot_volume.profile)
+    ])
 
+    error_message = "Solution supports boot_volume profile type must be either 'sdp' or 'general-purpose'."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.login_instance :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.size >= 100 &&
+        inst.boot_volume.size <= (
+          inst.boot_volume.profile == "sdp" ? 32000 : 250
+        )
+      )
+    ])
+
+    error_message = "Invalid login node boot volume configuration. Volume size must be at least 100 GB. For 'general-purpose' profiles, the maximum size is 250 GB. For 'sdp' profiles, the maximum size is 32000 GB."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.login_instance :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.profile == "sdp"
+        ?
+        (
+          inst.boot_volume.iops == null ||
+          inst.boot_volume.iops >= 3000 &&
+          inst.boot_volume.iops <= 64000
+        )
+        :
+        inst.boot_volume.iops == null
+      )
+    ])
+
+    error_message = "Invalid boot volume IOPS configuration. For the 'sdp' profile, IOPS can be omitted (null) or must be between 3000 and 64000. For the 'general-purpose' profile, IOPS must not be specified."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.login_instance :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.profile == "sdp"
+        ?
+        (
+          inst.boot_volume.bandwidth == null ||
+          inst.boot_volume.bandwidth >= 1000 &&
+          inst.boot_volume.bandwidth <= 8192
+        )
+        :
+        inst.boot_volume.bandwidth == null
+      )
+    ])
+
+    error_message = "Invalid boot volume bandwidth configuration. For the 'sdp' profile, bandwidth can be omitted (null) or must be between 1000 and 8192 Mbps. For the 'general-purpose' profile, bandwidth must not be specified."
+  }
+}
 variable "management_instances" {
   type = list(
     object({
       profile = string
       count   = number
       image   = string
+      boot_volume = optional(object({
+        profile   = optional(string) # sdp | general-purpose
+        size      = optional(number) # in GB
+        iops      = optional(number) # only for sdp else null
+        bandwidth = optional(number) # only for sdp else null
+      }))
     })
   )
   default = [{
     profile = "bx2-16x64"
     count   = 2
-    image   = "hpc-lsf-fp15-rhel810-v3"
+    image   = "hpc-lsf-fp15-rhel810-v4"
+    boot_volume = {
+      profile   = "general-purpose"
+      size      = 100
+      iops      = null # null for general-purpose
+      bandwidth = null # only for sdp
+    }
   }]
-  description = "Specify the list of management node configurations, including instance profile, image name, and count. By default, all management nodes are created using Fix Pack 15. The solution allows customization of instance profiles and counts, IBM stock images is not supported. he solution also supports provisioning instances on AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions."
+  description = "Specify the list of management node configurations, including instance profile, image name, and count. By default, all management nodes are created using Fix Pack 15. The solution allows customization of instance profiles and counts, IBM stock images is not supported. Solution also supports provisioning instances on AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
   validation {
     condition     = alltrue([for inst in var.management_instances : !contains([for i in var.management_instances : can(regex("^ibm", i.image))], true) || can(regex("^ibm-redhat", inst.image))])
     error_message = "When defining management_instances, all instances must either use custom images or IBM stock images exclusively — mixing the two is not supported. If stock images are used, only Red Hat-based IBM images (e.g., ibm-redhat-*) are allowed."
@@ -269,6 +354,67 @@ variable "management_instances" {
     ])
     error_message = "The profile 'hx4da-248x680' is supported only in the us-south region. Please choose any zone from us-south region when using this profile."
   }
+  validation {
+    condition = alltrue([
+      for inst in var.management_instances :
+      inst.boot_volume == null ||
+      contains(["sdp", "general-purpose"], inst.boot_volume.profile)
+    ])
+
+    error_message = "Solution supports boot_volume profile type must be either 'sdp' or 'general-purpose'."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.management_instances :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.size >= 100 &&
+        inst.boot_volume.size <= (
+          inst.boot_volume.profile == "sdp" ? 32000 : 250
+        )
+      )
+    ])
+
+    error_message = "Invalid management node boot volume configuration. Volume size must be at least 100 GB. For 'general-purpose' profiles, the maximum size is 250 GB. For 'sdp' profiles, the maximum size is 32000 GB.."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.management_instances :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.profile == "sdp"
+        ?
+        (
+          inst.boot_volume.iops == null ||
+          inst.boot_volume.iops >= 3000 &&
+          inst.boot_volume.iops <= 64000
+        )
+        :
+        inst.boot_volume.iops == null
+      )
+    ])
+
+    error_message = "Invalid boot volume IOPS configuration. For the 'sdp' profile, IOPS can be omitted (null) or must be between 3000 and 64000. For the 'general-purpose' profile, IOPS must not be specified."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.management_instances :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.profile == "sdp"
+        ?
+        (
+          inst.boot_volume.bandwidth == null ||
+          inst.boot_volume.bandwidth >= 1000 &&
+          inst.boot_volume.bandwidth <= 8192
+        )
+        :
+        inst.boot_volume.bandwidth == null
+      )
+    ])
+
+    error_message = "Invalid management node boot volume bandwidth configuration. For the 'sdp' profile, bandwidth can be omitted (null) or must be between 1000 and 8192 Mbps. For the 'general-purpose' profile, bandwidth must not be specified."
+  }
 }
 
 variable "static_compute_instances" {
@@ -277,27 +423,39 @@ variable "static_compute_instances" {
       profile = string
       count   = number
       image   = string
+      boot_volume = optional(object({
+        profile   = optional(string) # sdp | general-purpose
+        size      = optional(number) # in GB
+        iops      = optional(number) # only for sdp else null
+        bandwidth = optional(number) # only for sdp else null
+      }))
     })
   )
   default = [{
     profile = "bx2-4x16"
     count   = 0
-    image   = "hpc-lsf-fp15-compute-rhel810-v3"
+    image   = "hpc-lsf-fp15-compute-rhel810-v4"
+    boot_volume = {
+      profile   = "general-purpose"
+      size      = 100
+      iops      = null # null for general-purpose
+      bandwidth = null # only for sdp
+    }
   }]
-  description = "Specify the list of static compute node configurations, including instance profile, image name, and count. By default, all compute nodes are created using Fix Pack 15. The solution allows customization of instance profiles and counts, IBM Stock image are not supported. Solution also supports provisioning instances on AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions."
+
+  description = "Specify the list of static compute node configurations, including instance profile, image name, and count. By default, all compute nodes are created using Fix Pack 15. The solution allows customization of instance profiles and counts, IBM Stock image are not supported.  You can provision the static compute node using your own custom image by specifying the desired image name. Solution also supports provisioning instances on AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
+
   validation {
     condition = alltrue([
       for inst in var.static_compute_instances :
-      # If any instance uses IBM stock image, all must use it, and it should be redhat.
-      (!contains([for i in var.static_compute_instances : can(regex("^ibm-", i.image))], true) || can(regex("^ibm-redhat", inst.image)))
+      var.enable_baremetal
+      ? length(regexall("^(b|c|m)x[0-9]+d?-[a-z]+-[0-9]+x[0-9]+", inst.profile)) > 0
+      : (
+        length(regexall("^[^\\s]+-[0-9]+x[0-9]+", inst.profile)) > 0 &&
+        !strcontains(lower(inst.profile), "metal")
+      )
     ])
-    error_message = "When defining static_compute_instances, all instances must either use custom images or IBM stock images exclusively—mixing the two is not supported. If stock images are used, only Red Hat-based IBM images (e.g., ibm-redhat-*) are allowed."
-  }
-  validation {
-    condition = alltrue([
-      for inst in var.static_compute_instances : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
-    ])
-    error_message = "The profile must be a valid virtual server instance profile."
+    error_message = "Profiles must match baremetal server profile pattern when enable_baremetal=true, and VSI profile pattern when enable_baremetal=false."
   }
   validation {
     condition = alltrue([
@@ -305,31 +463,139 @@ variable "static_compute_instances" {
         (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15")
       )
     ])
-    error_message = "Mismatch between static_compute_instances image and lsf_version. Use an image with 'fp14' only when lsf_version is fixpack_14, and 'fp15' only with fixpack_15."
+    error_message = "Static Image should be FP15 when the version is set as fixpack_15."
   }
   validation {
     condition = alltrue([
       for inst in var.static_compute_instances :
       inst.profile != "hx4da-248x680" || startswith(var.zones[0], "us-south")
     ])
-    error_message = "The profile 'hx4da-248x680' is only supported in the us-south region. Please choose any zone from us-south region when using this profile."
+    error_message = "The profile 'hx4da-248x680' is only supported in the us-south region. Choose any zone from us-south region when using this profile."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances :
+      length(regexall("^(b|c|m)x4d?-[0-9]+x[0-9]+$", inst.profile)) == 0
+      || startswith(var.zones[0], "us-south")
+    ])
+    error_message = "Gen4 profiles (bx4, cx4, mx4, with or without 'd') are only supported in the us-south region. Choose a zone from us-south when using these profiles."
+  }
+  validation {
+    condition = (
+      !var.enable_dedicated_host ||
+      length(var.static_compute_instances) == 1
+    )
+    error_message = "When dedicated hosts are enabled, static_compute_instances must contain only a single instance profile entry. Multiple profile entries are not supported, even if the profiles belong to the same VSI family."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances : (
+        !var.enable_dedicated_host ||
+        !can(regex(".*xf.*", inst.profile))
+      )
+    ])
+    error_message = "Dedicated hosts do not support Flex instance profiles. Use supported fixed VSI profiles in static_compute_instances."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances :
+      !can(regex(".*xf.*", inst.profile))
+    ])
+    error_message = "Spot instance profiles are not supported for static_compute_instances. They are supported only for dynamic compute nodes when enable_spot_instances is set to true."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances :
+      inst.boot_volume == null ||
+      contains(["sdp", "general-purpose"], inst.boot_volume.profile)
+    ])
+
+    error_message = "Solution supports boot_volume profile type must be either 'sdp' or 'general-purpose'."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.size >= 100 &&
+        inst.boot_volume.size <= (
+          inst.boot_volume.profile == "sdp" ? 32000 : 250
+        )
+      )
+    ])
+
+    error_message = "Invalid Static compute node boot volume configuration. Volume size must be at least 100 GB. For 'general-purpose' profiles, the maximum size is 250 GB. For 'sdp' profiles, the maximum size is 32000 GB..."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.profile == "sdp"
+        ?
+        (
+          inst.boot_volume.iops == null ||
+          inst.boot_volume.iops >= 3000 &&
+          inst.boot_volume.iops <= 64000
+        )
+        :
+        inst.boot_volume.iops == null
+      )
+    ])
+
+    error_message = "Invalid Static compute node boot volume IOPS configuration. For the 'sdp' profile, IOPS can be omitted (null) or must be between 3000 and 64000. For the 'general-purpose' profile, IOPS must not be specified.."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.profile == "sdp"
+        ?
+        (
+          inst.boot_volume.bandwidth == null ||
+          inst.boot_volume.bandwidth >= 1000 &&
+          inst.boot_volume.bandwidth <= 8192
+        )
+        :
+        inst.boot_volume.bandwidth == null
+      )
+    ])
+
+    error_message = "Invalid Static compute node boot volume bandwidth configuration. For the 'sdp' profile, bandwidth can be omitted (null) or must be between 1000 and 8192 Mbps. For the 'general-purpose' profile, bandwidth must not be specified."
   }
 }
 
 variable "dynamic_compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile               = string
+      count                 = number
+      image                 = string
+      enable_spot_instances = bool
+      boot_volume = optional(object({
+        profile   = optional(string) # general-purpose | sdp | 5iops-tier | 10iops-tier | custom
+        size      = optional(number) # 100–250 GB
+        iops      = optional(number) # sdp (>=3000), custom (>=100), else null
+        bandwidth = optional(number) # only for sdp (>=1000), else null
+      }))
     })
   )
+
   default = [{
-    profile = "bx2-4x16"
-    count   = 500
-    image   = "hpc-lsf-fp15-compute-rhel810-v3"
+    profile               = "bx2-4x16"
+    count                 = 500
+    image                 = "hpc-lsf-fp15-compute-rhel810-v4"
+    enable_spot_instances = false
+    boot_volume = {
+      profile   = "general-purpose"
+      size      = 100
+      iops      = null
+      bandwidth = null
+    }
   }]
-  description = "Specify the list of dynamic compute node configurations, including instance profile, image name, and count. By default, all dynamic compute nodes are created using Fix Pack 15. Currently, only a single instance profile is supported for dynamic compute nodes multiple profiles are not yet supported. Solution also supports provisioning instances on AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions."
+  description = "Specify the list of dynamic compute node configurations, including instance profile, image name, and count. By default, all dynamic compute nodes are created using Fix Pack 15. Currently, only a single instance profile is supported, multiple profiles are not yet supported. Solution supports provision the dynamic compute node using your own custom image by specifying the desired image name. Instances can also be provisioned using AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
+
   validation {
     condition = alltrue([
       for inst in var.dynamic_compute_instances : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
@@ -347,6 +613,118 @@ variable "dynamic_compute_instances" {
       )
     ])
     error_message = "Mismatch between dynamic_compute_instances image and lsf_version. Use an image with 'fp14' only when lsf_version is fixpack_14, and 'fp15' only with fixpack_15."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances :
+      inst.boot_volume == null ||
+      contains(["general-purpose", "sdp", "5iops-tier", "10iops-tier", "custom"], inst.boot_volume.profile)
+    ])
+
+    error_message = "Solution supports boot_volume profile type must be one of the either 'general-purpose', 'sdp', '5iops-tier', '10iops-tier', or 'custom'."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.size >= 100 &&
+        inst.boot_volume.size <= 250
+      )
+    ])
+
+    error_message = "Boot volume size must be between 100 GB and 250 GB."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.profile == "sdp"
+        ?
+        (
+          inst.boot_volume.iops == null ||
+          inst.boot_volume.iops >= 3000 &&
+          inst.boot_volume.iops <= 64000
+        )
+        :
+        inst.boot_volume.profile == "custom"
+        ?
+        (
+          inst.boot_volume.iops == null ||
+          inst.boot_volume.iops >= 100 &&
+          inst.boot_volume.iops <= 48000
+        )
+        :
+        (
+          inst.boot_volume.iops == null
+        )
+      )
+    ])
+
+    error_message = "IOPS requirements: For the 'sdp' profile, iops must be null or between 3000 and 64000. For the 'custom' profile, iops must be null or between 100 and 48000. For the 'general-purpose', '5iops-tier', and '10iops-tier' profiles, iops must be null."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.profile == "sdp"
+        ?
+        (
+          inst.boot_volume.bandwidth == null ||
+          inst.boot_volume.bandwidth >= 1000 &&
+          inst.boot_volume.bandwidth <= 8192
+        )
+        :
+        inst.boot_volume.bandwidth == null
+      )
+    ])
+
+    error_message = "For 'sdp' profile, bandwidth must be null or between 1000 and 8192 Mbps. For 'general-purpose', bandwidth must be null."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances : (
+        !var.enable_dedicated_host ||
+        regex("^[a-z]+", inst.profile) ==
+        regex("^[a-z]+", var.static_compute_instances[0].profile)
+      )
+    ])
+    error_message = "When dedicated hosts are enabled, static_compute_instances and dynamic_compute_instances must belong to the same VSI profile family."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances : (
+        !var.enable_dedicated_host ||
+        !can(regex(".*xf.*", inst.profile))
+      )
+    ])
+    error_message = "Dedicated hosts do not support Flex instance profiles. Use supported fixed VSI profiles in dynamic_compute_instances."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances : (
+        !inst.enable_spot_instances ||
+        can(regex("(xf|^gx3)", inst.profile))
+      )
+    ])
+    error_message = "When enable_spot_instances is set to true, only Flex instance profiles (containing 'xf') and GPU Spot instance profiles (starting with 'gx3') are supported."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances :
+      inst.profile != "hx4da-248x680" || startswith(var.zones[0], "us-south")
+    ])
+    error_message = "The profile 'hx4da-248x680' is only supported in the us-south region. Choose any zone from us-south region when using this profile."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances :
+      length(regexall("^(b|c|m)x4d?-[0-9]+x[0-9]+$", inst.profile)) == 0
+      || startswith(var.zones[0], "us-south")
+    ])
+    error_message = "Gen4 profiles (bx4, cx4, mx4, with or without 'd') are only supported in the us-south region. Choose a zone from us-south when using these profiles."
   }
 }
 
@@ -471,35 +849,34 @@ variable "enable_license_scheduler" {
 variable "key_management" {
   type        = string
   default     = "key_protect"
-  description = "Set the value as key_protect to enable customer managed encryption for boot volume and file share. If the key_management is set as null, IBM Cloud resources will be always be encrypted through provider managed."
+  description = "Set the value as key_protect to enable customer managed encryption for boot volume and file share. If the key_management is set to null, IBM Cloud resources will be always be encrypted through provider managed."
   validation {
     condition     = var.key_management == "null" || var.key_management == null || var.key_management == "key_protect"
     error_message = "key_management must be either 'null', null, or 'key_protect'."
-  }
-  validation {
-    condition = (
-      var.kms_instance_name == null &&
-      (var.key_management == "null" || var.key_management == null || var.key_management == "key_protect")
-      ) || (
-      var.kms_instance_name != null && var.key_management == "key_protect"
-    )
-    error_message = "If kms_instance_name is provided, key_management must be 'key_protect'. If kms_instance_name is null, key_management can be 'key_protect', 'null' (string), or null (literal)."
   }
 }
 
 variable "kms_instance_name" {
   type        = string
   default     = null
-  description = "Provide the name of the existing Key Protect instance associated with the Key Management Service. Note: To use existing kms_instance_name set key_management as key_protect. The name can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
+  description = "Provide the name of the existing Key Protect instance associated with the Key Management Service. Note: To use existing kms_instance_name set key_management as key_protect.  The name can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
+  validation {
+    condition     = !(var.kms_instance_name != null && var.key_management != "key_protect")
+    error_message = "kms_instance_name can only be provided when key_management is set to 'key_protect'."
+  }
 }
 
 variable "kms_key_name" {
   type        = string
   default     = null
-  description = "Provide the existing kms key name that you want to use for the IBM Spectrum LSF cluster. Note: kms_key_name to be considered only if key_management value is set as key_protect.(for example kms_key_name: my-encryption-key)."
+  description = "Provide the existing kms key name that you want to use for the IBM Spectrum Scale cluster. Note: kms_key_name to be considered only if key_management value is set as key_protect (for example kms_key_name: my-encryption-key)."
   validation {
-    condition     = anytrue([alltrue([var.kms_key_name != null, var.kms_instance_name != null]), (var.kms_key_name == null), (var.key_management != "key_protect")])
-    error_message = "Please make sure you are passing the kms_instance_name if you are passing kms_key_name."
+    condition     = !(var.kms_key_name != null && var.kms_instance_name == null)
+    error_message = "kms_instance_name must be provided when kms_key_name is specified."
+  }
+  validation {
+    condition     = !(var.kms_key_name != null && var.key_management != "key_protect")
+    error_message = "kms_key_name can only be provided when key_management is set to 'key_protect'."
   }
 }
 
@@ -604,15 +981,17 @@ variable "ldap_instance" {
   )
   default = [{
     profile = "cx2-2x4"
-    image   = "ibm-ubuntu-22-04-5-minimal-amd64-12"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-16"
   }]
   description = "Specify the compute instance profile and image to be used for deploying LDAP instances. Only Debian-based operating systems, such as Ubuntu, are supported for LDAP functionality."
+
   validation {
     condition = alltrue([
       for inst in var.ldap_instance : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
     ])
     error_message = "The profile must be a valid virtual server instance profile."
   }
+
 }
 
 
@@ -770,7 +1149,21 @@ variable "override_json_string" {
 variable "enable_dedicated_host" {
   type        = bool
   default     = false
-  description = "Set this option to true to enable dedicated hosts for the VSIs provisioned as workload servers. The default value is false. When dedicated hosts are enabled, multiple vsi instance profiles from the same or different families (for example, bx2, cx2, mx2) can be used. If you plan to deploy a static cluster with a third-generation profile, ensure that dedicated host support is available in the selected region, as not all regions support third-gen profiles on dedicated hosts. For more information, see [Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-dh-profiles&interface=ui)."
+  description = "Set this option to true to enable dedicated hosts for the VSIs provisioned as workload servers. The default value is false. When dedicated hosts are enabled, a single VSI instance profile is used for both static and dynamic node provisioning. Multiple profiles are not supported, as dedicated hosts are single-tenant servers. Spot instances are not supported with dedicated hosts. If you plan to deploy a static cluster with a third-generation profile, ensure that dedicated host support is available in the selected region, as not all regions support third-generation profiles on dedicated hosts. For more information, see [Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-dh-profiles&interface=ui)."
+  validation {
+    condition     = !(var.enable_baremetal == true && var.enable_dedicated_host == true)
+    error_message = "dedicated host cannot be enabled when baremetal servers are enabled"
+  }
+}
+
+##############################################################################
+# Baremetal Variables
+##############################################################################
+
+variable "enable_baremetal" {
+  type        = bool
+  default     = false
+  description = "Set this option to true to provision static compute nodes using bare metal servers. By default, this option is false. When enabled, ensure that the static_compute_instances configuration uses a valid bare metal profile; otherwise, the deployment will fail."
 }
 
 ###########################################################################
@@ -872,5 +1265,69 @@ variable "app_config_plan" {
       ["basic", "standardv2", "enterprise"],
       var.app_config_plan
     )
+  }
+}
+
+######## State Bucket variables #########
+
+variable "tfstate_cos_config" {
+  type = list(object({
+    bucket_storage_class = string
+    bucket_type          = string
+    bucket_region        = string
+  }))
+
+  nullable = false
+
+  default = [{
+    bucket_storage_class = "standard"
+    bucket_type          = "region_location"
+    bucket_region        = ""
+  }]
+
+  description = "Configuration for Terraform state COS bucket"
+
+  #bucket_storage_class validation
+  validation {
+    condition = alltrue([
+      for cfg in var.tfstate_cos_config :
+      contains(["standard", "smart-tier"], cfg.bucket_storage_class)
+    ])
+    error_message = "bucket_storage_class must be either 'standard' or 'smart-tier'."
+  }
+
+  #bucket_type validation
+  validation {
+    condition = alltrue([
+      for cfg in var.tfstate_cos_config :
+      contains(
+        ["cross_region_location", "single_site_location", "region_location"],
+        cfg.bucket_type
+      )
+    ])
+    error_message = "bucket_type must be one of: cross_region_location, single_site_location, or region_location."
+  }
+}
+
+variable "tfstate_existing_cos_bucket_creds" {
+  type = object({
+    bucket = string
+    region = string
+    akey   = string
+    skey   = string
+  })
+  sensitive   = true
+  default     = null
+  description = "Credentials to use an EXISTING Terraform state COS bucket. Leave null if creating a new bucket."
+
+  # COS Credentials must be completely filled out if provided
+  validation {
+    condition = var.tfstate_existing_cos_bucket_creds == null ? true : (
+      trimspace(try(var.tfstate_existing_cos_bucket_creds.bucket, "")) != "" &&
+      trimspace(try(var.tfstate_existing_cos_bucket_creds.region, "")) != "" &&
+      trimspace(try(var.tfstate_existing_cos_bucket_creds.akey, "")) != "" &&
+      trimspace(try(var.tfstate_existing_cos_bucket_creds.skey, "")) != ""
+    )
+    error_message = "When providing tfstate_existing_cos_bucket_creds, the bucket, region, akey, and skey must all be non-empty."
   }
 }

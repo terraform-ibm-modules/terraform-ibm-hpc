@@ -35,6 +35,8 @@ resource "local_sensitive_file" "infra_details_to_json" {
   "zone_name": ${jsonencode(var.zones)},
   "compute_ssh_keys_ids": ${jsonencode(var.compute_ssh_keys_ids)},
   "dynamic_compute_instances": ${jsonencode(var.dynamic_compute_instances)},
+  "boot_volume_attachment": ${jsonencode(local.boot_volume_attachment)},
+  "enable_spot_instances": ${local.enable_spot_instances},
   "compute_subnets_cidr": ${jsonencode(var.compute_subnets_cidr)},
   "compute_security_group_id": ${jsonencode(var.compute_security_group_id)},
   "compute_subnet_crn": "${var.compute_subnet_crn}",
@@ -43,7 +45,10 @@ resource "local_sensitive_file" "infra_details_to_json" {
   "catalog_offering": ${jsonencode(local.pricing_model)},
   "mtu_value": ${var.mtu_value},
   "enable_license_scheduler": ${var.enable_license_scheduler},
-  "has_gaudi3": ${var.has_gaudi3}
+  "has_gaudi3": ${var.has_gaudi3},
+  "login_node_cpu_platform": "${var.login_node_cpu_platform}",
+  "enable_baremetal": "${var.enable_baremetal}",
+  "dedicated_host_id": ${jsonencode(var.dedicated_host_id)}
 }
 EOT
   filename = var.json_inventory_path

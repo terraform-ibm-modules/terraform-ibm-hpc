@@ -54,7 +54,9 @@ module "scale" {
   gklm_instances                                = local.env.gklm_instances
   storage_type                                  = local.env.storage_type
   scale_encryption_admin_password               = local.env.scale_encryption_admin_password
-  key_protect_instance_id                       = local.env.key_protect_instance_id
+  key_management                                = local.env.key_management
+  kms_instance_name                             = local.env.kms_instance_name
+  kms_key_name                                  = local.env.kms_key_name
   filesystem_config                             = local.env.filesystem_config
   existing_bastion_instance_name                = local.env.existing_bastion_instance_name
   existing_bastion_instance_public_ip           = local.env.existing_bastion_instance_public_ip
@@ -79,4 +81,6 @@ module "scale" {
   volume_storages                               = local.env.volume_storages
   enable_private_path_nlb                       = local.env.enable_private_path_nlb
   protocol_instance_eth1_mtu                    = local.env.protocol_instance_eth1_mtu
+  tfstate_cos_config                            = local.env.tfstate_cos_config
+  tfstate_existing_cos_bucket_creds             = local.env.tfstate_existing_cos_bucket_creds
 }

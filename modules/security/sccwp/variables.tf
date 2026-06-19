@@ -135,6 +135,11 @@ variable "enable_deployer" {
   description = "Deployer should be only used for better deployment performance"
 }
 
+variable "cloud_monitoring_crn" {
+  type        = string
+  description = "The Cloud Resource Name (CRN) of the target IBM Cloud Monitoring instance used for metrics ingestion."
+}
+
 variable "enable_sccwp" {
   type        = bool
   default     = true

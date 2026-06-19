@@ -163,18 +163,40 @@ variable "compute_subnet_crn" {
 variable "dynamic_compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile               = string
+      count                 = number
+      image                 = string
+      enable_spot_instances = bool
     })
   )
   default = [{
-    profile = "cx2-2x4"
-    count   = 1024
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    profile               = "cx2-2x4"
+    count                 = 1024
+    image                 = "ibm-redhat-8-10-minimal-amd64-2"
+    enable_spot_instances = false
   }]
-  description = "MaxNumber of instances to be launched for compute cluster."
+  description = "Specify the list of dynamic compute node configurations, including instance profile, image, instance count, and Spot instance support for the compute cluster."
 }
+
+variable "dynamic_compute_boot_volume" {
+  type = list(
+    object({
+      profile   = optional(string) # general-purpose | sdp | 5iops-tier | 10iops-tier | custom
+      size      = optional(number) # 100–250 GB
+      iops      = optional(number) # sdp (>=3000), custom (>=100), else null
+      bandwidth = optional(number) # only for sdp (>=1000), else null
+    })
+  )
+  default = [{
+    profile   = "general-purpose"
+    size      = 100
+    iops      = null
+    bandwidth = null
+  }]
+  description = "Boot Volume for compute cluster."
+}
+
+
 
 variable "boot_volume_encryption_key" {
   type        = string
@@ -234,4 +256,20 @@ variable "has_gaudi3" {
   type        = bool
   default     = false
   description = "Management nodes profile type."
+}
+
+variable "login_node_cpu_platform" {
+  type        = string
+  description = "Login node profile type."
+}
+
+variable "enable_baremetal" {
+  type        = bool
+  default     = false
+  description = "Set this option to true to enable baremetal servers. The default value is false."
+}
+
+variable "dedicated_host_id" {
+  type        = string
+  description = "Dedicated Host ID"
 }

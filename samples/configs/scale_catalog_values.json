@@ -46,7 +46,7 @@
     "ldap_instance": "[{ profile = \"cx2-2x4\", image = \"ibm-ubuntu-22-04-5-minimal-amd64-5\" }]",
     "scale_encryption_enabled": "false",
     "scale_encryption_type": "null",
-    "gklm_instances": "[{ profile = \"bx2-2x8\", count = 2, image = \"hpcc-scale-gklm4202-v2-5-5\" }]",
+    "gklm_instances": "[{ profile = \"bx2-4x16\", count = 2, image = \"hpcc-scale-gklm4202-v2-5-6\" }]",
     "scale_encryption_admin_password": "__NULL__",
     "key_protect_instance_id": "__NULL__",
     "storage_type": "vsi",

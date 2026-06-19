@@ -853,25 +853,42 @@ func ValidateCosServiceInstanceAndVpcFlowLogs(t *testing.T, apiKey, expectedZone
 // ValidateLSFLogs validates the log files in the shared folder and checks their status after a master node reboot.
 // It performs two main checks: verifying log files in the shared folder and ensuring the log files are intact after the reboot.
 // This ensures that LSF logs are available and up-to-date in LSF log-related scenarios.
-func ValidateLSFLogs(t *testing.T, sshClient *ssh.Client, apiKey, region, resourceGroup, bastionIP string, managementMasterNodeIPList []string, logger *utils.AggregatedLogger) {
-	// Check the log files in the shared folder for all nodes
-	err := LogFilesInSharedFolder(t, sshClient, logger)
+func ValidateLSFLogs(t *testing.T, bastionIP string, managementMasterNodeIPList []string, apiKey, region, resourceGroup string, logger *utils.AggregatedLogger) {
+	sshClient, err := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementMasterNodeIPList[0])
+	if err != nil {
+		utils.LogVerificationResult(t, err, "Initial SSH connection for LSF log checks", logger)
+		return
+	}
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			logger.Info(t, fmt.Sprintf("failed to close initial sshClient in ValidateLSFLogs: %v", err))
+		}
+	}()
+	logger.Info(t, "SSH connection established for LSF log validation.")
+
+	err = LogFilesInSharedFolder(t, sshClient, logger)
 	utils.LogVerificationResult(t, err, "Log files in shared folder check", logger)
 
-	// Validate that log files are still available after the master node reboot
 	err = LogFilesAfterMasterReboot(t, sshClient, bastionIP, managementMasterNodeIPList[0], logger)
 	utils.LogVerificationResult(t, err, "Log files after master reboot check", logger)
 
-	// Reconnect to the management node after reboot
-	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementMasterNodeIPList[0])
-	if connectionErr != nil {
-		logger.Error(t, fmt.Sprintf("Failed to reconnect to the master via SSH after reboot: %s", connectionErr))
-		utils.LogVerificationResult(t, connectionErr, fmt.Sprintf("Failed to reconnect to the master via SSH after reboot: %s", connectionErr), logger)
-		return // Exit if SSH connection fails
+	if err := sshClient.Close(); err != nil {
+		logger.Info(t, fmt.Sprintf("failed to close pre-reboot sshClient in ValidateLSFLogs: %v", err))
 	}
 
-	// Validate the log files after the master node shutdown
-	err = LogFilesAfterMasterShutdown(t, sshClient, apiKey, region, resourceGroup, bastionIP, managementMasterNodeIPList, logger)
+	postRebootClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementMasterNodeIPList[0])
+	if connectionErr != nil {
+		utils.LogVerificationResult(t, connectionErr, "Reconnect to master via SSH after reboot", logger)
+		return
+	}
+	defer func() {
+		if err := postRebootClient.Close(); err != nil {
+			logger.Info(t, fmt.Sprintf("failed to close postRebootClient in ValidateLSFLogs: %v", err))
+		}
+	}()
+	logger.Info(t, "Successfully reconnected to master after reboot.")
+
+	err = LogFilesAfterMasterShutdown(t, postRebootClient, apiKey, region, resourceGroup, bastionIP, managementMasterNodeIPList, logger)
 	utils.LogVerificationResult(t, err, "Log files after master shutdown check", logger)
 }
 
@@ -1063,4 +1080,36 @@ func VerifyManagementNodeAPIConfig(
 	fileMountErr := CheckFileMount(t, sshMgmtClient, managementNodeIPList, "management", logger)
 	utils.LogVerificationResult(t, fileMountErr, "File mount check on management node", logger)
 
+}
+
+func VerifyProfile(
+	t *testing.T,
+	sshMgmtClient *ssh.Client,
+	computeProfiles []string,
+	mgmtProfiles []string,
+	loginProfile []string,
+	logger *utils.AggregatedLogger,
+) {
+	allProfiles := append(append(computeProfiles, mgmtProfiles...), loginProfile...)
+	profileMatchError := CheckProfileToProcessorMatch(t, sshMgmtClient, allProfiles, logger)
+	utils.LogVerificationResult(t, profileMatchError, "Profile match with processor on management node", logger)
+}
+
+// VerifySpotInstance validates that the configured dynamic compute instance
+// uses the expected VM profile and verifies whether spot instances are
+// correctly configured in the LSF resource connector templates.
+func VerifySpotInstance(
+	t *testing.T,
+	options *testhelper.TestOptions,
+	sClient *ssh.Client,
+	logger *utils.AggregatedLogger,
+) {
+	// Fetch dynamic compute instance details from Terraform variables
+	instance := GetDynamicComputeInstance(t, options)
+
+	// Validate VM type and spot instance configuration in LSF templates
+	err := LSFValidateSpotVMType(t, sClient, instance.Profile, instance.EnableSpotInstances, logger)
+
+	// Log validation result
+	utils.LogVerificationResult(t, err, "Spot instance and VM type validation on management node", logger)
 }
