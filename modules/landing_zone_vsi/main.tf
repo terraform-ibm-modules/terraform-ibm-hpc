@@ -115,7 +115,7 @@ module "nfs_storage_sg" {
   source                         = "terraform-ibm-modules/security-group/ibm"
   version                        = "2.10.0"
   resource_group                 = var.resource_group
-  add_ibm_cloud_internal_rules   = true
+  add_ibm_cloud_internal_rules   = false
   use_existing_security_group_id = true
   existing_security_group_id     = var.storage_security_group_id
   security_group_rules           = local.storage_nfs_security_group_rules
