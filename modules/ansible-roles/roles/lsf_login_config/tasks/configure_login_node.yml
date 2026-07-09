@@ -1,0 +1,74 @@
+---
+# LSF Login Node Configuration
+# Configures LSF directories, host entries, environment setup,
+# and required system settings for the login node.
+
+- name: Ensure LSF log path is configured as symlink
+  shell: |
+    [ -L "{{ LSF_TOP }}/{{ item }}" ] && echo "Symlink exists, skipping." || { \
+      [ -d "{{ LSF_TOP }}/{{ item }}" ] && rm -rf "{{ LSF_TOP }}/{{ item }}"; \
+      ln -s /mnt/lsf/logs "{{ LSF_TOP }}/{{ item }}"; }
+  loop:
+    - log
+
+- name: Ensure ownership and permissions are set on LSF directory
+  file:
+    path: "{{ LSF_TOP }}"
+    owner: lsfadmin
+    group: root
+    mode: '0755'
+    recurse: yes
+
+- name: Set login node host fact
+  set_fact:
+    login_node_host: "{{ groups['login_node'][0] }}"
+
+- name: Get IPv4 address of current host
+  shell: "getent ahostsv4 {{ inventory_hostname }} | awk '{ print $1; exit }'"
+  register: ip_result
+  changed_when: false
+
+- name: Ensure login node entry exists in LSF hosts file
+  lineinfile:
+    path: "{{ nfs_client_mount_path }}/conf/hosts"
+    line: "{{ ip_result.stdout }} {{ login_node_host }}"
+    state: present
+    insertafter: EOF
+    create: yes
+
+- name: Ensure login node entry is present in LSF cluster file
+  lineinfile:
+    path: "{{ LSF_CLUSTER_FILE }}"
+    insertafter: "^#prune"
+    line: "{{ login_node_host }} {{ login_node_cpu_platform }} X86_64 0 ()"
+    state: present
+
+- name: Ensure LSF profile is present in root bashrc
+  lineinfile:
+    path: "/root/.bashrc"
+    line: "source {{ LSF_CONF }}/profile.lsf"
+    state: present
+
+- name: Ensure LSF profile is present in lsfadmin bashrc
+  lineinfile:
+    path: "{{ LSFADMIN_DIR }}/.bashrc"
+    line: "source {{ LSF_CONF }}/profile.lsf"
+    state: present
+
+- name: Source root bashrc if profile is configured
+  shell: |
+    grep -q "source {{ LSF_CONF }}/profile.lsf" /root/.bashrc && source /root/.bashrc || true
+  args:
+    executable: /bin/bash
+
+- name: Source lsfadmin bashrc if profile is configured
+  shell: |
+    grep -q "source {{ LSF_CONF }}/profile.lsf" "{{ LSFADMIN_DIR }}/.bashrc" && source "{{ LSFADMIN_DIR }}/.bashrc" || true
+  args:
+    executable: /bin/bash
+
+- name: Ensure /etc/resolv.conf is mutable
+  file:
+    path: /etc/resolv.conf
+    attributes: -i
+  become: true

@@ -4,7 +4,7 @@
 variable "scheduler" {
   type        = string
   default     = "LSF"
-  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+  description = "Select one of the scheduler (Scale/LSF/Symphony/Slurm/null)"
 }
 
 variable "ibm_customer_number" {
@@ -205,15 +205,17 @@ variable "static_compute_instances" {
 variable "dynamic_compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile               = string
+      count                 = number
+      image                 = string
+      enable_spot_instances = bool
     })
   )
   default = [{
-    profile = "cx2-2x4"
-    count   = 1024
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    profile               = "cx2-2x4"
+    count                 = 1024
+    image                 = "ibm-redhat-8-10-minimal-amd64-2"
+    enable_spot_instances = false
   }]
   description = "MaxNumber of instances to be launched for compute cluster."
 }
@@ -247,7 +249,7 @@ variable "storage_instances" {
       profile    = string
       count      = number
       image      = string
-      filesystem = string
+      filesystem = optional(string)
     })
   )
   default = [{
@@ -299,22 +301,6 @@ variable "storage_gui_password" {
   default     = "hpc@IBMCloud"
   sensitive   = true
   description = "Password for storage cluster GUI"
-}
-
-variable "nsd_details" {
-  type = list(
-    object({
-      profile  = string
-      capacity = optional(number)
-      iops     = optional(number)
-    })
-  )
-  default = [{
-    capacity = 100
-    iops     = 1000
-    profile  = "custom"
-  }]
-  description = "Storage scale NSD details"
 }
 
 variable "custom_file_shares" {
@@ -481,66 +467,6 @@ variable "enable_vpc_flow_logs" {
 }
 
 ##############################################################################
-# Scale specific Variables
-##############################################################################
-# variable "filesystem_config" {
-#   type = list(object({
-#     filesystem               = string
-#     block_size               = string
-#     default_data_replica     = number
-#     default_metadata_replica = number
-#     max_data_replica         = number
-#     max_metadata_replica     = number
-#     mount_point              = string
-#   }))
-#   default     = null
-#   description = "File system configurations."
-# }
-
-# variable "filesets_config" {
-#   type = list(object({
-#     fileset           = string
-#     filesystem        = string
-#     junction_path     = string
-#     client_mount_path = string
-#     quota             = number
-#   }))
-#   default     = null
-#   description = "Fileset configurations."
-# }
-
-# variable "afm_instances" {
-#   type = list(
-#     object({
-#       profile = string
-#       count   = number
-#       image   = string
-#     })
-#   )
-#   default = [{
-#     profile = "bx2-2x8"
-#     count   = 0
-#     image   = "ibm-redhat-8-10-minimal-amd64-2"
-#   }]
-#   description = "Number of instances to be launched for afm hosts."
-# }
-
-# variable "afm_cos_config" {
-#   type = list(object({
-#     afm_fileset          = string,
-#     mode                 = string,
-#     cos_instance         = string,
-#     bucket_name          = string,
-#     bucket_region        = string,
-#     cos_service_cred_key = string,
-#     bucket_type          = string,
-#     bucket_storage_class = string
-#   }))
-#   default     = null
-#   description = "AFM configurations."
-# }
-
-##############################################################################
 # LSF specific Variables
 ##############################################################################
 # variable "cluster_name" {
@@ -628,7 +554,7 @@ variable "enable_vpc_flow_logs" {
 #       boot_volume_crk_name                  = optional(string)      # Boot volume encryption key name
 #       disable_public_endpoint               = optional(bool, true)  # disable cluster public, leaving only private endpoint
 #       disable_outbound_traffic_protection   = optional(bool, false) # public outbound access from the cluster workers
-#       cluster_force_delete_storage          = optional(bool, false) # force the removal of persistent storage associated with the cluster during cluster deletion
+#       cluster_force_delete_storage          = optional(bool, false) # force the removal of baremetal storage associated with the cluster during cluster deletion
 #       operating_system                      = string                # The operating system of the workers in the default worker pool. See https://cloud.ibm.com/docs/openshift?topic=openshift-openshift_versions#openshift_versions_available .
 #       kms_wait_for_apply                    = optional(bool, true)  # make terraform wait until KMS is applied to master and it is ready and deployed
 #       verify_cluster_network_readiness      = optional(bool, true)  # Flag to run a script will run kubectl commands to verify that all worker nodes can communicate successfully with the master. If the runtime does not have access to the kube cluster to run kubectl commands, this should be set to false.

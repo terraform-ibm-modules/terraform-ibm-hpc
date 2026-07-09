@@ -2,12 +2,18 @@ package tests
 
 import (
 	"bufio"
+	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"maps"
+	"net/http"
 	"os"
 	"os/exec"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -24,7 +30,7 @@ import (
 const (
 	defaultSleepDuration           = 30 * time.Second
 	timeOutForDynamicNodeDisappear = 15 * time.Minute
-	jobCompletionWaitTime          = 50 * time.Second
+	jobCompletionWaitTime          = 40 * time.Second
 	dynamicNodeWaitTime            = 3 * time.Minute
 )
 
@@ -52,16 +58,15 @@ func LSFMTUCheck(t *testing.T, sClient *ssh.Client, ipsList []string, logger *ut
 		// Get the OS name of the compute node.
 		osName, osNameErr := GetOSNameOfNode(t, sClient, ip, logger)
 		if osNameErr != nil {
-			// Determine the expected command to check MTU based on the OS.
-			switch osName {
-			case "Ubuntu":
-				mtuCmd = ubuntuMTUCheckCmd
-			default:
-				mtuCmd = rhelMTUCheckCmd
-			}
-		} else {
-			// Return error if OS name retrieval fails.
 			return osNameErr
+		}
+
+		// Determine the expected command to check MTU based on the OS.
+		switch osName {
+		case "Ubuntu":
+			mtuCmd = ubuntuMTUCheckCmd
+		default:
+			mtuCmd = rhelMTUCheckCmd
 		}
 
 		// Build the SSH command to check MTU on the node
@@ -440,6 +445,17 @@ func LSFRunJobs(t *testing.T, sClient *ssh.Client, jobCmd string, logger *utils.
 			logger.Info(t, fmt.Sprintf("Job %s has executed successfully", jobID))
 			return nil
 		}
+
+		jobCheck := LOGIN_NODE_EXECUTION_PATH + "bjobs -u all -p"
+
+		// Run the 'bjobs' command to retrieve pending job information
+		pendingJobStatus, err := utils.RunCommandInSSHSession(sClient, jobCheck)
+		if err != nil {
+			return fmt.Errorf("failed to execute 'bjobs -u all -p' command: %w", err)
+		}
+
+		// Log the pending job status
+		logger.Info(t, fmt.Sprintf("Pending job status: %s", pendingJobStatus))
 
 		// Sleep for a minute before checking again
 		logger.Info(t, fmt.Sprintf("Waiting for dynamic node creation and job completion. Elapsed time: %s", time.Since(startTime)))
@@ -900,9 +916,9 @@ func LSFCheckSSHKeyForManagementNodes(t *testing.T, publicHostName, publicHostIP
 // It adjusts the expected values to account for default key counts.
 func HPCGenerateFilePathMap(numKeys int) map[string]int {
 	return map[string]int{
-		"/home/vpcuser/.ssh/authorized_keys":  numKeys,     // Default value plus number of keys
+		"/home/vpcuser/.ssh/authorized_keys":  numKeys + 1, // Default value plus number of keys
 		"/home/lsfadmin/.ssh/authorized_keys": numKeys + 1, // Default value plus number of keys
-		"/root/.ssh/authorized_keys":          numKeys + 1, // Default value plus number of keys
+		"/root/.ssh/authorized_keys":          numKeys,     // Default value plus number of keys
 	}
 }
 
@@ -1020,7 +1036,7 @@ func CheckLSFVersion(t *testing.T, sClient *ssh.Client, lsfVersion string, logge
 		return fmt.Errorf("unsupported LSF version identifier: %s", lsfVersion)
 	}
 
-	expectedString := "IBM Spectrum LSF " + expectedVersion
+	expectedString := "IBM Spectrum LSF Standard " + expectedVersion
 	if !utils.VerifyDataContains(t, output, expectedString, logger) {
 		actualValue := strings.TrimSpace(strings.Split(strings.Split(output, "IBM Spectrum LSF")[1], ", ")[0])
 		return fmt.Errorf("expected cluster Version %s, but found %s", expectedVersion, actualValue)
@@ -1199,15 +1215,15 @@ func verifyDirectories(t *testing.T, sClient *ssh.Client, ip string, logger *uti
 	switch {
 	case utils.IsStringInSlice(actualDirs, "openldap"):
 		expectedDirs = []string{
-			"das_staging_area", "data", "gui", "logs", "lsf", "openldap", "perf", "ppm", "repository-path", "ssh",
+			"conf", "das_staging_area", "data", "logs", "openldap", "repository-path", "ssh", "work",
 		}
 	case utils.IsStringInSlice(actualDirs, "pac"):
 		expectedDirs = []string{
-			"das_staging_area", "data", "gui", "logs", "lsf", "perf", "ppm", "repository-path", "ssh",
+			"conf", "das_staging_area", "data", "logs", "openldap", "repository-path", "ssh", "work",
 		}
 	default:
 		expectedDirs = []string{
-			"das_staging_area", "data", "gui", "logs", "lsf", "perf", "ppm", "repository-path", "ssh",
+			"conf", "das_staging_area", "data", "logs", "repository-path", "ssh", "work",
 		}
 	}
 
@@ -1387,7 +1403,7 @@ func VerifyEncryption(t *testing.T, apiKey, region, resourceGroup, clusterPrefix
 	}
 
 	//	// Retrieve the list of file shares (retry once after 2s if it fails)
-	fileSharesOutput, err := utils.RunCommandWithRetry(fileSharesCmd, 3, 60*time.Second)
+	fileSharesOutput, err := utils.RunCommandWithRetry(fileSharesCmd, 3, 90*time.Second)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve file shares: %w", err)
 	}
@@ -1403,18 +1419,24 @@ func VerifyEncryption(t *testing.T, apiKey, region, resourceGroup, clusterPrefix
 			return fmt.Errorf("failed to retrieve file share details for '%s': %w", fileShareName, err)
 		}
 
-		if !utils.VerifyDataContains(t, strings.ToLower(keyManagement), "key_protect", logger) {
-			if !utils.VerifyDataContains(t, string(output), "provider_managed", logger) {
-				return fmt.Errorf("encryption-in-transit is unexpectedly enabled for the file shares")
+		outStr := string(output)
+
+		if utils.VerifyDataContains(t, strings.ToLower(keyManagement), "key_protect", logger) {
+			// With KMS → expect user_managed + Encryption key present
+			if !utils.VerifyDataContains(t, outStr, "Encryption                         user_managed", logger) ||
+				!utils.VerifyDataContains(t, outStr, "Encryption key", logger) {
+				return fmt.Errorf("expected user-managed encryption with an encryption key for file share '%s'", fileShareName)
 			}
 		} else {
-			if !utils.VerifyDataContains(t, string(output), "user_managed", logger) {
-				return fmt.Errorf("encryption-in-transit is unexpectedly disabled for the file shares")
+			// Without KMS → expect provider_managed + no Encryption key
+			if !utils.VerifyDataContains(t, outStr, "Encryption                         provider_managed", logger) ||
+				utils.VerifyDataContains(t, outStr, "Encryption key", logger) {
+				return fmt.Errorf("expected provider-managed encryption without an encryption key for file share '%s'", fileShareName)
 			}
 		}
 
 	}
-	logger.Info(t, "Encryption set as expected")
+	logger.Info(t, "Encryption settings match the expected configuration")
 	return nil
 }
 
@@ -1493,6 +1515,17 @@ func LSFRunJobsAsLDAPUser(t *testing.T, sClient *ssh.Client, jobCmd, ldapUser st
 			logger.Info(t, fmt.Sprintf("Job %s has executed successfully", jobID))
 			return nil
 		}
+
+		jobCheck := LOGIN_NODE_EXECUTION_PATH + "bjobs -u all -p"
+
+		// Run the 'bjobs -u all -p' command to retrieve pending job information
+		pendingJobStatus, err := utils.RunCommandInSSHSession(sClient, jobCheck)
+		if err != nil {
+			return fmt.Errorf("failed to execute 'bjobs -u all -p' command: %w", err)
+		}
+
+		// Log the pending job status
+		logger.Info(t, fmt.Sprintf("Pending job status: %s", pendingJobStatus))
 
 		// Sleep for a minute before checking again
 		logger.Info(t, fmt.Sprintf("Waiting for dynamic node creation and job completion. Elapsed time: %s", time.Since(startTime)))
@@ -1597,7 +1630,7 @@ func verifyDirectoriesAsLdapUser(t *testing.T, sClient *ssh.Client, hostname str
 	actualDirs := strings.Fields(strings.TrimSpace(string(outputTwo)))
 
 	// Define expected directories
-	expectedDirs := []string{"das_staging_area", "data", "gui", "logs", "lsf", "openldap", "perf", "ppm", "repository-path", "ssh"}
+	expectedDirs := []string{"conf", "das_staging_area", "data", "logs", "openldap", "repository-path", "ssh", "work"}
 
 	// Verify if all expected directories exist
 	if !utils.VerifyDataContains(t, actualDirs, expectedDirs, logger) {
@@ -2328,71 +2361,6 @@ func GenerateLSFJobCommandsForMemoryTypes() (string, string, string) {
 	return lowMemJobCmd, medMemJobCmd, highMemJobCmd
 }
 
-// VerifyClusterCreationAndConsistency validates successful cluster creation and operational
-// consistency. It:
-//  1. Executes a consistency test via RunTestConsistency()
-//  2. Verifies non-nil output
-//  3. Provides detailed, traceable errors on failure
-//
-// Returns nil on success, or an error with context on failure.
-// All outcomes are logged through the provided logger.
-func VerifyClusterCreationAndConsistency(t *testing.T, options *testhelper.TestOptions, logger *utils.AggregatedLogger) error {
-	const op = "cluster creation and consistency check"
-
-	// Create a local copy of the test name to prevent race conditions
-	testName := t.Name()
-
-	// Execute the consistency test - ensure RunTestConsistency() is thread-safe
-	output, err := options.RunTestConsistency()
-
-	if err != nil {
-		// Thread-safe logging
-		logger.Error(t, fmt.Sprintf("%s failed for test %s: %v", op, testName, err))
-		return fmt.Errorf("%s failed for test %s: %w", op, testName, err)
-	}
-
-	// Check output with thread-safe nil check
-	if output == nil {
-		msg := fmt.Sprintf("%s failed for test %s: nil consistency output", op, testName)
-		// Thread-safe logging
-		logger.Error(t, msg)
-		return fmt.Errorf("%s: %s", op, msg)
-	}
-
-	// Thread-safe success logging
-	logger.Info(t, fmt.Sprintf("%s: %s passed", testName, op))
-	return nil
-}
-
-// VerifyClusterCreation checks cluster creation and operational consistency.
-// It runs options.RunTest and ensures the output is not nil.
-// Logs results and returns an error if validation fails.
-func VerifyClusterCreation(t *testing.T, options *testhelper.TestOptions, logger *utils.AggregatedLogger) error {
-	const op = "cluster creation and consistency check"
-
-	// Create a local copy of the test name to prevent race conditions
-	testName := t.Name()
-
-	// Execute the consistency test - ensure RunTest is thread-safe
-	output, err := options.RunTest()
-	if err != nil {
-		// Thread-safe logging
-		logger.Error(t, fmt.Sprintf("%s failed for test %s: %v", op, testName, err))
-		return fmt.Errorf("%s failed for test %s: %w", op, testName, err)
-	}
-
-	// Check output with thread-safe nil check
-	if output == "" {
-		msg := fmt.Sprintf("%s failed for test %s: no output from cluster validation test", op, testName)
-		logger.Error(t, msg)
-		return fmt.Errorf("%s: %s", op, msg)
-	}
-
-	// Thread-safe success logging
-	logger.Info(t, fmt.Sprintf("%s: %s passed", testName, op))
-	return nil
-}
-
 // GetClusterIPs fetches all key server IPs for an LSF cluster, including bastion, management, login, and static worker nodes.
 // Returns individual IPs and lists along with an error if retrieval fails.
 func GetClusterIPs(t *testing.T, options *testhelper.TestOptions, logger *utils.AggregatedLogger) (string, []string, string, []string, error) {
@@ -2528,6 +2496,9 @@ func validateNodeLogFiles(t *testing.T, sClient *ssh.Client, node, sharedLogDir,
 		return fmt.Errorf("directory does not exist for %s node %s: %w", nodeType, node, err)
 	}
 
+	// ibmcloudgen2-provider log uses short hostname only (strips .comp.com domain suffix)
+	shortNode := strings.SplitN(node, ".", 2)[0]
+
 	var logFiles []string
 	switch nodeType {
 	case "management":
@@ -2536,15 +2507,16 @@ func validateNodeLogFiles(t *testing.T, sClient *ssh.Client, node, sharedLogDir,
 			fmt.Sprintf("%s/lim.log.%s", dirPath, node),
 			fmt.Sprintf("%s/res.log.%s", dirPath, node),
 			fmt.Sprintf("%s/pim.log.%s", dirPath, node),
-			//fmt.Sprintf("%s/Install.log", dirPath),
 		}
 	case "master":
 		logFiles = []string{
 			fmt.Sprintf("%s/mbatchd.log.%s", dirPath, node),
 			fmt.Sprintf("%s/ebrokerd.log.%s", dirPath, node),
 			fmt.Sprintf("%s/mbschd.log.%s", dirPath, node),
-			fmt.Sprintf("%s/ibmcloudgen2-provider.log.%s", dirPath, node),
+			fmt.Sprintf("%s/ibmcloudgen2-provider.log.%s", dirPath, shortNode),
 		}
+	default:
+		return fmt.Errorf("unknown nodeType %q for node %s", nodeType, node)
 	}
 
 	for _, file := range logFiles {
@@ -2555,32 +2527,27 @@ func validateNodeLogFiles(t *testing.T, sClient *ssh.Client, node, sharedLogDir,
 		}
 		logger.Info(t, fmt.Sprintf("Log file exists: %s", file))
 	}
-
 	return nil
 }
 
 // Helper function to get file modification time
 func getFileModificationTime(t *testing.T, sClient *ssh.Client, sharedLogDir, masterName string, logger *utils.AggregatedLogger) (int64, error) {
-	// Construct the command to fetch the file modification time
 	command := fmt.Sprintf("stat -c %%Y %s/%s/mbatchd.log.%s", sharedLogDir, masterName, masterName)
 	logger.Info(t, fmt.Sprintf("Executing command to get file modification time: %s", command))
 
-	// Run the command on the remote server
 	output, err := utils.RunCommandInSSHSession(sClient, command)
 	if err != nil {
 		logger.Error(t, fmt.Sprintf("Failed to execute command: %s. Error: %v", command, err))
 		return 0, fmt.Errorf("failed to execute command to get file modification time: %w", err)
 	}
 
-	// Parse the output to extract modification time
-	modTimeStr := strings.TrimSpace(output)              //stat -c %Y is the correct syntax on most Linux systems to get modification time in epoch seconds.
-	modTime, err := strconv.ParseInt(modTimeStr, 10, 64) // converts the string timestamp to an integer.
+	modTimeStr := strings.TrimSpace(output)
+	modTime, err := strconv.ParseInt(modTimeStr, 10, 64)
 	if err != nil {
 		logger.Error(t, fmt.Sprintf("Failed to parse modification time from output: %s. Error: %v", modTimeStr, err))
 		return 0, fmt.Errorf("failed to parse file modification time: %w", err)
 	}
 
-	// Log the retrieved modification time
 	logger.Info(t, fmt.Sprintf("Successfully retrieved file modification time: %d", modTime))
 	return modTime, nil
 }
@@ -2590,14 +2557,13 @@ func rebootMasterNode(t *testing.T, sClient *ssh.Client, masterName string, logg
 	logger.Info(t, fmt.Sprintf("Shutting down master node: %s", masterName))
 	cmd := "sudo su -l root -c 'shutdown -r now'"
 	_, err := utils.RunCommandInSSHSession(sClient, cmd)
-	if !strings.Contains(err.Error(), "remote command exited without exit status or exit signal") {
+	// FIX: guard nil err before calling .Error() to avoid panic
+	if err != nil && !strings.Contains(err.Error(), "remote command exited without exit status or exit signal") {
 		return fmt.Errorf("failed to shut down master node %s: %w", masterName, err)
 	}
 
-	// Wait for the system to reboot and settle
 	logger.Info(t, fmt.Sprintf("Waiting for master node %s to reboot...", masterName))
 	time.Sleep(1 * time.Minute)
-
 	return nil
 }
 
@@ -2621,11 +2587,7 @@ func LogFilesInSharedFolder(t *testing.T, sClient *ssh.Client, logger *utils.Agg
 		}
 	}
 
-	if err := validateNodeLogFiles(t, sClient, masterName, sharedLogDir, "master", logger); err != nil {
-		return err
-	}
-
-	return nil
+	return validateNodeLogFiles(t, sClient, masterName, sharedLogDir, "master", logger)
 }
 
 // LogFilesAfterMasterReboot tests if log files are still available after the master node reboot.
@@ -2647,7 +2609,6 @@ func LogFilesAfterMasterReboot(t *testing.T, sClient *ssh.Client, bastionIP, man
 		return err
 	}
 
-	// Reboot the master node
 	if err := rebootMasterNode(t, sClient, masterName, logger); err != nil {
 		return err
 	}
@@ -2656,16 +2617,18 @@ func LogFilesAfterMasterReboot(t *testing.T, sClient *ssh.Client, bastionIP, man
 	sClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIP)
 	if connectionErr != nil {
 		logger.Error(t, fmt.Sprintf("Failed to reconnect to the master via SSH after Management node Reboot: %s", connectionErr))
-		return fmt.Errorf("failed to reconnect to the master via SSH after Management node Reboot : %s", connectionErr)
+		return fmt.Errorf("failed to reconnect to the master via SSH after Management node Reboot: %w", connectionErr)
 	}
-
+	// FIX: nil guard on deferred close to avoid panic if reconnect ever returns nil client
 	defer func() {
+		if sClient == nil {
+			return
+		}
 		if err := sClient.Close(); err != nil {
 			logger.Info(t, fmt.Sprintf("failed to close sClient: %v", err))
 		}
 	}()
 
-	// Validate the log files after reboot
 	for _, node := range managementNodes {
 		if err := validateNodeLogFiles(t, sClient, node, sharedLogDir, "management", logger); err != nil {
 			return err
@@ -2676,7 +2639,6 @@ func LogFilesAfterMasterReboot(t *testing.T, sClient *ssh.Client, bastionIP, man
 		return err
 	}
 
-	// Validate log modification time to ensure files were not lost
 	datePostRestart, err := getFileModificationTime(t, sClient, sharedLogDir, masterName, logger)
 	if err != nil {
 		return err
@@ -2692,18 +2654,17 @@ func LogFilesAfterMasterReboot(t *testing.T, sClient *ssh.Client, bastionIP, man
 // Helper function to shutdown the current master node
 func shutdownMasterNode(t *testing.T, sClient *ssh.Client, masterName string, logger *utils.AggregatedLogger) error {
 	logger.Info(t, fmt.Sprintf("Shutting down master node: %s", masterName))
-	cmd := "sudo su -l root -c 'shutdown  now'"
+	cmd := "sudo su -l root -c 'shutdown now'"
 	_, err := utils.RunCommandInSSHSession(sClient, cmd)
-	if !strings.Contains(err.Error(), "remote command exited without exit status or exit signal") {
+	// FIX: guard nil err before calling .Error() to avoid panic
+	if err != nil && !strings.Contains(err.Error(), "remote command exited without exit status or exit signal") {
 		return fmt.Errorf("failed to shut down master node %s: %w", masterName, err)
 	}
-
 	return nil
 }
 
 // LogFilesAfterMasterShutdown tests if log files are still available after the master node shutdown.
 func LogFilesAfterMasterShutdown(t *testing.T, sshClient *ssh.Client, apiKey, region, resourceGroup, bastionIP string, managementNodeIPList []string, logger *utils.AggregatedLogger) error {
-	// Retrieve the current master node name
 	oldMasterNodeName, err := utils.GetMasterNodeName(t, sshClient, logger)
 	if err != nil {
 		return fmt.Errorf("failed to get current master node name: %w", err)
@@ -2711,90 +2672,80 @@ func LogFilesAfterMasterShutdown(t *testing.T, sshClient *ssh.Client, apiKey, re
 
 	sharedLogDir := SHAREDLOGDIRPATH
 
-	// Shutdown the master node
 	if err := shutdownMasterNode(t, sshClient, oldMasterNodeName, logger); err != nil {
 		return fmt.Errorf("failed to shutdown master node %s: %w", oldMasterNodeName, err)
 	}
 
-	// Wait for the system to change to the new master node name
 	logger.Info(t, fmt.Sprintf("Waiting for the system to switch to the new master node name from %s...", oldMasterNodeName))
 	time.Sleep(2 * time.Minute)
 
 	// Reconnect to the secondary management node after shutdown
 	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[1])
 	if connectionErr != nil {
-		errorMessage := fmt.Sprintf("failed to connect to the secondary node via SSH after shutdown: %s", connectionErr)
-		logger.Error(t, errorMessage)
-		return fmt.Errorf("%s", errorMessage)
+		return fmt.Errorf("failed to connect to the secondary node via SSH after shutdown: %w", connectionErr)
 	}
-
+	// FIX: nil guard on deferred close to avoid panic if reconnect ever returns nil client
 	defer func() {
+		if sshClient == nil {
+			return
+		}
 		if err := sshClient.Close(); err != nil {
 			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
 		}
 	}()
 
-	// Retrieve the new master node name after shutdown
 	newMasterNodeName, err := utils.GetMasterNodeName(t, sshClient, logger)
 	if err != nil {
 		return fmt.Errorf("failed to get new master node name after shutdown: %w", err)
 	}
 
-	// Validate that the master node has changed after shutdown
 	logger.Info(t, fmt.Sprintf("Old master node: %s, New master node: %s", oldMasterNodeName, newMasterNodeName))
 	if newMasterNodeName == oldMasterNodeName {
-		fmt.Println("Should not")
-		logger.Error(t, fmt.Sprintf("Failed to switch to the new master node after shutdown. Old master node: %s, New master node: %s", oldMasterNodeName, newMasterNodeName))
+		logger.Error(t, fmt.Sprintf("Failed to switch to the new master node after shutdown. Old: %s, New: %s", oldMasterNodeName, newMasterNodeName))
 		return fmt.Errorf("failed to switch to the new master node after shutdown. Old: %s, New: %s", oldMasterNodeName, newMasterNodeName)
 	}
 
-	// Retrieve the list of management nodes
 	managementNodes, err := utils.GetManagementNodeNames(t, sshClient, logger)
 	if err != nil {
 		return fmt.Errorf("failed to get management node names: %w", err)
 	}
 
-	// Validate log files on management nodes
 	for _, node := range managementNodes {
 		if err := validateNodeLogFiles(t, sshClient, node, sharedLogDir, "management", logger); err != nil {
 			return fmt.Errorf("failed to validate log files for management node %s: %w", node, err)
 		}
 	}
 
-	// Validate log files on the new master node
 	if err := validateNodeLogFiles(t, sshClient, newMasterNodeName, sharedLogDir, "master", logger); err != nil {
 		return fmt.Errorf("failed to validate log files for new master node %s: %w", newMasterNodeName, err)
 	}
 
-	// Log in to IBM Cloud using the API key and region
 	if err := utils.LoginIntoIBMCloudUsingCLI(t, apiKey, region, resourceGroup); err != nil {
 		return fmt.Errorf("failed to log in to IBM Cloud: %w", err)
 	}
 
-	// Start the old master instance
-	startInstanceCmd := fmt.Sprintf("ibmcloud is instance-start %s", oldMasterNodeName)
+	// FIX: IBM Cloud CLI expects short hostname, not FQDN — strip domain suffix
+	shortOldMasterName := strings.SplitN(oldMasterNodeName, ".", 2)[0]
+	startInstanceCmd := fmt.Sprintf("ibmcloud is instance-start %s", shortOldMasterName)
 	cmd := exec.Command("bash", "-c", startInstanceCmd)
 	startInstanceOutput, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to start instance: %w", err)
+		return fmt.Errorf("failed to start instance %s: %w\nOutput: %s", shortOldMasterName, err, string(startInstanceOutput))
 	}
 
-	// Validate the instance start output
-	if !strings.Contains(strings.TrimSpace(string(startInstanceOutput)), fmt.Sprintf("Creating action start for instance %s", oldMasterNodeName)) {
-		return fmt.Errorf("failed to start master instance node %s", oldMasterNodeName)
+	expectedOutput := fmt.Sprintf("Creating action start for instance %s", shortOldMasterName)
+	if !strings.Contains(strings.TrimSpace(string(startInstanceOutput)), expectedOutput) {
+		return fmt.Errorf("unexpected output starting master instance %s: %s", shortOldMasterName, string(startInstanceOutput))
 	}
 
-	// Wait for the system to start instance and settle
-	logger.Info(t, fmt.Sprintf("Waiting for instance start for node %s...", oldMasterNodeName))
+	logger.Info(t, fmt.Sprintf("Waiting for instance start for node %s...", shortOldMasterName))
 	time.Sleep(1 * time.Minute)
 
-	// Retrieve the new master node name after starting the instance
 	postStartMasterNodeName, err := utils.GetMasterNodeName(t, sshClient, logger)
 	if err != nil {
-		return fmt.Errorf("failed to get new master node name after starting instance: %w", err)
+		return fmt.Errorf("failed to get master node name after starting instance: %w", err)
 	}
 
-	// Validate that the master node has switched back
 	if postStartMasterNodeName == newMasterNodeName {
 		return fmt.Errorf("failed to switch back to original master node after instance start")
 	}
@@ -2802,14 +2753,15 @@ func LogFilesAfterMasterShutdown(t *testing.T, sshClient *ssh.Client, apiKey, re
 	// Reconnect to the primary management node after instance start
 	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPList[0])
 	if connectionErr != nil {
-		errorMessage := fmt.Sprintf("failed to connect to the primary master node via SSH after instance start: %s", connectionErr)
-		logger.Error(t, errorMessage)
-		return fmt.Errorf("%s", errorMessage)
+		return fmt.Errorf("failed to connect to primary master node via SSH after instance start: %w", connectionErr)
 	}
-
+	// FIX: nil guard on deferred close to avoid panic if reconnect ever returns nil client
 	defer func() {
+		if sshClient == nil {
+			return
+		}
 		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			logger.Info(t, fmt.Sprintf("failed to close sshClient after primary reconnect: %v", err))
 		}
 	}()
 
@@ -3253,7 +3205,7 @@ func VerifyEncryptionCRN(t *testing.T, sshClient *ssh.Client, keyManagement stri
 	}
 
 	// Command to retrieve CRN configuration
-	cmd := "cat /opt/ibm/lsfsuite/lsf/conf/resource_connector/ibmcloudgen2/conf/ibmcloudgen2_templates.json"
+	cmd := "cat /opt/ibm/lsf/conf/resource_connector/ibmcloudgen2/conf/ibmcloudgen2_templates.json"
 
 	// Iterate over each management node IP in the list
 	for _, managementNodeIP := range managementNodeIPList {
@@ -3273,10 +3225,10 @@ func VerifyEncryptionCRN(t *testing.T, sshClient *ssh.Client, keyManagement stri
 		normalizedOutput := strings.ReplaceAll(strings.ReplaceAll(actualOutput, " ", ""), "\n", "")
 
 		// Determine the expected CRN format based on key management type
-		expectedCRN := "\"crn\":\"crn:v1:bluemix:public:kms"
+		expectedCRN := "\"encryptionKey\":\"crn:v1:bluemix:public:kms"
 		if strings.ToLower(keyManagement) != "key_protect" {
-			//expectedCRN = "\"crn\":\"\""
-			expectedCRN = "\"crn\":\"\""
+			//expectedCRN = "\"encryptionKey\":\"\""
+			expectedCRN = "\"encryptionKey\":\"\""
 		}
 
 		if !utils.VerifyDataContains(t, normalizedOutput, expectedCRN, logger) {
@@ -3995,7 +3947,15 @@ func ValidateAtrackerRouteTarget(t *testing.T, apiKey, region, resourceGroup, cl
 	}
 
 	// Execute command to get Atracker target details
-	cmd := exec.Command("bash", "-c", fmt.Sprintf("ibmcloud atracker target validate --target %s --output JSON", targetID))
+	cmd := exec.Command("bash", "-c", fmt.Sprintf("ibmcloud atracker target validate --target %s --output JSON", targetID)) // #nosec G702 -- test code, targetID sourced from test config
+	// 	cmd := exec.Command(
+	//     "ibmcloud",
+	//     "atracker",
+	//     "target",
+	//     "validate",
+	//     "--target", targetID,
+	//     "--output", "JSON",
+	// )
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to retrieve atracker target: %s, error: %w", string(output), err)
@@ -4178,6 +4138,9 @@ func ValidateTerraformOutput(
 
 	// Establish SSH connection to the deployer node
 	sDeployerClient, err := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_DEPLOYER_HOST_NAME, deployerIP)
+	if err != nil {
+		logger.FAIL(t, fmt.Sprintf("failed to connect to deployer via SSH: %v", err))
+	}
 	require.NoError(t, err, "Failed to connect to the deployer node via SSH")
 
 	defer func() {
@@ -4301,5 +4264,557 @@ func ValidateTerraformOutput(
 		return fmt.Errorf("ssh_to_ldap_node not found in terraform output")
 	}
 
+	return nil
+}
+
+// LSFWebServicesConfiguration validates LSF Web Services (lwsd) configuration.
+func LSFWebServicesConfiguration(
+	t *testing.T,
+	sshClient *ssh.Client,
+	logger *utils.AggregatedLogger,
+) error {
+
+	// 1. Check lwsd service status
+	cmd := "sudo su -l root -c 'systemctl is-active lwsd'"
+	output, err := utils.RunCommandInSSHSession(sshClient, cmd)
+	if err != nil {
+		return fmt.Errorf("failed to execute systemctl check for lwsd: %v", err)
+	}
+	if strings.TrimSpace(output) != "active" {
+		return fmt.Errorf("lwsd service is not active (output: %s)", output)
+	}
+	logger.Info(t, "Verified lwsd service is active.")
+
+	// 2. Check cacert.pem file existence
+	const certPath = "/opt/ibm/lsfsuite/ext/ws/conf/https/cacert.pem"
+	cmd = fmt.Sprintf("test -f %s", certPath)
+	_, err = utils.RunCommandInSSHSession(sshClient, cmd)
+	if err != nil {
+		return fmt.Errorf("required certificate file not found: %s", certPath)
+	}
+	logger.Info(t, fmt.Sprintf("Verified certificate file exists: %s", certPath))
+
+	// 3. Check if port 8448 is listening
+	const port = "8448"
+	portStatusCommand := fmt.Sprintf("netstat -tuln | grep ':%s'", port)
+	portStatusOutput, err := utils.RunCommandInSSHSession(sshClient, portStatusCommand)
+	if err != nil {
+		return fmt.Errorf("failed to execute command '%s': %w", portStatusCommand, err)
+	}
+	if !utils.VerifyDataContains(t, portStatusOutput, "LISTEN", logger) {
+		return fmt.Errorf(
+			"LSF Web Services port %s is not listening as expected: %s",
+			port,
+			portStatusOutput,
+		)
+	}
+	logger.Info(t, fmt.Sprintf("Verified LSF Web Services port %s is listening.", port))
+
+	return nil
+}
+
+// LSFClusterRESTConfiguration sets up REST configuration for the LSF cluster.
+// Ensures proper connectivity and endpoint configuration.
+func LSFClusterRESTConfiguration(
+	t *testing.T,
+	clusterPrefix string,
+	acPassword string,
+	logger *utils.AggregatedLogger,
+) error {
+
+	// InsecureSkipVerify is intentional: management nodes use self-signed certificates
+	// in the test environment and are only reachable via SSH tunnel on localhost.
+	client := &http.Client{ //#nosec
+		Timeout: 30 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // #nosec G402 -- test code, internal cluster endpoint
+		},
+	}
+
+	/* ================= V1: Ping ================= */
+
+	logger.Info(t, "[V1] Sending ping request")
+
+	resp, err := client.Post(
+		BASE_URL+PING_ENDPOINT,
+		"application/json",
+		nil,
+	)
+	if err != nil {
+		return fmt.Errorf("V1 ping request failed: %w", err)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err := resp.Body.Close(); err != nil {
+		log.Printf("V1 response body close error: %v", err)
+	}
+	if err != nil {
+		return fmt.Errorf("V1 failed to read response body: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("V1 ping failed with status: %d", resp.StatusCode)
+	}
+
+	if !strings.Contains(string(body), "Web Services are ready") {
+		return fmt.Errorf("V1 ping validation failed: %s", body)
+	}
+	logger.Info(t, fmt.Sprintf("[V1] Ping OK: %s", strings.TrimSpace(string(body))))
+
+	/* ================= V2: Login ================= */
+
+	logger.Info(t, "[V2] Attempting login")
+
+	// Fix 1: Trim whitespace from password to guard against env var trailing newlines
+	acPassword = strings.TrimSpace(acPassword)
+
+	loginPayload := fmt.Sprintf(
+		"<User><name>%s</name><pass>%s</pass></User>",
+		AC_USER, acPassword,
+	)
+
+	// Fix 2: Log the exact login URL at runtime to confirm LOGIN_ENDPOINT value
+	logger.Info(t, fmt.Sprintf("[V2] Login URL: %s%s", BASE_URL, LOGIN_ENDPOINT))
+
+	req, err := http.NewRequest(
+		"POST",
+		BASE_URL+LOGIN_ENDPOINT,
+		bytes.NewBuffer([]byte(loginPayload)),
+	)
+	if err != nil {
+		return fmt.Errorf("V2 request for login failed: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/xml")
+
+	resp, err = client.Do(req) // #nosec G704 -- internal test request
+	if err != nil {
+		return fmt.Errorf("V2 login request failed: %w", err)
+	}
+
+	// Fix 3: Read body first so we can log it on failure, instead of discarding it
+	loginBody, err := io.ReadAll(resp.Body)
+	if err := resp.Body.Close(); err != nil {
+		log.Printf("V2 response body close error: %v", err)
+	}
+	if err != nil {
+		return fmt.Errorf("V2 failed to read login response body: %w", err)
+	}
+
+	logger.Info(t, fmt.Sprintf("[V2] Login status=%d body=%s", resp.StatusCode, string(loginBody)))
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("V2 login failed with status: %d, body: %s", resp.StatusCode, loginBody)
+	}
+
+	var loginResp struct {
+		Token string `json:"token"`
+	}
+	if err := json.Unmarshal(loginBody, &loginResp); err != nil {
+		return fmt.Errorf("V2 failed to decode login response: %w, body: %s", err, loginBody)
+	}
+
+	if loginResp.Token == "" {
+		return fmt.Errorf("V2 login failed: token not generated, body: %s", loginBody)
+	}
+
+	myToken := "platform_token=" +
+		strings.ReplaceAll(loginResp.Token, `\"`, "#quote#")
+
+	logger.Info(t, "[V2] Login successful, token received")
+
+	/* ================= V3: Cluster Info ================= */
+
+	req, err = http.NewRequest(
+		"GET",
+		BASE_URL+CLUSTER_ENDPOINT,
+		nil,
+	)
+	if err != nil {
+		return fmt.Errorf("V3 request for cluster info failed: %w", err)
+	}
+	// Fix 4: Add missing headers to match working curl command
+	req.Header.Set("Content-Type", "application/xml")
+	req.Header.Set("Accept", "text/plain,application/json,text/xml,multipart/mixed")
+	req.Header.Set("Accept-Language", "en-us")
+	req.Header.Set("Cookie", myToken)
+
+	resp, err = client.Do(req) // #nosec G704 -- internal test request
+	if err != nil {
+		return fmt.Errorf("V3 cluster info request failed: %w", err)
+	}
+
+	clusterBody, err := io.ReadAll(resp.Body)
+	if err := resp.Body.Close(); err != nil {
+		log.Printf("V3 response body close error: %v", err)
+	}
+	if err != nil {
+		return fmt.Errorf("V3 failed to read cluster response body: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("V3 cluster info failed with status: %d, body: %s", resp.StatusCode, clusterBody)
+	}
+
+	if !strings.Contains(string(clusterBody), clusterPrefix) {
+		return fmt.Errorf(
+			"V3 cluster prefix validation failed: expected %s, got %s",
+			clusterPrefix, clusterBody,
+		)
+	}
+	logger.Info(t, fmt.Sprintf("[V3] Cluster response: %s", clusterBody))
+	logger.Info(t, "[V3] Cluster prefix validation passed")
+
+	/* ================= V4: Version ================= */
+
+	req, err = http.NewRequest(
+		"GET",
+		BASE_URL+"/platform/ws/version",
+		nil,
+	)
+	if err != nil {
+		return fmt.Errorf("V4 request for version info failed: %w", err)
+	}
+	// Fix 4 (cont): Add missing headers to match working curl command
+	req.Header.Set("Content-Type", "application/xml")
+	req.Header.Set("Accept", "text/plain,application/json,text/xml,multipart/mixed")
+	req.Header.Set("Accept-Language", "en-us")
+	req.Header.Set("Cookie", myToken)
+
+	resp, err = client.Do(req) // #nosec G704 -- internal test request
+	if err != nil {
+		return fmt.Errorf("V4 version check request failed: %w", err)
+	}
+
+	versionBody, err := io.ReadAll(resp.Body)
+	if err := resp.Body.Close(); err != nil {
+		log.Printf("V4 response body close error: %v", err)
+	}
+	if err != nil {
+		return fmt.Errorf("V4 failed to read version response body: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("V4 version check failed with status: %d, body: %s", resp.StatusCode, versionBody)
+	}
+
+	if !strings.Contains(string(versionBody), EXPECTED_LSF_VERSION) {
+		return fmt.Errorf(
+			"V4 version mismatch: expected %s, got %s",
+			EXPECTED_LSF_VERSION, versionBody,
+		)
+	}
+	logger.Info(t, fmt.Sprintf("[V4] Version response: %s", versionBody))
+	logger.Info(t, "[V4] Version validation passed")
+
+	/* ================= V5: Hosts ================= */
+
+	req, err = http.NewRequest(
+		"GET",
+		BASE_URL+"/platform/ws/hosts",
+		nil,
+	)
+	if err != nil {
+		return fmt.Errorf("V5 hosts info request failed: %w", err)
+	}
+	// Fix 4 (cont): Add missing headers to match working curl command
+	req.Header.Set("Content-Type", "application/xml")
+	req.Header.Set("Accept", "text/plain,application/json,text/xml,multipart/mixed")
+	req.Header.Set("Accept-Language", "en-us")
+	req.Header.Set("Cookie", myToken)
+
+	resp, err = client.Do(req) // #nosec G704 -- internal test request
+	if err != nil {
+		return fmt.Errorf("V5 hosts query request failed: %w", err)
+	}
+
+	hostsBody, err := io.ReadAll(resp.Body)
+	if err := resp.Body.Close(); err != nil {
+		log.Printf("V5 response body close error: %v", err)
+	}
+	if err != nil {
+		return fmt.Errorf("V5 failed to read hosts response body: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("V5 hosts query failed with status: %d, body: %s", resp.StatusCode, hostsBody)
+	}
+
+	if !strings.Contains(string(hostsBody), clusterPrefix) {
+		return fmt.Errorf("V5 hostnames do not contain cluster prefix")
+	}
+	logger.Info(t, fmt.Sprintf("[V5] Hosts response: %s", hostsBody))
+	logger.Info(t, "[V5] Hosts validation passed")
+
+	/* ================= V6–V9: Job submit & job query (twice) ================= */
+
+	for i := 0; i < 2; i++ {
+		boundary := "bqJky99mlBWa-ZuqjC53mG6EzbmlxB"
+		innerBoundary := "_Part_1_701508.1145579811786"
+
+		jobPayload := fmt.Sprintf(
+			"--%s\r\n"+
+				"Content-Disposition: form-data; name=\"AppName\"\r\n"+
+				"Content-ID: <AppName>\r\n\r\n"+
+				"generic\r\n"+
+				"--%s\r\n"+
+				"Content-Disposition: form-data; name=\"data\"\r\n"+
+				"Content-Type: multipart/mixed; boundary=%s\r\n"+
+				"Accept-Language: en-us\r\n"+
+				"Content-ID: <data>\r\n\r\n"+
+				"--%s\r\n"+
+				"Content-Disposition: form-data; name=\"COMMANDTORUN\"\r\n"+
+				"Content-Type: application/xml; charset=UTF-8\r\n"+
+				"Content-Transfer-Encoding: 8bit\r\n"+
+				"Accept-Language: en-us\r\n\r\n"+
+				"<AppParam><id>COMMANDTORUN</id><value>sleep 99</value><type></type></AppParam>\r\n"+
+				"--%s--\r\n"+
+				"--%s--\r\n",
+			boundary,
+			boundary,
+			innerBoundary,
+			innerBoundary,
+			innerBoundary,
+			boundary,
+		)
+
+		req, err := http.NewRequest(
+			"POST",
+			BASE_URL+"/platform/webservice/pacclient/submitapp",
+			bytes.NewBufferString(jobPayload),
+		)
+		if err != nil {
+			return fmt.Errorf("V6 request creation failed: %w", err)
+		}
+
+		req.Header.Set(
+			"Content-Type",
+			fmt.Sprintf("multipart/mixed; boundary=%s", boundary),
+		)
+		req.Header.Set("Accept", "text/xml, application/xml")
+		req.Header.Set("Accept-Language", "en-us")
+		req.Header.Set("Cookie", myToken)
+
+		resp, err := client.Do(req) // #nosec G704 -- internal test request
+		if err != nil {
+			return fmt.Errorf("V6 job submission failed: %w", err)
+		}
+
+		jobBody, err := io.ReadAll(resp.Body)
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("V6 response body close error: %v", err)
+		}
+		if err != nil {
+			return fmt.Errorf("V6 failed to read job submission response body: %w", err)
+		}
+
+		logger.Info(t, fmt.Sprintf("V6 Job submit status=%d body=%q", resp.StatusCode, string(jobBody)))
+
+		// Fix 5: Check job submission status before attempting to parse job ID
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("V6 job submission failed with status: %d, body: %s", resp.StatusCode, jobBody)
+		}
+
+		re := regexp.MustCompile(`<id>\s*(\d+)\s*</id>`)
+		match := re.FindStringSubmatch(string(jobBody))
+
+		if len(match) < 2 {
+			return fmt.Errorf(
+				"v%d job ID not found, status=%d body=%q",
+				6+i,
+				resp.StatusCode,
+				string(jobBody),
+			)
+		}
+
+		jobID := match[1]
+
+		req, err = http.NewRequest(
+			"GET",
+			BASE_URL+"/platform/ws/jobs/"+jobID,
+			nil,
+		)
+		if err != nil {
+			return fmt.Errorf("v%d request creation failed for job %s: %w", 7+i, jobID, err)
+		}
+
+		req.Header.Set("Content-Type", "application/xml")
+		req.Header.Set("Accept", "text/plain,application/xml,text/xml,multipart/mixed")
+		req.Header.Set("Accept-Language", "en-us")
+		req.Header.Set("Cookie", myToken)
+
+		resp, err = client.Do(req) // #nosec G704 -- internal test request
+		if err != nil {
+			return fmt.Errorf("v%d job query failed for job %s: %w", 7+i, jobID, err)
+		}
+
+		jobQueryBody, err := io.ReadAll(resp.Body)
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("V7 response body close error: %v", err)
+		}
+		if err != nil {
+			return fmt.Errorf("v%d failed to read job query response body for job %s: %w", 7+i, jobID, err)
+		}
+
+		logger.Info(t, fmt.Sprintf("V7 Job query status=%d body=%q", resp.StatusCode, string(jobQueryBody)))
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf(
+				"v7 job query failed, status=%d body=%q",
+				resp.StatusCode,
+				string(jobQueryBody),
+			)
+		}
+	}
+
+	logger.Info(t, "LSF Cluster REST API validation completed successfully")
+	return nil
+}
+
+func CheckProfileToProcessorMatch(
+	t *testing.T,
+	sClient *ssh.Client,
+	allProfiles []string,
+	logger *utils.AggregatedLogger,
+) error {
+
+	cmd := "sudo su -l root -c 'lshosts -w'"
+	out, err := utils.RunCommandInSSHSession(sClient, cmd)
+	if err != nil {
+		return fmt.Errorf("failed to run lshosts command: %w", err)
+	}
+
+	output := strings.TrimSpace(string(out))
+	logger.Info(t, output)
+
+	lines := strings.Split(output, "\n")
+	if len(lines) < 2 {
+		return fmt.Errorf("unexpected lshosts output format")
+	}
+
+	// Mapping of profile family → CPU model
+	profileToCPUModel := map[string]string{
+		"x2":    "Intel_Cascadelake",
+		"x3":    "Intel_SapphireRapids",
+		"hx4da": "AMD_EPYC_9575F",
+		"x4":    "Intel_GraniteRapids",
+		"gaudi": "Intel_Gaudi_PLATINUM_8568Y",
+	}
+
+	var actualProcessors []string
+
+	for _, line := range lines[1:] { // skip header
+		fields := strings.Fields(line)
+		if len(fields) < 9 {
+			return fmt.Errorf("lshosts -w has less that 9 fields")
+		}
+		resourceType := fields[8]
+		processor := fields[2]
+		if resourceType != "(icgen2host)" {
+			actualProcessors = append(actualProcessors, processor)
+		}
+	}
+
+	if len(actualProcessors) == 0 {
+		return fmt.Errorf("no processor information found in lshosts output")
+	}
+
+	var expectedProcessors []string
+
+	for _, profile := range allProfiles {
+		family := utils.ExtractProfileFamily(profile)
+		expectedCPU, ok := profileToCPUModel[family]
+		if !ok {
+			return fmt.Errorf(
+				"unsupported profile family %q derived from profile %q",
+				family,
+				profile,
+			)
+		}
+
+		expectedProcessors = append(expectedProcessors, expectedCPU)
+	}
+
+	sort.Strings(actualProcessors)
+	sort.Strings(expectedProcessors)
+
+	if !reflect.DeepEqual(actualProcessors, expectedProcessors) {
+		return fmt.Errorf(
+			"profile → processor mismatch\nexpected: %v\nactual:   %v",
+			expectedProcessors,
+			actualProcessors,
+		)
+	}
+
+	logger.Info(
+		t,
+		fmt.Sprintf(
+			"Profile to processor mapping validated successfully: %v",
+			actualProcessors,
+		),
+	)
+	return nil
+}
+
+type DynamicComputeInstance struct {
+	Profile             string // → profile
+	Count               int    // → count
+	Image               string // → image
+	EnableSpotInstances bool   // → enable_spot_instances
+}
+
+// GetDynamicComputeInstance extracts and maps the first dynamic_compute_instances
+// entry from Terraform variables into a DynamicComputeInstance struct.
+// Fails the test if the key is missing or the structure is invalid.
+func GetDynamicComputeInstance(t *testing.T, options *testhelper.TestOptions) DynamicComputeInstance {
+	raw, ok := options.TerraformVars["dynamic_compute_instances"]
+	require.True(t, ok, "dynamic_compute_instances not found in TerraformVars")
+
+	rawList, ok := raw.([]map[string]interface{})
+	require.True(t, ok, "dynamic_compute_instances is not a list")
+	require.Len(t, rawList, 1, "dynamic_compute_instances must have exactly one entry")
+
+	itemMap := rawList[0]
+
+	inst := DynamicComputeInstance{}
+
+	if v, ok := itemMap["profile"].(string); ok {
+		inst.Profile = v
+	}
+
+	if v, ok := itemMap["enable_spot_instances"].(bool); ok {
+		inst.EnableSpotInstances = v
+	}
+
+	return inst
+}
+
+// LSFValidateSpotVMType validates that the specified vmType exists in the
+// ibmcloudgen2_templates.json file on the remote host and optionally verifies
+// that the "spot" class is present when spotInstance is enabled.
+func LSFValidateSpotVMType(t *testing.T, sClient *ssh.Client, expectedVMType string, spotInstance bool, logger *utils.AggregatedLogger) error {
+	const templatePath = "/opt/ibm/lsf/conf/resource_connector/ibmcloudgen2/conf/ibmcloudgen2_templates.json"
+
+	// Read the JSON file over SSH
+	output, err := utils.RunCommandInSSHSession(sClient, fmt.Sprintf("cat %s", templatePath))
+	if err != nil {
+		return fmt.Errorf("failed to read ibmcloudgen2_templates.json: %w", err)
+	}
+
+	// Validate vmType
+	if !utils.VerifyDataContains(t, output, expectedVMType, logger) {
+		return fmt.Errorf("expected vmType '%s' not found in templates", expectedVMType)
+	}
+	logger.Info(t, fmt.Sprintf("vmType '%s' validated successfully", expectedVMType))
+
+	// Validate spot class only if spotInstance is true
+	if spotInstance {
+		if !utils.VerifyDataContains(t, output, "spot", logger) {
+			return fmt.Errorf("expected class 'spot' not found in templates")
+		}
+		logger.Info(t, "class 'spot' validated successfully")
+	} else {
+		logger.Info(t, "spotInstance is false, skipping spot class validation")
+	}
 	return nil
 }

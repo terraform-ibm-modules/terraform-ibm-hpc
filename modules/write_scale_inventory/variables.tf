@@ -239,3 +239,15 @@ variable "filesystem_mountpoint" {
   type        = string
   description = "filesystem mountpoint"
 }
+
+variable "boot_volume_disk_grow" {
+  type        = bool
+  default     = false
+  description = "Boot volume disk size grow option for SDP."
+}
+
+variable "block_volume_disk_grow" {
+  type        = bool
+  default     = false
+  description = "Block volume disk size grow option for SDP."
+}

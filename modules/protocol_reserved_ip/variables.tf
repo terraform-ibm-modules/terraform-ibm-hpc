@@ -27,3 +27,8 @@ variable "protocol_dns_zone_id" {
   type        = string
   description = "Protocol DNS zone id."
 }
+
+variable "enable_private_path_nlb" {
+  type        = bool
+  description = "Enable private path network load balancer for providing CES (NFS) storage."
+}

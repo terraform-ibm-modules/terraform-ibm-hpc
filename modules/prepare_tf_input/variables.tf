@@ -14,6 +14,12 @@ variable "lsf_version" {
   description = "Select the LSF version to deploy: 'fixpack_14' or 'fixpack_15'. Use null to skip LSF deployment."
 }
 
+variable "enable_lsf_pay_per_use" {
+  type        = bool
+  default     = true
+  description = "When enable_lsf_pay_per_use is set to true, the LSF cluster nodes are provisioned using predefined custom images under a pay-per-use pricing plan, where billing is based on vCPU usage per hour. In this mode, providing custom images for the nodes is not required, and Bring Your Own Image (BYOL) is not supported. The pay-per-use option is available only for FP15 images. If you set the variable to false, the automation uses default images for all cluster nodes and enables support for BYOL, with no pay-per-use billing applied."
+}
+
 ##############################################################################
 # Cluster Level Variables
 ##############################################################################
@@ -47,11 +53,6 @@ variable "resource_group_ids" {
 ##############################################################################
 # Compute Variables
 ##############################################################################
-variable "client_subnets" {
-  type        = list(string)
-  default     = null
-  description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
-}
 
 variable "ssh_keys" {
   type        = list(string)
@@ -70,7 +71,7 @@ variable "client_instances" {
   description = "Number of instances to be launched for client."
 }
 
-variable "cluster_subnet_id" {
+variable "compute_subnet_id" {
   type        = string
   default     = null
   description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
@@ -82,17 +83,42 @@ variable "management_instances" {
       profile = string
       count   = number
       image   = string
+      boot_volume = optional(object({
+        profile   = optional(string) # sdp | general-purpose
+        size      = optional(number) # in GB
+        iops      = optional(number) # only for sdp else null
+        bandwidth = optional(number) # only for sdp else null
+      }))
     })
   )
+  default = [{
+    profile = "cx2-2x4"
+    count   = 0
+    image   = "ibm-redhat-8-10-minimal-amd64-10"
+    boot_volume = {
+      profile   = "general-purpose"
+      size      = 100
+      iops      = null # null for general-purpose
+      bandwidth = null # only for sdp
+    }
+  }]
   description = "Number of instances to be launched for management."
 }
 
 variable "static_compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = optional(string)
+      boot_volume = optional(object({
+        profile   = optional(string) # sdp | general-purpose
+        size      = optional(number) # in GB
+        iops      = optional(number) # only for sdp else null
+        bandwidth = optional(number) # only for sdp else null
+      }))
+
     })
   )
   description = "Min Number of instances to be launched for compute cluster."
@@ -101,12 +127,19 @@ variable "static_compute_instances" {
 variable "dynamic_compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile               = string
+      count                 = number
+      image                 = string
+      enable_spot_instances = bool
+      boot_volume = optional(object({
+        profile   = optional(string) # general-purpose | sdp | 5iops-tier | 10iops-tier | custom
+        size      = optional(number) # 100–250 GB
+        iops      = optional(number) # sdp (>=3000), custom (>=100), else null
+        bandwidth = optional(number) # only for sdp (>=1000), else null
+      }))
     })
   )
-  description = "MaxNumber of instances to be launched for compute cluster."
+  description = "Specify the list of dynamic compute node configurations, including instance profile, image, instance count, and Spot instance support for the compute cluster."
 }
 
 ##############################################################################
@@ -121,11 +154,6 @@ variable "login_subnet_id" {
 ##############################################################################
 # Storage Variables
 ##############################################################################
-variable "storage_subnets" {
-  type        = list(string)
-  default     = null
-  description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
-}
 
 variable "storage_instances" {
   type = list(
@@ -136,6 +164,12 @@ variable "storage_instances" {
       filesystem = optional(string)
     })
   )
+  default = [{
+    profile         = "bx2d-32x128"
+    count           = 0
+    image           = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem_name = "fs1"
+  }]
   description = "Number of instances to be launched for storage cluster."
 }
 
@@ -145,7 +179,7 @@ variable "storage_servers" {
       profile    = string
       count      = number
       image      = string
-      filesystem = string
+      filesystem = optional(string)
     })
   )
   default = [{
@@ -157,21 +191,57 @@ variable "storage_servers" {
   description = "Number of BareMetal Servers to be launched for storage cluster."
 }
 
+variable "tie_breaker_bm_server_profile" {
+  type        = string
+  default     = null
+  description = "Specify the bare metal server profile type name to be used for creating the bare metal Tie breaker node. If no value is provided, the storage bare metal server profile will be used as the default. For more information, see [bare metal server profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-profile&interface=ui). [Tie Breaker Node](https://www.ibm.com/docs/en/storage-scale/5.2.2?topic=quorum-node-tiebreaker-disks)"
+}
+
+variable "scale_management_vsi_profile" {
+  type        = string
+  description = "The virtual server instance profile type name to be used to create the Management node. For more information, see [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
+}
+
 variable "protocol_instances" {
   type = list(
     object({
       profile = string
       count   = number
-      image   = string
     })
   )
   description = "Number of instances to be launched for protocol hosts."
 }
 
-variable "protocol_subnets" {
-  type        = list(string)
-  default     = null
-  description = "Name of an existing subnets in which the cluster resources will be deployed. If no value is given, then new subnet(s) will be provisioned for the cluster. [Learn more](https://cloud.ibm.com/docs/vpc)"
+##############################################################################
+# Scale GUI Variables
+##############################################################################
+
+variable "storage_gui_username" {
+  type        = string
+  default     = "null"
+  sensitive   = true
+  description = "GUI user to perform system management and monitoring tasks on storage cluster."
+}
+
+variable "storage_gui_password" {
+  type        = string
+  default     = "null"
+  sensitive   = true
+  description = "Password for storage cluster GUI"
+}
+
+variable "compute_gui_username" {
+  type        = string
+  default     = "null"
+  sensitive   = true
+  description = "GUI user to perform system management and monitoring tasks on compute cluster."
+}
+
+variable "compute_gui_password" {
+  type        = string
+  default     = "null"
+  sensitive   = true
+  description = "Password for compute cluster GUI"
 }
 
 ##############################################################################
@@ -193,6 +263,7 @@ variable "dns_domain_names" {
     protocol = string
     client   = string
     gklm     = string
+    ppnlb    = string
   })
   description = "IBM Cloud HPC DNS domain names."
 }
@@ -248,6 +319,9 @@ variable "enable_vpc_flow_logs" {
   description = "Enable Activity tracker"
 }
 
+##############################################################################
+# SCC Variables
+##############################################################################
 variable "enable_atracker" {
   type        = bool
   default     = false
@@ -283,6 +357,10 @@ variable "bastion_fip" {
   default     = null
   description = "bastion node fip"
 }
+
+##############################################################################
+# SCC Variables
+##############################################################################
 
 variable "cloud_logs_data_bucket" {
   type        = any
@@ -442,11 +520,11 @@ variable "ldap_user_password" {
   description = "The LDAP user password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required.It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
 }
 
-variable "ldap_instance_key_pair" {
-  type        = list(string)
-  default     = null
-  description = "Name of the SSH key configured in your IBM Cloud account that is used to establish a connection to the LDAP Server. Make sure that the SSH key is present in the same resource group and region where the LDAP Servers are provisioned. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
-}
+# variable "ldap_instance_key_pair" {
+#   type        = list(string)
+#   default     = null
+#   description = "Name of the SSH key configured in your IBM Cloud account that is used to establish a connection to the LDAP Server. Make sure that the SSH key is present in the same resource group and region where the LDAP Servers are provisioned. If you do not have an SSH key in your IBM Cloud account, create one by using the [SSH keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys) instructions."
+# }
 
 variable "ldap_instance" {
   type = list(
@@ -477,12 +555,6 @@ variable "scale_encryption_type" {
   description = "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled"
 }
 
-variable "gklm_instance_key_pair" {
-  type        = list(string)
-  default     = null
-  description = "The key pair to use to launch the GKLM host."
-}
-
 variable "gklm_instances" {
   type = list(
     object({
@@ -499,18 +571,6 @@ variable "gklm_instances" {
   description = "Number of instances to be launched for client."
 }
 
-# variable "scale_encryption_admin_default_password" {
-#   type        = string
-#   default     = null
-#   description = "The default administrator password used for resetting the admin password based on the user input. The password has to be updated which was configured during the GKLM installation."
-# }
-
-# variable "scale_encryption_admin_username" {
-#   type        = string
-#   default     = null
-#   description = "The default Admin username for Security Key Lifecycle Manager(GKLM)."
-# }
-
 variable "scale_encryption_admin_password" {
   type        = string
   default     = null
@@ -519,8 +579,8 @@ variable "scale_encryption_admin_password" {
 
 variable "storage_type" {
   type        = string
-  default     = "scratch"
-  description = "Select the required storage type(scratch/persistent/eval)."
+  default     = "vsi"
+  description = "Select the required storage type(vsi/baremetal/eval)."
 }
 
 variable "colocate_protocol_instances" {
@@ -534,7 +594,6 @@ variable "afm_instances" {
     object({
       profile = string
       count   = number
-      image   = string
     })
   )
   description = "Number of instances to be launched for afm hosts."
@@ -553,8 +612,30 @@ variable "afm_cos_config" {
       bucket_storage_class = string
     })
   )
-  default     = null
+  nullable    = false
   description = "AFM configurations."
+}
+
+variable "scale_afm_bucket_config_details" {
+  description = "Scale AFM COS Bucket and Configuration Details"
+  type = list(object({
+    bucket     = string
+    endpoint   = string
+    fileset    = string
+    filesystem = string
+    mode       = string
+  }))
+  default = null
+}
+
+variable "scale_afm_cos_hmac_key_params" {
+  description = "Scale AFM COS HMAC Key Details"
+  type = list(object({
+    akey   = string
+    bucket = string
+    skey   = string
+  }))
+  default = null
 }
 
 variable "filesystem_config" {
@@ -566,11 +647,21 @@ variable "filesystem_config" {
       default_metadata_replica = number
       max_data_replica         = number
       max_metadata_replica     = number
-      mount_point              = string
     })
   )
   default     = null
   description = "File system configurations."
+}
+
+variable "filesets_config" {
+  type = list(
+    object({
+      client_mount_path = string
+      quota             = number
+    })
+  )
+  default     = null
+  description = "Fileset configurations."
 }
 
 variable "scheduler" {
@@ -587,6 +678,17 @@ variable "enable_dedicated_host" {
   type        = bool
   default     = false
   description = "Enables dedicated host to the compute instances"
+}
+
+##############################################################################
+# Baremetal Variables
+##############################################################################
+
+variable "enable_baremetal" {
+  type        = bool
+  default     = false
+  description = "Set this option to true to enable baremetal servers. The default value is false."
+
 }
 
 ##############################################################################
@@ -620,7 +722,7 @@ variable "boot_volume_encryption_key" {
   description = "The kms_key crn."
 }
 
-variable "existing_kms_instance_guid" {
+variable "kms_instance_guid" {
   type        = string
   default     = null
   description = "The existing KMS instance guid."
@@ -649,6 +751,17 @@ variable "custom_file_shares" {
   description = "Provide details for customizing your shared file storage layout, including mount points, sizes (in GB), and IOPS ranges for up to five file shares if using VPC file storage as the storage option.If using IBM Storage Scale as an NFS mount, update the appropriate mount path and nfs_share values created from the Storage Scale cluster. Note that VPC file storage supports attachment to a maximum of 256 nodes. Exceeding this limit may result in mount point failures due to attachment restrictions.For more information, see [Storage options](https://test.cloud.ibm.com/docs/hpc-ibm-spectrumlsf?topic=hpc-ibm-spectrumlsf-integrating-scale#integrate-scale-and-hpc)."
 }
 
+variable "mtu_value" {
+  type        = number
+  description = "Default MTU is 9000. For deployments using Spectrum Scale with LSF and PPNLB enabled, configure the MTU at 8500 or lower to ensure compatibility."
+}
+
+variable "bms_boot_drive_encryption" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the boot drive of bare metal server. Select true or false"
+}
+
 ###########################################################################
 # Existing Bastion Support variables
 ###########################################################################
@@ -660,14 +773,26 @@ variable "existing_bastion_instance_name" {
 }
 
 ###########################################################################
-# Application Center variables
+# Web Service & Application Center variables
 ###########################################################################
 
-variable "app_center_gui_password" {
+variable "enable_webservice" {
+  type        = bool
+  default     = true
+  description = "Set to true to enable the IBM Spectrum LSF Web Services (default: true)."
+}
+
+variable "enable_appcenter" {
+  type        = bool
+  default     = false
+  description = "Set to true to enable the IBM Spectrum LSF Application Center GUI (default: false). [System requirements](https://www.ibm.com/docs/en/slac/10.2.0?topic=requirements-system-102-fix-pack-15) for IBM Spectrum LSF Application Center Version 10.2 Fix Pack 15."
+}
+
+variable "webservice_appcenter_password" {
   type        = string
   default     = ""
   sensitive   = true
-  description = "Password for IBM Spectrum LSF Application Center GUI."
+  description = "Password required to access the IBM Spectrum LSF Application Center (App Center) GUI, which is enabled by default with HTTPS. This is a mandatory value and omitting it will result in deployment failure. The password must meet the following requirements, at least 15 characters in length, and must include one uppercase letter, one lowercase letter, one number, and one special character. Spaces are not allowed."
 }
 
 ###########################################################################
@@ -678,11 +803,23 @@ variable "login_instance" {
     object({
       profile = string
       image   = string
+      boot_volume = optional(object({
+        profile   = optional(string) # sdp | general-purpose
+        size      = optional(number) # in GB
+        iops      = optional(number) # only for sdp else null
+        bandwidth = optional(number) # only for sdp else null
+      }))
     })
   )
   default = [{
     profile = "bx2-2x8"
     image   = "hpcaas-lsf10-rhel810-compute-v8"
+    boot_volume = {
+      profile   = "general-purpose"
+      size      = 100
+      iops      = null # null for general-purpose
+      bandwidth = null # only for sdp
+    }
   }]
   description = "Number of instances to be launched for login node."
 }
@@ -710,13 +847,13 @@ variable "sccwp_service_plan" {
   }
 }
 
-variable "sccwp_enable" {
+variable "enable_sccwp" {
   type        = bool
   default     = true
   description = "Flag to enable SCC instance creation. If true, an instance of SCC (Security and Compliance Center) will be created."
 }
 
-variable "cspm_enabled" {
+variable "enable_cspm" {
   description = "Enable Cloud Security Posture Management (CSPM) for the Workload Protection instance. This will create a trusted profile associated with the SCC Workload Protection instance that has viewer / reader access to the App Config service and viewer access to the Enterprise service. [Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
   type        = bool
   default     = false
@@ -734,4 +871,106 @@ variable "app_config_plan" {
       var.app_config_plan
     )
   }
+}
+
+variable "protocol_subnet_id" {
+  type        = string
+  description = "Name of an existing subnet for protocol nodes. If no value is given, a new subnet will be created"
+  default     = null
+}
+
+variable "client_subnet_id" {
+  type        = string
+  description = "Name of an existing subnet for client nodes. If no value is given, a new subnet will be created"
+  default     = null
+}
+
+variable "storage_subnet_id" {
+  type        = string
+  description = "Name of an existing subnet for storage nodes. If no value is given, a new subnet will be created"
+  default     = null
+}
+
+variable "login_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the bastion node. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the bastion node to function properly."
+}
+
+variable "storage_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the storage nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the storage nodes to function properly."
+}
+
+variable "compute_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the compute nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the compute nodes to function properly."
+}
+
+variable "client_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the gklm nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the gklm nodes to function properly."
+}
+
+variable "gklm_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the gklm nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the gklm nodes to function properly."
+}
+
+variable "ldap_security_group_name" {
+  type        = string
+  default     = null
+  description = "Provide the security group name to provision the ldap nodes. If set to null, the solution will automatically create the necessary security group and rules. If you choose to use an existing security group, ensure it has the appropriate rules configured for the ldap nodes to function properly."
+}
+
+variable "volume_storages" {
+  description = "The Volume Storage Profile to use for volume of the virtual instance"
+  type = list(
+    object({
+      boot_volume_profile    = optional(string)
+      boot_volume_iops       = optional(string)
+      boot_volume_size       = optional(number)
+      boot_volume_disk_grow  = optional(bool, false)
+      block_volume_capacity  = optional(number)
+      block_volume_iops      = optional(number)
+      block_volume_disk_grow = optional(bool, false)
+    })
+  )
+  default = []
+}
+
+variable "enable_private_path_nlb" {
+  type        = bool
+  description = "Enable private path network load balancer for providing CES (NFS) storage."
+}
+
+variable "protocol_instance_eth1_mtu" {
+  type        = number
+  description = "Enable the Private Path NLB for CES. When enabled, MTU must be 8500 or lower because PPNLB does not support MTU 9000. When disabled, protocol nodes can safely use MTU 9000."
+}
+
+variable "enable_license_scheduler" {
+  type        = bool
+  default     = true
+  description = "Set to true to enable the IBM Spectrum LSF License Scheduler (default: true)."
+}
+
+variable "terraform_state_bucket_region" {
+  type        = string
+  description = "IBM Cloud region for the COS bucket"
+}
+
+variable "terraform_state_bucket" {
+  type        = string
+  description = "Name of the COS bucket for storing Terraform state"
+}
+
+variable "state_file_key" {
+  type        = string
+  description = "Path and name of the state file within the bucket"
+  default     = "terraform.tfstate"
 }

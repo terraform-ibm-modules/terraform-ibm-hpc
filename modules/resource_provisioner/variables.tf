@@ -1,6 +1,28 @@
 ##############################################################################
 # Account Variables
 ##############################################################################
+variable "debug_mode" {
+  type        = bool
+  default     = false
+  description = "Set to true to skip the cleanup of sensitive deployment files (like tfvars, SSH keys, and scripts) for troubleshooting and debugging purposes."
+}
+
+variable "terraform_state_bucket_region" {
+  type        = string
+  description = "IBM Cloud region for the COS bucket"
+}
+
+variable "terraform_state_bucket" {
+  type        = string
+  description = "Name of the COS bucket for storing Terraform state"
+}
+
+variable "region" {
+  type        = string
+  default     = null
+  description = "vpc region"
+}
+
 variable "ibmcloud_api_key" {
   type        = string
   sensitive   = true
@@ -36,13 +58,19 @@ variable "deployer_ip" {
   description = "deployer node ip"
 }
 
+variable "deployer_instance_id" {
+  type        = string
+  default     = null
+  description = "deployer node id"
+}
+
 ##############################################################################
 # Offering Variations
 ##############################################################################
 variable "scheduler" {
   type        = string
   default     = null
-  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+  description = "Select one of the scheduler (Scale/LSF/Symphony/Slurm/null)"
 }
 
 ##############################################################################
@@ -89,4 +117,15 @@ variable "TF_LOG" {
   type        = string
   default     = "ERROR"
   description = "The Terraform log level used for output in the Schematics workspace."
+}
+
+variable "tfstate_cos_hmac_key_params" {
+  description = "Terraform State COS HMAC Key Details"
+  type = list(object({
+    akey   = string
+    bucket = string
+    skey   = string
+  }))
+  default   = null
+  sensitive = true
 }

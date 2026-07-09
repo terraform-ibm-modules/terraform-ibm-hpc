@@ -7,25 +7,53 @@
 
 #!/usr/bin/env bash
 exec > >(tee /var/log/ibm_spectrumscale_user-data.log)
-
-if grep -E -q "CentOS|Red Hat" /etc/os-release
+if grep -q "Red Hat" /etc/os-release
 then
     USER=vpcuser
 elif grep -q "Ubuntu" /etc/os-release
 then
     USER=ubuntu
 fi
-sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo \'Please client as the user \\\\\"$USER\\\\\" rather than the user \\\\\"root\\\\\".\';echo;sleep 5; exit 142\" /" /root/.ssh/authorized_keys
+sed -i '/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=/d' /home/$USER/.ssh/authorized_keys
 
 # input parameters
-echo "${bastion_public_key_content}" >> ~/.ssh/authorized_keys
-echo "${storage_public_key_content}" >> ~/.ssh/authorized_keys
-echo "StrictHostKeyChecking no" >> ~/.ssh/config
-echo "${storage_private_key_content}" > ~/.ssh/id_rsa
-chmod 600 ~/.ssh/id_rsa
+# Configure SSH
+# Create the .ssh directory for USER with correct permissions
+mkdir -p /home/$USER/.ssh
+chmod 700 /home/$USER/.ssh
 
-# if grep -q "Red Hat" /etc/os-release
-if grep -q "CentOS|Red Hat" /etc/os-release
+# Append the public keys to the USER's authorized_keys file
+echo "${storage_public_key_content}" >> /home/$USER/.ssh/authorized_keys
+echo "${storage_public_key_content}" >> /root/.ssh/authorized_keys
+echo "${bastion_public_key_content}" >> /home/$USER/.ssh/authorized_keys
+
+# Create the SSH config file to disable host key checking for all hosts
+echo "Host *
+    StrictHostKeyChecking no" > /home/$USER/.ssh/config
+echo "Host *
+    StrictHostKeyChecking no" > /root/.ssh/config
+chmod 600 /home/$USER/.ssh/config /root/.ssh/config
+
+# Write the private key file for USER
+echo "${storage_private_key_content}" > /home/$USER/.ssh/id_rsa
+echo "${storage_private_key_content}" > /root/.ssh/id_rsa
+chmod 600 /home/$USER/.ssh/id_rsa /home/$USER/.ssh/authorized_keys /root/.ssh/id_rsa /root/.ssh/authorized_keys
+
+# CRITICAL: Change ownership of everything to the USER
+chown -R $USER:$USER /home/$USER/.ssh
+
+# Add user to the 'sudo' group
+groupadd gpfs
+usermod -aG gpfs $USER
+
+# #Permission for the sudoers file
+# chmod 0440 /etc/sudoers.d/gpfs_sudo_wrapper
+
+sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
+#Restarting the SSH Service
+systemctl restart sshd
+
+if grep -q "Red Hat" /etc/os-release
 then
     USER=vpcuser
     REQ_PKG_INSTALLED=0
@@ -82,26 +110,25 @@ fi
 yum update --security -y
 yum versionlock $package_list
 yum versionlock list
+echo 'export PATH=$PATH:/usr/lpp/mmfs/bin' >> /home/$USER/.bashrc
 echo 'export PATH=$PATH:/usr/lpp/mmfs/bin' >> /root/.bashrc
 
-if [[ "${storage_disk_type}" == "fixed" ]]
-then
-    echo "###########################################################################################" >> /etc/motd
-    echo "# You have logged in to Instance storage virtual server.                                  #" >> /etc/motd
-    echo "#   - Instance storage is temporary storage that's available only while your virtual      #" >> /etc/motd
-    echo "#     server is running.                                                                  #" >> /etc/motd
-    echo "#   - Data on the drive is unrecoverable after instance shutdown, disruptive maintenance, #" >> /etc/motd
-    echo "#     or hardware failure.                                                                #" >> /etc/motd
-    echo "#                                                                                         #" >> /etc/motd
-    echo "# Refer: https://cloud.ibm.com/docs/vpc?topic=vpc-instance-storage                        #" >> /etc/motd
-    echo "###########################################################################################" >> /etc/motd
-fi
+echo "###########################################################################################" >> /etc/motd
+echo "#                 You have logged in to a VSI (Virtual Server Instance).                  #" >> /etc/motd
+echo "#                                                                                         #" >> /etc/motd
+echo "#   - A VSI Server provides temporary, ephemeral storage available only                   #" >> /etc/motd
+echo "#     for the duration of the virtual servers runtime.                                    #" >> /etc/motd
+echo "#   - Data on the root volume is unrecoverable after instance shutdown, disruptive        #" >> /etc/motd
+echo "#     maintenance, or hardware failure unless detached.                                   #" >> /etc/motd
+echo "#                                                                                         #" >> /etc/motd
+echo "# Refer: https://cloud.ibm.com/docs/vpc?group=virtual-servers                             #" >> /etc/motd
+echo "###########################################################################################" >> /etc/motd
 
 echo "DOMAIN=${storage_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${storage_interfaces}"
 echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${storage_interfaces}"
 chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
-sleep 120
 systemctl restart NetworkManager
+hostnamectl set-hostname "$(hostname).${storage_dns_domain}"
 
 systemctl stop firewalld
 firewall-offline-cmd --zone=public --add-port=1191/tcp
@@ -122,15 +149,33 @@ firewall-offline-cmd --zone=public --add-port=30000-61000/udp
 systemctl start firewalld
 systemctl enable firewalld
 
+if [ "${enable_sec_interface_storage}" == true ]; then
+    sec_interface=$(nmcli -t con show --active | grep eth1 | cut -d ':' -f 1)
+    nmcli conn del "$sec_interface"
+    nmcli con add type ethernet con-name eth1 ifname eth1
+    echo "DOMAIN=\"${storage_dns_domain}\"" >> "/etc/sysconfig/network-scripts/ifcfg-${protocol_interfaces}"
+    echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${protocol_interfaces}"
+    # Wait until eth1 gets an IP
+    while ! ip -4 addr show eth1 | grep -q "inet "; do sleep 1; done
+
+    ETH1_IP=$(ip -4 addr show eth1 | awk '/inet /{print $2}' | cut -d/ -f1)
+    GW="$(echo $ETH1_IP | awk -F. '{print $1"."$2"."$3".1"}')"
+
+    ip rule add from $ETH1_IP table 101
+    ip route add default via $GW dev eth1 table 101
+
+    systemctl restart NetworkManager
+fi
+
 if [ "${enable_protocol}" == true ]; then
     sec_interface=$(nmcli -t con show --active | grep eth1 | cut -d ':' -f 1)
     nmcli conn del "$sec_interface"
     nmcli con add type ethernet con-name eth1 ifname eth1
-    echo "DOMAIN=\"${protocol_dns_domain}\"" >> "/etc/sysconfig/network-scripts/ifcfg-eth1"
-    echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-eth1"
+    echo "DOMAIN=${protocol_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${protocol_interfaces}"
+    echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${protocol_interfaces}"
     systemctl restart NetworkManager
     ###### TODO: Fix Me ######
-    echo 'export IC_REGION=${vpc_region}' >> /root/.bashrc
-    echo 'export IC_SUBNET=${protocol_subnets}' >> /root/.bashrc
-    echo 'export IC_RG=${resource_group_id}' >> /root/.bashrc
+    echo "IC_REGION=${vpc_region}" >> /etc/environment
+    echo "IC_SUBNET=${protocol_subnets}" >> /etc/environment
+    echo "IC_RG=${resource_group_id}" >> /etc/environment
 fi

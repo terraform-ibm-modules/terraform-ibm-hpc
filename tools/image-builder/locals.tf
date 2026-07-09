@@ -126,7 +126,7 @@ locals {
   kms_encryption_enabled     = var.key_management == "key_protect" ? true : false
   landing_zone_kms_output    = var.key_management == "key_protect" ? (var.kms_key_name == null ? module.landing_zone.key_map[format("%s-vsi-key", var.prefix)] : module.landing_zone.key_map[var.kms_key_name]) : null
   boot_volume_encryption_key = var.key_management == "key_protect" ? local.landing_zone_kms_output["crn"] : null
-  existing_kms_instance_guid = var.key_management == "key_protect" ? module.landing_zone.key_management_guid : null
+  # existing_kms_instance_guid = var.key_management == "key_protect" ? module.landing_zone.key_management_guid : null
   landing_zone_subnet_output = [for subnet in flatten(module.landing_zone.subnet_data) : {
     name = subnet["name"]
     id   = subnet["id"]

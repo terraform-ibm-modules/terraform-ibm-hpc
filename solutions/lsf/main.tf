@@ -9,7 +9,7 @@ module "lsf" {
   vpc_cluster_login_private_subnets_cidr_blocks    = local.env.vpc_cluster_login_private_subnets_cidr_blocks
   login_subnet_id                                  = local.env.login_subnet_id
   vpc_cluster_private_subnets_cidr_blocks          = local.env.vpc_cluster_private_subnets_cidr_blocks
-  cluster_subnet_id                                = local.env.cluster_subnet_id
+  compute_subnet_id                                = local.env.compute_subnet_id
   cos_instance_name                                = local.env.cos_instance_name
   dns_custom_resolver_id                           = local.env.dns_custom_resolver_id
   dns_instance_id                                  = local.env.dns_instance_id
@@ -21,6 +21,7 @@ module "lsf" {
   enable_vpc_flow_logs                             = local.env.enable_vpc_flow_logs
   custom_file_shares                               = local.env.custom_file_shares
   storage_security_group_id                        = local.env.storage_security_group_id
+  mtu_value                                        = local.env.mtu_value
   key_management                                   = local.env.key_management
   management_instances                             = local.env.management_instances
   vpc_cidr                                         = local.env.vpc_cidr
@@ -43,7 +44,6 @@ module "lsf" {
   skip_iam_block_storage_authorization_policy      = local.env.skip_iam_block_storage_authorization_policy
   skip_kms_s2s_auth_policy                         = local.env.skip_kms_s2s_auth_policy
   ibmcloud_api_key                                 = local.env.ibmcloud_api_key
-  app_center_gui_password                          = local.env.app_center_gui_password
   lsf_version                                      = local.env.lsf_version
   enable_hyperthreading                            = local.env.enable_hyperthreading
   enable_ldap                                      = local.env.enable_ldap
@@ -55,14 +55,22 @@ module "lsf" {
   ldap_server_cert                                 = local.env.ldap_server_cert
   ldap_instance                                    = local.env.ldap_instance
   enable_dedicated_host                            = local.env.enable_dedicated_host
+  enable_baremetal                                 = local.env.enable_baremetal
   existing_bastion_instance_name                   = local.env.existing_bastion_instance_name
   existing_bastion_instance_public_ip              = local.env.existing_bastion_instance_public_ip
   existing_bastion_security_group_id               = local.env.existing_bastion_security_group_id
   existing_bastion_ssh_private_key                 = local.env.existing_bastion_ssh_private_key
-  vpn_enabled                                      = local.env.vpn_enabled
+  enable_vpn                                       = local.env.enable_vpn
   login_instance                                   = local.env.login_instance
-  sccwp_enable                                     = local.env.sccwp_enable
+  enable_sccwp                                     = local.env.enable_sccwp
   sccwp_service_plan                               = local.env.sccwp_service_plan
-  cspm_enabled                                     = var.cspm_enabled
+  enable_cspm                                      = var.enable_cspm
   app_config_plan                                  = var.app_config_plan
+  enable_lsf_pay_per_use                           = local.env.enable_lsf_pay_per_use
+  enable_license_scheduler                         = local.env.enable_license_scheduler
+  enable_webservice                                = local.env.enable_webservice
+  enable_appcenter                                 = local.env.enable_appcenter
+  webservice_appcenter_password                    = local.env.webservice_appcenter_password
+  tfstate_cos_config                               = local.env.tfstate_cos_config
+  tfstate_existing_cos_bucket_creds                = local.env.tfstate_existing_cos_bucket_creds
 }

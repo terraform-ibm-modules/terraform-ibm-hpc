@@ -75,7 +75,8 @@ locals {
   # resource_group_id = data.ibm_resource_group.existing_resource_group.id
 
   # Subnets
-  bastion_subnets = var.bastion_subnets
+  bastion_subnets              = var.bastion_subnets
+  login_security_group_name_id = var.login_security_group_name != null ? data.ibm_is_security_group.login_security_group[*].id : []
 }
 
 locals {

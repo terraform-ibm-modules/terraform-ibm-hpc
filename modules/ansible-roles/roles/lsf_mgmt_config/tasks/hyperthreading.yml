@@ -1,17 +1,17 @@
 ---
 # Hyperthreading Configuration
 
-- name: Hyperthreading | Define ego_define_ncpus based on hyperthreading
+- name: Hyperthreading | Determine EGO_DEFINE_NCPUS based on hyperthreading setting
   set_fact:
     ego_define_ncpus: "{{ 'threads' if enable_hyperthreading else 'cores' }}"
   run_once: true
 
-- name: Hyperthreading | Print the value of ego_define_ncpus
+- name: Hyperthreading | Display selected CPU configuration mode
   debug:
     msg: "EGO_DEFINE_NCPUS is set to {{ ego_define_ncpus }}"
   run_once: true
 
-- name: Hyperthreading | Set the EGO_DEFINE_NCPUS in LSF config file
+- name: Hyperthreading | Apply EGO_DEFINE_NCPUS setting in LSF configuration
   lineinfile:
     path: "{{ LSF_CONF_FILE }}"
     line: "{{ item }}"

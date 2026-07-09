@@ -28,12 +28,6 @@ variable "gui_hosts" {
   description = "list of lsf gui nodes"
 }
 
-variable "db_hosts" {
-  type        = list(string)
-  default     = null
-  description = "list of lsf gui db nodes"
-}
-
 variable "prefix" {
   type        = string
   default     = null
@@ -169,18 +163,40 @@ variable "compute_subnet_crn" {
 variable "dynamic_compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile               = string
+      count                 = number
+      image                 = string
+      enable_spot_instances = bool
     })
   )
   default = [{
-    profile = "cx2-2x4"
-    count   = 1024
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    profile               = "cx2-2x4"
+    count                 = 1024
+    image                 = "ibm-redhat-8-10-minimal-amd64-2"
+    enable_spot_instances = false
   }]
-  description = "MaxNumber of instances to be launched for compute cluster."
+  description = "Specify the list of dynamic compute node configurations, including instance profile, image, instance count, and Spot instance support for the compute cluster."
 }
+
+variable "dynamic_compute_boot_volume" {
+  type = list(
+    object({
+      profile   = optional(string) # general-purpose | sdp | 5iops-tier | 10iops-tier | custom
+      size      = optional(number) # 100–250 GB
+      iops      = optional(number) # sdp (>=3000), custom (>=100), else null
+      bandwidth = optional(number) # only for sdp (>=1000), else null
+    })
+  )
+  default = [{
+    profile   = "general-purpose"
+    size      = 100
+    iops      = null
+    bandwidth = null
+  }]
+  description = "Boot Volume for compute cluster."
+}
+
+
 
 variable "boot_volume_encryption_key" {
   type        = string
@@ -194,15 +210,66 @@ variable "kms_encryption_enabled" {
   default     = true
 }
 
-variable "app_center_gui_password" {
+variable "enable_webservice" {
+  type        = bool
+  default     = true
+  description = "Set to true to enable the IBM Spectrum LSF Web Services (default: true)."
+}
+
+variable "enable_appcenter" {
+  type        = bool
+  default     = false
+  description = "Set to true to enable the IBM Spectrum LSF Application Center GUI (default: false). [System requirements](https://www.ibm.com/docs/en/slac/10.2.0?topic=requirements-system-102-fix-pack-15) for IBM Spectrum LSF Application Center Version 10.2 Fix Pack 15."
+}
+
+variable "webservice_appcenter_password" {
   type        = string
   default     = ""
   sensitive   = true
-  description = "Password for IBM Spectrum LSF Application Center GUI."
+  description = "Password required to access the IBM Spectrum LSF Application Center (App Center) GUI, which is enabled by default with HTTPS. This is a mandatory value and omitting it will result in deployment failure. The password must meet the following requirements, at least 15 characters in length, and must include one uppercase letter, one lowercase letter, one number, and one special character. Spaces are not allowed."
 }
 
 variable "login_host" {
   type        = list(string)
   default     = null
   description = "list of lsf Login node"
+}
+
+variable "enable_lsf_pay_per_use" {
+  type        = bool
+  default     = true
+  description = "When enable_lsf_pay_per_use is set to true, the LSF cluster nodes are provisioned using predefined custom images under a pay-per-use pricing plan, where billing is based on vCPU usage per hour. In this mode, providing custom images for the nodes is not required, and Bring Your Own Image (BYOL) is not supported. The pay-per-use option is available only for FP15 images. If you set the variable to false, the automation uses default images for all cluster nodes and enables support for BYOL, with no pay-per-use billing applied."
+}
+
+variable "mtu_value" {
+  type        = number
+  description = "Default MTU is 9000. For deployments using Spectrum Scale with LSF and PPNLB enabled, configure the MTU at 8500 or lower to ensure compatibility."
+}
+
+variable "enable_license_scheduler" {
+  type        = bool
+  default     = true
+  description = "Set to true to enable the IBM Spectrum LSF License Scheduler (default: true)."
+}
+
+variable "has_gaudi3" {
+  type        = bool
+  default     = false
+  description = "Management nodes profile type."
+}
+
+variable "login_node_cpu_platform" {
+  type        = string
+  description = "Login node profile type."
+}
+
+variable "enable_baremetal" {
+  type        = bool
+  default     = false
+  description = "Set this option to true to enable baremetal servers. The default value is false."
+}
+
+variable "dedicated_host_id" {
+  type        = string
+  description = "Dedicated Host ID"
 }

@@ -24,7 +24,6 @@ module "custom" {
   client_instances         = local.env.client_instances
   management_instances     = local.env.management_instances
   vpc_cidr                 = local.env.vpc_cidr
-  nsd_details              = local.env.nsd_details
   placement_strategy       = local.env.placement_strategy
   protocol_instances       = local.env.protocol_instances
   protocol_subnets_cidr    = [local.env.protocol_subnets_cidr]

@@ -1,5 +1,6 @@
 #!/bin/bash
 common_suite() {
+    #common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
     test_cases="$1"
     suite="$2"
     compute_image_name="$3"
@@ -12,18 +13,19 @@ common_suite() {
     export TF_VAR_ibmcloud_api_key=$API_KEY
     export TF_VAR_github_token=${git_access_token:?}
 
-    DIRECTORY="/artifacts/tests/lsf_tests"
+    DIRECTORY="/artifacts/tests"
     if [ -d "$DIRECTORY" ]; then
-        cd $DIRECTORY || exit
         test_cases="${test_cases//,/|}"
         LOG_FILE=${suite}.json
         VALIDATION_LOG_FILE_NAME=${suite}.log
         export LOG_FILE_NAME=${LOG_FILE}
         echo "**************Validating on ${suite} **************"
         if [[ "$CHECK_PR_SUITE" ]]; then
+            cd $DIRECTORY || exit
             if [[ "$CHECK_SOLUTION" == "hpcaas" ]]; then
                 # get ssh-key created based on pr-id
-                get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}"
+                # shellcheck disable=SC2154
+                get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}" "${lsf_version}"
                 SSH_KEYS=${CICD_SSH_KEY:?} COMPUTE_IMAGE_NAME=${compute_image_name:?} LOGIN_NODE_IMAGE_NAME=${login_image_name:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
                     ZONE=${zone:?} RESERVATION_ID=${reservation_id:?} CLUSTER_NAME=${cluster_name:?} DEFAULT_EXISTING_RESOURCE_GROUP=${resource_group:?} \
                     go test -v -timeout 9000m -run "${test_cases}" | tee -a "$LOG_FILE"
@@ -39,7 +41,7 @@ common_suite() {
 
             if [[ "$CHECK_SOLUTION" == "lsf" ]]; then
                 # get ssh-key created based on pr-id
-                get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}"
+                get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}" "${lsf_version}"
                 SSH_KEYS=${CICD_SSH_KEY:?} COMPUTE_IMAGE_NAME=${compute_image_name:?} LOGIN_NODE_IMAGE_NAME=${login_image_name:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
                     ZONE=${zone:?} SOLUTION=${solution:?} DEFAULT_EXISTING_RESOURCE_GROUP=${resource_group:?} \
                     go test -v -timeout 9000m -run "${test_cases}" | tee -a "$LOG_FILE"
@@ -55,8 +57,8 @@ common_suite() {
 
             if [[ "$CHECK_SOLUTION" == "lsf-da" ]]; then
                 # get ssh-key created based on pr-id
-                get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}"
-                SSH_KEYS=${CICD_SSH_KEY:?} go test -v -timeout=900m -parallel=10 -run="${test_cases}" | tee -a "$LOG_FILE_NAME"
+                get_pr_ssh_key "${PR_REVISION}" "${CHECK_SOLUTION}" "${lsf_version}"
+                LSF_VERSION=${lsf_version:?} SSH_KEYS=${CICD_SSH_KEY:?} go test -v -timeout=900m -parallel=10 -run="${test_cases}" | tee -a "$LOG_FILE_NAME"
                 # Upload log/test_output files to cos bucket
                 cos_upload "PR" "${CHECK_SOLUTION}" "${DIRECTORY}"
 
@@ -68,9 +70,11 @@ common_suite() {
             fi
 
         else
+            REGRESSION_DIRECTORY=$DIRECTORY/lsf_tests
+            cd $REGRESSION_DIRECTORY || exit
             if [[ "$CHECK_SOLUTION" == "hpcaas" ]]; then
                 # get ssh-key created based on commit-id
-                get_commit_ssh_key "${REVISION}" "${CHECK_SOLUTION}"
+                get_commit_ssh_key "${REVISION}" "${CHECK_SOLUTION}" "${lsf_version}"
                 SSH_KEYS=${CICD_SSH_KEY:?} US_EAST_ZONE=${us_east_zone:?} US_EAST_CLUSTER_ID=${us_east_cluster_id:?} \
                     US_EAST_RESERVATION_ID=${us_east_reservation_id:?} US_SOUTH_ZONE=${us_south_zone:?} \
                     US_SOUTH_CLUSTER_ID=${us_south_cluster_id:?} US_SOUTH_RESERVATION_ID=${us_south_reservation_id:?} \
@@ -83,7 +87,7 @@ common_suite() {
                 cos_upload "REGRESSION" "${CHECK_SOLUTION}" "${DIRECTORY}" "${VALIDATION_LOG_FILE_NAME}"
 
                 # push custom reports to custom-reports repository
-                push_reports "${LOG_FILE}" "${DIRECTORY}" "REGRESSION" "${suite}" "${CHECK_SOLUTION}" "${BUILD_NUMBER}"
+                push_reports "${LOG_FILE}" "${REGRESSION_DIRECTORY}" "REGRESSION" "${suite}" "${CHECK_SOLUTION}" "${BUILD_NUMBER}"
 
                 # Checking any error/issue from log file for commit/push
                 issue_track "${LOG_FILE}"
@@ -91,7 +95,7 @@ common_suite() {
 
             if [[ "$CHECK_SOLUTION" == "lsf" ]]; then
                 # get ssh-key created based on commit-id
-                get_commit_ssh_key "${REVISION}" "${CHECK_SOLUTION}"
+                get_commit_ssh_key "${REVISION}" "${CHECK_SOLUTION}" "${lsf_version}"
                 SSH_KEYS=${CICD_SSH_KEY:?} COMPUTE_IMAGE_NAME=${compute_image_name:?} LOGIN_NODE_IMAGE_NAME=${login_image_name:?} MANAGEMENT_IMAGE_NAME=${management_image_name:?} \
                     ZONE=${zone:?} SOLUTION=${solution:?} DEFAULT_EXISTING_RESOURCE_GROUP=${resource_group:?} \
                     go test -v -timeout 9000m -run "${test_cases}" | tee -a "$LOG_FILE"
@@ -99,7 +103,7 @@ common_suite() {
                 cos_upload "REGRESSION" "${CHECK_SOLUTION}" "${DIRECTORY}" "${VALIDATION_LOG_FILE_NAME}"
 
                 # push custom reports to custom-reports repository
-                push_reports "${LOG_FILE}" "${DIRECTORY}" "REGRESSION" "${suite}" "${CHECK_SOLUTION}" "${BUILD_NUMBER}"
+                push_reports "${LOG_FILE}" "${REGRESSION_DIRECTORY}" "REGRESSION" "${suite}" "${CHECK_SOLUTION}" "${BUILD_NUMBER}"
 
                 # Checking any error/issue from log file for commit/push
                 issue_track "${LOG_FILE}"
@@ -107,13 +111,13 @@ common_suite() {
 
             if [[ "$CHECK_SOLUTION" == "lsf-da" ]]; then
                 # get ssh-key created based on commit-id
-                get_commit_ssh_key "${REVISION}" "${CHECK_SOLUTION}"
-                SSH_KEYS=${CICD_SSH_KEY:?} go test -v -timeout=900m -parallel=10 -run="${test_cases}" | tee -a "$LOG_FILE_NAME"
+                get_commit_ssh_key "${REVISION}" "${CHECK_SOLUTION}" "${lsf_version}"
+                LSF_VERSION=${lsf_version:?} SSH_KEYS=${CICD_SSH_KEY:?} go test -v -timeout=900m -parallel=10 -run="${test_cases}" | tee -a "$LOG_FILE_NAME"
                 # Upload log/test_output files to cos bucket
                 cos_upload "REGRESSION" "${CHECK_SOLUTION}" "${DIRECTORY}" "${VALIDATION_LOG_FILE_NAME}"
 
                 # push custom reports to custom-reports repository
-                push_reports "${LOG_FILE}" "${DIRECTORY}" "REGRESSION" "${suite}" "${CHECK_SOLUTION}" "${BUILD_NUMBER}"
+                push_reports "${LOG_FILE}" "${REGRESSION_DIRECTORY}" "REGRESSION" "${suite}" "${CHECK_SOLUTION}" "${BUILD_NUMBER}"
 
                 # Checking any error/issue from log file for commit/push
                 issue_track "${LOG_FILE}"
@@ -192,7 +196,7 @@ hpcaas_ubuntu_suite_1() {
 hpcaas_ubuntu_suite_2() {
     suite=hpcaas-ubuntu-suite-2
     solution=hpcaas
-    test_cases="TestRunUsingExistingKMS,TestRunLDAPAndPac,TestRunCustomRGAsNull"
+    test_cases="TestRunUsingExistingKMS,TestRunLDAPAndPac,TestRunCustomRGA"
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_ubuntu:?}" "${solution:?}"
@@ -463,93 +467,233 @@ lsf_da_pr_rhel_suite() {
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
-    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}" "PR"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-1
-lsf_da_rhel_suite_1() {
-    suite=lsf-da-rhel-suite-1
+
+
+
+######################## LSF-DA-LONGTERM Testcases Start ########################
+
+# Suite 1: Default cluster configuration and web service disabled tests
+default-cluster-config-and-web-service-disabled-tests() {
+    suite=default-cluster-config-and-web-service-disabled-tests
     solution=lsf-da
-    test_cases="TestRunBasic,TestRunCustomRGAsNull"
+    test_cases="TestDefaultCluster,TestWebServiceDisabled"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-2
-lsf_da_rhel_suite_2() {
-    suite=lsf-da-rhel-suite-2
+# Suite 2: AppCenter basic deployment and API tests
+appcenter-api-and-ldap-tests() {
+    suite=appcenter-api-and-ldap-tests
     solution=lsf-da
-    test_cases="TestRunCustomRGAsNonDefault,TestRunNoKMSAndHTOff"
+    test_cases="TestAppCenterWithAPI,TestLDAPAppCenterIntegration"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-3
-lsf_da_rhel_suite_3() {
-    suite=lsf-da-rhel-suite-3
+# Suite 3: LDAP new server tests (separate)
+ldap-new-server-tests() {
+    suite=ldap-new-server-tests
     solution=lsf-da
-    test_cases="TestRunUsingExistingKMS,TestRunUsingExistingKMSInstanceIDAndWithoutKey"
+    test_cases="TestLDAPNewServer"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-4
-lsf_da_rhel_suite_4() {
-    suite=lsf-da-rhel-suite-4
+# Suite 4: LDAP existing server tests (separate)
+ldap-existing-server-tests() {
+    suite=ldap-existing-server-tests
     solution=lsf-da
-    test_cases="TestRunWithExistingKMSInstanceAndKeyWithAuthorizationPolicy,TestRunLSFClusterCreationWithZeroWorkerNodes"
+    test_cases="TestLDAPExistingServer"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-5
-lsf_da_rhel_suite_5() {
-    suite=lsf-da-rhel-suite-5
+# Suite 5: Null and non-default resource group tests
+resource-group-configuration-tests() {
+    suite=resource-group-configuration-tests
     solution=lsf-da
-    test_cases="TestRunLDAP,TestRunCosAndVpcFlowLogs"
+    test_cases="TestNullResourceGroup,TestNonDefaultResourceGroup"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-6
-lsf_da_rhel_suite_6() {
-    suite=lsf-da-rhel-suite-6
+# Suite 6: Zero static worker nodes and dedicated host tests
+zero-static-worker-nodes-and-dedicated-host-tests() {
+    suite=zero-static-worker-nodes-and-dedicated-host-tests
     solution=lsf-da
-    test_cases="TestObservabilityAllFeaturesDisabled,TestObservabilityLogsEnabledForManagementAndCompute"
+    test_cases="TestZeroStaticWorkerNodes,TestDedicatedHost"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-7
-lsf_da_rhel_suite_7() {
-    suite=lsf-da-rhel-suite-7
+# Suite 7: Custom CIDR blocks, multi-profile compute node, and spot instance tests
+custom-cidr-multi-profile-spot-tests() {
+    suite=custom-cidr-multi-profile-spot-tests
     solution=lsf-da
-    test_cases="TestObservabilityMonitoringEnabledForManagementAndCompute,TestObservabilityAtrackerScenarios"
+    test_cases="TestCustomCIDRBlocks,TestMultiProfileComputeNodes,TestSpotInstance"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# commit based suite on rhel-suite-8
-lsf_da_rhel_suite_8() {
-    suite=lsf-da-rhel-suite-8
+
+# Suite 8: Existing VPC with CIDRs and subnets tests
+existing-vpc-cidrs-and-subnets-tests() {
+    suite=existing-vpc-cidrs-and-subnets-tests
     solution=lsf-da
-    test_cases="TestRunCIDRsAsNonDefault,TestRunMultiProfileStaticAndDynamic"
+    test_cases="TestExistingVPCCIDRsAndSubnets"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
+
+# Suite 9: Existing VPC with custom DNS and DNS instance only tests
+existing-vpc-dns-configuration-tests() {
+    suite=existing-vpc-dns-configuration-tests
+    solution=lsf-da
+    test_cases="TestExistingVPCWithCustomDNS,TestExistingVPCWithDNSInstanceOnly"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 10: LSF logs and reapply tests
+lsf-logs-and-reapply-tests() {
+    suite=lsf-logs-and-reapply-tests
+    solution=lsf-da
+    test_cases="TestLSFLogs,TestReapply"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 11: Existing KMS instance with and without key tests
+existing-kms-instance-key-tests() {
+    suite=existing-kms-instance-key-tests
+    solution=lsf-da
+    test_cases="^TestKMSInstanceWithoutKey$,^TestKMSInstanceWithExistingKey$"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 12: No KMS with hyperthreading and existing KMS authorization policy tests
+no-kms-hyperthreading-and-kms-auth-policy-tests() {
+    suite=no-kms-hyperthreading-and-kms-auth-policy-tests
+    solution=lsf-da
+    test_cases="TestNoKMSWithHyperthreading,TestExistingKMSInstanceAndKeyWithAuthorizationPolicy"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 13: Security compliance and COS VPC flow logs tests
+security-compliance-and-cos-vpc-flow-logs-tests() {
+    suite=security-compliance-and-cos-vpc-flow-logs-tests
+    solution=lsf-da
+    test_cases="TestSCCWPAndCSPM,TestCOSAndVPCFlowLogs"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 14: Observability features disabled tests
+observability-features-disabled-tests() {
+  suite=observability-features-disabled-tests
+  solution=lsf-da
+  test_cases="TestObservabilityAllFeaturesDisabled"
+  compute_image_name_rhel=""
+  new_line="${test_cases//,/$'\n'}"
+  echo "************** Going to run ${suite} ${new_line} **************"
+  common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 15: Observability atracker logging and monitoring tests
+observability-atracker-logging-monitoring-tests() {
+    suite=observability-atracker-logging-monitoring-tests
+    solution=lsf-da
+    test_cases="TestObservabilityAtrackerLoggingMonitoring"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 16: Observability atracker with COS and cloud logs tests
+observability-atracker-cos-cloud-logs-tests() {
+    suite=observability-atracker-cos-cloud-logs-tests
+    solution=lsf-da
+    test_cases="TestObservabilityAtrackerWithCosAndCloudLogs"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 17: Node scale-up and scale-down tests
+node-scale-up-and-scale-down-tests() {
+    suite=node-scale-up-and-scale-down-tests
+    solution=lsf-da
+    test_cases="^TestNodeScaleUp$,^TestNodeScaleDown$"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 18: Node scale-up-and-down bidirectional tests
+node-scale-up-and-down-tests() {
+    suite=node-scale-up-and-down-tests
+    solution=lsf-da
+    test_cases="^TestNodeScaleUpAndDown$"
+    compute_image_name_rhel=""
+    new_line="${test_cases//,/$'\n'}"
+    echo "************** Going to run ${suite} ${new_line} **************"
+    common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 19: Observability features enabled tests
+observability-features-enabled-tests() {
+  suite=observability-features-enabled-tests
+  solution=lsf-da
+  test_cases="TestObservabilityLogsEnabledForManagementAndCompute,TestObservabilityMonitoringEnabledForManagementAndCompute"
+  compute_image_name_rhel=""
+  new_line="${test_cases//,/$'\n'}"
+  echo "************** Going to run ${suite} ${new_line} **************"
+  common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 20: gen4profile-tests
+ gen4profile-tests() {
+  suite=gen4profile-tests
+  solution=lsf-da
+  test_cases="TestRunLSFClusterCreationWithGen4Profiles"
+  compute_image_name_rhel=""
+  new_line="${test_cases//,/$'\n'}"
+  echo "************** Going to run ${suite} ${new_line} **************"
+  common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+######################## LSF-DA-LONGTERM Testcases End ########################

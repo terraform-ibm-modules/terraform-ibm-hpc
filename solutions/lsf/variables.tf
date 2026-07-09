@@ -7,51 +7,37 @@ variable "ibmcloud_api_key" {
   sensitive   = true
   validation {
     condition     = var.ibmcloud_api_key != ""
-    error_message = "The API key for IBM Cloud must be set."
+    error_message = "The API key for IBM Cloud must be set and cannot be left empty"
   }
 }
 
 variable "lsf_version" {
   type        = string
   default     = "fixpack_15"
-  description = "Select the desired version of IBM Spectrum LSF to deploy either fixpack_15 or fixpack_14. By default, the solution uses the latest available version, which is Fix Pack 15. If you need to deploy an earlier version such as Fix Pack 14, update the lsf_version field to fixpack_14. When changing the LSF version, ensure that all custom images used for management, compute, and login nodes correspond to the same version. This is essential to maintain compatibility across the cluster and to prevent deployment issues."
+  description = "Provisioning of LSF cluster nodes in the IBM Spectrum LSF solution is supported exclusively with Fix Pack 15."
 
   validation {
-    condition     = contains(["fixpack_14", "fixpack_15"], var.lsf_version)
-    error_message = "Invalid LSF version. Allowed values are 'fixpack_14' and 'fixpack_15'"
+    condition     = contains(["fixpack_15"], var.lsf_version)
+    error_message = "IBM Spectrum LSF solution supports only 'fixpack_15'"
   }
 }
 
-variable "app_center_gui_password" {
-  type        = string
-  default     = ""
-  sensitive   = true
-  description = "Password required to access the IBM Spectrum LSF Application Center (App Center) GUI, which is enabled by default in both Fix Pack 15 and Fix Pack 14 with HTTPS. This is a mandatory value and omitting it will result in deployment failure. The password must meet the following requirements, at least 8 characters in length, and must include one uppercase letter, one lowercase letter, one number, and one special character. Spaces are not allowed."
-
-  validation {
-    condition = (
-      can(regex("^.{8,}$", var.app_center_gui_password)) &&
-      can(regex("[0-9]", var.app_center_gui_password)) &&
-      can(regex("[a-z]", var.app_center_gui_password)) &&
-      can(regex("[A-Z]", var.app_center_gui_password)) &&
-      can(regex("[!@#$%^&*()_+=-]", var.app_center_gui_password)) &&
-      !can(regex(".*\\s.*", var.app_center_gui_password))
-    )
-    error_message = "The password must be at least 8 characters long and include at least one lowercase letter, one uppercase letter, one number, and one special character (!@#$%^&*()_+=-). Spaces are not allowed."
-  }
+variable "enable_lsf_pay_per_use" {
+  type        = bool
+  default     = true
+  description = "Enabling lsf_pay_per_use provisions LSF cluster nodes using predefined custom images under a pay-per-use pricing model. Billing is based on vCPU usage per hour, considering the enable_hyperthreading configuration. In this mode, Bring Your Own Image (BYOI) is not supported for any cluster nodes. If enable_lsf_pay_per_use is false, solution provisions all cluster nodes using default images and supports BYOI. Setting enable_lsf_pay_per_use as false does not apply pay-per-use billing."
 }
-
 
 ##############################################################################
 # Cluster Level Variables
 ##############################################################################
 variable "zones" {
-  description = "Specify the IBM Cloud zone within the chosen region where the IBM Spectrum LSF cluster will be deployed. A single zone input is required, and the management nodes, file storage shares, and compute nodes will all be provisioned in this zone.[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
+  description = "Specify the IBM Cloud zone within the selected region where the Spectrum LSF cluster will be deployed. All required infrastructure for the solution including cluster nodes, VPC resources, and file storage shares will be provisioned within this single zone..[Learn more](https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region#get-zones-using-the-cli)."
   type        = list(string)
   default     = ["us-east-1"]
   validation {
     condition     = length(var.zones) == 1
-    error_message = "HPC product deployment supports only a single zone. Provide a value for a single zone from the supported regions: eu-de-2 or eu-de-3 for eu-de, us-east-1 or us-east-3 for us-east, and us-south-1 for us-south."
+    error_message = "LSF solution deployment supports only a single zone. Provide a value for a single zone from the supported regions."
 
   }
 }
@@ -59,7 +45,7 @@ variable "zones" {
 variable "ssh_keys" {
   type        = list(string)
   default     = null
-  description = "Provide the list of SSH key names already configured in your IBM Cloud account to establish a connection to the Spectrum LSF nodes. Solution does not create new SSH keys, provide the existing keys. Make sure the SSH key exists in the same resource group and region where the cluster is being provisioned. To pass multiple SSH keys, use the format [\"key-name-1\", \"key-name-2\"]. If you don't have an SSH key in your IBM Cloud account, you can create one by following the provided .[SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
+  description = "Provide a list of existing SSH key names configured in your IBM Cloud account to enable access to the Spectrum LSF nodes. The solution does not create new SSH keys, so only existing keys must be specified. Ensure that the SSH keys are available in the same resource group and region where the cluster is being provisioned. To pass multiple SSH keys, use the format [\"key-name-1\", \"key-name-2\"]. If you don't have an SSH key in your IBM Cloud account, create one by following the provided instructions.[Create SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
 }
 
 variable "remote_allowed_ips" {
@@ -83,7 +69,7 @@ variable "remote_allowed_ips" {
 # Prefix Variables
 ##############################################################################
 variable "cluster_prefix" {
-  description = "This prefix uniquely identifies the IBM Cloud Spectrum LSF cluster and its resources, it must always be unique. The name must start with a lowercase letter and can include only lowercase letters, digits, and hyphens. Hyphens must be followed by a lowercase letter or digit, with no leading, trailing, or consecutive hyphens. The prefix length must be less than 16 characters."
+  description = "Provide a unique prefix to identify the Spectrum LSF cluster and all associated resources created during cluster deployment. Ensure the value is globally unique to avoid naming conflicts. The prefix must start with a lowercase letter and can include only lowercase letters, digits, and hyphens. Hyphens must always be followed by a lowercase letter or digit, and leading, trailing, or consecutive hyphens are not permitted. The total length must not exceed 15 characters."
   type        = string
   default     = "hpc-lsf"
 
@@ -101,7 +87,7 @@ variable "cluster_prefix" {
 # Resource Groups Variables
 ##############################################################################
 variable "existing_resource_group" {
-  description = "Specify the name of the existing resource group in your IBM Cloud account where VPC resources will be deployed. By default, the resource group is set to 'Default.' In some older accounts, it may be 'default,' so please verify the resource group name before proceeding. If the value is set to \"null\", the automation will create two separate resource groups: 'workload-rg' and 'service-rg.' For more details, see Managing resource groups."
+  description = "Specify the name of the existing resource group in your IBM Cloud account where VPC resources will be deployed. By default, the resource group is set to 'Default.' In some older accounts, it may be 'default,' verify the resource group name before proceeding. If the value is set to \"null\", the automation will create two separate resource groups: 'workload-rg' and 'service-rg.' For more information, see [Manage Resource Groups](https://cloud.ibm.com/docs/account?topic=account-rgs&interface=ui#create_rgs)."
   type        = string
   default     = "Default"
   validation {
@@ -116,7 +102,7 @@ variable "existing_resource_group" {
 variable "vpc_name" {
   type        = string
   default     = null
-  description = "Provide the name of an existing VPC in which the cluster resources will be deployed. If no value is given, solution provisions a new VPC. [Learn more](https://cloud.ibm.com/docs/vpc)."
+  description = "Provide the name of an existing VPC in your IBM Cloud account to deploy the IBM Spectrum LSF cluster and its associated resources. This option is useful when reusing an existing VPC for the cluster deployment. If no value is specified, the solution automatically provisions a new VPC as part of the deployment. [IBM Cloud VPC Docs](https://cloud.ibm.com/docs/vpc)."
 }
 
 variable "vpc_cidr" {
@@ -144,20 +130,20 @@ variable "vpc_cluster_private_subnets_cidr_blocks" {
 variable "login_subnet_id" {
   type        = string
   default     = null
-  description = "Provide the ID of an existing subnet to deploy cluster resources, this is used only for provisioning bastion, deployer, and login nodes. If not provided, new subnet will be created.When providing an existing subnet ID, make sure that the subnet has an associated public gateway..[Learn more](https://cloud.ibm.com/docs/vpc)."
+  description = "Provide the ID of an existing subnet to provision bastion, deployer, and login nodes. If no id is provided, solution creates a new subnet. When providing an existing subnet ID, make sure that the subnet has an associated public gateway.[Learn more](https://cloud.ibm.com/docs/vpc)."
   validation {
-    condition     = (var.cluster_subnet_id == null && var.login_subnet_id == null) || (var.cluster_subnet_id != null && var.login_subnet_id != null)
-    error_message = "In case of existing subnets, provide both login_subnet_id and cluster_subnet_id."
+    condition     = (var.compute_subnet_id == null && var.login_subnet_id == null) || (var.compute_subnet_id != null && var.login_subnet_id != null)
+    error_message = "In case of existing subnets, provide both login_subnet_id and compute_subnet_id."
   }
 }
 
-variable "cluster_subnet_id" {
+variable "compute_subnet_id" {
   type        = string
   default     = null
-  description = "Provide the ID of an existing subnet to deploy cluster resources; this is used only for provisioning VPC file storage shares, management, and compute nodes. If not provided, a new subnet will be created. Ensure that a public gateway is attached to enable VPC API communication. [Learn more](https://cloud.ibm.com/docs/vpc)."
+  description = "Provide the ID of an existing subnet to provision VPC file storage shares, management, and compute nodes. If not id is provided, solution creates a new subnet. Ensure that a public gateway is attached to enable VPC API communication. [Learn more](https://cloud.ibm.com/docs/vpc)."
   validation {
-    condition     = anytrue([var.vpc_name != null && var.cluster_subnet_id != null, var.cluster_subnet_id == null])
-    error_message = "If the cluster_subnet_id are provided, the user should also provide the vpc_name."
+    condition     = anytrue([var.vpc_name != null && var.compute_subnet_id != null, var.compute_subnet_id == null])
+    error_message = "If the compute_subnet_id are provided, the user should also provide the vpc_name."
   }
 }
 ##############################################################################
@@ -170,10 +156,10 @@ variable "bastion_instance" {
     profile = string
   })
   default = {
-    image   = "ibm-ubuntu-22-04-5-minimal-amd64-3"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-16"
     profile = "cx2-4x8"
   }
-  description = "Configuration for the bastion node, including the image and instance profile. Only Ubuntu 22.04 stock images are supported."
+  description = "Define the configuration for the bastion node, including the image and instance profile. Only stock Ubuntu 22.04 images are supported."
 
   validation {
     condition     = can(regex("^ibm-ubuntu", var.bastion_instance.image))
@@ -192,23 +178,15 @@ variable "deployer_instance" {
     profile = string
   })
   default = {
-    image   = "hpc-lsf-fp15-deployer-rhel810-v1"
+    image   = "hpc-lsf-fp15-deployer-rhel810-v4"
     profile = "bx2-8x32"
   }
-  description = "Configuration for the deployer node, including the custom image and instance profile. By default, deployer node is created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp15-deployer-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures."
-  validation {
-    condition = contains([
-      "hpc-lsf-fp15-deployer-rhel810-v1",
-      "hpc-lsf-fp14-deployer-rhel810-v1"
-    ], var.deployer_instance.image)
-    error_message = "Invalid deployer image. Allowed values for fixpack_15 is 'hpc-lsf-fp15-deployer-rhel810-v1' and for fixpack_14 is 'hpc-lsf-fp14-deployer-rhel810-v1'."
-  }
+  description = "Defines the configuration of the deployer node, including the image and instance profile. By default, the deployer node is provisioned using the Fix Pack 15 image, which contains the required software packages, dependencies, and configuration needed for the deployment workflow. Customer-provided or custom images are not supported for the deployer node, as they may not contain the required components, resulting in deployment failures."
   validation {
     condition = (
-      (!can(regex("fp15", var.deployer_instance.image)) || var.lsf_version == "fixpack_15") &&
-      (!can(regex("fp14", var.deployer_instance.image)) || var.lsf_version == "fixpack_14")
+      (!can(regex("fp15", var.deployer_instance.image)) || var.lsf_version == "fixpack_15")
     )
-    error_message = "Mismatch between deployer_instance.image and lsf_version. Use an image with 'fp14' only when lsf_version is fixpack_14, and 'fp15' only with fixpack_15."
+    error_message = "Use an image with only 'fp15' only with fixpack_15."
   }
   validation {
     condition     = can(regex("^[^\\s]+-[0-9]+x[0-9]+", var.deployer_instance.profile))
@@ -225,13 +203,26 @@ variable "login_instance" {
     object({
       profile = string
       image   = string
+      boot_volume = optional(object({
+        profile   = optional(string) # sdp | general-purpose
+        size      = optional(number) # in GB
+        iops      = optional(number) # only for sdp else null
+        bandwidth = optional(number) # only for sdp else null
+      }))
     })
   )
   default = [{
     profile = "bx2-2x8"
-    image   = "hpc-lsf-fp15-compute-rhel810-v1"
+    image   = "hpc-lsf-fp15-compute-rhel810-v4"
+    boot_volume = {
+      profile   = "general-purpose"
+      size      = 100
+      iops      = null # null for general-purpose
+      bandwidth = null # only for sdp
+    }
   }]
-  description = "Specify the list of login node configurations, including instance profile, image name. By default, login node is created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures."
+  description = "Defines the login node configuration, including the instance profile, image, and optional boot volume settings. By default, the login node is provisioned using the Fix Pack 15 image. You can provision the login node using your own custom image by specifying the desired image name. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
+
   validation {
     condition = alltrue([
       for inst in var.login_instance : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
@@ -241,28 +232,99 @@ variable "login_instance" {
   validation {
     condition = alltrue([
       for inst in var.login_instance : (
-        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15") &&
-        (!can(regex("fp14", inst.image)) || var.lsf_version == "fixpack_14")
+        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15")
       )
     ])
-    error_message = "Mismatch between login_instance image and lsf_version. Use an image with 'fp14' only when lsf_version is fixpack_14, and 'fp15' only with fixpack_15."
+    error_message = "Use an image with only 'fp15' only with fixpack_15."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.login_instance :
+      inst.boot_volume == null ||
+      contains(["sdp", "general-purpose"], inst.boot_volume.profile)
+    ])
+
+    error_message = "Solution supports boot_volume profile type must be either 'sdp' or 'general-purpose'."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.login_instance :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.size >= 100 &&
+        inst.boot_volume.size <= (
+          inst.boot_volume.profile == "sdp" ? 32000 : 250
+        )
+      )
+    ])
+
+    error_message = "Invalid login node boot volume configuration. Volume size must be at least 100 GB. For 'general-purpose' profiles, the maximum size is 250 GB. For 'sdp' profiles, the maximum size is 32000 GB."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.login_instance :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.profile == "sdp"
+        ?
+        (
+          inst.boot_volume.iops == null ||
+          inst.boot_volume.iops >= 3000 &&
+          inst.boot_volume.iops <= 64000
+        )
+        :
+        inst.boot_volume.iops == null
+      )
+    ])
+
+    error_message = "Invalid boot volume IOPS configuration. For the 'sdp' profile, IOPS can be omitted (null) or must be between 3000 and 64000. For the 'general-purpose' profile, IOPS must not be specified."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.login_instance :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.profile == "sdp"
+        ?
+        (
+          inst.boot_volume.bandwidth == null ||
+          inst.boot_volume.bandwidth >= 1000 &&
+          inst.boot_volume.bandwidth <= 8192
+        )
+        :
+        inst.boot_volume.bandwidth == null
+      )
+    ])
+
+    error_message = "Invalid boot volume bandwidth configuration. For the 'sdp' profile, bandwidth can be omitted (null) or must be between 1000 and 8192 Mbps. For the 'general-purpose' profile, bandwidth must not be specified."
   }
 }
-
 variable "management_instances" {
   type = list(
     object({
       profile = string
       count   = number
       image   = string
+      boot_volume = optional(object({
+        profile   = optional(string) # sdp | general-purpose
+        size      = optional(number) # in GB
+        iops      = optional(number) # only for sdp else null
+        bandwidth = optional(number) # only for sdp else null
+      }))
     })
   )
   default = [{
     profile = "bx2-16x64"
     count   = 2
-    image   = "hpc-lsf-fp15-rhel810-v1"
+    image   = "hpc-lsf-fp15-rhel810-v4"
+    boot_volume = {
+      profile   = "general-purpose"
+      size      = 100
+      iops      = null # null for general-purpose
+      bandwidth = null # only for sdp
+    }
   }]
-  description = "Specify the list of management node configurations, including instance profile, image name, and count. By default, all management nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. The solution allows customization of instance profiles and counts, but mixing custom images and IBM stock images across instances is not supported. If using IBM stock images, only Red Hat-based images are allowed."
+  description = "Specify the list of management node configurations, including instance profile, image name, and count. By default, all management nodes are created using Fix Pack 15. The solution allows customization of instance profiles and counts, IBM stock images is not supported. Solution also supports provisioning instances on AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
   validation {
     condition     = alltrue([for inst in var.management_instances : !contains([for i in var.management_instances : can(regex("^ibm", i.image))], true) || can(regex("^ibm-redhat", inst.image))])
     error_message = "When defining management_instances, all instances must either use custom images or IBM stock images exclusively — mixing the two is not supported. If stock images are used, only Red Hat-based IBM images (e.g., ibm-redhat-*) are allowed."
@@ -280,11 +342,78 @@ variable "management_instances" {
   validation {
     condition = alltrue([
       for inst in var.management_instances : (
-        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15") &&
-        (!can(regex("fp14", inst.image)) || var.lsf_version == "fixpack_14")
+        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15")
       )
     ])
-    error_message = "Mismatch between management_instances image and lsf_version. Use an image with 'fp14' only when lsf_version is fixpack_14, and 'fp15' only with fixpack_15."
+    error_message = "Use an image with only 'fp15' only with fixpack_15."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.management_instances :
+      inst.profile != "hx4da-248x680" || startswith(var.zones[0], "us-south")
+    ])
+    error_message = "The profile 'hx4da-248x680' is supported only in the us-south region. Please choose any zone from us-south region when using this profile."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.management_instances :
+      inst.boot_volume == null ||
+      contains(["sdp", "general-purpose"], inst.boot_volume.profile)
+    ])
+
+    error_message = "Solution supports boot_volume profile type must be either 'sdp' or 'general-purpose'."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.management_instances :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.size >= 100 &&
+        inst.boot_volume.size <= (
+          inst.boot_volume.profile == "sdp" ? 32000 : 250
+        )
+      )
+    ])
+
+    error_message = "Invalid management node boot volume configuration. Volume size must be at least 100 GB. For 'general-purpose' profiles, the maximum size is 250 GB. For 'sdp' profiles, the maximum size is 32000 GB.."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.management_instances :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.profile == "sdp"
+        ?
+        (
+          inst.boot_volume.iops == null ||
+          inst.boot_volume.iops >= 3000 &&
+          inst.boot_volume.iops <= 64000
+        )
+        :
+        inst.boot_volume.iops == null
+      )
+    ])
+
+    error_message = "Invalid boot volume IOPS configuration. For the 'sdp' profile, IOPS can be omitted (null) or must be between 3000 and 64000. For the 'general-purpose' profile, IOPS must not be specified."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.management_instances :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.profile == "sdp"
+        ?
+        (
+          inst.boot_volume.bandwidth == null ||
+          inst.boot_volume.bandwidth >= 1000 &&
+          inst.boot_volume.bandwidth <= 8192
+        )
+        :
+        inst.boot_volume.bandwidth == null
+      )
+    ])
+
+    error_message = "Invalid management node boot volume bandwidth configuration. For the 'sdp' profile, bandwidth can be omitted (null) or must be between 1000 and 8192 Mbps. For the 'general-purpose' profile, bandwidth must not be specified."
   }
 }
 
@@ -294,53 +423,179 @@ variable "static_compute_instances" {
       profile = string
       count   = number
       image   = string
+      boot_volume = optional(object({
+        profile   = optional(string) # sdp | general-purpose
+        size      = optional(number) # in GB
+        iops      = optional(number) # only for sdp else null
+        bandwidth = optional(number) # only for sdp else null
+      }))
     })
   )
   default = [{
     profile = "bx2-4x16"
     count   = 0
-    image   = "hpc-lsf-fp15-compute-rhel810-v1"
+    image   = "hpc-lsf-fp15-compute-rhel810-v4"
+    boot_volume = {
+      profile   = "general-purpose"
+      size      = 100
+      iops      = null # null for general-purpose
+      bandwidth = null # only for sdp
+    }
   }]
-  description = "Specify the list of static compute node configurations, including instance profile, image name, and count. By default, all compute nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. The solution allows customization of instance profiles and counts, but mixing custom images and IBM stock images across instances is not supported. If using IBM stock images, only Red Hat-based images are allowed."
+
+  description = "Specify the list of static compute node configurations, including instance profile, image name, and count. By default, all compute nodes are created using Fix Pack 15. The solution allows customization of instance profiles and counts, IBM Stock image are not supported.  You can provision the static compute node using your own custom image by specifying the desired image name. Solution also supports provisioning instances on AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
+
   validation {
     condition = alltrue([
       for inst in var.static_compute_instances :
-      # If any instance uses IBM stock image, all must use it, and it should be redhat.
-      (!contains([for i in var.static_compute_instances : can(regex("^ibm-", i.image))], true) || can(regex("^ibm-redhat", inst.image)))
+      var.enable_baremetal
+      ? length(regexall("^(b|c|m)x[0-9]+d?-[a-z]+-[0-9]+x[0-9]+", inst.profile)) > 0
+      : (
+        length(regexall("^[^\\s]+-[0-9]+x[0-9]+", inst.profile)) > 0 &&
+        !strcontains(lower(inst.profile), "metal")
+      )
     ])
-    error_message = "When defining static_compute_instances, all instances must either use custom images or IBM stock images exclusively—mixing the two is not supported. If stock images are used, only Red Hat-based IBM images (e.g., ibm-redhat-*) are allowed."
-  }
-  validation {
-    condition = alltrue([
-      for inst in var.static_compute_instances : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
-    ])
-    error_message = "The profile must be a valid virtual server instance profile."
+    error_message = "Profiles must match baremetal server profile pattern when enable_baremetal=true, and VSI profile pattern when enable_baremetal=false."
   }
   validation {
     condition = alltrue([
       for inst in var.static_compute_instances : (
-        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15") &&
-        (!can(regex("fp14", inst.image)) || var.lsf_version == "fixpack_14")
+        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15")
       )
     ])
-    error_message = "Mismatch between static_compute_instances image and lsf_version. Use an image with 'fp14' only when lsf_version is fixpack_14, and 'fp15' only with fixpack_15."
+    error_message = "Static Image should be FP15 when the version is set as fixpack_15."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances :
+      inst.profile != "hx4da-248x680" || startswith(var.zones[0], "us-south")
+    ])
+    error_message = "The profile 'hx4da-248x680' is only supported in the us-south region. Choose any zone from us-south region when using this profile."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances :
+      length(regexall("^(b|c|m)x4d?-[0-9]+x[0-9]+$", inst.profile)) == 0
+      || startswith(var.zones[0], "us-south")
+    ])
+    error_message = "Gen4 profiles (bx4, cx4, mx4, with or without 'd') are only supported in the us-south region. Choose a zone from us-south when using these profiles."
+  }
+  validation {
+    condition = (
+      !var.enable_dedicated_host ||
+      length(var.static_compute_instances) == 1
+    )
+    error_message = "When dedicated hosts are enabled, static_compute_instances must contain only a single instance profile entry. Multiple profile entries are not supported, even if the profiles belong to the same VSI family."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances : (
+        !var.enable_dedicated_host ||
+        !can(regex(".*xf.*", inst.profile))
+      )
+    ])
+    error_message = "Dedicated hosts do not support Flex instance profiles. Use supported fixed VSI profiles in static_compute_instances."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances :
+      !can(regex(".*xf.*", inst.profile))
+    ])
+    error_message = "Spot instance profiles are not supported for static_compute_instances. They are supported only for dynamic compute nodes when enable_spot_instances is set to true."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances :
+      inst.boot_volume == null ||
+      contains(["sdp", "general-purpose"], inst.boot_volume.profile)
+    ])
+
+    error_message = "Solution supports boot_volume profile type must be either 'sdp' or 'general-purpose'."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.size >= 100 &&
+        inst.boot_volume.size <= (
+          inst.boot_volume.profile == "sdp" ? 32000 : 250
+        )
+      )
+    ])
+
+    error_message = "Invalid Static compute node boot volume configuration. Volume size must be at least 100 GB. For 'general-purpose' profiles, the maximum size is 250 GB. For 'sdp' profiles, the maximum size is 32000 GB..."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.profile == "sdp"
+        ?
+        (
+          inst.boot_volume.iops == null ||
+          inst.boot_volume.iops >= 3000 &&
+          inst.boot_volume.iops <= 64000
+        )
+        :
+        inst.boot_volume.iops == null
+      )
+    ])
+
+    error_message = "Invalid Static compute node boot volume IOPS configuration. For the 'sdp' profile, IOPS can be omitted (null) or must be between 3000 and 64000. For the 'general-purpose' profile, IOPS must not be specified.."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.static_compute_instances :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.profile == "sdp"
+        ?
+        (
+          inst.boot_volume.bandwidth == null ||
+          inst.boot_volume.bandwidth >= 1000 &&
+          inst.boot_volume.bandwidth <= 8192
+        )
+        :
+        inst.boot_volume.bandwidth == null
+      )
+    ])
+
+    error_message = "Invalid Static compute node boot volume bandwidth configuration. For the 'sdp' profile, bandwidth can be omitted (null) or must be between 1000 and 8192 Mbps. For the 'general-purpose' profile, bandwidth must not be specified."
   }
 }
 
 variable "dynamic_compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile               = string
+      count                 = number
+      image                 = string
+      enable_spot_instances = bool
+      boot_volume = optional(object({
+        profile   = optional(string) # general-purpose | sdp | 5iops-tier | 10iops-tier | custom
+        size      = optional(number) # 100–250 GB
+        iops      = optional(number) # sdp (>=3000), custom (>=100), else null
+        bandwidth = optional(number) # only for sdp (>=1000), else null
+      }))
     })
   )
+
   default = [{
-    profile = "bx2-4x16"
-    count   = 500
-    image   = "hpc-lsf-fp15-compute-rhel810-v1"
+    profile               = "bx2-4x16"
+    count                 = 500
+    image                 = "hpc-lsf-fp15-compute-rhel810-v4"
+    enable_spot_instances = false
+    boot_volume = {
+      profile   = "general-purpose"
+      size      = 100
+      iops      = null
+      bandwidth = null
+    }
   }]
-  description = "Specify the list of dynamic compute node configurations, including instance profile, image name, and count. By default, all dynamic compute nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. Currently, only a single instance profile is supported for dynamic compute nodes—multiple profiles are not yet supported.."
+  description = "Specify the list of dynamic compute node configurations, including instance profile, image name, and count. By default, all dynamic compute nodes are created using Fix Pack 15. Currently, only a single instance profile is supported, multiple profiles are not yet supported. Solution supports provision the dynamic compute node using your own custom image by specifying the desired image name. Instances can also be provisioned using AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
+
   validation {
     condition = alltrue([
       for inst in var.dynamic_compute_instances : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
@@ -354,11 +609,122 @@ variable "dynamic_compute_instances" {
   validation {
     condition = alltrue([
       for inst in var.dynamic_compute_instances : (
-        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15") &&
-        (!can(regex("fp14", inst.image)) || var.lsf_version == "fixpack_14")
+        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15")
       )
     ])
     error_message = "Mismatch between dynamic_compute_instances image and lsf_version. Use an image with 'fp14' only when lsf_version is fixpack_14, and 'fp15' only with fixpack_15."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances :
+      inst.boot_volume == null ||
+      contains(["general-purpose", "sdp", "5iops-tier", "10iops-tier", "custom"], inst.boot_volume.profile)
+    ])
+
+    error_message = "Solution supports boot_volume profile type must be one of the either 'general-purpose', 'sdp', '5iops-tier', '10iops-tier', or 'custom'."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.size >= 100 &&
+        inst.boot_volume.size <= 250
+      )
+    ])
+
+    error_message = "Boot volume size must be between 100 GB and 250 GB."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.profile == "sdp"
+        ?
+        (
+          inst.boot_volume.iops == null ||
+          inst.boot_volume.iops >= 3000 &&
+          inst.boot_volume.iops <= 64000
+        )
+        :
+        inst.boot_volume.profile == "custom"
+        ?
+        (
+          inst.boot_volume.iops == null ||
+          inst.boot_volume.iops >= 100 &&
+          inst.boot_volume.iops <= 48000
+        )
+        :
+        (
+          inst.boot_volume.iops == null
+        )
+      )
+    ])
+
+    error_message = "IOPS requirements: For the 'sdp' profile, iops must be null or between 3000 and 64000. For the 'custom' profile, iops must be null or between 100 and 48000. For the 'general-purpose', '5iops-tier', and '10iops-tier' profiles, iops must be null."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances :
+      inst.boot_volume == null ||
+      (
+        inst.boot_volume.profile == "sdp"
+        ?
+        (
+          inst.boot_volume.bandwidth == null ||
+          inst.boot_volume.bandwidth >= 1000 &&
+          inst.boot_volume.bandwidth <= 8192
+        )
+        :
+        inst.boot_volume.bandwidth == null
+      )
+    ])
+
+    error_message = "For 'sdp' profile, bandwidth must be null or between 1000 and 8192 Mbps. For 'general-purpose', bandwidth must be null."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances : (
+        !var.enable_dedicated_host ||
+        regex("^[a-z]+", inst.profile) ==
+        regex("^[a-z]+", var.static_compute_instances[0].profile)
+      )
+    ])
+    error_message = "When dedicated hosts are enabled, static_compute_instances and dynamic_compute_instances must belong to the same VSI profile family."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances : (
+        !var.enable_dedicated_host ||
+        !can(regex(".*xf.*", inst.profile))
+      )
+    ])
+    error_message = "Dedicated hosts do not support Flex instance profiles. Use supported fixed VSI profiles in dynamic_compute_instances."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances : (
+        !inst.enable_spot_instances ||
+        can(regex("(xf|^gx3)", inst.profile))
+      )
+    ])
+    error_message = "When enable_spot_instances is set to true, only Flex instance profiles (containing 'xf') and GPU Spot instance profiles (starting with 'gx3') are supported."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances :
+      inst.profile != "hx4da-248x680" || startswith(var.zones[0], "us-south")
+    ])
+    error_message = "The profile 'hx4da-248x680' is only supported in the us-south region. Choose any zone from us-south region when using this profile."
+  }
+  validation {
+    condition = alltrue([
+      for inst in var.dynamic_compute_instances :
+      length(regexall("^(b|c|m)x4d?-[0-9]+x[0-9]+$", inst.profile)) == 0
+      || startswith(var.zones[0], "us-south")
+    ])
+    error_message = "Gen4 profiles (bx4, cx4, mx4, with or without 'd') are only supported in the us-south region. Choose a zone from us-south when using these profiles."
   }
 }
 
@@ -410,6 +776,12 @@ variable "custom_file_shares" {
   }
 }
 
+variable "mtu_value" {
+  type        = number
+  default     = 9000
+  description = "MTU is set to 9000 by default. For deployments using Spectrum Scale with LSF and PPNLB enabled, set the MTU to 8500 or lower to maintain compatibility. It is recommended to use the same MTU value configured on the Spectrum Scale cluster for consistency."
+}
+
 ##############################################################################
 # DNS Variables
 ##############################################################################
@@ -435,50 +807,76 @@ variable "dns_domain_name" {
     compute = string
   })
   default = {
-    compute = "lsf.com"
+    compute = "hpc.local"
   }
   description = "IBM Cloud DNS Services domain name to be used for the IBM Spectrum LSF cluster."
   validation {
-    condition     = can(regex("^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.com$", var.dns_domain_name.compute))
-    error_message = "The compute domain name must be a valid FQDN ending in '.com'. It may include letters, digits, hyphens, and must start and end with an alphanumeric character."
+    condition     = can(regex("^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\\.[a-zA-Z]{2,})+$", var.dns_domain_name.compute))
+    error_message = "The compute domain name must be a valid FQDN. It may include letters, digits, hyphens, and must start and end with an alphanumeric character."
   }
 }
 
+##############################################################################
+# Web Services & App Center Variables
+##############################################################################
+variable "enable_webservice" {
+  type        = bool
+  default     = true
+  description = "Enable IBM Spectrum LSF Web Services to allow remote management and interaction with LSF clusters over standard HTTPS. This enables capabilities such as job submission, monitoring, and management without requiring a direct LSF client installation. This option is enabled by default, to disable set it to false."
+}
+
+variable "enable_appcenter" {
+  type        = bool
+  default     = false
+  description = "Enable IBM Spectrum LSF Application Center to provide a flexible, web-based user interface for cluster users and administrators. This option is disabled by default, to enable set it to true."
+}
+
+variable "webservice_appcenter_password" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Password required to access IBM Spectrum LSF Web Services and the Application Center GUI over HTTPS. This is a mandatory parameter whenever either Web Services or Application Center is enabled, and must be provided to ensure proper functionality. If omitted, the services will not function as expected and deployment may fail. The password must be at least 15 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character. Spaces are not allowed."
+}
+
+variable "enable_license_scheduler" {
+  type        = bool
+  default     = true
+  description = "Enable the license scheduler to optimize expensive software license usage by managing license tokens and enabling efficient sharing across projects and clusters. This option is enabled by default, set it to false to disable."
+}
 ##############################################################################
 # Encryption Variables
 ##############################################################################
 variable "key_management" {
   type        = string
   default     = "key_protect"
-  description = "Set the value as key_protect to enable customer managed encryption for boot volume and file share. If the key_management is set as null, IBM Cloud resources will be always be encrypted through provider managed."
+  description = "Set the value as key_protect to enable customer managed encryption for boot volume and file share. If the key_management is set to null, IBM Cloud resources will be always be encrypted through provider managed."
   validation {
     condition     = var.key_management == "null" || var.key_management == null || var.key_management == "key_protect"
     error_message = "key_management must be either 'null', null, or 'key_protect'."
-  }
-  validation {
-    condition = (
-      var.kms_instance_name == null &&
-      (var.key_management == "null" || var.key_management == null || var.key_management == "key_protect")
-      ) || (
-      var.kms_instance_name != null && var.key_management == "key_protect"
-    )
-    error_message = "If kms_instance_name is provided, key_management must be 'key_protect'. If kms_instance_name is null, key_management can be 'key_protect', 'null' (string), or null (literal)."
   }
 }
 
 variable "kms_instance_name" {
   type        = string
   default     = null
-  description = "Provide the name of the existing Key Protect instance associated with the Key Management Service. Note: To use existing kms_instance_name set key_management as key_protect. The name can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
+  description = "Provide the name of the existing Key Protect instance associated with the Key Management Service. Note: To use existing kms_instance_name set key_management as key_protect.  The name can be found under the details of the KMS, see [View key-protect ID](https://cloud.ibm.com/docs/key-protect?topic=key-protect-retrieve-instance-ID&interface=ui)."
+  validation {
+    condition     = !(var.kms_instance_name != null && var.key_management != "key_protect")
+    error_message = "kms_instance_name can only be provided when key_management is set to 'key_protect'."
+  }
 }
 
 variable "kms_key_name" {
   type        = string
   default     = null
-  description = "Provide the existing kms key name that you want to use for the IBM Spectrum LSF cluster. Note: kms_key_name to be considered only if key_management value is set as key_protect.(for example kms_key_name: my-encryption-key)."
+  description = "Provide the existing kms key name that you want to use for the IBM Spectrum Scale cluster. Note: kms_key_name to be considered only if key_management value is set as key_protect (for example kms_key_name: my-encryption-key)."
   validation {
-    condition     = anytrue([alltrue([var.kms_key_name != null, var.kms_instance_name != null]), (var.kms_key_name == null), (var.key_management != "key_protect")])
-    error_message = "Please make sure you are passing the kms_instance_name if you are passing kms_key_name."
+    condition     = !(var.kms_key_name != null && var.kms_instance_name == null)
+    error_message = "kms_instance_name must be provided when kms_key_name is specified."
+  }
+  validation {
+    condition     = !(var.kms_key_name != null && var.key_management != "key_protect")
+    error_message = "kms_key_name can only be provided when key_management is set to 'key_protect'."
   }
 }
 
@@ -499,7 +897,7 @@ variable "enable_ldap" {
 
 variable "ldap_basedns" {
   type        = string
-  default     = "lsf.com"
+  default     = "hpc.local"
   description = "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."
   validation {
     condition     = var.enable_ldap == false || (var.ldap_basedns != null ? (length(trimspace(var.ldap_basedns)) > 0 && var.ldap_basedns != "null") : false)
@@ -513,7 +911,7 @@ variable "ldap_server" {
   description = "Provide the IP address for the existing LDAP server. If no address is given, a new LDAP server will be created."
   validation {
     condition     = var.enable_ldap == false || var.ldap_server == null || (var.ldap_server != null ? (length(trimspace(var.ldap_server)) > 0 && var.ldap_server != "null") : true)
-    error_message = "If LDAP is enabled, an existing LDAP server IP should be provided."
+    error_message = "If LDAP is enabled and you choose to use an existing server, you must provide a valid LDAP server IP address."
   }
 }
 
@@ -521,7 +919,7 @@ variable "ldap_server_cert" {
   type        = string
   sensitive   = true
   default     = null
-  description = "Provide the existing LDAP server certificate. This value is required if the 'ldap_server' variable is not set to null. If the certificate is not provided or is invalid, the LDAP configuration may fail. For more information on how to create or obtain the certificate, please refer [existing LDAP server certificate](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-integrating-openldap)."
+  description = "Provide the existing LDAP server certificate. This value is required if the 'ldap_server' variable is not set to null. If the certificate is not provided or is invalid, the LDAP configuration may fail. For more information on how to create or obtain the certificate, For more information, see [existing LDAP server certificate](https://cloud.ibm.com/docs/allowlist/hpc-service?topic=hpc-service-integrating-openldap)."
   validation {
     condition     = var.enable_ldap == false || var.ldap_server == null || (var.ldap_server_cert != null ? (length(trimspace(var.ldap_server_cert)) > 0 && var.ldap_server_cert != "null") : false)
     error_message = "Provide the current LDAP server certificate. This is required if 'ldap_server' is set; otherwise, the LDAP configuration will not succeed."
@@ -532,10 +930,24 @@ variable "ldap_admin_password" {
   type        = string
   sensitive   = true
   default     = null
-  description = "The LDAP admin password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces. [This value is ignored for an existing LDAP server]."
+  description = "The LDAP admin password must be 15 to 32 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces. [This value is ignored for an existing LDAP server]."
   validation {
-    condition     = (!var.enable_ldap || var.ldap_server != null || can(var.ldap_admin_password != null && length(var.ldap_admin_password) >= 8 && length(var.ldap_admin_password) <= 20 && regex(".*[0-9].*", var.ldap_admin_password) != "" && regex(".*[A-Z].*", var.ldap_admin_password) != "" && regex(".*[a-z].*", var.ldap_admin_password) != "" && regex(".*[!@#$%^&*()_+=-].*", var.ldap_admin_password) != "" && !can(regex(".*\\s.*", var.ldap_admin_password))))
-    error_message = "The LDAP admin password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces."
+    condition = (
+      var.enable_ldap ? (
+        var.ldap_server == null ? (
+          var.ldap_admin_password != null ? (
+            try(length(var.ldap_admin_password)) >= 15 &&
+            try(length(var.ldap_admin_password)) <= 32 &&
+            try(can(regex(".*[0-9].*", var.ldap_admin_password)), false) &&
+            try(can(regex(".*[A-Z].*", var.ldap_admin_password)), false) &&
+            try(can(regex(".*[a-z].*", var.ldap_admin_password)), false) &&
+            try(can(regex(".*[!@#$%^&*()_+=-].*", var.ldap_admin_password)), false) &&
+            !try(can(regex(".*\\s.*", var.ldap_admin_password)), false)
+          ) : false
+        ) : true
+      ) : true
+    )
+    error_message = "The LDAP admin password must be 15 to 32 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain any spaces."
   }
 }
 
@@ -553,10 +965,10 @@ variable "ldap_user_password" {
   type        = string
   sensitive   = true
   default     = ""
-  description = "The LDAP user password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one numeric digit, and at least one special character from the set (!@#$%^&*()_+=-). Spaces are not allowed. The password must not contain the username for enhanced security. [This value is ignored for an existing LDAP server]."
+  description = "The LDAP user password must be 15 to 32 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one numeric digit, and at least one special character from the set (!@#$%^&*()_+=-). Spaces are not allowed. The password must not contain the username for enhanced security. [This value is ignored for an existing LDAP server]."
   validation {
-    condition     = !var.enable_ldap || var.ldap_server != null || ((replace(lower(var.ldap_user_password), lower(var.ldap_user_name), "") == lower(var.ldap_user_password)) && length(var.ldap_user_password) >= 8 && length(var.ldap_user_password) <= 20 && can(regex("^(.*[0-9]){1}.*$", var.ldap_user_password))) && can(regex("^(.*[A-Z]){1}.*$", var.ldap_user_password)) && can(regex("^(.*[a-z]){1}.*$", var.ldap_user_password)) && can(regex("^.*[!@#$%^&*()_+=-].*$", var.ldap_user_password)) && !can(regex(".*\\s.*", var.ldap_user_password))
-    error_message = "The LDAP user password must be 8 to 20 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces."
+    condition     = !var.enable_ldap || var.ldap_server != null || ((replace(lower(var.ldap_user_password), lower(var.ldap_user_name), "") == lower(var.ldap_user_password)) && length(var.ldap_user_password) >= 15 && length(var.ldap_user_password) <= 32 && can(regex("^(.*[0-9]){1}.*$", var.ldap_user_password))) && can(regex("^(.*[A-Z]){1}.*$", var.ldap_user_password)) && can(regex("^(.*[a-z]){1}.*$", var.ldap_user_password)) && can(regex("^.*[!@#$%^&*()_+=-].*$", var.ldap_user_password)) && !can(regex(".*\\s.*", var.ldap_user_password))
+    error_message = "The LDAP user password must be 15 to 32 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces."
   }
 }
 
@@ -569,15 +981,17 @@ variable "ldap_instance" {
   )
   default = [{
     profile = "cx2-2x4"
-    image   = "ibm-ubuntu-22-04-5-minimal-amd64-3"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-16"
   }]
   description = "Specify the compute instance profile and image to be used for deploying LDAP instances. Only Debian-based operating systems, such as Ubuntu, are supported for LDAP functionality."
+
   validation {
     condition = alltrue([
       for inst in var.ldap_instance : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
     ])
     error_message = "The profile must be a valid virtual server instance profile."
   }
+
 }
 
 
@@ -602,17 +1016,18 @@ variable "enable_vpc_flow_logs" {
   description = "This flag determines whether VPC flow logs are enabled. When set to true, a flow log collector will be created to capture and monitor network traffic data within the VPC. Enabling flow logs provides valuable insights for troubleshooting, performance monitoring, and security auditing by recording information about the traffic passing through your VPC. Consider enabling this feature to enhance visibility and maintain robust network management practices."
 }
 
-variable "vpn_enabled" {
+variable "enable_vpn" {
   type        = bool
   default     = false
-  description = "Set the value as true to deploy a VPN gateway for VPC in the cluster."
+  description = "Enable deployment of a VPN gateway for the VPC in the cluster to establish secure, encrypted connectivity between on-premises infrastructure and cloud resources. By default, this option is set to false; set it to true to enable. The solution supports only the creation of the VPN gateway, and the VPN tunnel must be configured separately based on requirements."
 }
 
 variable "enable_hyperthreading" {
   type        = bool
-  default     = true
-  description = "Setting this to true will enable hyper-threading in the worker nodes of the cluster (default). Otherwise, hyper-threading will be disabled."
+  default     = false
+  description = "Enable hyper-threading on the worker nodes of the cluster to allow each physical core to run multiple threads. This can improve performance for parallel or I/O-bound workloads. However, for compute-intensive HPC workloads, the impact may vary depending on the application. This option is disabled by default."
 }
+
 ##############################################################################
 # Observability Variables
 ##############################################################################
@@ -702,7 +1117,7 @@ variable "skip_flowlogs_s2s_auth_policy" {
 variable "skip_kms_s2s_auth_policy" {
   type        = bool
   default     = false
-  description = "When using an existing COS instance, set this value to true if authorization is already enabled between COS instance and the kms. Otherwise, default is set to false. Ensuring proper authorization avoids access issues during deployment."
+  description = "When using an existing COS instance, set this value to true if authorization is already enabled between COS instance and the KMS. Otherwise, default is set to false. Ensuring proper authorization avoids access issues during deployment."
 }
 
 variable "skip_iam_block_storage_authorization_policy" {
@@ -734,7 +1149,21 @@ variable "override_json_string" {
 variable "enable_dedicated_host" {
   type        = bool
   default     = false
-  description = "Set this option to true to enable dedicated hosts for the VSIs provisioned as workload servers. The default value is false. When dedicated hosts are enabled, multiple vsi instance profiles from the same or different families (e.g., bx2, cx2, mx2) can be used. If you plan to deploy a static cluster with a third-generation profile, ensure that dedicated host support is available in the selected region, as not all regions support third-gen profiles on dedicated hosts. To learn more about dedicated host, [click here.](https://cloud.ibm.com/docs/vpc?topic=vpc-dh-profiles&interface=ui)."
+  description = "Set this option to true to enable dedicated hosts for the VSIs provisioned as workload servers. The default value is false. When dedicated hosts are enabled, a single VSI instance profile is used for both static and dynamic node provisioning. Multiple profiles are not supported, as dedicated hosts are single-tenant servers. Spot instances are not supported with dedicated hosts. If you plan to deploy a static cluster with a third-generation profile, ensure that dedicated host support is available in the selected region, as not all regions support third-generation profiles on dedicated hosts. For more information, see [Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-dh-profiles&interface=ui)."
+  validation {
+    condition     = !(var.enable_baremetal == true && var.enable_dedicated_host == true)
+    error_message = "dedicated host cannot be enabled when baremetal servers are enabled"
+  }
+}
+
+##############################################################################
+# Baremetal Variables
+##############################################################################
+
+variable "enable_baremetal" {
+  type        = bool
+  default     = false
+  description = "Set this option to true to provision static compute nodes using bare metal servers. By default, this option is false. When enabled, ensure that the static_compute_instances configuration uses a valid bare metal profile; otherwise, the deployment will fail."
 }
 
 ###########################################################################
@@ -758,7 +1187,7 @@ variable "existing_bastion_instance_name" {
 variable "existing_bastion_instance_public_ip" {
   type        = string
   default     = null
-  description = "Provide the public ip address of the existing bastion instance to establish the remote connection. Also using this public ip address, connection to the LSF cluster nodes shall be established"
+  description = "Provide the public IP address of the existing bastion instance to establish the remote connection. Also using this public ip address, connection to the LSF cluster nodes shall be established"
 }
 
 variable "existing_bastion_security_group_id" {
@@ -813,14 +1242,14 @@ variable "sccwp_service_plan" {
   }
 }
 
-variable "sccwp_enable" {
+variable "enable_sccwp" {
   type        = bool
   default     = true
-  description = "Set this flag to true to create an instance of IBM Security and Compliance Center (SCC) Workload Protection. When enabled, it provides tools to discover and prioritize vulnerabilities, monitor for security threats, and enforce configuration, permission, and compliance policies across the full lifecycle of your workloads. To view the data on the dashboard, enable the cspm to create the app configuration and required trusted profile policies.[Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
+  description = "Set this flag to true to create an instance of IBM Security and Compliance Center (SCC) Workload Protection. When enabled, it provides tools to discover and prioritize vulnerabilities, monitor for security threats, and enforce configuration, permission, and compliance policies across the full lifecycle of your workloads. To view the data on the dashboard, enable the CSPM to create the App Configuration and required trusted profile policies. For more information, see [Cloud Security Posture Management](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
 }
 
-variable "cspm_enabled" {
-  description = "CSPM (Cloud Security Posture Management) is a set of tools and practices that continuously monitor and secure cloud infrastructure. When enabled, it creates a trusted profile with viewer access to the App Configuration and Enterprise services for the SCC Workload Protection instance. Make sure the required IAM permissions are in place, as missing permissions will cause deployment to fail. If CSPM is disabled, dashboard data will not be available.[Learn more](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
+variable "enable_cspm" {
+  description = "Cloud Security Posture Management (CSPM) is a set of tools and practices that continuously monitor and secure cloud infrastructure. When enabled, it creates a trusted profile with viewer access to the App Configuration and Enterprise services for the SCC Workload Protection instance. Make sure the required IAM permissions are in place, as missing permissions will cause deployment to fail. If CSPM is disabled, dashboard data will not be available. For more information, see [Cloud Security Posture Management](https://cloud.ibm.com/docs/workload-protection?topic=workload-protection-about)."
   type        = bool
   default     = true
   nullable    = false
@@ -831,10 +1260,74 @@ variable "app_config_plan" {
   type        = string
   default     = "basic"
   validation {
-    error_message = "Plan for App configuration can only be basic, lite, standardv2, enterprise.."
+    error_message = "Plan for App configuration can only be basic, standardv2, enterprise.."
     condition = contains(
-      ["basic", "lite", "standardv2", "enterprise"],
+      ["basic", "standardv2", "enterprise"],
       var.app_config_plan
     )
+  }
+}
+
+######## State Bucket variables #########
+
+variable "tfstate_cos_config" {
+  type = list(object({
+    bucket_storage_class = string
+    bucket_type          = string
+    bucket_region        = string
+  }))
+
+  nullable = false
+
+  default = [{
+    bucket_storage_class = "standard"
+    bucket_type          = "region_location"
+    bucket_region        = ""
+  }]
+
+  description = "Configuration for Terraform state COS bucket"
+
+  #bucket_storage_class validation
+  validation {
+    condition = alltrue([
+      for cfg in var.tfstate_cos_config :
+      contains(["standard", "smart-tier"], cfg.bucket_storage_class)
+    ])
+    error_message = "bucket_storage_class must be either 'standard' or 'smart-tier'."
+  }
+
+  #bucket_type validation
+  validation {
+    condition = alltrue([
+      for cfg in var.tfstate_cos_config :
+      contains(
+        ["cross_region_location", "single_site_location", "region_location"],
+        cfg.bucket_type
+      )
+    ])
+    error_message = "bucket_type must be one of: cross_region_location, single_site_location, or region_location."
+  }
+}
+
+variable "tfstate_existing_cos_bucket_creds" {
+  type = object({
+    bucket = string
+    region = string
+    akey   = string
+    skey   = string
+  })
+  sensitive   = true
+  default     = null
+  description = "Credentials to use an EXISTING Terraform state COS bucket. Leave null if creating a new bucket."
+
+  # COS Credentials must be completely filled out if provided
+  validation {
+    condition = var.tfstate_existing_cos_bucket_creds == null ? true : (
+      trimspace(try(var.tfstate_existing_cos_bucket_creds.bucket, "")) != "" &&
+      trimspace(try(var.tfstate_existing_cos_bucket_creds.region, "")) != "" &&
+      trimspace(try(var.tfstate_existing_cos_bucket_creds.akey, "")) != "" &&
+      trimspace(try(var.tfstate_existing_cos_bucket_creds.skey, "")) != ""
+    )
+    error_message = "When providing tfstate_existing_cos_bucket_creds, the bucket, region, akey, and skey must all be non-empty."
   }
 }

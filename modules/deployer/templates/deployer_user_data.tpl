@@ -1,51 +1,105 @@
-#!/usr/bin/bash
-
-###################################################
-# Copyright (C) IBM Corp. 2023 All Rights Reserved.
-# Licensed under the Apache License v2.0
-###################################################
-
 #!/usr/bin/env bash
-if grep -E -q "CentOS|Red Hat" /etc/os-release
-then
-    USER=vpcuser
-elif grep -q "Ubuntu" /etc/os-release
-then
-    USER=ubuntu
+set -euo pipefail
+
+###############################################################################
+# Script Variables (Internal configuration used within this script)
+###############################################################################
+LOGFILE="/tmp/user_data.log"
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOGFILE"
+}
+
+log "STARTING user-data initialization script"
+
+###############################################################################
+# 1. Detect OS and install required packages
+###############################################################################
+
+if grep -E -q "CentOS|Red Hat" /etc/os-release; then
+    USER="vpcuser"
+    yum install -y nc curl unzip jq
+elif grep -q "Ubuntu" /etc/os-release; then
+    USER="ubuntu"
+    apt-get update -y
+    apt-get install -y netcat curl unzip jq
+else
+    log "Unsupported OS detected"
+    exit 1
 fi
-sed -i -e "s/^/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo \'Please login as the user \\\\\"$USER\\\\\" rather than the user \\\\\"root\\\\\".\';echo;sleep 5; exit 142\" /" /root/.ssh/authorized_keys
-echo "DOMAIN=${compute_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
-echo "MTU=9000" >> "/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
-chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
-sleep 20
-systemctl restart NetworkManager
 
-# input parameters
-echo "${bastion_public_key_content}" >> /home/$USER/.ssh/authorized_keys
-echo "StrictHostKeyChecking no" >> /home/$USER/.ssh/config
-echo "StrictHostKeyChecking no" >> ~/.ssh/config
+###############################################################################
+# 2. Configure password aging policy
+###############################################################################
 
-# # setup env
-# # TODO: Conditional installation (python3, terraform & ansible)
-# if grep -E -q "CentOS|Red Hat" /etc/os-release
-# then
-#     # TODO: Terraform Repo access
-#     #yum install -y yum-utils
-#     #yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
-#     #if (which terraform); then echo "Terraform exists, skipping the installation"; else (yum install -y terraform
-#     if (which python3); then echo "Python3 exists, skipping the installation"; else (yum install -y python38); fi
-#     if (which ansible-playbook); then echo "Ansible exists, skipping the installation"; else (yum install -y ansible); fi
-# elif grep -q "Ubuntu" /etc/os-release
-# then
-#     apt update
-#     # TODO: Terraform Repo access
-#     #apt-get update && sudo apt-get install -y gnupg software-properties-common
-#     #wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
-#     #gpg --no-default-keyring --keyring /usr/share/keyrings/hashicorp-archive-keyring.gpg --fingerprint
-#     apt install software-properties-common
-#     apt-add-repository --yes --update ppa:ansible/ansible
-#     if (which python3); then echo "Python3 exists, skipping the installation"; else (apt install python38); fi
-#     if (which ansible-playbook); then echo "Ansible exists, skipping the installation"; else (apt install ansible); fi
-# fi
+log "Applying password aging policy for user: $USER"
 
-# TODO: run terraform
+chage -I -1 -m 0 -M 99999 -E -1 -W 14 "$USER"
+
+###############################################################################
+# 3. Restrict direct root SSH access
+###############################################################################
+
+log "Restricting root SSH login via authorized_keys"
+
+if [ -f /root/.ssh/authorized_keys ]; then
+    sed -i \
+      -e "s|^|no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command=\"echo 'Login as the \\\"$USER\\\" user rather than \\\"root\\\".';echo;sleep 5; exit 142\" |" \
+      /root/.ssh/authorized_keys
+else
+    log "WARNING: /root/.ssh/authorized_keys file not found"
+fi
+
+###############################################################################
+# 4. Configure network interface parameters (RHEL/CentOS only)
+###############################################################################
+
+if grep -E -q "CentOS|Red Hat" /etc/os-release; then
+    log "Updating network interface configuration"
+
+    IFCFG_FILE="/etc/sysconfig/network-scripts/ifcfg-${compute_interfaces}"
+    ROUTE_FILE="/etc/sysconfig/network-scripts/route-${compute_interfaces}"
+
+    touch "$IFCFG_FILE"
+    touch "$ROUTE_FILE"
+
+    sed -i '/^DOMAIN=/d' "$IFCFG_FILE"
+    sed -i '/^MTU=/d' "$IFCFG_FILE"
+
+    echo "DOMAIN=${compute_dns_domain}" >> "$IFCFG_FILE"
+    echo "MTU=9000" >> "$IFCFG_FILE"
+
+    systemctl restart NetworkManager
+fi
+
+###############################################################################
+# 5. Configure SSH access for the default user
+###############################################################################
+
+log "Setting up SSH configuration for user $USER"
+
+USER_HOME="/home/$USER"
+SSH_DIR="$USER_HOME/.ssh"
+
+mkdir -p "$SSH_DIR"
+chmod 700 "$SSH_DIR"
+
+touch "$SSH_DIR/authorized_keys"
+touch "$SSH_DIR/config"
+
+echo "${bastion_public_key_content}" >> "$SSH_DIR/authorized_keys"
+
+cat > "$SSH_DIR/config" <<EOF
+Host *
+    StrictHostKeyChecking no
+EOF
+
+chmod 600 "$SSH_DIR/authorized_keys" "$SSH_DIR/config"
+
+chown -R "$USER:$USER" "$SSH_DIR"
+
+###############################################################################
+# 6. Script completion
+###############################################################################
+
+log "User-data initialization script completed successfully"

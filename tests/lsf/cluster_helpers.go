@@ -3,9 +3,17 @@ package tests
 import (
 	"errors"
 	"fmt"
+	"io"
+	"log"
+	"net"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/require"
 	"github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper/testhelper"
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/utilities"
 	"golang.org/x/crypto/ssh"
@@ -176,17 +184,248 @@ func VerifyComputeNodeConfig(
 
 }
 
-// VerifyAPPCenterConfig verifies the configuration of the application center by performing various checks.
+// VerifyAPPCenterConfig verifies the configuration of the Application Center by performing various checks.
+// If more than one management node exists, validation runs on node 2; otherwise on node 1.
 func VerifyAPPCenterConfig(
 	t *testing.T,
 	sshMgmtClient *ssh.Client,
+	publicHostIP, publicHostName, privateHostName string,
+	managementNodeIPs []string,
 	logger *utils.AggregatedLogger,
 ) {
+	var targetSSHClient *ssh.Client
+	var nodeLabel string
 
-	// Verify application center
-	appCenterErr := LSFAPPCenterConfiguration(t, sshMgmtClient, logger)
-	utils.LogVerificationResult(t, appCenterErr, "check Application center", logger)
+	if len(managementNodeIPs) > 1 {
+		// Connect to management node 2
+		appCenterSSHClient, err := utils.ConnectToHost(publicHostName, publicHostIP, privateHostName, managementNodeIPs[1])
+		if err != nil {
+			msg := fmt.Sprintf(
+				"Failed to SSH to management node 2 via bastion (%s) -> private IP (%s): %v",
+				publicHostIP, managementNodeIPs[1], err,
+			)
+			logger.FAIL(t, msg)
+			require.FailNow(t, msg)
+		}
+		defer func() {
+			if cerr := appCenterSSHClient.Close(); cerr != nil {
+				logger.Warn(t, fmt.Sprintf("Failed to close SSH connection: %v", cerr))
+			}
+		}()
+		targetSSHClient = appCenterSSHClient
+		nodeLabel = "Application Center (mgmt node 2)"
+	} else {
+		// Use the provided SSH client (mgmt node 1)
+		targetSSHClient = sshMgmtClient
+		nodeLabel = "Application Center (mgmt node 1)"
+	}
 
+	// Run App Center validation
+	appCenterErr := LSFAPPCenterConfiguration(t, targetSSHClient, logger)
+	utils.LogVerificationResult(t, appCenterErr, nodeLabel, logger)
+
+	logger.Info(t, fmt.Sprintf("Completed %s validation.", nodeLabel))
+}
+
+// VerifyLSFWebServicesConfig verifies the configuration of LSF Web Services (lwsd).
+// If more than one management node exists, validation runs on node 2; otherwise on node 1.
+func VerifyLSFWebServicesConfig(
+	t *testing.T,
+	sshMgmtClient *ssh.Client,
+	publicHostIP, publicHostName, privateHostName string,
+	managementNodeIPs []string,
+	logger *utils.AggregatedLogger,
+) {
+	var targetSSHClient *ssh.Client
+	var nodeLabel string
+
+	if len(managementNodeIPs) > 1 {
+		// Connect to management node 2
+		wsSSHClient, err := utils.ConnectToHost(
+			publicHostName,
+			publicHostIP,
+			privateHostName,
+			managementNodeIPs[1],
+		)
+		if err != nil {
+			msg := fmt.Sprintf(
+				"Failed to SSH to management node 2 via bastion (%s) -> private IP (%s): %v",
+				publicHostIP,
+				managementNodeIPs[1],
+				err,
+			)
+			logger.FAIL(t, msg)
+			require.FailNow(t, msg)
+		}
+		defer func() {
+			if cerr := wsSSHClient.Close(); cerr != nil {
+				logger.Warn(t, fmt.Sprintf("Failed to close SSH connection: %v", cerr))
+			}
+		}()
+		targetSSHClient = wsSSHClient
+		nodeLabel = "LSF Web Services (mgmt node 2)"
+	} else {
+		// Use management node 1
+		targetSSHClient = sshMgmtClient
+		nodeLabel = "LSF Web Services (mgmt node 1)"
+	}
+
+	wsErr := LSFWebServicesConfiguration(t, targetSSHClient, logger)
+	utils.LogVerificationResult(t, wsErr, nodeLabel, logger)
+
+	logger.Info(t, fmt.Sprintf("Completed %s validation.", nodeLabel))
+}
+
+func cleanupExistingSSHTunnels(logger *utils.AggregatedLogger, t *testing.T) {
+	ports := []string{"8443", "6080", "8444"}
+
+	for _, port := range ports {
+		cmd := exec.Command("sh", "-c",
+			fmt.Sprintf(`lsof -ti tcp:%s | xargs -r kill -9`, port),
+		)
+		if err := cmd.Run(); err == nil {
+			logger.Info(t, fmt.Sprintf("Cleaned up existing SSH tunnel on port %s", port))
+		}
+	}
+}
+
+func VerifyLSFClusterRESTConfig(
+	t *testing.T,
+	_ *ssh.Client,
+	bastionIP string,
+	publicHostName string,
+	privateHostName string,
+	managementNodeIPs []string,
+	clusterPrefix string,
+	expectedLsfVersion string,
+	acPassword string,
+	logger *utils.AggregatedLogger,
+) {
+	// Pick management node
+	mgmtIP := managementNodeIPs[0]
+	if len(managementNodeIPs) > 1 {
+		mgmtIP = managementNodeIPs[1]
+	}
+
+	logger.Info(t, fmt.Sprintf(
+		"Creating SSH tunnel via bastion %s to management node %s",
+		bastionIP, mgmtIP,
+	))
+
+	logger.Info(t, "Cleaning up any existing SSH tunnels")
+	cleanupExistingSSHTunnels(logger, t)
+
+	// Detect SSH key path
+	sshKeyPath := "/artifacts/.ssh/id_rsa"
+
+	if _, err := os.Stat(sshKeyPath); os.IsNotExist(err) {
+		homeDir, _ := os.UserHomeDir()
+		sshKeyPath = filepath.Join(homeDir, ".ssh", "id_rsa")
+	}
+
+	// Build ProxyCommand with detected key
+	proxyCmd := fmt.Sprintf(
+		"ssh -i %s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "+
+			"-o GlobalKnownHostsFile=/dev/null -W %%h:%%p %s@%s",
+		sshKeyPath,
+		publicHostName,
+		bastionIP,
+	)
+
+	// Main SSH command
+	sshCmd := exec.Command(
+		"ssh",
+		"-i", sshKeyPath,
+		"-N",
+		"-T",
+		"-o", "StrictHostKeyChecking=no",
+		"-o", "UserKnownHostsFile=/dev/null",
+		"-o", "GlobalKnownHostsFile=/dev/null",
+		"-o", "BatchMode=yes",
+		"-o", "ExitOnForwardFailure=yes",
+		"-o", "ServerAliveInterval=5",
+		"-o", "ServerAliveCountMax=1",
+		"-o", "ProxyCommand="+proxyCmd,
+		"-L", "8443:localhost:8443",
+		"-L", "6080:localhost:6080",
+		"-L", "8444:localhost:8444",
+		fmt.Sprintf("%s@%s", privateHostName, mgmtIP),
+	)
+
+	// sshCmd := exec.Command(
+	// 	"ssh",
+	// 	"-N",
+	// 	"-T",
+	// 	"-o", "StrictHostKeyChecking=no",
+	// 	"-o", "UserKnownHostsFile=/dev/null",
+	// 	"-o", "GlobalKnownHostsFile=/dev/null",
+	// 	"-o", "BatchMode=yes",
+	// 	"-o", "ExitOnForwardFailure=yes",
+	// 	"-o", "ServerAliveInterval=5",
+	// 	"-o", "ServerAliveCountMax=1",
+	// 	"-o", "ProxyCommand="+proxyCmd,
+	// 	"-L", "8443:localhost:8443",
+	// 	"-L", "6080:localhost:6080",
+	// 	"-L", "8444:localhost:8444",
+	// 	fmt.Sprintf("%s@%s", privateHostName, mgmtIP),
+	// )
+
+	stdout, _ := sshCmd.StdoutPipe()
+	stderr, _ := sshCmd.StderrPipe()
+
+	if err := sshCmd.Start(); err != nil {
+		logger.FAIL(t, fmt.Sprintf("Failed to start SSH tunnel: %v", err))
+		require.FailNow(t, "SSH tunnel creation failed")
+	}
+
+	defer func() {
+		if sshCmd.Process != nil {
+			_ = sshCmd.Process.Kill()
+		}
+	}()
+
+	// Before
+	// go io.Copy(os.Stdout, stdout)
+	// go io.Copy(os.Stderr, stderr)
+
+	// After
+	go func() {
+		if _, err := io.Copy(os.Stdout, stdout); err != nil {
+			log.Printf("stdout copy error: %v", err)
+		}
+	}()
+	go func() {
+		if _, err := io.Copy(os.Stderr, stderr); err != nil {
+			log.Printf("stderr copy error: %v", err)
+		}
+	}()
+
+	// Wait for tunnel
+	timeout := time.After(40 * time.Second)
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-timeout:
+			require.FailNow(t, "SSH tunnel did not become ready on port 8443")
+		case <-ticker.C:
+			conn, err := net.DialTimeout("tcp", "127.0.0.1:8443", 2*time.Second)
+			if err == nil {
+				// Before
+				// conn.Close()
+
+				// After
+				if err := conn.Close(); err != nil {
+					log.Printf("connection close error: %v", err)
+				}
+				logger.Info(t, "SSH tunnel established successfully")
+				err := LSFClusterRESTConfiguration(t, clusterPrefix, acPassword, logger)
+				utils.LogVerificationResult(t, err, "LSF Cluster REST API Validation", logger)
+				return
+			}
+		}
+	}
 }
 
 // VerifyLoginNodeConfig validates the configuration of a login node by performing multiple checks.
@@ -296,10 +535,10 @@ func VerifyJobs(t *testing.T, sshClient *ssh.Client, jobCommand string, logger *
 func VerifyFileShareEncryption(t *testing.T, sshMgmtClient *ssh.Client, apiKey, region, resourceGroup, clusterPrefix, keyManagement string, managementNodeIPList []string, logger *utils.AggregatedLogger) {
 	// Validate encryption
 	encryptErr := VerifyEncryption(t, apiKey, region, resourceGroup, clusterPrefix, keyManagement, logger)
-	utils.LogVerificationResult(t, encryptErr, "File share encryption validation failed", logger)
+	utils.LogVerificationResult(t, encryptErr, "File share encryption validation", logger)
 
 	encryptCRNErr := VerifyEncryptionCRN(t, sshMgmtClient, keyManagement, managementNodeIPList, logger)
-	utils.LogVerificationResult(t, encryptCRNErr, "CRN encryption validation failed", logger)
+	utils.LogVerificationResult(t, encryptCRNErr, "CRN encryption validation", logger)
 }
 
 // VerifyManagementNodeLDAPConfig performs various checks on a management node's LDAP configuration.
@@ -614,25 +853,42 @@ func ValidateCosServiceInstanceAndVpcFlowLogs(t *testing.T, apiKey, expectedZone
 // ValidateLSFLogs validates the log files in the shared folder and checks their status after a master node reboot.
 // It performs two main checks: verifying log files in the shared folder and ensuring the log files are intact after the reboot.
 // This ensures that LSF logs are available and up-to-date in LSF log-related scenarios.
-func ValidateLSFLogs(t *testing.T, sshClient *ssh.Client, apiKey, region, resourceGroup, bastionIP string, managementMasterNodeIPList []string, logger *utils.AggregatedLogger) {
-	// Check the log files in the shared folder for all nodes
-	err := LogFilesInSharedFolder(t, sshClient, logger)
+func ValidateLSFLogs(t *testing.T, bastionIP string, managementMasterNodeIPList []string, apiKey, region, resourceGroup string, logger *utils.AggregatedLogger) {
+	sshClient, err := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementMasterNodeIPList[0])
+	if err != nil {
+		utils.LogVerificationResult(t, err, "Initial SSH connection for LSF log checks", logger)
+		return
+	}
+	defer func() {
+		if err := sshClient.Close(); err != nil {
+			logger.Info(t, fmt.Sprintf("failed to close initial sshClient in ValidateLSFLogs: %v", err))
+		}
+	}()
+	logger.Info(t, "SSH connection established for LSF log validation.")
+
+	err = LogFilesInSharedFolder(t, sshClient, logger)
 	utils.LogVerificationResult(t, err, "Log files in shared folder check", logger)
 
-	// Validate that log files are still available after the master node reboot
 	err = LogFilesAfterMasterReboot(t, sshClient, bastionIP, managementMasterNodeIPList[0], logger)
 	utils.LogVerificationResult(t, err, "Log files after master reboot check", logger)
 
-	// Reconnect to the management node after reboot
-	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementMasterNodeIPList[0])
-	if connectionErr != nil {
-		logger.Error(t, fmt.Sprintf("Failed to reconnect to the master via SSH after reboot: %s", connectionErr))
-		utils.LogVerificationResult(t, connectionErr, fmt.Sprintf("Failed to reconnect to the master via SSH after reboot: %s", connectionErr), logger)
-		return // Exit if SSH connection fails
+	if err := sshClient.Close(); err != nil {
+		logger.Info(t, fmt.Sprintf("failed to close pre-reboot sshClient in ValidateLSFLogs: %v", err))
 	}
 
-	// Validate the log files after the master node shutdown
-	err = LogFilesAfterMasterShutdown(t, sshClient, apiKey, region, resourceGroup, bastionIP, managementMasterNodeIPList, logger)
+	postRebootClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementMasterNodeIPList[0])
+	if connectionErr != nil {
+		utils.LogVerificationResult(t, connectionErr, "Reconnect to master via SSH after reboot", logger)
+		return
+	}
+	defer func() {
+		if err := postRebootClient.Close(); err != nil {
+			logger.Info(t, fmt.Sprintf("failed to close postRebootClient in ValidateLSFLogs: %v", err))
+		}
+	}()
+	logger.Info(t, "Successfully reconnected to master after reboot.")
+
+	err = LogFilesAfterMasterShutdown(t, postRebootClient, apiKey, region, resourceGroup, bastionIP, managementMasterNodeIPList, logger)
 	utils.LogVerificationResult(t, err, "Log files after master shutdown check", logger)
 }
 
@@ -777,4 +1033,83 @@ func ValidateAtracker(t *testing.T, apiKey, region, resourceGroup, clusterPrefix
 		logger.Warn(t, "Cloud atracker is disabled  - skipping validation of Atracker Route Target.")
 
 	}
+}
+
+// VerifyManagementNodeConfig verifies the configuration of a management node by performing various checks.
+// It checks the cluster ID, master name, MTU, IP route, hyperthreading, LSF version, Run tasks and file mount.
+// The results of the checks are logged using the provided logger.
+func VerifyManagementNodeAPIConfig(
+	t *testing.T,
+	sshMgmtClient *ssh.Client,
+	clusterPrefix string,
+	expectedHyperthreadingStatus bool,
+	managementNodeIPList []string,
+	lsfVersion string,
+	logger *utils.AggregatedLogger,
+) {
+
+	// Validate LSF health on the management node
+	healthCheckErr := LSFHealthCheck(t, sshMgmtClient, logger)
+	utils.LogVerificationResult(t, healthCheckErr, "Validate LSF health on management node", logger)
+
+	// Verify cluster name
+	clusterNameErr := LSFCheckClusterName(t, sshMgmtClient, clusterPrefix, logger)
+	utils.LogVerificationResult(t, clusterNameErr, "Verify cluster name on management node", logger)
+
+	// Verify Master Name
+	checkMasterNameErr := LSFCheckMasterName(t, sshMgmtClient, clusterPrefix, logger)
+	utils.LogVerificationResult(t, checkMasterNameErr, "Check Master Name on management node", logger)
+
+	// MTU check for management nodes
+	mtuCheckErr := LSFMTUCheck(t, sshMgmtClient, managementNodeIPList, logger)
+	utils.LogVerificationResult(t, mtuCheckErr, "MTU check on management node", logger)
+
+	// IP route check for management nodes
+	ipRouteCheckErr := LSFIPRouteCheck(t, sshMgmtClient, managementNodeIPList, logger)
+	utils.LogVerificationResult(t, ipRouteCheckErr, "IP route check on management node", logger)
+
+	// Hyperthreading check
+	hyperthreadErr := LSFCheckHyperthreading(t, sshMgmtClient, expectedHyperthreadingStatus, logger)
+	utils.LogVerificationResult(t, hyperthreadErr, "Hyperthreading check on management node", logger)
+
+	// LSF version check
+	versionErr := CheckLSFVersion(t, sshMgmtClient, lsfVersion, logger)
+	utils.LogVerificationResult(t, versionErr, "check LSF version on management node", logger)
+
+	//File Mount
+	fileMountErr := CheckFileMount(t, sshMgmtClient, managementNodeIPList, "management", logger)
+	utils.LogVerificationResult(t, fileMountErr, "File mount check on management node", logger)
+
+}
+
+func VerifyProfile(
+	t *testing.T,
+	sshMgmtClient *ssh.Client,
+	computeProfiles []string,
+	mgmtProfiles []string,
+	loginProfile []string,
+	logger *utils.AggregatedLogger,
+) {
+	allProfiles := append(append(computeProfiles, mgmtProfiles...), loginProfile...)
+	profileMatchError := CheckProfileToProcessorMatch(t, sshMgmtClient, allProfiles, logger)
+	utils.LogVerificationResult(t, profileMatchError, "Profile match with processor on management node", logger)
+}
+
+// VerifySpotInstance validates that the configured dynamic compute instance
+// uses the expected VM profile and verifies whether spot instances are
+// correctly configured in the LSF resource connector templates.
+func VerifySpotInstance(
+	t *testing.T,
+	options *testhelper.TestOptions,
+	sClient *ssh.Client,
+	logger *utils.AggregatedLogger,
+) {
+	// Fetch dynamic compute instance details from Terraform variables
+	instance := GetDynamicComputeInstance(t, options)
+
+	// Validate VM type and spot instance configuration in LSF templates
+	err := LSFValidateSpotVMType(t, sClient, instance.Profile, instance.EnableSpotInstances, logger)
+
+	// Log validation result
+	utils.LogVerificationResult(t, err, "Spot instance and VM type validation on management node", logger)
 }

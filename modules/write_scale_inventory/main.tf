@@ -47,7 +47,9 @@ resource "local_sensitive_file" "itself" {
   "afm_cos_bucket_details": ${local.afm_cos_bucket_details},
   "afm_config_details": ${local.afm_config_details},
   "afm_cluster_instance_names": ${local.afm_cluster_instance_names},
-  "filesystem_mountpoint": ${var.filesystem_mountpoint}
+  "filesystem_mountpoint": ${var.filesystem_mountpoint},
+  "boot_volume_disk_grow": ${var.boot_volume_disk_grow},
+  "block_volume_disk_grow": ${var.block_volume_disk_grow}
 }
 EOT
   filename = var.json_inventory_path

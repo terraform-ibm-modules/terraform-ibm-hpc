@@ -14,11 +14,16 @@ ${join("\n", [for host in var.hosts : host if can(regex(".*-comp-.*", host))])}
 management_nodes
 compute_nodes
 
+[gui_hosts]
+${join("\n", var.gui_hosts)}
+
 [login_node]
 ${join("\n", var.login_host)}
 
 [all:vars]
-scheduler = ${jsonencode(var.scheduler)}
+ansible_user=vpcuser
+ansible_ssh_private_key_file=/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/compute_id_rsa
+scheduler=${jsonencode(var.scheduler)}
 name_mount_path_map = {${join(",", [for k, v in var.name_mount_path_map : "\"${k}\": \"${v}\""])}}
 nfs_shares_map       = ${jsonencode(var.nfs_shares_map)}
 mount_paths_map = ${jsonencode(merge(var.name_mount_path_map, var.nfs_shares_map))}
@@ -31,6 +36,10 @@ cloud_monitoring_ingestion_url = ${var.cloud_monitoring_ingestion_url}
 cloud_monitoring_prws_key = ${var.cloud_monitoring_prws_key}
 cloud_monitoring_prws_url = ${var.cloud_monitoring_prws_url}
 cloud_logs_ingress_private_endpoint = ${var.cloud_logs_ingress_private_endpoint}
+enable_sccwp = ${var.enable_sccwp}
+sccwp_api_endpoint = ${var.sccwp_api_endpoint}
+sccwp_access_key = ${var.sccwp_access_key}
+sccwp_ingestion_endpoint = ${var.sccwp_ingestion_endpoint}
 ha_shared_dir            = ${var.ha_shared_dir}
 prefix                   = ${var.prefix}
 enable_ldap              = ${var.enable_ldap}
@@ -40,6 +49,7 @@ ldap_admin_password      = ${var.ldap_admin_password}
 ldap_server_cert         = ${replace(var.ldap_server_cert, "\n", "\\n")}
 ldap_user_name           = ${var.ldap_user_name}
 ldap_user_password       = ${var.ldap_user_password}
+ansible_python_interpreter = /usr/bin/python3
 EOT
   filename = var.inventory_path
 }

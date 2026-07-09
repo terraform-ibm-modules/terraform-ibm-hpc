@@ -1,3 +1,4 @@
+# ruff: noqa: B905
 #!/usr/bin/env python3
 """
 Copyright IBM Corporation 2018
@@ -160,7 +161,7 @@ def prepare_ansible_playbook(hosts_config, cluster_config, cluster_key_file):
     """Write to playbook"""
     content = f"""---
 # Ensure provisioned VMs are up and Passwordless SSH setup
-# has been compleated and operational
+# has been completed and operational
 - name: Check passwordless SSH connection is setup
   hosts: {hosts_config}
   any_errors_fatal: true
@@ -168,7 +169,7 @@ def prepare_ansible_playbook(hosts_config, cluster_config, cluster_key_file):
   connection: local
   tasks:
   - name: Check passwordless SSH on all scale inventory hosts
-    shell: ssh {{{{ ansible_ssh_common_args }}}} -i {cluster_key_file} root@{{{{ inventory_hostname }}}} "echo PASSWDLESS_SSH_ENABLED"
+    shell: ssh {{{{ ansible_ssh_common_args }}}} -i {cluster_key_file} vpcuser@{{{{ inventory_hostname }}}} "echo PASSWDLESS_SSH_ENABLED"
     register: result
     until: result.stdout.find("PASSWDLESS_SSH_ENABLED") != -1
     retries: 240
@@ -208,6 +209,7 @@ def prepare_ansible_playbook(hosts_config, cluster_config, cluster_key_file):
 
 # Install and config Spectrum Scale on nodes
 - hosts: {hosts_config}
+  become: yes
   collections:
      - ibm.spectrum_scale
   any_errors_fatal: true
@@ -240,9 +242,6 @@ def prepare_ansible_playbook(hosts_config, cluster_config, cluster_key_file):
      - {{ role: afm_cos_prepare, when: enable_afm }}
      - {{ role: afm_cos_install, when: "enable_afm and scale_packages_installed is false" }}
      - {{ role: afm_cos_configure, when: enable_afm }}
-     - {{ role: kp_encryption_prepare, when: "enable_key_protect and scale_cluster_type == 'storage'" }}
-     - {{ role: kp_encryption_configure, when: enable_key_protect }}
-     - {{ role: kp_encryption_apply, when: "enable_key_protect and scale_cluster_type == 'storage'" }}
 """
     return content
 
@@ -252,6 +251,7 @@ def prepare_packer_ansible_playbook(hosts_config, cluster_config):
     content = f"""---
 # Install and config Spectrum Scale on nodes
 - hosts: {hosts_config}
+  become: yes
   collections:
      - ibm.spectrum_scale
   any_errors_fatal: true
@@ -272,6 +272,7 @@ def prepare_nogui_ansible_playbook(hosts_config, cluster_config):
     content = f"""---
 # Install and config Spectrum Scale on nodes
 - hosts: {hosts_config}
+  become: yes
   collections:
      - ibm.spectrum_scale
   any_errors_fatal: true
@@ -290,6 +291,7 @@ def prepare_nogui_packer_ansible_playbook(hosts_config, cluster_config):
     content = f"""---
 # Install and config Spectrum Scale on nodes
 - hosts: {hosts_config}
+  become: yes
   collections:
      - ibm.spectrum_scale
   any_errors_fatal: true
@@ -306,6 +308,7 @@ def prepare_ansible_playbook_encryption_gklm():
     content = """---
 # Encryption setup for the key servers
 - hosts: localhost
+  become: yes
   collections:
      - ibm.spectrum_scale
   any_errors_fatal: true
@@ -321,6 +324,7 @@ def prepare_ansible_playbook_encryption_cluster(hosts_config):
     content = """---
 # Enabling encryption on Storage Scale
 - hosts: {hosts_config}
+  become: yes
   collections:
      - ibm.spectrum_scale
   any_errors_fatal: true
@@ -329,6 +333,282 @@ def prepare_ansible_playbook_encryption_cluster(hosts_config):
      - encryption_configure
 """
     return content.format(hosts_config=hosts_config)
+
+
+def prepare_ansible_playbook_key_protect_encryption(hosts_config, cluster_config):
+    # Write to playbook
+    content = f"""---
+# Install and config Spectrum Scale on nodes
+- hosts: {hosts_config}
+  become: yes
+  collections:
+     - ibm.spectrum_scale
+  any_errors_fatal: true
+  vars:
+    - scale_node_update_check: false
+  pre_tasks:
+     - include_vars: group_vars/{cluster_config}
+  roles:
+     - {{ role: kp_encryption_prepare, when: "enable_key_protect and scale_cluster_type == 'storage'" }}
+     - {{ role: kp_encryption_configure, when: enable_key_protect }}
+     - {{ role: kp_encryption_apply, when: "enable_key_protect and scale_cluster_type == 'storage'" }}
+"""
+    return content
+
+
+def boot_volume_disk_grow_partition(hosts_config):
+    """Generate an Ansible playbook to grow boot partition and filesystem."""
+    content = f"""---
+# Spectrum Scale — Grow boot partition and filesystem
+- hosts: {hosts_config}
+  become: yes
+  collections:
+    - ibm.spectrum_scale
+  gather_facts: false
+  tasks:
+    # =========================================================
+    # Grow partition and filesystem on /dev/vda3
+    # =========================================================
+    - name: Ensure growpart and lsblk utilities are installed
+      package:
+        name:
+          - cloud-utils-growpart
+          - util-linux
+        state: present
+    - name: Check if /dev/vda exists
+      stat:
+        path: /dev/vda
+      register: vda_check
+    - name: Fail if /dev/vda is not found
+      fail:
+        msg: "/dev/vda not found on this system"
+      when: not vda_check.stat.exists
+    - name: Attempt to grow /dev/vda3 partition
+      command: growpart /dev/vda 3
+      register: growpart_result
+      failed_when: false
+      changed_when: "'NOCHANGE' not in growpart_result.stdout and growpart_result.rc == 0"
+      ignore_errors: true
+    - name: Debug growpart output
+      debug:
+        msg: "{{ growpart_result.stdout | default('No output from growpart') }}"
+    - name: Get mount point of /dev/vda3
+      shell: "lsblk -nr -o MOUNTPOINT /dev/vda3 | tail -1"
+      register: mountpoint_result
+      changed_when: false
+    - name: Debug mount point info
+      debug:
+        msg: "Detected mount point for /dev/vda3: {{ mountpoint_result.stdout | default('none') }}"
+    - name: Grow XFS filesystem on /dev/vda3
+      command: "xfs_growfs /"
+      when:
+        - mountpoint_result.stdout is defined
+        - mountpoint_result.stdout | trim != ""
+      ignore_errors: true
+"""
+    return content
+
+
+def block_volume_disk_grow_and_nsd_add(
+    hosts_config, disks_list, disk_names, filesystem_mountpoint
+):
+    """Generate an Ansible playbook to create NSD stanza files (runs only on primary node)."""
+    content = f"""---
+# Spectrum Scale — NSD grow flow (primary executes all NSD ops sequentially)
+- hosts: {hosts_config}
+  become: yes
+  collections:
+    - ibm.spectrum_scale
+  gather_facts: false
+  vars:
+    output_dir: /var/mmfs/tmp
+    primary_node: "{{{{ groups['scale_nodes'][0] }}}}"  # first node = primary
+    filesystem_name: {filesystem_mountpoint}
+    pause_seconds: 5
+  tasks:
+    # =========================================================
+    # Grow partitions and filesystems on all servers
+    # =========================================================
+    - name: Ensure growpart and lsblk utilities are installed
+      package:
+        name:
+          - cloud-utils-growpart
+          - util-linux
+        state: present
+    - name: Define disk list dynamically
+      set_fact:
+        disk_names: "{{{{ disks_list | map(attribute='device') | list }}}}"
+    - name: Detect partitions for each disk
+      shell: "lsblk -nr -o NAME {{{{ item }}}} | grep -E '^{{{{ item | basename }}}}[0-9]+' || true"
+      loop: "{{{{ disk_names }}}}"
+      register: partition_info
+    - name: Grow partitions dynamically
+      command: "growpart {{{{ item.item }}}} {{{{ item.stdout | regex_search('[0-9]+$') or '1' }}}}"
+      loop: "{{{{ partition_info.results }}}}"
+      register: growpart_result
+      when: item.stdout != ''
+      failed_when: false
+      changed_when: "'NOCHANGE' not in growpart_result.stdout and growpart_result.rc == 0"
+      ignore_errors: true
+    - name: Debug growpart output
+      debug:
+        msg: "{{{{ item.stdout | default('No partitions found or skipped') }}}}"
+      loop: "{{{{ growpart_result.results | default([]) }}}}"
+    - name: Get mount points for each expanded partition
+      shell: "lsblk -nr -o MOUNTPOINT {{{{ item.item }}}} | tail -1"
+      loop: "{{{{ partition_info.results }}}}"
+      register: mountpoints
+      when: item.stdout != ''
+    - name: Grow XFS filesystems for detected mount points
+      command: "xfs_growfs {{{{ item.stdout }}}}"
+      loop: "{{{{ mountpoints.results }}}}"
+      when:
+        - item.stdout != ''
+        - item.stdout is not none
+      ignore_errors: true
+    # =========================================================
+    # Prepare stanza files (primary only)
+    # =========================================================
+    - name: "Prepare NSD stanza files (primary only)"
+      when: inventory_hostname == primary_node
+      block:
+        - name: Group disks by server
+          set_fact:
+            server_disks: "{{{{ server_disks | default({{}}) | combine(dict([(item.servers, (server_disks[item.servers] | default([])) + [item])])) }}}}"
+          loop: "{{{{ disks_list }}}}"
+        - name: "Ensure output directory exists"
+          ansible.builtin.file:
+            path: "{{{{ output_dir }}}}"
+            state: directory
+            mode: '0755'
+        - name: "Create NSD stanza files for each disk"
+          ansible.builtin.copy:
+            dest: "{{{{ output_dir }}}}/StanzaFile_nsd_{{{{ item.servers | replace('-', '_') }}}}_{{{{ item.device | basename }}}}.{{{{ filesystem_name }}}}"
+            mode: '0644'
+            content: |
+              %nsd:
+                device={{{{ item.device }}}}
+                nsd=nsd_{{{{ item.servers | replace('-', '_') }}}}_{{{{ item.device | basename }}}}
+                servers={{{{ item.servers }}}}
+                usage={{{{ item.usage }}}}
+                failureGroup={{{{ item.failureGroup }}}}
+                pool={{{{ item.pool }}}}
+          loop: "{{{{ disks_list }}}}"
+          loop_control:
+            label: "{{{{ item.servers }}}}"
+        - name: "Build list of target servers (exclude primary)"
+          set_fact:
+            target_servers: "{{{{ (server_disks.keys() | list) | reject('equalto', primary_node) | list }}}}"
+    # =========================================================
+    # Run per-server processing sequentially (primary only)
+    # =========================================================
+    - name: "Run per-server NSD processing sequentially (primary only)"
+      when:
+        - inventory_hostname == primary_node
+      block:
+        - name: "Fail early if no servers to process"
+          fail:
+            msg: "No target servers found (empty disks_list or only primary)."
+          when: target_servers is not defined or target_servers | length == 0
+        - name: "Process each target server sequentially"
+          include_tasks: nsd_remove_and_add_each_server.yaml
+          loop: "{{{{ target_servers }}}}"
+          loop_control:
+            loop_var: target_server
+            label: "{{{{ target_server }}}}"
+
+    # =========================================================
+    # Cleanup: remove exactly the created NSD stanza files
+    # =========================================================
+    - name: "Remove generated NSD stanza files (primary only)"
+      when: inventory_hostname == primary_node
+      ansible.builtin.file:
+        path: "{{{{ output_dir }}}}/StanzaFile_nsd_{{{{ item.servers | replace('-', '_') }}}}_{{{{ item.device | basename }}}}.{{{{ filesystem_name }}}}"
+        state: absent
+      loop: "{{{{ disks_list }}}}"
+      loop_control:
+        label: "{{{{ item.servers }}}}"
+    # =========================================================
+    # Final: Rebalance filesystem after NSD operations
+    # =========================================================
+    - name: "Run mmrestripefs to rebalance filesystem (primary only)"
+      when: inventory_hostname == primary_node
+      command: "mmrestripefs {{{{ filesystem_name }}}} -b"
+      register: restripe_output
+      ignore_errors: true
+    - name: "Debug mmrestripefs output"
+      when: inventory_hostname == primary_node
+      debug:
+        var: restripe_output.stdout
+    - name: "Re-mount the filesystem (primary only)"
+      when: inventory_hostname == primary_node
+      command: "mmmount {{{{ filesystem_name }}}} -a"
+      register: mount_output
+      ignore_errors: true
+    - name: "Debug mmmount output"
+      debug:
+        var: mount_output.stdout
+"""
+    return content
+
+
+def nsd_remove_and_add_each_server():
+    """Generate an Ansible task file to process NSDs on a per-server basis."""
+    content = """---
+# Tasks to process NSDs for a single server
+- name: "Debug — starting server {{ target_server }}"
+  debug:
+    msg: "Processing NSDs for {{ target_server }}"
+- name: "Delete NSDs from filesystem for {{ target_server }}"
+  shell: >
+    /usr/lpp/mmfs/bin/mmdeldisk {{ filesystem_name }}
+    nsd_{{ target_server | replace('-', '_') }}_{{ item.device | basename }}
+  loop: "{{ server_disks[target_server] }}"
+  loop_control:
+    label: "{{ item.device | basename }}"
+  register: del_results
+  failed_when: false
+  ignore_errors: true
+- name: "Delete NSD definitions for {{ target_server }}"
+  shell: >
+    /usr/lpp/mmfs/bin/mmdelnsd
+    nsd_{{ target_server | replace('-', '_') }}_{{ item.device | basename }}
+  loop: "{{ server_disks[target_server] }}"
+  loop_control:
+    label: "{{ item.device | basename }}"
+  register: delnsd_results
+  failed_when: false
+  ignore_errors: true
+- name: "Recreate NSDs using stanza files for {{ target_server }}"
+  shell: >
+    /usr/lpp/mmfs/bin/mmcrnsd -F {{ output_dir }}/StanzaFile_nsd_{{ target_server | replace('-', '_') }}_{{ item.device | basename }}.{{ filesystem_name }}
+  loop: "{{ server_disks[target_server] }}"
+  loop_control:
+    label: "{{ item.device | basename }}"
+  register: crnsd_results
+  failed_when: false
+  ignore_errors: true
+- name: "Add NSDs back to filesystem for {{ target_server }}"
+  shell: >
+    /usr/lpp/mmfs/bin/mmadddisk {{ filesystem_name }} -F {{ output_dir }}/StanzaFile_nsd_{{ target_server | replace('-', '_') }}_{{ item.device | basename }}.{{ filesystem_name }}
+  loop: "{{ server_disks[target_server] }}"
+  loop_control:
+    label: "{{ item.device | basename }}"
+  register: add_results
+  failed_when: false
+  ignore_errors: true
+- name: "Debug — summarize results for {{ target_server }}"
+  debug:
+    msg:
+      - "Delete: {{ del_results.results | map(attribute='rc') | list }}"
+      - "DelNSD: {{ delnsd_results.results | map(attribute='rc') | list }}"
+      - "Recreate: {{ crnsd_results.results | map(attribute='rc') | list }}"
+      - "Add: {{ add_results.results | map(attribute='rc') | list }}"
+- name: "Pause between servers"
+  pause:
+    seconds: "{{ pause_seconds }}"
+"""
+    return content
 
 
 def initialize_cluster_details(
@@ -415,6 +695,7 @@ def initialize_cluster_details(
     cluster_details["ldap_admin_password"] = ldap_admin_password
     cluster_details["scale_afm_cos_bucket_params"] = afm_cos_bucket_details
     cluster_details["scale_afm_cos_filesets_params"] = afm_config_details
+    cluster_details["sudo_enable"] = True
     return cluster_details
 
 
@@ -465,7 +746,7 @@ def initialize_node_details(
                     "scale_protocol_node": False,
                     "scale_cluster_gateway": False,
                 }
-            # Scale Management node defination
+            # Scale Management node definition
             elif (
                 compute_cluster_instance_names.index(each_ip) == total_compute_node - 1
             ):
@@ -492,7 +773,7 @@ def initialize_node_details(
                     ),
                 )
             else:
-                # Non-quorum node defination
+                # Non-quorum node definition
                 node = {
                     "ip_addr": each_ip,
                     "is_quorum": False,
@@ -546,7 +827,7 @@ def initialize_node_details(
                     "scale_protocol_node": is_protocol,
                     "scale_cluster_gateway": is_afm,
                 }
-            # Tie-breaker node defination
+            # Tie-breaker node definition
             elif (
                 storage_cluster_instance_names.index(each_ip) == total_storage_node - 1
             ):
@@ -565,7 +846,7 @@ def initialize_node_details(
                     "scale_protocol_node": False,
                     "scale_cluster_gateway": False,
                 }
-            # Scale Management node defination
+            # Scale Management node definition
             elif (
                 storage_cluster_instance_names.index(each_ip) == total_storage_node - 2
             ):
@@ -592,7 +873,7 @@ def initialize_node_details(
                     ),
                 )
             else:
-                # Non-quorum node defination
+                # Non-quorum node definition
                 node = {
                     "ip_addr": each_ip,
                     "is_quorum": False,
@@ -786,6 +1067,19 @@ def initialize_scale_config_details(list_nodclass_param_dict):
 
     scale_config["scale_cluster_config"]["ephemeral_port_range"] = "60000-61000"
     return scale_config
+
+
+def get_disk_name(disk_mapping, desc_disk_mapping):
+    """Get disk names."""
+    disk_names = []
+    for each_ip, disk_per_ip in disk_mapping.items():
+        for each_disk in disk_per_ip:
+            disk_names.append(each_disk)
+
+    # Append "descOnly" disk details
+    if len(desc_disk_mapping.keys()):
+        disk_names.append(list(desc_disk_mapping.values())[0][0])
+    return list(set(disk_names))
 
 
 def get_disks_list(az_count, disk_mapping, desc_disk_mapping, disk_type):
@@ -1108,6 +1402,7 @@ if __name__ == "__main__":
     PARSER.add_argument(
         "--enable_key_protect", help="enable key protect", default="null"
     )
+    PARSER.add_argument("--user", help="OS User for Ansible", default="vpcuser")
     ARGUMENTS = PARSER.parse_args()
 
     cluster_type, gui_username, gui_password = None, None, None
@@ -1226,7 +1521,7 @@ if __name__ == "__main__":
             "protocolnodegrp",
             ARGUMENTS.proto_memory,
             ARGUMENTS.proto_vcpus_count,
-            ARGUMENTS.strg_bandwidth,
+            ARGUMENTS.proto_bandwidth,
         )
         storageprotocolnodegrp = generate_nodeclass_config(
             "storageprotocolnodegrp",
@@ -1577,6 +1872,31 @@ if __name__ == "__main__":
             "Content of ansible playbook for encryption:\n", encryption_playbook_content
         )
 
+    # Step-4.2: Create Key Protect Encryption playbook
+    if (
+        ARGUMENTS.scale_encryption_enabled == "true"
+        and ARGUMENTS.scale_encryption_type == "key_protect"
+        and ARGUMENTS.enable_key_protect == "True"
+    ):
+        kp_encryption_playbook_content = (
+            prepare_ansible_playbook_key_protect_encryption(
+                "scale_nodes", f"{cluster_type}_cluster_config.yaml"
+            )
+        )
+        write_to_file(
+            "/{}/{}/{}_kp_encryption_playbook.yaml".format(
+                ARGUMENTS.install_infra_path,
+                "ibm-spectrum-scale-install-infra",
+                cluster_type,
+            ),
+            kp_encryption_playbook_content,
+        )
+    if ARGUMENTS.verbose:
+        print(
+            "Content of ansible playbook for key protect encryption:\n",
+            kp_encryption_playbook_content,
+        )
+
     # Step-5: Create hosts
     config = configparser.ConfigParser(allow_no_value=True)
     node_details = initialize_node_details(
@@ -1590,7 +1910,7 @@ if __name__ == "__main__":
         TF["protocol_cluster_instance_names"],
         TF["storage_cluster_desc_instance_private_ips"],
         quorum_count,
-        "root",
+        ARGUMENTS.user,
         ARGUMENTS.instance_private_key,
     )
     node_template = ""
@@ -1746,4 +2066,70 @@ if __name__ == "__main__":
         if ARGUMENTS.verbose:
             print(
                 f"group_vars content:\n{yaml.dump(scale_storage_cluster, default_flow_style=False)}"
+            )
+
+        # Grow filesystem if block_volume_disk_grow is true
+        block_volume_disk_grow = TF["block_volume_disk_grow"]
+        if block_volume_disk_grow:
+            disk_names = get_disk_name(
+                TF["storage_cluster_with_data_volume_mapping"],
+                TF["storage_cluster_desc_data_volume_mapping"],
+            )
+            storage_cluster_filesystem_mountpoint = TF[
+                "storage_cluster_filesystem_mountpoint"
+            ]
+            filesystem_mountpoint = storage_cluster_filesystem_mountpoint.rstrip(
+                "/"
+            ).split("/")[-1]
+            block_volume_disk_grow_and_nsd_add = block_volume_disk_grow_and_nsd_add(
+                hosts_config="scale_nodes",
+                disks_list=disks_list,
+                disk_names=disk_names,
+                filesystem_mountpoint=filesystem_mountpoint,
+            )
+            write_to_file(
+                "/{}/{}/{}_block_disk_grow_and_nsd_add.yaml".format(
+                    ARGUMENTS.install_infra_path,
+                    "ibm-spectrum-scale-install-infra",
+                    cluster_type,
+                ),
+                block_volume_disk_grow_and_nsd_add,
+            )
+            # Create nsd_remove_and_add_each_server.yaml file
+            nsd_remove_and_add_each_server = nsd_remove_and_add_each_server()
+            write_to_file(
+                "/{}/{}/nsd_remove_and_add_each_server.yaml".format(
+                    ARGUMENTS.install_infra_path,
+                    "ibm-spectrum-scale-install-infra",
+                ),
+                nsd_remove_and_add_each_server,
+            )
+
+            disks_json = json.dumps(disks_list)
+            config.set("all:vars", "disks_list", disks_json)
+            with open(
+                "{}/{}/{}_inventory.ini".format(
+                    ARGUMENTS.install_infra_path,
+                    "ibm-spectrum-scale-install-infra",
+                    cluster_type,
+                ),
+                "w",
+            ) as configfile:
+                configfile.write("[scale_nodes]" + "\n")
+                configfile.write(node_template)
+                config.write(configfile)
+
+        # Grow boot disk if boot_volume_disk_grow is true
+        boot_volume_disk_grow = TF["boot_volume_disk_grow"]
+        if boot_volume_disk_grow:
+            boot_volume_disk_grow_partition = boot_volume_disk_grow_partition(
+                hosts_config="scale_nodes"
+            )
+            write_to_file(
+                "/{}/{}/{}_boot_disk_grow.yaml".format(
+                    ARGUMENTS.install_infra_path,
+                    "ibm-spectrum-scale-install-infra",
+                    cluster_type,
+                ),
+                boot_volume_disk_grow_partition,
             )

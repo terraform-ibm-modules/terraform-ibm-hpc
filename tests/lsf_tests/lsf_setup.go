@@ -88,8 +88,8 @@ type EnvVars struct {
 	WorkerNodeMaxCount                          string
 	StaticComputeInstances                      string
 	DynamicComputeInstances                     string
-	SccWPEnabled                                string
-	CspmEnabled                                 string
+	EnableSccwp                                 string
+	EnableCspm                                  string
 	SccwpServicePlan                            string
 	AppConfigPlan                               string
 	ObservabilityMonitoringEnable               string
@@ -111,6 +111,19 @@ type EnvVars struct {
 	LsfVersion                                  string
 	LoginInstance                               string
 	AttrackerTestZone                           string
+	EnableWebService                            string
+	EnableAppcenter                             string
+	WebServiceAppcenterPassword                 string
+
+	// New fields for region configuration
+	DefaultRegion       string
+	BasicRegion         string
+	KmsRegion           string
+	LdapRegion          string
+	AppcenterRegion     string
+	ObservabilityRegion string
+	ExistingVpcRegion   string
+	ScalingRegion       string
 }
 
 func GetEnvVars() (*EnvVars, error) {
@@ -156,8 +169,8 @@ func GetEnvVars() (*EnvVars, error) {
 		WorkerNodeMaxCount:              os.Getenv("WORKER_NODE_MAX_COUNT"),
 		StaticComputeInstances:          os.Getenv("STATIC_COMPUTE_INSTANCES"),
 		DynamicComputeInstances:         os.Getenv("DYNAMIC_COMPUTE_INSTANCES"),
-		SccWPEnabled:                    os.Getenv("SCCWP_ENABLED"),
-		CspmEnabled:                     os.Getenv("CSPM_ENABLED"),
+		EnableSccwp:                     os.Getenv("ENABLE_SCCWP"),
+		EnableCspm:                      os.Getenv("ENABLE_CSPM"),
 		SccwpServicePlan:                os.Getenv("SCCWP_SERVICE_PLAN"),
 		AppConfigPlan:                   os.Getenv("APP_CONFIG_PLAN"),
 		ObservabilityMonitoringEnable:   os.Getenv("OBSERVABILITY_MONITORING_ENABLE"),
@@ -178,6 +191,19 @@ func GetEnvVars() (*EnvVars, error) {
 		LsfVersion:                                  os.Getenv("LSF_VERSION"),
 		LoginInstance:                               os.Getenv("LOGIN_INSTANCE"),
 		AttrackerTestZone:                           os.Getenv("ATTRACKER_TEST_ZONE"),
+		EnableWebService:                            os.Getenv("ENABLE_WEB_SERVICE"),
+		EnableAppcenter:                             os.Getenv("ENABLE_APPCENTER"),
+		WebServiceAppcenterPassword:                 os.Getenv("WEB_SERVICE_APPCENTER_PASSWORD"),
+
+		// New fields
+		DefaultRegion:       os.Getenv("DEFAULT_REGION"),
+		BasicRegion:         os.Getenv("BASIC_REGION"),
+		KmsRegion:           os.Getenv("KMS_REGION"),
+		LdapRegion:          os.Getenv("LDAP_REGION"),
+		AppcenterRegion:     os.Getenv("APPCENTER_REGION"),
+		ObservabilityRegion: os.Getenv("OBSERVABILITY_REGION"),
+		ExistingVpcRegion:   os.Getenv("EXISTING_VPC_REGION"),
+		ScalingRegion:       os.Getenv("SCALING_REGION"),
 	}
 
 	// Validate required fields
@@ -259,6 +285,88 @@ func checkRequiredEnvVars() error {
 	return nil
 }
 
+// GetLSFVersionConfig determines the correct config YAML file based on the LSF_VERSION
+// environment variable. It accepts multiple aliases for convenience (e.g., "14", "lsf14", "fixpack_14"),
+// normalizes them to standard constants, and returns the matching config file name.
+func GetLSFVersionConfig() (string, error) {
+	// Step 1: Set default version
+	lsfVersion := DefaultLSFVersion
+	var productFileName string
+
+	// Step 2: Check for environment override
+	if envVersion, ok := os.LookupEnv("LSF_VERSION"); ok {
+		lsfVersion = strings.ToLower(envVersion) // Normalize user input
+	}
+
+	// Step 3: Normalize aliases and map to config file
+	switch lsfVersion {
+	case "fixpack_14", "lsf14", "14":
+		productFileName = lsfFP14ConfigFile
+		lsfVersion = LSF14 // Normalize for consistent internal use
+	case "fixpack_15", "lsf15", "15":
+		productFileName = lsfFP15ConfigFile
+		lsfVersion = LSF15
+	default:
+		return "", fmt.Errorf("unsupported LSF version: %s (supported: fixpack_14, fixpack_15, lsf14, lsf15, 14, 15)", lsfVersion)
+	}
+
+	// Step 4: Ensure normalized value is set in environment
+	if err := os.Setenv("LSF_VERSION", lsfVersion); err != nil {
+		return "", fmt.Errorf("failed to set normalized LSF_VERSION: %w", err)
+	}
+
+	log.Printf("✅ Using LSF_VERSION: %s", lsfVersion)
+	return productFileName, nil
+}
+
+// applyRegionOverrides automatically determines test type from test name
+func applyRegionOverrides(t *testing.T, envVars *EnvVars, options *testhelper.TestOptions, testType string) {
+
+	// Do not override if default region is enabled or ZONES env variable is set
+	if strings.Contains(envVars.DefaultRegion, "true") {
+		testLogger.Info(t, "Skipping region override (default_region enabled)")
+		return
+	}
+
+	// Determine test name
+	testName := strings.ToLower(t.Name())
+	if testType != "" {
+		testName = strings.ToLower(testType)
+	}
+
+	var region string
+
+	switch {
+	case strings.Contains(testName, "basic"):
+		region = envVars.BasicRegion
+	case strings.Contains(testName, "kms"):
+		region = envVars.KmsRegion
+	case strings.Contains(testName, "ldap"):
+		region = envVars.LdapRegion
+	case strings.Contains(testName, "appcenter"):
+		region = envVars.AppcenterRegion
+	case strings.Contains(testName, "observability"):
+		region = envVars.ObservabilityRegion
+	case strings.Contains(testName, "existingvpc"), strings.Contains(testName, "existing_vpc"):
+		region = envVars.ExistingVpcRegion
+	case strings.Contains(testName, "scaling"):
+		region = envVars.ScalingRegion
+	default:
+		testLogger.Info(t, fmt.Sprintf("No region mapping found for test: %s. Using default zones.", t.Name()))
+		return
+	}
+
+	if region == "" {
+		testLogger.Info(t, fmt.Sprintf("Region mapping exists but region value is empty for test: %s", testName))
+		return
+	}
+
+	// Override Terraform zones
+	options.TerraformVars["zones"] = utils.SplitAndTrim(region, ",")
+
+	testLogger.Info(t, fmt.Sprintf("Terraform zones overridden to: %v", options.TerraformVars["zones"]))
+}
+
 // setupOptionsVPC creates a test options object with the given parameters to creating brand new vpc
 func setupOptionsVPC(t *testing.T, clusterNamePrefix, terraformDir, existingResourceGroup string) (*testhelper.TestOptions, error) {
 
@@ -325,13 +433,16 @@ func setupOptions(t *testing.T, clusterNamePrefix, terraformDir, existingResourc
 			"static_compute_instances":        envVars.StaticComputeInstances,
 			"dynamic_compute_instances":       envVars.DynamicComputeInstances,
 			"bastion_instance":                envVars.BastionInstance,
-			"sccwp_enable":                    false,
-			"cspm_enabled":                    false,
+			"enable_sccwp":                    false,
+			"enable_cspm":                     false,
 			"custom_file_shares":              envVars.CustomFileShares,
 			"enable_cos_integration":          false,
 			"enable_vpc_flow_logs":            false,
-			"app_center_gui_password":         envVars.AppCenterGuiPassword, // pragma: allowlist secret
+			"enable_webservice":               envVars.EnableWebService,
+			"enable_appcenter":                envVars.EnableAppcenter,
+			"webservice_appcenter_password":   envVars.WebServiceAppcenterPassword, // pragma: allowlist secret
 			"lsf_version":                     envVars.LsfVersion,
+			"enable_lsf_pay_per_use":          false,
 		},
 	}
 
@@ -345,79 +456,61 @@ func setupOptions(t *testing.T, clusterNamePrefix, terraformDir, existingResourc
 	return options, nil
 }
 
-// GetLSFVersionConfig determines the correct config YAML file based on the LSF_VERSION
-// environment variable. It accepts multiple aliases for convenience (e.g., "14", "lsf14", "fixpack_14"),
-// normalizes them to standard constants, and returns the matching config file name.
-func GetLSFVersionConfig() (string, error) {
-	// Step 1: Set default version
-	lsfVersion := DefaultLSFVersion
-	var productFileName string
-
-	// Step 2: Check for environment override
-	if envVersion, ok := os.LookupEnv("LSF_VERSION"); ok {
-		lsfVersion = strings.ToLower(envVersion) // Normalize user input
-	}
-
-	// Step 3: Normalize aliases and map to config file
-	switch lsfVersion {
-	case "fixpack_14", "lsf14", "14":
-		productFileName = lsfFP14ConfigFile
-		lsfVersion = LSF14 // Normalize for consistent internal use
-	case "fixpack_15", "lsf15", "15":
-		productFileName = lsfFP15ConfigFile
-		lsfVersion = LSF15
-	default:
-		return "", fmt.Errorf("unsupported LSF version: %s (supported: fixpack_14, fixpack_15, lsf14, lsf15, 14, 15)", lsfVersion)
-	}
-
-	// Step 4: Ensure normalized value is set in environment
-	if err := os.Setenv("LSF_VERSION", lsfVersion); err != nil {
-		return "", fmt.Errorf("failed to set normalized LSF_VERSION: %w", err)
-	}
-
-	log.Printf("✅ Using LSF_VERSION: %s", lsfVersion)
-	return productFileName, nil
-}
-
-// DefaultTest validates creation and verification of an HPC cluster
+// DefaultTest validates creation and verification of an HPC LSF cluster.
 // Tests:
-// - Successful cluster provisioning
-// - Valid output structure
-// - Resource cleanup
-
+//   - Successful cluster provisioning
+//   - Valid output structure
+//   - Resource cleanup
 func DefaultTest(t *testing.T) {
+	t.Helper()
 
-	// 1. Initialization
+	// ── 1. Initialization ────────────────────────────────────────────────────
 	setupTestSuite(t)
-	if testLogger == nil {
-		t.Fatal("Logger initialization failed")
-	}
-	testLogger.Info(t, fmt.Sprintf("Test %s starting execution", t.Name()))
+	require.NotNil(t, testLogger, "Test logger must be initialized before use")
+	testLogger.Info(t, fmt.Sprintf("[START] Test %s beginning execution", t.Name()))
+	t.Log("[START] Test", t.Name(), "beginning execution")
 
-	// 2. Configuration
+	// ── 2. Configuration ─────────────────────────────────────────────────────
 	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster prefix: %s", clusterNamePrefix))
+	t.Log("Generated cluster name prefix:", clusterNamePrefix)
 
 	envVars, err := GetEnvVars()
 	if err != nil {
-		testLogger.Error(t, fmt.Sprintf("Environment config error: %v", err))
+		t.Log("Failed to load environment variables:", err)
+		testLogger.FAIL(t, fmt.Sprintf("Failed to load environment variables: %v", err))
+		require.NoError(t, err, "Environment configuration failed")
 	}
-	require.NoError(t, err, "Environment configuration failed")
+	t.Log("Environment variables loaded successfully")
 
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
 	if err != nil {
-		testLogger.Error(t, fmt.Sprintf("Test setup error: %v", err))
+		t.Log("Failed to initialize test options:", err)
+		testLogger.FAIL(t, fmt.Sprintf("Failed to initialize test options: %v", err))
+		require.NoError(t, err, "Test options initialization failed")
 	}
-	require.NoError(t, err, "Test options initialization failed")
+	t.Log("Test options initialized successfully")
 
-	// 3. Execution & Validation
+	// ── 3. Pre-conditions ─────────────────────────────────────────────────────
+	testLogger.Info(t, fmt.Sprintf("Pre-condition check: cluster prefix=%s, resource group=%s",
+		clusterNamePrefix, envVars.DefaultExistingResourceGroup))
+	t.Log("Pre-condition check passed — configuration is valid, ready to provision")
+
+	// ── 4. Execution & Validation ─────────────────────────────────────────────
+	testLogger.Info(t, fmt.Sprintf("Deployment started for test: %s", t.Name()))
+	t.Log("Starting cluster provisioning...")
+
 	output, err := options.RunTestConsistency()
 	if err != nil {
-		testLogger.FAIL(t, fmt.Sprintf("Provisioning failed: %v", err))
+		t.Log("Cluster provisioning failed:", err)
+		testLogger.FAIL(t, fmt.Sprintf("Cluster provisioning failed: %v", err))
+		require.NoError(t, err, "Cluster provisioning failed with output: %v", output)
 	}
-	require.NoError(t, err, "Cluster provisioning failed with output: %v", output)
-	require.NotNil(t, output, "Received nil output from provisioning")
+	require.NotNil(t, output, "Cluster provisioning returned nil output")
 
-	// 4. Completion
-	testLogger.PASS(t, fmt.Sprintf("Test %s completed successfully", t.Name()))
+	testLogger.Info(t, fmt.Sprintf("Deployment completed successfully for test: %s", t.Name()))
+	t.Log("Cluster provisioning completed and output validated")
+
+	// ── 5. Completion ─────────────────────────────────────────────────────────
+	testLogger.PASS(t, fmt.Sprintf("[END] Test %s completed successfully", t.Name()))
+	t.Log("[END] Test", t.Name(), "completed successfully")
 }

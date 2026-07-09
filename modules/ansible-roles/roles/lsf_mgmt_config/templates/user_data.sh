@@ -5,10 +5,14 @@ echo "START $(date '+%Y-%m-%d %H:%M:%S')" >>$logfile
 
 # Initialize variables
 cluster_prefix="{{ prefix }}"
-default_cluster_name="myCluster"
+default_cluster_name="HPCCluster"
 nfs_server_with_mount_path="{{ mount_paths_map['/mnt/lsf'] }}"
 cloud_monitoring_access_key="{{ cloud_monitoring_access_key }}"
 cloud_monitoring_ingestion_url="{{ cloud_monitoring_ingestion_url }}"
+enable_sccwp="{{ enable_sccwp }}"
+sccwp_api_endpoint="{{ sccwp_api_endpoint }}"
+sccwp_access_key="{{ sccwp_access_key }}"
+sccwp_ingestion_endpoint="{{ sccwp_ingestion_endpoint }}"
 observability_monitoring_on_compute_nodes_enable="{{ monitoring_enable_for_compute }}"
 observability_logs_enable_for_compute="{{ logs_enable_for_compute }}"
 cloud_logs_ingress_private_endpoint="{{ cloud_logs_ingress_private_endpoint }}"
@@ -19,6 +23,8 @@ hyperthreading="{{ enable_hyperthreading }}"
 ManagementHostNames="{{ lsf_masters | join(' ') }}"
 dns_domain="{{ dns_domain_names }}"
 network_interface="eth0"
+mtu_value="{{ mtu_value }}"
+enable_spot_instances="{{ enable_spot_instances }}"
 
 # LDAP
 enable_ldap="{{ enable_ldap }}"
@@ -44,11 +50,11 @@ chage -I -1 -m 0 -M 99999 -E -1 -W 14 lsfadmin
 
 # Setup Network configuration
 if grep -q "NAME=\"Red Hat Enterprise Linux" /etc/os-release; then
-  echo "MTU=9000" >>"/etc/sysconfig/network-scripts/ifcfg-${network_interface}"
+  echo "MTU=${mtu_value}" >>"/etc/sysconfig/network-scripts/ifcfg-${network_interface}"
   echo "DOMAIN=${dns_domain}" >>"/etc/sysconfig/network-scripts/ifcfg-${network_interface}"
   gateway_ip=$(ip route | grep default | awk '{print $3}' | head -n 1)
   cidr_range=$(ip route show | grep "kernel" | awk '{print $1}' | head -n 1)
-  echo "$cidr_range via $gateway_ip dev ${network_interface} metric 0 mtu 9000" >>/etc/sysconfig/network-scripts/route-${network_interface}
+  echo "$cidr_range via $gateway_ip dev ${network_interface} metric 0 mtu ${mtu_value}" >>/etc/sysconfig/network-scripts/route-${network_interface}
   systemctl restart NetworkManager
 fi
 
@@ -113,8 +119,8 @@ echo "Setting custom file shares is completed." >>"$logfile"
 echo '{% endraw %}'
 
 # Setup SSH
-LDAP_DIR="/home/lsfadmin"
-SSH_DIR="$LDAP_DIR/.ssh"
+LSFADMIN_DIR="/home/lsfadmin"
+SSH_DIR="$LSFADMIN_DIR/.ssh"
 mkdir -p "$SSH_DIR"
 cp /home/vpcuser/.ssh/authorized_keys "$SSH_DIR/authorized_keys"
 cat "{{ ha_shared_dir }}/ssh/id_rsa.pub" >>"$SSH_DIR/authorized_keys"
@@ -126,12 +132,12 @@ chmod 700 "$SSH_DIR"
 chown -R lsfadmin:lsfadmin "$SSH_DIR"
 
 # Setup LSF environment variables
-LSF_TOP="/opt/ibm/lsfsuite/lsf"
+LSF_TOP="/opt/ibm/lsf"
 LSF_CONF="$LSF_TOP/conf"
 LSF_WORK="$LSF_TOP/work"
 LSF_CONF_FILE="$LSF_CONF/lsf.conf"
-LSF_LOGS="/opt/ibm/lsflogs"
-SHARED_HOSTS="/mnt/lsf/lsf/conf/hosts"
+LSF_LOGS="/opt/ibm/lsf/log"
+SHARED_HOSTS="/mnt/lsf/conf/hosts"
 LSF_HOSTS_FILE="${LSF_CONF}/hosts"
 SYSTEM_HOSTS_FILE="/etc/hosts"
 
@@ -139,6 +145,17 @@ SYSTEM_HOSTS_FILE="/etc/hosts"
 mkdir -p $LSF_LOGS
 chown -R lsfadmin $LSF_LOGS
 chown -R 755 $LSF_LOGS
+
+# Configure LSF sudoers and host setup
+
+cat <<EOT > "/etc/lsf.sudoers"
+LSF_STARTUP_USERS="lsfadmin"
+LSF_STARTUP_PATH=$LSF_TOP_VERSION/linux4.18-glibc2.28-x86_64/etc/
+EOT
+
+chmod 600 /etc/lsf.sudoers
+
+$LSF_TOP/10.1/install/hostsetup --top="$LSF_TOP" --boot="y" --start="y" --dynamic
 
 # Append the line only if the exact search line is not already present
 if ! grep -Fxq "search ${dns_domain}" /etc/resolv.conf; then
@@ -191,7 +208,7 @@ fi
 echo "EGO_DEFINE_NCPUS=${ego_define_ncpus}" >>$LSF_CONF_FILE
 
 # Main Configuration for Dynamic Nodes
-sed -i 's|^LSF_LOGDIR=.*|LSF_LOGDIR="/opt/ibm/lsflogs"|' $LSF_CONF_FILE
+# sed -i 's|^LSF_LOGDIR=.*|LSF_LOGDIR="/opt/ibm/lsf/log"|' $LSF_CONF_FILE
 sed -i '/^lsfservers/d' "$LSF_CONF/lsf.cluster.$cluster_prefix"
 grep -rli "$default_cluster_name" $LSF_CONF/* | xargs sed -i "s/$default_cluster_name/$cluster_prefix/g"
 mv $LSF_WORK/$default_cluster_name $LSF_WORK/"$cluster_prefix"
@@ -209,18 +226,37 @@ LSF_GPU_AUTOCONFIG=Y
 LSB_GPU_NEW_SYNTAX=extend
 EOF
 
+# Support rc_account resource to enable RC_ACCOUNT policy
+sed -i '$ a LSF_LOCAL_RESOURCES=\"[resource icgen2host]\"' $LSF_CONF_FILE
+
+# shellcheck disable=SC2154
+sed -i "s/\(LSF_LOCAL_RESOURCES=.*\)\"/\1 [resourcemap ${rc_account}*rc_account]\"/" $LSF_CONF_FILE
+
+# Add additional local resources if needed
+instance_id=$(dmidecode | grep Family | cut -d ' ' -f 2 |head -1)
+if [ -n "$instance_id" ]; then
+  sed -i "s/\(LSF_LOCAL_RESOURCES=.*\)\"/\1 [resourcemap ${instance_id}\*instanceID]\"/" "$LSF_CONF_FILE"
+  echo "Update LSF_LOCAL_RESOURCES in $LSF_CONF_FILE successfully, add [resourcemap ${instance_id}*instanceID]" >> "$logfile"
+else
+  echo "Can not get instance ID" >> $logfile
+fi
+
 # source profile.lsf
 echo "source ${LSF_CONF}/profile.lsf" >>~/.bashrc
-echo "source ${LSF_CONF}/profile.lsf" >>"$LDAP_DIR"/.bashrc
+echo "source ${LSF_CONF}/profile.lsf" >>"$LSFADMIN_DIR"/.bashrc
 source "$HOME/.bashrc"
-source "$LDAP_DIR/.bashrc"
+source "$LSFADMIN_DIR/.bashrc"
 
 chown -R lsfadmin $LSF_TOP
 chown -R lsfadmin $LSF_WORK
 
-# Restart the lsfd servive
+# Restart the lsfd service
 service lsfd stop && sleep 2 && service lsfd start
 sleep 10
+
+# Stop and Disable lwsd service
+systemctl stop lwsd
+systemctl disable lwsd
 
 # Setting up the LDAP configuration
 if [ "$enable_ldap" = "true" ]; then
@@ -328,37 +364,77 @@ else
   echo "Skipping LDAP Client configuration as it is not enabled." >>$logfile
 fi
 
-# Setting up the Cloud Monitoring Agent
-if [ "$cloud_monitoring_access_key" != "" ] && [ "$cloud_monitoring_ingestion_url" != "" ]; then
+# ==========================================
+# Setting up the Unified Metrics & Security Agent
+# ==========================================
+SYSDIG_CONFIG_FILE="/opt/draios/etc/dragent.yaml"
+START_DRAGENT=false
 
-  SYSDIG_CONFIG_FILE="/opt/draios/etc/dragent.yaml"
+# 1. Condition Block: IBM Cloud Monitoring (Metrics)
+if [ "$observability_monitoring_on_compute_nodes_enable" = true ]; then
+  echo "observability_monitoring_on_compute_nodes_enable is true" >>"$logfile"
+  if [ "$cloud_monitoring_access_key" != "" ] && [ "$cloud_monitoring_ingestion_url" != "" ]; then
+    {
+      echo "cloud_monitoring_access_key and cloud_monitoring_ingestion_url are provided"
+      echo "Writing sysdig config file"
+      echo "Setting customerid access key"
+    } >>"$logfile"
+    sed -i "s/==ACCESSKEY==/$cloud_monitoring_access_key/g" $SYSDIG_CONFIG_FILE
+    sed -i "s/==COLLECTOR==/$cloud_monitoring_ingestion_url/g" $SYSDIG_CONFIG_FILE
 
-  #packages installation
-  echo "Writing sysdig config file" >>"$logfile"
-
-  #sysdig config file
-  echo "Setting customerid access key" >>"$logfile"
-  sed -i "s/==ACCESSKEY==/$cloud_monitoring_access_key/g" $SYSDIG_CONFIG_FILE
-  sed -i "s/==COLLECTOR==/$cloud_monitoring_ingestion_url/g" $SYSDIG_CONFIG_FILE
-  echo "tags: type:compute,lsf:true" >>$SYSDIG_CONFIG_FILE
-else
-  echo "Skipping metrics agent configuration due to missing parameters" >>"$logfile"
+    # Mark that the agent has valid configuration to run
+    START_DRAGENT=true
+  else
+    echo "Skipping metrics agent configuration due to missing parameters" >>"$logfile"
+  fi
 fi
 
-if [ "$observability_monitoring_on_compute_nodes_enable" = true ]; then
+# 2. Condition Block: SCC Workload Protection (Security)
+if [ "$enable_sccwp" = true ]; then
+  echo "enable_sccwp is true" >>"$logfile"
+  if [ "$sccwp_api_endpoint" != "" ]; then
+    echo "Configuring Security Compliance data endpoints" >>"$logfile"
 
-  echo "Restarting sysdig agent" >>"$logfile"
+    sed -i "s/==SCC_ENDPOINT==/$sccwp_api_endpoint/g" $SYSDIG_CONFIG_FILE
+
+    # FALLBACK LOGIC: If Monitoring is OFF, the agent still needs an access key and collector!
+    if [ "$observability_monitoring_on_compute_nodes_enable" != true ]; then
+      echo "Monitoring is disabled on compute nodes. Using standalone SCC credentials for agent authentication." >>"$logfile"
+      sed -i "s/==ACCESSKEY==/$sccwp_access_key/g" $SYSDIG_CONFIG_FILE
+      sed -i "s/==COLLECTOR==/$sccwp_ingestion_endpoint/g" $SYSDIG_CONFIG_FILE
+    fi
+
+    # Mark that the agent has valid configuration to run
+    START_DRAGENT=true
+  else
+    echo "Skipping SCC configuration due to missing sccwp_api_endpoint" >>"$logfile"
+  fi
+
+else
+  echo "SCC Workload Protection is false. Safely disabling internal scanning engines." >>"$logfile"
+  # If security is explicitly disabled, flip the internal engine flags to false
+  # to save host CPU cycles and prevent connection errors to an empty placeholder.
+  sed -i '/host_scanner:/,/enabled: true/s/enabled: true/enabled: false/' $SYSDIG_CONFIG_FILE
+  sed -i '/kspm_analyzer:/,/enabled: true/s/enabled: true/enabled: false/' $SYSDIG_CONFIG_FILE
+fi
+
+# 3. Finalization Block: Global Rules & Daemon Lifecycle
+if [ "$START_DRAGENT" = true ]; then
+  echo "Appending global metadata infrastructure tags for compute nodes" >>"$logfile"
+  echo "tags: type:compute,lsf:true" >> $SYSDIG_CONFIG_FILE
+
+  echo "Activating and starting Sysdig unified agent service" >>"$logfile"
   systemctl enable dragent
   systemctl restart dragent
 else
-  echo "Metrics agent start skipped since monitoring provisioning is not enabled" >>"$logfile"
+  echo "Sysdig agent remaining stopped and disabled: No features were requested." >>"$logfile"
 fi
 
 # Setting up the IBM Cloud Logs
 if [ "$observability_logs_enable_for_compute" = true ]; then
 
-  echo "Configuring cloud logs for compute since observability logs for compute is enabled"
-  sudo cp /root/post-config.sh /opt/ibm
+  echo "Configuring cloud logs for compute since observability logs for compute is enabled" >>"$logfile"
+  sudo cp /opt/fluent-bit/bin/post-config.sh /opt/ibm
   cd /opt/ibm || exit
 
   cat <<EOL >/etc/fluent-bit/fluent-bit.conf
@@ -389,10 +465,10 @@ if [ "$observability_logs_enable_for_compute" = true ]; then
 [INPUT]
   Name              tail
   Tag               *
-  Path              /opt/ibm/lsflogs/*.log.*
+  Path              /opt/ibm/lsf/log/*.log.*
   Path_Key          file
   Exclude_Path      /var/log/at/**
-  DB                /opt/ibm/lsflogs/fluent-bit.DB
+  DB                /opt/ibm/lsf/log/fluent-bit.DB
   Buffer_Chunk_Size 32KB
   Buffer_Max_Size   256KB
   Skip_Long_Lines   On
@@ -406,15 +482,71 @@ if [ "$observability_logs_enable_for_compute" = true ]; then
   Add subsystemName compute
   Add applicationName lsf
 
-@INCLUDE output-logs-router-agent.conf
+@INCLUDE outputs.conf
 EOL
-
+  echo "Providing execution access to post-config.sh" >>"$logfile"
   sudo chmod +x post-config.sh
   sudo ./post-config.sh -h "$cloud_logs_ingress_private_endpoint" -p "3443" -t "/logs/v1/singles" -a IAMAPIKey -k "$VPC_APIKEY_VALUE" --send-directly-to-icl -s true -i Production
-  echo "INFO Testing IBM Cloud LSF Logs from compute: $hostname" | sudo tee -a /opt/ibm/lsflogs/test.log.com >/dev/null
-  sudo logger -u /tmp/in_syslog my_ident my_syslog_test_message_from_compute:"$hostname"
+  echo "INFO Testing IBM Cloud LSF Logs from compute: '$hostname'" | sudo tee -a /opt/ibm/lsf/log/fluent-test.log.com >/dev/null
+  echo "fluent-test.log.com has been successfully created" >>"$logfile"
 else
   echo "Cloud Logs configuration skipped since observability logs for compute is not enabled"
 fi
+echo "Completed sysdig and cloud logs configuration" >>"$logfile"
 
-echo "COMPLETED $(date '+%Y-%m-%d %H:%M:%S')" >>$logfile
+# Shutdown Script for Spot Instances
+if [ "$enable_spot_instances" = "True" ]; then
+# Create shutdown hook script
+cat <<'EOF' > /usr/local/bin/ibm-cloud-shutdown-script.sh
+#!/bin/bash
+
+# IBM Cloud Spot Instance Shutdown Hook Script
+#
+# This script is triggered automatically during:
+#   - IBM Cloud Spot instance reclaim/preemption
+#   - System shutdown
+#   - System reboot
+#
+# Purpose:
+#   Mark the LSF host as reclaimed/closed.
+
+su - lsfadmin -c 'badmin hclose -i "hostreclaim" -C "VM Instance is being reclaimed"'
+EOF
+
+chmod 755 /usr/local/bin/ibm-cloud-shutdown-script.sh
+
+# Create systemd service
+
+cat <<'EOF' > /etc/systemd/system/ibm-cloud-shutdown-script.service
+[Unit]
+Description=IBM Cloud Spot Shutdown Hook
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/true
+RemainAfterExit=true
+ExecStop=/usr/local/bin/ibm-cloud-shutdown-script.sh
+TimeoutStopSec=0
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+chmod 644 /etc/systemd/system/ibm-cloud-shutdown-script.service
+
+# Reload and enable service
+
+systemctl daemon-reload
+
+systemctl enable ibm-cloud-shutdown-script.service
+
+systemctl start ibm-cloud-shutdown-script.service
+
+echo "IBM Cloud Spot shutdown hook configured successfully"
+
+fi
+
+echo "COMPLETED $(date '+%Y-%m-%d %H:%M:%S')" >>"$logfile"

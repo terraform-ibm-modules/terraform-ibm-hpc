@@ -1,4 +1,11 @@
 ---
+# Configure Login Node
+# Includes tasks to set up the login node configuration.
 
-# Configure Login node
-- import_tasks: login_node_configuration.yml
+- name: Configure Login Node
+  import_tasks: configure_login_node.yml
+
+# Resize disk partition and filesystem
+- name: Resize root disk
+  include_role:
+    name: common_resize_disk

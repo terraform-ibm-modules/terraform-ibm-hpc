@@ -4,8 +4,11 @@ resource "local_sensitive_file" "prepare_tf_input" {
 {
   "scheduler": "${local.scheduler}",
   "ibmcloud_api_key": "${var.ibmcloud_api_key}",
-  "app_center_gui_password": "${var.app_center_gui_password}",
+  "enable_webservice": "${var.enable_webservice}",
+  "enable_appcenter": "${var.enable_appcenter}",
+  "webservice_appcenter_password": "${var.webservice_appcenter_password}",
   "lsf_version": "${var.lsf_version}",
+  "enable_lsf_pay_per_use": "${var.enable_lsf_pay_per_use}",
   "resource_group_ids": ${local.resource_group_ids},
   "cluster_prefix": "${var.cluster_prefix}",
   "zones": ${local.zones},
@@ -15,6 +18,8 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "ssh_keys": ${local.list_ssh_keys},
   "storage_instances": ${local.list_storage_instances},
   "storage_servers": ${local.list_storage_servers},
+  "tie_breaker_bm_server_profile": ${local.list_tie_breaker_bm_server},
+  "scale_management_vsi_profile": ${local.list_scale_management_vsi_profile},
   "storage_type": "${var.storage_type}",
   "management_instances": ${local.list_management_instances},
   "protocol_instances": ${local.list_protocol_instances},
@@ -23,22 +28,28 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "static_compute_instances": ${local.list_compute_instances},
   "dynamic_compute_instances": ${local.dynamic_compute_instances},
   "client_instances": ${local.list_client_instances},
+  "login_security_group_name": ${local.login_security_group_name},
+  "storage_security_group_name": ${local.storage_security_group_name},
+  "compute_security_group_name": ${local.compute_security_group_name},
+  "client_security_group_name": ${local.client_security_group_name},
+  "gklm_security_group_name": ${local.gklm_security_group_name},
+  "ldap_security_group_name": ${local.ldap_security_group_name},
   "enable_cos_integration": ${var.enable_cos_integration},
   "enable_atracker": ${var.enable_atracker},
   "enable_vpc_flow_logs": ${var.enable_vpc_flow_logs},
   "remote_allowed_ips": ${local.remote_allowed_ips},
   "vpc_name": "${var.vpc_name}",
-  "storage_subnets": ${local.list_storage_subnets},
-  "protocol_subnets": ${local.list_protocol_subnets},
-  "cluster_subnet_id": ${local.list_cluster_subnet_id},
-  "client_subnets": ${local.list_client_subnets},
+  "compute_subnet_id": ${local.list_compute_subnet_id},
   "login_subnet_id": ${local.list_login_subnet_ids},
+  "protocol_subnet_id": ${local.list_protocol_subnet_id},
+  "storage_subnet_id": ${local.list_storage_subnet_id},
+  "client_subnet_id": ${local.list_client_subnet_id},
   "dns_domain_names": ${local.dns_domain_names},
   "key_management": ${local.key_management},
   "kms_instance_name" : ${local.kms_instance_name},
   "kms_key_name": ${local.kms_key_name},
   "boot_volume_encryption_key": ${local.boot_volume_encryption_key},
-  "existing_kms_instance_guid": ${local.existing_kms_instance_guid},
+  "kms_instance_guid": ${local.kms_instance_guid},
   "skip_iam_share_authorization_policy": ${var.skip_iam_share_authorization_policy},
   "dns_custom_resolver_id": ${local.dns_custom_resolver_id},
   "dns_instance_id": ${local.dns_instance_id},
@@ -51,7 +62,6 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "enable_ldap": ${var.enable_ldap},
   "ldap_server": ${local.ldap_server},
   "ldap_basedns": ${local.ldap_basedns},
-  "ldap_instance_key_pair": ${local.list_ldap_ssh_keys},
   "ldap_admin_password": "${var.ldap_admin_password}",
   "ldap_user_name": "${var.ldap_user_name}",
   "ldap_user_password": "${var.ldap_user_password}",
@@ -60,10 +70,14 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "afm_cos_config": ${local.afm_cos_config_details},
   "scale_encryption_enabled": ${var.scale_encryption_enabled},
   "scale_encryption_type": ${local.scale_encryption_type},
-  "gklm_instance_key_pair": ${local.list_gklm_ssh_keys},
   "gklm_instances": ${local.list_gklm_instances},
-  "scale_encryption_admin_password": "${local.scale_encryption_admin_password}",
+  "scale_encryption_admin_password": ${local.scale_encryption_admin_password},
   "filesystem_config": ${local.filesystem_config},
+  "filesets_config": ${local.filesets_config},
+  "storage_gui_username": "${var.storage_gui_username}",
+  "storage_gui_password": "${var.storage_gui_password}",
+  "compute_gui_username": "${var.compute_gui_username}",
+  "compute_gui_password": "${var.compute_gui_password}",
   "enable_hyperthreading": ${var.enable_hyperthreading},
   "cloud_logs_data_bucket": ${var.cloud_logs_data_bucket},
   "cloud_metrics_data_bucket": ${var.cloud_metrics_data_bucket},
@@ -78,16 +92,44 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "observability_atracker_enable": ${var.observability_atracker_enable},
   "observability_atracker_target_type": "${var.observability_atracker_target_type}",
   "enable_dedicated_host": "${var.enable_dedicated_host}",
+  "enable_baremetal": "${var.enable_baremetal}",
   "storage_security_group_id": "${local.storage_security_group_id}",
   "custom_file_shares": ${local.custom_file_shares},
   "login_instance": ${local.login_instance},
   "vpc_cluster_private_subnets_cidr_blocks": "${var.vpc_cluster_private_subnets_cidr_blocks}",
+  "bms_boot_drive_encryption": ${var.bms_boot_drive_encryption},
   "existing_resource_group": "${var.existing_resource_group}",
   "sccwp_service_plan": "${var.sccwp_service_plan}",
-  "sccwp_enable": ${var.sccwp_enable},
-  "cspm_enabled": ${var.cspm_enabled},
-  "app_config_plan": "${var.app_config_plan}"
+  "enable_sccwp": ${var.enable_sccwp},
+  "enable_cspm": ${var.enable_cspm},
+  "app_config_plan": "${var.app_config_plan}",
+  "scale_afm_bucket_config_details": ${local.scale_afm_bucket_config_details},
+  "scale_afm_cos_hmac_key_params": ${local.scale_afm_cos_hmac_key_params},
+  "volume_storages": ${local.volume_storages},
+  "enable_private_path_nlb": ${var.enable_private_path_nlb},
+  "protocol_instance_eth1_mtu": ${var.protocol_instance_eth1_mtu},
+  "mtu_value": ${var.mtu_value},
+  "enable_license_scheduler": ${var.enable_license_scheduler}
 }
 EOT
   filename = local.schematics_inputs_path
+}
+
+resource "local_sensitive_file" "prepare_backend_input" {
+  count    = var.enable_deployer == true ? 1 : 0
+  content  = <<EOT
+terraform {
+  backend "s3" {
+    endpoint                    = "https://s3.${var.terraform_state_bucket_region}.cloud-object-storage.appdomain.cloud"
+    bucket                      = "${var.terraform_state_bucket}"
+    key                         = "${var.cluster_prefix}/${var.state_file_key}"
+    region                      = "${var.terraform_state_bucket_region}"
+    skip_credentials_validation = true
+    skip_region_validation      = true
+    skip_requesting_account_id  = true
+    force_path_style            = true
+  }
+}
+EOT
+  filename = local.backend_inputs_path
 }

@@ -258,44 +258,52 @@ export TF_VAR_github_token="your_github_token"
 ## Project Structure
 
 ```
-/root/HPCAAS/tests
+HPCaas/
 │
-├── data/                           # Cluster config files
-│   ├── lsf_14_config.yml           # Input YAML for test setup
-│   └── lsf_15_config.yml           # Input YAML for test setup
+├── tests/
+│   ├── deployment/
+│   │   ├── lsf_deployment.go
+│   │   └── scale_deployment.go
+│   │
+│   ├── logs_output/
+│   │   └── output.txt
+│   │
+│   ├── lsf/
+│   │   ├── cluster_helpers.go
+│   │   ├── cluster_utils.go
+│   │   ├── cluster_validation.go
+│   │   └── constants.go
+│   │
+│   ├── lsf_tests/
+│   │   ├── lsf_constants.go
+│   │   ├── lsf_e2e_appcenter_ldap_test.go
+│   │   ├── lsf_e2e_basic_test.go
+│   │   ├── lsf_e2e_existing_vpc_test.go
+│   │   ├── lsf_e2e_kms_test.go
+│   │   ├── lsf_e2e_observability_test.go
+│   │   ├── lsf_e2e_scaling_test.go
+│   │   ├── lsf_e2e_test.go
+│   │   ├── lsf_negative_test.go
+│   │   ├── lsf_resource_exemptions.go
+│   │   ├── lsf_setup.go
+│   │   └── README.md
+│   │
+│   ├── scale_tests/
+│   │
+│   ├── utilities/
+│   │   ├── api_utils.go
+│   │   ├── fileops.go
+│   │   ├── helpers.go
+│   │   ├── logging.go
+│   │   ├── report.go
+│   │   ├── resources.go
+│   │   └── ssh.go
+│   │
+│   ├── go.mod
+│   ├── go.sum
+│   └── pr_test.go
 │
-├── deployment/                     # Deployment-specific logic
-│   └── lsf_deployment.go
-│
-├── logs_output/                    # Runtime or SSH logs
-│   └── output.txt
-│
-├── lsf/                            # Core logic and cluster operations
-│   ├── cluster_helpers.go
-│   ├── cluster_utils.go
-│   ├── cluster_validation.go
-│   └── constants.go
-│
-├── utilities/                      # Shared utils across modules
-│   ├── api_utils.go                # IBM Cloud API interaction helpers
-│   ├── fileops.go                  # File read/write utilities
-│   ├── helpers.go                  # Common general-purpose functions
-│   ├── logging.go                  # Centralized logger
-│   ├── report.go                   # HTML/JSON report generation
-│   ├── resources.go                # Resource-specific helpers
-│   └── ssh.go                      # SSH connection + command execution
-│
-├── lsf_tests/
-│   ├── lsf_e2e_test.go             # Full end-to-end test
-│   ├── lsf_negative_test.go        # Negative test scenarios
-│   ├── lsf_setup.go
-│   ├── lsf_constants.go
-│   ├── resource_exemptions.go
-│   └── README.md                   # Instructions for running tests
-|
-├── go.mod                          # Go module file
-├── go.sum                          # Go module file
-│── pr_test.go                  # PR-level minimal test
+└── tools/
 
 ```
 

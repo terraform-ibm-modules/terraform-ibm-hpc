@@ -1,22 +1,71 @@
----
-- name: Hyperthreading | Create LSF hyperthreading script for disabling threads if hyperthreading is false
-  copy:
-    dest: "{{ hyperthreading_file }}"
-    content: |
-      #!/bin/sh
-      for vcpu in $(cat /sys/devices/system/cpu/cpu*/topology/thread_siblings_list | cut -s -d- -f2 | cut -d- -f2 | uniq); do
-          echo "0" > "/sys/devices/system/cpu/cpu"$vcpu"/online"
-      done
-    mode: '0755'
+# Disable Hyperthreading
+- block:
+    - name: Hyperthreading | Create disable script
+      copy:
+        dest: "{{ hyperthreading_file }}"
+        mode: '0755'
+        content: |
+          #!/bin/bash
+          for cpu_path in /sys/devices/system/cpu/cpu[0-9]*; do
+              cpu=$(basename "$cpu_path" | sed 's/cpu//')
+
+              siblings=$(cat "$cpu_path/topology/thread_siblings_list")
+
+              # Convert commas to spaces, split ranges if any
+              for sib in $(echo "$siblings" | tr ',' ' ' | sed 's/-/ /g'); do
+                  if [ "$sib" != "$cpu" ]; then
+                      if [ -f "/sys/devices/system/cpu/cpu$sib/online" ]; then
+                          echo 0 > "/sys/devices/system/cpu/cpu$sib/online" 2>/dev/null
+                      fi
+                  fi
+              done
+          done
+    - name: Hyperthreading | Disable sibling CPUs
+      shell: "{{ hyperthreading_file }}"
+
+    - name: Hyperthreading | Add reboot cron job
+      cron:
+        name: "Disable Hyperthreading"
+        special_time: reboot
+        job: "{{ hyperthreading_file }}"
+        state: present
+
+  rescue:
+    - name: Hyperthreading | Disable operation failed
+      fail:
+        msg: "Failed to disable hyperthreading."
+
   when: not enable_hyperthreading
 
-- name: Hyperthreading | Run the hyperthreading script and add to cron if hyperthreading is false
-  shell: "{{ hyperthreading_file }}"
-  when: not enable_hyperthreading
 
-- name: Hyperthreading | Add script to cron for reboot if hyperthreading is false
-  cron:
-    name: "Disable Hyperthreading"
-    special_time: reboot
-    job: "{{ hyperthreading_file }}"
-  when: not enable_hyperthreading
+# Enable Hyperthreading
+- block:
+    - name: Hyperthreading | Check for offline CPUs
+      shell: |
+        grep -l '^0$' /sys/devices/system/cpu/cpu*/online 2>/dev/null || true
+      register: offline_cpus
+      changed_when: false
+
+    - name: Hyperthreading | Enable offline CPUs
+      shell: |
+        for cpu in {{ offline_cpus.stdout_lines | join(' ') }}; do
+          echo 1 > "$cpu"
+        done
+      when: offline_cpus.stdout_lines | length > 0
+
+    - name: Hyperthreading | Remove reboot cron job
+      cron:
+        name: "Disable Hyperthreading"
+        state: absent
+
+    - name: Hyperthreading | Remove disable script
+      file:
+        path: "{{ hyperthreading_file }}"
+        state: absent
+
+  rescue:
+    - name: Hyperthreading | Enable operation failed
+      fail:
+        msg: "Failed to enable hyperthreading."
+
+  when: enable_hyperthreading

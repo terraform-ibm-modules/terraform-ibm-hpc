@@ -63,6 +63,7 @@ def prepare_remote_mount_playbook(hosts_config, mount_details):
     content = """---
 # Config remote mount
 - hosts: {hosts_config}
+  become: yes
   collections:
      - ibm.spectrum_scale
   vars:
@@ -184,6 +185,7 @@ if __name__ == "__main__":
         help="Spectrum Scale storage cluster GUI password",
     )
     PARSER.add_argument("--verbose", action="store_true", help="print log messages")
+    PARSER.add_argument("--user", help="OS User for Ansible", default="vpcuser")
     ARGUMENTS = PARSER.parse_args()
 
     # Step-1: Read the inventory file
@@ -230,7 +232,7 @@ if __name__ == "__main__":
     config = configparser.ConfigParser(allow_no_value=True)
     node_details = initialize_node_details(
         COMP_GUI["compute_cluster_gui_ip_address"],
-        "root",
+        ARGUMENTS.user,
         ARGUMENTS.instance_private_key,
     )
     node_template = ""

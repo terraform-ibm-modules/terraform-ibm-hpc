@@ -1,0 +1,28 @@
+---
+- name: Display contents of /var/log/lsf_management_setup.log
+  ansible.builtin.command: cat /var/log/lsf_management_setup.log
+  register: mgmt_log
+  become: true
+  become_user: root
+  when: inventory_hostname == groups['management_nodes'][0]
+
+- name: Show management log content
+  ansible.builtin.debug:
+    var: mgmt_log.stdout_lines
+  when: inventory_hostname == groups['management_nodes'][0]
+
+- name: Display contents of /var/log/lsf_compute_setup.log
+  ansible.builtin.command: cat /var/log/lsf_compute_setup.log
+  register: comp_log
+  become: true
+  become_user: root
+  when:
+    - groups['compute_nodes'] | length > 0
+    - inventory_hostname == groups['compute_nodes'][0]
+
+- name: Show compute log content
+  ansible.builtin.debug:
+    var: comp_log.stdout_lines
+  when:
+    - groups['compute_nodes'] | length > 0
+    - inventory_hostname == groups['compute_nodes'][0]

@@ -49,9 +49,10 @@ type StaticWorkerInstances struct {
 
 // DynamicWorkerInstances represents each dynamic compute instance.
 type DynamicWorkerInstances struct {
-	Profile string `yaml:"profile" json:"profile"`
-	Count   int    `yaml:"count" json:"count"`
-	Image   string `yaml:"image" json:"image"`
+	Profile             string `yaml:"profile" json:"profile"`
+	Count               int    `yaml:"count" json:"count"`
+	Image               string `yaml:"image" json:"image"`
+	EnableSpotInstances bool   `yaml:"enable_spot_instances" json:"enable_spot_instances"`
 }
 
 // LDAPServerNodeInstance represents each ldap node instance.
@@ -108,8 +109,8 @@ type Config struct {
 	SSHFilePathTwo                              string                    `yaml:"ssh_file_path_two"`
 	StaticComputeInstances                      []StaticWorkerInstances   `yaml:"static_compute_instances"`
 	DynamicComputeInstances                     []DynamicWorkerInstances  `yaml:"dynamic_compute_instances"`
-	SccWPEnabled                                bool                      `yaml:"sccwp_enable"`
-	CspmEnabled                                 bool                      `yaml:"cspm_enabled"`
+	EnableSccwp                                 bool                      `yaml:"enable_sccwp"`
+	EnableCspm                                  bool                      `yaml:"enable_cspm"`
 	SccwpServicePlan                            string                    `yaml:"sccwp_service_plan"`
 	AppConfigPlan                               string                    `yaml:"app_config_plan"`
 	ObservabilityMonitoringEnable               bool                      `yaml:"observability_monitoring_enable"`
@@ -129,14 +130,24 @@ type Config struct {
 	ManagementInstancesImage                    string                    `yaml:"management_instances_image"`
 	StaticComputeInstancesImage                 string                    `yaml:"static_compute_instances_image"`
 	DynamicComputeInstancesImage                string                    `yaml:"dynamic_compute_instances_image"`
-	AppCenterGuiPassword                        string                    `yaml:"app_center_gui_password"` // pragma: allowlist secret
+	EnableWebService                            bool                      `yaml:"enable_webservice"`
+	EnableAppcenter                             bool                      `yaml:"enable_appcenter"`
+	WebServiceAppcenterPassword                 string                    `yaml:"webservice_appcenter_password"` // pragma: allowlist secret
 	LsfVersion                                  string                    `yaml:"lsf_version"`
 	LoginInstance                               []LoginNodeInstance       `yaml:"login_instance"`
 	AttrackerTestZone                           string                    `yaml:"attracker_test_zone"`
+	DefaultRegion                               bool                      `yaml:"default_region"`
+	BasicRegion                                 string                    `yaml:"basic"`
+	KmsRegion                                   string                    `yaml:"kms"`
+	LdapRegion                                  string                    `yaml:"ldap"`
+	AppcenterRegion                             string                    `yaml:"appcenter"`
+	ObservabilityRegion                         string                    `yaml:"observability"`
+	ExistingVpcRegion                           string                    `yaml:"existing_vpc"`
+	ScalingRegion                               string                    `yaml:"scaling"`
 }
 
-// GetConfigFromYAML reads a YAML file and populates the Config struct.
-func GetConfigFromYAML(filePath string) (*Config, error) {
+// GetLSFConfigFromYAML reads a YAML file and populates the Config struct.
+func GetLSFConfigFromYAML(filePath string) (*Config, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open YAML file %s: %w", filePath, err)
@@ -199,8 +210,8 @@ func setEnvFromConfig(config *Config) error {
 		"SSH_FILE_PATH":                       config.SSHFilePath,
 		"SSH_FILE_PATH_TWO":                   config.SSHFilePathTwo,
 		"SCHEDULER":                           config.Scheduler,
-		"SCCWP_ENABLED":                       config.SccWPEnabled,
-		"CSPM_ENABLED":                        config.CspmEnabled,
+		"ENABLE_SCCWP":                        config.EnableSccwp,
+		"ENABLE_CSPM":                         config.EnableCspm,
 		"SCCWP_SERVICE_PLAN":                  config.SccwpServicePlan,
 		"APP_CONFIG_PLAN":                     config.AppConfigPlan,
 		"OBSERVABILITY_MONITORING_ENABLE":     config.ObservabilityMonitoringEnable,
@@ -220,10 +231,20 @@ func setEnvFromConfig(config *Config) error {
 		"MANAGEMENT_INSTANCES_IMAGE":                       config.ManagementInstancesImage,
 		"STATIC_COMPUTE_INSTANCES_IMAGE":                   config.StaticComputeInstancesImage,
 		"DYNAMIC_COMPUTE_INSTANCES_IMAGE":                  config.DynamicComputeInstancesImage,
-		"APP_CENTER_GUI_PASSWORD":                          config.AppCenterGuiPassword, // pragma: allowlist secret
+		"ENABLE_WEB_SERVICE":                               config.EnableWebService,
+		"ENABLE_APPCENTER":                                 config.EnableAppcenter,
+		"WEB_SERVICE_APPCENTER_PASSWORD":                   config.WebServiceAppcenterPassword, // pragma: allowlist secret
 		"LSF_VERSION":                                      config.LsfVersion,
 		"LOGIN_INSTANCE":                                   config.LoginInstance,
 		"ATTRACKER_TEST_ZONE":                              config.AttrackerTestZone,
+		"DEFAULT_REGION":                                   config.DefaultRegion,
+		"BASIC_REGION":                                     config.BasicRegion,
+		"KMS_REGION":                                       config.KmsRegion,
+		"LDAP_REGION":                                      config.LdapRegion,
+		"APPCENTER_REGION":                                 config.AppcenterRegion,
+		"OBSERVABILITY_REGION":                             config.ObservabilityRegion,
+		"EXISTING_VPC_REGION":                              config.ExistingVpcRegion,
+		"SCALING_REGION":                                   config.ScalingRegion,
 	}
 
 	if err := processSliceConfigs(config, envVars); err != nil {

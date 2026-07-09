@@ -73,9 +73,15 @@ spec:
       default: ""
     - name: solution
       description: Provide the value for the solution that is needed for the support of lsf and HPC.
-      default: "lsf"
+      default: "lsf-da"
     - name: pac_ha_exist_certificate
       description: PAC HA Existing Certificate
+      default: ""
+    - name: lsf_version
+      description: Fix pack LSF Version
+      default: "lsf15"
+    - name: ssh_key_regions
+      description: Region to create ssh_keys
       default: ""
   workspaces:
     - name: pipeline-ws
@@ -131,154 +137,16 @@ spec:
           value: $(params.revision)
         - name: solution
           value: $(params.solution)
-    - name: wes-lsf-da-rhel-1
+        - name: lsf_version
+          value: $(params.lsf_version)
+        - name: ssh_key_regions
+          value: $(params.ssh_key_regions)
+
+    # ── Test tasks ────────────────────────────────────────────────────────────
+    - name: gen4profile-tests
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
-        name: wes-lsf-da-rhel-1
-      workspaces:
-        - name: workspace
-          workspace: pipeline-ws
-      params:
-        - name: repository
-          value: $(params.repository)
-        - name: git_access_token
-          value: $(params.git_access_token)
-        - name: pipeline-debug
-          value: $(params.pipeline-debug)
-        - name: zone
-          value: $(params.zone)
-        - name: resource_group
-          value: $(params.resource_group)
-        - name: compute_image_name_rhel
-          value: $(params.compute_image_name_rhel)
-        - name: compute_image_name_ubuntu
-          value: $(params.compute_image_name_ubuntu)
-        - name: login_image_name
-          value: $(params.login_image_name)
-        - name: management_image_name
-          value: $(params.management_image_name)
-        - name: deployer_image_name
-          value: $(params.deployer_image_name)
-        - name: revision
-          value: $(params.revision)
-        - name: cos_region
-          value: $(params.cos_region)
-        - name: cos_bucket
-          value: $(params.cos_bucket)
-        - name: cos_instance_crn
-          value: $(params.cos_instance_crn)
-        - name: cos_api_key
-          value: $(params.cos_api_key)
-        - name: hpc_custom_reports_repo
-          value: $(params.hpc_custom_reports_repo)
-        - name: hpc_custom_reports_branch
-          value: $(params.hpc_custom_reports_branch)
-        - name: git_user_name
-          value: $(params.git_user_name)
-        - name: git_user_email
-          value: $(params.git_user_email)
-        - name: solution
-          value: $(params.solution)
-    - name: wes-lsf-da-rhel-2
-      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
-      taskRef:
-        name: wes-lsf-da-rhel-2
-      workspaces:
-        - name: workspace
-          workspace: pipeline-ws
-      params:
-        - name: repository
-          value: $(params.repository)
-        - name: git_access_token
-          value: $(params.git_access_token)
-        - name: pipeline-debug
-          value: $(params.pipeline-debug)
-        - name: zone
-          value: $(params.zone)
-        - name: resource_group
-          value: $(params.resource_group)
-        - name: compute_image_name_rhel
-          value: $(params.compute_image_name_rhel)
-        - name: compute_image_name_ubuntu
-          value: $(params.compute_image_name_ubuntu)
-        - name: login_image_name
-          value: $(params.login_image_name)
-        - name: management_image_name
-          value: $(params.management_image_name)
-        - name: deployer_image_name
-          value: $(params.deployer_image_name)
-        - name: revision
-          value: $(params.revision)
-        - name: cos_region
-          value: $(params.cos_region)
-        - name: cos_bucket
-          value: $(params.cos_bucket)
-        - name: cos_instance_crn
-          value: $(params.cos_instance_crn)
-        - name: cos_api_key
-          value: $(params.cos_api_key)
-        - name: hpc_custom_reports_repo
-          value: $(params.hpc_custom_reports_repo)
-        - name: hpc_custom_reports_branch
-          value: $(params.hpc_custom_reports_branch)
-        - name: git_user_name
-          value: $(params.git_user_name)
-        - name: git_user_email
-          value: $(params.git_user_email)
-        - name: solution
-          value: $(params.solution)
-    - name: wes-lsf-da-rhel-3
-      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
-      taskRef:
-        name: wes-lsf-da-rhel-3
-      workspaces:
-        - name: workspace
-          workspace: pipeline-ws
-      params:
-        - name: repository
-          value: $(params.repository)
-        - name: git_access_token
-          value: $(params.git_access_token)
-        - name: pipeline-debug
-          value: $(params.pipeline-debug)
-        - name: zone
-          value: $(params.zone)
-        - name: resource_group
-          value: $(params.resource_group)
-        - name: compute_image_name_rhel
-          value: $(params.compute_image_name_rhel)
-        - name: compute_image_name_ubuntu
-          value: $(params.compute_image_name_ubuntu)
-        - name: login_image_name
-          value: $(params.login_image_name)
-        - name: management_image_name
-          value: $(params.management_image_name)
-        - name: deployer_image_name
-          value: $(params.deployer_image_name)
-        - name: revision
-          value: $(params.revision)
-        - name: cos_region
-          value: $(params.cos_region)
-        - name: cos_bucket
-          value: $(params.cos_bucket)
-        - name: cos_instance_crn
-          value: $(params.cos_instance_crn)
-        - name: cos_api_key
-          value: $(params.cos_api_key)
-        - name: hpc_custom_reports_repo
-          value: $(params.hpc_custom_reports_repo)
-        - name: hpc_custom_reports_branch
-          value: $(params.hpc_custom_reports_branch)
-        - name: git_user_name
-          value: $(params.git_user_name)
-        - name: git_user_email
-          value: $(params.git_user_email)
-        - name: solution
-          value: $(params.solution)
-    - name: wes-lsf-da-rhel-4
-      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
-      taskRef:
-        name: wes-lsf-da-rhel-4
+        name: gen4profile-tests
       workspaces:
         - name: workspace
           workspace: pipeline-ws
@@ -325,153 +193,1039 @@ spec:
           value: $(params.solution)
         - name: pac_ha_exist_certificate
           value: $(params.pac_ha_exist_certificate)
-    # # - name: wes-lsf-da-ubuntu
-    # #   runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
-    # #   taskRef:
-    # #     name: wes-lsf-da-ubuntu
-    # #   workspaces:
-    # #     - name: workspace
-    # #       workspace: pipeline-ws
-    # #   params:
-    # #     - name: repository
-    # #       value: $(params.repository)
-    # #     - name: git_access_token
-    # #       value: $(params.git_access_token)
-    # #     - name: pipeline-debug
-    # #       value: $(params.pipeline-debug)
-    # #     - name: zone
-    # #       value: $(params.zone)
-    # #     - name: resource_group
-    # #       value: $(params.resource_group)
-    # #     - name: compute_image_name_rhel
-    # #       value: $(params.compute_image_name_rhel)
-    # #     - name: compute_image_name_ubuntu
-    # #       value: $(params.compute_image_name_ubuntu)
-    # #     - name: login_image_name
-    # #       value: $(params.login_image_name)
-    # #     - name: management_image_name
-    # #       value: $(params.management_image_name)
-    # #     - name: revision
-    # #       value: $(params.revision)
-    # #     - name: cos_region
-    # #       value: $(params.cos_region)
-    # #     - name: cos_bucket
-    # #       value: $(params.cos_bucket)
-    # #     - name: cos_instance_crn
-    # #       value: $(params.cos_instance_crn)
-    # #     - name: cos_api_key
-    # #       value: $(params.cos_api_key)
-    # #     - name: hpc_custom_reports_repo
-    # #       value: $(params.hpc_custom_reports_repo)
-    # #     - name: hpc_custom_reports_branch
-    # #       value: $(params.hpc_custom_reports_branch)
-    # #     - name: git_user_name
-    # #       value: $(params.git_user_name)
-    # #     - name: git_user_email
-    # #       value: $(params.git_user_email)
-    # - name: wes-lsf-da-region
-    #   runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
-    #   taskRef:
-    #     name: wes-lsf-da-region
-    #   workspaces:
-    #     - name: workspace
-    #       workspace: pipeline-ws
-    #   params:
-    #     - name: repository
-    #       value: $(params.repository)
-    #     - name: git_access_token
-    #       value: $(params.git_access_token)
-    #     - name: pipeline-debug
-    #       value: $(params.pipeline-debug)
-    #     - name: zone
-    #       value: $(params.zone)
-    #     - name: resource_group
-    #       value: $(params.resource_group)
-    #     - name: compute_image_name_rhel
-    #       value: $(params.compute_image_name_rhel)
-    #     - name: compute_image_name_ubuntu
-    #       value: $(params.compute_image_name_ubuntu)
-    #     - name: login_image_name
-    #       value: $(params.login_image_name)
-    #     - name: management_image_name
-    #       value: $(params.management_image_name)
-    #     - name: deployer_image_name
-    #       value: $(params.deployer_image_name)
-    #     - name: revision
-    #       value: $(params.revision)
-    #     - name: cos_region
-    #       value: $(params.cos_region)
-    #     - name: cos_bucket
-    #       value: $(params.cos_bucket)
-    #     - name: cos_instance_crn
-    #       value: $(params.cos_instance_crn)
-    #     - name: cos_api_key
-    #       value: $(params.cos_api_key)
-    #     - name: hpc_custom_reports_repo
-    #       value: $(params.hpc_custom_reports_repo)
-    #     - name: hpc_custom_reports_branch
-    #       value: $(params.hpc_custom_reports_branch)
-    #     - name: git_user_name
-    #       value: $(params.git_user_name)
-    #     - name: git_user_email
-    #       value: $(params.git_user_email)
-    #     - name: solution
-    #       value: $(params.solution)
-    # - name: wes-lsf-da-negative
-    #   runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
-    #   taskRef:
-    #     name: wes-lsf-da-negative
-    #   workspaces:
-    #     - name: workspace
-    #       workspace: pipeline-ws
-    #   params:
-    #     - name: repository
-    #       value: $(params.repository)
-    #     - name: git_access_token
-    #       value: $(params.git_access_token)
-    #     - name: pipeline-debug
-    #       value: $(params.pipeline-debug)
-    #     - name: zone
-    #       value: $(params.zone)
-    #     - name: resource_group
-    #       value: $(params.resource_group)
-    #     - name: compute_image_name_rhel
-    #       value: $(params.compute_image_name_rhel)
-    #     - name: compute_image_name_ubuntu
-    #       value: $(params.compute_image_name_ubuntu)
-    #     - name: login_image_name
-    #       value: $(params.login_image_name)
-    #     - name: management_image_name
-    #       value: $(params.management_image_name)
-    #     - name: deployer_image_name
-    #       value: $(params.deployer_image_name)
-    #     - name: revision
-    #       value: $(params.revision)
-    #     - name: cos_region
-    #       value: $(params.cos_region)
-    #     - name: cos_bucket
-    #       value: $(params.cos_bucket)
-    #     - name: cos_instance_crn
-    #       value: $(params.cos_instance_crn)
-    #     - name: cos_api_key
-    #       value: $(params.cos_api_key)
-    #     - name: hpc_custom_reports_repo
-    #       value: $(params.hpc_custom_reports_repo)
-    #     - name: hpc_custom_reports_branch
-    #       value: $(params.hpc_custom_reports_branch)
-    #     - name: git_user_name
-    #       value: $(params.git_user_name)
-    #     - name: git_user_email
-    #       value: $(params.git_user_email)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: appcenter-api-and-ldap-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: appcenter-api-and-ldap-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: custom-cidr-multi-profile-spot-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: custom-cidr-multi-profile-spot-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: default-cluster-config-and-web-service-disabled-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: default-cluster-config-and-web-service-disabled-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: existing-kms-instance-key-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: existing-kms-instance-key-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: existing-vpc-cidrs-and-subnets-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: existing-vpc-cidrs-and-subnets-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: existing-vpc-dns-configuration-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: existing-vpc-dns-configuration-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: ldap-existing-server-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: ldap-existing-server-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: ldap-new-server-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: ldap-new-server-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: lsf-logs-and-reapply-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: lsf-logs-and-reapply-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: no-kms-hyperthreading-and-kms-auth-policy-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: no-kms-hyperthreading-and-kms-auth-policy-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: node-scale-up-and-down-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: node-scale-up-and-down-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: node-scale-up-and-scale-down-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: node-scale-up-and-scale-down-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: observability-atracker-cos-cloud-logs-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: observability-atracker-cos-cloud-logs-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: observability-atracker-logging-monitoring-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: observability-atracker-logging-monitoring-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: observability-features-disabled-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: observability-features-disabled-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: observability-features-enabled-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: observability-features-enabled-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: resource-group-configuration-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: resource-group-configuration-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: security-compliance-and-cos-vpc-flow-logs-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: security-compliance-and-cos-vpc-flow-logs-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    - name: zero-static-worker-nodes-and-dedicated-host-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: zero-static-worker-nodes-and-dedicated-host-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
+
+    # ── Teardown & reporting ──────────────────────────────────────────────────
     - name: ssh-key-deletion
-      runAfter: [
-          wes-lsf-da-rhel-1,
-          wes-lsf-da-rhel-2,
-          wes-lsf-da-rhel-3,
-          wes-lsf-da-rhel-4,
-          # wes-lsf-da-region,
-          # wes-lsf-da-negative,
-        ]
+      runAfter:
+        - gen4profile-tests
+        - appcenter-api-and-ldap-tests
+        - custom-cidr-multi-profile-spot-tests
+        - default-cluster-config-and-web-service-disabled-tests
+        - existing-kms-instance-key-tests
+        - existing-vpc-cidrs-and-subnets-tests
+        - existing-vpc-dns-configuration-tests
+        - ldap-existing-server-tests
+        - ldap-new-server-tests
+        - lsf-logs-and-reapply-tests
+        - no-kms-hyperthreading-and-kms-auth-policy-tests
+        - node-scale-up-and-down-tests
+        - node-scale-up-and-scale-down-tests
+        - observability-atracker-cos-cloud-logs-tests
+        - observability-atracker-logging-monitoring-tests
+        - observability-features-disabled-tests
+        - observability-features-enabled-tests
+        - resource-group-configuration-tests
+        - security-compliance-and-cos-vpc-flow-logs-tests
+        - zero-static-worker-nodes-and-dedicated-host-tests
       taskRef:
         name: ssh-key-deletion
       workspaces:
@@ -484,15 +1238,33 @@ spec:
           value: $(params.revision)
         - name: solution
           value: $(params.solution)
+        - name: lsf_version
+          value: $(params.lsf_version)
+        - name: ssh_key_regions
+          value: $(params.ssh_key_regions)
+
     - name: git-content-inspect
-      runAfter: [
-          wes-lsf-da-rhel-1,
-          wes-lsf-da-rhel-2,
-          wes-lsf-da-rhel-3,
-          wes-lsf-da-rhel-4,
-          # wes-lsf-da-region,
-          # wes-lsf-da-negative,
-        ]
+      runAfter:
+        - gen4profile-tests
+        - appcenter-api-and-ldap-tests
+        - custom-cidr-multi-profile-spot-tests
+        - default-cluster-config-and-web-service-disabled-tests
+        - existing-kms-instance-key-tests
+        - existing-vpc-cidrs-and-subnets-tests
+        - existing-vpc-dns-configuration-tests
+        - ldap-existing-server-tests
+        - ldap-new-server-tests
+        - lsf-logs-and-reapply-tests
+        - no-kms-hyperthreading-and-kms-auth-policy-tests
+        - node-scale-up-and-down-tests
+        - node-scale-up-and-scale-down-tests
+        - observability-atracker-cos-cloud-logs-tests
+        - observability-atracker-logging-monitoring-tests
+        - observability-features-disabled-tests
+        - observability-features-enabled-tests
+        - resource-group-configuration-tests
+        - security-compliance-and-cos-vpc-flow-logs-tests
+        - zero-static-worker-nodes-and-dedicated-host-tests
       taskRef:
         name: inspect-git-content
       workspaces:
@@ -513,15 +1285,29 @@ spec:
           value: $(tasks.git-clone.results.git-commit)
         - name: git-user
           value: $(tasks.git-clone.results.git-user)
+
     - name: display-validation-logs
-      runAfter: [
-          wes-lsf-da-rhel-1,
-          wes-lsf-da-rhel-2,
-          wes-lsf-da-rhel-3,
-          wes-lsf-da-rhel-4,
-          # wes-lsf-da-region,
-          # wes-lsf-da-negative,
-        ]
+      runAfter:
+        - gen4profile-tests
+        - appcenter-api-and-ldap-tests
+        - custom-cidr-multi-profile-spot-tests
+        - default-cluster-config-and-web-service-disabled-tests
+        - existing-kms-instance-key-tests
+        - existing-vpc-cidrs-and-subnets-tests
+        - existing-vpc-dns-configuration-tests
+        - ldap-existing-server-tests
+        - ldap-new-server-tests
+        - lsf-logs-and-reapply-tests
+        - no-kms-hyperthreading-and-kms-auth-policy-tests
+        - node-scale-up-and-down-tests
+        - node-scale-up-and-scale-down-tests
+        - observability-atracker-cos-cloud-logs-tests
+        - observability-atracker-logging-monitoring-tests
+        - observability-features-disabled-tests
+        - observability-features-enabled-tests
+        - resource-group-configuration-tests
+        - security-compliance-and-cos-vpc-flow-logs-tests
+        - zero-static-worker-nodes-and-dedicated-host-tests
       workspaces:
         - name: workspace
           workspace: pipeline-ws
@@ -531,7 +1317,7 @@ spec:
             description: The git repo will be cloned onto the volume backing this workspace
             mountPath: /artifacts
         steps:
-          - name: validation-lsf-da-rhel-suite-1
+          - name: validation-appcenter-api-and-gen4profile
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -539,10 +1325,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-1.log"
+                VALIDATION_LOG_FILE_NAME="gen4profile-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-2
+          - name: validation-appcenter-api-and-ldap-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -550,10 +1336,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-2.log"
+                VALIDATION_LOG_FILE_NAME="appcenter-api-and-ldap-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-3
+          - name: validation-custom-cidr-multi-profile-spot-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -561,10 +1347,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-3.log"
+                VALIDATION_LOG_FILE_NAME="custom-cidr-multi-profile-spot-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-4
+          - name: validation-default-cluster-web-service-disabled
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -572,10 +1358,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-4.log"
+                VALIDATION_LOG_FILE_NAME="default-cluster-config-and-web-service-disabled-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-5
+          - name: validation-existing-kms-instance-key-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -583,10 +1369,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-5.log"
+                VALIDATION_LOG_FILE_NAME="existing-kms-instance-key-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-6
+          - name: validation-existing-vpc-cidrs-and-subnets
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -594,10 +1380,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-6.log"
+                VALIDATION_LOG_FILE_NAME="existing-vpc-cidrs-and-subnets-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-7
+          - name: validation-existing-vpc-dns-configuration
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -605,10 +1391,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-7.log"
+                VALIDATION_LOG_FILE_NAME="existing-vpc-dns-configuration-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-lsf-da-rhel-suite-8
+          - name: validation-ldap-existing-server-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -616,129 +1402,164 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-8.log"
+                VALIDATION_LOG_FILE_NAME="ldap-existing-server-tests.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-ldap-new-server-tests
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="ldap-new-server-tests.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-lsf-logs-and-reapply-tests
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="lsf-logs-and-reapply-tests.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-no-kms-hyperthreading-kms-auth
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="no-kms-hyperthreading-and-kms-auth-policy-tests.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-node-scale-up-and-down-tests
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="node-scale-up-and-down-tests.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-node-scale-up-and-scale-down
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="node-scale-up-and-scale-down-tests.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-observability-atracker-cos-logs
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="observability-atracker-cos-cloud-logs-tests.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-observability-atracker-log-mon
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="observability-atracker-logging-monitoring-tests.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-observability-features-disabled
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="observability-features-disabled-tests.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-observability-features-enabled
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="observability-features-enabled-tests.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-resource-group-configuration
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="resource-group-configuration-tests.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-security-compliance-cos-flow-logs
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="security-compliance-and-cos-vpc-flow-logs-tests.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-zero-static-workers-dedicated-host
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="zero-static-worker-nodes-and-dedicated-host-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
 
-          # - name: validation-lsf-da-rhel-suite-9
-          #   onError: continue
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-9.log"
-          #       source .tekton/scripts/issue_track.sh
-          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          # - name: validation-lsf-da-rhel-suite-10
-          #   onError: continue
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-10.log"
-          #       source .tekton/scripts/issue_track.sh
-          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          # - name: validation-lsf-da-rhel-suite-11
-          #   onError: continue
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       VALIDATION_LOG_FILE_NAME="lsf-da-rhel-suite-11.log"
-          #       source .tekton/scripts/issue_track.sh
-          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          # # - name: validation-lsf-ubuntu-suite
-          # #   onError: continue
-          # #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          # #   workingDir: "/artifacts"
-          # #   command: ["/bin/bash", "-c"]
-          # #   args:
-          # #     - |
-          # #       #!/bin/bash
-          # #       VALIDATION_LOG_FILE_NAME="lsf-da-ubuntu-suite.log"
-          # #       source .tekton/scripts/issue_track.sh
-          # #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          # - name: validation-lsf-regions-suite
-          #   onError: continue
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       VALIDATION_LOG_FILE_NAME="lsf-da-regions-suite.log"
-          #       source .tekton/scripts/issue_track.sh
-          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          # - name: validation-lsf-da-negative-suite-1
-          #   onError: continue
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       VALIDATION_LOG_FILE_NAME="lsf-da-negative-suite-1.log"
-          #       source .tekton/scripts/issue_track.sh
-          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          # - name: validation-lsf-da-negative-suite-2
-          #   onError: continue
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       VALIDATION_LOG_FILE_NAME="lsf-da-negative-suite-2.log"
-          #       source .tekton/scripts/issue_track.sh
-          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          # - name: validation-lsf-da-negative-suite-3
-          #   onError: continue
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       VALIDATION_LOG_FILE_NAME="lsf-da-negative-suite-3.log"
-          #       source .tekton/scripts/issue_track.sh
-          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          # - name: validation-lsf-da-negative-suite-4
-          #   onError: continue
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       VALIDATION_LOG_FILE_NAME="lsf-da-negative-suite-4.log"
-          #       source .tekton/scripts/issue_track.sh
-          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          # - name: validation-lsf-da-negative-suite-5
-          #   onError: continue
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       VALIDATION_LOG_FILE_NAME="lsf-da-negative-suite-5.log"
-          #       source .tekton/scripts/issue_track.sh
-          #       display_validation_log "${VALIDATION_LOG_FILE_NAME}"
     - name: display-lsf-da-infra-logs
-      runAfter: [
-          wes-lsf-da-rhel-1,
-          wes-lsf-da-rhel-2,
-          wes-lsf-da-rhel-3,
-          wes-lsf-da-rhel-4,
-          # wes-lsf-da-region,
-          # wes-lsf-da-negative,
-        ]
+      runAfter:
+        - gen4profile-tests
+        - appcenter-api-and-ldap-tests
+        - custom-cidr-multi-profile-spot-tests
+        - default-cluster-config-and-web-service-disabled-tests
+        - existing-kms-instance-key-tests
+        - existing-vpc-cidrs-and-subnets-tests
+        - existing-vpc-dns-configuration-tests
+        - ldap-existing-server-tests
+        - ldap-new-server-tests
+        - lsf-logs-and-reapply-tests
+        - no-kms-hyperthreading-and-kms-auth-policy-tests
+        - node-scale-up-and-down-tests
+        - node-scale-up-and-scale-down-tests
+        - observability-atracker-cos-cloud-logs-tests
+        - observability-atracker-logging-monitoring-tests
+        - observability-features-disabled-tests
+        - observability-features-enabled-tests
+        - resource-group-configuration-tests
+        - security-compliance-and-cos-vpc-flow-logs-tests
+        - zero-static-worker-nodes-and-dedicated-host-tests
       workspaces:
         - name: workspace
           workspace: pipeline-ws
@@ -748,7 +1569,7 @@ spec:
             description: The git repo will be cloned onto the volume backing this workspace
             mountPath: /artifacts
         steps:
-          - name: display-infra-da-log-rhel-suite-1
+          - name: infra-appcenter-api-and-gen4profile
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -756,10 +1577,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-1.json"
+                LOG_FILE_NAME="gen4profile-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-2
+          - name: infra-appcenter-api-and-ldap-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -767,10 +1588,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-2.json"
+                LOG_FILE_NAME="appcenter-api-and-ldap-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-3
+          - name: infra-custom-cidr-multi-profile-spot-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -778,10 +1599,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-3.json"
+                LOG_FILE_NAME="custom-cidr-multi-profile-spot-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-4
+          - name: infra-default-cluster-web-service-disabled
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -789,10 +1610,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-4.json"
+                LOG_FILE_NAME="default-cluster-config-and-web-service-disabled-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-5
+          - name: infra-existing-kms-instance-key-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -800,10 +1621,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-5.json"
+                LOG_FILE_NAME="existing-kms-instance-key-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-6
+          - name: infra-existing-vpc-cidrs-and-subnets
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -811,10 +1632,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-6.json"
+                LOG_FILE_NAME="existing-vpc-cidrs-and-subnets-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-7
+          - name: infra-existing-vpc-dns-configuration
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -822,10 +1643,10 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-7.json"
+                LOG_FILE_NAME="existing-vpc-dns-configuration-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: display-infra-da-log-rhel-suite-8
+          - name: infra-ldap-existing-server-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -833,118 +1654,142 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="lsf-da-rhel-suite-8.json"
+                LOG_FILE_NAME="ldap-existing-server-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          # - name: display-infra-da-log-rhel-suite-9
-          #   onError: continue
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       LOG_FILE_NAME="lsf-da-rhel-suite-9.json"
-          #       source .tekton/scripts/issue_track.sh
-          #       issue_track "${LOG_FILE_NAME}"
-          # - name: display-infra-da-log-rhel-suite-10
-          #   onError: continue
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       LOG_FILE_NAME="lsf-da-rhel-suite-10.json"
-          #       source .tekton/scripts/issue_track.sh
-          #       issue_track "${LOG_FILE_NAME}"
-          # - name: display-infra-da-log-rhel-suite-11
-          #   onError: continue
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       LOG_FILE_NAME="lsf-da-rhel-suite-11.json"
-          #       source .tekton/scripts/issue_track.sh
-          #       issue_track "${LOG_FILE_NAME}"
-          # # - name: display-infra-log-ubuntu-suite
-          # #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          # #   workingDir: "/artifacts"
-          # #   command: ["/bin/bash", "-c"]
-          # #   args:
-          # #     - |
-          # #       #!/bin/bash
-          # #       LOG_FILE_NAME="pipeline-ubuntu-suite.json"
-          # #       source .tekton/scripts/issue_track.sh
-          # #       issue_track "${LOG_FILE_NAME}"
-          # - name: display-infra-log-regions-suite
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   onError: continue
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       LOG_FILE_NAME="lsf-regions-suite.json"
-          #       source .tekton/scripts/issue_track.sh
-          #       issue_track "${LOG_FILE_NAME}"
-          # - name: display-infra-log-negative-suite-1
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   onError: continue
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       LOG_FILE_NAME="lsf-da-negative-suite-1.json"
-          #       source .tekton/scripts/issue_track.sh
-          #       issue_track "${LOG_FILE_NAME}" "negative_suite"
-          # - name: display-infra-log-negative-suite-2
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   onError: continue
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       LOG_FILE_NAME="lsf-da-negative-suite-2.json"
-          #       source .tekton/scripts/issue_track.sh
-          #       issue_track "${LOG_FILE_NAME}" "negative_suite"
-          # - name: display-infra-log-negative-suite-3
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   onError: continue
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       LOG_FILE_NAME="lsf-da-negative-suite-3.json"
-          #       source .tekton/scripts/issue_track.sh
-          #       issue_track "${LOG_FILE_NAME}" "negative_suite"
-          # - name: display-infra-log-negative-suite-4
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   onError: continue
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       LOG_FILE_NAME="lsf-da-negative-suite-4.json"
-          #       source .tekton/scripts/issue_track.sh
-          #       issue_track "${LOG_FILE_NAME}" "negative_suite"
-          # - name: display-infra-log-negative-suite-5
-          #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
-          #   onError: continue
-          #   workingDir: "/artifacts"
-          #   command: ["/bin/bash", "-c"]
-          #   args:
-          #     - |
-          #       #!/bin/bash
-          #       LOG_FILE_NAME="lsf-da-negative-suite-5.json"
-          #       source .tekton/scripts/issue_track.sh
-          #       issue_track "${LOG_FILE_NAME}" "negative_suite"
+          - name: infra-ldap-new-server-tests
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="ldap-new-server-tests.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: infra-lsf-logs-and-reapply-tests
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="lsf-logs-and-reapply-tests.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: infra-no-kms-hyperthreading-kms-auth
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="no-kms-hyperthreading-and-kms-auth-policy-tests.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: infra-node-scale-up-and-down-tests
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="node-scale-up-and-down-tests.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: infra-node-scale-up-and-scale-down
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="node-scale-up-and-scale-down-tests.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: infra-observability-atracker-cos-logs
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="observability-atracker-cos-cloud-logs-tests.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: infra-observability-atracker-log-mon
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="observability-atracker-logging-monitoring-tests.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: infra-observability-features-disabled
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="observability-features-disabled-tests.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: infra-observability-features-enabled
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="observability-features-enabled-tests.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: infra-resource-group-configuration
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="resource-group-configuration-tests.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: infra-security-compliance-cos-flow-logs
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="security-compliance-and-cos-vpc-flow-logs-tests.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: infra-zero-static-workers-dedicated-host
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="zero-static-worker-nodes-and-dedicated-host-tests.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+
     - name: error-check-on-lsf-da-infra-logs
       runAfter: [display-validation-logs, display-lsf-da-infra-logs]
       workspaces:
@@ -967,6 +1812,7 @@ spec:
                 DIRECTORY="/artifacts/tests/lsf_tests"
                 pattern="*.json"
                 error_check_on_all_file "${DIRECTORY}" "${pattern}" "infra"
+
     - name: error-check-on-lsf-validation-logs
       runAfter: [display-validation-logs, display-lsf-da-infra-logs]
       workspaces:

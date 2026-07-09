@@ -27,7 +27,7 @@ variable "encryption_key_crn" {
   default     = null
 }
 
-variable "existing_kms_instance_guid" {
+variable "kms_instance_guid" {
   type        = string
   default     = null
   description = "GUID of boot volume encryption key"

@@ -198,15 +198,17 @@ variable "static_compute_instances" {
 variable "dynamic_compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
-      image   = string
+      profile               = string
+      count                 = number
+      image                 = string
+      enable_spot_instances = bool
     })
   )
   default = [{
-    profile = "cx2-2x4"
-    count   = 1024
-    image   = "ibm-redhat-8-10-minimal-amd64-2"
+    profile               = "cx2-2x4"
+    count                 = 1024
+    image                 = "ibm-redhat-8-10-minimal-amd64-2"
+    enable_spot_instances = false
   }]
   description = "MaxNumber of instances to be launched for compute cluster."
 }
@@ -240,11 +242,11 @@ variable "storage_instances" {
       profile    = string
       count      = number
       image      = string
-      filesystem = string
+      filesystem = optional(string)
     })
   )
   default = [{
-    profile    = "bx2-2x8"
+    profile    = "bx2d-32x128"
     count      = 0
     image      = "ibm-redhat-8-10-minimal-amd64-4"
     filesystem = "/ibm/fs1"

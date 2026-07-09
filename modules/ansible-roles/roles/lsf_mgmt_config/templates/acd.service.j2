@@ -1,0 +1,12 @@
+[Unit]
+Description=IBM Spectrum LSF Application Center
+After=network.target nfs.service autofs.service gpfs.service
+
+[Service]
+Type=forking
+ExecStartPre=/bin/bash -c '(timer=12; while (( $timer )); do if [ ! -d /opt/ibm/lsfsuite/ext/gui/conf ]; then sleep 5; else exit 0; fi; timer=$[$timer-1]; done; echo "/opt/ibm/lsfsuite/ext/gui/conf not found." 1>&2; exit 1;)'
+ExecStart=/opt/ibm/lsfsuite/ext/gui/3.0/bin/ac_daemons start
+ExecStop=/opt/ibm/lsfsuite/ext/gui/3.0/bin/ac_daemons stop
+
+[Install]
+WantedBy=multi-user.target

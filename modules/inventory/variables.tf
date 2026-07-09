@@ -10,6 +10,12 @@ variable "login_host" {
   default     = []
 }
 
+variable "gui_hosts" {
+  description = "GUI Hosts"
+  type        = list(string)
+  default     = ["localhost"]
+}
+
 variable "inventory_path" {
   description = "Inventory file path"
   type        = string
@@ -85,6 +91,31 @@ variable "cloud_monitoring_prws_url" {
   default     = ""
 }
 
+variable "enable_sccwp" {
+  description = "Flag to enable or disable SCC Workload Protection agent configuration"
+  type        = bool
+  default     = false
+}
+
+variable "sccwp_api_endpoint" {
+  description = "SCC Workload Protection API endpoint for the Sysdig agent (must be formatted without https:// and /api)"
+  type        = string
+  default     = ""
+}
+
+variable "sccwp_access_key" {
+  description = "SCC Workload Protection access key for standalone agent authentication"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "sccwp_ingestion_endpoint" {
+  description = "SCC Workload Protection ingestion collector URL"
+  type        = string
+  default     = ""
+}
+
 # LDAP
 variable "playbooks_path" {
   description = "Inventory file path"
@@ -106,7 +137,7 @@ variable "ldap_server" {
 
 variable "ldap_basedns" {
   type        = string
-  default     = "lsf.com"
+  default     = "hpc.local"
   description = "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."
 }
 
@@ -152,5 +183,5 @@ variable "ha_shared_dir" {
 variable "scheduler" {
   default     = null
   type        = string
-  description = "Select one of the scheduler (LSF/Symphony/Slurm/null)"
+  description = "Select one of the scheduler (Scale/LSF/Symphony/Slurm/null)"
 }

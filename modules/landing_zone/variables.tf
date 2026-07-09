@@ -9,6 +9,15 @@ variable "enable_landing_zone" {
 }
 
 ##############################################################################
+# Offering Variations
+##############################################################################
+variable "scheduler" {
+  type        = string
+  default     = null
+  description = "Select one of the scheduler (Scale/LSF/Symphony/Slurm/null)"
+}
+
+##############################################################################
 # Resource Groups Variables
 ##############################################################################
 
@@ -132,13 +141,17 @@ variable "management_instances" {
 variable "compute_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = optional(string)
     })
   )
   default = [{
-    profile = "cx2-2x4"
-    count   = 0
+    profile    = "cx2-2x4"
+    count      = 0
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "/ibm/fs1"
   }]
   description = "Min Number of instances to be launched for compute cluster."
 }
@@ -149,8 +162,8 @@ variable "compute_instances" {
 
 variable "storage_type" {
   type        = string
-  default     = "scratch"
-  description = "Select the required storage type(scratch/persistent/eval)."
+  default     = "vsi"
+  description = "Select the required storage type(vsi/baremetal/eval)."
 }
 
 variable "storage_subnets_cidr" {
@@ -162,13 +175,17 @@ variable "storage_subnets_cidr" {
 variable "storage_instances" {
   type = list(
     object({
-      profile = string
-      count   = number
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = optional(string)
     })
   )
   default = [{
-    profile = "bx2-2x8"
-    count   = 3
+    profile    = "bx2d-32x128"
+    count      = 0
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "/ibm/fs1"
   }]
   description = "Number of instances to be launched for storage cluster."
 }
@@ -176,15 +193,19 @@ variable "storage_instances" {
 variable "storage_servers" {
   type = list(
     object({
-      profile = string
-      count   = number
+      profile    = string
+      count      = number
+      image      = string
+      filesystem = optional(string)
     })
   )
   default = [{
-    profile = "cx2d-metal-96x192"
-    count   = 2
+    profile    = "cx2d-metal-96x192"
+    count      = 0
+    image      = "ibm-redhat-8-10-minimal-amd64-4"
+    filesystem = "/ibm/fs1"
   }]
-  description = "Number of Bareemetal servers to be launched for storage cluster."
+  description = "Number of BareMetal Servers to be launched for storage cluster."
 }
 
 variable "protocol_subnets_cidr" {
@@ -207,6 +228,51 @@ variable "protocol_instances" {
   description = "Number of instances to be launched for protocol hosts."
 }
 
+variable "afm_instances" {
+  type = list(
+    object({
+      profile = string
+      count   = number
+    })
+  )
+  default = [{
+    profile = "bx2-32x128"
+    count   = 1
+  }]
+  description = "Number of instances to be launched for afm hosts."
+}
+
+variable "filesystem_config" {
+  type = list(
+    object({
+      filesystem               = string
+      block_size               = string
+      default_data_replica     = number
+      default_metadata_replica = number
+      max_data_replica         = number
+      max_metadata_replica     = number
+    })
+  )
+  default     = null
+  description = "File system configurations."
+}
+
+variable "afm_cos_config" {
+  type = list(
+    object({
+      afm_fileset          = string,
+      mode                 = string,
+      cos_instance         = string,
+      bucket_name          = string,
+      bucket_region        = string,
+      cos_service_cred_key = string,
+      bucket_type          = string,
+      bucket_storage_class = string
+    })
+  )
+  nullable    = false
+  description = "AFM configurations."
+}
 ##############################################################################
 # Observability Variables
 ##############################################################################
@@ -257,6 +323,21 @@ variable "kms_key_name" {
   description = "Provide the existing KMS encryption key name that you want to use for the IBM Cloud HPC cluster. (for example kms_key_name: my-encryption-key)."
 }
 
+
+##Scale Encryption Variables
+
+variable "scale_encryption_enabled" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the filesystem. Select true or false"
+}
+
+variable "scale_encryption_type" {
+  type        = string
+  default     = null
+  description = "To enable filesystem encryption, specify either 'key_protect' or 'gklm'. If neither is specified, the default value will be 'null' and encryption is disabled"
+}
+
 # variable "hpcs_instance_name" {
 #   type        = string
 #   default     = null
@@ -290,6 +371,27 @@ variable "enable_vpn" {
   default     = false
   description = "The solution supports multiple ways to connect to your HPC cluster for example, using bastion node, via VPN or direct connection. If connecting to the HPC cluster via VPN, set this value to true."
 }
+
+##############################################################################
+# Subnet_id Variables
+##############################################################################
+variable "client_subnet_id" {
+  type        = string
+  description = "Name of an existing subnet for protocol nodes. If no value is given, a new subnet will be created"
+  default     = null
+}
+
+variable "storage_subnet_id" {
+  type        = string
+  description = "Name of an existing subnet for storage nodes. If no value is given, a new subnet will be created"
+  default     = null
+}
+
+variable "protocol_subnet_id" {
+  type        = string
+  description = "Name of an existing subnet for protocol nodes. If no value is given, a new subnet will be created"
+  default     = null
+}
 ##############################################################################
 # Landing Zone Variables
 ##############################################################################
@@ -316,7 +418,7 @@ variable "clusters" {
       boot_volume_crk_name                  = optional(string)      # Boot volume encryption key name
       disable_public_endpoint               = optional(bool, true)  # disable cluster public, leaving only private endpoint
       disable_outbound_traffic_protection   = optional(bool, false) # public outbound access from the cluster workers
-      cluster_force_delete_storage          = optional(bool, false) # force the removal of persistent storage associated with the cluster during cluster deletion
+      cluster_force_delete_storage          = optional(bool, false) # force the removal of baremetal storage associated with the cluster during cluster deletion
       operating_system                      = string                # The operating system of the workers in the default worker pool. See https://cloud.ibm.com/docs/openshift?topic=openshift-openshift_versions#openshift_versions_available .
       kms_wait_for_apply                    = optional(bool, true)  # make terraform wait until KMS is applied to master and it is ready and deployed
       verify_cluster_network_readiness      = optional(bool, true)  # Flag to run a script will run kubectl commands to verify that all worker nodes can communicate successfully with the master. If the runtime does not have access to the kube cluster to run kubectl commands, this should be set to false.
@@ -359,4 +461,38 @@ variable "clusters" {
       )
     })
   )
+}
+
+variable "enable_private_path_nlb" {
+  type        = bool
+  description = "Enable private path network load balancer for providing CES (NFS) storage."
+}
+
+variable "tfstate_cos_config" {
+  type = list(object({
+    bucket_storage_class = string
+    bucket_type          = string
+    bucket_region        = string
+  }))
+
+  nullable = false
+
+  default = [{
+    bucket_storage_class = "standard"
+    bucket_type          = "region_location"
+    bucket_region        = ""
+  }]
+
+  description = "Configuration for Terraform state COS bucket"
+}
+
+variable "tfstate_existing_cos_bucket_creds" {
+  type = object({
+    bucket = string
+    region = string
+    akey   = string
+    skey   = string
+  })
+  default     = null
+  description = "Credentials for an EXISTING Terraform state COS bucket. Leave null if creating a new bucket."
 }

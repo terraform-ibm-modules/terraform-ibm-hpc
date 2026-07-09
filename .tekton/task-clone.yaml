@@ -294,7 +294,7 @@ spec:
               echo "Clone was not successful. Code $_clone_code - Retrying shortly..."
               sleep 10
               if [ $_retry_counter -eq $_max_retry ]; then
-                  set -e # reset on the last attempt so we fail if all attemps fail
+                  set -e # reset on the last attempt so we fail if all attempts fail
               fi
               eval "$_clone_command"
               _clone_code=$?

@@ -34,7 +34,7 @@ resource "ibm_dns_resource_record" "a_itself" {
 }
 
 resource "ibm_dns_resource_record" "b_itself" {
-  for_each = {
+  for_each = var.enable_private_path_nlb == true ? {} : {
     for idx, count_number in range(1, var.total_reserved_ips + 1) : idx => {
       name       = element(tolist([for name_details in ibm_is_subnet_reserved_ip.itself : var.name]), idx)
       network_ip = element(tolist([for ip_details in ibm_is_subnet_reserved_ip.itself : ip_details.address]), idx)

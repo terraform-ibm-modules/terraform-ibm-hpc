@@ -1,0 +1,223 @@
+---
+# License Scheduler Configuration
+
+- block:
+# Restart LSF daemon (lsfd) service on the first management node
+  - name: Restart lsfd service
+    service:
+      name: lsfd
+      state: restarted
+
+  - name: Pause for 10s
+    ansible.builtin.pause:
+      seconds: 10
+  when:
+    - inventory_hostname in groups['management_nodes']
+    - enable_license_scheduler | bool
+
+  rescue:
+    - name: Log failure for lsfd restart block
+      ansible.builtin.debug:
+        msg: "WARNING: Failed to restart lsfd service on {{ inventory_hostname }}"
+
+##############################
+# WHEN ENABLE_LICENSE_SCHEDULER = TRUE
+##############################
+- block:
+    ##############################
+    # UPDATING THE LSF.LICENSESCHEDULER FILE
+    ##############################
+
+    - name: License Scheduler | Updating lsf.licensescheduler file
+      ansible.builtin.replace:
+        path: "{{ LSF_LICENSE_SCHEDULER_FILE }}"
+        regexp: "{{ item.regexp }}"
+        replace: "{{ item.replace }}"
+      loop:
+        - { regexp: '^\s*#CLUSTER_MODE=y', replace: 'CLUSTER_MODE=y' }
+        - { regexp: '^\s*MERGE_BY_SERVICE_DOMAIN=.*', replace: '#MERGE_BY_SERVICE_DOMAIN=Y' }
+        - { regexp: '^\s*LM_REMOVE_INTERVAL=.*', replace: '#LM_REMOVE_INTERVAL=0' }
+
+    - name: License Scheduler | Updating lsf.licensescheduler file - projects
+      ansible.builtin.replace:
+        path: "{{ LSF_LICENSE_SCHEDULER_FILE }}"
+        regexp: '(?s)Begin Projects[\s\S]*?End Projects'
+        replace: |
+          #Begin Projects
+          #PROJECTS
+          #myProject1
+          #myProject2
+          #myProject3
+          #myProject4
+          #End Projects
+
+    - name: License Scheduler | Updating lsf.licensescheduler file - ServiceDomain
+      ansible.builtin.replace:
+        path: "{{ LSF_LICENSE_SCHEDULER_FILE }}"
+        regexp: '(?s)Begin ServiceDomain\n\s*NAME = WanServer[\s\S]*?End ServiceDomain'
+        replace: |
+          #Begin ServiceDomain
+          #NAME = WanServer
+          #LIC_SERVERS = ((1888@server1 1888@server2 1888@server3) (1999@serverB) (2000@serverC) (2001@serverZ 2002@serverY 2003@serverZ))
+          #End ServiceDomain
+
+    - name: License Scheduler | Updating lsf.licensescheduler file - jobs
+      ansible.builtin.replace:
+        path: "{{ LSF_LICENSE_SCHEDULER_FILE }}"
+        regexp: '(?s)Begin Feature\n\s*NAME = myjob(\s|$)[\s\S]*?End Feature'
+        replace: |
+          #Begin Feature
+          #NAME = myjob
+          #DISTRIBUTION = LanServer(myProject1 1 myProject2 1)
+          #End Feature
+
+    - name: License Scheduler | Updating lsf.licensescheduler file - jobs
+      ansible.builtin.replace:
+        path: "{{ LSF_LICENSE_SCHEDULER_FILE }}"
+        regexp: '(?s)Begin Feature\n\s*NAME = myjob1[\s\S]*?End Feature'
+        replace: |
+          #Begin Feature
+          #NAME = myjob1
+          #LM_LICENSE_NAME = VCS-RUNTIME
+          #DISTRIBUTION = LanServer(myProject1 1 myProject2 1/1)
+          #PREEMPT_RESERVE=Y
+          #End Feature
+
+
+    - name: License Scheduler | Updating lsf.licensescheduler file - feature
+      ansible.builtin.replace:
+        path: "{{ LSF_LICENSE_SCHEDULER_FILE }}"
+        regexp: '(?s)#Begin Feature\n#NAME = myFeature1[\s\S]*?#End Feature'
+        replace: |
+          Begin Feature
+          NAME = myFeature1
+          CLUSTER_MODE=y
+          CLUSTER_DISTRIBUTION=LanServer({{ prefix }} 1)
+          End Feature
+
+    ##############################
+    # STARTING THE LICENSE SCHEDULER DAEMON
+    ##############################
+
+    - name: License Scheduler | Ensure HOSTS entry in lsf.licensescheduler
+      ansible.builtin.lineinfile:
+        path: "{{ LSF_LICENSE_SCHEDULER_FILE }}"
+        regexp: '^HOSTS\s*=.*'
+        line: "HOSTS = {{ groups['gui_hosts'][0] }}"
+        state: present
+      register: lic_sched_file
+
+    - name: License Scheduler | Set ADMIN for new LDAP
+      ansible.builtin.lineinfile:
+        path: "{{ LSF_LICENSE_SCHEDULER_FILE }}"
+        regexp: '^ADMIN\s*='
+        line: "ADMIN = lsfadmin {{ ldap_user_name }}"
+        state: present
+      when: enable_ldap | bool and (ldap_server_cert is none or ldap_server_cert | lower == 'null' or ldap_server_cert | trim == '')
+
+    - name: License Scheduler | Ensure LSF_LIC_SCHED_HOSTS in lsf.conf
+      ansible.builtin.lineinfile:
+        path: "{{ LSF_CONF_FILE }}"
+        regexp: '^#?LSF_LIC_SCHED_HOST(S)?=.*'
+        line: 'LSF_LIC_SCHED_HOSTS="{{ groups["gui_hosts"][0] }}"'
+        state: present
+      register: lic_sched_conf
+
+    - name: License Scheduler | Run bld -C to validate config
+      ansible.builtin.shell: ". {{ LSF_TOP }}/conf/profile.lsf && bld -C"
+      register: bld_check
+      changed_when: false
+      failed_when: "'error' in bld_check.stdout.lower() or bld_check.rc != 0"
+
+    - name: License Scheduler | Show bld -C output if error
+      ansible.builtin.debug:
+        msg: "{{ bld_check.stdout }}"
+      when: "'error' in bld_check.stdout.lower() or bld_check.rc != 0"
+
+    - name: License Scheduler | Ensure LIM is running
+      ansible.builtin.shell: ". {{ LSF_TOP }}/conf/profile.lsf && lsadmin limstartup || true"
+      become: true
+      become_user: lsfadmin
+
+    - name: License Scheduler | Wait for LIM to come up
+      ansible.builtin.shell: ". {{ LSF_TOP }}/conf/profile.lsf && lsload"
+      register: lim_status
+      retries: 10
+      delay: 5
+      until: lim_status.rc == 0 and lim_status.stdout != ""
+      become: true
+      become_user: lsfadmin
+
+    - name: License Scheduler | Reconfigure LSF daemons
+      ansible.builtin.shell: ". {{ LSF_TOP }}/conf/profile.lsf && echo y | lsadmin reconfig"
+      become: true
+      become_user: lsfadmin
+
+    - name: License Scheduler | Restart mbd daemon
+      ansible.builtin.shell: "echo y | . {{ LSF_TOP }}/conf/profile.lsf && badmin mbdrestart"
+      register: mbd_restart
+      changed_when: true
+      failed_when: "'there are fatal errors' in mbd_restart.stderr.lower()"
+      become: true
+      become_user: lsfadmin
+
+    - name: License Scheduler | Verify bld process running
+      ansible.builtin.shell: "ps -ef | grep -v grep | grep '[b]ld'"
+      register: bld_process
+      retries: 10
+      delay: 5
+      until: bld_process.stdout != ""
+      changed_when: false
+      failed_when: bld_process.stdout == ""
+
+    - name: License Scheduler | Report daemon failure
+      ansible.builtin.debug:
+        msg: "License Scheduler daemon (bld) failed to start!"
+      when: bld_process.stdout == ""
+
+  when:
+    - inventory_hostname in groups['gui_hosts']
+    - enable_license_scheduler | bool
+
+  rescue:
+    - name: Log failure for license scheduler enable block
+      ansible.builtin.debug:
+        msg: "WARNING: License Scheduler enable block failed"
+
+##############################
+# WHEN ENABLE_LICENSE_SCHEDULER = FALSE
+##############################
+- block:
+    - name: License Scheduler | Check if bld process is running
+      ansible.builtin.shell: "ps -ef | grep -v grep | grep '[b]ld'"
+      register: bld_process
+      changed_when: false
+      failed_when: false
+
+    - name: License Scheduler | Stop bld daemon if running
+      ansible.builtin.shell: "{{ LSF_TOP }}/10.1/linux4.18-glibc2.28-x86_64/etc/lsf_daemons stop bld"
+      when: bld_process.stdout != ""
+      become: true
+      become_user: root
+      failed_when: false
+
+    - name: License Scheduler | Report daemon stopped
+      ansible.builtin.debug:
+        msg: "License Scheduler daemon (bld) has been stopped."
+      when: bld_process.stdout != ""
+
+    - name: License Scheduler | Ensure LSF_LIC_SCHED_HOSTS is commented
+      ansible.builtin.lineinfile:
+        path: "{{ LSF_CONF_FILE }}"
+        regexp: '^LSF_LIC_SCHED_HOSTS=.*'
+        line: '#LSF_LIC_SCHED_HOSTS={{ groups["gui_hosts"][0] }}'
+        state: present
+
+  when:
+    - inventory_hostname in groups['gui_hosts']
+    - not enable_license_scheduler | bool
+
+  rescue:
+    - name: Log failure for license scheduler disable block
+      ansible.builtin.debug:
+        msg: "WARNING: License Scheduler disable block failed"

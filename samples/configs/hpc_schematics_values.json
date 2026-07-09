@@ -76,6 +76,13 @@
           "description": "Select the desired version of IBM Spectrum LSF to deploy either fixpack_15 or fixpack_14. By default, the solution uses the latest available version, which is Fix Pack 15. If you need to deploy an earlier version such as Fix Pack 14, update the lsf_version field to fixpack_14. When changing the LSF version, ensure that all custom images used for management, compute, and login nodes correspond to the same version. This is essential to maintain compatibility across the cluster and to prevent deployment issues."
         },
         {
+          "name": "enable_lsf_pay_per_use",
+          "value": "true",
+          "type": "string",
+          "secure": false,
+          "description": "Enabling lsf_pay_per_use provisions LSF cluster nodes using predefined custom images under a pay-per-use pricing model. Billing is based on vCPU usage per hour, considering the enable_hyperthreading configuration. In this mode, Bring Your Own Image (BYOI) is not supported for any cluster nodes. If enable_lsf_pay_per_use is false, solution provisions all cluster nodes using default images and supports BYOI. Setting enable_lsf_pay_per_use as false does not apply pay-per-use billing."
+        },
+        {
           "name": "ssh_keys",
           "value": "[\"Please fill here\"]",
           "type": "list(string)",
@@ -83,11 +90,11 @@
           "description": "Provide the list of SSH key names configured in your IBM Cloud account to establish a connection to the IBM Cloud HPC bastion and login node. Ensure the SSH key is present in the same resource group and region where the cluster is being provisioned. If you do not have an SSH key in your IBM Cloud account, create one by following the provided instructions.[SSH Keys](https://cloud.ibm.com/docs/vpc?topic=vpc-ssh-keys)."
         },
         {
-          "name": "app_center_gui_password",
+          "name": "webservice_appcenter_password",
           "value": "Please fill here",
           "type": "string",
           "secure": true,
-          "description": "Password required to access the IBM Spectrum LSF Application Center (App Center) GUI, which is enabled by default in both Fix Pack 15 and Fix Pack 14 with HTTPS. This is a mandatory value and omitting it will result in deployment failure. The password must meet the following requirements, at least 8 characters in length, and must include one uppercase letter, one lowercase letter, one number, and one special character."
+          "description": "Password required to access the IBM Spectrum LSF Application Center (App Center) GUI, which is enabled by default in both Fix Pack 15 and Fix Pack 14 with HTTPS. This is a mandatory value and omitting it will result in deployment failure. The password must meet the following requirements, at least 15 characters in length, and must include one uppercase letter, one lowercase letter, one number, and one special character. Spaces are not allowed."
         },
         {
           "name": "remote_allowed_ips",
@@ -147,7 +154,7 @@
         },
         {
           "name": "dns_domain_name",
-          "value": "{compute= \"lsf.com\"}",
+          "value": "{compute= \"hpc.local\"}",
           "type": "object({compute = string})",
           "secure": false,
           "description": "IBM Cloud DNS Services domain name to be used for the IBM Cloud HPC cluster."
@@ -182,45 +189,45 @@
         },
         {
           "name": "bastion_instance",
-          "value": "{image = \"ibm-ubuntu-22-04-5-minimal-amd64-3\", profile = \"cx2-4x8\"}",
+          "value": "{image = \"ibm-ubuntu-22-04-5-minimal-amd64-16\", profile = \"cx2-4x8\"}",
           "type": "object({ image = string, profile = string })",
           "secure": false,
           "description": "Specify the Bastion node configuration, including instance profile and image name. Only Ubuntu stock images available in the IBM Cloud account and region are supported."
         },
         {
           "name": "deployer_instance",
-          "value": "{image = \"hpc-lsf-fp15-deployer-rhel810-v1\", profile = \"bx2-8x32\" }",
+          "value": "{image = \"hpc-lsf-fp15-deployer-rhel810-v4\", profile = \"bx2-8x32\" }",
           "type": "object({ image = string, profile = string })",
           "secure": false,
-          "description": "Specify the deployer node configuration, including instance profile and image name. By default, the image is set for fixpack_15. Use 'hpc-lsf-fp14-deployer-rhel810-v1' if deploying with fixpack_14, and ensure lsf_version matches the image."
+          "description": "Defines the configuration of the deployer node, including the image and instance profile. By default, the deployer node is provisioned using the Fix Pack 15 image, which contains the required software packages, dependencies, and configuration needed for the deployment workflow. Customer-provided or custom images are not supported for the deployer node, as they may not contain the required components, resulting in deployment failures."
         },
         {
           "name": "management_instances",
-          "value": "[{ profile = \"bx2-16x64\", count = 2, image = \"hpc-lsf-fp15-rhel810-v1\" }]",
-          "type": "list(object({ profile = string, count = number, image = string }))",
+          "value": "[{ profile = \"bx2-16x64\", count = 2, image = \"hpc-lsf-fp15-rhel810-v4\", boot_volume = { profile = \"general-purpose\", size = 100, iops = null, bandwidth = null} }]",
+          "type": "list(object({ profile = string, count = number, image = string, boot_volume = optional(object({profile = optional(string), size = optional(number), iops = optional(number), bandwidth = optional(number)})) }))",
           "secure": false,
-          "description": "Specify the list of management node configurations, including instance profile, image name, and count. By default, all management nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. The solution allows customization of instance profiles and counts, but mixing custom images and IBM stock images across instances is not supported. If using IBM stock images, only Red Hat-based images are allowed."
+          "description": "Specify the list of management node configurations, including instance profile, image name, and count. By default, all management nodes are created using Fix Pack 15. The solution allows customization of instance profiles and counts, IBM stock images is not supported. Solution also supports provisioning instances on AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions.  Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
         },
         {
           "name": "static_compute_instances",
-          "value": "[{ profile = \"bx2-4x16\", count = 0, image = \"hpc-lsf-fp15-compute-rhel810-v1\" }]",
-          "type": "list(object({ profile = string, count = number, image = string }))",
+          "value": "[{ profile = \"bx2-4x16\", count = 0, image = \"hpc-lsf-fp15-compute-rhel810-v4\", boot_volume = { profile = \"general-purpose\", size = 100, iops = null, bandwidth = null} }]",
+          "type": "list(object({ profile = string, count = number, image = string, boot_volume = optional(object({profile = optional(string), size = optional(number), iops = optional(number), bandwidth = optional(number)})) }))",
           "secure": false,
-          "description": "Specify the list of static compute node configurations, including instance profile, image name, and count. By default, all compute nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. The solution allows customization of instance profiles and counts, but mixing custom images and IBM stock images across instances is not supported. If using IBM stock images, only Red Hat-based images are allowed."
+          "description": "Specify the list of static compute node configurations, including instance profile, image name, and count. By default, all compute nodes are created using Fix Pack 15. The solution allows customization of instance profiles and counts, IBM Stock image are not supported.  You can provision the static compute node using your own custom image by specifying the desired image name. Solution also supports provisioning instances on AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
         },
         {
           "name": "dynamic_compute_instances",
-          "value": "[{ profile = \"bx2-4x16\", count = 500, image = \"hpc-lsf-fp15-compute-rhel810-v1\" }]",
-          "type": "list(object({ profile = string, count = number, image = string }))",
+          "value": "[{ profile = \"bx2-4x16\", count = 500, image = \"hpc-lsf-fp15-compute-rhel810-v4\", enable_spot_instances = false, boot_volume = { profile = \"general-purpose\", size = 100, iops = null, bandwidth = null} }]",
+          "type": "list(object({ profile = string, count = number, image = string, enable_spot_instances = bool, boot_volume = optional(object({profile = optional(string), size = optional(number), iops = optional(number), bandwidth = optional(number)})) }))",
           "secure": false,
-          "description": "Specify the list of dynamic compute node configurations, including instance profile, image name, and count. By default, all dynamic compute nodes are created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures. Currently, only a single instance profile is supported for dynamic compute nodes—multiple profiles are not yet supported.."
+          "description": "Specify the list of dynamic compute node configurations, including instance profile, image name, and count. By default, all dynamic compute nodes are created using Fix Pack 15. Currently, only a single instance profile is supported, multiple profiles are not yet supported. Solution supports provision the dynamic compute node using your own custom image by specifying the desired image name. Instances can also be provisioned using AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
         },
         {
           "name": "login_instance",
-          "value": "[{ profile = \"bx2-2x8\", image = \"hpc-lsf-fp15-compute-rhel810-v1\" }]",
-          "type": "list(object({ profile = string, image = string }))",
+          "value": "[{ profile = \"bx2-2x8\", image = \"hpc-lsf-fp15-compute-rhel810-v4\", boot_volume = { profile = \"general-purpose\", size = 100, iops = null, bandwidth = null} }]",
+          "type": "list(object({ profile = string, image = string, boot_volume = optional(object({profile = optional(string), size = optional(number), iops = optional(number), bandwidth = optional(number)})) }))",
           "secure": false,
-          "description": "Specify the list of login node configurations, including instance profile, image name. By default, login nodes is created using Fix Pack 15. If deploying with Fix Pack 14, set lsf_version to fixpack_14 and use the corresponding image hpc-lsf-fp14-compute-rhel810-v1. The selected image must align with the specified lsf_version, any mismatch may lead to deployment failures."
+          "description": "Defines the login node configuration, including the instance profile, image, and optional boot volume settings. By default, the login node is provisioned using the Fix Pack 15 image. You can provision the login node using your own custom image by specifying the desired image name. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
         },
         {
           "name": "custom_file_shares",
@@ -244,7 +251,21 @@
           "description": "Setting this to true will enable hyper-threading in the compute nodes of the cluster (default). Otherwise, hyper-threading will be disabled."
         },
         {
-          "name": "vpn_enabled",
+          "name": "enable_baremetal",
+          "value": "false",
+          "type": "bool",
+          "secure": false,
+          "description": "Set this option to true to provision static compute nodes using bare metal servers. By default, this option is false. When enabled, ensure that the static_compute_instances configuration uses a valid bare metal profile; otherwise, the deployment will fail."
+        },
+        {
+          "name": "enable_dedicated_host",
+          "value": "false",
+          "type": "bool",
+          "secure": false,
+          "description": "Setting this to true will provision a dedicated host in the cluster."
+        },
+        {
+          "name": "enable_vpn",
           "value": "false",
           "type": "bool",
           "secure": false,
@@ -287,7 +308,7 @@
         },
         {
           "name": "ldap_basedns",
-          "value": "lsf.com",
+          "value": "hpc.local",
           "type": "string",
           "secure": false,
           "description": "The dns domain name is used for configuring the LDAP server. If an LDAP server is already in existence, ensure to provide the associated DNS domain name."
@@ -311,7 +332,7 @@
           "value": "",
           "type": "string",
           "secure": true,
-          "description": "The LDAP administrative password should be 8 to 20 characters long, with a mix of at least three alphabetic characters, including one uppercase and one lowercase letter. It must also include two numerical digits and at least one special character from (~@_+:) are required. It is important to avoid including the username in the password for enhanced security.[This value is ignored for an existing LDAP server]."
+          "description": "The LDAP admin password must be 15 to 32 characters long and include at least two alphabetic characters (with one uppercase and one lowercase), one number, and one special character from the set (!@#$%^&*()_+=-). The password must not contain the username or any spaces. [This value is ignored for an existing LDAP server]."
         },
         {
           "name": "ldap_user_name",
@@ -363,7 +384,7 @@
           "description": "When using an existing COS instance, set this value to true if authorization is already enabled between COS instance and the kms. Otherwise, default is set to false. Ensuring proper authorization avoids access issues during deployment."
         },
         {
-          "name": "sccwp_enable",
+          "name": "enable_sccwp",
           "value": "true",
           "type": "bool",
           "secure": false,
@@ -377,7 +398,7 @@
           "description": "Specify the plan type for the Security and Compliance Center (SCC) Workload Protection instance. Valid values are free-trial and graduated-tier only."
         },
         {
-          "name": "cspm_enabled",
+          "name": "enable_cspm",
           "value": "true",
           "type": "string",
           "secure": false,

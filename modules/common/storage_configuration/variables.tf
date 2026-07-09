@@ -24,6 +24,11 @@ variable "inventory_path" {
   description = "Scale JSON inventory path"
 }
 
+variable "scale_config_path" {
+  type        = string
+  description = "Path to clone github.com/IBM/ibm-spectrum-scale-install-infra."
+}
+
 variable "inventory_format" {
   type        = string
   description = "Scale inventory format"
@@ -275,4 +280,28 @@ variable "afm_vcpus_count" {
 variable "afm_bandwidth" {
   type        = string
   description = "AFM node bandwidth"
+}
+
+variable "storage_type" {
+  type        = string
+  default     = "vsi"
+  description = "Select the required storage type(vsi/baremetal/eval)."
+}
+
+variable "boot_volume_disk_grow" {
+  type        = bool
+  default     = false
+  description = "Boot volume disk size grow option for SDP."
+}
+
+variable "block_volume_disk_grow" {
+  type        = bool
+  default     = false
+  description = "Block volume disk size grow option for SDP."
+}
+
+variable "bms_boot_drive_encryption" {
+  type        = bool
+  default     = false
+  description = "To enable the encryption for the boot drive of bare metal server. Select true or false"
 }

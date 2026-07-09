@@ -8,6 +8,11 @@ output "vpc_name" {
   value       = module.landing_zone[*].vpc_data[0].vpc_name
 }
 
+output "vpc_default_security_group" {
+  description = "VPC default security group name"
+  value       = module.landing_zone[*].vpc_data[0].vpc_data.default_security_group
+}
+
 output "vpc_id" {
   description = "VPC ID"
   value       = module.landing_zone[*].vpc_data[0].vpc_id
@@ -30,7 +35,7 @@ output "bastion_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-lsf-bastion-subnet")
+    } if strcontains(subnet["name"], "-${local.name}-bastion-subnet")
   ]
 }
 
@@ -41,7 +46,7 @@ output "client_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-lsf-client-subnet")
+    } if strcontains(subnet["name"], "-${local.name}-client-subnet") || strcontains(subnet["name"], "-${local.name}-ppnlb-subnet")
   ]
 }
 
@@ -52,7 +57,7 @@ output "compute_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-lsf-compute-subnet-zone-")
+    } if strcontains(subnet["name"], "-${local.name}-compute-subnet-zone-")
   ]
 }
 
@@ -63,7 +68,7 @@ output "storage_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-lsf-storage-subnet-zone-")
+    } if strcontains(subnet["name"], "-${local.name}-storage-subnet-zone-")
   ]
 }
 
@@ -74,7 +79,7 @@ output "protocol_subnets" {
     id   = subnet["id"]
     zone = subnet["zone"]
     cidr = subnet["cidr"]
-    } if strcontains(subnet["name"], "-lsf-protocol-subnet-zone-")
+    } if strcontains(subnet["name"], "-${local.name}-protocol-subnet-zone-")
   ]
 }
 
@@ -91,7 +96,7 @@ output "boot_volume_encryption_key" {
 
 output "key_management_guid" {
   description = "GUID for KMS instance"
-  value       = var.enable_landing_zone ? var.key_management != null ? module.landing_zone[0].key_management_guid : null : null
+  value       = var.enable_landing_zone ? var.key_management != null || (var.scale_encryption_enabled && var.scale_encryption_type == "key_protect" && var.kms_instance_name == null) ? module.landing_zone[0].key_management_guid : null : null
 }
 
 output "cos_buckets_data" {
@@ -105,8 +110,38 @@ output "cos_instance_crns" {
 }
 
 output "cos_buckets_names" {
-  description = "Name of the COS Bucket created for SCC Instance"
+  description = "List of names for COS buckets created"
   value       = flatten(module.landing_zone[*].cos_bucket_names)
+}
+
+output "cos_data" {
+  description = "COS buckets data"
+  value       = flatten(module.landing_zone[*].cos_data)
+}
+
+output "hmac_key_data" {
+  description = "COS hmac data"
+  value       = var.enable_landing_zone ? [for key in flatten(module.landing_zone[*].cos_key_credentials_map)[0] : key] : []
+}
+
+output "cos_names" {
+  description = "List of Cloud Object Storage instance names"
+  value       = flatten(module.landing_zone[*].cos_names)
+}
+
+output "scale_afm_bucket_config_details" {
+  description = "Scale AFM COS Bucket and Configuration Details"
+  value       = local.scale_afm_bucket_config_details
+}
+
+output "scale_afm_cos_hmac_key_params" {
+  description = "Scale AFM COS HMAC Key Details"
+  value       = local.scale_afm_cos_hmac_key_params
+}
+
+output "tfstate_cos_hmac_key_params" {
+  description = "Scale AFM COS HMAC Key Details"
+  value       = local.terraform_state_bucket_params
 }
 
 # TODO: Observability data

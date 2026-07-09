@@ -6,8 +6,8 @@
 # Configure shared folders and create necessary symlinks on management nodes
 - import_tasks: configure_shared_folders.yml
 
-# Reload or restart services to apply the new configurations
-- import_tasks: reload_services.yml
+# Display shell script logs for management node 1 and compute node 1 (if present)
+- import_tasks: display_shell_script_logs.yml
 
 # Cluster validation
 - import_tasks: cluster_validation.yml
