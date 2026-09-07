@@ -28,10 +28,10 @@ func TestRunScaleDefault(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 
-	require.NoError(t, os.Setenv("ZONES", "us-east-3"), "Failed to set ZONES env variable")
+	require.NoError(t, os.Setenv("ZONES", "jp-osa-3"), "Failed to set ZONES env variable")
 	require.NoError(t, os.Setenv("DEFAULT_EXISTING_RESOURCE_GROUP", "Default"), "Failed to set DEFAULT_EXISTING_RESOURCE_GROUP")
 
-	t.Log("Running default LSF cluster test for region us-east-3")
+	t.Log("Running default LSF cluster test for region jp-osa-3")
 	scale_tests.DefaultTest(t)
 }
 
