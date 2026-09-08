@@ -204,6 +204,16 @@ func setupOptions(t *testing.T, clusterNamePrefix, terraformDir, existingResourc
 		"observability_atracker_enable": false,
 		"colocate_protocol_instances":   false,
 		"protocol_instances":            envVars.ProtocolInstances,
+		"volume_storages": []map[string]interface{}{
+			{
+				"boot_volume_profile":    "general-purpose",
+				"boot_volume_size":       155,
+				"boot_volume_iops":       nil,
+				"boot_volume_disk_grow":  false,
+				"block_volume_capacity":  610,
+				"block_volume_iops":      10100,
+				"block_volume_disk_grow": false,
+			}},
 	}
 
 	options := &testhelper.TestOptions{
