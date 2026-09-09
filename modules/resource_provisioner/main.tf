@@ -162,14 +162,14 @@ resource "null_resource" "fetch_host_details_from_deployer" {
 
   provisioner "local-exec" {
     command = <<EOT
-      ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-          -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${local.ssh_key_file} ubuntu@${var.bastion_fip} -W %h:%p" \
+      ssh -o StrictHostKeyChecking=no -o ControlMaster=no -o UserKnownHostsFile=/dev/null \
+          -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o ControlMaster=no -o UserKnownHostsFile=/dev/null -i ${local.ssh_key_file} ubuntu@${var.bastion_fip} -W ${var.deployer_ip}:22" \
           -i ${local.ssh_key_file} \
           vpcuser@${var.deployer_ip} \
           "sudo chmod 644 /opt/ibm/terraform-ibm-hpc/solutions/${local.products}/*.ini && sudo chown vpcuser:vpcuser /opt/ibm/terraform-ibm-hpc/solutions/${local.products}/*.ini"
 
-      scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-          -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${local.ssh_key_file} ubuntu@${var.bastion_fip} -W %h:%p" \
+      scp -o StrictHostKeyChecking=no -o ControlMaster=no -o UserKnownHostsFile=/dev/null \
+          -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o ControlMaster=no -o UserKnownHostsFile=/dev/null -i ${local.ssh_key_file} ubuntu@${var.bastion_fip} -W ${var.deployer_ip}:22" \
           -i ${local.ssh_key_file} \
           vpcuser@${var.deployer_ip}:/opt/ibm/terraform-ibm-hpc/solutions/${local.products}/*.ini \
           "${path.root}/../../solutions/${local.products}/"
