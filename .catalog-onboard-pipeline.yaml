@@ -18,7 +18,7 @@ offerings:
       # scc details needed if your offering is claiming any compliance controls
       scc:
         # must be an instance in the same account the validation is being done in
-        instance_id: 1c7d5f78-9262-44c3-b779-b28fe4d88c37
+        instance_id: 9e082928-339a-4458-90f6-d0762a130b4c
         region: us-south
       # pre_validation: tests/scripts/pre-validation.sh # optionally run a command before validation runs
       # post_validation: tests/scripts/post-validation.sh  # optionally run a command after validation completes
