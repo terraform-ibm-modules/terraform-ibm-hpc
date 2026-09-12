@@ -5,7 +5,7 @@
 
 module "storage_baremetal" {
   source                       = "terraform-ibm-modules/bare-metal-vpc/ibm"
-  version                      = "1.6.1"
+  version                      = "1.7.2"
   count                        = var.scheduler == "Scale" ? length(var.storage_servers) : 0
   server_count                 = var.storage_servers[count.index]["count"]
   prefix                       = var.prefix
@@ -28,7 +28,7 @@ module "storage_baremetal" {
 
 module "static_compute_baremetal" {
   source                = "terraform-ibm-modules/bare-metal-vpc/ibm"
-  version               = "1.6.1"
+  version               = "1.7.2"
   count                 = var.scheduler == "LSF" ? length(var.static_compute_baremetal_servers) : 0
   server_count          = var.static_compute_baremetal_servers[count.index].count
   prefix                = format("%s-%02d", var.prefix, count.index + 1)
