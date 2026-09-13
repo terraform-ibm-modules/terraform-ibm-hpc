@@ -79,7 +79,7 @@ module "storage_key" {
 module "client_sg" {
   count                        = local.enable_client && var.client_security_group_name == null ? 1 : 0
   source                       = "terraform-ibm-modules/security-group/ibm"
-  version                      = "2.10.0"
+  version                      = "2.11.0"
   add_ibm_cloud_internal_rules = true
   resource_group               = var.resource_group
   security_group_name          = format("%s-client-sg", local.prefix)
@@ -90,7 +90,7 @@ module "client_sg" {
 module "compute_sg" {
   count                        = local.enable_compute && var.compute_security_group_name == null ? 1 : 0
   source                       = "terraform-ibm-modules/security-group/ibm"
-  version                      = "2.10.0"
+  version                      = "2.11.0"
   add_ibm_cloud_internal_rules = true
   resource_group               = var.resource_group
   security_group_name          = format("%s-comp-sg", local.prefix)
@@ -101,7 +101,7 @@ module "compute_sg" {
 module "bastion_sg_existing" {
   count                          = var.login_security_group_name == null ? 1 : 0
   source                         = "terraform-ibm-modules/security-group/ibm"
-  version                        = "2.10.0"
+  version                        = "2.11.0"
   resource_group                 = var.resource_group
   add_ibm_cloud_internal_rules   = false
   use_existing_security_group_id = true
@@ -113,7 +113,7 @@ module "bastion_sg_existing" {
 module "nfs_storage_sg" {
   count                          = var.storage_security_group_id != "" ? 1 : 0
   source                         = "terraform-ibm-modules/security-group/ibm"
-  version                        = "2.10.0"
+  version                        = "2.11.0"
   resource_group                 = var.resource_group
   add_ibm_cloud_internal_rules   = false
   use_existing_security_group_id = true
@@ -125,7 +125,7 @@ module "nfs_storage_sg" {
 module "storage_sg" {
   count                        = local.enable_storage && var.storage_security_group_name == null ? 1 : 0
   source                       = "terraform-ibm-modules/security-group/ibm"
-  version                      = "2.10.0"
+  version                      = "2.11.0"
   add_ibm_cloud_internal_rules = true
   resource_group               = var.resource_group
   security_group_name          = format("%s-strg-sg", local.prefix)
@@ -136,7 +136,7 @@ module "storage_sg" {
 module "login_vsi" {
   count                         = var.scheduler == "LSF" ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "6.5.1"
+  version                       = "6.6.2"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -165,7 +165,7 @@ module "login_vsi" {
 module "management_vsi" {
   count                 = length(var.management_instances)
   source                = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version               = "6.5.1"
+  version               = "6.6.2"
   vsi_per_subnet        = var.management_instances[count.index]["count"]
   create_security_group = false
   security_group        = null
@@ -195,7 +195,7 @@ module "management_vsi" {
 module "compute_vsi" {
   count                 = ((var.scheduler == "LSF" && var.enable_baremetal == false) || (var.scheduler == "Scale")) ? length(var.static_compute_instances) : 0
   source                = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version               = "6.5.1"
+  version               = "6.6.2"
   vsi_per_subnet        = var.static_compute_instances[count.index]["count"]
   create_security_group = false
   security_group        = null
@@ -231,7 +231,7 @@ module "compute_vsi" {
 module "compute_cluster_management_vsi" {
   count                         = var.scheduler == "Scale" && local.enable_compute ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "6.5.1"
+  version                       = "6.6.2"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -261,7 +261,7 @@ module "compute_cluster_management_vsi" {
 module "storage_vsi" {
   count                         = var.scheduler == "Scale" ? (length(var.storage_instances) > 0 && var.storage_type != "baremetal" ? 1 : 0) : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "6.5.1"
+  version                       = "6.6.2"
   vsi_per_subnet                = var.storage_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -295,7 +295,7 @@ module "storage_vsi" {
 module "storage_cluster_management_vsi" {
   count                         = var.scheduler == "Scale" ? length(var.storage_instances) : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "6.5.1"
+  version                       = "6.6.2"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -325,7 +325,7 @@ module "storage_cluster_management_vsi" {
 module "storage_cluster_tie_breaker_vsi" {
   count                         = var.scheduler == "Scale" ? (var.storage_type != "baremetal" ? 1 : 0) : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "6.5.1"
+  version                       = "6.6.2"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -357,7 +357,7 @@ module "storage_cluster_tie_breaker_vsi" {
 module "client_vsi" {
   count                         = var.scheduler == "Scale" ? length(var.client_instances) : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "6.5.1"
+  version                       = "6.6.2"
   vsi_per_subnet                = var.client_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -383,7 +383,7 @@ module "client_vsi" {
 module "protocol_vsi" {
   count                         = var.scheduler == "Scale" ? ((local.enable_protocol && var.colocate_protocol_instances == false && local.ces_server_type == false) ? 1 : 0) : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "6.5.1"
+  version                       = "6.6.2"
   vsi_per_subnet                = var.protocol_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -416,7 +416,7 @@ module "protocol_vsi" {
 module "afm_vsi" {
   count                         = var.scheduler == "Scale" ? ((local.afm_server_type == false && local.enable_afm) ? 1 : 0) : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "6.5.1"
+  version                       = "6.6.2"
   vsi_per_subnet                = var.afm_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -443,7 +443,7 @@ module "afm_vsi" {
 module "gklm_vsi" {
   count                         = var.scheduler == "Scale" ? (var.scale_encryption_enabled == true && var.scale_encryption_type == "gklm" ? 1 : 0) : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "6.5.1"
+  version                       = "6.6.2"
   vsi_per_subnet                = var.gklm_instances[count.index]["count"]
   create_security_group         = false
   security_group                = null
@@ -469,7 +469,7 @@ module "gklm_vsi" {
 module "ldap_vsi" {
   count                         = var.enable_ldap == true && var.ldap_server == "null" ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "6.5.1"
+  version                       = "6.6.2"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
