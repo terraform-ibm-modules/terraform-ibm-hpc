@@ -10,14 +10,14 @@ variable "ibmcloud_api_key" {
 
 variable "lsf_version" {
   type        = string
-  default     = "fixpack_15"
-  description = "Select the LSF version to deploy: 'fixpack_14' or 'fixpack_15'. Use null to skip LSF deployment."
+  default     = "fixpack_16"
+  description = "Select the LSF version to deploy. The solution supports Fix Pack 16. Use null to skip LSF deployment."
 }
 
 variable "enable_lsf_pay_per_use" {
   type        = bool
   default     = true
-  description = "When enable_lsf_pay_per_use is set to true, the LSF cluster nodes are provisioned using predefined custom images under a pay-per-use pricing plan, where billing is based on vCPU usage per hour. In this mode, providing custom images for the nodes is not required, and Bring Your Own Image (BYOL) is not supported. The pay-per-use option is available only for FP15 images. If you set the variable to false, the automation uses default images for all cluster nodes and enables support for BYOL, with no pay-per-use billing applied."
+  description = "When enable_lsf_pay_per_use is set to true, the LSF cluster nodes are provisioned using predefined custom images under a pay-per-use pricing plan, where billing is based on vCPU usage per hour. In this mode, providing custom images for the nodes is not required, and Bring Your Own Image (BYOL) is not supported. The pay-per-use option is available only for FP16 images. If you set the variable to false, the automation uses default images for all cluster nodes and enables support for BYOL, with no pay-per-use billing applied."
 }
 
 ##############################################################################
@@ -785,7 +785,7 @@ variable "enable_webservice" {
 variable "enable_appcenter" {
   type        = bool
   default     = false
-  description = "Set to true to enable the IBM Spectrum LSF Application Center GUI (default: false). [System requirements](https://www.ibm.com/docs/en/slac/10.2.0?topic=requirements-system-102-fix-pack-15) for IBM Spectrum LSF Application Center Version 10.2 Fix Pack 15."
+  description = "Set to true to enable the IBM Spectrum LSF Application Center GUI (default: false). [System requirements](https://www.ibm.com/docs/en/slac/10.2.0?topic=requirements-system-102-fix-pack-16) for IBM Spectrum LSF Application Center Version 10.2 Fix Pack 16."
 }
 
 variable "webservice_appcenter_password" {

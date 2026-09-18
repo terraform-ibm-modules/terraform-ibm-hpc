@@ -1,6 +1,6 @@
-/*
-    LDAP Configurations and Ansible Plays
-*/
+##########
+##  LDAP Configurations and Ansible Plays
+##########
 
 resource "local_sensitive_file" "write_meta_private_key" {
   count           = (tobool(var.turn_on) == true) ? 1 : 0

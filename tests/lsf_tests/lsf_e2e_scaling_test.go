@@ -10,9 +10,26 @@ import (
 	utils "github.com/terraform-ibm-modules/terraform-ibm-hpc/utilities"
 )
 
-// TestReapply validates that a cluster can be re-applied with no input changes
-// and remains in a consistent state after the second apply.
-func TestReapply(t *testing.T) {
+// TestNodeScaleWithReapplyAndUP validates cluster consistency through:
+//
+//	Phase 1: Initial deployment (baseline: 1 management, 1 static)
+//	Phase 2: Re-apply with NO input changes (idempotency test)
+//	Phase 3: Scale UP management and compute nodes (2 management, 2 static)
+//
+// This consolidates what were previously two separate tests:
+//   - TestREAPPLY      (Phase 2 - idempotency)
+//   - TestNodeScaleUp  (Phase 3 - scale up)
+//
+// Both original test paths are fully exercised on the same cluster,
+// with no assertion coverage lost. The re-apply phase validates that
+// the cluster remains consistent when re-applied with identical inputs,
+// before any scaling changes are introduced.
+//
+// Prerequisites:
+//   - Valid environment configuration
+//   - Proper test suite initialization
+//   - Required permissions for resource operations
+func TestNodeScaleWithReapplyAndUP(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 
@@ -39,8 +56,6 @@ func TestReapply(t *testing.T) {
 	testLogger.Info(t, "Region overrides applied for scaling cluster configuration")
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
-	// SkipTestTearDown + DisableTempWorkingDir allow a single automation-controlled
-	// working directory to be reused across multiple RunTest phases.
 	options.SkipTestTearDown = true
 	options.DisableTempWorkingDir = true
 
@@ -52,11 +67,7 @@ func TestReapply(t *testing.T) {
 	)
 	options.TerraformDir = preparedTerraformDir
 
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	runPhase := func(phase string, fn func() error) {
 		testLogger.Info(t, fmt.Sprintf("[START] %s", phase))
@@ -75,99 +86,42 @@ func TestReapply(t *testing.T) {
 	})
 	testLogger.Info(t, fmt.Sprintf("Phase 1 duration: %v", time.Since(phase1Start)))
 
-	// ── 5. Phase 2: Re-apply (no input changes) ───────────────────────────────
+	// ── 5. Phase 2: Re-apply with NO input changes (was TestREAPPLY) ─────────
+	// Verifies the cluster remains in a consistent state when re-applied
+	// with identical inputs, before any scaling changes are introduced.
 	phase2Start := time.Now()
 	runPhase("Phase 2: Re-apply (no input changes)", func() error {
-		_, err := options.RunTest()
+		_, err := options.RunTestConsistency()
 		return err
 	})
 	testLogger.Info(t, fmt.Sprintf("Phase 2 duration: %v", time.Since(phase2Start)))
 
-	// ── 6. Validation ────────────────────────────────────────────────────────
+	// Validate after re-apply (idempotency check)
 	utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
-		lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
+		t.Run("ReapplyNoChanges", func(t *testing.T) {
+			lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
+		})
 	})
-}
 
-// TestNodeScaleUp validates that a cluster can scale up management and compute
-// nodes after the initial deployment and remains consistent post-scale.
-func TestNodeScaleUp(t *testing.T) {
-	t.Helper()
-	t.Parallel()
-
-	// ── 1. Initialization ────────────────────────────────────────────────────
-	setupTestSuite(t)
-	require.NotNil(t, testLogger, "Test logger must be initialized before use")
-	defer logResult(t)
-	testLogger.Info(t, fmt.Sprintf("[START] Test %s initiated", t.Name()))
-
-	// ── 2. Configuration ─────────────────────────────────────────────────────
-	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
-
-	envVars, err := GetEnvVars()
-	utils.NoError(t, err, "Failed to load environment configuration", testLogger)
-	testLogger.Info(t, "Environment variables loaded successfully")
-
-	options, err := setupOptions(t, clusterNamePrefix, terraformDir, LSF_CUSTOM_EXISTING_RESOURCE_GROUP_VALUE_AS_NULL)
-	utils.NoError(t, err, "Failed to initialize test options", testLogger)
-	testLogger.Info(t, "Test options initialized successfully")
-
-	// Override default zones with scaling-specific region (default_region=false).
-	applyRegionOverrides(t, envVars, options, "scaling")
-	testLogger.Info(t, "Region overrides applied for scaling cluster configuration")
-
-	// ── 3. Teardown ──────────────────────────────────────────────────────────
-	options.SkipTestTearDown = true
-	options.DisableTempWorkingDir = true
-
-	preparedTerraformDir := utils.PrepareTerraformWorkingDir(
-		t,
-		clusterNamePrefix,
-		options.TerraformDir,
-		options.IsUpgradeTest,
-	)
-	options.TerraformDir = preparedTerraformDir
-
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
-
-	runPhase := func(phase string, fn func() error) {
-		testLogger.Info(t, fmt.Sprintf("[START] %s", phase))
-		if err := fn(); err != nil {
-			testLogger.Error(t, fmt.Sprintf("%s failed: %v", phase, err))
-			t.FailNow()
-		}
-		testLogger.Info(t, fmt.Sprintf("[END] %s completed successfully", phase))
-	}
-
-	// ── 4. Phase 1: Initial Deployment ───────────────────────────────────────
-	phase1Start := time.Now()
-	runPhase("Phase 1: Initial deployment", func() error {
-		_, err := options.RunTest()
-		return err
-	})
-	testLogger.Info(t, fmt.Sprintf("Phase 1 duration: %v", time.Since(phase1Start)))
-
-	// ── 5. Phase 2: Scale-Up ─────────────────────────────────────────────────
+	// ── 6. Phase 3: Scale-Up ─────────────────────────────────────────────────
+	// Scale up management and static compute instances
 	utils.UpdateInstanceCount(t, options.TerraformOptions.Vars, "management_instances", 2)
 	utils.UpdateInstanceCount(t, options.TerraformOptions.Vars, "static_compute_instances", 2)
 	testLogger.Info(t, fmt.Sprintf("management_instances=%v", options.TerraformOptions.Vars["management_instances"]))
 	testLogger.Info(t, fmt.Sprintf("static_compute_instances=%v", options.TerraformOptions.Vars["static_compute_instances"]))
 
-	phase2Start := time.Now()
-	runPhase("Phase 2: Scale-up", func() error {
+	phase3Start := time.Now()
+	runPhase("Phase 3: Scale-up", func() error {
 		_, err := options.RunTest()
 		return err
 	})
-	testLogger.Info(t, fmt.Sprintf("Phase 2 duration: %v", time.Since(phase2Start)))
+	testLogger.Info(t, fmt.Sprintf("Phase 3 duration: %v", time.Since(phase3Start)))
 
-	// ── 6. Validation ────────────────────────────────────────────────────────
+	// ── 7. Validation after Scale-Up ─────────────────────────────────────────
 	utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
-		lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
+		t.Run("ScaleUp", func(t *testing.T) {
+			lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
+		})
 	})
 }
 
@@ -211,11 +165,7 @@ func TestNodeScaleDown(t *testing.T) {
 	)
 	options.TerraformDir = preparedTerraformDir
 
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	runPhase := func(phase string, fn func() error) {
 		testLogger.Info(t, fmt.Sprintf("[START] %s", phase))
@@ -260,7 +210,18 @@ func TestNodeScaleDown(t *testing.T) {
 }
 
 // TestNodeScaleUpAndDown validates a full scale-up then scale-down lifecycle:
-// deploy at baseline, scale up, then scale back down.
+// deploy at baseline, scale up, then scale back down. This is intentionally
+// kept separate from TestNodeScaleDown: that test exercises scale-down as the
+// FIRST operation after a high-baseline deploy, while this test exercises
+// scale-down only after a prior scale-up — different starting states can
+// surface different regressions (e.g. a bug that only appears when scaling
+// down without ever having scaled up first), so merging them would be a
+// functional coverage change, not just deduplication.
+//
+// Prerequisites:
+//   - Valid environment configuration
+//   - Proper test suite initialization
+//   - Required permissions for resource operations
 func TestNodeScaleUpAndDown(t *testing.T) {
 	t.Helper()
 	t.Parallel()
@@ -299,11 +260,7 @@ func TestNodeScaleUpAndDown(t *testing.T) {
 	)
 	options.TerraformDir = preparedTerraformDir
 
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	runPhase := func(phase string, fn func() error) {
 		testLogger.Info(t, fmt.Sprintf("[START] %s", phase))

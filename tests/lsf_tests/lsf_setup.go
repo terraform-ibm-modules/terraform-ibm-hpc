@@ -367,6 +367,22 @@ func applyRegionOverrides(t *testing.T, envVars *EnvVars, options *testhelper.Te
 	testLogger.Info(t, fmt.Sprintf("Terraform zones overridden to: %v", options.TerraformVars["zones"]))
 }
 
+// GetZonesKMSForTest returns the KMS region extracted from zones
+func GetZonesKMSForTest(t *testing.T, envVars EnvVars) string {
+	// Do not override if default region is enabled
+	if strings.Contains(envVars.DefaultRegion, "true") {
+		return utils.GetRegion(envVars.DefaultRegion)
+	}
+
+	// Only return KMS region if this is a KMS test
+	testName := strings.ToLower(t.Name())
+	if strings.Contains(testName, "kms") {
+		return utils.GetRegion(envVars.KmsRegion)
+	}
+
+	return utils.GetRegion(envVars.KmsRegion)
+}
+
 // setupOptionsVPC creates a test options object with the given parameters to creating brand new vpc
 func setupOptionsVPC(t *testing.T, clusterNamePrefix, terraformDir, existingResourceGroup string) (*testhelper.TestOptions, error) {
 

@@ -43,11 +43,42 @@ resource "null_resource" "remove_scale_host_entry_play" {
   }
 }
 
+resource "null_resource" "remove_outbound_sg_rule_entry_play" {
+  count = (tobool(var.turn_on) == true && tobool(var.create_scale_cluster) == true) ? 1 : 0
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "sudo -E ansible-playbook -f 50 -i localhost, -c local -e sg_id=${var.security_group_id} -e region=${var.vpc_region} -e resource_group=${var.resource_group} ${local.remove_security_outbound_rule_playbook_path}"
+
+    environment = {
+      IBMCLOUD_API_KEY = var.ibmcloud_api_key
+    }
+  }
+
+  triggers = {
+    build = timestamp()
+  }
+
+  depends_on = [null_resource.remove_scale_host_entry_play]
+}
+
 resource "null_resource" "remove_deployer_host_entry_play" {
   count = (tobool(var.turn_on) == true && tobool(var.create_scale_cluster) == true) ? 1 : 0
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "sudo ansible-playbook -f 50 -i localhost, -c local ${local.remove_hostentry_playbooks_path}"
+  }
+  triggers = {
+    build = timestamp()
+  }
+  depends_on = [null_resource.remove_scale_host_entry_play]
+}
+
+resource "null_resource" "grafana_bridge_automation" {
+  count = (tobool(var.turn_on) == true && tobool(var.create_scale_cluster) == true) ? 1 : 0
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "sudo ansible-playbook -f 50 -i ${local.storage_inventory_path} -e @${local.scale_observability_prerequisite_vars} ${local.grafana_bridge_automation_playbook_path}"
   }
   triggers = {
     build = timestamp()

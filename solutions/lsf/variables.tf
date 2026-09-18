@@ -13,12 +13,12 @@ variable "ibmcloud_api_key" {
 
 variable "lsf_version" {
   type        = string
-  default     = "fixpack_15"
-  description = "Provisioning of LSF cluster nodes in the IBM Spectrum LSF solution is supported exclusively with Fix Pack 15."
+  default     = "fixpack_16"
+  description = "Provisioning of LSF cluster nodes in the IBM Spectrum LSF solution is supported with Fix Pack 16."
 
   validation {
-    condition     = contains(["fixpack_15"], var.lsf_version)
-    error_message = "IBM Spectrum LSF solution supports only 'fixpack_15'"
+    condition     = contains(["fixpack_16"], var.lsf_version)
+    error_message = "IBM Spectrum LSF solution supports only 'fixpack_16'"
   }
 }
 
@@ -178,15 +178,15 @@ variable "deployer_instance" {
     profile = string
   })
   default = {
-    image   = "hpc-lsf-fp15-deployer-rhel810-v4"
+    image   = "hpc-lsf-fp16-deployer-rhel810-v1"
     profile = "bx2-8x32"
   }
-  description = "Defines the configuration of the deployer node, including the image and instance profile. By default, the deployer node is provisioned using the Fix Pack 15 image, which contains the required software packages, dependencies, and configuration needed for the deployment workflow. Customer-provided or custom images are not supported for the deployer node, as they may not contain the required components, resulting in deployment failures."
+  description = "Defines the configuration of the deployer node, including the image and instance profile. By default, the deployer node is provisioned using the Fix Pack 16 image, which contains the required software packages, dependencies, and configuration needed for the deployment workflow. Customer-provided or custom images are not supported for the deployer node, as they may not contain the required components, resulting in deployment failures."
   validation {
     condition = (
-      (!can(regex("fp15", var.deployer_instance.image)) || var.lsf_version == "fixpack_15")
+      (!can(regex("fp16", var.deployer_instance.image)) || var.lsf_version == "fixpack_16")
     )
-    error_message = "Use an image with only 'fp15' only with fixpack_15."
+    error_message = "Mismatch between deployer_instance image and lsf_version. Use an image with 'fp16' only when lsf_version is fixpack_16."
   }
   validation {
     condition     = can(regex("^[^\\s]+-[0-9]+x[0-9]+", var.deployer_instance.profile))
@@ -213,7 +213,7 @@ variable "login_instance" {
   )
   default = [{
     profile = "bx2-2x8"
-    image   = "hpc-lsf-fp15-compute-rhel810-v4"
+    image   = "hpc-lsf-fp16-compute-rhel810-v1"
     boot_volume = {
       profile   = "general-purpose"
       size      = 100
@@ -221,21 +221,21 @@ variable "login_instance" {
       bandwidth = null # only for sdp
     }
   }]
-  description = "Defines the login node configuration, including the instance profile, image, and optional boot volume settings. By default, the login node is provisioned using the Fix Pack 15 image. You can provision the login node using your own custom image by specifying the desired image name. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
+  description = "Defines the login node configuration, including the instance profile, image, and optional boot volume settings. By default, the login node is provisioned using the Fix Pack 16 image. You can provision the login node using your own custom image by specifying the desired image name. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
 
   validation {
     condition = alltrue([
-      for inst in var.login_instance : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
+      for inst in var.login_instance : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile)) && !strcontains(lower(inst.profile), "metal")
     ])
     error_message = "The profile must be a valid virtual server instance profile."
   }
   validation {
     condition = alltrue([
       for inst in var.login_instance : (
-        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15")
+        (!can(regex("fp16", inst.image)) || var.lsf_version == "fixpack_16")
       )
     ])
-    error_message = "Use an image with only 'fp15' only with fixpack_15."
+    error_message = "Mismatch between login_instance image and lsf_version. Use an image with 'fp16' only when lsf_version is fixpack_16."
   }
   validation {
     condition = alltrue([
@@ -316,7 +316,7 @@ variable "management_instances" {
   default = [{
     profile = "bx2-16x64"
     count   = 2
-    image   = "hpc-lsf-fp15-rhel810-v4"
+    image   = "hpc-lsf-fp16-rhel810-v1"
     boot_volume = {
       profile   = "general-purpose"
       size      = 100
@@ -324,14 +324,14 @@ variable "management_instances" {
       bandwidth = null # only for sdp
     }
   }]
-  description = "Specify the list of management node configurations, including instance profile, image name, and count. By default, all management nodes are created using Fix Pack 15. The solution allows customization of instance profiles and counts, IBM stock images is not supported. Solution also supports provisioning instances on AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
+  description = "Specify the list of management node configurations, including instance profile, image name, and count. By default, all management nodes are created using Fix Pack 16. The solution allows customization of instance profiles and counts, IBM stock images is not supported. Solution also supports provisioning instances on AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
   validation {
     condition     = alltrue([for inst in var.management_instances : !contains([for i in var.management_instances : can(regex("^ibm", i.image))], true) || can(regex("^ibm-redhat", inst.image))])
     error_message = "When defining management_instances, all instances must either use custom images or IBM stock images exclusively — mixing the two is not supported. If stock images are used, only Red Hat-based IBM images (e.g., ibm-redhat-*) are allowed."
   }
   validation {
     condition = alltrue([
-      for inst in var.management_instances : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
+      for inst in var.management_instances : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile)) && !strcontains(lower(inst.profile), "metal")
     ])
     error_message = "The profile must be a valid virtual server instance profile."
   }
@@ -342,10 +342,10 @@ variable "management_instances" {
   validation {
     condition = alltrue([
       for inst in var.management_instances : (
-        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15")
+        (!can(regex("fp16", inst.image)) || var.lsf_version == "fixpack_16")
       )
     ])
-    error_message = "Use an image with only 'fp15' only with fixpack_15."
+    error_message = "Mismatch between management_instance image and lsf_version. Use an image with 'fp16' only when lsf_version is fixpack_16."
   }
   validation {
     condition = alltrue([
@@ -434,7 +434,7 @@ variable "static_compute_instances" {
   default = [{
     profile = "bx2-4x16"
     count   = 0
-    image   = "hpc-lsf-fp15-compute-rhel810-v4"
+    image   = "hpc-lsf-fp16-compute-rhel810-v1"
     boot_volume = {
       profile   = "general-purpose"
       size      = 100
@@ -443,7 +443,7 @@ variable "static_compute_instances" {
     }
   }]
 
-  description = "Specify the list of static compute node configurations, including instance profile, image name, and count. By default, all compute nodes are created using Fix Pack 15. The solution allows customization of instance profiles and counts, IBM Stock image are not supported.  You can provision the static compute node using your own custom image by specifying the desired image name. Solution also supports provisioning instances on AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
+  description = "Specify the list of static compute node configurations, including instance profile, image name, and count. By default, all compute nodes are created using Fix Pack 16. The solution allows customization of instance profiles and counts, IBM Stock image are not supported.  You can provision the static compute node using your own custom image by specifying the desired image name. Solution also supports provisioning instances on AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
 
   validation {
     condition = alltrue([
@@ -460,10 +460,10 @@ variable "static_compute_instances" {
   validation {
     condition = alltrue([
       for inst in var.static_compute_instances : (
-        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15")
+        (!can(regex("fp16", inst.image)) || var.lsf_version == "fixpack_16")
       )
     ])
-    error_message = "Static Image should be FP15 when the version is set as fixpack_15."
+    error_message = "Mismatch between static_compute_instance image and lsf_version. Use an image with 'fp16' only when lsf_version is fixpack_16."
   }
   validation {
     condition = alltrue([
@@ -585,7 +585,7 @@ variable "dynamic_compute_instances" {
   default = [{
     profile               = "bx2-4x16"
     count                 = 500
-    image                 = "hpc-lsf-fp15-compute-rhel810-v4"
+    image                 = "hpc-lsf-fp16-compute-rhel810-v1"
     enable_spot_instances = false
     boot_volume = {
       profile   = "general-purpose"
@@ -594,12 +594,15 @@ variable "dynamic_compute_instances" {
       bandwidth = null
     }
   }]
-  description = "Specify the list of dynamic compute node configurations, including instance profile, image name, and count. By default, all dynamic compute nodes are created using Fix Pack 15. Currently, only a single instance profile is supported, multiple profiles are not yet supported. Solution supports provision the dynamic compute node using your own custom image by specifying the desired image name. Instances can also be provisioned using AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
+  description = "Specify the list of dynamic compute node configurations, including instance profile, image name, and count. By default, all dynamic compute nodes are created using Fix Pack 16. Currently, only a single instance profile is supported, multiple profiles are not yet supported. Solution supports provision the dynamic compute node using your own custom image by specifying the desired image name. Instances can also be provisioned using AMD-based profiles for parallel workloads, with the supported profile hx4da-248x680 available in the Dallas region. In addition, GPU-based profiles are supported, including gx3d-160x1792x8gaudi3, available in the Dallas, Washington, and Frankfurt regions. Boot volume profiles can be general-purpose or sdp. The general-purpose profile supports volumes up to 250 GB, while the sdp profile supports volumes from 100 GB to 32,000 GB with a minimum of 3000 IOPS. Using SDP provides enhanced storage performance, throughput, and scalability for LSF workloads. For more information on selecting the right size, see [Boot volume profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui)."
 
   validation {
     condition = alltrue([
-      for inst in var.dynamic_compute_instances : can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile))
+      for inst in var.dynamic_compute_instances :
+      can(regex("^[^\\s]+-[0-9]+x[0-9]+", inst.profile)) &&
+      !strcontains(lower(inst.profile), "metal")
     ])
+
     error_message = "The profile must be a valid virtual server instance profile."
   }
   validation {
@@ -609,10 +612,10 @@ variable "dynamic_compute_instances" {
   validation {
     condition = alltrue([
       for inst in var.dynamic_compute_instances : (
-        (!can(regex("fp15", inst.image)) || var.lsf_version == "fixpack_15")
+        (!can(regex("fp16", inst.image)) || var.lsf_version == "fixpack_16")
       )
     ])
-    error_message = "Mismatch between dynamic_compute_instances image and lsf_version. Use an image with 'fp14' only when lsf_version is fixpack_14, and 'fp15' only with fixpack_15."
+    error_message = "Mismatch between dynamic_compute_instances image and lsf_version. Use an image with 'fp16' only when lsf_version is fixpack_16"
   }
   validation {
     condition = alltrue([

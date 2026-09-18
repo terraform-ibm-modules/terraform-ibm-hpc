@@ -78,6 +78,11 @@ output "protocol_vsi_data" {
   value       = module.protocol_vsi[*]["list"]
 }
 
+output "protocol_secondary_vni_names" {
+  description = "Secondary VNI names"
+  value       = local.protocol_secondary_vnis
+}
+
 output "compute_sg_id" {
   description = "Compute SG id"
   value       = module.compute_sg[*].security_group_id
@@ -188,4 +193,9 @@ output "client_sg_id" {
 output "dedicated_host_id" {
   description = "dedicated_host"
   value       = local.dedicated_host_ids
+}
+
+output "storage_sg_id" {
+  description = "Storage SG id"
+  value       = module.storage_sg[*].security_group_id
 }
