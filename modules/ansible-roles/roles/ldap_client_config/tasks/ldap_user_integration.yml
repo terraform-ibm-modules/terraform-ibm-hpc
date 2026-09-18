@@ -36,10 +36,6 @@
           TLS_CACERTDIR /etc/openldap/certs
         create: yes
 
-    - name: LDAP | Rehash OpenLDAP certs directory
-      ansible.builtin.command:
-        cmd: openssl rehash /etc/openldap/certs
-
     # Configure SSSD
     - name: LDAP | Configure authselect to use SSSD with mkhomedir
       ansible.builtin.command:
@@ -57,6 +53,23 @@
         mode: '0600'
         owner: root
         group: root
+
+    - name: LDAP | Remove existing Kerberos configuration (if present)
+      ansible.builtin.file:
+        path: /etc/krb5.conf
+        state: absent
+
+    - name: LDAP | Generate new Kerberos configuration file from template
+      ansible.builtin.template:
+        src: krb5.conf.j2
+        dest: /etc/krb5.conf
+        mode: "0644"
+        owner: root
+        group: root
+
+    - name: LDAP | Rehash OpenLDAP certs directory
+      ansible.builtin.command:
+        cmd: openssl rehash /etc/openldap/certs
 
     - name: LDAP | Restart and enable SSSD and oddjobd services
       ansible.builtin.systemd:

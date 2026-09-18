@@ -1,5 +1,5 @@
 Scheduler: LSF
-lsf_version: fixpack_15
+lsf_version: fixpack_16
 zones: us-south-1         # Default zones used when default_region=true. Set default_region=true to use this.
 default_region: false    # When false, test-specific region mapping is used (basic, kms, ldap, etc.)
 basic: us-south-1
@@ -22,7 +22,7 @@ bastion_instance:
   image: ibm-ubuntu-22-04-5-minimal-amd64-16
 deployer_instance:
   profile:  bx2-8x32
-  image: hpc-lsf-fp15-deployer-rhel810-v4
+  image: hpc-lsf-fp16-deployer-rhel810-v1
 enable_cos_integration: false
 enable_vpc_flow_logs: false
 custom_file_shares:
@@ -35,19 +35,19 @@ custom_file_shares:
 key_management: key_protect
 login_instance:
   - profile:  bx2-2x8
-    image: hpc-lsf-fp15-compute-rhel810-v4
+    image: hpc-lsf-fp16-compute-rhel810-v1
 management_instances:
   - profile:  bx2-4x16
     count: 2
-    image: hpc-lsf-fp15-rhel810-v4
+    image: hpc-lsf-fp16-rhel810-v1
 static_compute_instances:
   - profile: bx2-2x8
     count: 2
-    image: hpc-lsf-fp15-compute-rhel810-v4
+    image: hpc-lsf-fp16-compute-rhel810-v1
 dynamic_compute_instances:
   - profile: bx2-2x8
     count: 1024
-    image: hpc-lsf-fp15-compute-rhel810-v4
+    image: hpc-lsf-fp16-compute-rhel810-v1
     enable_spot_instances: false
 placement_strategy: spread
 kms_instance_name: cicd-lsf-dnd-kms-instance
@@ -88,8 +88,8 @@ us_south_cluster_name: HPC-LSF-2
 jp_tok_zone: jp-tok-1
 jp_tok_cluster_name: HPC-LSF-2
 attracker_test_zone: us-south-1  #added for testing purpose
-management_instances_image: hpc-lsf-fp15-rhel810-v4  #added for testing purpose
-static_compute_instances_image: hpc-lsf-fp15-compute-rhel810-v4 #added for testing purpose
-dynamic_compute_instances_image: hpc-lsf-fp15-compute-rhel810-v4 #added for testing purpose
+management_instances_image: hpc-lsf-fp16-rhel810-v1  #added for testing purpose
+static_compute_instances_image: hpc-lsf-fp16-compute-rhel810-v1 #added for testing purpose
+dynamic_compute_instances_image: hpc-lsf-fp16-compute-rhel810-v1 #added for testing purpose
 ssh_file_path: /artifacts/.ssh/id_rsa
 ssh_file_path_two: /artifacts/.ssh/id_rsa

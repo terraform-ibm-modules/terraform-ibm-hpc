@@ -1,6 +1,6 @@
-/*
-    Executes ansible playbook to install IBM Spectrum Scale compute cluster.
-*/
+##########
+##  Executes ansible playbook to install IBM Spectrum Scale compute cluster.
+##########
 
 resource "local_file" "create_compute_tuning_parameters" {
   count    = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true) ? 1 : 0

@@ -4,7 +4,7 @@ set -euo pipefail
 ###############################################################################
 # Script Variables (Internal configuration used within this script)
 ###############################################################################
-LOGFILE="/tmp/user_data.log"
+LOGFILE="/var/log/ibm_user_data.log"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOGFILE"
@@ -97,6 +97,41 @@ EOF
 chmod 600 "$SSH_DIR/authorized_keys" "$SSH_DIR/config"
 
 chown -R "$USER:$USER" "$SSH_DIR"
+
+###############################################################################
+# 6. Installing IBM Cloud Cli and VPC Plugin
+###############################################################################
+
+# Install ibmcloud globally
+curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+
+# Create symbolic link
+ln -sf /usr/local/ibmcloud/bin/ibmcloud /usr/bin/ibmcloud
+
+# Install for root
+export PATH=$PATH:/usr/local/ibmcloud/bin
+ibmcloud plugin install is -f
+
+# Install for vpcuser
+sudo -u vpcuser bash << 'EOF'
+  # Setup environment
+  export PATH=$PATH:/usr/local/ibmcloud/bin
+
+  # Create bluemix directory
+  mkdir -p /home/vpcuser/.bluemix/plugins
+
+  # Install plugin
+  /usr/local/ibmcloud/bin/ibmcloud plugin install is -f
+
+  # Add to .bashrc for persistence
+  echo 'export PATH=$PATH:/usr/local/ibmcloud/bin' >> /home/vpcuser/.bashrc
+  echo 'export IBMCLOUD_HOME=/home/vpcuser/.bluemix' >> /home/vpcuser/.bashrc
+
+  # Fix permissions
+  chown -R vpcuser:vpcuser /home/vpcuser/.bluemix
+EOF
+
+echo "IBM Cloud CLI installation complete"
 
 ###############################################################################
 # 6. Script completion

@@ -108,3 +108,67 @@ func RunValidateCluster(t *testing.T, logger *AggregatedLogger, validate func(t 
 		logger.Info(t, fmt.Sprintf("[END] Cluster validation completed successfully (duration: %v)", time.Since(validationStart)))
 	})
 }
+
+func RunPhase(t *testing.T, phase string, fn func() error, logger *AggregatedLogger) {
+	logger.Info(t, fmt.Sprintf("[START] %s", phase))
+
+	if err := fn(); err != nil {
+		logger.Error(t, fmt.Sprintf("%s failed: %v", phase, err))
+		t.FailNow()
+	}
+
+	logger.Info(t, fmt.Sprintf("[END] %s completed successfully", phase))
+}
+
+// SetupTeardown returns a teardown function that must be deferred immediately.
+//
+// On the normal path, the returned function runs options.TestTearDown() followed
+// by RunCleanupAfterTeardown(). If the test body panics, it recovers, skips
+// terraform destroy (the stack may be inconsistent), and runs only orphan
+// cleanup.
+//
+// SetupTeardown requires options.SkipTestTearDown to already be true; it does
+// not set this flag. Otherwise, Terratest's automatic teardown may run as well:
+//
+//	options.SkipTestTearDown = true
+//	defer utils.SetupTeardown(t, options, logger)()
+//
+// If SkipTestTearDown is false, the test is marked failed with t.Fail() instead
+// of t.Fatal()/t.FailNow(). Since SetupTeardown is evaluated before the defer
+// is registered, Goexit would prevent the returned cleanup function from being
+// deferred, potentially leaving resources behind.
+func SetupTeardown(t *testing.T, options *testhelper.TestOptions, logger *AggregatedLogger) func() {
+	t.Helper()
+
+	if !options.SkipTestTearDown {
+		logger.FAIL(t, "options.SkipTestTearDown was not set to true before calling SetupTeardown — "+
+			"terratest's automatic teardown may run in addition to this cleanup")
+		t.Fail()
+	}
+
+	return func() {
+		if r := recover(); r != nil {
+			logger.Error(t, fmt.Sprintf("Panic during test: %v", r))
+			logger.Info(t, "Skipping terraform destroy after panic — running orphan cleanup only...")
+			// Skip destroying resources (state might be broken)
+			// Just clean up any orphaned resources
+			RunCleanupAfterTeardown(t, options, logger)
+			t.Errorf("test panicked: %v", r)
+			return
+		}
+
+		// Registered before TestTearDown() runs, so cleanup still fires
+		// even if TestTearDown() itself panics.
+		defer func() {
+			if r := recover(); r != nil {
+				logger.Error(t, fmt.Sprintf("Panic during terraform destroy: %v", r))
+				t.Errorf("terraform destroy panicked: %v", r)
+			}
+			RunCleanupAfterTeardown(t, options, logger) // Double-check nothing remains // Always runs!
+		}()
+
+		logger.Info(t, "Initiating final resource teardown...")
+		options.TestTearDown() // Destroy terraform resources
+		logger.Info(t, "Resource teardown completed")
+	}
+}

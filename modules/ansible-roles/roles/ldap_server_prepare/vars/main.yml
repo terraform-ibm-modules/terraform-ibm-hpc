@@ -11,3 +11,4 @@ LDAP_CERT_FILES_DIR: "/opt/ibm/terraform-ibm-hpc/modules/ansible-roles/ldap_key"
 OPENLDAP_SERVER_PKGS:
   - slapd
   - ldap-utils
+KERBEROS_REALM: "{{ ldap_basedns | upper }}"

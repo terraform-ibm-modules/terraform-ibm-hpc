@@ -204,3 +204,47 @@ variable "protocol_instance_eth1_mtu" {
   description = "MTU for protocol instance eth1. When private path NLB is enabled, MTU must be 8500 or lower. When disabled, MTU can be up to 9000."
   default     = 9000
 }
+
+variable "observability_monitoring_enable" {
+  description = "Enables or disables IBM Cloud Monitoring integration. When enabled, the Grafana bridge is deployed on management nodes to expose IBM Storage Scale metrics, and the unified agent collects infrastructure and filesystem data across the cluster. This must be set to true if monitoring is required for the storage cluster."
+  type        = bool
+  default     = false
+}
+
+variable "cloud_monitoring_access_key" {
+  description = "IBM Cloud Monitoring access key for agents to use"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "cloud_monitoring_ingestion_url" {
+  description = "IBM Cloud Monitoring ingestion url for agents to use"
+  type        = string
+  default     = ""
+}
+
+variable "enable_sccwp" {
+  description = "Flag to enable or disable SCC Workload Protection agent configuration"
+  type        = bool
+  default     = false
+}
+
+variable "sccwp_api_endpoint" {
+  description = "SCC Workload Protection API endpoint for the Sysdig agent (must be formatted without https:// and /api)"
+  type        = string
+  default     = ""
+}
+
+variable "sccwp_access_key" {
+  description = "SCC Workload Protection access key for standalone agent authentication"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "sccwp_ingestion_endpoint" {
+  description = "SCC Workload Protection ingestion collector URL"
+  type        = string
+  default     = ""
+}
