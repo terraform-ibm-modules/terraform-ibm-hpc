@@ -28,7 +28,8 @@ const (
 	// Configuration files for each LSF version
 	lsfFP14ConfigFile = "lsf_fp14_config.yml"
 	lsfFP15ConfigFile = "lsf_fp15_config.yml"
-	defaultConfigFile = lsfFP15ConfigFile // Use latest as default
+	lsfFP16ConfigFile = "lsf_fp16_config.yml"
+	defaultConfigFile = lsfFP16ConfigFile // Use latest as default
 
 	// Log file suffixes
 	defaultLogFileSuffix     = ".log"
@@ -37,9 +38,10 @@ const (
 
 // Constants for LSF version normalization
 const (
-	DefaultLSFVersion = "fixpack_15"
+	DefaultLSFVersion = "fixpack_16"
 	LSF14             = "fixpack_14"
 	LSF15             = "fixpack_15"
+	LSF16             = "fixpack_16"
 )
 
 // EnvVars represents all environment variables required for the test
@@ -306,8 +308,11 @@ func GetLSFVersionConfig() (string, error) {
 	case "fixpack_15", "lsf15", "15":
 		productFileName = lsfFP15ConfigFile
 		lsfVersion = LSF15
+	case "fixpack_16", "lsf16", "16":
+		productFileName = lsfFP16ConfigFile
+		lsfVersion = LSF16
 	default:
-		return "", fmt.Errorf("unsupported LSF version: %s (supported: fixpack_14, fixpack_15, lsf14, lsf15, 14, 15)", lsfVersion)
+		return "", fmt.Errorf("unsupported LSF version: %s (supported: fixpack_14, fixpack_15, fixpack_16, lsf14, lsf15, lsf16, 14, 15, 16)", lsfVersion)
 	}
 
 	// Step 4: Ensure normalized value is set in environment

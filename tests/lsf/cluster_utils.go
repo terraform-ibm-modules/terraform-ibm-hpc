@@ -36,6 +36,7 @@ const (
 const (
 	LSFVersion14 = "fixpack_14"
 	LSFVersion15 = "fixpack_15"
+	LSFVersion16 = "fixpack_16"
 )
 
 // LSFMTUCheck checks the MTU setting for multiple nodes of a specified type.
@@ -1033,6 +1034,8 @@ func CheckLSFVersion(t *testing.T, sClient *ssh.Client, lsfVersion string, logge
 		expectedVersion = LSF_VERSION_FP14
 	case LSFVersion15:
 		expectedVersion = LSF_VERSION_FP15
+	case LSFVersion16:
+		expectedVersion = LSF_VERSION_FP16
 	default:
 		return fmt.Errorf("unsupported LSF version identifier: %s", lsfVersion)
 	}
