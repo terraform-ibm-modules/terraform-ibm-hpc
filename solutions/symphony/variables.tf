@@ -110,10 +110,10 @@ variable "deployer_instance" {
     profile = string
   })
   default = {
-    image   = "hpc-lsf-fp15-deployer-rhel810-v1"
+    image   = "hpc-lsf-fp16-deployer-rhel810-v1"
     profile = "bx2-8x32"
   }
-  description = "Configuration for the deployer node, including the custom image and instance profile. By default, uses fixpack_15 image and a bx2-8x32 profile."
+  description = "Configuration for the deployer node, including the custom image and instance profile. By default, uses fixpack_16 image and a bx2-8x32 profile."
 }
 
 # variable "enable_bastion" {

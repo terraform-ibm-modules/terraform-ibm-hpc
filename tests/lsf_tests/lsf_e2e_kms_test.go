@@ -39,7 +39,7 @@ func TestKMSInstanceWithExistingKey(t *testing.T) {
 	apiKey := os.Getenv("TF_VAR_ibmcloud_api_key")
 	require.NotEmpty(t, apiKey, "IBM Cloud API key must be set")
 
-	region := utils.GetRegion(envVars.Zones)
+	region := GetZonesKMSForTest(t, *envVars)
 	kmsInstanceName := "cicd-" + utils.GenerateRandomString()
 	testLogger.Info(t, fmt.Sprintf("Creating KMS instance: %s in region: %s", kmsInstanceName, region))
 
@@ -84,14 +84,8 @@ func TestKMSInstanceWithExistingKey(t *testing.T) {
 	testLogger.Info(t, "KMS Terraform variables configured")
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
-	// SkipTestTearDown defers destruction to the explicit defer below, giving
-	// us control over logging and sequencing around teardown.
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -131,7 +125,7 @@ func TestKMSInstanceWithoutKey(t *testing.T) {
 	apiKey := os.Getenv("TF_VAR_ibmcloud_api_key")
 	require.NotEmpty(t, apiKey, "IBM Cloud API key must be set")
 
-	region := utils.GetRegion(envVars.Zones)
+	region := GetZonesKMSForTest(t, *envVars)
 	kmsInstanceName := "cicd-" + utils.GenerateRandomString()
 	testLogger.Info(t, fmt.Sprintf("Creating KMS instance: %s in region: %s", kmsInstanceName, region))
 
@@ -177,11 +171,7 @@ func TestKMSInstanceWithoutKey(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -240,11 +230,7 @@ func TestExistingKMSInstanceAndKeyWithAuthorizationPolicy(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)

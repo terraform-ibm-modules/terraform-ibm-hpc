@@ -1050,9 +1050,481 @@ EOT
   filename = local.encryption_replication_playbook_path
 }
 
+resource "local_file" "remove_security_outbound_rule_playbook" {
+  count    = var.scheduler == "Scale" ? 1 : 0
+  content  = <<EOT
+---
+- name: Remove outbound security group rule
+  hosts: localhost
+  gather_facts: true
+
+  vars:
+    region: "{{ region }}"
+    resource_group: "{{ resource_group }}"
+    security_group_id: "{{ sg_id }}"
+    api_key: "{{ lookup('env', 'IBMCLOUD_API_KEY') }}"
+
+  tasks:
+    - name: Check if IBM Cloud IS plugin is installed
+      shell: ibmcloud plugin list | grep -i "infrastructure-service" || true
+      register: plugin_check
+      changed_when: false
+
+    - name: Install IBM Cloud IS plugin if missing
+      shell: ibmcloud plugin install infrastructure-service -f
+      when: plugin_check.stdout == ""
+      register: plugin_install
+
+    - name: Ensure plugin is ready (wait a moment)
+      pause:
+        seconds: 2
+      when: plugin_install is changed
+
+    - name: Login to IBM Cloud
+      shell: ibmcloud login --apikey "{{ api_key }}" -r "{{ region }}" -g "{{ resource_group }}"
+      no_log: true
+      when: api_key != ""
+      register: login_result
+      ignore_errors: yes
+
+    - name: Abort if login failed
+      fail:
+        msg: "IBM Cloud login failed. Please check IBMCLOUD_API_KEY environment variable."
+      when:
+        - api_key != ""
+        - login_result is defined
+        - login_result.rc is defined
+        - login_result.rc != 0
+
+    - name: Check if already logged in (if no API key)
+      shell: ibmcloud target
+      register: target_check
+      changed_when: false
+      failed_when: false
+      when: api_key == ""
+
+    - name: Abort if not logged in
+      fail:
+        msg: "Not logged in to IBM Cloud. Set IBMCLOUD_API_KEY environment variable."
+      when:
+        - api_key == ""
+        - target_check is defined
+        - target_check.rc != 0
+
+    - name: Get security group details
+      shell: >
+        ibmcloud is security-group {{ security_group_id }} --output JSON
+      register: sg_details
+      changed_when: false
+
+    - name: Find rule ID by name
+      set_fact:
+        rule_id: >-
+          {{
+            (
+              (sg_details.stdout | from_json).rules
+              | selectattr('name', 'equalto', 'storage-allow-all-outbound')
+              | map(attribute='id')
+              | first
+            ) | default('')
+          }}
+
+    - name: Show rule ID
+      debug:
+        var: rule_id
+
+    - name: Delete rule
+      shell: >
+        ibmcloud is security-group-rule-delete {{ security_group_id }} {{ rule_id }} -f
+      when: rule_id != ""
+      register: delete_result
+
+    - name: Confirm deletion
+      debug:
+        msg: "Rule 'storage-allow-all-outbound' deleted successfully"
+      when: delete_result is defined and delete_result.rc == 0
+EOT
+  filename = local.remove_security_outbound_rule_playbook_path
+}
+
 resource "time_sleep" "wait_for_servers_syncup" {
   triggers = {
     always = timestamp()
   }
   create_duration = "180s"
+}
+
+resource "local_file" "scale_observability_prerequisite_vars" {
+  filename        = local.scale_observability_prerequisite_vars
+  file_permission = "0600" # Locks down read/write to the owner only
+  content = yamlencode({
+    # Cloud Monitoring Variables
+    monitoring_enabled             = var.observability_monitoring_enable
+    bridge_version                 = "9.0.0"
+    api_key_name                   = "grafana_bridge_key"
+    bridge_basic_auth_user         = "svc_osprey_scraper"
+    cloud_monitoring_access_key    = var.cloud_monitoring_access_key
+    cloud_monitoring_ingestion_url = var.cloud_monitoring_ingestion_url
+
+    # SCC Workload Protection Variables
+    sccwp_enabled            = var.enable_sccwp
+    sccwp_api_endpoint       = var.sccwp_api_endpoint
+    sccwp_access_key         = var.sccwp_access_key
+    sccwp_ingestion_endpoint = var.sccwp_ingestion_endpoint
+  })
+}
+
+resource "local_file" "scale_grafana_bridge_automation_playbook" {
+  count    = var.scheduler == "Scale" ? 1 : 0
+  content  = <<EOT
+---
+- name: Deploy IBM Storage Scale Bridge & Sysdig Agent
+  hosts: scale_nodes
+  become: yes
+  tasks:
+
+    # =========================================================================
+    # 0. PREREQUISITE CHECK (EXITS GRACEFULLY IF SCC and Monitoring BOTH ARE DISABLED)
+    # =========================================================================
+    - name: Notify user that installation is skipped
+      ansible.builtin.debug:
+        msg: "Both Monitoring and SCC Workload Protection are disabled. Skipping installation."
+      when: not (monitoring_enabled | default(false) | bool) and not (sccwp_enabled | default(false) | bool)
+
+    - name: Halt playbook execution if no features are enabled
+      ansible.builtin.meta: end_play
+      when: not (monitoring_enabled | default(false) | bool) and not (sccwp_enabled | default(false) | bool)
+
+    - name: Notify user that installation is proceeding
+      ansible.builtin.debug:
+        msg: "Proceeding with Agent installation (Monitoring: {{ monitoring_enabled | default(false) }}, SCC: {{ sccwp_enabled | default(false) }})."
+
+    # ==================================================================================
+    # THE GRAFANA BRIDGE BLOCK (ONLY RUNS ON MANAGEMENT NODES if MONITORING IS ENABLED)
+    # ==================================================================================
+    - name: Deploy Grafana Bridge on management nodes
+      block:
+        # =========================================================================
+        # 1. DEPENDENCIES & DIRECTORIES
+        # =========================================================================
+        - name: Install Python 3.12
+          ansible.builtin.dnf:
+            name: python312
+            state: present
+
+        - name: Download and install pip for Python 3.12
+          ansible.builtin.shell: |
+            curl -sS https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
+            /usr/bin/python3.12 /tmp/get-pip.py
+          args:
+            creates: /usr/local/bin/pip3.12
+
+        - name: Create required directories
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: directory
+            mode: '0755'
+          loop:
+            - /opt/IBM
+            - /var/log/ibm_bridge_for_grafana
+            - /etc/bridge_ssl/certs
+
+        # =========================================================================
+        # 2. DOWNLOAD & EXTRACT BRIDGE
+        # =========================================================================
+        - name: Download and extract Grafana Bridge archive
+          ansible.builtin.unarchive:
+            src: "https://github.com/IBM/ibm-spectrum-scale-bridge-for-grafana/archive/refs/tags/v{{ bridge_version }}.tar.gz"
+            dest: /opt/IBM
+            remote_src: yes
+            creates: "/opt/IBM/ibm-spectrum-scale-bridge-for-grafana-{{ bridge_version }}"
+
+        - name: Install Python requirements via pip3.12
+          ansible.builtin.pip:
+            requirements: /opt/IBM/ibm-spectrum-scale-bridge-for-grafana-{{ bridge_version }}/requirements.txt
+            executable: /usr/local/bin/pip3.12
+
+        # =========================================================================
+        # 3. SECURITY & CERTIFICATES
+        # =========================================================================
+        - name: Generate self-signed SSL Certificates silently
+          ansible.builtin.command: >
+            openssl req -x509 -nodes -days 365 -newkey rsa:2048
+            -subj "/C=IN/ST=State/L=City/O=IBM/OU=Storage/CN=grafana-bridge"
+            -keyout /etc/bridge_ssl/certs/privkey.pem
+            -out /etc/bridge_ssl/certs/cert.pem
+          args:
+            creates: /etc/bridge_ssl/certs/cert.pem
+
+        # =========================================================================
+        # 4. STORAGE SCALE API KEY EXTRACTION
+        # =========================================================================
+        - name: Generate Storage Scale API Key in cluster
+          ansible.builtin.command: /usr/lpp/mmfs/bin/mmperfmon config add --apiKey {{ api_key_name }}
+          register: create_key
+          failed_when:
+            - create_key.rc != 0
+            - "'already defined' not in create_key.stderr"
+          changed_when: create_key.rc == 0
+
+        - name: Wait 5 seconds for CCR propagation
+          ansible.builtin.pause:
+            seconds: 5
+          when: create_key.changed
+
+        - name: Fetch and parse the API Key Value safely
+          ansible.builtin.shell: |
+            /usr/lpp/mmfs/bin/mmperfmon config show --apiKey {{ api_key_name }}
+          register: mmperfmon_output
+          changed_when: false
+
+        - name: Extract key from JSON output
+          set_fact:
+            extracted_api_key: "{{ (mmperfmon_output.stdout | from_json).key }}"
+
+        # =========================================================================
+        # 5. DYNAMIC PASSWORD GENERATION (IDEMPOTENT)
+        # =========================================================================
+        - name: Check if config.ini already exists
+          ansible.builtin.stat:
+            path: /opt/IBM/ibm-spectrum-scale-bridge-for-grafana-{{ bridge_version }}/source/config.ini
+          register: config_stat
+
+        - name: Extract existing password if present
+          ansible.builtin.shell: |
+            sed -n 's/^password = //p' /opt/IBM/ibm-spectrum-scale-bridge-for-grafana-{{ bridge_version }}/source/config.ini
+          register: existing_b64
+          when: config_stat.stat.exists
+          changed_when: false
+
+        - name: Set existing or generate new random password
+          ansible.builtin.set_fact:
+            # We add | trim to the end of both the extraction and the generator
+            bridge_pass_raw: >-
+              {% if config_stat.stat.exists and existing_b64.stdout != '' %}
+              {{ existing_b64.stdout }}
+              {% else %}
+              {{ lookup('password', '/dev/null chars=ascii_letters,digits length=15') | b64encode }}
+              {% endif %}
+
+        - name: Forcefully strip ALL whitespace from password
+          ansible.builtin.set_fact:
+            clean_bridge_pass: "{{ bridge_pass_raw | replace(' ', '') | replace('\n', '') }}"
+
+        # =========================================================================
+        # 6. CONFIGURATION FILES & SYSTEMD
+        # =========================================================================
+        - name: Deploy declarative config.ini over default package file
+          ansible.builtin.copy:
+            dest: "/opt/IBM/ibm-spectrum-scale-bridge-for-grafana-{{ bridge_version }}/source/config.ini"
+            mode: '0644'
+            backup: yes
+            content: |
+              [opentsdb_plugin]
+              port = 8443
+
+              [prometheues_exporter_plugin]
+              prometheus = 9250
+              promBindIp = 0.0.0.0
+              rawCounters = True
+
+              [connection]
+              protocol = https
+
+              [basic_auth]
+              enabled = True
+              username = {{ bridge_basic_auth_user }}
+              password = {{ clean_bridge_pass }}
+
+              [tls]
+              # Directory path of tls key and cert file location
+              tlsKeyPath = /etc/bridge_ssl/certs
+
+              # Name of tls private key file
+              tlsKeyFile = privkey.pem
+
+              # Name of tls certificate file
+              tlsCertFile = cert.pem
+
+              [server]
+              server = localhost
+              serverPort = 9980
+              retryDelay = 60
+              apiKeyName = {{ api_key_name }}
+              apiKeyValue = {{ extracted_api_key }}
+              caCertPath = False
+
+              [query]
+              includeDiskData = no
+
+              [logging]
+              # Directory where the bridge can store logs
+              logPath = /var/log/ibm_bridge_for_grafana
+
+              # log level 5 (TRACE) 10 (DEBUG), 15 (MOREINFO), 20 (INFO), 30 (WARN),
+              # 40 (ERROR) (Default: 15)
+              logLevel = 15
+
+              # Log file name (Default: zserver.log)
+              # Comment out this setting, if you wish to print out the trace messages directly on the command line
+              logFile = zserver.log
+          notify: Restart Grafana Bridge
+
+        - name: Deploy Grafana Bridge Systemd Service File
+          ansible.builtin.copy:
+            dest: /etc/systemd/system/grafana-bridge.service
+            content: |
+              [Unit]
+              Description=IBM Storage Scale bridge for Grafana
+              After=multi-user.target
+
+              [Service]
+              Type=simple
+              Restart=on-failure
+              WorkingDirectory=/opt/IBM/ibm-spectrum-scale-bridge-for-grafana-{{ bridge_version }}
+              ExecStart=/usr/bin/python3.12 -u /opt/IBM/ibm-spectrum-scale-bridge-for-grafana-{{ bridge_version }}/source/zimonGrafanaIntf.py --configFile /opt/IBM/ibm-spectrum-scale-bridge-for-grafana-{{ bridge_version }}/source/config.ini
+
+              StandardOutput=journal+console
+              StandardError=journal+console
+              SyslogIdentifier=grafana-bridge
+
+              [Install]
+              WantedBy=multi-user.target
+          notify: Restart Grafana Bridge
+
+        - name: Ensure Grafana Bridge service is enabled and running
+          ansible.builtin.systemd:
+            name: grafana-bridge.service
+            state: started
+            enabled: yes
+            daemon_reload: yes
+
+      when: (scale_nodeclass == "managementnodegrp") and (monitoring_enabled | default(false) | bool)
+
+    # =========================================================================
+    # 7. UNIFIED SYSDIG AGENT (METRICS & SECURITY - RUNS ON ALL NODES)
+    # =========================================================================
+
+    - name: Check if Sysdig Agent binary exists
+      ansible.builtin.stat:
+        path: /opt/draios/bin/dragent
+      register: sysdig_binary
+
+    - name: Install Sysdig Agent via IBM Cloud Script (Dynamic Credentials)
+      ansible.builtin.shell: |
+        curl -sL https://ibm.biz/install-sysdig-agent | sudo bash -s -- \
+          --access_key {% if monitoring_enabled | default(false) | bool %}{{ cloud_monitoring_access_key }}{% else %}{{ sccwp_access_key }}{% endif %} \
+          --collector {% if monitoring_enabled | default(false) | bool %}{{ cloud_monitoring_ingestion_url }}{% else %}{{ sccwp_ingestion_endpoint }}{% endif %} \
+          --collector_port 6443 \
+          --secure true \
+          --check_certificate false
+      when: not sysdig_binary.stat.exists
+
+    - name: Configure dragent.yaml (Unified Agent Config)
+      ansible.builtin.copy:
+        dest: /opt/draios/etc/dragent.yaml
+        content: |
+          # -----------------------------------------------------
+          # Global Credentials (Fallback Logic Handled via Jinja)
+          # -----------------------------------------------------
+          customerid: "{% if monitoring_enabled | default(false) | bool %}{{ cloud_monitoring_access_key }}{% else %}{{ sccwp_access_key }}{% endif %}"
+          collector: "{% if monitoring_enabled | default(false) | bool %}{{ cloud_monitoring_ingestion_url }}{% else %}{{ sccwp_ingestion_endpoint }}{% endif %}"
+          collector_port: 6443
+          ssl: true
+          ssl_verify_certificate: false
+          tags: "cluster:ibm_storage_scale,nodeclass:{{ scale_nodeclass }}"
+          sysdig_capture_enabled: false
+          remotefs: true
+          # ----------------------------------------------------
+          # IBM Cloud Monitoring Integration
+          # ----------------------------------------------------
+          prometheus:
+            enabled: {{ 'true' if (monitoring_enabled | default(false) | bool) else 'false' }}
+            yaml_dir: /opt/draios/etc/promscrape.yaml.d
+          # ----------------------------------------------------
+          # SCC Workload Protection (Security)
+          # ----------------------------------------------------
+          sysdig_api_endpoint: "{{ sccwp_api_endpoint | default('') }}"
+          host_scanner:
+            enabled: {{ 'true' if (sccwp_enabled | default(false) | bool) else 'false' }}
+            scan_on_start: {{ 'true' if (sccwp_enabled | default(false) | bool) else 'false' }}
+          kspm_analyzer:
+            enabled: {{ 'true' if (sccwp_enabled | default(false) | bool) else 'false' }}
+      notify: Restart Sysdig Agent
+
+    - name: Ensure Sysdig Agent is enabled and running
+      ansible.builtin.systemd:
+        name: dragent
+        state: started
+        enabled: yes
+
+    # =========================================================================
+    # 8. FETCH AND INJECT PROMETHEUS SCRAPE CONFIGURATION (MANAGEMENT ONLY)
+    # =========================================================================
+
+    - name: Configure Prometheus Scraping for Grafana Bridge
+      block:
+        - name: Ensure custom Prometheus scrape directory exists
+          ansible.builtin.file:
+            path: /opt/draios/etc/promscrape.yaml.d
+            state: directory
+            mode: '0755'
+
+        - name: Wait for Grafana Bridge API to become responsive
+          ansible.builtin.wait_for:
+            port: 9250
+            delay: 5
+            timeout: 60
+            host: 127.0.0.1
+
+        - name: Fetch auto-generated prometheus.yml from Grafana Bridge
+          ansible.builtin.uri:
+            url: https://127.0.0.1:9250/prometheus.yml
+            method: GET
+            user: "{{ bridge_basic_auth_user }}"
+            password: "{{ clean_bridge_pass }}"
+            force_basic_auth: yes
+            validate_certs: no
+            return_content: yes
+          register: bridge_prom_config
+          until: bridge_prom_config.status == 200
+          retries: 5
+          delay: 5
+
+        - name: Save raw config to a temporary staging file
+          ansible.builtin.copy:
+            dest: /tmp/staged_scale_bridge.yaml
+            content: "scrape_configs:{{ (bridge_prom_config.content.split('scrape_configs:')[1]).split('storage:')[0] | regex_replace('password: .*', 'password: ' ~ clean_bridge_pass) }}"
+            mode: '0644'
+          changed_when: false # Suppress changes for the temp file
+
+        - name: Clean GPFSPDDisk from staged config
+          ansible.builtin.replace:
+            path: /tmp/staged_scale_bridge.yaml
+            regexp: '(?m)^- basic_auth:\n(?:[ \t]+.*\n)*?[ \t]+job_name: GPFSPDDisk\n(?:[ \t]+.*\n)*'
+            replace: ''
+          changed_when: false # Suppress changes for the temp file
+
+        - name: Inject final cleaned configuration to Sysdig
+          ansible.builtin.copy:
+            src: /tmp/staged_scale_bridge.yaml
+            dest: /opt/draios/etc/promscrape.yaml.d/scale_bridge.yaml
+            remote_src: yes
+            mode: '0644'
+          notify: Restart Sysdig Agent
+
+      when: (scale_nodeclass == "managementnodegrp") and (monitoring_enabled | default(false) | bool)
+
+  handlers:
+    - name: Restart Grafana Bridge
+      ansible.builtin.systemd:
+        name: grafana-bridge.service
+        state: restarted
+
+    - name: Restart Sysdig Agent
+      ansible.builtin.systemd:
+        name: dragent
+        state: restarted
+EOT
+  filename = local.grafana_bridge_automation_playbook_path
 }

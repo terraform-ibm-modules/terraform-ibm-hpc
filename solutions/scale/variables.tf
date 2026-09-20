@@ -954,6 +954,28 @@ variable "observability_atracker_target_type" {
   }
 }
 
+variable "observability_monitoring_enable" {
+  description = "Enables or disables IBM Cloud Monitoring integration. When enabled, the Grafana bridge is deployed on management nodes to expose IBM Storage Scale metrics, and the unified agent collects infrastructure and filesystem data across the cluster. This must be set to true if monitoring is required for the storage cluster."
+  type        = bool
+  default     = false
+}
+
+variable "observability_monitoring_plan" {
+  description = "Type of service plan for IBM Cloud Monitoring instance. You can choose one of the following: lite, graduated-tier. For all details visit [IBM Cloud Monitoring Service Plans](https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans)."
+  type        = string
+  default     = "graduated-tier"
+  validation {
+    condition     = can(regex("lite|graduated-tier", var.observability_monitoring_plan))
+    error_message = "Please enter a valid plan for IBM Cloud Monitoring, for all details visit https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans."
+  }
+}
+
+variable "observability_enable_metrics_routing" {
+  description = "Enable metrics routing to manage metrics at the account-level by configuring targets and routes that define where data points are routed."
+  type        = bool
+  default     = false
+}
+
 ##############################################################################
 # SCC Workload Protection Variables
 ##############################################################################

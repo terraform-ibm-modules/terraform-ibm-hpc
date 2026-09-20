@@ -47,14 +47,8 @@ func TestExistingVPCCIDRsAndSubnets(t *testing.T) {
 	testLogger.Info(t, "Region overrides applied for existingvpc cluster configuration")
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
-	// SkipTestTearDown defers destruction to the explicit defer below, giving
-	// us control over logging and sequencing around teardown.
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. VPC Deployment ────────────────────────────────────────────────────
 	deploymentStart := time.Now()
@@ -127,11 +121,7 @@ func RunCreateClusterWithExistingVpcCIDRs(t *testing.T, vpcName string) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -176,11 +166,7 @@ func RunCreateClusterWithExistingVpcSubnetsNoDns(t *testing.T, vpcName string, b
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -231,11 +217,7 @@ func TestExistingVPCWithCustomDNS(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. VPC Deployment ────────────────────────────────────────────────────
 	deploymentStart := time.Now()
@@ -307,11 +289,7 @@ func RunCreateClusterWithDnsAndResolver(t *testing.T, vpcName string, bastionSub
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -357,11 +335,7 @@ func RunCreateClusterWithOnlyResolver(t *testing.T, vpcName string, bastionSubne
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -411,11 +385,7 @@ func TestExistingVPCWithDNSInstanceOnly(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. VPC Deployment ────────────────────────────────────────────────────
 	deploymentStart := time.Now()
@@ -473,11 +443,7 @@ func RunCreateClusterWithOnlyDns(t *testing.T, instanceID string) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)

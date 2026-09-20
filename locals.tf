@@ -1124,8 +1124,8 @@ locals {
   ssh_jump_host                       = var.enable_deployer ? "" : var.scheduler == "LSF" ? local.bastion_instance_public_ip != null ? local.bastion_instance_public_ip : var.bastion_fip : ""
   ssh_jump_option                     = var.enable_deployer ? "" : var.scheduler == "LSF" ? "-J ubuntu@${local.ssh_jump_host}" : ""
   ssh_cmd                             = var.enable_deployer ? "" : var.scheduler == "LSF" ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 ${local.ssh_forwards} ${local.ssh_jump_option} lsfadmin@${local.ssh_forward_host}" : ""
-  webservice_ssh_forwards             = var.enable_deployer ? "" : var.scheduler == "LSF" && var.lsf_version == "fixpack_15" ? "-L 8448:localhost:8448" : ""
-  webservice_ssh_cmd                  = var.enable_deployer ? "" : var.scheduler == "LSF" && var.lsf_version == "fixpack_15" ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 ${local.webservice_ssh_forwards} ${local.ssh_jump_option} lsfadmin@${local.ssh_forward_host}" : ""
+  webservice_ssh_forwards             = var.enable_deployer ? "" : var.scheduler == "LSF" && var.lsf_version == "fixpack_16" ? "-L 8448:localhost:8448" : ""
+  webservice_ssh_cmd                  = var.enable_deployer ? "" : var.scheduler == "LSF" && var.lsf_version == "fixpack_16" ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 ${local.webservice_ssh_forwards} ${local.ssh_jump_option} lsfadmin@${local.ssh_forward_host}" : ""
   cloud_logs_ingress_private_endpoint = var.enable_deployer ? "" : module.cloud_monitoring_instance_creation[0].cloud_logs_ingress_private_endpoint
   cloud_monitoring_crn                = var.enable_deployer ? "" : module.cloud_monitoring_instance_creation[0].cloud_monitoring_crn
 }
