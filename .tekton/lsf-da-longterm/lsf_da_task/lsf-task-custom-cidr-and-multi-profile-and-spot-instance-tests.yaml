@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: custom-cidr-multi-profile-spot-tests
+  name: multi-profile-and-spot-instance-enabled-tests
 spec:
   params:
     - name: ibmcloud-api
@@ -120,7 +120,7 @@ spec:
       - name: lsf_version
         value: $(params.lsf_version)
   steps:
-    - name: custom-cidr-multi-profile-spot-tests
+    - name: multi-profile-and-spot-instance-enabled-tests
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -133,7 +133,7 @@ spec:
             pwd; env; trap env EXIT; set -x
           fi
           source .tekton/scripts/suites.sh
-          custom-cidr-multi-profile-spot-tests
+          multi-profile-and-spot-instance-enabled-tests
     - name: display-summary-report
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
@@ -147,4 +147,4 @@ spec:
             pwd; env; trap env EXIT; set -x
           fi
           source .tekton/scripts/html_report.sh
-          common_task_report custom-cidr-multi-profile-spot-tests lsf-da
+          common_task_report multi-profile-and-spot-instance-enabled-tests lsf-da

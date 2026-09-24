@@ -96,8 +96,12 @@ locals {
     volume_storages                      = var.volume_storages
     enable_private_path_nlb              = var.enable_private_path_nlb
     protocol_instance_eth1_mtu           = var.protocol_instance_eth1_mtu
+    observability_monitoring_enable      = var.observability_monitoring_enable
+    observability_monitoring_plan        = var.observability_monitoring_plan
+    observability_enable_metrics_routing = var.observability_enable_metrics_routing
     tfstate_cos_config                   = var.tfstate_cos_config
     tfstate_existing_cos_bucket_creds    = var.tfstate_existing_cos_bucket_creds
+    github_token                         = var.github_token # Delete this variable before pushing to the public repository.
   }
 }
 
@@ -183,7 +187,11 @@ locals {
     volume_storages                      = lookup(local.override[local.override_type], "volume_storages", local.config.volume_storages)
     enable_private_path_nlb              = lookup(local.override[local.override_type], "enable_private_path_nlb", local.config.enable_private_path_nlb)
     protocol_instance_eth1_mtu           = lookup(local.override[local.override_type], "protocol_instance_eth1_mtu", local.config.protocol_instance_eth1_mtu)
+    observability_monitoring_enable      = lookup(local.override[local.override_type], "observability_monitoring_enable", local.config.observability_monitoring_enable)
+    observability_monitoring_plan        = lookup(local.override[local.override_type], "observability_monitoring_plan", local.config.observability_monitoring_plan)
+    observability_enable_metrics_routing = lookup(local.override[local.override_type], "observability_enable_metrics_routing", local.config.observability_enable_metrics_routing)
     tfstate_cos_config                   = lookup(local.override[local.override_type], "tfstate_cos_config", local.config.tfstate_cos_config)
     tfstate_existing_cos_bucket_creds    = lookup(local.override[local.override_type], "tfstate_existing_cos_bucket_creds", local.config.tfstate_existing_cos_bucket_creds)
+    github_token                         = lookup(local.override[local.override_type], "github_token", local.config.github_token) # Delete this variable before pushing to the public repository.
   }
 }

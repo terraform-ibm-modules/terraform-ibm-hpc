@@ -35,6 +35,14 @@ variable "ibmcloud_api_key" {
   description = "Provide the IBM Cloud API key for the account where the IBM Storage Scale cluster will be deployed, this is a required value that must be provided as it is used to authenticate and authorize access during the deployment. For instructions on creating an API key, see [Managing user API keys](https://cloud.ibm.com/docs/account?topic=account-userapikey&interface=ui)."
 }
 
+
+# Delete this variable before pushing to the public repository.
+variable "github_token" {
+  type        = string
+  default     = null
+  description = "Provide your GitHub token to download the HPCaaS code into the Deployer node"
+}
+
 ##############################################################################
 # Cluster Level Variables
 ##############################################################################
@@ -127,7 +135,7 @@ variable "bastion_instance" {
     profile = string
   })
   default = {
-    image   = "ibm-ubuntu-22-04-5-minimal-amd64-12"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-18"
     profile = "cx2-4x8"
   }
   validation {
@@ -152,7 +160,7 @@ variable "deployer_instance" {
     profile = string
   })
   default = {
-    image   = "hpcc-scale-deployer-v2"
+    image   = "hpcc-scale-deployer-v3"
     profile = "bx2-8x32"
   }
   validation {
@@ -259,7 +267,7 @@ variable "compute_instances" {
   default = [{
     profile    = "bx2-2x8"
     count      = 0
-    image      = "hpcc-scale6000-rhel810-v1"
+    image      = "hpcc-scale6000-rhel96-v1"
     filesystem = "/gpfs/fs1"
   }]
   validation {
@@ -288,7 +296,7 @@ variable "client_instances" {
   default = [{
     profile = "cx2-2x4"
     count   = 0
-    image   = "ibm-redhat-8-10-minimal-amd64-6"
+    image   = "ibm-redhat-9-6-minimal-amd64-13"
   }]
   validation {
     condition = alltrue([
@@ -318,7 +326,7 @@ variable "storage_instances" {
   default = [{
     profile    = "bx2-32x128"
     count      = 2
-    image      = "hpcc-scale6000-rhel810-v1"
+    image      = "hpcc-scale6000-rhel96-v1"
     filesystem = "/gpfs/fs1"
   }]
   validation {
@@ -355,7 +363,7 @@ variable "storage_baremetal_server" {
   default = [{
     profile    = "cx2d-metal-96x192"
     count      = 2
-    image      = "hpcc-scale6000-rhel810-v1"
+    image      = "hpcc-scale6000-rhel96-v1"
     filesystem = "/gpfs/fs1"
   }]
 
@@ -783,7 +791,7 @@ variable "ldap_instance" {
   )
   default = [{
     profile = "cx2-2x4"
-    image   = "ibm-ubuntu-22-04-5-minimal-amd64-12"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-18"
   }]
   description = "Specify the list of virtual server instances to be provisioned as ldap nodes in the cluster. Each object in the list defines the instance profile (machine type), the count (number of instances), the image (OS image to use). This configuration allows you to customize the server for setting up ldap server. The profile must match a valid IBM Cloud VPC Gen2 instance profile format. For more details, refer [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
   validation {
@@ -874,7 +882,7 @@ variable "gklm_instances" {
   default = [{
     profile = "bx2-4x16"
     count   = 2
-    image   = "hpcc-scale-gklm4202-v2-5-6"
+    image   = "hpcc-scale-gklm4202-v3"
   }]
   validation {
     condition = (
@@ -952,6 +960,28 @@ variable "observability_atracker_target_type" {
     condition     = contains(["cloudlogs", "cos"], var.observability_atracker_target_type)
     error_message = "Allowed values for atracker target type is cloudlogs and cos."
   }
+}
+
+variable "observability_monitoring_enable" {
+  description = "Enables or disables IBM Cloud Monitoring integration. When enabled, the Grafana bridge is deployed on management nodes to expose IBM Storage Scale metrics, and the unified agent collects infrastructure and filesystem data across the cluster. This must be set to true if monitoring is required for the storage cluster."
+  type        = bool
+  default     = false
+}
+
+variable "observability_monitoring_plan" {
+  description = "Type of service plan for IBM Cloud Monitoring instance. You can choose one of the following: lite, graduated-tier. For all details visit [IBM Cloud Monitoring Service Plans](https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans)."
+  type        = string
+  default     = "graduated-tier"
+  validation {
+    condition     = can(regex("lite|graduated-tier", var.observability_monitoring_plan))
+    error_message = "Please enter a valid plan for IBM Cloud Monitoring, for all details visit https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans."
+  }
+}
+
+variable "observability_enable_metrics_routing" {
+  description = "Enable metrics routing to manage metrics at the account-level by configuring targets and routes that define where data points are routed."
+  type        = bool
+  default     = false
 }
 
 ##############################################################################

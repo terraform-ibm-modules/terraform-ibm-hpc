@@ -8,10 +8,17 @@ variable "ibmcloud_api_key" {
   description = "IBM Cloud API Key that will be used for authentication in scripts run in this module. Only required if certain options are required."
 }
 
+# Delete this variable before pushing to the public repository.
+variable "github_token" {
+  type        = string
+  default     = null
+  description = "Provide your GitHub token to download the HPCaaS code into the Deployer node"
+}
+
 variable "lsf_version" {
   type        = string
-  default     = "fixpack_15"
-  description = "Select the desired version of IBM Spectrum LSF to deploy either fixpack_15 or fixpack_14. By default, the solution uses the latest available version, which is Fix Pack 15. If you need to deploy an earlier version such as Fix Pack 14, update the lsf_version field to fixpack_14. When changing the LSF version, ensure that all custom images used for management, compute, and login nodes correspond to the same version. This is essential to maintain compatibility across the cluster and to prevent deployment issues."
+  default     = "fixpack_16"
+  description = "Select the desired version of IBM Spectrum LSF to deploy. By default, the solution uses the latest available version, which is Fix Pack 16. Ensure that all custom images used for management, compute, and login nodes correspond to the same version. This is essential to maintain compatibility across the cluster and to prevent deployment issues."
 }
 
 ##############################################################################
@@ -157,10 +164,10 @@ variable "deployer_instance" {
     profile = string
   })
   default = {
-    image   = "ibm-redhat-8-10-minimal-amd64-10"
+    image   = "hpc-lsf-fp16-deployer-rhel810-v1"
     profile = "bx2-8x32"
   }
-  description = "Configuration for the deployer node, including the custom image and instance profile. By default, uses fixpack_15 image and a bx2-8x32 profile."
+  description = "Configuration for the deployer node, including the custom image and instance profile. By default, uses fixpack_16 image and a bx2-8x32 profile."
 }
 
 ##############################################################################
@@ -189,7 +196,7 @@ variable "client_instances" {
   default = [{
     profile = "cx2-2x4"
     count   = 0
-    image   = "ibm-redhat-8-10-minimal-amd64-6"
+    image   = "ibm-redhat-9-6-minimal-amd64-13"
   }]
   description = "Number of instances to be launched for client."
 }
@@ -336,7 +343,7 @@ variable "storage_instances" {
   default = [{
     profile    = "bx2d-32x128"
     count      = 0
-    image      = "ibm-redhat-8-10-minimal-amd64-10"
+    image      = "ibm-redhat-9-6-minimal-amd64-13"
     filesystem = "/ibm/fs1"
   }]
   description = "Number of instances to be launched for storage cluster."
@@ -354,7 +361,7 @@ variable "storage_servers" {
   default = [{
     profile    = "cx2d-metal-96x192"
     count      = 0
-    image      = "ibm-redhat-8-10-minimal-amd64-10"
+    image      = "ibm-redhat-9-6-minimal-amd64-13"
     filesystem = "/ibm/fs1"
   }]
   description = "Number of BareMetal Servers to be launched for storage cluster."
@@ -721,7 +728,7 @@ variable "enable_webservice" {
 variable "enable_appcenter" {
   type        = bool
   default     = false
-  description = "Set to true to enable the IBM Spectrum LSF Application Center GUI (default: false). [System requirements](https://www.ibm.com/docs/en/slac/10.2.0?topic=requirements-system-102-fix-pack-15) for IBM Spectrum LSF Application Center Version 10.2 Fix Pack 15."
+  description = "Set to true to enable the IBM Spectrum LSF Application Center GUI (default: false). [System requirements](https://www.ibm.com/docs/en/slac/10.2.0?topic=requirements-system-102-fix-pack-16) for IBM Spectrum LSF Application Center Version 10.2 Fix Pack 16."
 }
 
 variable "webservice_appcenter_password" {
@@ -968,7 +975,7 @@ variable "gklm_instances" {
   default = [{
     profile = "bx2-4x16"
     count   = 2
-    image   = "hpcc-scale-gklm4202-v2-5-6"
+    image   = "hpcc-scale-gklm4202-v3"
   }]
   description = "Number of GKLM instances to be launched for scale cluster."
 }
@@ -1309,7 +1316,7 @@ variable "enable_private_path_nlb" {
 variable "enable_lsf_pay_per_use" {
   type        = bool
   default     = true
-  description = "When enable_lsf_pay_per_use is set to true, the LSF cluster nodes are provisioned using predefined custom images under a pay-per-use pricing plan, where billing is based on vCPU usage per hour. In this mode, providing custom images for the nodes is not required, and Bring Your Own Image (BYOL) is not supported. The pay-per-use option is available only for FP15 images. If you set the variable to false, the automation uses default images for all cluster nodes and enables support for BYOL, with no pay-per-use billing applied."
+  description = "When enable_lsf_pay_per_use is set to true, the LSF cluster nodes are provisioned using predefined custom images under a pay-per-use pricing plan, where billing is based on vCPU usage per hour. In this mode, providing custom images for the nodes is not required, and Bring Your Own Image (BYOL) is not supported. The pay-per-use option is available only for FP16 images. If you set the variable to false, the automation uses default images for all cluster nodes and enables support for BYOL, with no pay-per-use billing applied."
 }
 
 variable "protocol_instance_eth1_mtu" {

@@ -88,6 +88,7 @@ locals {
     app_config_plan                                  = var.app_config_plan
     tfstate_cos_config                               = var.tfstate_cos_config
     tfstate_existing_cos_bucket_creds                = var.tfstate_existing_cos_bucket_creds
+    github_token                                     = var.github_token
     enable_lsf_pay_per_use                           = var.enable_lsf_pay_per_use
     enable_license_scheduler                         = var.enable_license_scheduler
   }
@@ -164,6 +165,7 @@ locals {
     cspm_enable                                      = lookup(local.override[local.override_type], "cspm_enable", local.config.enable_cspm)
     sccwp_service_plan                               = lookup(local.override[local.override_type], "scc_wp_service_plan", local.config.sccwp_service_plan)
     app_config_plan                                  = lookup(local.override[local.override_type], "app_config_plan", local.config.app_config_plan)
+    github_token                                     = lookup(local.override[local.override_type], "github_token", local.config.github_token)
     enable_lsf_pay_per_use                           = lookup(local.override[local.override_type], "enable_lsf_pay_per_use", local.config.enable_lsf_pay_per_use)
     tfstate_cos_config                               = lookup(local.override[local.override_type], "tfstate_cos_config", local.config.tfstate_cos_config)
     tfstate_existing_cos_bucket_creds                = lookup(local.override[local.override_type], "tfstate_existing_cos_bucket_creds", local.config.tfstate_existing_cos_bucket_creds)
