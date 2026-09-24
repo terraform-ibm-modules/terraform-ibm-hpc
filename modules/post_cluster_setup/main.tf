@@ -19,6 +19,7 @@ resource "null_resource" "refreshing_storage_scale_health_play" {
   triggers = {
     build = timestamp()
   }
+  depends_on = [null_resource.encryption_master_replication_play]
 }
 
 resource "null_resource" "refreshing_compute_scale_health_play" {
@@ -30,6 +31,19 @@ resource "null_resource" "refreshing_compute_scale_health_play" {
   triggers = {
     build = timestamp()
   }
+  depends_on = [null_resource.refreshing_storage_scale_health_play]
+}
+
+resource "null_resource" "grafana_bridge_automation" {
+  count = (tobool(var.turn_on) == true && tobool(var.create_scale_cluster) == true) ? 1 : 0
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "sudo ansible-playbook -f 50 -i ${local.storage_inventory_path} -e @${local.scale_observability_prerequisite_vars} ${local.grafana_bridge_automation_playbook_path}"
+  }
+  triggers = {
+    build = timestamp()
+  }
+  depends_on = [null_resource.refreshing_compute_scale_health_play]
 }
 
 resource "null_resource" "remove_scale_host_entry_play" {
@@ -41,6 +55,32 @@ resource "null_resource" "remove_scale_host_entry_play" {
   triggers = {
     build = timestamp()
   }
+  depends_on = [null_resource.grafana_bridge_automation]
+}
+
+resource "null_resource" "remove_outbound_sg_rule_entry_play" {
+  count = (tobool(var.turn_on) == true && tobool(var.create_scale_cluster) == true) ? 1 : 0
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<-CMD
+      sudo -E ansible-playbook -f 50 -i localhost, -c local \
+        -e region=${var.vpc_region} \
+        -e resource_group=${var.resource_group} \
+        -e 'sg_entries=${local.sg_entries_json}' \
+        ${local.remove_security_outbound_rule_playbook_path}
+    CMD
+
+    environment = {
+      IBMCLOUD_API_KEY = var.ibmcloud_api_key
+    }
+  }
+
+  triggers = {
+    build = timestamp()
+  }
+
+  depends_on = [null_resource.remove_scale_host_entry_play]
 }
 
 resource "null_resource" "remove_deployer_host_entry_play" {
@@ -52,5 +92,5 @@ resource "null_resource" "remove_deployer_host_entry_play" {
   triggers = {
     build = timestamp()
   }
-  depends_on = [null_resource.remove_scale_host_entry_play]
+  depends_on = [null_resource.remove_outbound_sg_rule_entry_play]
 }

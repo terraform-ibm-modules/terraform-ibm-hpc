@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: gen4profile-tests
+  name: gen4profile-default-rg-tests
 spec:
   params:
     - name: ibmcloud-api
@@ -120,7 +120,7 @@ spec:
       - name: lsf_version
         value: $(params.lsf_version)
   steps:
-    - name: gen4profile-tests
+    - name: gen4profile-default-rg-tests
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
       workingDir: "/artifacts"
@@ -133,7 +133,7 @@ spec:
             pwd; env; trap env EXIT; set -x
           fi
           source .tekton/scripts/suites.sh
-          gen4profile-tests
+          gen4profile-default-rg-tests
     - name: display-summary-report
       onError: continue
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
@@ -147,4 +147,4 @@ spec:
             pwd; env; trap env EXIT; set -x
           fi
           source .tekton/scripts/html_report.sh
-          common_task_report gen4profile-tests lsf-da
+          common_task_report gen4profile-default-rg-tests lsf-da

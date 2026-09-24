@@ -72,11 +72,11 @@
             },
             {
               "key": "lsf_version",
-              "default_value": "fixpack_15",
+              "default_value": "fixpack_16",
               "options": [
                 {
-                  "displayname": "fixpack_15",
-                  "value": "fixpack_15"
+                  "displayname": "fixpack_16",
+                  "value": "fixpack_16"
                 }
               ]
             },
@@ -468,7 +468,7 @@
             {
               "key": "deployer_instance",
               "type": "object",
-              "default_value": "{\n  \"image\": \"hpc-lsf-fp15-deployer-rhel810-v4\",\n  \"profile\": \"bx2-8x32\"\n}",
+              "default_value": "{\n  \"image\": \"hpc-lsf-fp16-deployer-rhel810-v1\",\n  \"profile\": \"bx2-8x32\"\n}",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -482,7 +482,7 @@
             {
               "key": "login_instance",
               "type": "array",
-              "default_value": "[\n  {\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v4\",\n    \"boot_volume\": {\n    \"profile\": \"general-purpose\",\n    \"size\": 100,\n    \"iops\": null,\n    \"bandwidth\": null\n    }\n  }\n]",
+              "default_value": "[\n  {\n    \"profile\": \"bx2-2x8\",\n    \"image\": \"hpc-lsf-fp16-compute-rhel810-v1\",\n    \"boot_volume\": {\n    \"profile\": \"general-purpose\",\n    \"size\": 100,\n    \"iops\": null,\n    \"bandwidth\": null\n    }\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -496,7 +496,7 @@
             {
               "key": "management_instances",
               "type": "array",
-              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-16x64\",\n    \"image\": \"hpc-lsf-fp15-rhel810-v4\",\n    \"boot_volume\": {\n      \"profile\": \"general-purpose\",\n      \"size\": 100,\n      \"iops\": null,\n      \"bandwidth\": null\n    }\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-16x64\",\n    \"image\": \"hpc-lsf-fp16-rhel810-v1\",\n    \"boot_volume\": {\n      \"profile\": \"general-purpose\",\n      \"size\": 100,\n      \"iops\": null,\n      \"bandwidth\": null\n    }\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -513,7 +513,7 @@
             {
               "key": "static_compute_instances",
               "type": "array",
-              "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"bx2-4x16\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v4\",\n    \"boot_volume\": {\n      \"profile\": \"general-purpose\",\n      \"size\": 100,\n      \"iops\": null,\n      \"bandwidth\": null\n    }\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"bx2-4x16\",\n    \"image\": \"hpc-lsf-fp16-compute-rhel810-v1\",\n    \"boot_volume\": {\n      \"profile\": \"general-purpose\",\n      \"size\": 100,\n      \"iops\": null,\n      \"bandwidth\": null\n    }\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -527,7 +527,7 @@
             {
               "key": "dynamic_compute_instances",
               "type": "array",
-              "default_value": "[\n  {\n    \"count\": 500,\n    \"profile\": \"bx2-4x16\",\n    \"image\": \"hpc-lsf-fp15-compute-rhel810-v4\",\n    \"enable_spot_instances\": false,\n    \"boot_volume\": {\n      \"profile\": \"general-purpose\",\n      \"size\": 100,\n      \"iops\": null,\n      \"bandwidth\": null\n    }\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 500,\n    \"profile\": \"bx2-4x16\",\n    \"image\": \"hpc-lsf-fp16-compute-rhel810-v1\",\n    \"enable_spot_instances\": false,\n    \"boot_volume\": {\n      \"profile\": \"general-purpose\",\n      \"size\": 100,\n      \"iops\": null,\n      \"bandwidth\": null\n    }\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -1148,6 +1148,26 @@
               "key": "protocol_subnets_cidr"
             },
             {
+              "key": "observability_monitoring_enable"
+            },
+            {
+              "key": "observability_enable_metrics_routing"
+            },
+            {
+              "key": "observability_monitoring_plan",
+              "default_value": "graduated-tier",
+              "options": [
+                {
+                  "displayname": "graduated-tier",
+                  "value": "graduated-tier"
+                },
+                {
+                  "displayname": "lite",
+                  "value": "lite"
+                }
+              ]
+            },
+            {
               "key": "enable_vpc_flow_logs"
             },
             {
@@ -1210,7 +1230,7 @@
             {
               "key": "bastion_instance",
               "type": "object",
-              "default_value": "{\n  \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-12\",\n  \"profile\": \"cx2-4x8\"\n}",
+              "default_value": "{\n  \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-18\",\n  \"profile\": \"cx2-4x8\"\n}",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -1224,7 +1244,7 @@
             {
               "key": "deployer_instance",
               "type": "object",
-              "default_value": "{\n  \"image\": \"hpcc-scale-deployer-v2\",\n  \"profile\": \"bx2-8x32\"\n}",
+              "default_value": "{\n  \"image\": \"hpcc-scale-deployer-v3\",\n  \"profile\": \"bx2-8x32\"\n}",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -1238,7 +1258,7 @@
             {
               "key": "client_instances",
               "type": "object",
-              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-redhat-8-10-minimal-amd64-10\"\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-redhat-9-6-minimal-amd64-13\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -1258,7 +1278,7 @@
             {
               "key": "compute_instances",
               "type": "object",
-              "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"bx2-2x8\",\n  \"filesystem\": \"/gpfs/fs1\",\n  \"image\": \"hpcc-scale6000-rhel810-v1\"\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"bx2-2x8\",\n  \"filesystem\": \"/gpfs/fs1\",\n  \"image\": \"hpcc-scale6000-rhel96-v1\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -1272,7 +1292,7 @@
             {
               "key": "storage_instances",
               "type": "object",
-              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-32x128\",\n  \"filesystem\": \"/gpfs/fs1\",\n  \"image\": \"hpcc-scale6000-rhel810-v1\"\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-32x128\",\n  \"filesystem\": \"/gpfs/fs1\",\n  \"image\": \"hpcc-scale6000-rhel96-v1\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -1300,7 +1320,7 @@
             {
               "key": "storage_baremetal_server",
               "type": "object",
-              "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"cx2d-metal-96x192\",\n  \"filesystem\": \"/gpfs/fs1\",\n  \"image\": \"hpcc-scale6000-rhel810-v1\"\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 0,\n    \"profile\": \"cx2d-metal-96x192\",\n  \"filesystem\": \"/gpfs/fs1\",\n  \"image\": \"hpcc-scale6000-rhel96-v1\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -1400,7 +1420,7 @@
             {
               "key": "gklm_instances",
               "type": "object",
-              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-4x16\",\n    \"image\": \"hpcc-scale-gklm4202-v2-5-6\"\n  }\n]",
+              "default_value": "[\n  {\n    \"count\": 2,\n    \"profile\": \"bx2-4x16\",\n    \"image\": \"hpcc-scale-gklm4202-v3\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
@@ -1473,7 +1493,7 @@
             {
               "key": "ldap_instance",
               "type": "array",
-              "default_value": "[\n  {\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-12\"\n  }\n]",
+              "default_value": "[\n  {\n    \"profile\": \"cx2-2x4\",\n    \"image\": \"ibm-ubuntu-22-04-5-minimal-amd64-18\"\n  }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",

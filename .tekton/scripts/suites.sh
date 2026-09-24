@@ -475,11 +475,11 @@ lsf_da_pr_rhel_suite() {
 
 ######################## LSF-DA-LONGTERM Testcases Start ########################
 
-# Suite 1: Default cluster configuration and web service disabled tests
-default-cluster-config-and-web-service-disabled-tests() {
-    suite=default-cluster-config-and-web-service-disabled-tests
-    solution=lsf-da
-    test_cases="TestDefaultCluster,TestWebServiceDisabled"
+# Suite 1: Default cluster config, and disabled web/KMS with custom CIDR
+default-and-custom-cidr-config-tests() {
+	suite=default-and-custom-cidr-config-tests
+	solution=lsf-da
+	test_cases="TestDefaultCluster,TestBasicWithDisabledWebKMSAndCustomCIDR"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
@@ -519,11 +519,11 @@ ldap-existing-server-tests() {
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# Suite 5: Null and non-default resource group tests
-resource-group-configuration-tests() {
-    suite=resource-group-configuration-tests
+# Suite 5: Null resource group tests
+null-resource-group-configuration-tests() {
+    suite=null-resource-group-configuration-tests
     solution=lsf-da
-    test_cases="TestNullResourceGroup,TestNonDefaultResourceGroup"
+    test_cases="TestNullResourceGroup"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
@@ -541,11 +541,11 @@ zero-static-worker-nodes-and-dedicated-host-tests() {
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# Suite 7: Custom CIDR blocks, multi-profile compute node, and spot instance tests
-custom-cidr-multi-profile-spot-tests() {
-    suite=custom-cidr-multi-profile-spot-tests
+# Suite 7: Multi-profile compute node, and spot instance tests
+multi-profile-and-spot-instance-enabled-tests() {
+    suite=multi-profile-and-spot-instance-enabled-tests
     solution=lsf-da
-    test_cases="TestCustomCIDRBlocks,TestMultiProfileComputeNodes,TestSpotInstance"
+    test_cases="TestMultiProfileComputeNodes,TestSpotInstance"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
@@ -579,7 +579,7 @@ existing-vpc-dns-configuration-tests() {
 lsf-logs-and-reapply-tests() {
     suite=lsf-logs-and-reapply-tests
     solution=lsf-da
-    test_cases="TestLSFLogs,TestReapply"
+    test_cases="TestLSFLogs,TestREAPPLY"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
@@ -597,11 +597,11 @@ existing-kms-instance-key-tests() {
     common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# Suite 12: No KMS with hyperthreading and existing KMS authorization policy tests
-no-kms-hyperthreading-and-kms-auth-policy-tests() {
-    suite=no-kms-hyperthreading-and-kms-auth-policy-tests
+# Suite 12: existing KMS authorization policy tests
+existing-kms-auth-policy-tests() {
+    suite=existing-kms-auth-policy-tests
     solution=lsf-da
-    test_cases="TestNoKMSWithHyperthreading,TestExistingKMSInstanceAndKeyWithAuthorizationPolicy"
+    test_cases="TestExistingKMSInstanceAndKeyWithAuthorizationPolicy"
     compute_image_name_rhel=""
     new_line="${test_cases//,/$'\n'}"
     echo "************** Going to run ${suite} ${new_line} **************"
@@ -685,11 +685,22 @@ observability-features-enabled-tests() {
   common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
 }
 
-# Suite 20: gen4profile-tests
- gen4profile-tests() {
-  suite=gen4profile-tests
+# Suite 20: Gen4 profiles with default resource group
+gen4profile-default-rg-tests() {
+	suite=gen4profile-default-rg-tests
+	solution=lsf-da
+	test_cases="TestGen4ProfileAndDefaultRG"
+  compute_image_name_rhel=""
+  new_line="${test_cases//,/$'\n'}"
+  echo "************** Going to run ${suite} ${new_line} **************"
+  common_suite "${test_cases}" "${suite}" "${compute_image_name_rhel:-}" "${solution:?}"
+}
+
+# Suite 21: lsf-bootvolume-tests
+ lsf-bootvolume-tests() {
+  suite=lsf-bootvolume-tests
   solution=lsf-da
-  test_cases="TestRunLSFClusterCreationWithGen4Profiles"
+  test_cases="TestBootVolume"
   compute_image_name_rhel=""
   new_line="${test_cases//,/$'\n'}"
   echo "************** Going to run ${suite} ${new_line} **************"

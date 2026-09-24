@@ -5,7 +5,7 @@ output "cloud_monitoring_access_key" {
 }
 
 output "cloud_monitoring_ingestion_url" {
-  value       = var.cloud_monitoring_provision ? "ingest.${var.location}.monitoring.cloud.ibm.com" : null
+  value       = var.cloud_monitoring_provision ? "ingest.private.${var.location}.monitoring.cloud.ibm.com" : null
   description = "IBM Cloud Monitoring ingestion url for agents to use"
 }
 
@@ -16,7 +16,7 @@ output "cloud_monitoring_prws_key" {
 }
 
 output "cloud_monitoring_prws_url" {
-  value       = "https://ingest.prws.${var.location}.monitoring.cloud.ibm.com/prometheus/remote/write"
+  value       = "https://ingest.prws.private.${var.location}.monitoring.cloud.ibm.com/prometheus/remote/write"
   description = "IBM Cloud Monitoring Prometheus Remote Write ingestion url"
 }
 

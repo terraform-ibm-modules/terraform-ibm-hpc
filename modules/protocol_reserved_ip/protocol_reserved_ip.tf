@@ -1,6 +1,6 @@
-/*
-    Creates IBM Cloud reserved ip for protocol nodes.
-*/
+##########
+##  Creates IBM Cloud reserved ip for protocol nodes.
+##########
 # Subnet ID with address, name and auto_delete
 resource "ibm_is_subnet_reserved_ip" "itself" {
   for_each = {

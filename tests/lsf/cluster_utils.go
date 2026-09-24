@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"maps"
 	"net/http"
 	"os"
 	"os/exec"
@@ -37,6 +36,7 @@ const (
 const (
 	LSFVersion14 = "fixpack_14"
 	LSFVersion15 = "fixpack_15"
+	LSFVersion16 = "fixpack_16"
 )
 
 // LSFMTUCheck checks the MTU setting for multiple nodes of a specified type.
@@ -121,21 +121,23 @@ func LSFIPRouteCheck(t *testing.T, sClient *ssh.Client, ipsList []string, logger
 // if the expected cluster ID is present in the command output.
 // Returns an error if the checks fail.
 func LSFCheckClusterName(t *testing.T, sClient *ssh.Client, expectedClusterName string, logger *utils.AggregatedLogger) error {
-
-	// Execute the 'lsid' command to get the cluster ID
 	command := "source /opt/ibm/lsf/conf/profile.lsf; lsid"
 	output, err := utils.RunCommandInSSHSession(sClient, command)
 	if err != nil {
 		return fmt.Errorf("failed to execute 'lsid' command: %w", err)
 	}
 
-	// Verify if the expected cluster ID is present in the output
 	if !utils.VerifyDataContains(t, output, "My cluster name is "+expectedClusterName, logger) {
-		// Extract actual cluster version from the output for better error reporting
-		actualValue := strings.TrimSpace(strings.Split(strings.Split(output, "My cluster name is")[1], "My master name is")[0])
-		return fmt.Errorf("expected cluster ID %s , but found %s", expectedClusterName, actualValue)
+		parts := strings.Split(output, "My cluster name is")
+		if len(parts) < 2 {
+			return fmt.Errorf("unexpected output format from lsid: %s", output)
+		}
+
+		nameParts := strings.Split(parts[1], "My master name is")
+		actualValue := strings.TrimSpace(nameParts[0])
+		return fmt.Errorf("expected cluster ID %s, but found %s", expectedClusterName, actualValue)
 	}
-	// Log success if no errors occurred
+
 	logger.Info(t, fmt.Sprintf("Cluster ID is set as expected : %s", expectedClusterName))
 	return nil
 }
@@ -211,7 +213,7 @@ func LSFRestartDaemons(t *testing.T, sClient *ssh.Client, logger *utils.Aggregat
 	restartCmd := "sudo su -l root -c 'lsf_daemons restart'"
 	out, err := utils.RunCommandInSSHSession(sClient, restartCmd)
 	if err != nil {
-		return fmt.Errorf("failed to run 'lsf_daemons restart' command: %w", err)
+		return fmt.Errorf("failed to execute 'lsf_daemons restart' command: %v", err)
 	}
 
 	logger.Info(t, string(out))
@@ -355,7 +357,7 @@ func LSFRebootInstance(t *testing.T, sClient *ssh.Client, logger *utils.Aggregat
 	rebootCmd := "sudo su -l root -c 'reboot'"
 
 	_, checkErr := utils.RunCommandInSSHSession(sClient, rebootCmd)
-	if !strings.Contains(checkErr.Error(), "remote command exited without exit status or exit signal") {
+	if checkErr != nil && !strings.Contains(checkErr.Error(), "remote command exited without exit status or exit signal") {
 		return fmt.Errorf("instance reboot failed")
 	}
 
@@ -1032,6 +1034,8 @@ func CheckLSFVersion(t *testing.T, sClient *ssh.Client, lsfVersion string, logge
 		expectedVersion = LSF_VERSION_FP14
 	case LSFVersion15:
 		expectedVersion = LSF_VERSION_FP15
+	case LSFVersion16:
+		expectedVersion = LSF_VERSION_FP16
 	default:
 		return fmt.Errorf("unsupported LSF version identifier: %s", lsfVersion)
 	}
@@ -1073,29 +1077,20 @@ func IsDynamicNodeAvailable(t *testing.T, sClient *ssh.Client, logger *utils.Agg
 // It takes a testing.T instance for error reporting, an SSH client, the IP address of the remote node,
 // and a logger for additional logging. It returns the OS name and an error if any.
 func GetOSNameOfNode(t *testing.T, sClient *ssh.Client, hostIP string, logger *utils.AggregatedLogger) (string, error) {
-	// Command to retrieve the content of /etc/os-release on the remote server
-	//catOsReleaseCmd := "sudo su -l root -c 'cat /etc/os-release'"
 	catOsReleaseCmd := "cat /etc/os-release"
-	// Construct the SSH command
 	OsReleaseCmd := fmt.Sprintf("ssh %s \"%s\"", hostIP, catOsReleaseCmd)
 	output, err := utils.RunCommandInSSHSession(sClient, OsReleaseCmd)
 	if err != nil {
-		// Report an error and fail the test
-		t.Fatal("Error executing SSH command:", err)
+		return "", fmt.Errorf("error executing SSH command: %w", err)
 	}
 
-	// Parse the OS name from the /etc/os-release content
 	osName, parseErr := utils.ParsePropertyValue(strings.TrimSpace(string(output)), "NAME")
 	if parseErr != nil {
-		// Log information about the OS installation on the specified node.
-		logger.Info(t, fmt.Sprintf("Operating System: %s, Installed on Node: %s", osName, hostIP))
-
-		// Return the parsed OS name on success
-		return osName, parseErr
+		return "", fmt.Errorf("failed to parse OS name from /etc/os-release: %w", parseErr)
 	}
 
-	// If parsing fails, return the error
-	return "", parseErr
+	logger.Info(t, fmt.Sprintf("Operating System: %s, Installed on Node: %s", osName, hostIP))
+	return osName, nil
 }
 
 // CheckFileMount checks if essential LSF directories ("gui", "lsf", "perf", "ppm", and "ssh",) exist
@@ -1238,40 +1233,44 @@ func verifyDirectories(t *testing.T, sClient *ssh.Client, ip string, logger *uti
 // HPCVerifyTerraformOutputs verifies specific fields in the Terraform outputs and ensures they are not empty based on the provided LastTestTerraformOutputs.
 // Additional checks are performed for the application center and LDAP server based on the isAPPCenterEnabled and ldapServerEnabled flags.
 // Any missing essential field results in an error being returned with detailed information.
+// HPCVerifyTerraformOutputs verifies specific fields in the Terraform outputs.
 func HPCVerifyTerraformOutputs(t *testing.T, LastTestTerraformOutputs map[string]interface{}, isAPPCenterEnabled, ldapServerEnabled bool, logger *utils.AggregatedLogger) error {
-
 	fields := []string{"ssh_to_management_node", "ssh_to_login_node", "vpc_name", "region_name"}
-	actualOutput := make(map[string]interface{})
-	maps.Copy(actualOutput, LastTestTerraformOutputs["cluster_info"].(map[string]interface{}))
+
+	clusterInfo, ok := LastTestTerraformOutputs["cluster_info"].(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("cluster_info not found or invalid type in terraform outputs")
+	}
+
 	for _, field := range fields {
-		value := actualOutput[field].(string)
-		logger.Info(t, field+" = "+value)
-		if len(value) == 0 {
-			return fmt.Errorf("%s is missing terraform output", field)
+		value, ok := clusterInfo[field].(string)
+		if !ok || len(strings.TrimSpace(value)) == 0 {
+			return fmt.Errorf("%s is missing or empty in terraform output", field)
 		}
+		logger.Info(t, field+" = "+value)
 	}
 
 	if isAPPCenterEnabled {
-		if len(strings.TrimSpace(actualOutput["application_center"].(string))) == 0 {
+		appCenter, ok := clusterInfo["application_center"].(string)
+		if !ok || len(strings.TrimSpace(appCenter)) == 0 {
 			return errors.New("application_center is missing from terraform output")
-
 		}
-		if len(strings.TrimSpace(actualOutput["application_center_url"].(string))) == 0 {
+
+		appCenterURL, ok := clusterInfo["application_center_url"].(string)
+		if !ok || len(strings.TrimSpace(appCenterURL)) == 0 {
 			return errors.New("application_center_url is missing from terraform output")
 		}
 	}
 
 	if ldapServerEnabled {
-		if len(strings.TrimSpace(actualOutput["ssh_to_ldap_node"].(string))) == 0 {
+		sshToLDAP, ok := clusterInfo["ssh_to_ldap_node"].(string)
+		if !ok || len(strings.TrimSpace(sshToLDAP)) == 0 {
 			return fmt.Errorf("ssh_to_ldap_node is missing from terraform output")
-
 		}
 	}
-	// Log success if no errors occurred
-	logger.Info(t, "Terraform output check has been successfully completed")
-	// No errors occurred
-	return nil
 
+	logger.Info(t, "Terraform output check has been successfully completed")
+	return nil
 }
 
 // LSFCheckSSHConnectivityToNodesFromLogin verifies SSH connectivity from the login node
@@ -1865,6 +1864,23 @@ func verifyPTRRecords(t *testing.T, sClient *ssh.Client, publicHostName, publicH
 	return nil
 }
 
+// extractBetween returns the trimmed substring of s found between the first
+// occurrence of start and the first occurrence of end after it. It returns an
+// error instead of panicking if either marker is missing, so callers can
+// report a clear parse failure rather than crashing on a malformed/unexpected
+// CLI output format.
+func extractBetween(s, start, end string) (string, error) {
+	startParts := strings.SplitN(s, start, 2)
+	if len(startParts) < 2 {
+		return "", fmt.Errorf("marker %q not found in input", start)
+	}
+	endParts := strings.SplitN(startParts[1], end, 2)
+	if len(endParts) < 2 {
+		return "", fmt.Errorf("marker %q not found after %q", end, start)
+	}
+	return strings.TrimSpace(endParts[0]), nil
+}
+
 // CreateServiceInstanceAndReturnGUID creates a service instance on IBM Cloud, verifies its creation, and retrieves the service instance ID.
 // It logs into IBM Cloud using the provided API key, region, and resource group, then creates the service instance
 // with the specified instance name. If the creation is successful, it retrieves and returns the service instance ID.
@@ -1882,7 +1898,7 @@ func CreateServiceInstanceAndReturnGUID(t *testing.T, apiKey, region, resourceGr
 	cmdCreate := exec.Command("bash", "-c", createServiceInstanceCmd)
 	createOutput, err := cmdCreate.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("failed to create service instance: %w", err)
+		return "", fmt.Errorf("failed to create service instance: %w. Output: %s", err, string(createOutput))
 	}
 
 	// Verify that the service instance was created successfully
@@ -1892,7 +1908,10 @@ func CreateServiceInstanceAndReturnGUID(t *testing.T, apiKey, region, resourceGr
 	}
 
 	// Extract and return the service instance ID
-	serviceInstanceID := strings.TrimSpace(strings.Split(strings.Split(string(createOutput), "GUID:")[1], "Location:")[0])
+	serviceInstanceID, err := extractBetween(string(createOutput), "GUID:", "Location:")
+	if err != nil {
+		return "", fmt.Errorf("failed to parse service instance ID for '%s': %w. Raw output: %s", instanceName, err, string(createOutput))
+	}
 	if len(serviceInstanceID) == 0 {
 		return "", fmt.Errorf("service instance ID not found")
 	}
@@ -1914,66 +1933,195 @@ func DeleteServiceInstance(t *testing.T, apiKey, region, resourceGroup, instance
 		return fmt.Errorf("failed to log in to IBM Cloud: %w", err)
 	}
 
-	// Retrieve the service instance GUID
-	retrieveServiceCmd := fmt.Sprintf("ibmcloud resource service-instance --service-name %s --output", instanceName)
+	// Retrieve the service instance GUID using JSON for reliability
+	retrieveServiceCmd := fmt.Sprintf("ibmcloud resource service-instance %s --output JSON 2>/dev/null", instanceName)
 	cmdRetrieveGUID := exec.Command("bash", "-c", retrieveServiceCmd)
 	retrieveOutput, err := cmdRetrieveGUID.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to retrieve service instance GUID: %w", err)
+
+	var serviceInstanceID string
+
+	if err == nil && len(retrieveOutput) > 0 {
+		// Try JSON parsing first
+		var instanceData map[string]interface{}
+		if jsonErr := json.Unmarshal(retrieveOutput, &instanceData); jsonErr == nil {
+			if id, ok := instanceData["id"].(string); ok && id != "" {
+				serviceInstanceID = id
+			} else if guid, ok := instanceData["guid"].(string); ok && guid != "" {
+				serviceInstanceID = guid
+			}
+		}
 	}
-	serviceInstanceID := strings.TrimSpace(strings.Split(strings.Split(string(retrieveOutput), "GUID:")[1], "Location:")[0])
+
+	// If JSON parsing failed, try text parsing
+	if serviceInstanceID == "" {
+		retrieveServiceCmd := fmt.Sprintf("ibmcloud resource service-instance %s", instanceName)
+		cmdRetrieveGUID := exec.Command("bash", "-c", retrieveServiceCmd)
+		retrieveOutput, err := cmdRetrieveGUID.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to retrieve service instance GUID: %w. Output: %s", err, string(retrieveOutput))
+		}
+
+		serviceInstanceID, err = extractBetween(string(retrieveOutput), "GUID:", "Location:")
+		if err != nil {
+			return fmt.Errorf("failed to parse service instance ID for '%s': %w. Raw output: %s", instanceName, err, string(retrieveOutput))
+		}
+	}
 
 	if len(serviceInstanceID) == 0 {
-		return fmt.Errorf("service instance ID not found")
+		return fmt.Errorf("service instance ID not found for '%s'", instanceName)
 	}
 
 	logger.Info(t, fmt.Sprintf("Service instance '%s' retrieved successfully. Instance ID: %s", instanceName, serviceInstanceID))
 
 	// Set the IBM Cloud Key Protect region
-	setKPRegionCommand := fmt.Sprintf("ibmcloud kp region-set %s", region)
+	setKPRegionCommand := fmt.Sprintf("ibmcloud kp region-set %s 2>/dev/null", region)
 	setKPRegionExec := exec.Command("bash", "-c", setKPRegionCommand)
-	setKPRegionOutput, err := setKPRegionExec.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to set Key Protect region: %w. Output: %s", err, string(setKPRegionOutput))
+	if _, err := setKPRegionExec.CombinedOutput(); err != nil {
+		logger.Warn(t, fmt.Sprintf("Failed to set Key Protect region: %v (continuing)", err))
 	}
 
-	// Retrieve and delete associated keys
-	getAssociatedKeysCmd := fmt.Sprintf("ibmcloud kp keys -i %s | awk 'NR>3' | awk '{print $1}'", serviceInstanceID)
-	cmdKeysID := exec.Command("bash", "-c", getAssociatedKeysCmd)
-	keysIDOutput, err := cmdKeysID.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to retrieve associated keys: %w", err)
+	// Retrieve and delete associated keys - use JSON for reliability
+	if err := deleteAssociatedKeys(t, serviceInstanceID, instanceName, logger); err != nil {
+		logger.Warn(t, fmt.Sprintf("Failed to delete associated keys: %v (continuing with instance deletion)", err))
+		// Continue with instance deletion even if key deletion fails
 	}
-	// Extract the GUID values of the keys
-	keyLines := strings.Split(string(strings.TrimSpace(strings.Split(string(keysIDOutput), "kms.cloud.ibm.com")[1])), "\n")
-	for _, key := range keyLines {
-		if key != "" {
-			// Delete each key
-			deleteKeyCmd := fmt.Sprintf("ibmcloud kp key delete %s -i %s", key, serviceInstanceID)
-			cmdDeleteKey := exec.Command("bash", "-c", deleteKeyCmd)
-			deleteKeyOutput, err := cmdDeleteKey.CombinedOutput()
-			if err != nil {
-				return fmt.Errorf("failed to delete key %s: %w", key, err)
+
+	// Delete the service instance with recursive flag
+	deleteInstanceCmd := fmt.Sprintf("ibmcloud resource service-instance-delete %s -f --recursive", instanceName)
+	cmdDeleteInstance := exec.Command("bash", "-c", deleteInstanceCmd)
+	deleteInstanceOutput, err := cmdDeleteInstance.CombinedOutput()
+
+	if err != nil {
+		outputStr := string(deleteInstanceOutput)
+		// Check if instance is already deleted
+		if strings.Contains(outputStr, "not found") ||
+			strings.Contains(outputStr, "does not exist") {
+			logger.Info(t, fmt.Sprintf("Service instance '%s' already deleted", instanceName))
+			return nil
+		}
+
+		// Check if deletion is already in progress
+		if strings.Contains(outputStr, "is being deleted") {
+			logger.Info(t, fmt.Sprintf("Service instance '%s' is already being deleted", instanceName))
+			return nil
+		}
+
+		return fmt.Errorf("failed to delete instance %s: %w. Output: %s", instanceName, err, outputStr)
+	}
+
+	// Check for success indicators
+	outputStr := string(deleteInstanceOutput)
+	if strings.Contains(outputStr, "deleted successfully") ||
+		strings.Contains(outputStr, "success") {
+		logger.Info(t, fmt.Sprintf("Service instance '%s' deleted successfully", instanceName))
+		return nil
+	}
+
+	logger.Info(t, fmt.Sprintf("Service instance deletion initiated for '%s'. Output: %s", instanceName, outputStr))
+	return nil
+}
+
+// deleteAssociatedKeys deletes all keys associated with a service instance
+func deleteAssociatedKeys(t *testing.T, serviceInstanceID, instanceName string, logger *utils.AggregatedLogger) error {
+	logger.Info(t, fmt.Sprintf("Retrieving keys for instance: %s", instanceName))
+
+	// Use JSON output for reliable parsing
+	getKeysCmd := fmt.Sprintf("ibmcloud kp keys -i %s --output JSON 2>/dev/null", serviceInstanceID)
+	cmdKeysID := exec.Command("bash", "-c", getKeysCmd)
+	keysOutput, err := cmdKeysID.CombinedOutput()
+
+	var keyIDs []string
+
+	if err == nil && len(keysOutput) > 0 {
+		// Try to parse JSON
+		var keysData map[string]interface{}
+		if jsonErr := json.Unmarshal(keysOutput, &keysData); jsonErr == nil {
+			// Check for resources array
+			if resources, ok := keysData["resources"].([]interface{}); ok {
+				for _, resource := range resources {
+					if keyMap, ok := resource.(map[string]interface{}); ok {
+						if id, ok := keyMap["id"].(string); ok && id != "" {
+							keyIDs = append(keyIDs, id)
+						}
+					}
+				}
 			}
-			if !utils.VerifyDataContains(t, string(deleteKeyOutput), "Deleted Key", logger) {
-				return fmt.Errorf("failed to delete key: %s", string(deleteKeyOutput))
+			// Check for keys array (alternative format)
+			if keys, ok := keysData["keys"].([]interface{}); ok {
+				for _, key := range keys {
+					if keyMap, ok := key.(map[string]interface{}); ok {
+						if id, ok := keyMap["id"].(string); ok && id != "" {
+							keyIDs = append(keyIDs, id)
+						}
+					}
+				}
 			}
 		}
 	}
 
-	// Delete the service instance
-	deleteInstanceCmd := fmt.Sprintf("ibmcloud resource service-instance-delete %s -f", instanceName)
-	cmdDeleteInstance := exec.Command("bash", "-c", deleteInstanceCmd)
-	deleteInstanceOutput, err := cmdDeleteInstance.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to delete instance %s: %w", instanceName, err)
+	// If JSON parsing failed or found no keys, try text parsing
+	if len(keyIDs) == 0 {
+		logger.Info(t, "JSON parsing failed or no keys found, trying text parsing...")
+
+		// Get keys in text format with better parsing
+		textCmd := fmt.Sprintf("ibmcloud kp keys -i %s 2>/dev/null | grep -v '^ID' | grep -v '^---' | awk '{print $1}'", serviceInstanceID)
+		textOutput, err := exec.Command("bash", "-c", textCmd).CombinedOutput()
+
+		if err == nil && len(textOutput) > 0 {
+			// Parse the output and filter out empty lines
+			lines := strings.Split(string(textOutput), "\n")
+			for _, line := range lines {
+				if line = strings.TrimSpace(line); line != "" {
+					// Skip if it looks like a header or not a valid key ID
+					if !strings.Contains(line, "ID") && !strings.Contains(line, "---") {
+						keyIDs = append(keyIDs, line)
+					}
+				}
+			}
+		}
 	}
 
-	if !utils.VerifyDataContains(t, string(deleteInstanceOutput), "deleted successfully", logger) {
-		return fmt.Errorf("failed to delete instance: %s", string(deleteInstanceOutput))
+	if len(keyIDs) == 0 {
+		logger.Info(t, fmt.Sprintf("No associated keys found for service instance '%s'", instanceName))
+		return nil
 	}
 
-	logger.Info(t, "Service instance deleted successfully")
+	logger.Info(t, fmt.Sprintf("Found %d associated key(s) for instance '%s'", len(keyIDs), instanceName))
+
+	// Delete each key - continue on errors
+	var deleteErrors []string
+	for _, key := range keyIDs {
+		logger.Info(t, fmt.Sprintf("Deleting key: %s", key))
+
+		// Add -f flag to force deletion without confirmation
+		deleteKeyCmd := fmt.Sprintf("ibmcloud kp key delete %s -i %s -f 2>&1", key, serviceInstanceID)
+		cmdDeleteKey := exec.Command("bash", "-c", deleteKeyCmd)
+		deleteKeyOutput, err := cmdDeleteKey.CombinedOutput()
+
+		output := string(deleteKeyOutput)
+		if err != nil {
+			// Check if key already deleted
+			if strings.Contains(output, "not found") ||
+				strings.Contains(output, "does not exist") ||
+				strings.Contains(output, "already deleted") {
+				logger.Info(t, fmt.Sprintf("Key %s already deleted", key))
+				continue
+			}
+			deleteErrors = append(deleteErrors, fmt.Sprintf("key %s: %v - %s", key, err, output))
+		} else if strings.Contains(output, "Deleted Key") ||
+			strings.Contains(output, "success") ||
+			strings.Contains(output, "OK") {
+			logger.Info(t, fmt.Sprintf("Key %s deleted successfully", key))
+		} else {
+			deleteErrors = append(deleteErrors, fmt.Sprintf("key %s: unexpected output: %s", key, output))
+		}
+	}
+
+	if len(deleteErrors) > 0 {
+		return fmt.Errorf("failed to delete some keys: %s", strings.Join(deleteErrors, "; "))
+	}
+
+	logger.Info(t, fmt.Sprintf("All associated keys deleted successfully for instance '%s'", instanceName))
 	return nil
 }
 
@@ -1994,10 +2142,13 @@ func CreateKey(t *testing.T, apiKey, region, resourceGroup, instanceName, keyNam
 	cmdRetrieveGUID := exec.Command("bash", "-c", retrieveServiceCmd)
 	retrieveOutput, err := cmdRetrieveGUID.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to retrieve service instance GUID: %w", err)
+		return fmt.Errorf("failed to retrieve service instance GUID: %w. Output: %s", err, string(retrieveOutput))
 	}
 
-	serviceInstanceID := strings.TrimSpace(strings.Split(strings.Split(string(retrieveOutput), "GUID:")[1], "Location:")[0])
+	serviceInstanceID, err := extractBetween(string(retrieveOutput), "GUID:", "Location:")
+	if err != nil {
+		return fmt.Errorf("failed to parse service instance ID for '%s': %w. Raw output: %s", instanceName, err, string(retrieveOutput))
+	}
 	if len(serviceInstanceID) == 0 {
 		return fmt.Errorf("service instance ID not found")
 	}
@@ -2030,7 +2181,7 @@ func CreateKey(t *testing.T, apiKey, region, resourceGroup, instanceName, keyNam
 	cmdRetrieveKey := exec.Command("bash", "-c", retrieveKeyCmd)
 	retrieveKeyOutput, err := cmdRetrieveKey.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to retrieve keys: %w", err)
+		return fmt.Errorf("failed to retrieve keys: %w. Output: %s", err, string(retrieveKeyOutput))
 	}
 	if !utils.VerifyDataContains(t, string(retrieveKeyOutput), keyName, logger) {
 		return fmt.Errorf("key retrieval failed: %s", string(retrieveKeyOutput))
@@ -2204,7 +2355,7 @@ func VerifyCosServiceInstance(t *testing.T, apiKey, region, resourceGroup, clust
 		return fmt.Errorf("failed to execute command to check COS service instance: %w", err)
 	}
 
-	logger.Info(t, "cos details : "+string(output))
+	logger.Info(t, fmt.Sprintf("cos details : %s", string(output)))
 
 	// Check if the COS service instance contains the cluster prefix and is active
 	if !utils.VerifyDataContains(t, string(output), clusterPrefix, logger) {
@@ -2274,18 +2425,18 @@ func CheckSSSDServiceStatus(t *testing.T, sClient *ssh.Client, logger *utils.Agg
 // GetLDAPServerCert retrieves the LDAP server certificate by connecting to the LDAP server via SSH.
 // It requires the public host name, bastion IP, LDAP host name, and LDAP server IP as inputs.
 // Returns the certificate as a string if successful, or an error otherwise.
-func GetLDAPServerCert(publicHostName, bastionIP, ldapHostName, ldapServerIP string) (string, error) {
+func GetLDAPServerCert(t *testing.T, publicHostName, bastionIP, ldapHostName, ldapServerIP string, logger *utils.AggregatedLogger) (string, error) {
 	// Establish SSH connection to LDAP server via bastion host
 	sshClient, connectionErr := utils.ConnectToHost(publicHostName, bastionIP, ldapHostName, ldapServerIP)
 	if connectionErr != nil {
 		return "", fmt.Errorf("failed to connect to LDAP server via SSH: %w", connectionErr)
 	}
 
-	// Ensure SSH client is closed, log any close errors
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			// Log the error instead of returning
-			fmt.Printf("warning: failed to close sshClient: %v\n", err)
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -2684,13 +2835,12 @@ func LogFilesAfterMasterShutdown(t *testing.T, sshClient *ssh.Client, apiKey, re
 	if connectionErr != nil {
 		return fmt.Errorf("failed to connect to the secondary node via SSH after shutdown: %w", connectionErr)
 	}
-	// FIX: nil guard on deferred close to avoid panic if reconnect ever returns nil client
+
 	defer func() {
-		if sshClient == nil {
-			return
-		}
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -2755,13 +2905,12 @@ func LogFilesAfterMasterShutdown(t *testing.T, sshClient *ssh.Client, apiKey, re
 	if connectionErr != nil {
 		return fmt.Errorf("failed to connect to primary master node via SSH after instance start: %w", connectionErr)
 	}
-	// FIX: nil guard on deferred close to avoid panic if reconnect ever returns nil client
+
 	defer func() {
-		if sshClient == nil {
-			return
-		}
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient after primary reconnect: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -4679,6 +4828,7 @@ func CheckProfileToProcessorMatch(
 ) error {
 
 	cmd := "sudo su -l root -c 'lshosts -w'"
+	flag_dynamic_nodes := 1
 	out, err := utils.RunCommandInSSHSession(sClient, cmd)
 	if err != nil {
 		return fmt.Errorf("failed to run lshosts command: %w", err)
@@ -4710,7 +4860,10 @@ func CheckProfileToProcessorMatch(
 		}
 		resourceType := fields[8]
 		processor := fields[2]
-		if resourceType != "(icgen2host)" {
+		if resourceType == "(icgen2host)" && flag_dynamic_nodes == 1 {
+			actualProcessors = append(actualProcessors, processor)
+			flag_dynamic_nodes = 0
+		} else if resourceType != "(icgen2host)" {
 			actualProcessors = append(actualProcessors, processor)
 		}
 	}
@@ -4722,6 +4875,9 @@ func CheckProfileToProcessorMatch(
 	var expectedProcessors []string
 
 	for _, profile := range allProfiles {
+		if profile == "" {
+			continue
+		}
 		family := utils.ExtractProfileFamily(profile)
 		expectedCPU, ok := profileToCPUModel[family]
 		if !ok {
@@ -4816,5 +4972,125 @@ func LSFValidateSpotVMType(t *testing.T, sClient *ssh.Client, expectedVMType str
 	} else {
 		logger.Info(t, "spotInstance is false, skipping spot class validation")
 	}
+	return nil
+}
+
+// This checks if the security group contain rules like:
+// inbound which starts with 0.0.0.0 in both comp-sg and bastion-sg
+// outbound which starts with 0.0.0.0 in comp-sg
+func VerifySecurityGroups(
+	t *testing.T,
+	apiKey, region, resourceGroup, clusterPrefix string,
+	logger *utils.AggregatedLogger,
+) error {
+
+	computeSecurityGroupName := fmt.Sprintf("%s-comp-sg", clusterPrefix)
+	bastionSecurityGroupName := fmt.Sprintf("%s-bastion-sg", clusterPrefix)
+	vpcName := fmt.Sprintf("%s-lsf", clusterPrefix)
+
+	if err := utils.LoginIntoIBMCloudUsingCLI(t, apiKey, region, resourceGroup); err != nil {
+		return fmt.Errorf("failed to log in to IBM Cloud: %w", err)
+	}
+
+	var allErrors []string
+
+	// Helper to validate one SG and RETURN errors
+	validateSG := func(sgName string, isBastion bool) error {
+
+		cmd := exec.Command(
+			"bash", "-c",
+			fmt.Sprintf("ibmcloud is security-group-rules %s --vpc %s -q", sgName, vpcName),
+		)
+
+		outputBytes, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf(
+				"failed to retrieve rules for %s: %w\n%s",
+				sgName, err, string(outputBytes),
+			)
+		}
+
+		output := string(outputBytes)
+		logger.Info(t, fmt.Sprintf("Security group %s rules:\n%s", sgName, output))
+
+		lines := strings.Split(output, "\n")
+
+		var localErrors []string
+
+		for _, line := range lines[1:] {
+			fields := strings.Fields(line)
+			if len(fields) < 7 {
+				continue
+			}
+
+			direction := fields[1]
+			remote := fields[3]
+
+			// Bastion rules
+			if isBastion {
+				if direction == "inbound" &&
+					strings.HasPrefix(remote, "0.0.0.0") {
+
+					localErrors = append(localErrors,
+						fmt.Sprintf(
+							"bastion security group %s has open inbound rule (0.0.0.0/0)",
+							sgName,
+						),
+					)
+				}
+				continue
+			}
+
+			// Compute inbound
+			if direction == "inbound" &&
+				strings.HasPrefix(remote, "0.0.0.0") {
+
+				localErrors = append(localErrors,
+					fmt.Sprintf(
+						"compute security group %s has open inbound rule (0.0.0.0/0)",
+						sgName,
+					),
+				)
+			}
+
+			// Compute outbound
+			if direction == "outbound" &&
+				strings.HasPrefix(remote, "0.0.0.0") {
+
+				localErrors = append(localErrors,
+					fmt.Sprintf(
+						"compute security group %s has open outbound rule (0.0.0.0/0)",
+						sgName,
+					),
+				)
+			}
+		}
+
+		// Return aggregated SG-level error
+		if len(localErrors) > 0 {
+			return fmt.Errorf("%s", strings.Join(localErrors, "\n"))
+		}
+
+		return nil
+	}
+
+	// Validate compute
+	if err := validateSG(computeSecurityGroupName, false); err != nil {
+		allErrors = append(allErrors, fmt.Sprintf("compute SG:\n%s", err.Error()))
+	}
+
+	// Validate bastion
+	if err := validateSG(bastionSecurityGroupName, true); err != nil {
+		allErrors = append(allErrors, fmt.Sprintf("bastion SG:\n%s", err.Error()))
+	}
+
+	// Final aggregation
+	if len(allErrors) > 0 {
+		return fmt.Errorf(
+			"security group validation failed:\n%s",
+			strings.Join(allErrors, "\n\n"),
+		)
+	}
+
 	return nil
 }

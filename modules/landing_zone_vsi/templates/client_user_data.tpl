@@ -128,3 +128,11 @@ echo "MTU=${client_instance_eth1_mtu}" >> "/etc/sysconfig/network-scripts/ifcfg-
 chage -I -1 -m 0 -M 99999 -E -1 -W 14 vpcuser
 systemctl restart NetworkManager
 hostnamectl set-hostname "$(hostname).${client_dns_domain}"
+
+# IBM Cloud VPC RHEL9 base images pre-mask rpcbind and nfs-server.
+# Unmask both before enabling. nfs-server is unmasked for completeness but not
+# enabled — Scale CES uses nfs-ganesha, not kernel nfsd. rpcbind.socket must be
+# enabled and started so that mmces service start NFS can register with portmapper.
+# Applied unconditionally because storage nodes can act as protocol/CES nodes.
+systemctl unmask rpcbind.service rpcbind.socket nfs-server.service
+systemctl enable --now rpcbind.socket
