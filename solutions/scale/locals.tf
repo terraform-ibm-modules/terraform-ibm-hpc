@@ -101,7 +101,6 @@ locals {
     observability_enable_metrics_routing = var.observability_enable_metrics_routing
     tfstate_cos_config                   = var.tfstate_cos_config
     tfstate_existing_cos_bucket_creds    = var.tfstate_existing_cos_bucket_creds
-    github_token                         = var.github_token # Delete this variable before pushing to the public repository.
   }
 }
 
@@ -192,6 +191,5 @@ locals {
     observability_enable_metrics_routing = lookup(local.override[local.override_type], "observability_enable_metrics_routing", local.config.observability_enable_metrics_routing)
     tfstate_cos_config                   = lookup(local.override[local.override_type], "tfstate_cos_config", local.config.tfstate_cos_config)
     tfstate_existing_cos_bucket_creds    = lookup(local.override[local.override_type], "tfstate_existing_cos_bucket_creds", local.config.tfstate_existing_cos_bucket_creds)
-    github_token                         = lookup(local.override[local.override_type], "github_token", local.config.github_token) # Delete this variable before pushing to the public repository.
   }
 }

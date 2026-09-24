@@ -8,7 +8,6 @@ resource "local_sensitive_file" "prepare_tf_input" {
   "enable_appcenter": "${var.enable_appcenter}",
   "webservice_appcenter_password": "${var.webservice_appcenter_password}",
   "lsf_version": "${var.lsf_version}",
-  "github_token": "${var.github_token}",
   "enable_lsf_pay_per_use": "${var.enable_lsf_pay_per_use}",
   "resource_group_ids": ${local.resource_group_ids},
   "cluster_prefix": "${var.cluster_prefix}",

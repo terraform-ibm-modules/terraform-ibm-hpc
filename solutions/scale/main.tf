@@ -86,5 +86,4 @@ module "scale" {
   observability_enable_metrics_routing          = local.env.observability_enable_metrics_routing
   tfstate_cos_config                            = local.env.tfstate_cos_config
   tfstate_existing_cos_bucket_creds             = local.env.tfstate_existing_cos_bucket_creds
-  github_token                                  = local.env.github_token # Delete this variable before pushing to the public repository.
 }
