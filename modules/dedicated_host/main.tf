@@ -4,7 +4,7 @@
 
 module "dedicated_host" {
   source  = "terraform-ibm-modules/dedicated-host/ibm"
-  version = "2.0.20"
+  version = "2.0.21"
   dedicated_hosts = [
     {
       host_group_name     = "${var.prefix}-dhgroup"
