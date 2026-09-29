@@ -182,11 +182,7 @@ func TestLDAPNewServer(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -246,13 +242,10 @@ func TestLDAPExistingServer(t *testing.T) {
 	options1.TerraformVars["ldap_user_password"] = envVars.LdapUserPassword // pragma: allowlist secret
 	testLogger.Info(t, "First cluster LDAP Terraform variables configured")
 
-	// ── 4. First Cluster Teardown ─────────────────────────────────────────────
+	// ──  First Cluster teardown ──────────────────────────────────────
+	// ── 4. Teardown ──────────────────────────────────────────────────────────
 	options1.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating teardown of first cluster resources...")
-		options1.TestTearDown()
-		testLogger.Info(t, "First cluster teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options1, testLogger)()
 
 	// ── 5. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options1, testLogger)
@@ -292,7 +285,7 @@ func TestLDAPExistingServer(t *testing.T) {
 		testLogger.Info(t, "Region overrides applied for second cluster")
 
 		// Retrieve LDAP server certificate from first cluster.
-		ldapServerCert, err := lsf.GetLDAPServerCert(lsf.LSF_PUBLIC_HOST_NAME, ldapServerBastionIP, lsf.LSF_LDAP_HOST_NAME, ldapIP)
+		ldapServerCert, err := lsf.GetLDAPServerCert(t, lsf.LSF_PUBLIC_HOST_NAME, ldapServerBastionIP, lsf.LSF_LDAP_HOST_NAME, ldapIP, testLogger)
 		utils.NoError(t, err, "Failed to retrieve LDAP server certificate", testLogger)
 		testLogger.Info(t, fmt.Sprintf("LDAP server certificate retrieved successfully: %s", strings.TrimSpace(ldapServerCert)))
 
@@ -314,12 +307,9 @@ func TestLDAPExistingServer(t *testing.T) {
 		testLogger.Info(t, "Second cluster LDAP and networking Terraform variables configured")
 
 		// Second cluster teardown.
+		// ──  Teardown ──────────────────────────────────────────────────────────
 		options2.SkipTestTearDown = true
-		defer func() {
-			testLogger.Info(t, "Initiating teardown of second cluster resources...")
-			options2.TestTearDown()
-			testLogger.Info(t, "Second cluster teardown completed")
-		}()
+		defer utils.SetupTeardown(t, options2, testLogger)()
 
 		// ── 6a. Deployment ───────────────────────────────────────────────────
 		utils.DeployCluster(t, options2, testLogger)

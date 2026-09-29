@@ -1,6 +1,6 @@
-/*
-    Executes ansible playbook to configure remote mount between IBM Spectrum Scale compute and storage cluster.
-*/
+##########
+##  Executes ansible playbook to configure remote mount between IBM Spectrum Scale compute and storage cluster.
+##########
 
 resource "null_resource" "prepare_remote_mnt_inventory_using_jumphost_connection" {
   count = (tobool(var.turn_on) == true && tobool(var.compute_cluster_create_complete) == true && tobool(var.storage_cluster_create_complete) == true && tobool(var.using_jumphost_connection) == true && tobool(var.create_scale_cluster) == true) ? 1 : 0

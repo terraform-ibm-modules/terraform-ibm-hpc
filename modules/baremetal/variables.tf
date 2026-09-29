@@ -37,16 +37,18 @@ variable "scheduler" {
 # Scale Storage Variables
 ##############################################################################
 
-/*variable "storage_subnets" {
-  type = list(object({
-    name = string
-    id   = string
-    zone = string
-    cidr = string
-  }))
-  default     = []
-  description = "Subnets to launch the storage host."
-}*/
+##########
+# variable "storage_subnets" {
+#   type = list(object({
+#     name = string
+#     id   = string
+#     zone = string
+#     cidr = string
+#   }))
+#   default     = []
+#   description = "Subnets to launch the storage host."
+# }
+##########
 
 variable "storage_subnets" {
   type        = list(string)

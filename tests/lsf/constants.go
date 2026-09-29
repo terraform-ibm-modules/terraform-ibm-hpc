@@ -38,5 +38,6 @@ var (
 	LSF_CUSTOM_RESOURCE_GROUP_OTHER_THAN_DEFAULT = "WES_TEST"
 	LSF_VERSION_FP14                             = "10.1.0.14"
 	LSF_VERSION_FP15                             = "10.1.0.15"
+	LSF_VERSION_FP16                             = "10.1.0.16"
 	SCC_INSTANCE_REGION                          = "us-south"
 )

@@ -48,7 +48,7 @@ module "bastion_sg" {
 module "bastion_vsi" {
   count                         = (var.enable_deployer && var.bastion_instance_name == null) ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "6.5.1"
+  version                       = "6.6.2"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -60,7 +60,7 @@ module "bastion_vsi" {
   security_group_ids            = var.login_security_group_name == null ? module.bastion_sg[*].security_group_id : local.login_security_group_name_id
   ssh_key_ids                   = local.bastion_ssh_keys
   subnets                       = local.bastion_subnets
-  tags                          = local.tags
+  resource_tags                 = local.tags
   user_data                     = data.template_file.bastion_user_data.rendered
   vpc_id                        = var.vpc_id
   kms_encryption_enabled        = var.kms_encryption_enabled
@@ -71,7 +71,7 @@ module "bastion_vsi" {
 module "deployer_vsi" {
   count                         = local.enable_deployer ? 1 : 0
   source                        = "terraform-ibm-modules/landing-zone-vsi/ibm"
-  version                       = "6.5.1"
+  version                       = "6.6.2"
   vsi_per_subnet                = 1
   create_security_group         = false
   security_group                = null
@@ -83,7 +83,7 @@ module "deployer_vsi" {
   security_group_ids            = var.login_security_group_name == null ? module.bastion_sg[*].security_group_id : local.login_security_group_name_id
   ssh_key_ids                   = local.bastion_ssh_keys
   subnets                       = local.bastion_subnets
-  tags                          = local.tags
+  resource_tags                 = local.tags
   user_data                     = data.template_file.deployer_user_data.rendered
   vpc_id                        = var.vpc_id
   kms_encryption_enabled        = var.kms_encryption_enabled

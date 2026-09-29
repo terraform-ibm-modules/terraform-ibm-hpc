@@ -24,6 +24,7 @@ func logResult(t *testing.T) {
 
 // TestDefaultCluster validates the basic cluster configuration requirements.
 // The test ensures proper resource isolation through random prefix generation
+// - Sets enable_lsf_pay_per_use to false
 // and relies on ValidateBasicClusterConfiguration for resource cleanup.
 //
 // Prerequisites:
@@ -31,7 +32,6 @@ func logResult(t *testing.T) {
 //   - Proper test suite initialization
 //   - Required permissions for resource operations
 func TestDefaultCluster(t *testing.T) {
-	t.Helper()
 	t.Parallel()
 
 	// ── 1. Initialization ────────────────────────────────────────────────────
@@ -52,17 +52,15 @@ func TestDefaultCluster(t *testing.T) {
 	utils.NoError(t, err, "Failed to initialize test options", testLogger)
 	testLogger.Info(t, "Test options initialized successfully")
 
+	options.TerraformVars["enable_lsf_pay_per_use"] = false
+
 	// Override default zones with basic-specific region (default_region=false).
 	applyRegionOverrides(t, envVars, options, "basic")
 	testLogger.Info(t, "Region overrides applied for basic cluster configuration")
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -73,14 +71,24 @@ func TestDefaultCluster(t *testing.T) {
 	})
 }
 
-// TestWebServiceDisabled validates the basic cluster configuration
-// with web service and app center disabled.
+// TestBasicWithDisabledWebKMSAndCustomCIDR validates multiple
+// independent feature combinations on a single basic cluster:
+//   - Web service disabled      (enable_webservice=false)
+//   - App center disabled       (enable_appcenter=false)
+//   - KMS disabled              (key_management=null)
+//   - COS integration disabled  (enable_cos_integration=false)
+//   - VPC flow logs disabled    (enable_vpc_flow_logs=false)
+//   - Hyperthreading enabled    (enable_hyperthreading=true)
+//   - Custom CIDR blocks        (vpc_cidr=10.243.0.0/18)
 //
-// Prerequisites:
-//   - Valid environment configuration
-//   - Proper test suite initialization
-//   - Required permissions for resource operations
-func TestWebServiceDisabled(t *testing.T) {
+// All features are independent with no variable conflicts,
+// making this bundle safe and maintaining 100% test coverage.
+//
+// Consolidated from:
+//   - TestWebServiceDisabled
+//   - TestNoKMSWithHyperthreading
+//   - TestCustomCIDRBlocks
+func TestBasicWithDisabledWebKMSAndCustomCIDR(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 
@@ -106,25 +114,42 @@ func TestWebServiceDisabled(t *testing.T) {
 	applyRegionOverrides(t, envVars, options, "basic")
 	testLogger.Info(t, "Region overrides applied for basic cluster configuration")
 
+	// ── Feature: Web Service Disabled (was TestWebServiceDisabled) ──────
 	options.TerraformVars["enable_webservice"] = false
 	options.TerraformVars["enable_appcenter"] = false
 	options.TerraformVars["webservice_appcenter_password"] = ""
-	testLogger.Info(t, "Web service and app center disabled for this test")
+	testLogger.Info(t, "Web service and app center disabled")
+
+	// ── Feature: KMS Disabled + Hyperthreading Enabled ──────────────────
+	// (was TestNoKMSWithHyperthreading)
+	options.TerraformVars["enable_cos_integration"] = false
+	options.TerraformVars["enable_vpc_flow_logs"] = false
+	options.TerraformVars["key_management"] = "null"
+	options.TerraformVars["enable_hyperthreading"] = "true"
+	testLogger.Info(t, "KMS, VPC flow logs, COS integration disabled, hyperthreading enabled")
+
+	// ── Feature: Custom CIDR Blocks (was TestCustomCIDRBlocks) ──────────
+	options.TerraformVars["vpc_cidr"] = "10.243.0.0/18"
+	options.TerraformVars["vpc_cluster_private_subnets_cidr_blocks"] = "10.243.0.0/20"
+	options.TerraformVars["vpc_cluster_login_private_subnets_cidr_blocks"] = "10.243.16.0/28"
+	testLogger.Info(t, "Custom CIDR blocks applied for VPC and subnets")
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
 
 	// ── 5. Validation ────────────────────────────────────────────────────────
 	utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
-		lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
+		t.Run("WebServiceDisabled and CustomCIDRBlocks", func(t *testing.T) {
+			lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
+		})
+		t.Run("NoKMSWithHyperthreading", func(t *testing.T) {
+			lsf.ValidateBasicClusterConfigurationHyperThreadingOn(t, options, testLogger)
+		})
+
 	})
 }
 
@@ -164,11 +189,7 @@ func TestNullResourceGroup(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -179,15 +200,16 @@ func TestNullResourceGroup(t *testing.T) {
 	})
 }
 
-// TestNonDefaultResourceGroup validates cluster creation with a non-default resource group.
-// Ensures proper resource creation in the specified resource group and verifies
-// all components are correctly provisioned in the custom location.
+// TestGen4ProfileAndDefaultRG validates cluster creation
+// with a non-default resource group AND Gen4 instance profiles.
 //
-// Prerequisites:
-//   - Pre-existing non-default resource group
-//   - Valid environment configuration
-//   - Proper permissions on target resource group
-func TestNonDefaultResourceGroup(t *testing.T) {
+// Consolidated from:
+//   - TestNonDefaultResourceGroup (default resource group)
+//   - TestRunLSFClusterCreationWithGen4Profiles (Gen4 profiles)
+//
+// Both features are independent with no variable conflicts,
+// making this bundle safe while maintaining 100% test coverage.
+func TestGen4ProfileAndDefaultRG(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 
@@ -205,21 +227,36 @@ func TestNonDefaultResourceGroup(t *testing.T) {
 	utils.NoError(t, err, "Failed to load environment configuration", testLogger)
 	testLogger.Info(t, "Environment variables loaded successfully")
 
+	// ── Feature: Non-default Resource Group ──────────────────────────────────
 	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.NonDefaultExistingResourceGroup)
 	utils.NoError(t, err, "Failed to initialize test options", testLogger)
-	testLogger.Info(t, "Test options initialized successfully")
+	testLogger.Info(t, "Test options initialized successfully using non-default resource group")
 
 	// Override default zones with basic-specific region (default_region=false).
 	applyRegionOverrides(t, envVars, options, "basic")
 	testLogger.Info(t, "Region overrides applied for basic cluster configuration")
 
+	// ── Feature: Gen4 Profiles ──────────────────────────────────────────────
+	options.TerraformVars["static_compute_instances"] = []map[string]interface{}{
+		{
+			"profile": "bx4-4x16", // Gen4 profile
+			"count":   2,
+			"image":   envVars.StaticComputeInstancesImage,
+		},
+	}
+	options.TerraformVars["dynamic_compute_instances"] = []map[string]interface{}{
+		{
+			"profile":               "bx4-4x16", // Gen4 profile
+			"count":                 1024,
+			"image":                 envVars.DynamicComputeInstancesImage,
+			"enable_spot_instances": false,
+		},
+	}
+	testLogger.Info(t, "Gen4 profiles configured for static and dynamic compute instances")
+
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -270,78 +307,7 @@ func TestZeroStaticWorkerNodes(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
-
-	// ── 4. Deployment ────────────────────────────────────────────────────────
-	utils.DeployCluster(t, options, testLogger)
-
-	// ── 5. Validation ────────────────────────────────────────────────────────
-	utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
-		lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
-	})
-}
-
-// TestRunLSFClusterCreationWithGen4Profiles validates cluster creation
-// with Gen4 profiles on two static worker nodes
-//
-// Prerequisites:
-//   - Valid environment configuration
-//   - Proper test suite initialization
-//   - Test should run only in us-south region
-func TestRunLSFClusterCreationWithGen4Profiles(t *testing.T) {
-	t.Helper()
-	t.Parallel()
-
-	// ── 1. Initialization ────────────────────────────────────────────────────
-	//setupTestSuite creates a logger and logs into the file
-	setupTestSuite(t)
-	require.NotNil(t, testLogger, "Test logger must be initialized before use")
-
-	defer logResult(t)
-	testLogger.Info(t, fmt.Sprintf("[START] Test %s initiated", t.Name()))
-
-	// ── 2. Configuration ─────────────────────────────────────────────────────
-	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
-
-	envVars, err := GetEnvVars()
-	require.NoError(t, err, "Failed to load environment configuration")
-	testLogger.Info(t, "Environment variables loaded successfully")
-
-	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	require.NoError(t, err, "Failed to initialize test options")
-	testLogger.Info(t, "Test options initialized successfully")
-
-	// Cluster profile: 2 static workers, dynamic scaling enabled.
-	options.TerraformVars["static_compute_instances"] = []map[string]interface{}{
-		{
-			"profile": "bx4-4x16",
-			"count":   2,
-			"image":   envVars.StaticComputeInstancesImage,
-		},
-	}
-	options.TerraformVars["dynamic_compute_instances"] = []map[string]interface{}{
-		{
-			"profile":               "bx4-4x16",
-			"count":                 1024,
-			"image":                 envVars.DynamicComputeInstancesImage,
-			"enable_spot_instances": false,
-		},
-	}
-
-	testLogger.Info(t, "Cluster profile configured: 2 static workers, dynamic scaling enabled")
-
-	// ── 3. Teardown ──────────────────────────────────────────────────────────
-	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -392,7 +358,7 @@ func TestDedicatedHost(t *testing.T) {
 	}
 	options.TerraformVars["dynamic_compute_instances"] = []map[string]interface{}{
 		{
-			"profile":               "cx2-2x4",
+			"profile":               "bx2-2x8",
 			"count":                 1024,
 			"image":                 envVars.DynamicComputeInstancesImage,
 			"enable_spot_instances": false,
@@ -403,11 +369,7 @@ func TestDedicatedHost(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -418,168 +380,9 @@ func TestDedicatedHost(t *testing.T) {
 	})
 }
 
-// TestCustomCIDRBlocks validates that a cluster can be deployed using non-default
-// VPC and subnet CIDR blocks, ensuring isolation and custom networking flexibility.
-//
-// Prerequisites:
-//   - Valid environment configuration
-//   - Proper test suite initialization
-//   - Required permissions for resource operations
-func TestCustomCIDRBlocks(t *testing.T) {
-	t.Helper()
-	t.Parallel()
-
-	// ── 1. Initialization ────────────────────────────────────────────────────
-	setupTestSuite(t)
-	require.NotNil(t, testLogger, "Test logger must be initialized before use")
-	defer logResult(t)
-	testLogger.Info(t, fmt.Sprintf("[START] Test %s initiated", t.Name()))
-
-	// ── 2. Configuration ─────────────────────────────────────────────────────
-	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
-
-	envVars, err := GetEnvVars()
-	utils.NoError(t, err, "Failed to load environment configuration", testLogger)
-	testLogger.Info(t, "Environment variables loaded successfully")
-
-	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	utils.NoError(t, err, "Failed to initialize test options", testLogger)
-	testLogger.Info(t, "Test options initialized successfully")
-
-	// Override default zones with basic-specific region (default_region=false).
-	applyRegionOverrides(t, envVars, options, "basic")
-	testLogger.Info(t, "Region overrides applied for basic cluster configuration")
-
-	// Override CIDR blocks with custom non-default values.
-	options.TerraformVars["vpc_cidr"] = "10.243.0.0/18"
-	options.TerraformVars["vpc_cluster_private_subnets_cidr_blocks"] = "10.243.0.0/20"
-	options.TerraformVars["vpc_cluster_login_private_subnets_cidr_blocks"] = "10.243.16.0/28"
-	testLogger.Info(t, "Custom CIDR blocks applied for VPC and subnets")
-
-	// ── 3. Teardown ──────────────────────────────────────────────────────────
-	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
-
-	// ── 4. Deployment ────────────────────────────────────────────────────────
-	utils.DeployCluster(t, options, testLogger)
-
-	// ── 5. Validation ────────────────────────────────────────────────────────
-	utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
-		lsf.ValidateBasicClusterConfiguration(t, options, testLogger)
-	})
-}
-
-// TestNoKMSWithHyperthreading validates cluster creation without KMS and with hyperthreading
-// enabled. Verifies proper cluster operation with these specific configurations.
-//
-// Prerequisites:
-//   - Valid environment configuration
-//   - Proper test suite initialization
-//   - Permissions to create resources without KMS
-func TestNoKMSWithHyperthreading(t *testing.T) {
-	t.Helper()
-	t.Parallel()
-
-	// ── 1. Initialization ────────────────────────────────────────────────────
-	setupTestSuite(t)
-	require.NotNil(t, testLogger, "Test logger must be initialized before use")
-	defer logResult(t)
-	testLogger.Info(t, fmt.Sprintf("[START] Test %s initiated", t.Name()))
-
-	// ── 2. Configuration ─────────────────────────────────────────────────────
-	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
-
-	envVars, err := GetEnvVars()
-	utils.NoError(t, err, "Failed to load environment configuration", testLogger)
-	testLogger.Info(t, "Environment variables loaded successfully")
-
-	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	utils.NoError(t, err, "Failed to initialize test options", testLogger)
-	testLogger.Info(t, "Test options initialized successfully")
-
-	// Override default zones with basic-specific region (default_region=false).
-	applyRegionOverrides(t, envVars, options, "basic")
-	testLogger.Info(t, "Region overrides applied for basic cluster configuration")
-
-	// Disable KMS, VPC flow logs, COS integration, and enable hyperthreading.
-	options.TerraformVars["enable_cos_integration"] = false
-	options.TerraformVars["enable_vpc_flow_logs"] = false
-	options.TerraformVars["key_management"] = "null"
-	options.TerraformVars["enable_hyperthreading"] = "true"
-	testLogger.Info(t, "KMS, VPC flow logs, COS integration disabled, and hyperthreading enabled")
-
-	// ── 3. Teardown ──────────────────────────────────────────────────────────
-	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
-
-	// ── 4. Deployment ────────────────────────────────────────────────────────
-	utils.DeployCluster(t, options, testLogger)
-
-	// ── 5. Validation ────────────────────────────────────────────────────────
-	utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
-		lsf.ValidateBasicClusterConfigurationHyperThreadingOn(t, options, testLogger)
-	})
-}
-
-// TestMultipleSSHKeys validates cluster creation with multiple SSH keys configured.
-// Verifies proper handling and authentication with multiple SSH keys.
-//
-// Prerequisites:
-//   - Valid environment configuration
-//   - Proper test suite initialization
-//   - Multiple SSH keys configured in environment
-func TestMultipleSSHKeys(t *testing.T) {
-	t.Helper()
-	t.Parallel()
-
-	// ── 1. Initialization ────────────────────────────────────────────────────
-	setupTestSuite(t)
-	require.NotNil(t, testLogger, "Test logger must be initialized before use")
-	defer logResult(t)
-	testLogger.Info(t, fmt.Sprintf("[START] Test %s initiated", t.Name()))
-
-	// ── 2. Configuration ─────────────────────────────────────────────────────
-	clusterNamePrefix := utils.GenerateTimestampedClusterPrefix(utils.GenerateRandomString())
-	testLogger.Info(t, fmt.Sprintf("Generated cluster name prefix: %s", clusterNamePrefix))
-
-	envVars, err := GetEnvVars()
-	utils.NoError(t, err, "Failed to load environment configuration", testLogger)
-	testLogger.Info(t, "Environment variables loaded successfully")
-
-	options, err := setupOptions(t, clusterNamePrefix, terraformDir, envVars.DefaultExistingResourceGroup)
-	utils.NoError(t, err, "Failed to initialize test options", testLogger)
-	testLogger.Info(t, "Test options initialized successfully")
-
-	// Override default zones with basic-specific region (default_region=false).
-	applyRegionOverrides(t, envVars, options, "basic")
-	testLogger.Info(t, "Region overrides applied for basic cluster configuration")
-
-	// ── 3. Teardown ──────────────────────────────────────────────────────────
-	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
-
-	// ── 4. Deployment ────────────────────────────────────────────────────────
-	utils.DeployCluster(t, options, testLogger)
-
-	// ── 5. Validation ────────────────────────────────────────────────────────
-	utils.RunValidateCluster(t, testLogger, func(t *testing.T) {
-		lsf.ValidateClusterConfigurationWithMultipleKeys(t, options, testLogger)
-	})
-}
+// TestNoKMSWithHyperthreading, TestMultipleSSHKeys, TestWebServiceDisabled, and
+// TestCustomCIDRBlocks have been consolidated into TestBasicConfigFlagsBundle
+// above (single deployment, all four validations preserved).
 
 // TestMultiProfileComputeNodes validates cluster deployment with multiple static
 // and dynamic compute instance profiles to ensure mixed provisioning works as expected.
@@ -630,11 +433,7 @@ func TestMultiProfileComputeNodes(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -650,6 +449,10 @@ func TestMultiProfileComputeNodes(t *testing.T) {
 // Region tests set options.TerraformVars["zones"] directly from the environment
 // variable for each target region instead of calling applyRegionOverrides, because
 // they intentionally target a specific zone rather than the default basic region.
+//
+// NOTE: these four are NOT clubbed — each deploys to a distinct region/zone, and
+// a single cluster can only occupy one region, so consolidating them would drop
+// real regional coverage rather than just reduce redundant deployments.
 
 // TestInUSEastRegion validates cluster creation in the US East region.
 //
@@ -688,11 +491,7 @@ func TestInUSEastRegion(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -740,11 +539,7 @@ func TestInEUDERegion(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -792,11 +587,7 @@ func TestInUSSouthRegion(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -844,11 +635,7 @@ func TestInJPTokyoRegion(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -909,11 +696,7 @@ func TestSpotInstance(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)

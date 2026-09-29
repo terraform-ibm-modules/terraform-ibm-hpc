@@ -21,7 +21,7 @@ bastion_instance:
 # Deployer Configuration
 deployer_instance:
   profile: "mx2-4x32"
-  image: "hpcc-scale-deployer-v2"
+  image: "hpcc-scale-deployer-v3"
 
 
 # Compute Configuration
@@ -36,36 +36,36 @@ storage_gui_password: "Pass@1234"  # pragma: allowlist secret
 compute_instances:
   - profile: "cx2-2x4"
     count: 3
-    image: "hpcc-scale6000-rhel810-v1"
+    image: "hpcc-scale6000-rhel96-v1"
     filesystem: "/comp/fs1"
 
 client_instances:
   - profile: "cx2-2x4"
     count: 2
-    image: "ibm-redhat-8-10-minimal-amd64-6"
+    image: "ibm-redhat-9-6-minimal-amd64-13"
 
 storage_instances:
   - profile: "bx2-16x64"
     count: 2
-    image: "hpcc-scale6000-rhel810-v1"
+    image: "hpcc-scale6000-rhel96-v1"
     filesystem: "/storage/fs1"
 
 storage_servers:
   - profile: "cx2d-metal-96x192"
     count: 0
-    image: "hpcc-scale6000-rhel810-v1"
+    image: "hpcc-scale6000-rhel96-v1"
     filesystem: "/gpfs/fs1"
 
 protocol_instances:
   - profile: "bx2-16x64"
     count: 0
-    image: "hpcc-scale6000-rhel810-v1"
+    image: "hpcc-scale6000-rhel96-v1"
 
 # AFM
 afm_instances:
   - profile: "bx2-32x128"
     count: 1
-    image: "hpcc-scale6000-rhel810-v1"
+    image: "hpcc-scale6000-rhel96-v1"
 
 # Filesystem Configuration
 filesystem_config:
@@ -111,7 +111,7 @@ scale_encryption_type: "key_protect"
 gklm_instances:
   - profile: "bx2-4x16"
     count: 2
-    image: "hpcc-scale-gklm4202-v2-5-6"
+    image: "hpcc-scale-gklm4202-v3"
 scale_encryption_admin_password: "Pass@1234"  # pragma: allowlist secret
 
 

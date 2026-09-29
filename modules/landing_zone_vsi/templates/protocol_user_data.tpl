@@ -60,14 +60,14 @@ then
     if grep -q "platform:el9" /etc/os-release
     then
         PACKAGE_MGR=dnf
-        package_list="python3 kernel-devel-$(uname -r) kernel-headers-$(uname -r) firewalld numactl make gcc-c++ elfutils-libelf-devel bind-utils iptables-nft nfs-utils elfutils elfutils-devel python3-dnf-plugin-versionlock"
+        package_list="python3 kernel-devel-$(uname -r) kernel-headers-$(uname -r) firewalld numactl make gcc-c++ elfutils-libelf-devel bind-utils iptables-nft nfs-utils elfutils elfutils-devel python3-dnf-plugin-versionlock NetworkManager NetworkManager-dispatcher-routing-rules"
     elif grep -q "platform:el8" /etc/os-release
     then
         PACKAGE_MGR=dnf
-        package_list="python38 kernel-devel-$(uname -r) kernel-headers-$(uname -r) firewalld numactl jq make gcc-c++ elfutils-libelf-devel bind-utils iptables nfs-utils elfutils elfutils-devel python3-dnf-plugin-versionlock"
+        package_list="python38 kernel-devel-$(uname -r) kernel-headers-$(uname -r) firewalld numactl jq make gcc-c++ elfutils-libelf-devel bind-utils iptables nfs-utils elfutils elfutils-devel python3-dnf-plugin-versionlock NetworkManager NetworkManager-dispatcher-routing-rules"
     else
         PACKAGE_MGR=yum
-        package_list="python3 kernel-devel-$(uname -r) kernel-headers-$(uname -r) firewalld numactl make gcc-c++ elfutils-libelf-devel bind-utils iptables nfs-utils elfutils elfutils-devel yum-plugin-versionlock"
+        package_list="python3 kernel-devel-$(uname -r) kernel-headers-$(uname -r) firewalld numactl make gcc-c++ elfutils-libelf-devel bind-utils iptables nfs-utils elfutils elfutils-devel yum-plugin-versionlock NetworkManager NetworkManager-dispatcher-routing-rules"
     fi
 
     RETRY_LIMIT=5
@@ -107,9 +107,14 @@ then
     USER=ubuntu
 fi
 
-yum update --security -y
-yum versionlock add $package_list
-yum versionlock list
+# Versionlock must run BEFORE the security update so that NM and its dispatcher
+# package are pinned at their current versions before dnf update --security can
+# upgrade them to a newer point-release with changed routing behaviour.
+if [ -n "$PACKAGE_MGR" ]; then
+    $PACKAGE_MGR versionlock add $package_list
+    $PACKAGE_MGR versionlock list
+    $PACKAGE_MGR update --security -y
+fi
 echo 'export PATH=$PATH:/usr/lpp/mmfs/bin' >> /home/$USER/.bashrc
 echo 'export PATH=$PATH:/usr/lpp/mmfs/bin' >> /root/.bashrc
 
@@ -150,11 +155,37 @@ firewall-offline-cmd --zone=public --add-port=30000-61000/udp
 systemctl start firewalld
 systemctl enable firewalld
 
+# IBM Cloud VPC RHEL9 base images pre-mask rpcbind and nfs-server.
+# Unmask both before enabling. nfs-server is unmasked for completeness but not
+# enabled — Scale CES uses nfs-ganesha, not kernel nfsd. rpcbind.socket must be
+# enabled and started so that mmces service start NFS can register with portmapper.
+systemctl unmask rpcbind.service rpcbind.socket nfs-server.service
+systemctl enable --now rpcbind.socket
+
 sec_interface=$(nmcli -t con show --active | grep eth1 | cut -d ':' -f 1)
 nmcli conn del "$sec_interface"
 nmcli con add type ethernet con-name eth1 ifname eth1
 echo "DOMAIN=${protocol_dns_domain}" >> "/etc/sysconfig/network-scripts/ifcfg-${protocol_interfaces}"
 echo "MTU=${protocol_instance_eth1_mtu}" >> "/etc/sysconfig/network-scripts/ifcfg-${protocol_interfaces}"
+
+# Wait for eth1 to receive its primary IP from DHCP before configuring routing
+while ! ip -4 addr show eth1 | grep -q "inet "; do sleep 1; done
+
+ETH1_IP=$(ip -4 addr show eth1 | awk '/inet /{print $2}' | cut -d/ -f1)
+GW="$(echo $ETH1_IP | awk -F. '{print $1"."$2"."$3".1"}')"
+
+# Install policy routing rules so return traffic from eth1 (and CES secondary
+# addresses added to eth1 by mmcesExtendedIpMgmt) egresses via the correct
+# gateway.  Without these rules, NM 1.52.0-11.el9_6.1 no longer installs them
+# automatically via 30-policy-route because the bare connection profile created
+# above carries no ipv4.routing-rules stanza.
+ip rule add from "$ETH1_IP" table 101 priority 1000 2>/dev/null || true
+ip route add default via "$GW" dev eth1 table 101 2>/dev/null || true
+
+# Persist the rules across NM restarts by adding them to the connection profile
+nmcli connection modify eth1 \
+  ipv4.routing-rules "priority 1000 from $ETH1_IP/32 table 101"
+
 systemctl restart NetworkManager
 
 ###### TODO: Fix Me ######

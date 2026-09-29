@@ -1,7 +1,7 @@
 # define variables
 locals {
   # Future use
-  name           = lower(var.scheduler)
+  name           = var.scheduler != null ? lower(var.scheduler) : ""
   prefix         = var.prefix
   tags           = [local.prefix, local.name]
   vsi_interfaces = ["eth0", "eth1"]
@@ -78,24 +78,24 @@ locals {
   login_node_name               = format("%s-%s", local.prefix, "login")
 
   # Future use
-  /*
-  management_instance_count     = sum(var.management_instances[*]["count"])
-  management_instance_profile   = flatten([for item in var.management_instances: [
-    for count in range(item["count"]) : var.management_instances[index(var.management_instances, item)]["profile"]
-  ]])
-  static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
-  storage_instance_count        = sum(var.storage_instances[*]["count"])
-  protocol_instance_count       = sum(var.protocol_instances[*]["count"])
-  */
+  ##########
+  # management_instance_count     = sum(var.management_instances[*]["count"])
+  # management_instance_profile   = flatten([for item in var.management_instances: [
+  #   for count in range(item["count"]) : var.management_instances[index(var.management_instances, item)]["profile"]
+  # ]])
+  # static_compute_instance_count = sum(var.static_compute_instances[*]["count"])
+  # storage_instance_count        = sum(var.storage_instances[*]["count"])
+  # protocol_instance_count       = sum(var.protocol_instances[*]["count"])
+  ##########
 
   # Future use
-  /*
-  client_image_name     = var.client_image_name
-  management_image_name = var.management_image_name
-  compute_image_name    = var.compute_image_name
-  storage_image_name    = var.storage_image_name
-  protocol_image_name   = var.storage_image_name
-  */
+  ##########
+  # client_image_name     = var.client_image_name
+  # management_image_name = var.management_image_name
+  # compute_image_name    = var.compute_image_name
+  # storage_image_name    = var.storage_image_name
+  # protocol_image_name   = var.storage_image_name
+  ##########
 
   # client_image_id   = data.ibm_is_image.client[*].id
   # storage_image_id  = data.ibm_is_image.storage[*].id
@@ -109,16 +109,16 @@ locals {
   # gklm_ssh_keys = [for name in var.gklm_instance_key_pair : data.ibm_is_ssh_key.gklm[name].id]
 
   # Future use
-  /*
-  # Scale static configs
-  scale_cloud_deployer_path     = "/opt/IBM/ibm-spectrumscale-cloud-deploy"
-  scale_cloud_install_repo_url  = "https://github.com/IBM/ibm-spectrum-scale-cloud-install"
-  scale_cloud_install_repo_name = "ibm-spectrum-scale-cloud-install"
-  scale_cloud_install_branch    = "5.1.8.1"
-  scale_cloud_infra_repo_url    = "https://github.com/IBM/ibm-spectrum-scale-install-infra"
-  scale_cloud_infra_repo_name   = "ibm-spectrum-scale-install-infra"
-  scale_cloud_infra_repo_tag    = "v2.7.0"
-  */
+  ##########
+  ## Scale static configs
+  # scale_cloud_deployer_path     = "/opt/IBM/ibm-spectrumscale-cloud-deploy"
+  # scale_cloud_install_repo_url  = "https://github.com/IBM/ibm-spectrum-scale-cloud-install"
+  # scale_cloud_install_repo_name = "ibm-spectrum-scale-cloud-install"
+  # scale_cloud_install_branch    = "5.1.8.1"
+  # scale_cloud_infra_repo_url    = "https://github.com/IBM/ibm-spectrum-scale-install-infra"
+  # scale_cloud_infra_repo_name   = "ibm-spectrum-scale-install-infra"
+  # scale_cloud_infra_repo_tag    = "v2.7.0"
+  ##########
 
   # Region and Zone calculations
   # region = join("-", slice(split("-", var.zones[0]), 0, 2))
@@ -301,151 +301,277 @@ locals {
 
   bastion_security_group = var.bastion_security_group_id
   # Security group id
-  client_security_group  = local.client_instance_count > 0 ? (local.enable_client && var.client_security_group_name == null ? module.client_sg[0].security_group_id_for_ref : local.client_security_group_name_id[0]) : ""
-  compute_security_group = local.static_compute_instance_count > 0 ? (local.enable_compute && var.compute_security_group_name == null ? module.compute_sg[0].security_group_id_for_ref : local.compute_security_group_name_id[0]) : ""
-  storage_security_group = local.storage_instance_count > 0 ? (local.enable_storage && var.storage_security_group_name == null ? module.storage_sg[0].security_group_id_for_ref : local.storage_security_group_name_id[0]) : ""
+  client_security_group  = local.client_instance_count > 0 ? (local.enable_client && var.client_security_group_name == null ? module.client_sg[0].security_group_id_for_ref : local.client_security_group_name_id[0]) : null
+  compute_security_group = local.static_compute_instance_count > 0 ? (local.enable_compute && var.compute_security_group_name == null ? module.compute_sg[0].security_group_id_for_ref : local.compute_security_group_name_id[0]) : null
+  storage_security_group = local.storage_instance_count > 0 ? (local.enable_storage && var.storage_security_group_name == null ? module.storage_sg[0].security_group_id_for_ref : local.storage_security_group_name_id[0]) : null
 
   client_security_group_rules = local.enable_client ? (local.enable_compute ?
-    [
+    flatten([
       { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "client-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
-      { name = "client-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+
+      # COMPUTESG CHECK ADDED
+      local.static_compute_instance_count > 0 ? [{ name = "client-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group }] : [],
+
       { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
-      { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
+      local.enable_storage ? [{ name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group }] : [],
+      { name = "client-allow-vpc-cidr-outbound", direction = "outbound", remote = var.cluster_cidr },
+      { name = "client-allow-storagesg-outbound", direction = "outbound", remote = local.client_security_group },
+      local.enable_storage ? [{ name = "storage-allow-storagesg-outbound", direction = "outbound", remote = local.storage_security_group }] : [],
+
+      # COMPUTESG CHECK ADDED
+      local.static_compute_instance_count > 0 ? [{ name = "client-allow-computesg-outbound", direction = "outbound", remote = local.compute_security_group }] : [],
+
+      # NEW: Allow all outbound traffic
       { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
-    ] :
-    [
+    ]) :
+    flatten([
       { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "client-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
       { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
-      { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
+      local.enable_storage ? [{ name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group }] : [],
+      { name = "client-allow-vpc-cidr-outbound", direction = "outbound", remote = var.cluster_cidr },
+      { name = "client-allow-storagesg-outbound", direction = "outbound", remote = local.client_security_group },
+      local.enable_storage ? [{ name = "storage-allow-storagesg-outbound", direction = "outbound", remote = local.storage_security_group }] : [],
+
+      # NEW: Allow all outbound traffic
       { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
-    ]
+    ])
     ) : (local.enable_compute ?
-    [
+    flatten([
       { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
-      { name = "client-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+
+      # COMPUTESG CHECK ADDED
+      local.static_compute_instance_count > 0 ? [{ name = "client-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group }] : [],
+
       { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "client-allow-vpc-cidr-outbound", direction = "outbound", remote = var.cluster_cidr },
+      local.enable_storage ? [{ name = "storage-allow-storagesg-outbound", direction = "outbound", remote = local.storage_security_group }] : [],
+
+      # COMPUTESG CHECK ADDED
+      local.static_compute_instance_count > 0 ? [{ name = "client-allow-computesg-outbound", direction = "outbound", remote = local.compute_security_group }] : [],
+
+      # NEW: Allow all outbound traffic
       { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
-    ]
+    ])
     :
-    [
+    flatten([
       { name = "client-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
-      { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
+      local.enable_storage ? [{ name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group }] : [],
+      { name = "client-allow-vpc-cidr-outbound", direction = "outbound", remote = var.cluster_cidr },
+      local.enable_storage ? [{ name = "storage-allow-storagesg-outbound", direction = "outbound", remote = local.storage_security_group }] : [],
+
+      # NEW: Allow all outbound traffic
       { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
-    ]
+    ])
   )
 
   compute_security_group_rules = local.enable_client ? (local.enable_compute ? (local.enable_storage ?
-    [
+    flatten([
       { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "compute-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
-      { name = "compute-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+
+      # COMPUTESG CHECK ADDED
+      local.static_compute_instance_count > 0 ? [{ name = "compute-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group }] : [],
+
       { name = "compute-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
       { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "compute-allow-nfs-outbound", direction = "outbound", remote = var.cluster_cidr },
+      { name = "compute-allow-bastionsg-outbound", direction = "outbound", remote = local.bastion_security_group },
+
+      # COMPUTESG CHECK ADDED
+      local.static_compute_instance_count > 0 ? [{ name = "compute-allow-computesg-outbound", direction = "outbound", remote = local.compute_security_group }] : [],
+
+      # NEW: Allow all outbound traffic
       { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
-    ] :
-    [
+    ]) :
+    flatten([
       { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "compute-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
-      { name = "compute-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+
+      # COMPUTESG CHECK ADDED
+      local.static_compute_instance_count > 0 ? [{ name = "compute-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group }] : [],
+
       { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
-      { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" },
-    ]
+      { name = "compute-allow-nfs-outbound", direction = "outbound", remote = var.cluster_cidr },
+      { name = "compute-allow-bastionsg-outbound", direction = "outbound", remote = local.bastion_security_group },
+
+      # COMPUTESG CHECK ADDED
+      local.static_compute_instance_count > 0 ? [{ name = "compute-allow-computesg-outbound", direction = "outbound", remote = local.compute_security_group }] : [],
+
+      # NEW: Allow all outbound traffic
+      { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+    ])
     ) : (local.enable_storage ?
-    [
+    flatten([
       { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "compute-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
       { name = "compute-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
       { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "compute-allow-nfs-outbound", direction = "outbound", remote = var.cluster_cidr },
+      { name = "compute-allow-bastionsg-outbound", direction = "outbound", remote = local.bastion_security_group },
+
+      # COMPUTESG CHECK ADDED
+      local.static_compute_instance_count > 0 ? [{ name = "compute-allow-computesg-outbound", direction = "outbound", remote = local.compute_security_group }] : [],
+
+      # NEW: Allow all outbound traffic
       { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
-    ] :
-    [
+    ]) :
+    flatten([
       { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "compute-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
       { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "compute-allow-nfs-outbound", direction = "outbound", remote = var.cluster_cidr },
+      { name = "compute-allow-bastionsg-outbound", direction = "outbound", remote = local.bastion_security_group },
+
+      # COMPUTESG CHECK ADDED
+      local.static_compute_instance_count > 0 ? [{ name = "compute-allow-computesg-outbound", direction = "outbound", remote = local.compute_security_group }] : [],
+
+      # NEW: Allow all outbound traffic
       { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
-    ]
+    ])
     )
     ) : (local.enable_compute ? (local.enable_storage ?
-      [
+      flatten([
         { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
-        { name = "compute-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+
+        # COMPUTESG CHECK ADDED
+        local.static_compute_instance_count > 0 ? [{ name = "compute-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group }] : [],
+
         { name = "compute-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
         { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+        { name = "compute-allow-nfs-outbound", direction = "outbound", remote = var.cluster_cidr },
+        { name = "compute-allow-bastionsg-outbound", direction = "outbound", remote = local.bastion_security_group },
+
+        # COMPUTESG CHECK ADDED
+        local.static_compute_instance_count > 0 ? [{ name = "compute-allow-computesg-outbound", direction = "outbound", remote = local.compute_security_group }] : [],
+
+        # NEW: Allow all outbound traffic
         { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
-      ] :
-      [
+      ]) :
+      flatten([
         { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
-        { name = "compute-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+
+        # COMPUTESG CHECK ADDED
+        local.static_compute_instance_count > 0 ? [{ name = "compute-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group }] : [],
+
         { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+        { name = "compute-allow-nfs-outbound", direction = "outbound", remote = var.cluster_cidr },
+        { name = "compute-allow-bastionsg-outbound", direction = "outbound", remote = local.bastion_security_group },
+
+        # COMPUTESG CHECK ADDED
+        local.static_compute_instance_count > 0 ? [{ name = "compute-allow-computesg-outbound", direction = "outbound", remote = local.compute_security_group }] : [],
+
+        # NEW: Allow all outbound traffic
         { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
-      ]
+      ])
       ) : (local.enable_storage ?
-      [
+      flatten([
         { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
         { name = "compute-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
         { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+        { name = "compute-allow-nfs-outbound", direction = "outbound", remote = var.cluster_cidr },
+        { name = "compute-allow-bastionsg-outbound", direction = "outbound", remote = local.bastion_security_group },
+
+        # COMPUTESG CHECK ADDED
+        local.static_compute_instance_count > 0 ? [{ name = "compute-allow-computesg-outbound", direction = "outbound", remote = local.compute_security_group }] : [],
+
+        # NEW: Allow all outbound traffic
         { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
-      ] :
-      [
+      ]) :
+      flatten([
         { name = "compute-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
         { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+        { name = "compute-allow-nfs-outbound", direction = "outbound", remote = var.cluster_cidr },
+        { name = "compute-allow-bastionsg-outbound", direction = "outbound", remote = local.bastion_security_group },
+
+        # COMPUTESG CHECK ADDED
+        local.static_compute_instance_count > 0 ? [{ name = "compute-allow-computesg-outbound", direction = "outbound", remote = local.compute_security_group }] : [],
+
+        # NEW: Allow all outbound traffic
         { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
-      ]
+      ])
     )
   )
 
   storage_security_group_rules = local.enable_compute ? (local.enable_storage ?
-    [
+    flatten([
       { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
-      { name = "storage-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
+
+      # COMPUTESG CHECK ADDED
+      local.static_compute_instance_count > 0 ? [{ name = "storage-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group }] : [],
+
       { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
       { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
-      { name = "client-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
-      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
-    ] :
-    [
-      { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
-      { name = "storage-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group },
-      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
-      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" },
-      { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+      local.enable_client ? [{ name = "client-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group }] : [],
+      { name = "storage-allow-vpc-cidr-outbound", direction = "outbound", remote = var.cluster_cidr },
+      { name = "storage-allow-storagesg-outbound", direction = "outbound", remote = local.storage_security_group },
+      local.enable_client ? [{ name = "client-allow-storagesg-outbound", direction = "outbound", remote = local.client_security_group }] : [],
 
-    ]
+      # COMPUTESG CHECK ADDED
+      local.static_compute_instance_count > 0 ? [{ name = "compute-allow-computesg-inbound", direction = "outbound", remote = local.compute_security_group }] : [],
+
+      # NEW: Allow all outbound traffic
+      { name = "storage-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+    ]) :
+    flatten([
+      { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
+
+      # COMPUTESG CHECK ADDED
+      local.static_compute_instance_count > 0 ? [{ name = "storage-allow-computesg-inbound", direction = "inbound", remote = local.compute_security_group }] : [],
+
+      { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
+      { name = "storage-allow-vpc-cidr-outbound", direction = "outbound", remote = var.cluster_cidr },
+
+      # COMPUTESG CHECK ADDED
+      local.static_compute_instance_count > 0 ? [{ name = "compute-allow-storagesg-outbound", direction = "outbound", remote = local.compute_security_group }] : [],
+
+      # NEW: Allow all outbound traffic
+      { name = "storage-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+    ])
     ) : (local.enable_storage ?
-    [
+    flatten([
       { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "storage-allow-storagesg-inbound", direction = "inbound", remote = local.storage_security_group },
       { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
-      { name = "client-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group },
-      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
-    ] :
-    [
+      local.enable_client ? [{ name = "client-allow-clientsg-inbound", direction = "inbound", remote = local.client_security_group }] : [],
+      { name = "storage-allow-vpc-cidr-outbound", direction = "outbound", remote = var.cluster_cidr },
+      { name = "storage-allow-storagesg-outbound", direction = "outbound", remote = local.storage_security_group },
+      local.enable_client ? [{ name = "client-allow-clientsg-outbound", direction = "outbound", remote = local.client_security_group }] : [],
+
+      # NEW: Allow all outbound traffic
+      { name = "storage-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+    ]) :
+    flatten([
       { name = "storage-allow-bastionsg-inbound", direction = "inbound", remote = local.bastion_security_group },
       { name = "client-allow-network-inbound", direction = "inbound", remote = var.cluster_cidr },
-      { name = "client-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" },
-      { name = "compute-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+      { name = "storage-allow-vpc-cidr-outbound", direction = "outbound", remote = var.cluster_cidr },
+      { name = "storage-allow-storagesg-outbound", direction = "outbound", remote = local.storage_security_group },
 
-    ]
+      # NEW: Allow all outbound traffic
+      { name = "storage-allow-all-outbound", direction = "outbound", remote = "0.0.0.0/0" }
+    ])
   )
 
-  storage_nfs_security_group_rules = [
+  # CHANGED local.enable_compute TO local.static_compute_instance_count > 0
+  storage_nfs_security_group_rules = local.static_compute_instance_count > 0 ? [
     {
       name      = "allow-all-compute-sg"
       direction = "inbound"
       remote    = local.compute_security_group
     }
-  ]
+  ] : []
 
-  bastion_security_group_update_rule = local.enable_compute ? [
+  # CHANGED local.enable_compute TO local.static_compute_instance_count > 0 FOR BASTION CHECK
+  bastion_security_group_update_rule = local.static_compute_instance_count > 0 ? [
     { name = "bastion-allow-compute-sg", direction = "inbound", remote = local.compute_security_group }
     ] : (local.enable_storage ? [
       { name = "bastion-allow-storage-sg", direction = "inbound", remote = local.storage_security_group }
       ] : (local.enable_client ? [
-      { name = "bastion-allow-client-sg", direction = "inbound", remote = local.client_security_group }] : []
-  ))
+        { name = "bastion-allow-client-sg", direction = "inbound", remote = local.client_security_group }
+  ] : []))
+
 }
 
 locals {
@@ -479,11 +605,11 @@ locals {
   boot_volume_size = length(var.volume_storages) > 0 ? try(var.volume_storages[0].boot_volume_size, 100) : 100
 
   ht_true_pricing = {
-    version_crn = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:version:61e655c5-40b6-4b68-a6ab-e6c77a457fce-global/b6efee69-353d-4f4d-925b-3809a7e44a7c-global"
+    version_crn = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:version:61e655c5-40b6-4b68-a6ab-e6c77a457fce-global/019c4410-4c47-4c8f-8b21-565a875c7f3e-global"
     plan_crn    = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:plan:sw.1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc.d114e7ab-4f7e-40c4-98cc-f0c000cbf3a7-global"
   }
   ht_false_pricing = {
-    version_crn = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:version:61e655c5-40b6-4b68-a6ab-e6c77a457fce-global/b6efee69-353d-4f4d-925b-3809a7e44a7c-global"
+    version_crn = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:version:61e655c5-40b6-4b68-a6ab-e6c77a457fce-global/019c4410-4c47-4c8f-8b21-565a875c7f3e-global"
     plan_crn    = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:plan:sw.1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc.6e0f4e27-509d-4cba-bf80-58217a412103-global"
   }
 

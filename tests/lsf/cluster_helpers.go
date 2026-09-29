@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -1088,9 +1089,10 @@ func VerifyProfile(
 	computeProfiles []string,
 	mgmtProfiles []string,
 	loginProfile []string,
+	dynamicProfile []string,
 	logger *utils.AggregatedLogger,
 ) {
-	allProfiles := append(append(computeProfiles, mgmtProfiles...), loginProfile...)
+	allProfiles := append(append(append(computeProfiles, mgmtProfiles...), loginProfile...), dynamicProfile...)
 	profileMatchError := CheckProfileToProcessorMatch(t, sshMgmtClient, allProfiles, logger)
 	utils.LogVerificationResult(t, profileMatchError, "Profile match with processor on management node", logger)
 }
@@ -1112,4 +1114,67 @@ func VerifySpotInstance(
 
 	// Log validation result
 	utils.LogVerificationResult(t, err, "Spot instance and VM type validation on management node", logger)
+}
+
+// This is an abstraction for VerifySecurityGroups function.
+// This validation is defined to check inbound and outbound rules in security groups
+func VerifySecurityGroupRules(
+	t *testing.T,
+	apiKey string,
+	region string,
+	resourceGroup string,
+	clusterPrefix string,
+	logger *utils.AggregatedLogger,
+) {
+	sgErr := VerifySecurityGroups(
+		t,
+		apiKey,
+		region,
+		resourceGroup,
+		clusterPrefix,
+		logger,
+	)
+
+	utils.LogVerificationResult(
+		t,
+		sgErr,
+		"Security group rules validation",
+		logger,
+	)
+}
+
+func VerifyBootVolumeSize(
+	t *testing.T,
+	sClient *ssh.Client,
+	nodeName string,
+	expectedSize int,
+	logger *utils.AggregatedLogger,
+) {
+	command := "lsblk -dn -o SIZE /dev/vda"
+
+	output, err := utils.RunCommandInSSHSession(sClient, command)
+	require.NoError(t, err, "Failed to execute lsblk on %s", nodeName)
+
+	size := strings.TrimSpace(output)
+	size = strings.TrimSuffix(size, "G")
+
+	actualSize, err := strconv.Atoi(size)
+	require.NoError(t, err, "Failed to parse boot volume size for %s", nodeName)
+
+	require.Equal(
+		t,
+		expectedSize,
+		actualSize,
+		"Boot volume size mismatch for %s",
+		nodeName,
+	)
+
+	logger.Info(
+		t,
+		fmt.Sprintf("%s boot volume verified successfully. Expected=%dG, Actual=%dG",
+			nodeName,
+			expectedSize,
+			actualSize,
+		),
+	)
 }

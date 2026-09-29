@@ -42,6 +42,24 @@
     msg: "LDAP User '{{ LDAP_USER }}' already exists. Skipping."
   when: ldap_user_search.stdout == "UserFound"
 
+- name: LDAP_Server_Setup | Create Kerberos user principal
+  command:
+    cmd: >
+      kadmin.local
+      -q "addprinc -pw {{ LDAP_USER_PASSWORD }} {{ LDAP_USER }}"
+  no_log: true
+
+# Verify Kerberos principals
+- name: LDAP_Server_Setup | List Kerberos principals
+  command:
+    cmd: kadmin.local -q "listprincs"
+  register: kerberos_principals
+  changed_when: false
+
+- name: LDAP_Server_Setup | Display Kerberos principals
+  debug:
+    var: kerberos_principals.stdout
+
 - name: LDAP_Server_Setup | Mark LDAP configuration as completed
   file:
     path: /etc/ldap/.ldap_configured

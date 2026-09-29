@@ -80,7 +80,7 @@ output "protocol_vsi_data" {
 
 output "compute_sg_id" {
   description = "Compute SG id"
-  value       = module.compute_sg[*].security_group_id
+  value       = var.compute_security_group_name == null ? module.compute_sg[*].security_group_id : local.compute_security_group_name_id
 }
 
 output "compute_public_key_content" {
@@ -182,10 +182,15 @@ output "storage_public_key_content" {
 
 output "client_sg_id" {
   description = "Client SG id"
-  value       = module.client_sg[*].security_group_id
+  value       = var.client_security_group_name == null ? module.client_sg[*].security_group_id : local.client_security_group_name_id
 }
 
 output "dedicated_host_id" {
   description = "dedicated_host"
   value       = local.dedicated_host_ids
+}
+
+output "storage_sg_id" {
+  description = "Storage SG id"
+  value       = var.storage_security_group_name == null ? module.storage_sg[*].security_group_id : local.storage_security_group_name_id
 }

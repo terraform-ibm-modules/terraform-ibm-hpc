@@ -143,10 +143,10 @@ spec:
           value: $(params.ssh_key_regions)
 
     # ── Test tasks ────────────────────────────────────────────────────────────
-    - name: gen4profile-tests
+    - name: gen4profile-default-rg-tests
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
-        name: gen4profile-tests
+        name: gen4profile-default-rg-tests
       workspaces:
         - name: workspace
           workspace: pipeline-ws
@@ -249,10 +249,10 @@ spec:
         - name: lsf_version
           value: $(params.lsf_version)
 
-    - name: custom-cidr-multi-profile-spot-tests
+    - name: multi-profile-and-spot-instance-enabled-tests
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
-        name: custom-cidr-multi-profile-spot-tests
+        name: multi-profile-and-spot-instance-enabled-tests
       workspaces:
         - name: workspace
           workspace: pipeline-ws
@@ -302,10 +302,10 @@ spec:
         - name: lsf_version
           value: $(params.lsf_version)
 
-    - name: default-cluster-config-and-web-service-disabled-tests
+    - name: default-and-custom-cidr-config-tests
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
-        name: default-cluster-config-and-web-service-disabled-tests
+        name: default-and-custom-cidr-config-tests
       workspaces:
         - name: workspace
           workspace: pipeline-ws
@@ -673,10 +673,10 @@ spec:
         - name: lsf_version
           value: $(params.lsf_version)
 
-    - name: no-kms-hyperthreading-and-kms-auth-policy-tests
+    - name: existing-kms-auth-policy-tests
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
-        name: no-kms-hyperthreading-and-kms-auth-policy-tests
+        name: existing-kms-auth-policy-tests
       workspaces:
         - name: workspace
           workspace: pipeline-ws
@@ -1044,10 +1044,10 @@ spec:
         - name: lsf_version
           value: $(params.lsf_version)
 
-    - name: resource-group-configuration-tests
+    - name: null-resource-group-configuration-tests
       runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
       taskRef:
-        name: resource-group-configuration-tests
+        name: null-resource-group-configuration-tests
       workspaces:
         - name: workspace
           workspace: pipeline-ws
@@ -1202,30 +1202,83 @@ spec:
           value: $(params.pac_ha_exist_certificate)
         - name: lsf_version
           value: $(params.lsf_version)
+    - name: lsf-bootvolume-tests
+      runAfter: [git-clone, pre-requisites-install, ssh-key-creation]
+      taskRef:
+        name: lsf-bootvolume-tests
+      workspaces:
+        - name: workspace
+          workspace: pipeline-ws
+      params:
+        - name: repository
+          value: $(params.repository)
+        - name: git_access_token
+          value: $(params.git_access_token)
+        - name: pipeline-debug
+          value: $(params.pipeline-debug)
+        - name: zone
+          value: $(params.zone)
+        - name: resource_group
+          value: $(params.resource_group)
+        - name: compute_image_name_rhel
+          value: $(params.compute_image_name_rhel)
+        - name: compute_image_name_ubuntu
+          value: $(params.compute_image_name_ubuntu)
+        - name: login_image_name
+          value: $(params.login_image_name)
+        - name: management_image_name
+          value: $(params.management_image_name)
+        - name: deployer_image_name
+          value: $(params.deployer_image_name)
+        - name: revision
+          value: $(params.revision)
+        - name: cos_region
+          value: $(params.cos_region)
+        - name: cos_bucket
+          value: $(params.cos_bucket)
+        - name: cos_instance_crn
+          value: $(params.cos_instance_crn)
+        - name: cos_api_key
+          value: $(params.cos_api_key)
+        - name: hpc_custom_reports_repo
+          value: $(params.hpc_custom_reports_repo)
+        - name: hpc_custom_reports_branch
+          value: $(params.hpc_custom_reports_branch)
+        - name: git_user_name
+          value: $(params.git_user_name)
+        - name: git_user_email
+          value: $(params.git_user_email)
+        - name: solution
+          value: $(params.solution)
+        - name: pac_ha_exist_certificate
+          value: $(params.pac_ha_exist_certificate)
+        - name: lsf_version
+          value: $(params.lsf_version)
 
     # ── Teardown & reporting ──────────────────────────────────────────────────
     - name: ssh-key-deletion
       runAfter:
-        - gen4profile-tests
+        - gen4profile-default-rg-tests
         - appcenter-api-and-ldap-tests
-        - custom-cidr-multi-profile-spot-tests
-        - default-cluster-config-and-web-service-disabled-tests
+        - multi-profile-and-spot-instance-enabled-tests
+        - default-and-custom-cidr-config-tests
         - existing-kms-instance-key-tests
         - existing-vpc-cidrs-and-subnets-tests
         - existing-vpc-dns-configuration-tests
         - ldap-existing-server-tests
         - ldap-new-server-tests
         - lsf-logs-and-reapply-tests
-        - no-kms-hyperthreading-and-kms-auth-policy-tests
+        - existing-kms-auth-policy-tests
         - node-scale-up-and-down-tests
         - node-scale-up-and-scale-down-tests
         - observability-atracker-cos-cloud-logs-tests
         - observability-atracker-logging-monitoring-tests
         - observability-features-disabled-tests
         - observability-features-enabled-tests
-        - resource-group-configuration-tests
+        - null-resource-group-configuration-tests
         - security-compliance-and-cos-vpc-flow-logs-tests
         - zero-static-worker-nodes-and-dedicated-host-tests
+        - lsf-bootvolume-tests
       taskRef:
         name: ssh-key-deletion
       workspaces:
@@ -1245,26 +1298,27 @@ spec:
 
     - name: git-content-inspect
       runAfter:
-        - gen4profile-tests
+        - gen4profile-default-rg-tests
         - appcenter-api-and-ldap-tests
-        - custom-cidr-multi-profile-spot-tests
-        - default-cluster-config-and-web-service-disabled-tests
+        - multi-profile-and-spot-instance-enabled-tests
+        - default-and-custom-cidr-config-tests
         - existing-kms-instance-key-tests
         - existing-vpc-cidrs-and-subnets-tests
         - existing-vpc-dns-configuration-tests
         - ldap-existing-server-tests
         - ldap-new-server-tests
         - lsf-logs-and-reapply-tests
-        - no-kms-hyperthreading-and-kms-auth-policy-tests
+        - existing-kms-auth-policy-tests
         - node-scale-up-and-down-tests
         - node-scale-up-and-scale-down-tests
         - observability-atracker-cos-cloud-logs-tests
         - observability-atracker-logging-monitoring-tests
         - observability-features-disabled-tests
         - observability-features-enabled-tests
-        - resource-group-configuration-tests
+        - null-resource-group-configuration-tests
         - security-compliance-and-cos-vpc-flow-logs-tests
         - zero-static-worker-nodes-and-dedicated-host-tests
+        - lsf-bootvolume-tests
       taskRef:
         name: inspect-git-content
       workspaces:
@@ -1288,26 +1342,27 @@ spec:
 
     - name: display-validation-logs
       runAfter:
-        - gen4profile-tests
+        - gen4profile-default-rg-tests
         - appcenter-api-and-ldap-tests
-        - custom-cidr-multi-profile-spot-tests
-        - default-cluster-config-and-web-service-disabled-tests
+        - multi-profile-and-spot-instance-enabled-tests
+        - default-and-custom-cidr-config-tests
         - existing-kms-instance-key-tests
         - existing-vpc-cidrs-and-subnets-tests
         - existing-vpc-dns-configuration-tests
         - ldap-existing-server-tests
         - ldap-new-server-tests
         - lsf-logs-and-reapply-tests
-        - no-kms-hyperthreading-and-kms-auth-policy-tests
+        - existing-kms-auth-policy-tests
         - node-scale-up-and-down-tests
         - node-scale-up-and-scale-down-tests
         - observability-atracker-cos-cloud-logs-tests
         - observability-atracker-logging-monitoring-tests
         - observability-features-disabled-tests
         - observability-features-enabled-tests
-        - resource-group-configuration-tests
+        - null-resource-group-configuration-tests
         - security-compliance-and-cos-vpc-flow-logs-tests
         - zero-static-worker-nodes-and-dedicated-host-tests
+        - lsf-bootvolume-tests
       workspaces:
         - name: workspace
           workspace: pipeline-ws
@@ -1325,7 +1380,7 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="gen4profile-tests.log"
+                VALIDATION_LOG_FILE_NAME="gen4profile-default-rg-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
           - name: validation-appcenter-api-and-ldap-tests
@@ -1339,7 +1394,7 @@ spec:
                 VALIDATION_LOG_FILE_NAME="appcenter-api-and-ldap-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
-          - name: validation-custom-cidr-multi-profile-spot-tests
+          - name: validation-multi-profile-and-spot-instance-enabled-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -1347,7 +1402,7 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="custom-cidr-multi-profile-spot-tests.log"
+                VALIDATION_LOG_FILE_NAME="multi-profile-and-spot-instance-enabled-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
           - name: validation-default-cluster-web-service-disabled
@@ -1358,7 +1413,7 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="default-cluster-config-and-web-service-disabled-tests.log"
+                VALIDATION_LOG_FILE_NAME="default-and-custom-cidr-config-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
           - name: validation-existing-kms-instance-key-tests
@@ -1435,7 +1490,7 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="no-kms-hyperthreading-and-kms-auth-policy-tests.log"
+                VALIDATION_LOG_FILE_NAME="existing-kms-auth-policy-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
           - name: validation-node-scale-up-and-down-tests
@@ -1512,7 +1567,7 @@ spec:
             args:
               - |
                 #!/bin/bash
-                VALIDATION_LOG_FILE_NAME="resource-group-configuration-tests.log"
+                VALIDATION_LOG_FILE_NAME="null-resource-group-configuration-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
           - name: validation-security-compliance-cos-flow-logs
@@ -1537,29 +1592,41 @@ spec:
                 VALIDATION_LOG_FILE_NAME="zero-static-worker-nodes-and-dedicated-host-tests.log"
                 source .tekton/scripts/issue_track.sh
                 display_validation_log "${VALIDATION_LOG_FILE_NAME}"
+          - name: validation-lsf-bootvolume
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                VALIDATION_LOG_FILE_NAME="lsf-bootvolume-tests.log"
+                source .tekton/scripts/issue_track.sh
+                display_validation_log "${VALIDATION_LOG_FILE_NAME}"
 
     - name: display-lsf-da-infra-logs
       runAfter:
-        - gen4profile-tests
+        - gen4profile-default-rg-tests
         - appcenter-api-and-ldap-tests
-        - custom-cidr-multi-profile-spot-tests
-        - default-cluster-config-and-web-service-disabled-tests
+        - multi-profile-and-spot-instance-enabled-tests
+        - default-and-custom-cidr-config-tests
         - existing-kms-instance-key-tests
         - existing-vpc-cidrs-and-subnets-tests
         - existing-vpc-dns-configuration-tests
         - ldap-existing-server-tests
         - ldap-new-server-tests
         - lsf-logs-and-reapply-tests
-        - no-kms-hyperthreading-and-kms-auth-policy-tests
+        - existing-kms-auth-policy-tests
         - node-scale-up-and-down-tests
         - node-scale-up-and-scale-down-tests
         - observability-atracker-cos-cloud-logs-tests
         - observability-atracker-logging-monitoring-tests
         - observability-features-disabled-tests
         - observability-features-enabled-tests
-        - resource-group-configuration-tests
+        - null-resource-group-configuration-tests
         - security-compliance-and-cos-vpc-flow-logs-tests
         - zero-static-worker-nodes-and-dedicated-host-tests
+        - lsf-bootvolume-tests
       workspaces:
         - name: workspace
           workspace: pipeline-ws
@@ -1577,7 +1644,7 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="gen4profile-tests.json"
+                LOG_FILE_NAME="gen4profile-default-rg-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
           - name: infra-appcenter-api-and-ldap-tests
@@ -1591,7 +1658,7 @@ spec:
                 LOG_FILE_NAME="appcenter-api-and-ldap-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
-          - name: infra-custom-cidr-multi-profile-spot-tests
+          - name: infra-multi-profile-and-spot-instance-enabled-tests
             onError: continue
             image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
             workingDir: "/artifacts"
@@ -1599,7 +1666,7 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="custom-cidr-multi-profile-spot-tests.json"
+                LOG_FILE_NAME="multi-profile-and-spot-instance-enabled-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
           - name: infra-default-cluster-web-service-disabled
@@ -1610,7 +1677,7 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="default-cluster-config-and-web-service-disabled-tests.json"
+                LOG_FILE_NAME="default-and-custom-cidr-config-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
           - name: infra-existing-kms-instance-key-tests
@@ -1687,7 +1754,7 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="no-kms-hyperthreading-and-kms-auth-policy-tests.json"
+                LOG_FILE_NAME="existing-kms-auth-policy-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
           - name: infra-node-scale-up-and-down-tests
@@ -1764,7 +1831,7 @@ spec:
             args:
               - |
                 #!/bin/bash
-                LOG_FILE_NAME="resource-group-configuration-tests.json"
+                LOG_FILE_NAME="null-resource-group-configuration-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
           - name: infra-security-compliance-cos-flow-logs
@@ -1787,6 +1854,17 @@ spec:
               - |
                 #!/bin/bash
                 LOG_FILE_NAME="zero-static-worker-nodes-and-dedicated-host-tests.json"
+                source .tekton/scripts/issue_track.sh
+                issue_track "${LOG_FILE_NAME}"
+          - name: infra-lsf-bootvolume
+            onError: continue
+            image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:latest
+            workingDir: "/artifacts"
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                #!/bin/bash
+                LOG_FILE_NAME="lsf-bootvolume-tests.json"
                 source .tekton/scripts/issue_track.sh
                 issue_track "${LOG_FILE_NAME}"
 

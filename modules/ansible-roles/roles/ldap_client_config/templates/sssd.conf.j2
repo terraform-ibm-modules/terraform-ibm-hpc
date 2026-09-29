@@ -11,11 +11,19 @@ homedir_substring = /home
 [domain/default]
 id_provider = ldap
 autofs_provider = ldap
-auth_provider = ldap
-chpass_provider = ldap
+
+auth_provider = krb5
+chpass_provider = krb5
+
+krb5_server = {{ LDAP_SERVER_IP }}
+krb5_realm = {{ KERBEROS_REALM }}
+
 ldap_uri = ldap://{{ LDAP_SERVER_IP }}
 ldap_search_base = dc={{ BASE_DN | regex_replace('\\..*', '') }},dc={{ BASE_DN | regex_replace('^[^.]+\\.', '') }}
+
 ldap_id_use_start_tls = True
 ldap_tls_cacertdir = /etc/openldap/certs
-cache_credentials = True
 ldap_tls_reqcert = allow
+
+cache_credentials = True
+enumerate = False

@@ -107,9 +107,14 @@ then
     USER=ubuntu
 fi
 
-yum update --security -y
-yum versionlock $package_list
-yum versionlock list
+# Versionlock must run BEFORE the security update so that NM and its dispatcher
+# package are pinned at their current versions before dnf update --security can
+# upgrade them to a newer point-release with changed routing behaviour.
+if [ -n "$PACKAGE_MGR" ]; then
+    $PACKAGE_MGR versionlock add $package_list
+    $PACKAGE_MGR versionlock list
+    $PACKAGE_MGR update --security -y
+fi
 echo 'export PATH=$PATH:/usr/lpp/mmfs/bin' >> /home/$USER/.bashrc
 echo 'export PATH=$PATH:/usr/lpp/mmfs/bin' >> /root/.bashrc
 
@@ -148,3 +153,10 @@ firewall-offline-cmd --zone=public --add-port=30000-61000/tcp
 firewall-offline-cmd --zone=public --add-port=30000-61000/udp
 systemctl start firewalld
 systemctl enable firewalld
+
+# IBM Cloud VPC RHEL9 base images pre-mask rpcbind and nfs-server.
+# Unmask both before enabling. nfs-server is unmasked for completeness but not
+# enabled — Scale CES uses nfs-ganesha, not kernel nfsd. rpcbind.socket must be
+# enabled and started so that mmces service start NFS can register with portmapper.
+systemctl unmask rpcbind.service rpcbind.socket nfs-server.service
+systemctl enable --now rpcbind.socket
