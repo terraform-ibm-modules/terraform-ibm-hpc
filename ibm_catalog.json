@@ -43,7 +43,7 @@
       ],
       "flavors": [
         {
-          "label": "Cluster with LSF v10.1.0.15",
+          "label": "Cluster with LSF v10.1.0.16",
           "name": "Cluster-with-LSF",
           "short_description": "Deploy your high performance computing (HPC) cluster with IBM scheduling software for compute intensive workloads.",
           "install_type": "fullstack",
