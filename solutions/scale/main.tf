@@ -81,6 +81,9 @@ module "scale" {
   volume_storages                               = local.env.volume_storages
   enable_private_path_nlb                       = local.env.enable_private_path_nlb
   protocol_instance_eth1_mtu                    = local.env.protocol_instance_eth1_mtu
+  observability_monitoring_enable               = local.env.observability_monitoring_enable
+  observability_monitoring_plan                 = local.env.observability_monitoring_plan
+  observability_enable_metrics_routing          = local.env.observability_enable_metrics_routing
   tfstate_cos_config                            = local.env.tfstate_cos_config
   tfstate_existing_cos_bucket_creds             = local.env.tfstate_existing_cos_bucket_creds
 }

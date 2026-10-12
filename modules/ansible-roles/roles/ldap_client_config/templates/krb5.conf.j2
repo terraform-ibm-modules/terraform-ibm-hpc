@@ -1,0 +1,14 @@
+[libdefaults]
+ default_realm = {{ KERBEROS_REALM }}
+ dns_lookup_realm = false
+ dns_lookup_kdc = false
+
+[realms]
+ {{ KERBEROS_REALM }} = {
+  kdc = {{ LDAP_SERVER_IP }}
+  admin_server = {{ LDAP_SERVER_IP }}
+ }
+
+[domain_realm]
+ .{{ BASE_DN  }} = {{ KERBEROS_REALM }}
+ {{ BASE_DN  }} = {{ KERBEROS_REALM }}

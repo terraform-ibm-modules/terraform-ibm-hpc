@@ -229,7 +229,9 @@ func LoginIntoIBMCloudUsingCLI(t *testing.T, apiKey, region, resourceGroup strin
 	}
 
 	// Login to IBM Cloud and set the target resource group
+	// #nosec G702 -- This is a test environment, inputs are from trusted sources (config/env)
 	loginCmd := exec.CommandContext(ctx, "ibmcloud", "login", "--apikey", apiKey, "-r", region, "-g", resourceGroup)
+
 	loginOutput, err := loginCmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to login to IBM Cloud: %w. Output: %s", err, string(loginOutput))
@@ -242,7 +244,6 @@ func LoginIntoIBMCloudUsingCLI(t *testing.T, apiKey, region, resourceGroup strin
 func GenerateTimestampedClusterPrefix(prefix string) string {
 	//Place current time in the string.
 	t := time.Now()
-	//return strings.ToLower("cicd" + "-" + t.Format(TimeLayout) + "-" + prefix)
 	return strings.ToLower("cicd" + "-" + t.Format(TimeLayout) + "-" + prefix)
 }
 
@@ -902,6 +903,94 @@ func GetLoginProfile(
 	return profiles, nil
 }
 
+// Fetches the dynamic compute profile, always returns exactly one entry
+func GetDynamicComputeProfile(
+	t *testing.T,
+	terraformVars map[string]interface{},
+	logger *AggregatedLogger,
+) ([]string, error) {
+
+	if logger == nil {
+		return nil, fmt.Errorf("logger cannot be nil")
+	}
+
+	rawVal, exists := terraformVars["dynamic_compute_instances"]
+	if !exists {
+		err := fmt.Errorf("dynamic_compute_instances key does not exist")
+		logger.Error(t, err.Error())
+		return nil, err
+	}
+
+	var profilesList []map[string]interface{}
+
+	if val, ok := rawVal.([]map[string]interface{}); ok {
+		profilesList = val
+	} else if str, ok := rawVal.(string); ok {
+		if err := json.Unmarshal([]byte(str), &profilesList); err != nil {
+			err := fmt.Errorf("failed to parse dynamic_compute_instances JSON string: %w", err)
+			logger.Error(t, err.Error())
+			return nil, err
+		}
+	} else {
+		err := fmt.Errorf(
+			"dynamic_compute_instances has unsupported type: %v (got %T)",
+			rawVal,
+			rawVal,
+		)
+		logger.Error(t, err.Error())
+		return nil, err
+	}
+
+	if len(profilesList) == 0 {
+		logger.Warn(t, "dynamic_compute_instances is empty (count = 0)")
+		return []string{}, nil
+	}
+
+	var profiles []string
+
+	for i, inst := range profilesList {
+		profileVal, exists := inst["profile"]
+		if !exists {
+			err := fmt.Errorf("instance at index %d is missing 'profile' key", i)
+			logger.Error(t, err.Error())
+			return nil, err
+		}
+
+		profileStr, ok := profileVal.(string)
+		if !ok {
+			err := fmt.Errorf("profile at index %d is not a string (got %T)", i, profileVal)
+			logger.Error(t, err.Error())
+			return nil, err
+		}
+
+		count := 1
+		if countVal, exists := inst["count"]; exists {
+			switch v := countVal.(type) {
+			case int:
+				count = v
+			case float64:
+				count = int(v)
+			default:
+				err := fmt.Errorf("count at index %d is not a number (got %T)", i, countVal)
+				logger.Error(t, err.Error())
+				return nil, err
+			}
+		}
+
+		if count > 0 {
+			profiles = append(profiles, profileStr)
+			break // only take the first one
+		}
+	}
+
+	logger.Info(
+		t,
+		fmt.Sprintf("Collected dynamic compute profile: %v", profiles),
+	)
+
+	return profiles, nil
+}
+
 func ExtractProfileFamily(profile string) string {
 
 	// Order matters: more specific first
@@ -925,6 +1014,58 @@ func ExtractProfileFamily(profile string) string {
 	}
 
 	return ""
+}
+
+// GetTotalCores obtains the total (cores/vcpus * count of profiles provided)
+// The cores/vpcus depend on whether hyperthreading is enabled or disabled
+func GetTotalCores(
+	t *testing.T,
+	expectedHyperthreadingStatus bool,
+	computeProfiles []string,
+	logger *AggregatedLogger,
+) int {
+	total := 0
+
+	for i, profile := range computeProfiles {
+		start := strings.Index(profile, "metal-")
+		if start == -1 {
+			err := fmt.Errorf("profile at index %d does not contain 'metal-' (profile: %s)", i, profile)
+			logger.Error(t, err.Error())
+			continue
+		}
+
+		start += len("metal-")
+
+		end := strings.Index(profile[start:], "x")
+		if end == -1 {
+			err := fmt.Errorf("profile at index %d does not contain 'x' after 'metal-' (profile: %s)", i, profile)
+			logger.Error(t, err.Error())
+			continue
+		}
+
+		coreStr := profile[start : start+end]
+
+		cores, err := strconv.Atoi(coreStr)
+		if err != nil {
+			parseErr := fmt.Errorf(
+				"failed to parse core count '%s' from profile at index %d (%s): %w",
+				coreStr,
+				i,
+				profile,
+				err,
+			)
+			logger.Error(t, parseErr.Error())
+			continue
+		}
+
+		if !expectedHyperthreadingStatus {
+			cores /= 2
+		}
+
+		total += cores
+	}
+
+	return total
 }
 
 // RunCommandWithRetry executes a shell command with retries
@@ -1176,4 +1317,333 @@ func NoError(t *testing.T, err error, msg string, logger *AggregatedLogger) {
 
 	// Success case — no logging, just pass through
 	require.NoError(t, err)
+}
+
+// ========SCALE==============
+
+// ScaleUpdateInstanceCount increments the "count" field for all instances
+// under the specified Terraform variable key by newCount.
+// Expects value to be either []interface{} or []map[string]interface{}
+func ScaleUpdateInstanceCount(t *testing.T, vars map[string]interface{}, key string, newCount int) {
+	value, exists := vars[key]
+	if !exists {
+		t.Fatalf("key %q not found in vars", key)
+	}
+
+	// Convert to []interface{} if needed
+	var rawList []interface{}
+
+	switch v := value.(type) {
+	case []interface{}:
+		rawList = v
+	case []map[string]interface{}:
+		rawList = make([]interface{}, len(v))
+		for i, m := range v {
+			rawList[i] = m
+		}
+	default:
+		t.Fatalf("%s must be a list of maps (got %T)", key, value)
+	}
+
+	for i, item := range rawList {
+		instanceMap, ok := item.(map[string]interface{})
+		if !ok {
+			t.Fatalf("element %d must be a map (got %T)", i, item)
+		}
+
+		// Handle count field
+		countField, exists := instanceMap["count"]
+		if !exists {
+			t.Fatalf("element %d missing 'count' field", i)
+		}
+
+		// Convert to int
+		var current int
+		switch v := countField.(type) {
+		case int:
+			current = v
+		case float64:
+			current = int(v)
+		case int64:
+			current = int(v)
+		case string:
+			var err error
+			current, err = strconv.Atoi(v)
+			require.NoError(t, err, "failed to parse count as string")
+		default:
+			t.Fatalf("unexpected count type for element %d: %T", i, countField)
+		}
+
+		instanceMap["count"] = current + newCount
+	}
+
+	vars[key] = rawList
+}
+
+/*
+Extract mount directories from df -h output
+based on cluster prefix
+*/
+func ExtractMountDirs(t *testing.T, dfOutput, clusterPrefix string) []string {
+	var mounts []string
+	lines := strings.Split(dfOutput, "\n")
+
+	for _, line := range lines {
+		if strings.Contains(line, clusterPrefix) {
+			fields := strings.Fields(line)
+			if len(fields) >= 6 {
+				// Last column is mount directory
+				mountDir := fields[len(fields)-1]
+				mounts = append(mounts, mountDir)
+			}
+		}
+	}
+	return mounts
+}
+
+// HasValidPrefix returns true if the given name starts with any of the specified prefixes.
+func HasValidPrefix(t *testing.T, name string, prefixes []string) bool {
+	for _, p := range prefixes {
+		if strings.HasPrefix(name, p) {
+			return true
+		}
+	}
+	return false
+}
+
+// GetLastPathElement returns the last component of a path, handling trailing slashes.
+// Returns an error if the path is empty or invalid.
+func GetLastPathElement(path string) (string, error) {
+	cleanPath := strings.TrimRight(path, "/")
+
+	if cleanPath == "" {
+		return "", fmt.Errorf("invalid path: empty or only slashes")
+	}
+
+	last := filepath.Base(cleanPath)
+
+	if last == "" || last == "." {
+		return "", fmt.Errorf("cannot determine last path element from: %s", path)
+	}
+
+	return last, nil
+}
+
+// ParseJSONVar parses a Terraform variable stored as a JSON string
+// into a strongly typed Go structure.
+// Example Terraform behavior:
+//
+//	value = "[{...}]"
+//	type  = string
+//
+// This function converts that JSON string into type T.
+func ParseJSONVar[T any](vars map[string]interface{}, key string) (T, error) {
+	var result T
+
+	raw, ok := vars[key]
+	if !ok {
+		return result, fmt.Errorf("terraform variable %q not found", key)
+	}
+
+	str, ok := raw.(string)
+	if !ok {
+		return result, fmt.Errorf("terraform variable %q is not a string", key)
+	}
+
+	if err := json.Unmarshal([]byte(str), &result); err != nil {
+		return result, fmt.Errorf("failed to parse %q: %w", key, err)
+	}
+
+	return result, nil
+}
+
+// ParseJSONVarOptional parses a JSON var into T.
+// If the key is missing, it returns the zero value of T and no error.
+func ParseJSONVarOptional[T any](vars map[string]interface{}, key string) (T, error) {
+	var zero T
+
+	if _, ok := vars[key]; !ok {
+		return zero, nil
+	}
+
+	return ParseJSONVar[T](vars, key)
+}
+
+// ---- Helper functions ----
+
+// MustBool returns the bool value for key or an error if missing or wrong type.
+func MustBool(vars map[string]interface{}, key string) (bool, error) {
+	val, ok := vars[key]
+	if !ok {
+		return false, fmt.Errorf("missing key %q", key)
+	}
+
+	v, ok := val.(bool)
+	if !ok {
+		return false, fmt.Errorf("%q is not a bool (got %T)", key, val)
+	}
+
+	return v, nil
+}
+
+// MustString returns the string value for key or an error if missing or wrong type.
+func MustString(vars map[string]interface{}, key string) (string, error) {
+	val, ok := vars[key]
+	if !ok {
+		return "", fmt.Errorf("missing key %q", key)
+	}
+
+	v, ok := val.(string)
+	if !ok {
+		return "", fmt.Errorf("%q is not a string (got %T)", key, val)
+	}
+
+	return v, nil
+}
+
+// ParseDomain splits an LDAP domain into two parts (dc1, dc2).
+// Returns an error if the domain format is invalid.
+func ParseDomain(domain string) (string, string, error) {
+	parts := strings.SplitN(domain, ".", 2)
+	if len(parts) < 2 {
+		return "", "", fmt.Errorf("invalid ldapDomain format: %s", domain)
+	}
+	return parts[0], parts[1], nil
+}
+
+// GetAFMNodeCount checks AFM instances in the provided vars map
+// and returns the count of nodes along with a flag indicating
+// whether AFM is enabled.
+func GetAFMNodeCount(t *testing.T, vars map[string]interface{}) int {
+	// Step 1: Validate AFM instances
+	rawInstances, ok := vars["afm_instances"].([]map[string]interface{})
+	if !ok {
+		return 0
+	}
+
+	// Step 2: Iterate through AFM instances
+	for _, inst := range rawInstances {
+		count, ok := inst["count"].(int)
+		if ok && count > 0 {
+			// AFM is enabled if any instance has count > 0
+			return count
+		}
+	}
+
+	// Step 3: No valid AFM instances found
+	return 0
+}
+
+// FailNow logs the failure and stops the test immediately.
+func FailNow(t *testing.T, msg string, logger *AggregatedLogger) {
+	if logger != nil {
+		logger.FAIL(t, msg)
+	}
+	require.FailNow(t, msg)
+}
+
+// NonEmptyLines splits s on newlines and returns the non-blank, trimmed lines.
+func NonEmptyLines(s string) []string {
+	var lines []string
+	for _, line := range strings.Split(s, "\n") {
+		if line = strings.TrimSpace(line); line != "" {
+			lines = append(lines, line)
+		}
+	}
+	return lines
+}
+
+func UpdateBootVolume(
+	vars map[string]interface{},
+	isReApply bool,
+) error {
+
+	type bootVolumeConfig struct {
+		profile   string
+		size      int
+		iops      interface{}
+		bandwidth interface{}
+	}
+
+	configs := map[string]bootVolumeConfig{
+		"login_instance": {
+			profile:   "general-purpose",
+			size:      150,
+			iops:      nil,
+			bandwidth: nil,
+		},
+		"management_instances": {
+			profile:   "sdp",
+			size:      200,
+			iops:      3500,
+			bandwidth: 1500,
+		},
+		"static_compute_instances": {
+			profile:   "sdp",
+			size:      300,
+			iops:      3600,
+			bandwidth: 1250,
+		},
+		"dynamic_compute_instances": {
+			profile:   "custom",
+			size:      150,
+			iops:      3600,
+			bandwidth: nil,
+		},
+	}
+
+	for key, cfg := range configs {
+		raw, ok := vars[key]
+		if !ok {
+			return fmt.Errorf("terraform var %s does not exist", key)
+		}
+
+		rawStr, ok := raw.(string)
+		if !ok {
+			return fmt.Errorf("%s must be string, got %T", key, raw)
+		}
+
+		var instances []map[string]interface{}
+		if err := json.Unmarshal([]byte(rawStr), &instances); err != nil {
+			return fmt.Errorf("failed to parse %s: %w", key, err)
+		}
+
+		if len(instances) == 0 {
+			return fmt.Errorf("%s is empty", key)
+		}
+
+		instance := instances[0]
+
+		if isReApply {
+			bootVolume, ok := instance["boot_volume"].(map[string]interface{})
+			if !ok {
+				return fmt.Errorf("boot_volume not found for %s during re-apply", key)
+			}
+
+			switch v := bootVolume["size"].(type) {
+			case float64:
+				bootVolume["size"] = int(v) + 100
+			case int:
+				bootVolume["size"] = v + 100
+			default:
+				return fmt.Errorf("boot_volume.size has unexpected type %T for %s", v, key)
+			}
+		} else {
+			instance["boot_volume"] = map[string]interface{}{
+				"profile":   cfg.profile,
+				"size":      cfg.size,
+				"iops":      cfg.iops,
+				"bandwidth": cfg.bandwidth,
+			}
+		}
+
+		updated, err := json.Marshal(instances)
+		if err != nil {
+			return err
+		}
+
+		vars[key] = string(updated)
+	}
+
+	return nil
 }

@@ -38,7 +38,7 @@ output "ssh_to_login_node" {
 
 
 output "cloud_monitoring_url" {
-  value       = var.scheduler == "LSF" && var.observability_monitoring_enable && (var.enable_deployer == false) ? module.cloud_monitoring_instance_creation[0].cloud_monitoring_url : null
+  value       = var.observability_monitoring_enable && (var.enable_deployer == false) ? module.cloud_monitoring_instance_creation[0].cloud_monitoring_url : null
   description = "IBM Cloud Monitoring URL"
 }
 
@@ -59,7 +59,7 @@ output "application_center_url" {
 
 output "web_service_tunnel" {
   description = "SSH command to connect to the LSF WebServices"
-  value       = var.scheduler == "LSF" && var.lsf_version == "fixpack_15" && var.enable_deployer == false && var.enable_webservice ? local.webservice_ssh_cmd : null
+  value       = var.scheduler == "LSF" && var.lsf_version == "fixpack_16" && var.enable_deployer == false && var.enable_webservice ? local.webservice_ssh_cmd : null
 }
 
 #############################################

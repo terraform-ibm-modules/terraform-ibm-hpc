@@ -1,6 +1,6 @@
 {
    "cluster_prefix": "lsf",
-   "lsf_version": "fixpack_15",
+   "lsf_version": "fixpack_16",
    "existing_resource_group": "Default",
    "vpc_name": null,
    "vpc_cidr": "10.0.0.0/8",
@@ -14,7 +14,7 @@
    },
    "deployer_instance": {
       "profile": "bx2-8x32",
-      "image": "hpc-lsf-fp15-deployer-rhel810-v1"
+      "image": "hpc-lsf-fp16-deployer-rhel810-v1"
    },
    "vpc_cluster_login_private_subnets_cidr_blocks": "10.0.0.0/24",
    "vpc_cluster_private_subnets_cidr_blocks": "10.10.20.0/24",

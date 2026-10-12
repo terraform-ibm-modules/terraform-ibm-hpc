@@ -30,6 +30,7 @@ enable_spot_instances="{{ enable_spot_instances }}"
 enable_ldap="{{ enable_ldap }}"
 ldap_server="{{ ldap_server }}"
 ldap_basedns="{{ ldap_basedns }}"
+KERBEROS_REALM="{{ ldap_basedns | upper }}"
 
 # Setup Hostname
 HostIP=$(hostname -I | awk '{print $1}')
@@ -294,6 +295,27 @@ if [ "$enable_ldap" = "true" ]; then
         exit 1
       }
 
+      # Kerberos config file
+      cat <<EOF >/etc/krb5.conf
+[libdefaults]
+ default_realm = ${KERBEROS_REALM}
+ dns_lookup_realm = false
+ dns_lookup_kdc = false
+
+[realms]
+ ${KERBEROS_REALM} = {
+  kdc = ${ldap_server}
+  admin_server = ${ldap_server}
+ }
+
+[domain_realm]
+ .${ldap_basedns} = ${KERBEROS_REALM}
+ ${ldap_basedns} = ${KERBEROS_REALM}
+EOF
+
+      chmod 644 /etc/krb5.conf
+      chown root:root /etc/krb5.conf
+
       # Create and configure the SSSD configuration file for LDAP integration
       cat <<EOF >/etc/sssd/sssd.conf
 [sssd]
@@ -309,10 +331,16 @@ homedir_substring = /home
 [domain/default]
 id_provider = ldap
 autofs_provider = ldap
-auth_provider = ldap
-chpass_provider = ldap
+
+auth_provider = krb5
+chpass_provider = krb5
+
+krb5_server = ${ldap_server}
+krb5_realm = ${KERBEROS_REALM}
+
 ldap_uri = ldap://${ldap_server}
 ldap_search_base = dc=${ldap_basedns%%.*},dc=${ldap_basedns#*.}
+
 ldap_id_use_start_tls = True
 ldap_tls_cacertdir = /etc/openldap/certs
 cache_credentials = True
@@ -486,7 +514,7 @@ if [ "$observability_logs_enable_for_compute" = true ]; then
 EOL
   echo "Providing execution access to post-config.sh" >>"$logfile"
   sudo chmod +x post-config.sh
-  sudo ./post-config.sh -h "$cloud_logs_ingress_private_endpoint" -p "3443" -t "/logs/v1/singles" -a IAMAPIKey -k "$VPC_APIKEY_VALUE" --send-directly-to-icl -s true -i Production
+  sudo ./post-config.sh -h "$cloud_logs_ingress_private_endpoint" -p "3443" -t "/logs/v1/singles" -a IAMAPIKey -k "$VPC_APIKEY_VALUE" --send-directly-to-icl -s true -i PrivateProduction
   echo "INFO Testing IBM Cloud LSF Logs from compute: '$hostname'" | sudo tee -a /opt/ibm/lsf/log/fluent-test.log.com >/dev/null
   echo "fluent-test.log.com has been successfully created" >>"$logfile"
 else

@@ -963,7 +963,28 @@ locals {
   protocol_bm_instance_ids         = flatten(local.protocol_bm_instances[*]["id"])
   protocol_bm_instance_names       = try(tolist([for name_details in flatten(local.protocol_bm_instances[*]["name"]) : "${name_details}.${var.dns_domain_names["storage"]}"]), [])
 
-  protocol_cluster_instance_names = var.enable_deployer ? [] : slice((concat(local.protocol_instance_names, local.protocol_bm_instance_names, (var.storage_type == "baremetal" ? local.strg_servers_names : local.strg_instance_names))), 0, local.protocol_instance_count)
+  protocol_cluster_instance_names = var.enable_deployer ? [] : slice(
+    concat(
+      local.protocol_instance_names,
+      local.protocol_bm_instance_names,
+      var.storage_type == "baremetal"
+      ? local.strg_servers_names
+      : local.strg_instance_names
+    ),
+    0,
+    min(
+      local.protocol_instance_count,
+      length(
+        concat(
+          local.protocol_instance_names,
+          local.protocol_bm_instance_names,
+          var.storage_type == "baremetal"
+          ? local.strg_servers_names
+          : local.strg_instance_names
+        )
+      )
+    )
+  )
 
   afm_instance_private_ips = flatten(local.afm_instances[*]["ipv4_address"])
   afm_instance_ids         = flatten(local.afm_instances[*]["id"])
@@ -1071,7 +1092,11 @@ locals {
   final_pool_vsi_ids = concat(local.colo_ces_srvr_typ_tru_scratch_vsi_mem_ids, local.colo_ces_srvr_typ_fls_scratch_vsi_mem_ids, local.non_colo_ces_srvr_typ_fls_scratch_vsi_mem_ids, local.non_colo_ces_srvr_typ_fls_persistent_vsi_mem_ids)
   final_pool_bm_ids  = concat(local.non_colo_ces_srvr_typ_tru_scratch_bm_mem_ids, local.colo_ces_srvr_typ_tru_persistent_bm_mem_ids, local.colo_ces_srvr_typ_fls_persistent_bm_mem_ids, local.non_colo_ces_srvr_typ_tru_persistent_bm_mem_ids)
 
-  nlb_backend_pools = local.scale_ces_enabled ? [
+  nlb_backend_pools = (
+    local.scale_ces_enabled &&
+    var.enable_private_path_nlb &&
+    length(concat(local.final_pool_vsi_ids, local.final_pool_bm_ids)) > 0
+    ) ? [
     {
       pool_name                      = format("%s-nlb-pool", var.cluster_prefix)
       pool_health_delay              = 5
@@ -1085,7 +1110,6 @@ locals {
       pool_health_monitor_port       = 2049
       pool_algorithm                 = "round_robin"
       listener_accept_proxy_protocol = false
-      # pool_member_application_load_balancer_id = null
     }
   ] : []
 }
@@ -1124,8 +1148,8 @@ locals {
   ssh_jump_host                       = var.enable_deployer ? "" : var.scheduler == "LSF" ? local.bastion_instance_public_ip != null ? local.bastion_instance_public_ip : var.bastion_fip : ""
   ssh_jump_option                     = var.enable_deployer ? "" : var.scheduler == "LSF" ? "-J ubuntu@${local.ssh_jump_host}" : ""
   ssh_cmd                             = var.enable_deployer ? "" : var.scheduler == "LSF" ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 ${local.ssh_forwards} ${local.ssh_jump_option} lsfadmin@${local.ssh_forward_host}" : ""
-  webservice_ssh_forwards             = var.enable_deployer ? "" : var.scheduler == "LSF" && var.lsf_version == "fixpack_15" ? "-L 8448:localhost:8448" : ""
-  webservice_ssh_cmd                  = var.enable_deployer ? "" : var.scheduler == "LSF" && var.lsf_version == "fixpack_15" ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 ${local.webservice_ssh_forwards} ${local.ssh_jump_option} lsfadmin@${local.ssh_forward_host}" : ""
+  webservice_ssh_forwards             = var.enable_deployer ? "" : var.scheduler == "LSF" && var.lsf_version == "fixpack_16" ? "-L 8448:localhost:8448" : ""
+  webservice_ssh_cmd                  = var.enable_deployer ? "" : var.scheduler == "LSF" && var.lsf_version == "fixpack_16" ? "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=5 -o ServerAliveCountMax=1 ${local.webservice_ssh_forwards} ${local.ssh_jump_option} lsfadmin@${local.ssh_forward_host}" : ""
   cloud_logs_ingress_private_endpoint = var.enable_deployer ? "" : module.cloud_monitoring_instance_creation[0].cloud_logs_ingress_private_endpoint
   cloud_monitoring_crn                = var.enable_deployer ? "" : module.cloud_monitoring_instance_creation[0].cloud_monitoring_crn
 }

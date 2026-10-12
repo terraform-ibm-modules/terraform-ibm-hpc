@@ -397,7 +397,7 @@ if [ "${observability_logs_enable_for_compute}" = true ]; then
 EOL
   log "Providing execution access to post-config.sh"
   sudo chmod +x post-config.sh
-  sudo ./post-config.sh -h "${cloud_logs_ingress_private_endpoint}" -p "3443" -t "/logs/v1/singles" -a IAMAPIKey -k "${vpc_apikey_value}" --send-directly-to-icl -s true -i Production
+  sudo ./post-config.sh -h "${cloud_logs_ingress_private_endpoint}" -p "3443" -t "/logs/v1/singles" -a IAMAPIKey -k "${vpc_apikey_value}" --send-directly-to-icl -s true -i PrivateProduction
   log "Adding INFO testing line to fluent-test.log.com"
   echo "INFO Testing IBM Cloud LSF Logs from compute: '$HOSTNAME'" | sudo tee -a /opt/ibm/lsf/log/fluent-test.log.com >/dev/null
   log "fluent-test.log.com has been successfully created"

@@ -30,30 +30,39 @@
       - gnutls-bin
       - ssl-cert
       - debconf-utils
+      - krb5-kdc
+      - krb5-admin-server
+      - krb5-user
     state: present
     force_apt_get: yes
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+- name: LDAP_Server_Setup | Configure slapd debconf values
+  shell: |
+    echo "slapd slapd/no_configuration boolean false" | debconf-set-selections
+    echo "slapd slapd/domain string {{ BASE_DN }}" | debconf-set-selections
+    echo "slapd shared/organization string {{ LDAP_GROUP }}" | debconf-set-selections
+
+    echo "slapd slapd/password1 password {{ LDAP_ADMIN_PASSWORD }}" | debconf-set-selections
+    echo "slapd slapd/password2 password {{ LDAP_ADMIN_PASSWORD }}" | debconf-set-selections
+
+    echo "slapd slapd/root_password password {{ LDAP_ADMIN_PASSWORD }}" | debconf-set-selections
+    echo "slapd slapd/root_password_again password {{ LDAP_ADMIN_PASSWORD }}" | debconf-set-selections
+
+    echo "slapd slapd/internal/adminpw password {{ LDAP_ADMIN_PASSWORD }}" | debconf-set-selections
+    echo "slapd slapd/internal/generated_adminpw password {{ LDAP_ADMIN_PASSWORD }}" | debconf-set-selections
+
+    echo "slapd slapd/purge_database boolean false" | debconf-set-selections
+    echo "slapd slapd/move_old_database boolean true" | debconf-set-selections
+  no_log: true
 
 - name: LDAP_Server_Setup | Install the openldap and required packages for ubuntu
   ansible.builtin.apt:
     name: "{{ OPENLDAP_SERVER_PKGS }}"
     state: present
     update_cache: true
-  when: ansible_os_family == 'Debian'
-
-- name: LDAP_Server_Setup | Reconfigure slapd
-  shell: |
-    echo "slapd slapd/root_password password {{ LDAP_ADMIN_PASSWORD }}" | debconf-set-selections
-    echo "slapd slapd/root_password_again password {{ LDAP_ADMIN_PASSWORD }}" | debconf-set-selections
-    echo "slapd slapd/internal/adminpw password {{ LDAP_ADMIN_PASSWORD }}" | debconf-set-selections
-    echo "slapd slapd/internal/generated_adminpw password {{ LDAP_ADMIN_PASSWORD }}" | debconf-set-selections
-    echo "slapd slapd/password1 password {{ LDAP_ADMIN_PASSWORD }}" | debconf-set-selections
-    echo "slapd slapd/password2 password {{ LDAP_ADMIN_PASSWORD }}" | debconf-set-selections
-    echo "slapd slapd/domain string {{ BASE_DN }}" | debconf-set-selections
-    echo "slapd shared/organization string {{ LDAP_GROUP }}" | debconf-set-selections
-    echo "slapd slapd/purge_database boolean false" | debconf-set-selections
-    echo "slapd slapd/move_old_database boolean true" | debconf-set-selections
-    echo "slapd slapd/no_configuration boolean false" | debconf-set-selections
-    dpkg-reconfigure -f noninteractive slapd
+  when: ansible_facts['os_family'] == 'Debian'
 
 - name: LDAP_Server_Setup | Set BASE in ldap.conf
   lineinfile:
@@ -79,6 +88,112 @@
 - name: LDAP_Server_Setup | Display slapd status
   debug:
     var: slapd_status
+
+- name: LDAP_Server_Setup | Configure Kerberos
+  ansible.builtin.copy:
+    dest: /etc/krb5.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [libdefaults]
+       default_realm = {{ KERBEROS_REALM }}
+       dns_lookup_realm = false
+       dns_lookup_kdc = false
+       ticket_lifetime = 24h
+       renew_lifetime = 7d
+       forwardable = true
+
+      [realms]
+       {{ KERBEROS_REALM }} = {
+        kdc = {{ LDAP_SERVER_IP }}
+        admin_server = {{ LDAP_SERVER_IP }}
+       }
+
+      [domain_realm]
+       .{{ BASE_DN }} = {{ KERBEROS_REALM }}
+       {{ BASE_DN }} = {{ KERBEROS_REALM }}
+
+- name: LDAP_Server_Setup | Create Kerberos KDC configuration directory
+  ansible.builtin.file:
+    path: /etc/krb5kdc
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: LDAP_Server_Setup | Configure Kerberos KDC
+  ansible.builtin.copy:
+    dest: /etc/krb5kdc/kdc.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [kdcdefaults]
+       kdc_ports = 88
+
+      [realms]
+       {{ KERBEROS_REALM }} = {
+        database_name = /var/lib/krb5kdc/principal
+        admin_keytab = FILE:/etc/krb5kdc/kadm5.keytab
+        acl_file = /etc/krb5kdc/kadm5.acl
+        key_stash_file = /etc/krb5kdc/stash
+
+        max_life = 24h
+        max_renewable_life = 7d
+
+        default_principal_flags = +preauth
+       }
+
+- name: LDAP_Server_Setup | Check Kerberos database
+  ansible.builtin.stat:
+    path: /var/lib/krb5kdc/principal
+  register: kerberos_database
+
+- name: LDAP_Server_Setup | Initialize Kerberos database
+  ansible.builtin.expect:
+    command: kdb5_util create -s
+    responses:
+      'Enter KDC database master key': "{{ LDAP_ADMIN_PASSWORD }}"
+      'Re-enter KDC database master key to verify': "{{ LDAP_ADMIN_PASSWORD }}"
+  when: not kerberos_database.stat.exists
+  no_log: true
+
+- name: LDAP_Server_Setup | Configure Kerberos admin ACL
+  ansible.builtin.copy:
+    dest: /etc/krb5kdc/kadm5.acl
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      */admin@{{ KERBEROS_REALM }} *
+
+- name: LDAP_Server_Setup | Enable Kerberos KDC service
+  ansible.builtin.systemd:
+    name: krb5-kdc
+    enabled: true
+
+- name: LDAP_Server_Setup | Enable Kerberos admin server
+  ansible.builtin.systemd:
+    name: krb5-admin-server
+    enabled: true
+
+- name: LDAP_Server_Setup | Restart Kerberos KDC
+  ansible.builtin.systemd:
+    name: krb5-kdc
+    state: restarted
+
+- name: LDAP_Server_Setup | Restart Kerberos admin server
+  ansible.builtin.systemd:
+    name: krb5-admin-server
+    state: restarted
+
+- name: LDAP_Server_Setup | Create Kerberos root admin principal
+  command:
+    cmd: >
+      kadmin.local
+      -q "addprinc -pw {{ LDAP_ADMIN_PASSWORD }} root/admin"
+  no_log: true
 
 - name: LDAP_Server_Setup | Generate private key for CA
   command:

@@ -1,14 +1,14 @@
 # Future use
-/*
-data "ibm_is_region" "region" {
-  name = local.region
-}
+##########
+# data "ibm_is_region" "region" {
+#   name = local.region
+# }
 
-data "ibm_is_zone" "zone" {
-  name   = var.zones[0]
-  region = data.ibm_is_region.region.name
-}
-*/
+# data "ibm_is_zone" "zone" {
+#   name   = var.zones[0]
+#   region = data.ibm_is_region.region.name
+# }
+##########
 
 #Fetching Existing VPC CIDR for Security rules:
 data "ibm_is_vpc" "existing_vpc" {
@@ -21,12 +21,12 @@ data "ibm_is_vpc_address_prefixes" "existing_vpc_cidr" {
   vpc   = data.ibm_is_vpc.existing_vpc[0].id
 }
 
-/*
-data "ibm_is_subnet" "subnet" {
-  count      = length(local.subnets)
-  identifier = local.subnets[count.index]["id"]
-}
-*/
+##########
+# data "ibm_is_subnet" "subnet" {
+#   count      = length(local.subnets)
+#   identifier = local.subnets[count.index]["id"]
+# }
+##########
 
 # data "ibm_resource_group" "existing_resource_group" {
 #   count = var.existing_resource_group == null ? 0 : 1

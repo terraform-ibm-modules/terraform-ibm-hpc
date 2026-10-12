@@ -127,7 +127,7 @@ variable "bastion_instance" {
     profile = string
   })
   default = {
-    image   = "ibm-ubuntu-22-04-5-minimal-amd64-12"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-18"
     profile = "cx2-4x8"
   }
   validation {
@@ -152,7 +152,7 @@ variable "deployer_instance" {
     profile = string
   })
   default = {
-    image   = "hpcc-scale-deployer-v2"
+    image   = "hpcc-scale-deployer-v3"
     profile = "bx2-8x32"
   }
   validation {
@@ -259,7 +259,7 @@ variable "compute_instances" {
   default = [{
     profile    = "bx2-2x8"
     count      = 0
-    image      = "hpcc-scale6000-rhel810-v1"
+    image      = "hpcc-scale6000-rhel96-v1"
     filesystem = "/gpfs/fs1"
   }]
   validation {
@@ -288,7 +288,7 @@ variable "client_instances" {
   default = [{
     profile = "cx2-2x4"
     count   = 0
-    image   = "ibm-redhat-8-10-minimal-amd64-6"
+    image   = "ibm-redhat-9-6-minimal-amd64-13"
   }]
   validation {
     condition = alltrue([
@@ -318,7 +318,7 @@ variable "storage_instances" {
   default = [{
     profile    = "bx2-32x128"
     count      = 2
-    image      = "hpcc-scale6000-rhel810-v1"
+    image      = "hpcc-scale6000-rhel96-v1"
     filesystem = "/gpfs/fs1"
   }]
   validation {
@@ -355,7 +355,7 @@ variable "storage_baremetal_server" {
   default = [{
     profile    = "cx2d-metal-96x192"
     count      = 2
-    image      = "hpcc-scale6000-rhel810-v1"
+    image      = "hpcc-scale6000-rhel96-v1"
     filesystem = "/gpfs/fs1"
   }]
 
@@ -783,7 +783,7 @@ variable "ldap_instance" {
   )
   default = [{
     profile = "cx2-2x4"
-    image   = "ibm-ubuntu-22-04-5-minimal-amd64-12"
+    image   = "ibm-ubuntu-22-04-5-minimal-amd64-18"
   }]
   description = "Specify the list of virtual server instances to be provisioned as ldap nodes in the cluster. Each object in the list defines the instance profile (machine type), the count (number of instances), the image (OS image to use). This configuration allows you to customize the server for setting up ldap server. The profile must match a valid IBM Cloud VPC Gen2 instance profile format. For more details, refer [Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
   validation {
@@ -874,7 +874,7 @@ variable "gklm_instances" {
   default = [{
     profile = "bx2-4x16"
     count   = 2
-    image   = "hpcc-scale-gklm4202-v2-5-6"
+    image   = "hpcc-scale-gklm4202-v3"
   }]
   validation {
     condition = (
@@ -952,6 +952,28 @@ variable "observability_atracker_target_type" {
     condition     = contains(["cloudlogs", "cos"], var.observability_atracker_target_type)
     error_message = "Allowed values for atracker target type is cloudlogs and cos."
   }
+}
+
+variable "observability_monitoring_enable" {
+  description = "Enables or disables IBM Cloud Monitoring integration. When enabled, the Grafana bridge is deployed on management nodes to expose IBM Storage Scale metrics, and the unified agent collects infrastructure and filesystem data across the cluster. This must be set to true if monitoring is required for the storage cluster."
+  type        = bool
+  default     = false
+}
+
+variable "observability_monitoring_plan" {
+  description = "Type of service plan for IBM Cloud Monitoring instance. You can choose one of the following: lite, graduated-tier. For all details visit [IBM Cloud Monitoring Service Plans](https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans)."
+  type        = string
+  default     = "graduated-tier"
+  validation {
+    condition     = can(regex("lite|graduated-tier", var.observability_monitoring_plan))
+    error_message = "Please enter a valid plan for IBM Cloud Monitoring, for all details visit https://cloud.ibm.com/docs/monitoring?topic=monitoring-service_plans."
+  }
+}
+
+variable "observability_enable_metrics_routing" {
+  description = "Enable metrics routing to manage metrics at the account-level by configuring targets and routes that define where data points are routed."
+  type        = bool
+  default     = false
 }
 
 ##############################################################################
@@ -1184,7 +1206,7 @@ variable "TF_PARALLELISM" {
 }
 
 variable "volume_storages" {
-  description = "Configures the boot and block volumes for each instance. Boot volumes use the SDP profile by default but can be changed to a general-purpose profile if required by the workload. If the boot volume profile is set to general-purpose, the IOPS value should be set to 0 or null, as IOPS are not supported for that profile. Block volumes are always created with the SDP profile to maintain performance standards. You can specify optional boot volume settings (profile, size, IOPS), while block volume capacity and IOPS are mandatory. Both volume types support an optional auto-grow feature that allows disk size to increase automatically when needed through automation."
+  description = "Configures the boot and block volumes for each instance. Boot volumes use the general-purpose profile by default but can be changed to a SDP profile if required by the workload. Only allowlisted accounts can use SDP profiles. To request access, submit an allowlisting request (https://forms.monday.com/forms/6f855ea28400d75ef31e540e39c1d31a?r=use1&SDSallowlist=). If the boot volume profile is set to general-purpose, the IOPS value should be set to 0 or null, as IOPS are not supported for that profile. Block volumes are always created with the general-purpose profile. Both volume types support an optional auto-grow feature that allows disk size to increase automatically when needed through automation."
   type = list(
     object({
       # Boot Volume
@@ -1202,9 +1224,9 @@ variable "volume_storages" {
 
   default = [{
     # Boot Volume
-    boot_volume_profile   = "sdp"
+    boot_volume_profile   = "general-purpose"
     boot_volume_size      = 100
-    boot_volume_iops      = 3000 # IOPS is not applicable for general-purpose profile
+    boot_volume_iops      = null # IOPS is not applicable for general-purpose profile
     boot_volume_disk_grow = false
     # Block Volume
     block_volume_capacity  = 500

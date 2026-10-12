@@ -14,11 +14,11 @@ locals {
     for inst in var.dynamic_compute_instances : inst.enable_spot_instances
   ])
   ht_true_pricing = {
-    version_crn = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:version:61e655c5-40b6-4b68-a6ab-e6c77a457fce-global/b6efee69-353d-4f4d-925b-3809a7e44a7c-global"
+    version_crn = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:version:61e655c5-40b6-4b68-a6ab-e6c77a457fce-global/019c4410-4c47-4c8f-8b21-565a875c7f3e-global"
     plan_crn    = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:plan:sw.1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc.d114e7ab-4f7e-40c4-98cc-f0c000cbf3a7-global"
   }
   ht_false_pricing = {
-    version_crn = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:version:61e655c5-40b6-4b68-a6ab-e6c77a457fce-global/b6efee69-353d-4f4d-925b-3809a7e44a7c-global"
+    version_crn = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:version:61e655c5-40b6-4b68-a6ab-e6c77a457fce-global/019c4410-4c47-4c8f-8b21-565a875c7f3e-global"
     plan_crn    = "crn:v1:bluemix:public:globalcatalog-collection:global::1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc:plan:sw.1082e7d2-5e2f-0a11-a3bc-f88a8e1931fc.6e0f4e27-509d-4cba-bf80-58217a412103-global"
   }
 }

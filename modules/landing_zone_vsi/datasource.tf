@@ -4,19 +4,19 @@ data "ibm_is_image" "management_stock_image" {
 }
 
 # TODO: Verify distinct profiles
-/*
-data "ibm_is_instance_profile" "management" {
-  name = var.management_profile
-}
+##########
+# data "ibm_is_instance_profile" "management" {
+#   name = var.management_profile
+# }
 
-data "ibm_is_instance_profile" "compute" {
-  name = var.compute_profile
-}
+# data "ibm_is_instance_profile" "compute" {
+#   name = var.compute_profile
+# }
 
-data "ibm_is_instance_profile" "protocol" {
-  name = var.protocol_profile
-}
-*/
+# data "ibm_is_instance_profile" "protocol" {
+#   name = var.protocol_profile
+# }
+##########
 
 data "ibm_is_image" "client" {
   count = var.scheduler == "Scale" ? length(var.client_instances) : 0

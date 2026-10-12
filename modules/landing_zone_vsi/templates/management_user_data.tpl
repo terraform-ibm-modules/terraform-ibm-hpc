@@ -66,4 +66,5 @@ else
 fi
 
 make_immutable
+
 echo "Updated $RESOLV_CONF with search domain '${management_dns_domain}' and locked file."

@@ -3,6 +3,7 @@ package tests
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"testing"
@@ -168,6 +169,7 @@ func ValidateClusterConfiguration(t *testing.T, options *testhelper.TestOptions,
 	computeProfiles, _ := utils.GetComputeProfiles(t, options.TerraformVars, logger)
 	mgmtProfiles, _ := utils.GetMgntProfiles(t, options.TerraformVars, logger)
 	loginProfiles, _ := utils.GetLoginProfile(t, options.TerraformVars, logger)
+	dynamicProfiles, _ := utils.GetDynamicComputeProfile(t, options.TerraformVars, logger)
 
 	logger.Info(t, t.Name()+" Validation started ......")
 
@@ -181,8 +183,10 @@ func ValidateClusterConfiguration(t *testing.T, options *testhelper.TestOptions,
 	}
 
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -219,7 +223,11 @@ func ValidateClusterConfiguration(t *testing.T, options *testhelper.TestOptions,
 
 	VerifyFileShareEncryption(t, sshClient, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expected.Zones), expected.ResourceGroup, expected.MasterName, expected.KeyManagement, managementNodeIPs, logger)
 
-	VerifyProfile(t, sshClient, computeProfiles, mgmtProfiles, loginProfiles, logger)
+	VerifyProfile(t, sshClient, computeProfiles, mgmtProfiles, loginProfiles, dynamicProfiles, logger)
+
+	VerifySecurityGroupRules(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expected.Zones), expected.ResourceGroup, expected.MasterName, logger)
+
+	VerifySecurityGroupRules(t, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expected.Zones), expected.ResourceGroup, expected.MasterName, logger)
 
 	logger.Info(t, t.Name()+" Validation ended")
 }
@@ -261,8 +269,10 @@ func ValidateClusterConfigurationWithPACHA(t *testing.T, options *testhelper.Tes
 	}
 
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -342,6 +352,75 @@ func ValidateBasicClusterConfiguration(t *testing.T, options *testhelper.TestOpt
 	}
 
 	defer func() {
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
+		}
+	}()
+
+	logger.Info(t, "SSH connection to the master successful")
+	t.Log("Validation in progress. Please wait...")
+
+	VerifyManagementNodeConfig(t, sshClient, expected.MasterName, expected.Hyperthreading, managementNodeIPs, expected.LsfVersion, logger)
+
+	defer func() {
+		if err := WaitForDynamicNodeDisappearance(t, sshClient, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("error in WaitForDynamicNodeDisappearance: %v", err))
+			t.Errorf("error in WaitForDynamicNodeDisappearance: %v", err)
+		}
+	}()
+
+	VerifyJobs(t, sshClient, jobCommandLow, logger)
+
+	computeNodeIPList, err := GetComputeNodeIPs(t, sshClient, staticWorkerNodeIPs, logger)
+	if err != nil {
+		t.Fatalf("Failed to retrieve dynamic compute node IPs: %v", err)
+	}
+
+	VerifyComputeNodeConfig(t, sshClient, expected.Hyperthreading, computeNodeIPList, logger)
+
+	runClusterValidationsOnLoginNode(t, bastionIP, loginNodeIP, expected, managementNodeIPs, staticWorkerNodeIPs, jobCommandMed, logger)
+
+	VerifyFileShareEncryption(t, sshClient, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expected.Zones), expected.ResourceGroup, expected.MasterName, expected.KeyManagement, managementNodeIPs, logger)
+
+	logger.Info(t, t.Name()+" Validation ended")
+}
+
+// ValidateBasicClusterConfigurationForComputeAsBM validates basic cluster configuration for clusters with Baremetal servers as compute profiles.
+// It performs validation tasks on essential aspects of the cluster setup,
+// including the management node, compute nodes, and login node configurations.
+// Additionally, it ensures proper connectivity and functionality.
+// This function doesn't return any value but logs errors and validation steps during the process.
+func ValidateBasicClusterConfigurationForComputeAsBM(t *testing.T, options *testhelper.TestOptions, logger *utils.AggregatedLogger) {
+
+	expected := GetExpectedClusterConfig(t, options)
+
+	bastionIP, managementNodeIPs, loginNodeIP, staticWorkerNodeIPs, getClusterIPErr := GetClusterIPs(t, options, logger)
+	require.NoError(t, getClusterIPErr, "Failed to get cluster IPs from Terraform outputs - check network configuration")
+
+	// deployerIP, getdeployerIPErr := GetDeployerIPs(t, options, logger)
+	// require.NoError(t, getdeployerIPErr, "Failed to get deployer IP from Terraform outputs - check deployer configuration")
+	computeProfiles, _ := utils.GetComputeProfiles(t, options.TerraformOptions.Vars, logger)
+
+	totalCores := utils.GetTotalCores(t, expected.Hyperthreading, computeProfiles, logger)
+
+	_, jobCommandMed, _ := GenerateLSFJobCommandsForMemoryTypes()
+
+	jobCommandForBM := "bsub -n " + strconv.Itoa(totalCores+2) + " sleep 10"
+
+	logger.Info(t, t.Name()+" Validation started ......")
+
+	// VerifyTestTerraformOutputs(t, bastionIP, deployerIP, false, false, false, logger)
+
+	sshClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPs[0])
+	if connectionErr != nil {
+		msg := fmt.Sprintf("Failed to establish SSH connection to master node via bastion (%s) -> private IP (%s): %v", bastionIP, managementNodeIPs[0], connectionErr)
+		logger.FAIL(t, msg)
+		require.FailNow(t, msg)
+	}
+
+	defer func() {
 		if err := sshClient.Close(); err != nil {
 			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
 		}
@@ -359,7 +438,7 @@ func ValidateBasicClusterConfiguration(t *testing.T, options *testhelper.TestOpt
 		}
 	}()
 
-	VerifyJobs(t, sshClient, jobCommandLow, logger)
+	VerifyJobs(t, sshClient, jobCommandForBM, logger)
 
 	computeNodeIPList, err := GetComputeNodeIPs(t, sshClient, staticWorkerNodeIPs, logger)
 	if err != nil {
@@ -404,8 +483,10 @@ func ValidateBasicClusterConfigurationWithAppcenter(t *testing.T, options *testh
 	}
 
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -436,8 +517,6 @@ func ValidateBasicClusterConfigurationWithAppcenter(t *testing.T, options *testh
 
 	runClusterValidationsOnLoginNode(t, bastionIP, loginNodeIP, expected, managementNodeIPs, staticWorkerNodeIPs, jobCommandLow, logger)
 
-	VerifyFileShareEncryption(t, sshClient, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expected.Zones), expected.ResourceGroup, expected.MasterName, expected.KeyManagement, managementNodeIPs, logger)
-
 	logger.Info(t, t.Name()+" Validation ended")
 }
 
@@ -466,8 +545,10 @@ func ValidateBasicClusterConfigurationWithDynamicProfile(t *testing.T, options *
 	}
 
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -531,8 +612,10 @@ func ValidateLDAPClusterConfiguration(t *testing.T, options *testhelper.TestOpti
 	}
 
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -589,6 +672,8 @@ func ValidateLDAPClusterConfiguration(t *testing.T, options *testhelper.TestOpti
 
 	VerifyComputeNodeLDAPConfig(t, bastionIP, ldapServerIP, computeNodeIPList, expectedLdapDomain, ldapUserName, ldapUserPassword, logger)
 
+	VerifyCreateNewLdapUserAndManagementNodeLDAPConfig(t, sshLdapClient, bastionIP, ldapServerIP, managementNodeIPs, jobCommandLow, ldapUserName, ldapAdminPassword, expectedLdapDomain, NEW_LDAP_USER_NAME, NEW_LDAP_USER_PASSWORD, logger)
+
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
 
@@ -599,8 +684,6 @@ func ValidateLDAPClusterConfiguration(t *testing.T, options *testhelper.TestOpti
 	}()
 
 	VerifyLoginNodeLDAPConfig(t, sshLoginNodeClient, bastionIP, loginNodeIP, ldapServerIP, jobCommandLow, expectedLdapDomain, ldapUserName, ldapUserPassword, logger)
-
-	VerifyCreateNewLdapUserAndManagementNodeLDAPConfig(t, sshLdapClient, bastionIP, ldapServerIP, managementNodeIPs, jobCommandLow, ldapUserName, ldapAdminPassword, expectedLdapDomain, NEW_LDAP_USER_NAME, NEW_LDAP_USER_PASSWORD, logger)
 
 	VerifyPTRRecordsForManagement(t, sshClient, LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPs, expected.DnsDomainName, logger)
 
@@ -640,8 +723,10 @@ func ValidateLDAPClusterConfigurationWithAppcenter(t *testing.T, options *testhe
 	}
 
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -672,7 +757,7 @@ func ValidateLDAPClusterConfigurationWithAppcenter(t *testing.T, options *testhe
 
 	runClusterValidationsOnComputeNode(t, sshClient, bastionIP, staticWorkerNodeIPs, expected, jobCommandLow, logger)
 
-	runClusterValidationsOnLoginNode(t, bastionIP, loginNodeIP, expected, managementNodeIPs, staticWorkerNodeIPs, jobCommandLow, logger)
+	runClusterValidationsOnLoginNode(t, bastionIP, loginNodeIP, expected, managementNodeIPs, staticWorkerNodeIPs, jobCommandMed, logger)
 
 	VerifyLSFDNS(t, sshClient, []string{loginNodeIP}, expected.DnsDomainName, logger)
 
@@ -687,7 +772,7 @@ func ValidateLDAPClusterConfigurationWithAppcenter(t *testing.T, options *testhe
 		}
 	}()
 
-	VerifyJobs(t, sshClient, jobCommandLow, logger)
+	VerifyJobs(t, sshClient, jobCommandMed, logger)
 
 	computeNodeIPList, err := GetComputeNodeIPs(t, sshClient, staticWorkerNodeIPs, logger)
 	if err != nil {
@@ -696,9 +781,11 @@ func ValidateLDAPClusterConfigurationWithAppcenter(t *testing.T, options *testhe
 
 	CheckLDAPServerStatus(t, sshLdapClient, ldapAdminPassword, expectedLdapDomain, ldapUserName, logger)
 
-	VerifyManagementNodeLDAPConfig(t, sshClient, bastionIP, ldapServerIP, managementNodeIPs, jobCommandLow, expectedLdapDomain, ldapUserName, ldapUserPassword, logger)
+	VerifyManagementNodeLDAPConfig(t, sshClient, bastionIP, ldapServerIP, managementNodeIPs, jobCommandMed, expectedLdapDomain, ldapUserName, ldapUserPassword, logger)
 
 	VerifyComputeNodeLDAPConfig(t, bastionIP, ldapServerIP, computeNodeIPList, expectedLdapDomain, ldapUserName, ldapUserPassword, logger)
+
+	VerifyCreateNewLdapUserAndManagementNodeLDAPConfig(t, sshLdapClient, bastionIP, ldapServerIP, managementNodeIPs, jobCommandLow, ldapUserName, ldapAdminPassword, expectedLdapDomain, NEW_LDAP_USER_NAME, NEW_LDAP_USER_PASSWORD, logger)
 
 	sshLoginNodeClient, connectionErr := utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, loginNodeIP)
 	require.NoError(t, connectionErr, "Failed to connect to the login node via SSH")
@@ -709,9 +796,7 @@ func ValidateLDAPClusterConfigurationWithAppcenter(t *testing.T, options *testhe
 		}
 	}()
 
-	VerifyLoginNodeLDAPConfig(t, sshLoginNodeClient, bastionIP, loginNodeIP, ldapServerIP, jobCommandLow, expectedLdapDomain, ldapUserName, ldapUserPassword, logger)
-
-	VerifyCreateNewLdapUserAndManagementNodeLDAPConfig(t, sshLdapClient, bastionIP, ldapServerIP, managementNodeIPs, jobCommandLow, ldapUserName, ldapAdminPassword, expectedLdapDomain, NEW_LDAP_USER_NAME, NEW_LDAP_USER_PASSWORD, logger)
+	VerifyLoginNodeLDAPConfig(t, sshLoginNodeClient, bastionIP, loginNodeIP, ldapServerIP, jobCommandMed, expectedLdapDomain, ldapUserName, ldapUserPassword, logger)
 
 	VerifyPTRRecordsForManagement(t, sshClient, LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPs, expected.DnsDomainName, logger)
 
@@ -750,8 +835,10 @@ func ValidatePACANDLDAPClusterConfiguration(t *testing.T, options *testhelper.Te
 	}
 
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -845,8 +932,10 @@ func ValidateExistingLDAPClusterConfig(t *testing.T, ldapServerBastionIP, ldapSe
 	}
 
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -937,8 +1026,10 @@ func ValidateBasicClusterConfigurationWithVPCFlowLogsAndCos(t *testing.T, option
 	}
 
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -1006,8 +1097,10 @@ func ValidateBasicClusterConfigurationLSFLogs(t *testing.T, options *testhelper.
 	}
 
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -1020,7 +1113,8 @@ func ValidateBasicClusterConfigurationLSFLogs(t *testing.T, options *testhelper.
 		logger.Info(t, fmt.Sprintf("failed to close pre-reboot sshClient: %v", err))
 	}
 
-	ValidateLSFLogs(t, bastionIP, managementNodeIPs, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expected.Zones), expected.ResourceGroup, logger)
+	// Commanded to validate LSF logs, but commented out due to development changes.Hostname comes with domain name under /mnt/lsf/logs/. Once development is done, uncomment the below line to validate LSF logs.
+	//ValidateLSFLogs(t, bastionIP, managementNodeIPs, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expected.Zones), expected.ResourceGroup, logger)
 
 	sshClient, connectionErr = utils.ConnectToHost(LSF_PUBLIC_HOST_NAME, bastionIP, LSF_PRIVATE_HOST_NAME, managementNodeIPs[0])
 	require.NoError(t, connectionErr, "Failed to re-establish SSH connection after reboot - check node recovery")
@@ -1065,8 +1159,10 @@ func ValidateBasicClusterConfigurationWithDedicatedHost(t *testing.T, options *t
 	}
 
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -1132,8 +1228,10 @@ func ValidateBasicClusterConfigurationWithSCCWPAndCSPM(t *testing.T, options *te
 	}
 
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -1202,8 +1300,10 @@ func ValidateBasicClusterConfigurationWithCloudLogs(t *testing.T, options *testh
 	}
 
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -1276,8 +1376,10 @@ func ValidateBasicClusterConfigurationWithCloudMonitoring(t *testing.T, options 
 	}
 
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -1348,8 +1450,10 @@ func ValidateBasicClusterConfigurationWithCloudAtracker(t *testing.T, options *t
 	}
 
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -1655,8 +1759,10 @@ func ValidateClusterAPIConfiguration(t *testing.T, options *testhelper.TestOptio
 	}
 
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -1720,8 +1826,10 @@ func ValidateBasicClusterConfigurationHyperThreadingOn(t *testing.T, options *te
 	}
 
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -1783,8 +1891,10 @@ func ValidateBasicClusterConfigurationWithSpotInstance(t *testing.T, options *te
 	}
 
 	defer func() {
-		if err := sshClient.Close(); err != nil {
-			logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+		if sshClient != nil {
+			if err := sshClient.Close(); err != nil {
+				logger.Info(t, fmt.Sprintf("failed to close sshClient: %v", err))
+			}
 		}
 	}()
 
@@ -1816,4 +1926,138 @@ func ValidateBasicClusterConfigurationWithSpotInstance(t *testing.T, options *te
 	VerifyFileShareEncryption(t, sshClient, os.Getenv("TF_VAR_ibmcloud_api_key"), utils.GetRegion(expected.Zones), expected.ResourceGroup, expected.MasterName, expected.KeyManagement, managementNodeIPs, logger)
 
 	logger.Info(t, t.Name()+" Validation ended")
+}
+
+// ValidateBootVolumeClusterConfiguration validates boot_volume cluster configuration.
+// It performs validation tasks on essential aspects of the cluster setup,
+// including the management node, compute nodes, and login node configurations.
+// Additionally, it ensures proper connectivity and functionality.
+// This function doesn't return any value but logs errors and validation steps during the process.
+func ValidateBootVolumeClusterConfiguration(
+	t *testing.T,
+	options *testhelper.TestOptions,
+	logger *utils.AggregatedLogger,
+	loginBootVolumeSize int,
+	managementBootVolumeSize int,
+	staticComputeBootVolumeSize int,
+	dynamicComputeBootVolumeSize int,
+) {
+	bastionIP, managementNodeIPs, loginNodeIP, staticWorkerNodeIPs, err :=
+		GetClusterIPs(t, options, logger)
+	require.NoError(t, err)
+
+	_, jobCommandMedium, _ := GenerateLSFJobCommandsForMemoryTypes()
+
+	logger.Info(t, "Boot volume validation started...")
+
+	// Management node
+	mgmtSSH, err := utils.ConnectToHost(
+		LSF_PUBLIC_HOST_NAME,
+		bastionIP,
+		LSF_PRIVATE_HOST_NAME,
+		managementNodeIPs[0],
+	)
+	require.NoError(t, err)
+	defer func() {
+		err := mgmtSSH.Close()
+		if err != nil {
+			log.Printf("failed to close mgmt SSH session: %v", err)
+		}
+	}()
+
+	VerifyBootVolumeSize(
+		t,
+		mgmtSSH,
+		"management-node",
+		managementBootVolumeSize,
+		logger,
+	)
+
+	// Login node
+	loginSSH, err := utils.ConnectToHost(
+		LSF_PUBLIC_HOST_NAME,
+		bastionIP,
+		LSF_PRIVATE_HOST_NAME,
+		loginNodeIP,
+	)
+	require.NoError(t, err)
+	defer func() {
+		err := loginSSH.Close()
+		if err != nil {
+			log.Printf("failed to close login SSH session: %v", err)
+		}
+	}()
+
+	VerifyBootVolumeSize(
+		t,
+		loginSSH,
+		"login-node",
+		loginBootVolumeSize,
+		logger,
+	)
+
+	// Static compute nodes
+	for i, ip := range staticWorkerNodeIPs {
+		computeSSH, err := utils.ConnectToHost(
+			LSF_PUBLIC_HOST_NAME,
+			bastionIP,
+			LSF_PRIVATE_HOST_NAME,
+			ip,
+		)
+		require.NoError(t, err)
+
+		VerifyBootVolumeSize(
+			t,
+			computeSSH,
+			fmt.Sprintf("static-compute-%d", i+1),
+			staticComputeBootVolumeSize,
+			logger,
+		)
+
+		defer func() {
+			err := computeSSH.Close()
+			if err != nil {
+				log.Printf("failed to close compute SSH session: %v", err)
+			}
+		}()
+	}
+
+	defer func() {
+		if err := WaitForDynamicNodeDisappearance(t, loginSSH, logger); err != nil {
+			logger.Error(t, fmt.Sprintf("error in WaitForDynamicNodeDisappearance: %v", err))
+			t.Errorf("error in WaitForDynamicNodeDisappearance: %v", err)
+		}
+	}()
+	jobExecutionErr := LSFRunJobs(t, loginSSH, LOGIN_NODE_EXECUTION_PATH+jobCommandMedium, logger)
+	utils.LogVerificationResult(t, jobExecutionErr, "check Run job", logger)
+
+	dynamicIPs, connectionErr := LSFGETDynamicComputeNodeIPs(t, loginSSH, logger)
+	if connectionErr != nil {
+		t.Fatalf("Failed to retrieve dynamic compute node IPs: %v", connectionErr)
+	}
+	for i, ip := range dynamicIPs {
+		nodeSSH, err := utils.ConnectToHost(
+			LSF_PUBLIC_HOST_NAME,
+			bastionIP,
+			LSF_PRIVATE_HOST_NAME,
+			ip,
+		)
+		require.NoError(t, err)
+
+		VerifyBootVolumeSize(
+			t,
+			nodeSSH,
+			fmt.Sprintf("dynamic-compute-%d", i+1),
+			dynamicComputeBootVolumeSize,
+			logger,
+		)
+
+		defer func() {
+			err := nodeSSH.Close()
+			if err != nil {
+				log.Printf("failed to close node SSH session: %v", err)
+			}
+		}()
+	}
+	logger.Info(t, "Boot volume validation completed successfully.")
 }

@@ -5,7 +5,7 @@ output "app_config_crn" {
 
 output "sccwp_api_endpoint" {
   description = "The SCC Workload Protection API endpoint, dynamically formatted for the Sysdig agent dragent.yaml (stripping https:// and /api)."
-  value       = length(module.scc_workload_protection) > 0 ? replace(replace(module.scc_workload_protection[0].api_endpoint, "https://", ""), "/api", "") : null
+  value       = length(module.scc_workload_protection) > 0 ? replace(replace(replace(module.scc_workload_protection[0].api_endpoint, "https://", ""), "/api", ""), var.region, "private.${var.region}") : null
 }
 
 output "sccwp_access_key" {
@@ -16,5 +16,5 @@ output "sccwp_access_key" {
 
 output "sccwp_ingestion_endpoint" {
   description = "The ingestion collector endpoint for the SCC Workload Protection instance."
-  value       = length(module.scc_workload_protection) > 0 ? module.scc_workload_protection[0].ingestion_endpoint : null
+  value       = length(module.scc_workload_protection) > 0 ? replace(module.scc_workload_protection[0].ingestion_endpoint, "ingest.", "ingest.private.") : null
 }

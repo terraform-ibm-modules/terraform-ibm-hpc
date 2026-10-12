@@ -59,14 +59,8 @@ func TestSCCWPAndCSPM(t *testing.T) {
 	testLogger.Info(t, "SCCWP and CSPM Terraform variables configured")
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
-	// SkipTestTearDown defers destruction to the explicit defer below, giving
-	// us control over logging and sequencing around teardown.
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -116,11 +110,7 @@ func TestCOSAndVPCFlowLogs(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -166,11 +156,7 @@ func TestLSFLogs(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -227,11 +213,7 @@ func TestObservabilityAllFeaturesDisabled(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -287,11 +269,7 @@ func TestObservabilityLogsEnabledForManagementAndCompute(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -347,11 +325,7 @@ func TestObservabilityMonitoringEnabledForManagementAndCompute(t *testing.T) {
 
 	// ── 3. Teardown ──────────────────────────────────────────────────────────
 	options.SkipTestTearDown = true
-	defer func() {
-		testLogger.Info(t, "Initiating final resource teardown...")
-		options.TestTearDown()
-		testLogger.Info(t, "Resource teardown completed")
-	}()
+	defer utils.SetupTeardown(t, options, testLogger)()
 
 	// ── 4. Deployment ────────────────────────────────────────────────────────
 	utils.DeployCluster(t, options, testLogger)
@@ -451,13 +425,9 @@ func TestObservabilityAtrackerLoggingMonitoring(t *testing.T) {
 			options.TerraformVars["zones"] = utils.SplitAndTrim(envVars.AttrackerTestZone, ",")
 			testLogger.Info(t, fmt.Sprintf("Observability Terraform variables configured (Atracker target: %s)", scenario.atrackerTargetType))
 
-			// Teardown for this scenario.
+			// ── 3. Teardown ──────────────────────────────────────────────────────────
 			options.SkipTestTearDown = true
-			defer func() {
-				testLogger.Info(t, fmt.Sprintf("Initiating resource teardown for scenario: %s", scenario.name))
-				options.TestTearDown()
-				testLogger.Info(t, fmt.Sprintf("Resource teardown completed for scenario: %s", scenario.name))
-			}()
+			defer utils.SetupTeardown(t, options, testLogger)()
 
 			// ── 4. Deployment ────────────────────────────────────────────────────────
 			utils.DeployCluster(t, options, testLogger)
@@ -561,13 +531,9 @@ func TestObservabilityAtrackerWithCosAndCloudLogs(t *testing.T) {
 			options.TerraformVars["zones"] = utils.SplitAndTrim(envVars.AttrackerTestZone, ",")
 			testLogger.Info(t, fmt.Sprintf("Observability Terraform variables configured (Atracker target: %s)", scenario.atrackerTargetType))
 
-			// Teardown for this scenario.
+			// ── 3. Teardown ──────────────────────────────────────────────────────────
 			options.SkipTestTearDown = true
-			defer func() {
-				testLogger.Info(t, fmt.Sprintf("Initiating resource teardown for scenario: %s", scenario.name))
-				options.TestTearDown()
-				testLogger.Info(t, fmt.Sprintf("Resource teardown completed for scenario: %s", scenario.name))
-			}()
+			defer utils.SetupTeardown(t, options, testLogger)()
 
 			// ── 4. Deployment ────────────────────────────────────────────────────────
 			utils.DeployCluster(t, options, testLogger)

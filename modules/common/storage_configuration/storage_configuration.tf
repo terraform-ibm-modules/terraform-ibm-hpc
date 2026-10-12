@@ -1,6 +1,6 @@
-/*
-    Executes ansible playbook to install IBM Spectrum Scale storage cluster.
-*/
+##########
+##  Executes ansible playbook to install IBM Spectrum Scale storage cluster.
+##########
 
 resource "local_file" "create_storage_tuning_parameters" {
   count    = (tobool(var.turn_on) == true && tobool(var.write_inventory_complete) == true) ? 1 : 0

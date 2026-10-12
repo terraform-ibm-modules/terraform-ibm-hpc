@@ -105,7 +105,7 @@
                 },
                 {
                     "name": "deployer_instance",
-                    "value": "{image = \"hpcc-scale-deployer-v2\", profile = \"mx2-4x32\"}",
+                    "value": "{image = \"hpcc-scale-deployer-v3\", profile = \"mx2-4x32\"}",
                     "type": "object({ image = string, profile = string })",
                     "secure": false,
                     "description": "A deployer node is a dedicated virtual machine or server instance used to automate the deployment and configuration of infrastructure and applications for HPC cluster components. Specify the configuration for the deployer node, including the custom image and virtual server instance profile."
@@ -161,7 +161,7 @@
                 },
                 {
                     "name": "compute_instances",
-                    "value": "[{ profile = \"cx2-2x4\", count = 0, image = \"hpcc-scale5232-rhel810-v1\", filesystem = \"/gpfs/fs1\" }]",
+                    "value": "[{ profile = \"cx2-2x4\", count = 0, image = \"hpcc-scale6000-rhel96-v1\", filesystem = \"/gpfs/fs1\" }]",
                     "type": "list(object({ profile = string, count = number, image = string, filesystem = optional(string) }))",
                     "secure": false,
                     "description": "Specify the list of virtual server instances to be provisioned as compute nodes in the cluster. Each object includes the instance profile (machine type), number of instances (count), OS image to use, and an optional filesystem mount path. This configuration allows customization of the compute tier to suit specific performance and workload requirements. The profile must match a valid IBM Cloud VPC Gen2 instance profile format. A minimum of 3 compute nodes is required to form a cluster, and a maximum of 64 nodes is supported. For more details, refer[Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
@@ -175,14 +175,14 @@
                 },
                 {
                     "name": "storage_instances",
-                    "value": "[{ profile = \"bx2d-32x128\", count = 2, image = \"hpcc-scale5232-rhel810-v1\", filesystem = \"/gpfs/fs1\" }]",
+                    "value": "[{ profile = \"bx2d-32x128\", count = 2, image = \"hpcc-scale6000-rhel96-v1\", filesystem = \"/gpfs/fs1\" }]",
                     "type": "list(object({ profile = string, count = number, image = string, filesystem = optional(string) }))",
                     "secure": false,
                     "description": "Specify the list of virtual server instances to be provisioned as storage nodes in the cluster. Each object includes the instance profile (machine type), number of instances (count), OS image to use, and an optional filesystem mount path. This configuration allows customization of the storage tier to suit specific storage performance cluster. The profile must match a valid IBM Cloud VPC Gen2 instance profile format. A minimum of 2 storage nodes is required to form a cluster, and a maximum of 64 nodes is supported. For more details, refer[Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."
                 },
                 {
                     "name": "storage_baremetal_server",
-                    "value": "[{ profile = \"cx2d-metal-96x192\", count = 2, image = \"hpcc-scale5232-rhel810-v1\", filesystem = \"/gpfs/fs1\" }]",
+                    "value": "[{ profile = \"cx2d-metal-96x192\", count = 2, image = \"hpcc-scale6000-rhel96-v1\", filesystem = \"/gpfs/fs1\" }]",
                     "type": "list(object({ profile = string, count = number, image = string, filesystem = optional(string) }))",
                     "secure": false,
                     "description":  "Specify the list of bare metal servers to be provisioned for the storage cluster. Each object in the list specifies the server profile (hardware configuration), the count (number of servers), the image (OS image to use), and an optional filesystem mount path. This configuration allows flexibility in scaling and customizing the storage cluster based on performance and capacity requirements. Only valid bare metal profiles supported in IBM Cloud VPC should be used. A minimum of 2 baremetal storage nodes is required to form a cluster, and a maximum of 64 nodes is supported For available bare metal profiles, refer to the [Baremetal Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-profile&interface=ui)."
@@ -385,7 +385,7 @@
                 },
                 {
                     "name": "gklm_instances",
-                    "value": "[{ profile = \"bx2-4x16\", count = 2, image = \"hpcc-scale-gklm4202-v2-5-6\" }]",
+                    "value": "[{ profile = \"bx2-4x16\", count = 2, image = \"hpcc-scale-gklm4202-v3\" }]",
                     "type": "list(object({ profile = string, count = number, image = string }))",
                     "secure": false,
                     "description": "Specify the list of virtual server instances to be provisioned as GKLM (Guardium Key Lifecycle Manager) nodes in the cluster. Each object in the list includes the instance profile (machine type), the count (number of instances), and the image (OS image to use).  This configuration allows you to  manage and securely store encryption keys used across the cluster components. The profile must match a valid IBM Cloud VPC Gen2 instance profile format. A minimum of 2 and maximum of 5 gklm nodes are supported. For more details, refer[Instance Profiles](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui)."

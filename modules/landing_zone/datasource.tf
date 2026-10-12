@@ -182,7 +182,7 @@ locals {
     ]
   ])
 
-  afm_config_details_1 = [
+  afm_config_details_1 = length(local.new_instance_bucket_hmac) > 0 ? [
     for i in range(length(local.newly_created_instance_bucket)) : {
       bucket     = local.newly_created_instance_bucket[i].bucket
       endpoint   = "https://${local.newly_created_instance_bucket[i].endpoint}"
@@ -190,7 +190,7 @@ locals {
       filesystem = local.filesystem
       mode       = local.new_instance_bucket_hmac[i].mode
     }
-  ]
+  ] : []
 
   scale_afm_bucket_config_details = concat(local.afm_config_details_0, local.afm_config_details_1)
 
