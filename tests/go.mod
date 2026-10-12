@@ -2,6 +2,7 @@ module github.com/terraform-ibm-modules/terraform-ibm-hpc
 
 go 1.26.0
 
+toolchain go1.26.2
 require (
 	github.com/IBM/go-sdk-core/v5 v5.19.0
 	github.com/IBM/secrets-manager-go-sdk/v2 v2.0.10
