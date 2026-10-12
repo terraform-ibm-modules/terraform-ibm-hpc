@@ -585,7 +585,7 @@ locals {
 locals {
   block_storage_volumes = length(var.volume_storages) > 0 ? [{
     name     = "data-volume"
-    profile  = "sdp"
+    profile  = "general-purpose"
     capacity = try(var.volume_storages[0].block_volume_capacity, "")
     iops     = try(var.volume_storages[0].block_volume_iops, "")
   }] : []
@@ -595,7 +595,7 @@ locals {
 locals {
   boot_volume_profile = coalesce(
     try(var.volume_storages[0].boot_volume_profile, null),
-    "sdp"
+    "general-purpose"
   )
   boot_volume_iops = (
     local.boot_volume_profile == "general-purpose"

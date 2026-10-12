@@ -1273,7 +1273,7 @@ variable "login_security_group_name" {
 }
 
 variable "volume_storages" {
-  description = "Configures the boot and block volumes for each instance. Boot volumes use the SDP profile by default but can be changed to a general-purpose profile if required by the workload. If the boot volume profile is set to general-purpose, the IOPS value should be set to 0 or null, as IOPS are not supported for that profile. Block volumes are always created with the SDP profile to maintain performance standards. You can specify optional boot volume settings (profile, size, IOPS), while block volume capacity and IOPS are mandatory. Both volume types support an optional auto-grow feature that allows disk size to increase automatically when needed through automation."
+  description = "Configures the boot and block volumes for each instance. Boot volumes use the general-purpose profile by default but can be changed to a SDP profile if required by the workload. Only allowlisted accounts can use SDP profiles. To request access, submit an allowlisting request (https://forms.monday.com/forms/6f855ea28400d75ef31e540e39c1d31a?r=use1&SDSallowlist=). If the boot volume profile is set to general-purpose, the IOPS value should be set to 0 or null, as IOPS are not supported for that profile. Block volumes are always created with the general-purpose profile. Both volume types support an optional auto-grow feature that allows disk size to increase automatically when needed through automation."
   type = list(
     object({
       boot_volume_profile    = optional(string)
@@ -1286,9 +1286,9 @@ variable "volume_storages" {
     })
   )
   default = [{
-    boot_volume_profile    = "sdp"
+    boot_volume_profile    = "general-purpose"
     boot_volume_size       = 100
-    boot_volume_iops       = 3000 # IOPS is not applicable for general-purpose profile
+    boot_volume_iops       = null # IOPS is not applicable for general-purpose profile
     boot_volume_disk_grow  = false
     block_volume_capacity  = 500
     block_volume_iops      = 20000
