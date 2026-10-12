@@ -1,16 +1,15 @@
 module github.com/terraform-ibm-modules/terraform-ibm-hpc
 
-go 1.25.0
+go 1.26.0
 
-toolchain go1.25.11
-
+toolchain go1.26.2
 require (
 	github.com/IBM/go-sdk-core/v5 v5.19.0
 	github.com/IBM/secrets-manager-go-sdk/v2 v2.0.10
 	github.com/gruntwork-io/terratest v0.48.2
 	github.com/stretchr/testify v1.11.1
 	github.com/terraform-ibm-modules/ibmcloud-terratest-wrapper v1.48.2
-	golang.org/x/crypto v0.55.0
+	golang.org/x/crypto v0.57.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -93,11 +92,11 @@ require (
 	go.opentelemetry.io/otel v1.35.0 // indirect
 	go.opentelemetry.io/otel/metric v1.35.0 // indirect
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect
-	golang.org/x/mod v0.40.0 // indirect
-	golang.org/x/net v0.58.0 // indirect
-	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/text v0.41.0 // indirect
+	golang.org/x/mod v0.41.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
 	golang.org/x/tools v0.49.0 // indirect
 	google.golang.org/protobuf v1.36.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect

@@ -1306,7 +1306,7 @@
             {
               "key": "volume_storages",
               "type": "object",
-              "default_value": "[\n  {\n    \"boot_volume_profile\": \"sdp\",\n    \"boot_volume_size\": 100,\n    \"boot_volume_iops\": 3000,\n \"boot_volume_disk_grow\": false,\n \"block_volume_capacity\": 500,\n \"block_volume_iops\": 20000,\n \"block_volume_disk_grow\": false\n }\n]",
+              "default_value": "[\n  {\n    \"boot_volume_profile\": \"general-purpose\",\n    \"boot_volume_size\": 100,\n    \"boot_volume_iops\": null,\n \"boot_volume_disk_grow\": false,\n \"block_volume_capacity\": 500,\n \"block_volume_iops\": 20000,\n \"block_volume_disk_grow\": false\n }\n]",
               "required": false,
               "custom_config": {
                 "type": "json_editor",
